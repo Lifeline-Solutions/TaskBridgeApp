@@ -30,6 +30,8 @@ class Product < ApplicationRecord
     joins(:statuses).where(statuses: { name: 'Quality Assurance' }).distinct
   }
 
+  scope :active, -> { where(archive_status: false) }
+
   validate :end_date_after_start_date
 
   def added_to?(user)
