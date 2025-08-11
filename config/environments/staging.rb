@@ -15,6 +15,8 @@ Rails.application.configure do
   config.assets.digest = true
   # config.public_file_server.enabled = true  # uncomment if Rails must serve /public
 
+    config.force_ssl = false
+
   # storage
   config.active_storage.service = :staging
 
