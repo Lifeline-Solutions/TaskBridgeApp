@@ -6,7 +6,7 @@ class Product < ApplicationRecord
   # Milestones associations
   has_many :milestones, dependent: :destroy
   accepts_nested_attributes_for :milestones, allow_destroy: true
-  
+
   belongs_to :client
   has_many :boards, dependent: :destroy
   has_many :tasks, dependent: :destroy
