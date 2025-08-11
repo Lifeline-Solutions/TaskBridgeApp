@@ -10,6 +10,10 @@ production:
   service: Disk
   root: /var/www/uploads
 
+staging:
+  service: Disk
+  root: /var/www/uploads
+
 
 
 
