@@ -21,26 +21,31 @@ class DefectController < ApplicationController
   end
 
   def show
-    unless current_user.has_any_role?(:admin, :observer) || @defect.users.include?(current_user)
-      redirect_to defect_index_path, alert: 'You are not authorized to view this defect.' and return
-    end
+    return if current_user.has_any_role?(:admin, :observer) || @defect.users.include?(current_user)
 
-    @bugs = @defect.bugs
-    @per_page = 10
-    @page = (params[:page] || 1).to_i
-    @total_pages = (@bugs.count / @per_page.to_f).ceil
-    @bugs = @bugs.offset((@page - 1) * @per_page).limit(@per_page)
+    redirect_to defect_index_path, alert: 'You are not authorized to view this defect.' and return
+
+    @defect = Defect.find(params[:id])
   end
 
   def new
     @defect = Defect.new
+
+    # Pick the first product in QA status
+    @product = Product.includes(:client, :groupwares, :statuses)
+      .find_by(statuses: { name: 'Quality Assurance' })
+
+    # Fallback: If no QA product found, just pick first product
+    @product ||= Product.includes(:client, :groupwares).first
+
+    # Dropdown options for product selection
     @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
       .select { |product| product.statuses.any? { |status| status.name == 'Quality Assurance' } }
       .map do |product|
-      client_name = product.client&.name || 'No Client'
-      groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
-      ["#{client_name} - #{groupware_names}", product.id]
-    end
+        client_name = product.client&.name || 'No Client'
+        groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
+        ["#{client_name} - #{groupware_names}", product.id]
+      end
   end
 
   def edit
@@ -103,6 +108,7 @@ class DefectController < ApplicationController
   end
 
   def defect_params
-    params.require(:defect).permit(:name, :description, :start_date, :end_date, :product_id, :user_id, :submodule)
+    params.require(:defect).permit(:name, :description, :start_date, :end_date, :product_id, :user_id,
+                                   :submodule, :issue, :priority, :summary, :software_id, :groupware_id, :script_id, :label)
   end
 end
