@@ -5,5 +5,4 @@ class SalesController < ApplicationController
     @product = Product.includes(softwares: :groupwares)
     @used_statuses = @product.map { |p| p.statuses.first&.name }.compact.uniq
   end
-
 end
