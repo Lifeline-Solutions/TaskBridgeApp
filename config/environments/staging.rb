@@ -52,3 +52,4 @@ if ENV["SMTP_USERNAME"].present? && ENV["SMTP_PASSWORD"].present?
     read_timeout:         30
   }
 end
+end
