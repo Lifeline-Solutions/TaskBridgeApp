@@ -32,7 +32,7 @@ Rails.application.configure do
   config.action_mailer.perform_deliveries = true
   config.action_mailer.default_url_options = {
     host: ENV.fetch("APP_HOST", "172.16.2.15"), # host ONLY
-    protocol: ENV.fetch("APP_PROTOCOL", "http")
+    protocol: "http"
   }
   config.action_mailer.delivery_method = :smtp
 
@@ -72,6 +72,8 @@ Rails.application.configure do
 
   # allowed hosts (NO scheme)
   config.hosts << ENV.fetch("APP_HOST", "172.16.2.15")
+  config.ssl_options = { redirect: false, hsts: false }
+  config.middleware.delete ActionDispatch::SSL rescue nil
   # config.hosts << /.*\.craftsilicon\.com/
 
   # i18n / deprecations / schema dumps
