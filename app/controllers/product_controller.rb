@@ -5,7 +5,8 @@ class ProductController < ApplicationController
 
   def index
     # Base product query
-    @product = Product.includes(softwares: :groupwares)
+    @product = Product.active
+                    .includes(softwares: :groupwares)
 
     # Search functionality for rich text content
     if params[:query].present?
