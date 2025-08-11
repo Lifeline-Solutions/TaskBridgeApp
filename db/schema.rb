@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_11_134427) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_11_080121) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -51,15 +51,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_11_134427) do
     t.uuid "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
-  end
-
-  create_table "add_bugs", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "user_id", null: false
-    t.uuid "bug_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["bug_id"], name: "index_add_bugs_on_bug_id"
-    t.index ["user_id"], name: "index_add_bugs_on_user_id"
   end
 
   create_table "add_statuses", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -108,25 +99,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_11_134427) do
     t.index ["user_id"], name: "index_boards_on_user_id"
   end
 
-  create_table "bugs", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.string "issue"
-    t.string "priority"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.uuid "user_id"
-    t.string "summary"
-    t.uuid "software_id"
-    t.uuid "groupware_id"
-    t.uuid "script_id"
-    t.string "label"
-    t.uuid "defect_id"
-    t.index ["defect_id"], name: "index_bugs_on_defect_id"
-    t.index ["groupware_id"], name: "index_bugs_on_groupware_id"
-    t.index ["script_id"], name: "index_bugs_on_script_id"
-    t.index ["software_id"], name: "index_bugs_on_software_id"
-    t.index ["user_id"], name: "index_bugs_on_user_id"
-  end
-
   create_table "clients", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name"
     t.string "email"
@@ -171,12 +143,22 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_11_134427) do
     t.string "description"
     t.date "start_date"
     t.date "end_date"
+    t.uuid "product_id"
+    t.uuid "user_id"
+    t.string "submodule"
+    t.string "issue"
+    t.string "priority"
+    t.string "summary"
+    t.uuid "software_id"
+    t.uuid "groupware_id"
+    t.uuid "script_id"
+    t.string "label"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.uuid "product_id", null: false
-    t.uuid "user_id", null: false
-    t.string "submodule"
+    t.index ["groupware_id"], name: "index_defects_on_groupware_id"
     t.index ["product_id"], name: "index_defects_on_product_id"
+    t.index ["script_id"], name: "index_defects_on_script_id"
+    t.index ["software_id"], name: "index_defects_on_software_id"
     t.index ["user_id"], name: "index_defects_on_user_id"
   end
 
@@ -272,6 +254,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_11_134427) do
     t.integer "position"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "paid", default: false
     t.index ["product_id"], name: "index_milestones_on_product_id"
     t.index ["status_id"], name: "index_milestones_on_status_id"
   end
@@ -577,8 +560,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_11_134427) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "add_bugs", "bugs"
-  add_foreign_key "add_bugs", "users"
   add_foreign_key "add_statuses", "statuses"
   add_foreign_key "add_statuses", "tickets"
   add_foreign_key "add_tasks", "tasks"
@@ -589,19 +570,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_11_134427) do
   add_foreign_key "assignees", "users"
   add_foreign_key "boards", "products"
   add_foreign_key "boards", "users"
-  add_foreign_key "bugs", "defects"
-  add_foreign_key "bugs", "groupwares"
-  add_foreign_key "bugs", "scripts"
-  add_foreign_key "bugs", "softwares"
-  add_foreign_key "bugs", "users"
   add_foreign_key "clients", "users"
   add_foreign_key "comments", "projects"
   add_foreign_key "comments", "tickets"
   add_foreign_key "comments", "users"
   add_foreign_key "commonly_selected_clients", "clients"
   add_foreign_key "commonly_selected_clients", "users"
-  add_foreign_key "defects", "products"
-  add_foreign_key "defects", "users"
   add_foreign_key "documents", "products"
   add_foreign_key "events", "tickets"
   add_foreign_key "events", "users"
@@ -634,7 +608,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_11_134427) do
   add_foreign_key "softwares", "users"
   add_foreign_key "states", "tasks"
   add_foreign_key "states", "users"
-  add_foreign_key "status_bugs", "bugs"
   add_foreign_key "status_bugs", "statuses"
   add_foreign_key "statuses", "users"
   add_foreign_key "taggings", "tickets"
