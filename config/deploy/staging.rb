@@ -24,7 +24,11 @@ append :linked_dirs,
   'storage' # if Active Storage local/disk in staging
 
 # Ensure tasks that shell out also see RAILS_ENV=staging
-set :default_env, { 'RAILS_ENV' => 'staging' }
+set :default_env, {
+  'RAILS_ENV' => 'staging',
+  'SMTP_USERNAME' => 'cspm@craftsilicon.com',
+  'SMTP_PASSWORD' => '#cspm@123#'
+}
 
 # Optional niceties
 set :assets_roles, %i[web app]
