@@ -283,6 +283,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_11_080121) do
     t.text "document_name"
     t.string "status", default: "draft"
     t.integer "budget"
+    t.boolean "archive_status", default: false, null: false
     t.index ["client_id"], name: "index_products_on_client_id"
     t.index ["groupware_id"], name: "index_products_on_groupware_id"
     t.index ["script_id"], name: "index_products_on_script_id"
