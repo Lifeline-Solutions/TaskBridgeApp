@@ -49,14 +49,23 @@ class DefectController < ApplicationController
   end
 
   def edit
-    @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
-      .select { |product| product.statuses.any? { |status| status.name == 'Quality Assurance' } }
-      .map do |product|
+  @defect = Defect.find(params[:id])
+  @product = @defect.product || Product.includes(:client, :groupwares, :statuses)
+                        .find_by(statuses: { name: 'Quality Assurance' }) || 
+                        Product.includes(:client, :groupwares).first
+
+  @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
+    .select { |product| product.statuses.any? { |status| status.name == 'Quality Assurance' } }
+    .map do |product|
       client_name = product.client&.name || 'No Client'
       groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
       ["#{client_name} - #{groupware_names}", product.id]
     end
-  end
+  
+  # Load existing attachments
+  @existing_images = @defect.images
+  @existing_videos = @defect.videos
+end
 
   def create
     @defect = Defect.new(defect_params)
