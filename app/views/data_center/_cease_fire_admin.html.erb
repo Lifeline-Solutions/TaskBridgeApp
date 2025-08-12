@@ -1,0 +1,315 @@
+<% provide(:title, "Tickets Status") %>
+
+<div class="flex items-center justify-between mb-6">
+  <!-- Left: Title and Subtext -->
+  <div class="flex flex-col items-center justify-center w-full">
+    <h1 class="text-2xl font-bold text-center">
+      <% if current_user.has_role?(:admin) || current_user.has_role?('project manager') %>
+        Cease Fire Report
+      <% else %>
+        Status Report
+      <% end %>
+    </h1>
+    <span class="text-xs text-red mt-1">
+      (Leave the date field blank if you want all the data from inception to date*)
+    </span>
+    <div id="flash-container"></div>
+  </div>
+
+  <!-- Right: Manage Button (admin only) -->
+  <% if current_user.has_role?(:admin) %>
+    <%= link_to commonly_selected_clients_path, data: { turbo_frame: "modal" },
+          class: "ml-4 flex-shrink-0 flex items-center gap-2 border-2 border-blue-500 bg-white hover:bg-blue-500 px-4 py-2 rounded-lg text-blue-500 hover:text-white font-medium transition-colors duration-200" do %>
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+      </svg>
+      <span>Manage Common Clients</span>
+    <% end %>
+  <% end %>
+</div>
+
+<div class="p-2 w-full flex-wrap">
+  <%= form_with url: cease_fire_report_path, method: :get, local: true do |f| %>
+    <div class="flex flex-wrap justify-center gap-2">
+      <div class="flex flex-col relative gap-2">
+        <label for="searchStatus" class="capitalize text-sm font-bold w-full align-middle pt-3">Status</label>
+        <!-- Searchable Input -->
+        <input type="text" id="searchStatus" class="border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-slate-100 w-full px-4 py-2" placeholder="Search Status...">
+        <!-- Dropdown List -->
+        <div id="statusDropdown" class="absolute top-20 left-0 w-full bg-white border border-[#3F8CFF] rounded-lg mt-1 shadow-lg max-h-60 overflow-y-auto hidden z-10">
+          <% ['New', 'Resolved', 'Closed', 'Reopened', 'Under Development', 'QA Testing', 'Awaiting Build', 'Client Confirmation Pending', 'On-Hold', 'Assigned', 'Declined', 'Work in Progress'].each do |status| %>
+            <div class="dropdown-item px-4 py-2 hover:bg-gray-100 cursor-pointer bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-slate-100">
+              <label>
+                <input type="checkbox" value="<%= status %>" data-status-name="<%= status %>" class="status-checkbox mr-2 capitalize">
+                <%= status %>
+              </label>
+            </div>
+          <% end %>
+        </div>
+
+        <!-- Hidden Input to store multiple selected statuses -->
+        <div id="selectedStatusesWrapper"></div>
+      </div>
+
+      <!-- CLients dropdown -->
+      <% if !current_user.has_role?(:ceo) %>
+        <div class="flex flex-col relative gap-2">
+          <label for="searchClient" class="capitalize text-sm font-bold w-full align-middle pt-3">Client</label>
+
+          <div class="flex gap-2">
+            <!-- Search Input -->
+            <input type="text" id="searchClient" class="border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-slate-100 w-full px-4 py-2" placeholder="Search Client..." onkeyup="filterClientDropdown()">
+          </div>
+
+          <!-- Dropdown List -->
+          <div id="clientDropdown" class="absolute top-20 left-0 w-full bg-white border border-[#3F8CFF] rounded-lg mt-1 shadow-lg max-h-60 overflow-y-auto hidden z-10">
+            <div class="dropdown-item px-4 py-2 hover:bg-gray-100 cursor-pointer bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-slate-100">
+              <label>
+                <input type="checkbox" value="" data-client-name="All Clients" class="client-checkbox mr-2">
+                All Clients
+              </label>
+            </div>
+            <% (current_user.has_role?(:admin) || current_user.has_role?(:observer) ? Client.all : Client.joins(:projects).where(projects: { id: current_user.projects.pluck(:id) }).distinct).each do |client| %>
+              <div class="dropdown-item px-4 py-2 hover:bg-gray-100 cursor-pointer bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-slate-100">
+                <label>
+                  <input type="checkbox" value="<%= client.id %>" data-client-name="<%= client.name %>" class="client-checkbox mr-2 capitalize">
+                  <%= client.name %>
+                </label>
+              </div>
+            <% end %>
+          </div>
+
+          <!-- Hidden Input to store multiple selected client IDs -->
+          <div id="selectedClientsWrapper"></div>
+        </div>
+      <% end %>
+
+
+      <div class="flex flex-col gap-2">
+        <%= f.label :start_date, "Start Date", class: "capitalize text-sm font-bold w-full align-middle pt-3" %>
+        <%= f.date_field :start_date, value: params[:start_date], class: "border py-2 px-4 border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-md dark:bg-gray-900" %>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <%= f.label :end_date, "End Date", class: "capitalize text-sm font-bold w-full align-middle pt-3" %>
+        <%= f.date_field :end_date, value: params[:end_date], class: "border py-2 px-4 border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-md dark:bg-gray-900" %>
+      </div>
+      <div class="flex flex-col gap-2">
+        <%= f.label :priority, "Severity", class: "capitalize text-sm font-bold w-full align-middle pt-3" %>
+        <%= f.select :priority,
+                     options_for_select(['SEVERITY 1', 'SEVERITY 2', 'SEVERITY 3', 'SEVERITY 4'], params[:priority]),
+                     { include_blank: 'All Severities' },
+                     prompt: 'Select Priority',
+                     class: "border py-2 pl-4 pr-8 border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-md dark:bg-gray-900" %>
+
+      </div>
+      <div class="flex  flex-cols-2 gap-2 pt-10">
+        <% if current_user.has_role? :admin %>
+          <!-- Preselect commonly selected clients button -->
+          <button type="button" id="precheckCommonClientsBtn" class="border-2 border-green-500 text-green-600 hover:bg-green-600 hover:text-white p-2 rounded-lg transition duration-200">
+            Preselect Common Clients
+          </button>
+        <% end %>
+        <%= f.submit "Generate Report", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100 w-full sm:w-auto' %>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<%= render 'data_center/ticket_cease' %>
+
+<script>
+  document.addEventListener("turbo:load", () => {
+    // Common function to update selections
+    function updateSelections(inputId, wrapperId, checkboxClass, inputName, dataAttr) {
+      const searchInput = document.getElementById(inputId);
+      const selectedWrapper = document.getElementById(wrapperId);
+      let selectedNames = [];
+      selectedWrapper.innerHTML = ""; // Clear previous hidden fields
+
+      document.querySelectorAll(`.${checkboxClass}:checked`).forEach((checkbox) => {
+        const name = checkbox.dataset[dataAttr];
+        const value = checkbox.value;
+
+        if (name) selectedNames.push(name);
+        if (value) {
+          const input = document.createElement("input");
+          input.type = "hidden";
+          input.name = inputName;
+          input.value = value;
+          selectedWrapper.appendChild(input);
+        }
+      });
+
+      searchInput.value = selectedNames.join(", ");
+    }
+
+    // Common function to handle dropdown visibility and filtering
+    function setupDropdown(inputId, dropdownId, checkboxClass, wrapperId, inputName, dataAttr) {
+      const searchInput = document.getElementById(inputId);
+      const dropdown = document.getElementById(dropdownId);
+
+      // Show dropdown on click
+      searchInput.addEventListener("click", () => {
+        dropdown.classList.remove("hidden");
+      });
+
+      // Filter dropdown based on search input
+      searchInput.addEventListener("keyup", () => {
+        const searchValue = searchInput.value.toLowerCase();
+        const items = dropdown.querySelectorAll(".dropdown-item");
+
+        items.forEach((item) => {
+          const label = item.textContent.toLowerCase();
+          item.style.display = label.includes(searchValue) ? "block" : "none";
+        });
+      });
+
+      // Apply selection logic to all checkboxes
+      document.querySelectorAll(`.${checkboxClass}`).forEach((cb) => {
+        cb.addEventListener("change", () => {
+          updateSelections(inputId, wrapperId, checkboxClass, inputName, dataAttr);
+        });
+      });
+
+      // Hide dropdown when clicking outside
+      document.addEventListener("click", function (event) {
+        if (!dropdown.contains(event.target) && !searchInput.contains(event.target)) {
+          dropdown.classList.add("hidden");
+        }
+      });
+    }
+
+    let commonClientsPreselected = false;
+    let originalDropdownOrder = null; // Store the original dropdown order
+
+    document.getElementById("precheckCommonClientsBtn").addEventListener("click", async () => {
+      const button = document.getElementById("precheckCommonClientsBtn");
+      const clientDropdown = document.getElementById("clientDropdown");
+      const searchInput = document.getElementById("searchClient");
+
+      try {
+        const response = await fetch("/commonly_selected_clients/ids");
+        const data = await response.json();
+        const commonIds = data.client_ids.map(id => id.toString());
+        const commonClientNames = data.client_names;
+
+        if (commonIds.length === 0) {
+          showFlashNotice("No commonly selected clients found. Please click 'Manage common clients' to add them first.");
+          return;
+        }
+
+        // Store original dropdown order on first click if not already stored
+        if (!originalDropdownOrder) {
+          originalDropdownOrder = clientDropdown.innerHTML;
+        }
+
+        if (!commonClientsPreselected) {
+          // When selecting common clients (original behavior)
+          const dropdownItems = Array.from(clientDropdown.querySelectorAll(".dropdown-item"));
+          const commonClientItems = dropdownItems.filter(item => {
+            return commonIds.includes(item.querySelector(".client-checkbox").value);
+          });
+          const otherClientItems = dropdownItems.filter(item => {
+            return !commonIds.includes(item.querySelector(".client-checkbox").value);
+          });
+
+          clientDropdown.innerHTML = '';
+          
+          // Add common clients first with a separator
+          if (commonClientItems.length > 0) {
+            const header = document.createElement("div");
+            header.className = "px-4 py-2 font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700";
+            header.textContent = "Common Clients";
+            clientDropdown.appendChild(header);
+            
+            commonClientItems.forEach(item => {
+              item.classList.add("common-client");
+              clientDropdown.appendChild(item);
+            });
+            
+            const separator = document.createElement("div");
+            separator.className = "border-t border-gray-200 dark:border-gray-600 my-1";
+            clientDropdown.appendChild(separator);
+          }
+          
+          // Add other clients
+          otherClientItems.forEach(item => clientDropdown.appendChild(item));
+
+          // Check common client checkboxes
+          document.querySelectorAll(".client-checkbox").forEach((checkbox) => {
+            if (commonIds.includes(checkbox.value)) {
+              checkbox.checked = true;
+            }
+          });
+
+          searchInput.value = commonClientNames.map(c => c[0]).join(", ");
+        } else {
+          // When deselecting - restore original order
+          clientDropdown.innerHTML = originalDropdownOrder;
+          
+          // Uncheck all checkboxes
+          document.querySelectorAll(".client-checkbox").forEach((checkbox) => {
+            checkbox.checked = false;
+          });
+
+          searchInput.value = "";
+        }
+
+        updateSelections("searchClient", "selectedClientsWrapper", "client-checkbox", "client_ids[]", "clientName");
+        clientDropdown.classList.remove("hidden");
+
+        // Toggle state and button appearance
+        commonClientsPreselected = !commonClientsPreselected;
+        if (commonClientsPreselected) {
+          button.textContent = "Deselect Common Clients";
+          button.classList.remove("border-green-500", "text-green-600", "hover:bg-green-600");
+          button.classList.add("border-red-500", "text-red-600", "hover:bg-red-600");
+        } else {
+          button.textContent = "Preselect Common Clients";
+          button.classList.remove("border-red-500", "text-red-600", "hover:bg-red-600");
+          button.classList.add("border-green-500", "text-green-600", "hover:bg-green-600");
+        }
+      } catch (err) {
+        console.error("Failed to load common clients:", err);
+        alert("Failed to load common clients.");
+      }
+    });
+
+    // Helper function to display flash-like notice
+    function showFlashNotice(message) {
+      const flashDiv = document.createElement("div");
+      flashDiv.className = "flash-notice bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-2 rounded mt-4";
+      flashDiv.textContent = message;
+
+      const target = document.getElementById("flash-container") || document.body;
+      target.prepend(flashDiv);
+
+      setTimeout(() => {
+        flashDiv.remove();
+      }, 5000);
+    }
+
+
+
+    // Setup for "Status" dropdown
+    setupDropdown(
+      "searchStatus",
+      "statusDropdown",
+      "status-checkbox",
+      "selectedStatusesWrapper",
+      "status[]",
+      "statusName"
+    );
+
+    // Setup for "Client" dropdown
+    setupDropdown(
+      "searchClient",
+      "clientDropdown",
+      "client-checkbox",
+      "selectedClientsWrapper",
+      "client_ids[]",
+      "clientName"
+    );
+  });
+</script>
