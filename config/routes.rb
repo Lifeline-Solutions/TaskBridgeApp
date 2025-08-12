@@ -5,6 +5,7 @@ Rails.application.routes.draw do
   get 'users/client_active', to: 'users#client_active', as: 'active_client_users'
   get 'users/manager_active', to: 'users#manager_active', as: 'active_manager_users'
   get 'users/agent_active', to: 'users#agent_active', as: 'active_agent_users'
+  get "/crash", to: "test#crash"
 
   devise_for :users, controllers: { invitations: 'invitations' }
   resources :users do
