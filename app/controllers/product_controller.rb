@@ -139,7 +139,7 @@ class ProductController < ApplicationController
     @product.errors.add(:content, "can't be blank") if @product.content.blank?
 
     respond_to do |format|
-      if (current_user.has_role?(:admin) || current_user.has_role?('project_manager')) && @product.errors.empty?
+      if (current_user.has_role?(:admin) || current_user.has_role?('project manager')) && @product.errors.empty?
         case params[:commit]
         when 'create'
           @product.status = 'published'
