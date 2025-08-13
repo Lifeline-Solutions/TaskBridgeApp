@@ -57,9 +57,7 @@ class ProductController < ApplicationController
     # @product = @product.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :hod)
 
     # Filter by user role (allow PMs to see all projects). After two weeks remove this line
-    unless current_user.has_any_role?(:admin, :observer, :hod, 'project manager')
-      @product = @product.joins(:users).where(users: { id: current_user.id })
-    end
+    @product = @product.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :hod, 'project manager')
 
     # Pagination (AFTER all filters and sorts)
     @per_page = 12
