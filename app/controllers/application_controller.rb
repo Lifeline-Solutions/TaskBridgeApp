@@ -15,7 +15,7 @@ class ApplicationController < ActionController::Base
   before_action :load_notifications, if: :user_signed_in?
 
   # Handle missing records by redirecting to root with an alert
-  rescue_from ActiveRecord::RecordNotFound, with: :redirect_to_root
+  # rescue_from ActiveRecord::RecordNotFound, with: :redirect_to_root
 
   # Handle authorization errors by redirecting to root with an alert
   rescue_from CanCan::AccessDenied do |exception|
@@ -66,7 +66,7 @@ class ApplicationController < ActionController::Base
   end
 
   # Redirects to root with a not found alert
-  def redirect_to_root
-    redirect_to root_path, alert: 'The page you were looking for does not exist.'
-  end
+  # def redirect_to_root
+  #  redirect_to root_path, alert: 'The page you were looking for does not exist.'
+  # end
 end
