@@ -1,6 +1,27 @@
-    <%= form_with url: product_status_product_path(@product), local: true do %>
-        <div class="relative flex flex-col gap-2">
-            <%= select_tag :status_id, options_for_select(Status.where(name: ['Development','User Acceptance Test','Pilot','Quality Assurance','Deploy','Production']).pluck(:name, :id)), class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500" %>
-            <%= submit_tag "UPDATE", class: 'font-semibold bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg mt-2' %>
-        </div>
-    <% end %>
+<% # Find the product's current status name (or nil if it has none) %>
+<% current_status = @product.statuses.first&.name %>
+
+<% status_options =
+     if current_status.nil? || current_status == 'Initiation'
+             Status.where(name: ['Development']).pluck(:name, :id)
+     elsif current_status == 'Development'
+             Status.where(name: ['Quality Assurance']).pluck(:name, :id)
+     elsif current_status == 'Quality Assurance'
+             Status.where(name: ['User Acceptance Test']).pluck(:name, :id)
+     elsif current_status == "User Acceptance Test"
+             Status.where(name: ['Deploy']).pluck(:name, :id)
+     elsif current_status == 'Deploy'
+             Status.where(name: ['Production']).pluck(:name, :id)
+     else
+             []
+     end
+%>
+
+<%= form_with url: product_status_product_path(@product), local: true do %>
+  <div class="relative flex flex-col gap-2">
+    <%= select_tag :status_id,
+                   options_for_select(status_options),
+                   class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500" %>
+    <%= submit_tag "UPDATE", class: 'font-semibold bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg mt-2' %>
+  </div>
+<% end %>

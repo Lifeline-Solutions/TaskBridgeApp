@@ -18,6 +18,12 @@ class TasksController < ApplicationController
 
     respond_to do |format|
       if @task.save
+        # Assign one or more users to the task on creation
+        if (assignee_id = params.dig(:task, :user_id).presence)
+          assignee = User.find_by(id: assignee_id)
+          @task.users << assignee if assignee && !@task.users.include?(assignee)
+        end
+
         current_user.add_role :creator, @task
         format.html { redirect_to product_path(@product), notice: 'Task was successfully created.' }
       else

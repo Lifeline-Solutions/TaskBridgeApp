@@ -7,8 +7,6 @@ class TicketsController < ApplicationController
   before_action :set_ticket, only: %i[show destroy edit assign_tag unassign_tag add_status modal_show]
   # Load and authorize resources using CanCanCan
   load_and_authorize_resource
-
-  # Show a single ticket with issues, comments, and events
   def show
     # Search issues by rich text content if query is present, else show all issues
     @issue = if params[:query].present?
@@ -50,14 +48,12 @@ class TicketsController < ApplicationController
     # Count how many tickets the current user has in that status
     @tickets_count = if confirmation_pending_status
                        @project.tickets
-                         .where(user: current_user)
                          .joins(:statuses)
                          .where(statuses: { id: confirmation_pending_status.id })
                          .count
                      else
                        0
                      end
-
     # Prevent clients from creating more than 10 pending tickets
     if current_user.has_role?(:client) && @tickets_count >= 10
       redirect_to project_path(@project),
