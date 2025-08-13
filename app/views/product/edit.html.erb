@@ -102,11 +102,10 @@
         <div class="flex items-center">
           <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white mr-2">Paid</label>
           <%= f.check_box "milestones_attributes[#{index}][paid]",
-            { checked: milestone.paid },
-            true,
-            false %>
+              { checked: milestone.paid, disabled: true },
+              "true",
+              "false" %>
         </div>
-
         <!-- Remove Button -->
         <div class="flex items-end">
           <input type="hidden" name="product[milestones_attributes][<%= index %>][_destroy]" value="false">
@@ -215,7 +214,7 @@
       <div class="flex items-end">
         <input type="hidden" name="product[milestones_attributes][${timestamp}][_destroy]" value="false">
         <button type="button"
-                class="mt-4 p-2 bg-red-600 hover:bg-red-800 text-white rounded remove-milestone text-sm font-medium"
+                class="mt-4 p-2 bg-red-600 hover:bg-red-800 text-white roundedremove-milestone text-sm font-medium"
                 onclick="this.closest('.milestone-field').remove()">
           Remove
         </button>

@@ -159,6 +159,10 @@ Rails.application.routes.draw do
 
   resources :groupwares # Independent route for AJAX requests
 
+  resources :milestones, only: [] do
+    patch :toggle_paid, on: :member
+  end
+  
   resources :client
   resources :status
   resources :team do
