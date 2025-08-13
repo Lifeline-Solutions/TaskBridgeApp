@@ -52,7 +52,14 @@ class ProductController < ApplicationController
     @product = @product.joins(:statuses).where(statuses: { name: params[:status] }) if params[:status].present? && params[:status] != 'All'
 
     # Filter by user role
-    @product = @product.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :hod)
+    # THis line has been commented out for the time being, we are allowing PMS to see all projects
+    # After 2 weeks we should re uncomment it to allow a pm to only see their own projects
+    # @product = @product.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :hod)
+
+    # Filter by user role (allow PMs to see all projects). After two weeks remove this line
+    unless current_user.has_any_role?(:admin, :observer, :hod, 'project manager')
+      @product = @product.joins(:users).where(users: { id: current_user.id })
+    end
 
     # Pagination (AFTER all filters and sorts)
     @per_page = 12
@@ -69,7 +76,7 @@ class ProductController < ApplicationController
   end
 
   def show
-    if current_user.has_role?(:admin) || @product.users.include?(current_user) || current_user.has_role?(:hod)
+    if current_user.has_role?('project manager') || current_user.has_role?(:admin) || @product.users.include?(current_user) || current_user.has_role?(:hod)
       @days_remaining = (@product.end_date - Date.today).to_i if @product.end_date.present?
 
       # Define status groups
