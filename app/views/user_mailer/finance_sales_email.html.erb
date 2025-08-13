@@ -1,8 +1,7 @@
 <!-- app/views/user_mailer/finance_sales_email.html.erb -->
-<p>Hello Team </p>
+<p>Hello Team, </p>
 
-<p> The client <%= @product.client.name %> with project
-</p>
+<p> The client <%= @product.client.name %> with project </p>
 <div>
   <% current_status = @product.statuses.first&.name %>
   <% if current_status.present? %>
