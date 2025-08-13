@@ -1,0 +1,21 @@
+<!-- app/views/user_mailer/finance_sales_email.html.erb -->
+<p>Hello Team, </p>
+
+<p> The client <%= @product.client.name %> with project </p>
+<div>
+  <% current_status = @product.statuses.first&.name %>
+  <% if current_status.present? %>
+    <%= @product.groupwares.map(&:name).join(', ') %>
+    for milestone
+    <% @product.milestones.each do |milestone| %>
+      <% if milestone.status&.name == current_status %>
+        <%= milestone.status.name %>
+        <%= number_with_precision(milestone.amount || (@product.budget * milestone.percentage.to_f / 100), precision: 2) %>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>
+
+<p>Click <a href="<%= @url %>">here</a> to view the project.</p>
+<p>Best regards,</p>
+<p>Your Team</p>

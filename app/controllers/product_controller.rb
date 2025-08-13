@@ -57,9 +57,7 @@ class ProductController < ApplicationController
     # @product = @product.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :hod)
 
     # Filter by user role (allow PMs to see all projects). After two weeks remove this line
-    unless current_user.has_any_role?(:admin, :observer, :hod, 'project manager')
-      @product = @product.joins(:users).where(users: { id: current_user.id })
-    end
+    @product = @product.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :hod, 'project manager')
 
     # Pagination (AFTER all filters and sorts)
     @per_page = 12
@@ -218,7 +216,13 @@ class ProductController < ApplicationController
     @product = Product.find(params[:id])
     status = Status.find(params[:status_id])
     @product.statuses.clear
+    @product.user = current_user
     @product.statuses << status
+
+    # Send an email to the developers and select the
+    assigned_user = @product.users.pluck(:id)
+
+    UserMailer.finance_sales_email(@product, assigned_user, current_user).deliver_later
     redirect_to product_path(@product), notice: 'Product status was successfully updated.'
   end
 
@@ -244,6 +248,6 @@ class ProductController < ApplicationController
     params.require(:product).permit(:status, :start_date, :end_date, :document_name, :image, :content, :budget,
                                     :user_id, :client_id, images: [], software_ids: [], groupware_ids: [],
                                                           documents_attributes: %i[id name file _destroy],
-                                                          milestones_attributes: %i[id status_id percentage amount position _destroy])
+                                                          milestones_attributes: %i[id status_id percentage amount paid position _destroy])
   end
 end

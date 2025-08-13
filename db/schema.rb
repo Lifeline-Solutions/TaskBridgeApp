@@ -254,6 +254,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_11_134427) do
     t.integer "position"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "paid", default: false
     t.index ["product_id"], name: "index_milestones_on_product_id"
     t.index ["status_id"], name: "index_milestones_on_status_id"
   end
@@ -529,6 +530,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_11_134427) do
     t.uuid "client_id"
     t.boolean "active", default: true
     t.uuid "location_id"
+    t.string "position"
     t.index ["client_id"], name: "index_users_on_client_id"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true

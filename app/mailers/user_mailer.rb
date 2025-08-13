@@ -162,4 +162,15 @@ class UserMailer < ApplicationMailer
       format.text { render plain: "Morning Ticket Report for #{@user.name}" }
     end
   end
+
+  def finance_sales_email(product, assigned_user, current_user)
+    @product = product
+    @assigned_user = assigned_user
+    @current_user = current_user
+    @url = product_url(@product)
+    mail(to: @assigned_user.email, subject: "Project Payment Status for #{@product.client.name} for #{@product.groupwares.map(&:name).join(', ').presence} milestone ") do |format|
+      format.html { render 'finance_sales_email' }
+      format.text { render plain: "Project Payment Status for #{@product.client.name}, for #{@product.groupwares.map(&:name).join(', ').presence} for milestone " }
+    end
+  end
 end

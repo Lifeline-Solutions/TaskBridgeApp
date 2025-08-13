@@ -1,7 +1,7 @@
 <!-- app/views/user_mailer/assign_product_email.html.erb -->
 <p>Hello <%= @user.first_name %> <%= @user.last_name %>,</p>
 
-<p><%= @product.users.map(&:name).join(', ') %> has been assigned to the project: <%= @product.name %> by <%= @current_user.name %></p>
+<p><%= @product.client.name %> for <%= @product.groupwares.map(&:name).join(', ') %> has been assigned to the project: by <%= @current_user.name %></p>
 <p>Assigned user: <%= @assigned_user.first_name %> <%= @assigned_user.last_name %></p>
 <p>Click <a href="<%= @url %>">here</a> to view the project.</p>
 
