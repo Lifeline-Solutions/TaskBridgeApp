@@ -57,7 +57,6 @@ class TicketsController < ApplicationController
                      else
                        0
                      end
-
     # Prevent clients from creating more than 10 pending tickets
     if current_user.has_role?(:client) && @tickets_count >= 10
       redirect_to project_path(@project),
