@@ -1,4 +1,3 @@
-# app/services/error_logger.rb
 class ErrorLogger
   LOG_FILE = Rails.root.join("log", "production_errors.log")
 
@@ -8,7 +7,7 @@ class ErrorLogger
       f.puts "Message: #{exception.message}"
       f.puts "Type: #{exception.class}"
       f.puts "Context: #{context.inspect}" if context
-      f.puts "Backtrace:\n#{exception.backtrace.join("\n")}"
+      f.puts "Backtrace:\n#{Array(exception.backtrace).join("\n")}"
       f.puts "=============================="
       f.puts
     end

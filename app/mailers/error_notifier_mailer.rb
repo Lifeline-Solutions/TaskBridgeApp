@@ -1,14 +1,15 @@
 class ErrorNotifierMailer < ApplicationMailer
-  default to: -> { ["robert.mbugua@craftsilicon.com"] },
-          from: "cspm@craftsilicon.com"
+  default to: -> { ['robert.mbugua@craftsilicon.com'] },
+          from: 'cspm@craftsilicon.com'
 
-  def notify_error(exception, context: nil)
-    @exception = exception
-    @context = context
+  # Accept a serializable payload hash
+  def notify_error(payload)
+    @payload = payload
 
-    log_path = Rails.root.join("log", "errors.log")
-    attachments["errors.log"] = File.read(log_path) if File.exist?(log_path)
+    log_path = Rails.root.join('log', 'production_errors.log')
+    attachments['production_errors.log'] = File.read(log_path) if File.exist?(log_path)
 
-    mail(subject: "[Rails Error] #{exception.class} - #{exception.message.truncate(80)}")
+    subj = "[Rails Error] #{@payload[:exception_class]} - #{@payload[:message].to_s.truncate(80)}"
+    mail(subject: subj)
   end
 end
