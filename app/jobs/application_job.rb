@@ -1,7 +1,8 @@
 class ApplicationJob < ActiveJob::Base
-  # Automatically retry jobs that encountered a deadlock
-  # retry_on ActiveRecord::Deadlocked
-
-  # Most jobs are safe to ignore if the underlying records are no longer available
-  # discard_on ActiveJob::DeserializationError
+  rescue_from(StandardError) do |exception|
+    context = { job: self.class.name, args: arguments, queue: queue_name }
+    ErrorLogger.log(exception, context: context)
+    SafeNotifier.email(exception, context: context)
+    raise
+  end
 end

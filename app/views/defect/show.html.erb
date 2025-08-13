@@ -12,18 +12,67 @@
 
 <div class="p-2">
   <!-- Topbar and Alert -->
-  <%= render 'bugs/top_bug' %>
 
   <%= render 'layouts/alert', class: "" %>
   <div class="grid grid-cols-3 gap-4 mb-4">
-    <div class="col-span-1">
-      <%= render 'defect/add_defect' %>
-    </div>
-  </div>
-  <div class="flex pt-2 mb-4 rounded bg-gray-50 dark:bg-gray-800 w-full">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <!-- Defect Header -->
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+      Defect Details
+    </h1>
 
-    <%= render 'bugs/bugs_view' %>
+    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+      <div>
+        <dt class="font-medium text-gray-500 dark:text-gray-400">Defect ID</dt>
+        <dd class="mt-1 text-gray-900 dark:text-white"><%= @defect.id %></dd>
+      </div>
 
+      <div>
+        <dt class="font-medium text-gray-500 dark:text-gray-400">Title</dt>
+        <dd class="mt-1 text-gray-900 dark:text-white"><%= @defect.name %></dd>
+      </div>
+
+      <div>
+        <dt class="font-medium text-gray-500 dark:text-gray-400">Status</dt>
+        <dd class="mt-1">
+  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+    <%= case @defect.priority
+        when 'High' then 'bg-red-100 text-red-800'
+        when 'Medium' then 'bg-yellow-100 text-yellow-800'
+        when 'Low' then 'bg-green-100 text-green-800'
+        else 'bg-gray-100 text-gray-800'
+       end %>">
+    <%= @defect.priority || "Not Set" %>
+  </span>
+</dd>
+
+      </div>
+
+      <div>
+        <dt class="font-medium text-gray-500 dark:text-gray-400">Priority</dt>
+        <dd class="mt-1 text-gray-900 dark:text-white"><%= @defect.priority %></dd>
+      </div>
+
+      <div>
+        <dt class="font-medium text-gray-500 dark:text-gray-400">Assigned To</dt>
+        <dd class="mt-1 text-gray-900 dark:text-white">
+          <% if @defect.users.any? %>
+            <%= @defect.users.map(&:name).join(", ") %>
+          <% else %>
+            <span class="text-gray-400">No users assigned</span>
+          <% end %>
+        </dd>
+      </div>
+
+      <div>
+        <dt class="font-medium text-gray-500 dark:text-gray-400">Created At</dt>
+        <dd class="mt-1 text-gray-900 dark:text-white"><%= l(@defect.created_at, format: :long) %></dd>
+      </div>
+    </dl>
   </div>
 </div>
 
+  </div>
+  
+</div>

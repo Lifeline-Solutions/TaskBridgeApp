@@ -2,7 +2,7 @@
 lock "~> 3.19.1"
 
 set :application, "CSPM"
-set :repo_url, "https://github.com/ger619/CSPM.git"
+set :repo_url, "https://github.com/Kanyorok/TaskBridgeApp.git"
 set :branch, 'dev'
 
 # Default branch is :master
