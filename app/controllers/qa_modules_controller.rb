@@ -6,6 +6,11 @@ class QaModulesController < ApplicationController
     @qa_modules = QaModule.all
   end
 
+  def show
+    @qa_module = QaModule.find(params[:id])
+  @child_modules = QaModule.where(parent_id: @qa_module.id).order(:name)
+  end
+
   def new
     @qa_module = QaModule.new
     @parents = QaModule.where(parent_id: nil) # Only top-level modules
