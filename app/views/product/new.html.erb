@@ -165,127 +165,243 @@
 <% end %>
 
 <script>
-  // Add Milestone Button
-  document.getElementById('add-milestone-button').addEventListener('click', function () {
+  // Run in Turbo frames too
+  document.addEventListener('turbo:load', initProjectForm);
+  document.addEventListener('turbo:frame-load', initProjectForm);
+
+  function initProjectForm() {
     const container = document.getElementById('milestones-container');
+    const addBtn = document.getElementById('add-milestone-button');
+    if (!container || !addBtn) return;
+
+    // Avoid duplicate listeners from Turbo by cloning nodes
+    const freshAddBtn = addBtn.cloneNode(true);
+    addBtn.replaceWith(freshAddBtn);
+
+    // Master list of statuses from Rails (id, name) — safe JSON
+    const STATUSES = <%= raw Status.where(name: ['Development','User Acceptance Test','Pilot','Quality Assurance','Deploy','Production']).pluck(:id,:name).to_json %>;
+
+    // Add row
+    freshAddBtn.addEventListener('click', () => {
+      addMilestoneRow(container);
+      syncAllStatusSelects(container, STATUSES);
+      enforceAllPercentageLimits(container);
+    });
+
+    // Remove row (delegate)
+    container.addEventListener('click', (e) => {
+      const btn = e.target.closest('.remove-milestone');
+      if (!btn) return;
+      e.preventDefault();
+      btn.closest('.milestone-field').remove();
+      syncAllStatusSelects(container, STATUSES);
+      enforceAllPercentageLimits(container);
+    });
+
+    // Status change → re-sync option sets
+    container.addEventListener('change', (e) => {
+      if (e.target.matches('.status-select')) {
+        syncAllStatusSelects(container, STATUSES);
+      }
+    });
+
+    // Percentage typing → clamp + recalc amount + refresh max limits
+    container.addEventListener('input', (e) => {
+      if (e.target.matches('.percentage-input')) {
+        clampPercentageForInput(container, e.target);
+        updateAmountForInput(e.target);
+        enforceAllPercentageLimits(container);
+      }
+    });
+
+    // Recompute amounts when budget changes
+    const budgetInput = document.getElementById('product_budget');
+    if (budgetInput) {
+      const freshBudget = budgetInput.cloneNode(true);
+      budgetInput.replaceWith(freshBudget);
+      freshBudget.addEventListener('input', () => {
+        container.querySelectorAll('.percentage-input').forEach(updateAmountForInput);
+      });
+    }
+
+    // Documents UI (kept, with stable ids)
+    wireDocumentsUI();
+
+    // Char counter (kept)
+    wireCharCounter();
+  }
+
+  // ---------- Milestones helpers ----------
+  function addMilestoneRow(container) {
     const timestamp = Date.now();
-    const budget = document.getElementById('product_budget').value || 0;
+    const row = document.createElement('div');
+    row.className = 'milestone-field grid grid-cols-4 gap-4 mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg';
+    row.id = `milestone-${timestamp}`;
 
-    const newField = document.createElement('div');
-    newField.classList.add('milestone-field', 'grid', 'grid-cols-4', 'gap-4', 'mb-4', 'p-4', 'bg-gray-100', 'dark:bg-gray-800', 'rounded-lg');
-    newField.id = `milestone-${timestamp}`;
-
-    newField.innerHTML = `
+    row.innerHTML = `
       <div>
         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Status</label>
         <select name="product[milestones_attributes][${timestamp}][status_id]"
                 class="status-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
-          <%= options_from_collection_for_select(
-                Status.where(name: ['Development', 'User Acceptance Test', 'Pilot', 'Quality Assurance', 'Deploy', 'Production']),
-                :id,
-                :name
-              ) %>
+          <!-- options injected by syncAllStatusSelects -->
         </select>
       </div>
 
       <div>
         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Percentage</label>
-        <input type="number" step="0.01"
-              name="product[milestones_attributes][${timestamp}][percentage]"
-              class="percentage-input bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-              oninput="calculateAmount(this, ${budget})">
+        <input type="number" step="0.01" min="0"
+               name="product[milestones_attributes][${timestamp}][percentage]"
+               class="percentage-input bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
       </div>
 
       <div>
         <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Amount</label>
         <input type="text" readonly
-              class="amount-display bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+               class="amount-display bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
       </div>
 
       <div class="flex items-end">
         <input type="hidden" name="product[milestones_attributes][${timestamp}][_destroy]" value="false">
         <button type="button"
-                class="mt-4 p-2 bg-red-600 hover:bg-red-800 text-white roundedremove-milestone text-sm font-medium"
-                onclick="this.closest('.milestone-field').remove()">
+                class="mt-4 p-2 bg-red-600 hover:bg-red-800 text-white rounded remove-milestone text-sm font-medium">
           Remove
         </button>
       </div>
     `;
-
-    container.appendChild(newField);
-  });
-
-  // Calculate amount function
-  function calculateAmount(input, budget) {
-    const percentage = parseFloat(input.value) || 0;
-    const amountField = input.closest('.milestone-field').querySelector('.amount-display');
-    const amount = (budget * percentage / 100).toFixed(2);
-    amountField.value = amount;
+    container.appendChild(row);
   }
 
+  // Build options list: include prompt + full statuses minus exclusions, but keep current
+  function buildOptionsFragment(statuses, keepId, excludeIds) {
+    const frag = document.createDocumentFragment();
+    const prompt = document.createElement('option');
+    prompt.value = '';
+    prompt.textContent = 'Select milestone…';
+    frag.appendChild(prompt);
 
-  document.getElementById('add-document-button').addEventListener('click', function() {
-    const container = document.getElementById('documents-container');
-    const timestamp = Date.now(); // Unique identifier for each field set
-    const newField = document.createElement('div');
-    
-    newField.classList.add('document-field', 'flex', 'flex-col', 'mb-4', 'p-3', 'border', 'rounded');
-    newField.id = timestamp;
-    
-    newField.innerHTML = `
-      <label class="block mb-1 text-sm font-medium">Document Name</label>
-      <input type="text" name="product[documents_attributes][${timestamp}][name]" 
-            class="border rounded-lg p-2 mb-2" placeholder="Document Name">
-      <label class="block mb-1 text-sm font-medium">Upload File</label>
-      <input type="file" name="product[documents_attributes][${timestamp}][file]" 
-            class="border rounded-lg p-2">
-      <a href="#" class="remove-document text-red-500 mt-2 block" data-id="document-${timestamp}">Remove</a>
-    `;
-
-    container.appendChild(newField);
-  });
-
-  // Functionality to remove an upload document block based on the ID
-  document.addEventListener('click', (e) => {
-    if(e.target.classList.contains("remove-document")) {
-      e.preventDefault();
-      const id = e.target.getAttribute("data-id");
-      const element = document.getElementById(id);
-      if(element) {
-        element.remove();
-      }
-    }
-  })
-
-  // Character counter for description
-  document.addEventListener('turbo:load', function() {
-    const contentField = document.querySelector('[data-text-limit-target="content"]');
-    const charCount = document.getElementById('char-count');
-    
-    if (contentField && charCount) {
-      contentField.addEventListener('input', function() {
-        const length = this.textContent.length;
-        charCount.textContent = `${length}/3000`;
-        
-        if (length > 3000) {
-          charCount.classList.add('text-red-500');
-          charCount.classList.remove('text-gray-500', 'dark:text-gray-400');
-        } else {
-          charCount.classList.remove('text-red-500');
-          charCount.classList.add('text-gray-500', 'dark:text-gray-400');
-        }
-      });
-      
-      // Initialize count
-      const initialLength = contentField.textContent.length;
-      charCount.textContent = `${initialLength}/3000`;
-    }
-
-    document.addEventListener('click', function (e) {
-      if (e.target.classList.contains('remove-document')) {
-        e.preventDefault();
-        e.target.closest('.document-field').remove();
+    statuses.forEach(([id, name]) => {
+      const idStr = String(id);
+      if (idStr === String(keepId) || !excludeIds.includes(idStr)) {
+        const opt = document.createElement('option');
+        opt.value = idStr;
+        opt.textContent = name;
+        frag.appendChild(opt);
       }
     });
-  });
+    return frag;
+  }
+
+  // Remove already-chosen statuses from other selects; restore on change/remove
+  function syncAllStatusSelects(container, statuses) {
+    const selects = Array.from(container.querySelectorAll('.status-select'));
+    const chosenByOther = (self) =>
+      selects.filter(s => s !== self).map(s => s.value).filter(Boolean);
+
+    selects.forEach(select => {
+      const current = select.value || '';
+      const exclude = chosenByOther(select).map(String);
+      select.innerHTML = '';
+      select.appendChild(buildOptionsFragment(statuses, current, exclude));
+      // Restore value if still allowed
+      if ([...select.options].some(o => o.value === current)) {
+        select.value = current;
+      } else {
+        select.value = '';
+      }
+    });
+  }
+
+  // Clamp current input so total never exceeds 100; update its max to remainder
+  function clampPercentageForInput(container, input) {
+    const inputs = Array.from(container.querySelectorAll('.percentage-input'));
+    const othersTotal = inputs.filter(i => i !== input)
+                              .reduce((s, i) => s + (parseFloat(i.value) || 0), 0);
+    const allowed = Math.max(0, 100 - othersTotal);
+    input.max = allowed.toFixed(2);
+
+    let val = parseFloat(input.value) || 0;
+    if (val > allowed) {
+      val = allowed;
+      input.value = allowed.toFixed(2);
+    }
+  }
+
+  // After any change, make sure every input respects its personal remainder cap
+  function enforceAllPercentageLimits(container) {
+    const inputs = Array.from(container.querySelectorAll('.percentage-input'));
+    inputs.forEach(inp => {
+      const others = inputs.filter(i => i !== inp).reduce((s, i) => s + (parseFloat(i.value) || 0), 0);
+      const allowed = Math.max(0, 100 - others);
+      inp.max = allowed.toFixed(2);
+      if ((parseFloat(inp.value) || 0) > allowed) {
+        inp.value = allowed.toFixed(2);
+        updateAmountForInput(inp);
+      }
+    });
+  }
+
+  // Amount = budget * percentage / 100
+  function updateAmountForInput(input) {
+    const budget = parseFloat(document.getElementById('product_budget')?.value) || 0;
+    const pct = parseFloat(input.value) || 0;
+    const amount = (budget * pct) / 100;
+    const out = input.closest('.milestone-field').querySelector('.amount-display');
+    if (out) out.value = amount.toFixed(2);
+  }
+
+  // ---------- Documents (kept) ----------
+  function wireDocumentsUI() {
+    const addDocBtn = document.getElementById('add-document-button');
+    const docsContainer = document.getElementById('documents-container');
+    if (!addDocBtn || !docsContainer) return;
+
+    const freshBtn = addDocBtn.cloneNode(true);
+    addDocBtn.replaceWith(freshBtn);
+
+    freshBtn.addEventListener('click', function () {
+      const timestamp = Date.now();
+      const wrap = document.createElement('div');
+      wrap.classList.add('document-field', 'flex', 'flex-col', 'mb-4', 'p-3', 'border', 'rounded');
+      wrap.id = `document-${timestamp}`;
+
+      wrap.innerHTML = `
+        <label class="block mb-1 text-sm font-medium">Document Name</label>
+        <input type="text" name="product[documents_attributes][${timestamp}][name]" class="border rounded-lg p-2 mb-2" placeholder="Document Name">
+        <label class="block mb-1 text-sm font-medium">Upload File</label>
+        <input type="file" name="product[documents_attributes][${timestamp}][file]" class="border rounded-lg p-2">
+        <a href="#" class="remove-document text-red-500 mt-2 block" data-id="document-${timestamp}">Remove</a>
+      `;
+      docsContainer.appendChild(wrap);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('remove-document')) {
+        e.preventDefault();
+        const id = e.target.getAttribute('data-id');
+        document.getElementById(id)?.remove();
+      }
+    });
+  }
+
+  // ---------- Character counter (kept) ----------
+  function wireCharCounter() {
+    const contentField = document.querySelector('[data-text-limit-target="content"]');
+    const charCount = document.getElementById('char-count');
+    if (!contentField || !charCount) return;
+
+    const update = () => {
+      const length = contentField.textContent.length;
+      charCount.textContent = `${length}/3000`;
+      if (length > 3000) {
+        charCount.classList.add('text-red-500');
+        charCount.classList.remove('text-gray-500', 'dark:text-gray-400');
+      } else {
+        charCount.classList.remove('text-red-500');
+        charCount.classList.add('text-gray-500', 'dark:text-gray-400');
+      }
+    };
+
+    contentField.addEventListener('input', update);
+    update();
+  }
 </script>
