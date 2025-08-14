@@ -1,0 +1,14 @@
+<!-- app/views/qa_modules/_form.html.erb -->
+<%= form_with model: @qa_module, local: true do |f| %>
+  <div class="mb-4">
+    <%= f.label :name, "Module Name" %>
+    <%= f.text_field :name, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+
+  <div class="mb-4">
+    <%= f.label :parent_id, "Parent Module (optional)" %>
+    <%= f.collection_select :parent_id, @parents, :id, :name, include_blank: true, class: "border rounded px-2 py-1 w-full" %>
+  </div>
+
+  <%= f.submit "Save Module", class: "bg-blue-500 text-white px-4 py-2 rounded" %>
+<% end %>
