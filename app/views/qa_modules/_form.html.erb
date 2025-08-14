@@ -1,4 +1,4 @@
-<%= form_with model: @qa_module, local: true do |f| %>
+<%= form_with model: @qa_module, data: { turbo: false } do |f| %>
   <div class="mb-4">
     <%= f.label :name, "Module Name" %>
     <%= f.text_field :name, class: "border rounded px-2 py-1 w-full" %>

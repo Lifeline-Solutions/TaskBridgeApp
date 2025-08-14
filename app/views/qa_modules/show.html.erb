@@ -6,15 +6,22 @@
     <div class="flex justify-between items-start">
       <div>
         <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+          <% if @qa_module.parent %>
+            <span class="text-sm font-normal text-gray-500 dark:text-gray-400 mr-2">
+              Submodule of <%= @qa_module.parent.name %>:
+            </span>
+          <% end %>
           <%= @qa_module.name %>
         </h1>
         
         <% if @qa_module.parent %>
-          <p class="text-gray-600 dark:text-gray-300">
-            Parent Module: 
-            <%= link_to @qa_module.parent.name, qa_module_path(@qa_module.parent), 
-                        class: "text-blue-600 dark:text-blue-400 hover:underline" %>
-          </p>
+          <div class="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
+            </svg>
+            <%= link_to "View parent module", qa_module_path(@qa_module.parent), 
+                       class: "text-blue-600 dark:text-blue-400 hover:underline" %>
+          </div>
         <% end %>
       </div>
 
@@ -34,9 +41,10 @@
   <% if @child_modules.any? %>
     <div class="mb-6 flex justify-between items-center">
       <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">
-        Child Modules
+        <%= @qa_module.parent ? "Related Modules" : "Child Modules" %>
       </h2>
-      <%= link_to "Add Child Module", new_qa_module_path(parent_id: @qa_module.id),
+      <%= link_to "Add #{@qa_module.parent ? 'Related' : 'Child'} Module", 
+                  new_qa_module_path(parent_id: @qa_module.id),
                   class: "px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm" %>
     </div>
 
@@ -46,6 +54,9 @@
           <tr>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
               Module Name
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+              Type
             </th>
             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
               Actions
@@ -58,6 +69,17 @@
               <td class="px-6 py-4 whitespace-nowrap">
                 <%= link_to child.name, qa_module_path(child), 
                             class: "text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium" %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-gray-500 dark:text-gray-300">
+                <% if child.parent_id == @qa_module.id %>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                    Child Module
+                  </span>
+                <% else %>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                    Related Module
+                  </span>
+                <% end %>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <%= link_to "View", qa_module_path(child),
@@ -76,11 +98,32 @@
     </div>
   <% else %>
     <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 text-center">
-      <p class="text-gray-600 dark:text-gray-300 mb-4">
-        This module doesn't have any child modules yet.
-      </p>
-      <%= link_to "Add First Child Module", new_qa_module_path(parent_id: @qa_module.id),
-                  class: "px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm" %>
+      <% if @qa_module.parent %>
+        <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <h3 class="mt-2 text-lg font-medium text-gray-900 dark:text-gray-100">This is a submodule</h3>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Submodule of: <%= link_to @qa_module.parent.name, qa_module_path(@qa_module.parent), 
+                                 class: "text-blue-600 dark:text-blue-400 hover:underline" %>
+        </p>
+        <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">
+          You can add related modules that share this same parent.
+        </p>
+      <% else %>
+        <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+        </svg>
+        <h3 class="mt-2 text-lg font-medium text-gray-900 dark:text-gray-100">No child modules yet</h3>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Get started by creating your first child module.
+        </p>
+      <% end %>
+      <div class="mt-6">
+        <%= link_to @qa_module.parent ? "Add Related Module" : "Add Child Module", 
+                    new_qa_module_path(parent_id: @qa_module.id),
+                    class: "inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm" %>
+      </div>
     </div>
   <% end %>
 </div>
