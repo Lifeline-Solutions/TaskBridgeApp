@@ -1,0 +1,2 @@
+class QaModule < ApplicationRecord
+end
