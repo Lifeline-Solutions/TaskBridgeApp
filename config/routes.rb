@@ -171,4 +171,6 @@ Rails.application.routes.draw do
     end
   end
   resources :location
+
+  resources :qa_modules
 end
