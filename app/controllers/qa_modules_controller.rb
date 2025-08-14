@@ -1,6 +1,6 @@
 class QaModulesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_qa_module, only: [:edit, :update, :destroy]
+  before_action :set_qa_module, only: %i[edit update destroy]
 
   def index
     @qa_modules = QaModule.all
@@ -8,7 +8,7 @@ class QaModulesController < ApplicationController
 
   def show
     @qa_module = QaModule.find(params[:id])
-  @child_modules = QaModule.where(parent_id: @qa_module.id).order(:name)
+    @child_modules = QaModule.where(parent_id: @qa_module.id).order(:name)
   end
 
   def new
@@ -20,30 +20,26 @@ class QaModulesController < ApplicationController
     @qa_module = QaModule.new(name: params[:qa_module][:name])
 
     if params[:qa_module][:parent_id].present?
-        parent = QaModule.find_by(id: params[:qa_module][:parent_id])
-        @qa_module.parent_id = parent.id if parent
+      parent = QaModule.find_by(id: params[:qa_module][:parent_id])
+      @qa_module.parent_id = parent.id if parent
     end
 
     if @qa_module.save
-        respond_to do |format|
+      respond_to do |format|
         format.html { redirect_to qa_modules_path, notice: 'Module created successfully.' }
         format.turbo_stream
-        end
+      end
     else
-        @parents = QaModule.where(parent_id: nil)
-        render :new, status: :unprocessable_entity
+      @parents = QaModule.where(parent_id: nil)
+      render :new, status: :unprocessable_entity
     end
   end
 
-  def edit
-  end
+  def edit; end
 
-  def update
-  end
+  def update; end
 
-  def destroy
-  end
-
+  def destroy; end
 
   private
 
