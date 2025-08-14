@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resource :banking_type
   resources :sales, only: [:index]
 
   get 'users/active', to: 'users#active', as: 'active_users'
