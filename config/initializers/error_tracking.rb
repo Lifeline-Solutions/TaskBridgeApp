@@ -13,6 +13,9 @@ Rails.application.config.after_initialize do
     }
 
     ErrorLogger.log(exception, context: context)
-    SafeNotifier.email(exception, context: context)   # now sends a payload
+    # Limit subscriber emails to production-like envs to avoid dev noise
+    if Rails.env.production? || Rails.env.staging?
+      SafeNotifier.email(exception, context: context)
+    end
   end
 end

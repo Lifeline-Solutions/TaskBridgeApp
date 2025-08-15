@@ -28,7 +28,7 @@ class TasksController < ApplicationController
         current_user.add_role :creator, @task
         format.html { redirect_to product_path(@product), notice: 'Task was successfully created.' }
       else
-        Sentry.capture_message("Task creation failed: #{@task.errors.full_messages.join(', ')}")
+        SafeNotifier.email(StandardError.new('Task creation failed'), context: { errors: @task.errors.full_messages, product_id: @product.id, params: params.to_unsafe_h })
         Rails.logger.error("Task creation failed: #{@task.errors.full_messages.join(', ')}")
         format.html do
           redirect_to new_product_task_path(@product), notice: 'Task was not created.'

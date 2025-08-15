@@ -25,10 +25,7 @@ module AuditTrailControllerHelpers
   # Expects record to be the AR instance you intend to destroy
   # Return value: if soft-deleted, halts with head :no_content or render as you prefer
   def audit_soft_delete(record)
-    if (record.respond_to?(:deleted_on) || record.respond_to?(:deleted_by)) && AuditTrailService.soft_delete(record, current_user)
-      # If your app uses default_scopes to hide soft-deleted rows, do not hard delete
-      return true
-    end
+    return true if (record.respond_to?(:deleted_on) || record.respond_to?(:deleted_by)) && AuditTrailService.soft_delete(record, current_user)
 
     false
   end
