@@ -28,11 +28,6 @@
       <div class="flex space-x-3">
         <%= link_to "Edit", edit_qa_module_path(@qa_module),
                     class: "px-3 py-1 text-sm bg-yellow-500 hover:bg-yellow-600 text-white rounded" %>
-                    
-        <%= link_to "Delete", qa_module_path(@qa_module),
-                    method: :delete,
-                    data: { confirm: "Are you sure?" },
-                    class: "px-3 py-1 text-sm bg-red-500 hover:bg-red-600 text-white rounded" %>
       </div>
     </div>
   </div>
@@ -86,10 +81,6 @@
                             class: "text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 mr-3" %>
                 <%= link_to "Edit", edit_qa_module_path(child),
                             class: "text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-300 mr-3" %>
-                <%= link_to "Delete", qa_module_path(child),
-                            method: :delete,
-                            data: { confirm: "Are you sure?" },
-                            class: "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300" %>
               </td>
             </tr>
           <% end %>

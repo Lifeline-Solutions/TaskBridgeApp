@@ -35,9 +35,22 @@ class QaModulesController < ApplicationController
     end
   end
 
-  def edit; end
+  def edit
+    @parents = QaModule.where(parent_id: nil)
+  end
 
-  def update; end
+  def update
+    # Get the parent_id from params if present
+    parent_id = params[:qa_module][:parent_id].presence
+
+    # Update attributes
+    if @qa_module.update(name: params[:qa_module][:name], parent_id: parent_id)
+      redirect_to qa_modules_path, notice: 'Module was successfully updated.'
+    else
+      @parents = QaModule.where.not(id: @qa_module.id) # Reload parents for the form
+      render :edit, status: :unprocessable_entity
+    end
+  end
 
   def destroy; end
 
