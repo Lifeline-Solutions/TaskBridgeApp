@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_11_134427) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -87,6 +87,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_11_134427) do
     t.datetime "updated_at", null: false
     t.index ["project_id"], name: "index_assignees_on_project_id"
     t.index ["user_id"], name: "index_assignees_on_user_id"
+  end
+
+  create_table "banking_types", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "boards", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -254,6 +260,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_11_134427) do
     t.integer "position"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "paid", default: false
     t.index ["product_id"], name: "index_milestones_on_product_id"
     t.index ["status_id"], name: "index_milestones_on_status_id"
   end
@@ -334,6 +341,14 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_11_134427) do
     t.uuid "software_id", null: false
     t.index ["project_id", "software_id"], name: "index_projects_softwares_on_project_id_and_software_id", unique: true
     t.index ["software_id", "project_id"], name: "index_projects_softwares_on_software_id_and_project_id", unique: true
+  end
+
+  create_table "qa_modules", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.uuid "parent_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_id"], name: "index_qa_modules_on_parent_id"
   end
 
   create_table "ratings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|

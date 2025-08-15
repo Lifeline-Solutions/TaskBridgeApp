@@ -1,4 +1,12 @@
 Rails.application.routes.draw do
+  # get "banking_types/index"
+  # get "banking_types/show"
+  # get "banking_types/destroy"
+  # get "banking_types/new"
+  # get "banking_types/update"
+  # get "banking_types/edit"
+  # get "banking_types/create"
+  resources :banking_types
   resources :sales, only: [:index]
 
   get 'users/active', to: 'users#active', as: 'active_users'
@@ -159,6 +167,10 @@ Rails.application.routes.draw do
 
   resources :groupwares # Independent route for AJAX requests
 
+  resources :milestones, only: [] do
+    patch :toggle_paid, on: :member
+  end
+  
   resources :client
   resources :status
   resources :team do
@@ -167,4 +179,6 @@ Rails.application.routes.draw do
     end
   end
   resources :location
+
+  resources :qa_modules
 end

@@ -7,8 +7,6 @@ class TicketsController < ApplicationController
   before_action :set_ticket, only: %i[show destroy edit assign_tag unassign_tag add_status modal_show]
   # Load and authorize resources using CanCanCan
   load_and_authorize_resource
-
-  # Show a single ticket with issues, comments, and events
   def show
     # Search issues by rich text content if query is present, else show all issues
     @issue = if params[:query].present?
@@ -26,7 +24,7 @@ class TicketsController < ApplicationController
     # Get the SLA record for this ticket
     @sla_ticket = SlaTicket.find_by(ticket_id: @ticket.id)
     # Get all events for this ticket
-    @events = @ticket.events.order(created_at: :asc)
+    @events = @ticket.events.order(created_at: :desc)
 
     # Combine issues and comments, sort by creation date (descending), and paginate
     ticket_items = (@ticket.issues + @ticket.comments).sort_by(&:created_at).reverse
@@ -50,14 +48,12 @@ class TicketsController < ApplicationController
     # Count how many tickets the current user has in that status
     @tickets_count = if confirmation_pending_status
                        @project.tickets
-                         .where(user: current_user)
                          .joins(:statuses)
                          .where(statuses: { id: confirmation_pending_status.id })
                          .count
                      else
                        0
                      end
-
     # Prevent clients from creating more than 10 pending tickets
     if current_user.has_role?(:client) && @tickets_count >= 10
       redirect_to project_path(@project),
@@ -146,6 +142,7 @@ class TicketsController < ApplicationController
 
   # Delete a ticket
   def destroy
+    authorize! :destroy, @ticket
     log_event(@ticket, current_user, 'destroy', 'Ticket was destroyed.')
     @ticket.destroy
     redirect_to project_path(@project)

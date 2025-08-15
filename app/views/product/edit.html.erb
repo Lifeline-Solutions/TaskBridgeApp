@@ -66,6 +66,65 @@
     <% end %>
   </div>
 
+  <!-- Milestones -->
+  <div id="milestones-container">
+    <% @product.milestones.each_with_index do |milestone, index| %>
+      <div class="milestone-field grid grid-cols-5 gap-4 mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg" id="milestone-<%= index %>">
+        
+        <!-- Status -->
+        <div>
+          <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Status</label>
+          <%= f.select "milestones_attributes[#{index}][status_id]",
+            Status.where(name: ['Development', 'User Acceptance Test', 'Pilot', 'Quality Assurance', 'Deploy', 'Production']).map { |s| [s.name, s.id] },
+            { selected: milestone.status_id },
+            class: "status-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" %>
+        </div>
+
+        <!-- Percentage -->
+        <div>
+          <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Percentage</label>
+          <%= f.number_field "milestones_attributes[#{index}][percentage]",
+            value: milestone.percentage,
+            step: "0.01",
+            class: "percentage-input bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white",
+            oninput: "calculateAmount(this, #{@product.budget || 0})" %>
+        </div>
+
+        <!-- Amount -->
+        <div>
+          <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Amount</label>
+          <input type="text" readonly
+            value="<%= milestone.amount %>"
+            class="amount-display bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+        </div>
+
+        <!-- Paid Checkbox -->
+        <div class="flex items-center">
+          <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white mr-2">Paid</label>
+          <%= f.check_box "milestones_attributes[#{index}][paid]",
+              { checked: milestone.paid, disabled: true },
+              "true",
+              "false" %>
+        </div>
+        <!-- Remove Button -->
+        <div class="flex items-end">
+          <input type="hidden" name="product[milestones_attributes][<%= index %>][_destroy]" value="false">
+          <button type="button"
+                  class="mt-4 p-2 bg-red-600 hover:bg-red-800 text-white rounded remove-milestone text-sm font-medium"
+                  onclick="this.closest('.milestone-field').remove()">
+            Remove
+          </button>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Add Milestone Button -->
+  <button type="button" id="add-milestone-button" class="mt-4 p-2 bg-blue-500 text-white rounded">
+    Add Milestone
+  </button>
+
+
   <!-- Documents -->
   <h3 class="mt-6 mb-2 font-semibold">Attached Documents</h3>
   <div id="documents-container">
@@ -115,6 +174,65 @@
   <%= f.submit "Update Product", class: "bg-green-600 text-white p-3 rounded font-semibold" %>
 <% end %>
 <script>
+  // Add Milestone Button
+  document.getElementById('add-milestone-button').addEventListener('click', function () {
+    const container = document.getElementById('milestones-container');
+    const timestamp = Date.now();
+    const budget = document.getElementById('product_budget').value || 0;
+
+    const newField = document.createElement('div');
+    newField.classList.add('milestone-field', 'grid', 'grid-cols-4', 'gap-4', 'mb-4', 'p-4', 'bg-gray-100', 'dark:bg-gray-800', 'rounded-lg');
+    newField.id = `milestone-${timestamp}`;
+
+    newField.innerHTML = `
+      <div>
+        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Status</label>
+        <select name="product[milestones_attributes][${timestamp}][status_id]"
+                class="status-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
+          <%= options_from_collection_for_select(
+                Status.where(name: ['Development', 'User Acceptance Test', 'Pilot', 'Quality Assurance', 'Deploy', 'Production']),
+                :id,
+                :name
+              ) %>
+        </select>
+      </div>
+
+      <div>
+        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Percentage</label>
+        <input type="number" step="0.01"
+              name="product[milestones_attributes][${timestamp}][percentage]"
+              class="percentage-input bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+              oninput="calculateAmount(this, ${budget})">
+      </div>
+
+      <div>
+        <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Amount</label>
+        <input type="text" readonly
+              class="amount-display bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+      </div>
+
+      <div class="flex items-end">
+        <input type="hidden" name="product[milestones_attributes][${timestamp}][_destroy]" value="false">
+        <button type="button"
+                class="mt-4 p-2 bg-red-600 hover:bg-red-800 text-white roundedremove-milestone text-sm font-medium"
+                onclick="this.closest('.milestone-field').remove()">
+          Remove
+        </button>
+      </div>
+    `;
+
+    container.appendChild(newField);
+  });
+
+  // Calculate amount function
+  function calculateAmount(input, budget) {
+    const percentage = parseFloat(input.value) || 0;
+    const amountField = input.closest('.milestone-field').querySelector('.amount-display');
+    const amount = (budget * percentage / 100).toFixed(2);
+    amountField.value = amount;
+  }
+
+
   document.getElementById('add-document-button').addEventListener('click', function () {
     const container = document.getElementById('documents-container');
     const index = Date.now(); // unique index

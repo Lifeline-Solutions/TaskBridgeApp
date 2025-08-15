@@ -1,0 +1,18 @@
+<div class="max-w-7xl mx-auto px-4 py-8">
+  <div class="bg-white shadow rounded-lg p-6">
+    <div class="flex justify-between items-start">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 mb-2">
+          <%= @banking_type.name %>
+        </h1>
+        <p class="text-sm text-gray-500">
+          Created <%= time_ago_in_words(@banking_type.created_at) %> ago
+        </p>
+      </div>
+      <div class="flex space-x-3">
+        <%= link_to 'Edit', edit_banking_type_path(@banking_type), class: "px-3 py-1 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600" %>
+        <%= link_to 'Back', banking_types_path, class: "px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600" %>
+      </div>
+    </div>
+  </div>
+</div>
