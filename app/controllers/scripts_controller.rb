@@ -21,6 +21,7 @@ class ScriptsController < ApplicationController
   def create
     @script = @groupware.scripts.build(script_params)
     @script.software = @software
+    audit_on_create(@script)
 
     respond_to do |format|
       if @script.save
@@ -35,6 +36,8 @@ class ScriptsController < ApplicationController
   def edit; end
 
   def update
+    # Controller seems to be updating groupware; keep audit on that record
+    audit_on_update(@groupware)
     respond_to do |format|
       if @groupware.update(groupware_params)
         format.html { redirect_to software_path(@software), notice: 'Groupware was successfully updated.' }
@@ -45,9 +48,13 @@ class ScriptsController < ApplicationController
   end
 
   def destroy
-    @groupware.destroy
+    if audit_soft_delete(@groupware)
+      # soft-deleted
+    else
+      @groupware.destroy
+    end
     respond_to do |format|
-      format.html { redirect_to software_path(@software), notice: 'Groupware was successfully destroyed.' }
+      format.html { redirect_to software_path(@software), notice: 'Groupware was successfully deleted.' }
     end
   end
 

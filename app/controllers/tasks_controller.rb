@@ -15,6 +15,7 @@ class TasksController < ApplicationController
   def create
     @task = @product.tasks.new(task_params)
     @task.user = current_user
+    audit_on_create(@task)
 
     respond_to do |format|
       if @task.save
@@ -44,6 +45,7 @@ class TasksController < ApplicationController
   def edit; end
 
   def update
+    audit_on_update(@task)
     if @task.update(task_params)
       redirect_to product_path(@product), notice: 'Task was successfully updated.'
     else
@@ -52,8 +54,12 @@ class TasksController < ApplicationController
   end
 
   def destroy
-    @task.destroy
-    redirect_to product_path(@product), notice: 'Task was successfully deleted.'
+    if audit_soft_delete(@task)
+      redirect_to product_path(@product), notice: 'Task was successfully deleted.'
+    else
+      @task.destroy
+      redirect_to product_path(@product), notice: 'Task was successfully deleted.'
+    end
   end
 
   # Assigning User a Task

@@ -29,6 +29,7 @@ class StatusController < ApplicationController
   def create
     @status = Status.new(status_params)
     @status.user_id = current_user.id
+    audit_on_create(@status)
     respond_to do |format|
       if @status.save
         format.html { redirect_to status_index_path, notice: 'Status was successfully created.' }
@@ -41,6 +42,7 @@ class StatusController < ApplicationController
   def edit; end
 
   def update
+    audit_on_update(@status)
     respond_to do |format|
       if @status.update(status_params)
         format.html { redirect_to status_index_path, notice: 'Status was successfully updated.' }
@@ -51,8 +53,12 @@ class StatusController < ApplicationController
   end
 
   def destroy
-    @status.destroy
-    redirect_to status_index_path
+    if audit_soft_delete(@status)
+      redirect_to status_index_path
+    else
+      @status.destroy
+      redirect_to status_index_path
+    end
   end
 
   private

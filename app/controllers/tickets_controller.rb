@@ -81,6 +81,7 @@ class TicketsController < ApplicationController
   def create
     @ticket = @project.tickets.new(ticket_params)
     @ticket.user = current_user
+    audit_on_create(@ticket)
 
     respond_to do |format|
       # Custom validations for required fields
@@ -144,8 +145,12 @@ class TicketsController < ApplicationController
   def destroy
     authorize! :destroy, @ticket
     log_event(@ticket, current_user, 'destroy', 'Ticket was destroyed.')
-    @ticket.destroy
-    redirect_to project_path(@project)
+    if audit_soft_delete(@ticket)
+      redirect_to project_path(@project)
+    else
+      @ticket.destroy
+      redirect_to project_path(@project)
+    end
   end
 
   # Render edit form (logic handled in view)
@@ -153,6 +158,7 @@ class TicketsController < ApplicationController
 
   # Update a ticket
   def update
+    audit_on_update(@ticket)
     respond_to do |format|
       if @ticket.update(ticket_params)
         # Add editor role to current user for this ticket

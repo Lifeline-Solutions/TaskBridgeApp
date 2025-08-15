@@ -18,6 +18,7 @@ class QaModulesController < ApplicationController
 
   def create
     @qa_module = QaModule.new(name: params[:qa_module][:name])
+    audit_on_create(@qa_module)
 
     if params[:qa_module][:parent_id].present?
       parent = QaModule.find_by(id: params[:qa_module][:parent_id])
@@ -40,6 +41,7 @@ class QaModulesController < ApplicationController
   end
 
   def update
+    audit_on_update(@qa_module)
     # Get the parent_id from params if present
     parent_id = params[:qa_module][:parent_id].presence
 
@@ -52,7 +54,14 @@ class QaModulesController < ApplicationController
     end
   end
 
-  def destroy; end
+  def destroy
+    if audit_soft_delete(@qa_module)
+      redirect_to qa_modules_path, notice: 'Module deleted.'
+    else
+      @qa_module.destroy
+      redirect_to qa_modules_path, notice: 'Module destroyed.'
+    end
+  end
 
   private
 

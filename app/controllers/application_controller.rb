@@ -1,5 +1,6 @@
 # The base controller for all controllers in the application
 class ApplicationController < ActionController::Base
+  include AuditTrailControllerHelpers if defined?(AuditTrailControllerHelpers)
   protect_from_forgery with: :exception # Protects from CSRF attacks
 
   # Require authentication for all actions except :new and :create
@@ -10,6 +11,7 @@ class ApplicationController < ActionController::Base
 
   # Check the user's state (active, profile completion, etc.) before each action
   before_action :check_user_state
+  before_action :assign_current_user
 
   # Load notifications for the current user if signed in
   before_action :load_notifications, if: :user_signed_in?
@@ -63,6 +65,11 @@ class ApplicationController < ActionController::Base
     return unless user_signed_in?
 
     @notifications = current_user.notifications.order(created_at: :desc)
+  end
+
+  # Make Current.user available to models for audit callbacks
+  def assign_current_user
+    Current.user = current_user if defined?(Current)
   end
 
   # Redirects to root with a not found alert

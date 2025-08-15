@@ -20,6 +20,7 @@ class IssuesController < ApplicationController
     @issue.project = @project
     @issue.user = current_user
     @issue.message_type ||= 'external'
+    audit_on_create(@issue)
 
     if @issue.content.blank?
       @issue.errors.add(:content, 'Message cannot be blank.')
@@ -83,6 +84,7 @@ class IssuesController < ApplicationController
   end
 
   def update
+    audit_on_update(@issue)
     respond_to do |format|
       if @issue.update(issue_params)
         send_email_notifications(@issue, current_user)
@@ -113,7 +115,11 @@ class IssuesController < ApplicationController
   end
 
   def destroy
-    @issue.destroy
+    if audit_soft_delete(@issue)
+      # soft-deleted
+    else
+      @issue.destroy
+    end
     respond_to do |format|
       format.turbo_stream do
         render turbo_stream: turbo_stream.remove(dom_id(@issue))

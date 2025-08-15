@@ -9,8 +9,56 @@ class AuditTablesDb < ActiveRecord::Migration[7.2]
 
   # Put only your application tables here. Avoid Rails/system tables.
   TARGET_TABLES = %i[
-    action_text_rich_texts active_storage_attachments active_storage_blobs active_storage_variant_records add_statuses
-    add_tasks  
+  action_text_rich_texts
+  active_storage_attachments
+  active_storage_blobs
+  active_storage_variant_records
+  add_statuses
+  add_tasks
+  addusers
+  assignees
+  banking_types
+  boards
+  clients
+  comments
+  commonly_selected_clients
+  defects
+  defects_users
+  documents
+  events
+  groupwares
+  groupwares_products
+  groupwares_projects
+  issues
+  locations
+  messages
+  milestones
+  notifications
+  products
+  products_scripts
+  products_softwares
+  products_statuses
+  projects
+  projects_softwares
+  qa_modules
+  ratings
+  roles
+  scripts
+  sla_tickets
+  softwares
+  states
+  status_bugs
+  statuses
+  statuses_tasks
+  taggings
+  tasks
+  teams
+  teams_users
+  tickets
+  update_histories
+  users
+  users_roles
+  versions
   ].freeze
 
   def up

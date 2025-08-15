@@ -6,6 +6,7 @@ class RatingsController < ApplicationController
     @rating = @ticket.ratings.find_or_initialize_by(user: current_user)
     @rating.assign_attributes(rating_params)
     @rating.value = rating_params[:value]
+    audit_on_create(@rating)
 
     if @rating.save
       redirect_to project_ticket_path(@ticket.project, @ticket), notice: 'Rating submitted successfully.'

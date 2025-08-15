@@ -53,6 +53,7 @@ class TeamController < ApplicationController
 
   def create
     @team = Team.new(team_params)
+    audit_on_create(@team)
 
     respond_to do |format|
       if @team.save
@@ -66,6 +67,7 @@ class TeamController < ApplicationController
   def edit; end
 
   def update
+    audit_on_update(@team)
     respond_to do |format|
       if @team.update(team_params)
         format.html { redirect_to team_index_path, notice: 'Team was successfully updated.' }
@@ -76,9 +78,15 @@ class TeamController < ApplicationController
   end
 
   def destroy
-    @team.destroy
-    respond_to do |format|
-      format.html { redirect_to team_path, notice: 'Team was successfully deleted.' }
+    if audit_soft_delete(@team)
+      respond_to do |format|
+        format.html { redirect_to team_path, notice: 'Team was successfully deleted.' }
+      end
+    else
+      @team.destroy
+      respond_to do |format|
+        format.html { redirect_to team_path, notice: 'Team was successfully deleted.' }
+      end
     end
   end
 

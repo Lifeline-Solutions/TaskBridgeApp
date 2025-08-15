@@ -158,6 +158,7 @@ class ProjectController < ApplicationController
   # POST /projects
   def create
     @project = Project.new(project_params)
+    audit_on_create(@project)
     respond_to do |format|
       # Check if the user has the appropriate role
       if current_user.has_role?(:admin) || current_user.has_role?('project_manager')
@@ -184,6 +185,7 @@ class ProjectController < ApplicationController
 
   # PATCH/PUT /projects/id
   def update
+    audit_on_update(@project)
     respond_to do |format|
       if @project.update(project_params)
         current_user.add_role :editor, @project
@@ -198,9 +200,13 @@ class ProjectController < ApplicationController
 
   # DELETE /projects/id
   def destroy
-    @project.destroy
+    if audit_soft_delete(@project)
+      # soft-deleted
+    else
+      @project.destroy
+    end
     respond_to do |format|
-      format.html { redirect_to project_url, notice: 'Support Desk was successfully destroyed.' }
+      format.html { redirect_to project_url, notice: 'Support Desk was successfully deleted.' }
     end
   end
 

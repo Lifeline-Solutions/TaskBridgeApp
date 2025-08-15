@@ -12,6 +12,7 @@ class BoardsController < ApplicationController
   def create
     @board = @product.boards.new(board_params)
     @board.user = current_user
+    audit_on_create(@board)
 
     respond_to do |format|
       if @board.save
@@ -29,6 +30,7 @@ class BoardsController < ApplicationController
   def edit; end
 
   def update
+    audit_on_update(@board)
     respond_to do |format|
       if @board.update(board_params)
         current_user.add_role :editor, @board
@@ -40,8 +42,12 @@ class BoardsController < ApplicationController
   end
 
   def destroy
-    @board.destroy
-    redirect_to product_path(@product)
+    if audit_soft_delete(@board)
+      redirect_to product_path(@product)
+    else
+      @board.destroy
+      redirect_to product_path(@product)
+    end
   end
 
   private

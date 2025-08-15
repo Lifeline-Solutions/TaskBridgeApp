@@ -139,6 +139,7 @@ class ProductController < ApplicationController
   def create
     @product = Product.new(product_params)
     @product.user_id = current_user.id
+    audit_on_create(@product)
 
     # Validate presence of name, description, and content (subject)
     @product.errors.add(:content, "can't be blank") if @product.content.blank?
@@ -183,6 +184,7 @@ class ProductController < ApplicationController
   end
 
   def update
+    audit_on_update(@product)
     if @product.update(product_params)
       redirect_to product_path(@product), notice: 'Product was successfully updated.'
     else
@@ -234,8 +236,12 @@ class ProductController < ApplicationController
   end
 
   def destroy
-    @product.destroy
-    redirect_to product_index_path, notice: 'Product was successfully destroyed.'
+    if audit_soft_delete(@product)
+      redirect_to product_index_path, notice: 'Product was successfully deleted.'
+    else
+      @product.destroy
+      redirect_to product_index_path, notice: 'Product was successfully destroyed.'
+    end
   end
 
   private

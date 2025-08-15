@@ -14,6 +14,7 @@ class CommentsController < ApplicationController
     @comment.project = @project
     @comment.user = current_user
     @comment.status = @ticket.statuses.pluck('statuses.name').first
+    audit_on_create(@comment)
 
     respond_to do |format|
       if @comment.save
@@ -33,8 +34,12 @@ class CommentsController < ApplicationController
 
   def destroy
     @comment = @ticket.comments.find(params[:id])
-    @comment.destroy
-    redirect_to project_ticket_path(@project, @ticket)
+    if audit_soft_delete(@comment)
+      redirect_to project_ticket_path(@project, @ticket)
+    else
+      @comment.destroy
+      redirect_to project_ticket_path(@project, @ticket)
+    end
   end
 
   def edit; end
@@ -43,6 +48,7 @@ class CommentsController < ApplicationController
     @comment = @ticket.comments.find(params[:id])
     @comment.project = @project
     @comment.user = current_user
+    audit_on_update(@comment)
 
     respond_to do |format|
       if @comment.update(comment_params)

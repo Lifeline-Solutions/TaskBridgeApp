@@ -38,6 +38,7 @@ class GroupwaresController < ApplicationController
   def create
     @groupware = @software.groupwares.new(groupware_params)
     @groupware.software_id = params[:software_id] # Ensure software_id is set
+    audit_on_create(@groupware)
 
     respond_to do |format|
       if @groupware.save
@@ -56,6 +57,7 @@ class GroupwaresController < ApplicationController
   end
 
   def update
+    audit_on_update(@groupware)
     respond_to do |format|
       if @groupware.update(groupware_params)
         format.html { redirect_to software_path(@software), notice: 'Groupware was successfully updated.' }
@@ -68,9 +70,13 @@ class GroupwaresController < ApplicationController
   def destroy
     @software = Software.find(params[:software_id])
     @groupware = @software.groupwares.find(params[:id])
-    @groupware.destroy
+    if audit_soft_delete(@groupware)
+      # soft-deleted
+    else
+      @groupware.destroy
+    end
     respond_to do |format|
-      format.html { redirect_to software_path(@software), notice: 'Groupware was successfully destroyed.' }
+      format.html { redirect_to software_path(@software), notice: 'Groupware was successfully deleted.' }
     end
   end
 

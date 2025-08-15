@@ -21,6 +21,7 @@ class BankingTypesController < ApplicationController
   # POST /banking_types
   def create
     @banking_type = BankingType.new(banking_type_params)
+    audit_on_create(@banking_type)
 
     respond_to do |format|
       if @banking_type.save
@@ -35,6 +36,7 @@ class BankingTypesController < ApplicationController
 
   # PATCH/PUT /banking_types/1
   def update
+    audit_on_update(@banking_type)
     respond_to do |format|
       if @banking_type.update(banking_type_params)
         format.html { redirect_to banking_types_path, notice: 'Banking type was successfully updated.' }
@@ -48,9 +50,13 @@ class BankingTypesController < ApplicationController
 
   # DELETE /banking_types/1
   def destroy
-    @banking_type.destroy
+    if audit_soft_delete(@banking_type)
+      # soft-deleted
+    else
+      @banking_type.destroy
+    end
     respond_to do |format|
-      format.html { redirect_to banking_types_url, notice: 'Banking type was successfully destroyed.' }
+      format.html { redirect_to banking_types_url, notice: 'Banking type was successfully deleted.' }
       format.json { head :no_content }
     end
   end

@@ -20,6 +20,7 @@ class MessagesController < ApplicationController
   def create
     @message = @task.messages.build(message_params)
     @message.user = current_user
+    audit_on_create(@message)
     if @message.save
       current_user.add_role :creator, @message
       render :index, notice: 'Message was successfully assigned.'
@@ -32,6 +33,7 @@ class MessagesController < ApplicationController
   def edit; end
 
   def update
+    audit_on_update(@message)
     if @message.update(message_params)
       redirect_to product_task_path(@product, @task), notice: 'Message was successfully updated.'
     else
@@ -40,8 +42,12 @@ class MessagesController < ApplicationController
   end
 
   def destroy
-    @message.destroy
-    redirect_to product_task_path(@task.product, @task), notice: 'Message deleted successfully.'
+    if audit_soft_delete(@message)
+      redirect_to product_task_path(@task.product, @task), notice: 'Message deleted successfully.'
+    else
+      @message.destroy
+      redirect_to product_task_path(@task.product, @task), notice: 'Message deleted successfully.'
+    end
   end
 
   private

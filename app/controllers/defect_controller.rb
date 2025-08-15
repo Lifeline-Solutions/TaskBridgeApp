@@ -69,6 +69,7 @@ class DefectController < ApplicationController
 
   def create
     @defect = Defect.new(defect_params)
+    audit_on_create(@defect)
 
     respond_to do |format|
       if @defect.save
@@ -80,6 +81,7 @@ class DefectController < ApplicationController
   end
 
   def update
+    audit_on_update(@defect)
     if @defect.update(defect_params)
       redirect_to @defect, notice: 'Defect was successfully updated.'
     else
@@ -88,8 +90,12 @@ class DefectController < ApplicationController
   end
 
   def destroy
-    @defect.destroy
-    redirect_to defects_url, notice: 'Defect was successfully destroyed.'
+    if audit_soft_delete(@defect)
+      redirect_to defects_url, notice: 'Defect was successfully deleted.'
+    else
+      @defect.destroy
+      redirect_to defects_url, notice: 'Defect was successfully destroyed.'
+    end
   end
 
   # add a user to the defect
