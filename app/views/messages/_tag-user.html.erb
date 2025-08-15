@@ -1,0 +1,106 @@
+<div>
+  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notify Users</label>
+  <div class="relative">
+    <input type="text" id="searchUser"
+           class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-sm dark:bg-gray-700 dark:text-white"
+           placeholder="Search User..."
+           onclick="showDropdown()"
+           onkeyup="filterUserDropdown()"
+           autocomplete="off">
+
+    <div id="selectedUsers" class="flex flex-wrap gap-2 mt-2"></div>
+    <div id="hiddenUserInputs">
+      <%= hidden_field_tag "team[user_ids][]", "" %>
+    </div>
+
+    <div id="userDropdown" class="hidden absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+      <div class="p-2">
+        <div class="flex justify-end">
+          <button type="button" onclick="hideDropdown()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+              <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </div>
+
+        <div id="externalUsers" class="user-list">
+          <% @product.users.distinct.order(:first_name).each do |user| %>
+            <div class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                 data-user-id="<%= user.id %>"
+                 onclick="selectUser(this)">
+              <%= user.name %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let selectedUsers = [];
+
+  function showDropdown() {
+    document.getElementById("userDropdown").classList.remove("hidden");
+  }
+
+  function hideDropdown() {
+    document.getElementById("userDropdown").classList.add("hidden");
+  }
+
+  function filterUserDropdown() {
+    let input = document.getElementById("searchUser").value.toLowerCase();
+    let items = document.querySelectorAll("#userDropdown .user-list > div");
+
+    items.forEach(item => {
+      let text = item.textContent.toLowerCase();
+      item.style.display = text.includes(input) ? "block" : "none";
+    });
+  }
+
+  function selectUser(element) {
+    let userId = element.getAttribute("data-user-id");
+    let userName = element.textContent;
+
+    if (!selectedUsers.some(user => user.id === userId)) {
+      selectedUsers.push({ id: userId, name: userName });
+
+      // Update Selected UI
+      let tag = document.createElement("div");
+      tag.className = "bg-blue-100 text-blue-800 px-2 py-1 rounded-md flex items-center gap-2 text-sm";
+      tag.innerHTML = `${userName} <span onclick="removeUser('${userId}', this)" class="cursor-pointer text-red-500">×</span>`;
+      document.getElementById("selectedUsers").appendChild(tag);
+
+      // Add hidden input
+      let input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "team[user_ids][]";
+      input.value = userId;
+      input.classList.add(`user-input-${userId}`);
+      document.getElementById("hiddenUserInputs").appendChild(input);
+
+      // Remove from dropdown
+      element.remove();
+    }
+
+    hideDropdown();
+  }
+
+  function removeUser(userId, element) {
+    selectedUsers = selectedUsers.filter(user => user.id !== userId);
+    element.parentElement.remove();
+
+    // Remove hidden input
+    let input = document.querySelector(`.user-input-${userId}`);
+    if (input) input.remove();
+
+    // Add back to dropdown
+    let dropdown = document.getElementById("userDropdown");
+    let item = document.createElement("div");
+    item.className = "px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer";
+    item.setAttribute("data-user-id", userId);
+    item.setAttribute("onclick", "selectUser(this)");
+    item.textContent = element.parentElement.textContent.replace('×', '').trim();
+    document.getElementById("externalUsers").appendChild(item);
+  }
+</script>
