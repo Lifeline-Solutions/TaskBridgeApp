@@ -1,0 +1,3 @@
+<%= turbo_stream.remove("modal") %>
+<%= turbo_stream.replace("flash", partial: "shared/flash", locals: { notice: "Module created successfully" }) %>
+<%= turbo_stream.visit qa_modules_path %>
