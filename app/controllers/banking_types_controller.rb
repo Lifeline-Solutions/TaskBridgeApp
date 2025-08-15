@@ -1,6 +1,6 @@
 class BankingTypesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_banking_type, only: [:show, :edit, :update, :destroy]
+  before_action :set_banking_type, only: %i[show edit update destroy]
 
   # GET /banking_types
   def index
@@ -8,8 +8,7 @@ class BankingTypesController < ApplicationController
   end
 
   # GET /banking_types/1
-  def show
-  end
+  def show; end
 
   # GET /banking_types/new
   def new
@@ -17,8 +16,7 @@ class BankingTypesController < ApplicationController
   end
 
   # GET /banking_types/1/edit
-  def edit
-  end
+  def edit; end
 
   # POST /banking_types
   def create
@@ -58,13 +56,14 @@ class BankingTypesController < ApplicationController
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_banking_type
-      @banking_type = BankingType.find(params[:id])
-    end
 
-    # Only allow a list of trusted parameters through.
-    def banking_type_params
-      params.require(:banking_type).permit(:name)
-    end
+  # Use callbacks to share common setup or constraints between actions.
+  def set_banking_type
+    @banking_type = BankingType.find(params[:id])
+  end
+
+  # Only allow a list of trusted parameters through.
+  def banking_type_params
+    params.require(:banking_type).permit(:name)
+  end
 end
