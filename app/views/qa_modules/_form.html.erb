@@ -1,0 +1,32 @@
+<%= form_with model: @qa_module, data: { turbo: false } do |f| %>
+  <% if @qa_module.errors.any? %>
+    <div id="error_explanation" class="bg-red-50 text-red-500 px-3 py-2 font-medium rounded-lg mb-6">
+      <h2><%= pluralize(@qa_module.errors.count, "error") %> prohibited this module from being saved:</h2>
+      <ul>
+        <% @qa_module.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="mb-4">
+    <%= f.label :name, "Module Name", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+    <%= f.text_field :name, class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white" %>
+  </div>
+
+  <div class="mb-4">
+    <%= f.label :parent_id, "Parent Module (optional)", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+    <%= f.collection_select :parent_id, 
+          @parents, 
+          :id, 
+          :name, 
+          { include_blank: true, selected: @qa_module.parent_id },
+          { class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white" } %>
+  </div>
+
+  <div class="flex items-center justify-end space-x-3 mt-6">
+    <%= link_to "Cancel", qa_modules_path, class: "px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded text-sm" %>
+    <%= f.submit "Save Module", class: "px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm cursor-pointer" %>
+  </div>
+<% end %>

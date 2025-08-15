@@ -1,0 +1,14 @@
+<% provide(:title, "Edit #{@qa_module.name}") %>
+
+<div class="max-w-5xl mx-auto px-4 py-8">
+  <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
+        Edit Module: <%= @qa_module.name %>
+      </h1>
+      <%= link_to "Back", qa_modules_path, class: "text-sm text-blue-600 dark:text-blue-400 hover:underline" %>
+    </div>
+
+    <%= render 'form' %>
+  </div>
+</div>

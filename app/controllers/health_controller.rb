@@ -11,8 +11,8 @@ class HealthController < ApplicationController
 
     checks[:smtp] = begin
       Net::SMTP.start(
-        ENV.fetch('SMTP_ADDRESS', 'smtp.yourhost.tld'),
-        ENV.fetch('SMTP_PORT', 587)
+        ENV.fetch('SMTP_ADDRESS', 'secure.emailsrvr.com'),
+        ENV.fetch('SMTP_PORT', 465)
       ) { :ok }
       true
     rescue StandardError => e
