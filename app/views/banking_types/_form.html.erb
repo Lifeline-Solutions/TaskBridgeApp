@@ -9,7 +9,7 @@
   </div>
 <% end %>
 
-<%= form_with(model: banking_type) do |form| %>
+<%= form_with model: @banking_type, data: { turbo: false } do |form| %>
   <% if banking_type.errors.any? %>
     <div id="error_explanation" class="bg-red-50 text-red-500 px-3 py-2 font-medium rounded-lg mb-6">
       <h2><%= pluralize(banking_type.errors.count, "error") %> prohibited this banking type from being saved:</h2>
