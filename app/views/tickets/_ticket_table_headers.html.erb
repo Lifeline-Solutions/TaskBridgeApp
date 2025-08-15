@@ -1,17 +1,18 @@
 <tr>
-        <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider">Date of Issue</th>
-        <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider">Ticket ID</th>
-        <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider">Issue Type</th>
-        <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider">Severity</th>
-        <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider">Summary</th>
-        <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider">Assigned To</th>
-        <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider">Status</th>
-        <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider">Progress</th>
-        <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider">Reported By</th>
-        <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider">Last Updated</th>
-        <th scope="col" class="p-2 text-right text-sm font-medium uppercase tracking-wider">Actions</th>
-        <% if current_user.has_role?(:admin) || current_user.has_role?(:agent) || current_user.has_role?('project manager') || current_user.has_role?(:observer) %>
-            <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider hide-on-sidebar">Edits</th>
-            <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider hide-on-sidebar">Last Edit</th>
-        <% end %>
-      </tr>
+  <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider">Date of Issue</th>
+  <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider">Ticket ID</th>
+  <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider">Issue Type</th>
+  <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider">Severity</th>
+  <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider">Summary</th>
+  <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider">Assigned To</th>
+  <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider">Status</th>
+  <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider">Progress</th>
+  <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider">Reported By</th>
+  <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider">Last Updated</th>
+  <th scope="col" class="p-2 text-right text-sm font-medium uppercase tracking-wider">Actions</th>
+  <% if current_user.has_role?(:admin) || current_user.has_role?(:agent) || current_user.has_role?('project manager') || current_user.has_role?(:observer) %>
+    <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider hide-on-sidebar">Days From Create</th>
+    <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider hide-on-sidebar">Edits</th>
+    <th scope="col" class="p-2 text-left text-sm font-medium uppercase tracking-wider hide-on-sidebar">Last Edit</th>
+  <% end %>
+</tr>

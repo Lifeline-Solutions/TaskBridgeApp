@@ -93,6 +93,18 @@
             </td>
 
             <% if current_user.has_role?(:admin) || current_user.has_role?(:agent) || current_user.has_role?('project manager') %>
+              <td class="py-2 px-4 font-bold text-center">
+                <% closed_status = ticket.add_statuses.joins(:status).where(statuses: { name: %w[Closed Resolved Declined] }).order(updated_at: :desc).first %>
+                <% if ticket.created_at %>
+                  <% if closed_status %>
+                    <%= distance_of_time_in_words(ticket.created_at, closed_status.updated_at).gsub('about ', '') %>
+                  <% else %>
+                    <%= distance_of_time_in_words(ticket.created_at, Time.current).gsub('about ', '') %>
+                  <% end %>
+                <% else %>
+                  N/A
+                <% end %>
+              </td>
               <td class="px-4 py-4 whitespace-nowrap text-sm text-center hide-on-sidebar">
                 <%= ticket.update_count %>
               </td>

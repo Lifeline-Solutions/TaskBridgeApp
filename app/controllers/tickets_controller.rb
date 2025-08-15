@@ -24,7 +24,7 @@ class TicketsController < ApplicationController
     # Get the SLA record for this ticket
     @sla_ticket = SlaTicket.find_by(ticket_id: @ticket.id)
     # Get all events for this ticket
-    @events = @ticket.events.order(created_at: :asc)
+    @events = @ticket.events.order(created_at: :desc)
 
     # Combine issues and comments, sort by creation date (descending), and paginate
     ticket_items = (@ticket.issues + @ticket.comments).sort_by(&:created_at).reverse
@@ -142,6 +142,7 @@ class TicketsController < ApplicationController
 
   # Delete a ticket
   def destroy
+    authorize! :destroy, @ticket
     log_event(@ticket, current_user, 'destroy', 'Ticket was destroyed.')
     @ticket.destroy
     redirect_to project_path(@project)
