@@ -3,49 +3,49 @@ require 'rails_helper'
 RSpec.describe "BankingTypes", type: :request do
   describe "GET /index" do
     it "returns http success" do
-      get "/banking_type/index"
+      get "/banking_types/index"
       expect(response).to have_http_status(:success)
     end
   end
 
   describe "GET /show" do
     it "returns http success" do
-      get "/banking_type/show"
+      get "/banking_types/show"
       expect(response).to have_http_status(:success)
     end
   end
 
   describe "GET /destroy" do
     it "returns http success" do
-      get "/banking_type/destroy"
+      get "/banking_types/destroy"
       expect(response).to have_http_status(:success)
     end
   end
 
   describe "GET /new" do
     it "returns http success" do
-      get "/banking_type/new"
+      get "/banking_types/new"
       expect(response).to have_http_status(:success)
     end
   end
 
   describe "GET /update" do
     it "returns http success" do
-      get "/banking_type/update"
+      get "/banking_types/update"
       expect(response).to have_http_status(:success)
     end
   end
 
   describe "GET /edit" do
     it "returns http success" do
-      get "/banking_type/edit"
+      get "/banking_types/edit"
       expect(response).to have_http_status(:success)
     end
   end
 
   describe "GET /create" do
     it "returns http success" do
-      get "/banking_type/create"
+      get "/banking_types/create"
       expect(response).to have_http_status(:success)
     end
   end

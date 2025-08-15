@@ -1,5 +1,12 @@
 Rails.application.routes.draw do
-  resource :banking_type
+  # get "banking_types/index"
+  # get "banking_types/show"
+  # get "banking_types/destroy"
+  # get "banking_types/new"
+  # get "banking_types/update"
+  # get "banking_types/edit"
+  # get "banking_types/create"
+  resources :banking_types
   resources :sales, only: [:index]
 
   get 'users/active', to: 'users#active', as: 'active_users'
