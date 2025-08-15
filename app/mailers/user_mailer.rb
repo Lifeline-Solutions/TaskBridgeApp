@@ -178,7 +178,7 @@ class UserMailer < ApplicationMailer
     @message_user = message_user
     @message = message
     @current_user = current_user
-    @url = product_task_path(@product, @task)
+    @url = product_tasks_path(@product, @tasks)
     mail(to: @user.email, subject: 'New Message on Task')
   end
 end
