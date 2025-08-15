@@ -22,6 +22,10 @@ class MessagesController < ApplicationController
     @message.user = current_user
     if @message.save
       current_user.add_role :creator, @message
+      selected_users = User.where(id: message_params[:user_ids])
+      selected_users.each do |message_user|
+        UserMailer.new_message_email(message_user, @message, current_user).deliver_later
+      end
       render :index, notice: 'Message was successfully assigned.'
     else
       flash.now[:alert] = 'Failed to create the message.'
@@ -55,6 +59,6 @@ class MessagesController < ApplicationController
   end
 
   def message_params
-    params.require(:message).permit(:message_type, :content, attachments: [])
+    params.require(:message).permit(:message_type, :content, attachments: [], user_ids: [])
   end
 end

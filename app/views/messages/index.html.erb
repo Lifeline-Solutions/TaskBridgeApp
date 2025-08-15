@@ -88,6 +88,13 @@
             <% end %>
           </ol>
         </div>
+        <% @product.users.distinct.order(:first_name).each do |user| %>
+        <div class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+             data-user-id="<%= user.id %>"
+             onclick="selectUser(this)">
+          <%= user.name %>
+        </div>
+      <% end %>
       <% else %>
         <div class="mt-3 text-sm text-gray-500">No attachments.</div>
       <% end %>
