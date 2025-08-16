@@ -1,6 +1,7 @@
 # The base controller for all controllers in the application
 class ApplicationController < ActionController::Base
   include ActivityHelper if defined?(ActivityHelper)
+  include ControllerActivity if defined?(ControllerActivity)
   include AuditTrailControllerHelpers if defined?(AuditTrailControllerHelpers)
   protect_from_forgery with: :exception # Protects from CSRF attacks
 

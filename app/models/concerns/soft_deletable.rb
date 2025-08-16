@@ -25,6 +25,16 @@ module SoftDeletable
     def destroy
       if has_attribute?(:deleted_on) || has_attribute?(:deleted_by)
         AuditTrailService.soft_delete(self, defined?(Current) ? Current.user : nil)
+        begin
+          Activities.activity
+            .caused_by(defined?(Current) ? Current.user : nil)
+            .performed_on(self)
+            .event('soft_delete')
+            .with_properties(deleted_on: (respond_to?(:deleted_on) ? deleted_on : nil))
+            .log("Soft-deleted #{self.class.name}##{id}")
+        rescue StandardError => e
+          Rails.logger.debug("SoftDeletable destroy log failed: #{e.message}")
+        end
       else
         super
       end
@@ -43,7 +53,20 @@ module SoftDeletable
       return true if changes.empty?
 
       assign_attributes(changes)
-      save(validate: false)
+      ok = save(validate: false)
+      if ok && !is_a?(SystemActivity)
+        begin
+          Activities.activity
+            .caused_by(defined?(Current) ? Current.user : nil)
+            .performed_on(self)
+            .event('restore')
+            .with_properties(restored: true)
+            .log("Restored #{self.class.name}##{id}")
+        rescue StandardError => e
+          Rails.logger.debug("SoftDeletable restore log failed: #{e.message}")
+        end
+      end
+      ok
     end
   end
 end
