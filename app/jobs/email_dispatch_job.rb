@@ -6,7 +6,23 @@ class EmailDispatchJob < ApplicationJob
     return unless email && email.status_queued?
 
     email.mark_sending!
-  mail = SystemMailer.generic(email.id)
+    # Defense-in-depth: compute filtered recipients right before send
+    filtered_to = defined?(Messaging::EmailSender) ? Messaging::EmailSender.filter_active_emails(email.to_list) : email.to_list
+    filtered_cc = defined?(Messaging::EmailSender) ? Messaging::EmailSender.filter_active_emails(email.cc_list) : email.cc_list
+    filtered_bcc = defined?(Messaging::EmailSender) ? Messaging::EmailSender.filter_active_emails(email.bcc_list) : email.bcc_list
+
+    # If all recipients are filtered out, fail gracefully and skip SMTP
+    if filtered_to.blank? && filtered_cc.blank? && filtered_bcc.blank?
+      email.mark_failed!(reason: 'No active recipients')
+      Activities.activity
+        .event('email_skipped')
+        .performed_on(email)
+        .with_properties({ reason: 'no_active_recipients', subject: email.subject })
+        .log("Email skipped (no active recipients) #{email.subject}")
+      return
+    end
+
+    mail = SystemMailer.generic(email.id)
     mail.deliver_now
     message_id = mail.message_id
 
@@ -16,7 +32,7 @@ class EmailDispatchJob < ApplicationJob
       .performed_on(email)
       .with_properties({ message_id: message_id, to: email.to_list, subject: email.subject })
       .log("Email sent #{email.subject}")
-  rescue => e
+  rescue StandardError => e
     email&.mark_failed!(reason: e.message)
     Activities.activity
       .event('email_failed')

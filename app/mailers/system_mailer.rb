@@ -22,10 +22,27 @@ class SystemMailer < ApplicationMailer
       end
     end
 
+    # Filter recipients to exclude deactivated users (defense-in-depth)
+    filtered_to = if defined?(Messaging::EmailSender)
+                    Messaging::EmailSender.filter_active_emails(@email.to_list)
+                  else
+                    @email.to_list
+                  end
+    filtered_cc = if defined?(Messaging::EmailSender)
+                    Messaging::EmailSender.filter_active_emails(@email.cc_list)
+                  else
+                    @email.cc_list
+                  end
+    filtered_bcc = if defined?(Messaging::EmailSender)
+                     Messaging::EmailSender.filter_active_emails(@email.bcc_list)
+                   else
+                     @email.bcc_list
+                   end
+
     mail(
-      to: @email.to_list,
-      cc: @email.cc_list.presence,
-      bcc: @email.bcc_list.presence,
+      to: filtered_to.presence,
+      cc: filtered_cc.presence,
+      bcc: filtered_bcc.presence,
       from: allowed_from,
       subject: @email.subject
     ) do |format|

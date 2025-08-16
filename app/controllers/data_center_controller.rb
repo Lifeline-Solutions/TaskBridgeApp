@@ -588,7 +588,7 @@ class DataCenterController < ApplicationController
           Messaging::EmailSender
             .send_email(
               "Daily Ticket Report for #{user.name}",
-              body: "<p>Please find your daily ticket report.</p>",
+              body: '<p>Please find your daily ticket report.</p>',
               to: [user.email],
               cc: mail_options[:cc],
               actor: current_user,
@@ -602,7 +602,7 @@ class DataCenterController < ApplicationController
           Messaging::EmailSender
             .send_email(
               "Daily Ticket Report for #{user.name}",
-              body: "<p>No closed/resolved/declined tickets in the last 24 hours.</p>",
+              body: '<p>No closed/resolved/declined tickets in the last 24 hours.</p>',
               to: [user.email],
               cc: mail_options[:cc],
               actor: current_user,
@@ -635,20 +635,20 @@ class DataCenterController < ApplicationController
 
     team.users.each do |user|
       user_tickets = base_scope.where(taggings: { user_id: user.id }).distinct
-      if user_tickets.any?
-        Messaging::EmailSender
-          .send_email(
-            "Start of Day Ticket Report for #{user.name}",
-            body: "<p>Please find your SOD ticket report.</p>",
-            to: [user.email],
-            actor: current_user,
-            priority: :normal,
-            type: 'morning_ticket_report'
-          )
-          .set_source('team', team.id)
-          .set_party('user', user.id)
-          .send(queue: true)
-      end
+      next unless user_tickets.any?
+
+      Messaging::EmailSender
+        .send_email(
+          "Start of Day Ticket Report for #{user.name}",
+          body: '<p>Please find your SOD ticket report.</p>',
+          to: [user.email],
+          actor: current_user,
+          priority: :normal,
+          type: 'morning_ticket_report'
+        )
+        .set_source('team', team.id)
+        .set_party('user', user.id)
+        .send(queue: true)
     end
 
     redirect_back fallback_location: root_path, notice: 'Ticket emails sent to team members.'

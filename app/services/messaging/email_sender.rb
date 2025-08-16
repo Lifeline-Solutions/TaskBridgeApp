@@ -1,5 +1,19 @@
 module Messaging
   class EmailSender
+    # Filter out emails belonging to deactivated users. If an email doesn't
+    # belong to any user record, it's kept.
+    def self.filter_active_emails(addresses)
+      emails = Array(addresses).compact.map(&:to_s).map(&:strip).reject(&:blank?)
+      return [] if emails.empty?
+
+      # Build a lookup for known users' active flags
+      active_lookup = User.where(email: emails).pluck(:email, :active).to_h
+
+      emails.select do |e|
+        active_lookup[e].nil? || active_lookup[e] == true
+      end
+    end
+
     def self.send_email(subject,
                         to:, body: nil,
                         text: nil,
@@ -25,9 +39,14 @@ module Messaging
           modified_on: Time.current
         )
         @actor = actor
-        @email.to = to
-        @email.cc = cc if cc
-        @email.bcc = bcc if bcc
+        # Apply recipient filtering up-front: drop deactivated users
+        filtered_to = EmailSender.filter_active_emails(to)
+        filtered_cc = cc ? EmailSender.filter_active_emails(cc) : nil
+        filtered_bcc = bcc ? EmailSender.filter_active_emails(bcc) : nil
+
+        @email.to = filtered_to
+        @email.cc = filtered_cc if filtered_cc
+        @email.bcc = filtered_bcc if filtered_bcc
         @email.extra ||= {}
       end
 
