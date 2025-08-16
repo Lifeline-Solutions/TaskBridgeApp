@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_16_120000) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_16_120002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -642,6 +642,28 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_16_120000) do
     t.index ["deleted_on"], name: "index_statuses_tasks_on_deleted_on"
     t.index ["status_id", "task_id"], name: "index_statuses_tasks_on_status_id_and_task_id"
     t.index ["task_id", "status_id"], name: "index_statuses_tasks_on_task_id_and_status_id"
+  end
+
+  create_table "system_activities", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "log_name"
+    t.text "description"
+    t.string "subject_type"
+    t.uuid "subject_id"
+    t.string "causer_type"
+    t.uuid "causer_id"
+    t.jsonb "properties", default: {}
+    t.string "event"
+    t.uuid "batch_uuid"
+    t.datetime "deleted_on"
+    t.uuid "deleted_by"
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["causer_type", "causer_id"], name: "index_system_activities_on_causer_type_and_causer_id"
+    t.index ["created_at"], name: "index_system_activities_on_created_at"
+    t.index ["event"], name: "index_system_activities_on_event"
+    t.index ["subject_type", "subject_id"], name: "index_system_activities_on_subject_type_and_subject_id"
   end
 
   create_table "taggings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|

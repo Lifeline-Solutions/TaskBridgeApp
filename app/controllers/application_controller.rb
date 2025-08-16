@@ -1,5 +1,6 @@
 # The base controller for all controllers in the application
 class ApplicationController < ActionController::Base
+  include ActivityHelper if defined?(ActivityHelper)
   include AuditTrailControllerHelpers if defined?(AuditTrailControllerHelpers)
   protect_from_forgery with: :exception # Protects from CSRF attacks
 
@@ -71,6 +72,8 @@ class ApplicationController < ActionController::Base
   def assign_current_user
     Current.user = current_user if defined?(Current)
   end
+
+  helper_method :activity if defined?(helper_method)
 
   # Redirects to root with a not found alert
   # def redirect_to_root
