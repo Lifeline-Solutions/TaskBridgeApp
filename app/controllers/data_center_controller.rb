@@ -94,7 +94,21 @@ class DataCenterController < ApplicationController
     encoded_xlsx_data = Base64.encode64(xlsx_data)
 
     # Use the email from the client model
-    UserMailer.cease_fire_report_email(client.client_contact_person_email, client.client_contact_person, client.name, encoded_xlsx_data).deliver_later
+    if client.client_contact_person_email.present?
+      Messaging::EmailSender
+        .send_email(
+          "Cease Fire Report for #{client.name}",
+          body: "<p>Dear #{client.client_contact_person},</p><p>Please find attached the cease fire report for #{client.name}.</p>",
+          to: [client.client_contact_person_email],
+          actor: current_user,
+          priority: :normal,
+          type: 'cease_fire_report'
+        )
+        .set_source('client', client.id)
+        .set_party('user', current_user.id)
+        .add_attachment_content(bytes: Base64.decode64(encoded_xlsx_data), filename: "ticket_status_report_#{client.name}_#{Date.today}.xlsx", content_type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        .send(queue: true)
+    end
     activity('user_activity')
       .caused_by(current_user)
       .event('report.email_sent')
@@ -571,10 +585,33 @@ class DataCenterController < ApplicationController
           .distinct
 
         if tagged_tickets.any?
-          UserMailer.daily_ticket_email(user, tagged_tickets.to_a, mail_options).deliver_later
+          Messaging::EmailSender
+            .send_email(
+              "Daily Ticket Report for #{user.name}",
+              body: "<p>Please find your daily ticket report.</p>",
+              to: [user.email],
+              cc: mail_options[:cc],
+              actor: current_user,
+              priority: :normal,
+              type: 'daily_ticket_report'
+            )
+            .set_source('team', team.id)
+            .set_party('user', user.id)
+            .send(queue: true)
         elsif report_type == 'closed'
-          # Send an empty notice for the user with no closed/resolved/declined tickets
-          UserMailer.daily_ticket_email(user, [], mail_options).deliver_later
+          Messaging::EmailSender
+            .send_email(
+              "Daily Ticket Report for #{user.name}",
+              body: "<p>No closed/resolved/declined tickets in the last 24 hours.</p>",
+              to: [user.email],
+              cc: mail_options[:cc],
+              actor: current_user,
+              priority: :normal,
+              type: 'daily_ticket_report_empty'
+            )
+            .set_source('team', team.id)
+            .set_party('user', user.id)
+            .send(queue: true)
         end
       end
 
@@ -598,7 +635,20 @@ class DataCenterController < ApplicationController
 
     team.users.each do |user|
       user_tickets = base_scope.where(taggings: { user_id: user.id }).distinct
-      UserMailer.morning_ticket_email(user, user_tickets.to_a).deliver_later if user_tickets.any?
+      if user_tickets.any?
+        Messaging::EmailSender
+          .send_email(
+            "Start of Day Ticket Report for #{user.name}",
+            body: "<p>Please find your SOD ticket report.</p>",
+            to: [user.email],
+            actor: current_user,
+            priority: :normal,
+            type: 'morning_ticket_report'
+          )
+          .set_source('team', team.id)
+          .set_party('user', user.id)
+          .send(queue: true)
+      end
     end
 
     redirect_back fallback_location: root_path, notice: 'Ticket emails sent to team members.'

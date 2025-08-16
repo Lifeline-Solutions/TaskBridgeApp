@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_16_120002) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_16_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -261,6 +261,46 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_16_120002) do
     t.datetime "deleted_on"
     t.index ["deleted_on"], name: "index_documents_on_deleted_on"
     t.index ["product_id"], name: "index_documents_on_product_id"
+  end
+
+  create_table "emails", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "mail_id"
+    t.string "message_id"
+    t.string "email_type"
+    t.string "status", default: "queued", null: false
+    t.string "priority", default: "normal", null: false
+    t.string "from_address"
+    t.text "to_addresses"
+    t.text "cc_addresses"
+    t.text "bcc_addresses"
+    t.string "subject"
+    t.text "body_html"
+    t.text "body_text"
+    t.string "party_type"
+    t.uuid "party_id"
+    t.string "source_type"
+    t.uuid "source_id"
+    t.jsonb "extra", default: {}
+    t.datetime "dated"
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.datetime "created_on"
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.datetime "modified_on"
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.string "email_conversation_id"
+    t.string "reference_id"
+    t.uuid "read_by"
+    t.datetime "read_on"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_emails_on_created_at"
+    t.index ["mail_id"], name: "index_emails_on_mail_id", unique: true
+    t.index ["message_id"], name: "index_emails_on_message_id"
+    t.index ["party_type", "party_id"], name: "index_emails_on_party_type_and_party_id"
+    t.index ["priority"], name: "index_emails_on_priority"
+    t.index ["source_type", "source_id"], name: "index_emails_on_source_type_and_source_id"
+    t.index ["status"], name: "index_emails_on_status"
   end
 
   create_table "events", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|

@@ -2,7 +2,6 @@
 module ActivityMorphMap
   module_function
 
-  # Customize this map if you want shorter keys than full class names
   MAP = {
     'User' => 'user',
     'Project' => 'project',

@@ -51,8 +51,20 @@ class IssuesController < ApplicationController
         if @issue.message_type == 'external'
           recipients = @ticket.users.to_a
           recipients << @ticket.user unless recipients.include?(@ticket.user)
-          recipients.each do |recipient|
-            UserMailer.issue_created_email(recipient, @issue, @project, @ticket, current_user).deliver_later
+          recipients.map(&:email).compact.uniq.each do |email|
+            Messaging::EmailSender
+              .send_email(
+                "New Message for Ticket ##{@ticket.unique_id}",
+                to: [email],
+                actor: Current.user,
+                priority: :normal,
+                type: 'issue_created'
+              )
+              .use_template(view: 'user_mailer/issue_created_email', assigns: { user: User.find_by(email: email), issue: @issue, project: @project, ticket: @ticket,
+                                                                                current_user: Current.user })
+              .set_source('ticket', @ticket.id)
+              .set_party('user', Current.user&.id)
+              .send(queue: true)
           end
         end
 
@@ -165,11 +177,22 @@ class IssuesController < ApplicationController
     @issue = @ticket.issues.find(params[:id])
   end
 
-  def send_email_notifications(issue, sender)
+  def send_email_notifications(_issue, sender)
     selected_users = User.where(id: params.dig(:team, :user_ids)) # Safely fetch user IDs
 
     selected_users.each do |user|
-      UserMailer.mention_user_in_issue(user, issue, sender, @project, @ticket).deliver_later
+      Messaging::EmailSender
+        .send_email(
+          "New Comment on Ticket ##{@ticket.unique_id}",
+          to: [user.email],
+          actor: sender,
+          priority: :normal,
+          type: 'mention_issue'
+        )
+        .use_template(view: 'user_mailer/mention_user_in_issue', assigns: { user:, issue: @issue, sender:, project: @project, ticket: @ticket })
+        .set_source('ticket', @ticket.id)
+        .set_party('user', sender.id)
+        .send(queue: true)
     end
   end
 

@@ -13,18 +13,23 @@ module SafeNotifier
       return
     end
 
-    if async_delivery?
-      ErrorNotifierMailer.notify_error(payload).deliver_later
-    else
-      ErrorNotifierMailer.notify_error(payload).deliver_now
-    end
+    queue_flag = async_delivery?
+    subject = "[Error] #{payload[:exception_class]}: #{payload[:message].to_s.truncate(80)}"
+    body_html = "<pre>#{ERB::Util.html_escape(payload[:message])}</pre>"
+    Messaging::EmailSender
+      .send_email(
+        subject,
+        body: body_html,
+        to: Array(payload[:to]).presence || env_recipients,
+        actor: nil,
+        priority: :high,
+        type: 'error_notification'
+      )
+      .set_source('system_activity', nil)
+      .send(queue: queue_flag)
   rescue StandardError => e
     Rails.logger.warn("ErrorNotifierMailer delivery failed (#{e.class}): #{e.message}.")
-    begin
-      ErrorNotifierMailer.notify_error(payload).deliver_now
-    rescue StandardError => send_err
-      Rails.logger.error("deliver_now failed (#{send_err.class}): #{send_err.message}")
-    end
+  Rails.logger.error("SafeNotifier fallback suppressed; emails now persisted via Emails table")
   end
 
   def async_delivery?

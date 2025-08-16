@@ -170,6 +170,23 @@ class ProjectController < ApplicationController
         elsif @project.save
           @project.users << @project.user if @project.users.empty?
           current_user.add_role :creator, @project
+
+          # Persisted email: notify the initially assigned user on project creation
+          assigned = @project.user
+          if assigned.present? && !assigned.has_role?(:ceo)
+            Messaging::EmailSender
+              .send_email(
+                'Support Desk Assignment',
+                to: [assigned.email],
+                actor: current_user,
+                priority: :normal,
+                type: 'project_create_assign'
+              )
+              .use_template(view: 'user_mailer/assignment_email', assigns: { user: assigned, project: @project, current_user:, assigned_user: assigned })
+              .set_source('project', @project.id)
+              .set_party('user', assigned.id)
+              .send(queue: true)
+          end
           format.html { redirect_to project_path(@project), notice: 'Support Desk was successfully created.' }
         else
           format.html { render :new, status: :unprocessable_entity }
@@ -237,10 +254,22 @@ class ProjectController < ApplicationController
         .log("Assigned #{user.name} to Project ##{@project.id}")
 
       # Send email to the newly assigned user
-      assigned_user = user # Assuming the first user is the assigned user
       # if current user has role :ceo do not send email to the user
 
-      UserMailer.assignment_email(user, @project, current_user, assigned_user).deliver_later unless user.has_role?(:ceo)
+      unless user.has_role?(:ceo)
+        Messaging::EmailSender
+          .send_email(
+            'Support Desk Assignment',
+            to: [user.email],
+            actor: current_user,
+            priority: :normal,
+            type: 'project_assign'
+          )
+          .use_template(view: 'user_mailer/assignment_email', assigns: { user:, project: @project, current_user:, assigned_user: user })
+          .set_source('project', @project.id)
+          .set_party('user', user.id)
+          .send(queue: true)
+      end
       # @project.users.each do |project_user|
       #  next if project_user == current_user
 
@@ -266,7 +295,18 @@ class ProjectController < ApplicationController
         .event('project.add_team_user')
         .with_properties(team_id: team.id, user_id: user.id)
         .log("Added #{user.name} to Project ##{@project.id} via Team ##{team.id}")
-      UserMailer.assignment_email(user, @project, current_user, user).deliver_later
+      Messaging::EmailSender
+        .send_email(
+          'Support Desk Assignment',
+          to: [user.email],
+          actor: current_user,
+          priority: :normal,
+          type: 'project_assign_team'
+        )
+        .use_template(view: 'user_mailer/assignment_email', assigns: { user:, project: @project, current_user:, assigned_user: user })
+        .set_source('project', @project.id)
+        .set_party('user', user.id)
+        .send(queue: true)
     end
 
     redirect_to @project, notice: 'Team and its users were successfully added to the project.'

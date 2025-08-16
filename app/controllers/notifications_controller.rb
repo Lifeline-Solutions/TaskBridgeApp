@@ -21,7 +21,9 @@ class NotificationsController < ApplicationController
 
   def send_email
     user_email = params[:email]
-    UserMailer.mention_notification(user_email).deliver_later
+    Messaging::EmailSender
+      .send_email('Notification', body: '<p>You have a new notification</p>', to: [user_email], actor: Current.user, priority: :normal, type: 'notification')
+      .send(queue: true)
     activity('user_activity')
       .caused_by(current_user)
       .event('notification.email_sent')

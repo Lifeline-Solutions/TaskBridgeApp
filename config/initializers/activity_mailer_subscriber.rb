@@ -4,6 +4,8 @@ return unless defined?(Activities)
 ActiveSupport::Notifications.subscribe('deliver.action_mailer') do |_name, _start, _finish, _id, payload|
   begin
     mail = payload[:mail]
+  # Skip SystemMailer to avoid duplicate email_sent logs (EmailDispatchJob already logs)
+  next if payload[:mailer].to_s == 'SystemMailer'
     Activities.activity
       .caused_by(defined?(Current) ? Current.user : nil)
       .event('email_sent')

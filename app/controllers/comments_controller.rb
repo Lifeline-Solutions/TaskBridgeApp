@@ -28,7 +28,20 @@ class CommentsController < ApplicationController
         selected_users = User.where(id: comment_params[:user_ids])
 
         selected_users.each do |comment_user|
-          UserMailer.new_comment_email(comment_user, @comment, current_user, @project, @ticket).deliver_later
+          next if comment_user.email.blank?
+
+          Messaging::EmailSender
+            .send_email(
+              "Root Cause Analysis for Ticket ID #{@ticket.unique_id}.",
+              to: [comment_user.email],
+              actor: current_user,
+              priority: :normal,
+              type: 'comment_create'
+            )
+            .use_template(view: 'user_mailer/new_comment_email', assigns: { user: comment_user, comment: @comment, current_user:, project: @project, ticket: @ticket })
+            .set_source('comment', @comment.id)
+            .set_party('user', comment_user.id)
+            .send(queue: true)
         end
 
         format.html { redirect_to project_ticket_path(@project, @ticket), notice: 'Comment was successfully created.' }

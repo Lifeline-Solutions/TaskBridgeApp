@@ -95,7 +95,18 @@ class TasksController < ApplicationController
         .log("Assigned #{user.name} to Task ##{@task.id}")
       assigned_user = user # Sending to all users added to the product
       # Send email to the newly assigned user
-      UserMailer.task_assignment_email(user, @task, current_user, assigned_user).deliver_later
+      Messaging::EmailSender
+        .send_email(
+          'You have been assigned to a new task',
+          to: [assigned_user.email],
+          actor: current_user,
+          priority: :normal,
+          type: 'task_assign'
+        )
+        .use_template(view: 'user_mailer/task_assignment_email', assigns: { user: assigned_user, task: @task, current_user:, assigned_user: })
+        .set_source('task', @task.id)
+        .set_party('user', assigned_user.id)
+        .send(queue: true)
       # Send email to all users tagged on the product, except the current user
       # @product.users.each do |product_user|
       #   next if product_user == current_user
@@ -140,7 +151,20 @@ class TasksController < ApplicationController
       .event('task.status_update')
       .with_properties(status_id: status.id, status_name: status.name)
       .log("Updated Task ##{@task.id} status to #{status.name}")
-    UserMailer.add_state_email(@task.user, @task, current_user).deliver_later
+    if @task.user&.email.present?
+      Messaging::EmailSender
+        .send_email(
+          'Task State Updated',
+          to: [@task.user.email],
+          actor: current_user,
+          priority: :normal,
+          type: 'task_state_update'
+        )
+        .use_template(view: 'user_mailer/add_state_email', assigns: { user: @task.user, task: @task, current_user: })
+        .set_source('task', @task.id)
+        .set_party('user', @task.user.id)
+        .send(queue: true)
+    end
     redirect_to product_task_path(@product, @task), notice: 'Task status updated.'
   end
 

@@ -210,7 +210,18 @@ class ProductController < ApplicationController
         .log("Assigned #{user.name} to Product ##{@product.id}")
 
       assigned_user = user
-      UserMailer.assign_product_email(@product.user, @product, current_user, assigned_user).deliver_later
+      Messaging::EmailSender
+        .send_email(
+          'Product Assignment',
+          to: [assigned_user.email],
+          actor: current_user,
+          priority: :normal,
+          type: 'product_assign'
+        )
+        .use_template(view: 'user_mailer/assign_product_email', assigns: { user: assigned_user, product: @product, current_user:, assigned_user: })
+        .set_source('product', @product.id)
+        .set_party('user', assigned_user.id)
+        .send(queue: true)
       # @product.users.each do |product_user|
       #  next if product_user == current_user
 
@@ -235,9 +246,21 @@ class ProductController < ApplicationController
       .log("Updated Product ##{@product.id} status to #{status.name}")
 
     # Send an email to the developers and select the
-    assigned_user = @product.users.pluck(:id)
-
-    UserMailer.finance_sales_email(@product, assigned_user, current_user).deliver_later
+    @product.users.each do |u|
+      subject = "Project Payment Status for #{@product.client.name} for #{@product.groupwares.map(&:name).join(', ').presence} milestone"
+      Messaging::EmailSender
+        .send_email(
+          subject,
+          to: [u.email],
+          actor: current_user,
+          priority: :normal,
+          type: 'finance_sales'
+        )
+        .use_template(view: 'user_mailer/finance_sales_email', assigns: { product: @product, assigned_user: u, current_user: })
+        .set_source('product', @product.id)
+        .set_party('user', u.id)
+        .send(queue: true)
+    end
     redirect_to product_path(@product), notice: 'Product status was successfully updated.'
   end
 
