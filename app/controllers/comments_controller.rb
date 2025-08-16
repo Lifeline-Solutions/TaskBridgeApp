@@ -24,7 +24,7 @@ class CommentsController < ApplicationController
           .event('comment.create')
           .with_properties(ticket_id: @ticket.id, project_id: @project.id)
           .log("Created Comment ##{@comment.id} on Ticket ##{@ticket.id}")
-        # Send email to the selected users
+        # Send email ONLY to explicitly selected users
         selected_users = User.where(id: comment_params[:user_ids])
 
         selected_users.each do |comment_user|

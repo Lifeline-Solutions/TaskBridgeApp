@@ -119,8 +119,9 @@ class TicketsController < ApplicationController
           end
         end
 
-        # Send notification email to assigned user
-        assigned_user = @project.user
+        # Determine recipients: current assignee and project owner
+        assigned_user = @ticket.users.first || @project.user
+        project_owner = @project.user
         if @ticket.issue == 'CHANGE REQUEST'
           Messaging::EmailSender
             .send_email(
@@ -134,21 +135,37 @@ class TicketsController < ApplicationController
             .set_source('ticket', @ticket.id)
             .set_party('user', current_user.id)
             .send(queue: true)
-        elsif assigned_user.present?
-          Messaging::EmailSender
-            .send_email(
-              "A new ticket has been created with Ticket ID #{@ticket.unique_id}.",
-              to: [assigned_user.email],
-              actor: current_user,
-              priority: :normal,
-              type: 'ticket_create_assign'
-            )
-            .use_template(view: 'user_mailer/create_ticket_email', assigns: { ticket: @ticket, current_user:, assigned_user:, project: @project })
-            .set_source('ticket', @ticket.id)
-            .set_party('user', assigned_user.id)
-            .send(queue: true)
         else
-          Rails.logger.warn('Assigned user is nil, email not sent.')
+          # Notify only the current assignee and the project owner (if different)
+          if assigned_user.present?
+            Messaging::EmailSender
+              .send_email(
+                "A new ticket has been created with Ticket ID #{@ticket.unique_id}.",
+                to: [assigned_user.email],
+                actor: current_user,
+                priority: :normal,
+                type: 'ticket_create_assign'
+              )
+              .use_template(view: 'user_mailer/create_ticket_email', assigns: { ticket: @ticket, current_user:, assigned_user:, project: @project })
+              .set_source('ticket', @ticket.id)
+              .set_party('user', assigned_user.id)
+              .send(queue: true)
+          end
+
+          if project_owner.present? && project_owner != assigned_user
+            Messaging::EmailSender
+              .send_email(
+                "A new ticket has been created with Ticket ID #{@ticket.unique_id}.",
+                to: [project_owner.email],
+                actor: current_user,
+                priority: :normal,
+                type: 'ticket_create_project_owner'
+              )
+              .use_template(view: 'user_mailer/create_ticket_email', assigns: { ticket: @ticket, current_user:, assigned_user: project_owner, project: @project })
+              .set_source('ticket', @ticket.id)
+              .set_party('user', project_owner.id)
+              .send(queue: true)
+          end
         end
 
         # Log the creation event
@@ -220,10 +237,9 @@ class TicketsController < ApplicationController
           end
         end
 
-        # Send notification emails to relevant users
-        assigned_user = @project.user
-        ticket_user = @ticket.user
-        user = @ticket.users.first
+        # Send notification emails only to the assignee and the project owner
+        assigned_user = @ticket.users.first || @project.user
+        project_owner = @project.user
 
         if assigned_user.present?
           Messaging::EmailSender
@@ -232,48 +248,27 @@ class TicketsController < ApplicationController
               to: [assigned_user.email],
               actor: current_user,
               priority: :normal,
-              type: 'ticket_edit_project_user'
+              type: 'ticket_edit_assignee'
             )
             .use_template(view: 'user_mailer/edit_ticket_email', assigns: { user: assigned_user, ticket: @ticket, current_user:, assigned_user:, project: @project })
             .set_source('ticket', @ticket.id)
             .set_party('user', assigned_user.id)
             .send(queue: true)
-        else
-          Rails.logger.warn('Assigned project user is nil, email not sent.')
         end
 
-        if ticket_user.present? && ticket_user != assigned_user && ticket_user != user
+        if project_owner.present? && project_owner != assigned_user
           Messaging::EmailSender
             .send_email(
               "A ticket with Ticket ID #{@ticket.unique_id} has been edited.",
-              to: [ticket_user.email],
+              to: [project_owner.email],
               actor: current_user,
               priority: :normal,
-              type: 'ticket_edit_ticket_user'
+              type: 'ticket_edit_project_owner'
             )
-            .use_template(view: 'user_mailer/edit_ticket_email', assigns: { user: ticket_user, ticket: @ticket, current_user:, assigned_user: ticket_user, project: @project })
+            .use_template(view: 'user_mailer/edit_ticket_email', assigns: { user: project_owner, ticket: @ticket, current_user:, assigned_user: project_owner, project: @project })
             .set_source('ticket', @ticket.id)
-            .set_party('user', ticket_user.id)
+            .set_party('user', project_owner.id)
             .send(queue: true)
-        else
-          Rails.logger.warn('Assigned ticket user is nil or already notified, email not sent.')
-        end
-
-        if user.present? && user != ticket_user && user != assigned_user
-          Messaging::EmailSender
-            .send_email(
-              "A ticket with Ticket ID #{@ticket.unique_id} has been edited.",
-              to: [user.email],
-              actor: current_user,
-              priority: :normal,
-              type: 'ticket_edit_user'
-            )
-            .use_template(view: 'user_mailer/edit_ticket_email', assigns: { user:, ticket: @ticket, current_user:, assigned_user: user, project: @project })
-            .set_source('ticket', @ticket.id)
-            .set_party('user', user.id)
-            .send(queue: true)
-        else
-          Rails.logger.warn('User is nil or already notified, email not sent.')
         end
 
         # Log the update event
@@ -337,6 +332,23 @@ class TicketsController < ApplicationController
         .set_party('user', user.id)
         .send(queue: true)
 
+      # Also notify the project owner if different from assignee
+      owner = @project.user
+      if owner.present? && owner != user && owner.email.present?
+        Messaging::EmailSender
+          .send_email(
+            "Ticket assigned with Ticket ID #{@ticket.unique_id}.",
+            body: "<p>Ticket ##{@ticket.unique_id} has been assigned to #{user.name}.</p><p><a href='#{project_ticket_url(@project, @ticket)}'>Open Ticket</a></p>",
+            to: [owner.email],
+            actor: current_user,
+            priority: :normal,
+            type: 'ticket_assign_project_owner'
+          )
+          .set_source('ticket', @ticket.id)
+          .set_party('user', owner.id)
+          .send(queue: true)
+      end
+
       # Log the assignment event
       log_event(@ticket, current_user, 'assign', "#{user.name} was assigned to the ticket, with Status:
         #{sla_ticket.sla_status} and Target Response Deadline #{sla_target_response_deadline}")
@@ -395,39 +407,23 @@ class TicketsController < ApplicationController
       end
     end
 
-    # Send status update emails
-    if status.name != 'Reopened'
-      @ticket.users.each do |ticket_user|
-        Messaging::EmailSender
-          .send_email(
-            "Status update for Ticket ID #{@ticket.unique_id}.",
-            to: [ticket_user.email],
-            actor: current_user,
-            priority: :normal,
-            type: 'ticket_status_update'
-          )
-          .use_template(view: 'user_mailer/status_update_email', assigns: { user: ticket_user, ticket: @ticket, current_user:, project: @project })
-          .set_source('ticket', @ticket.id)
-          .set_party('user', ticket_user.id)
-          .send(queue: true)
-      end
-    end
+    # Send status update emails ONLY to current assignee and project owner
+    assignee = @ticket.users.first || @project.user
+    owner = @project.user
 
-    if status.name == 'Reopened'
-      @project.users.each do |project_user|
-        Messaging::EmailSender
-          .send_email(
-            "Status update for Ticket ID #{@ticket.unique_id}.",
-            to: [project_user.email],
-            actor: current_user,
-            priority: :normal,
-            type: 'ticket_status_update_reopened'
-          )
-          .use_template(view: 'user_mailer/status_update_email', assigns: { user: project_user, ticket: @ticket, current_user:, project: @project })
-          .set_source('ticket', @ticket.id)
-          .set_party('user', project_user.id)
-          .send(queue: true)
-      end
+    [assignee, owner].compact.uniq.each do |recipient|
+      Messaging::EmailSender
+        .send_email(
+          "Status update for Ticket ID #{@ticket.unique_id}.",
+          to: [recipient.email],
+          actor: current_user,
+          priority: :normal,
+          type: (status.name == 'Reopened' ? 'ticket_status_update_reopened' : 'ticket_status_update')
+        )
+        .use_template(view: 'user_mailer/status_update_email', assigns: { user: recipient, ticket: @ticket, current_user:, project: @project })
+        .set_source('ticket', @ticket.id)
+        .set_party('user', recipient.id)
+        .send(queue: true)
     end
 
     # Log the status change event

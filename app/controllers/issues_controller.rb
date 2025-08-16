@@ -49,18 +49,23 @@ class IssuesController < ApplicationController
         current_user.add_role :creator, @issue
 
         if @issue.message_type == 'external'
-          recipients = @ticket.users.to_a
-          recipients << @ticket.user unless recipients.include?(@ticket.user)
-          recipients.map(&:email).compact.uniq.each do |email|
+          # Notify only the current assignee and project owner by default
+          assignee = @ticket.users.first || @project.user
+          owner = @project.user
+          recipients = [assignee, owner].compact.uniq
+
+          recipients.each do |target|
+            next if target.email.blank?
+
             Messaging::EmailSender
               .send_email(
                 "New Message for Ticket ##{@ticket.unique_id}",
-                to: [email],
+                to: [target.email],
                 actor: Current.user,
                 priority: :normal,
                 type: 'issue_created'
               )
-              .use_template(view: 'user_mailer/issue_created_email', assigns: { user: User.find_by(email: email), issue: @issue, project: @project, ticket: @ticket,
+              .use_template(view: 'user_mailer/issue_created_email', assigns: { user: target, issue: @issue, project: @project, ticket: @ticket,
                                                                                 current_user: Current.user })
               .set_source('ticket', @ticket.id)
               .set_party('user', Current.user&.id)
@@ -179,6 +184,7 @@ class IssuesController < ApplicationController
 
   def send_email_notifications(_issue, sender)
     selected_users = User.where(id: params.dig(:team, :user_ids)) # Safely fetch user IDs
+    return if selected_users.blank?
 
     selected_users.each do |user|
       Messaging::EmailSender
