@@ -19,6 +19,11 @@ class QaModulesController < ApplicationController
   def create
     @qa_module = QaModule.new(name: params[:qa_module][:name])
     audit_on_create(@qa_module)
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@qa_module)
+      .event('qa_module.create')
+      .log('QA Module created')
 
     if params[:qa_module][:parent_id].present?
       parent = QaModule.find_by(id: params[:qa_module][:parent_id])
@@ -47,6 +52,12 @@ class QaModulesController < ApplicationController
 
     # Update attributes
     if @qa_module.update(name: params[:qa_module][:name], parent_id: parent_id)
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@qa_module)
+        .event('qa_module.update')
+        .with_properties(parent_id: parent_id)
+        .log('QA Module updated')
       redirect_to qa_modules_path, notice: 'Module was successfully updated.'
     else
       @parents = QaModule.where.not(id: @qa_module.id) # Reload parents for the form
@@ -61,6 +72,11 @@ class QaModulesController < ApplicationController
       @qa_module.destroy
       redirect_to qa_modules_path, notice: 'Module destroyed.'
     end
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@qa_module)
+      .event('qa_module.destroy')
+      .log('QA Module removed')
   end
 
   private

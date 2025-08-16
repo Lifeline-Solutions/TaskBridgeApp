@@ -14,7 +14,7 @@ module Activities
       return self unless user
 
       @attrs[:causer] = user
-      @attrs[:causer_type] = ActivityMorphMap.class_to_key(user.class)
+      @attrs[:causer_type] = ::ActivityMorphMap.class_to_key(user.class)
       @attrs[:causer_id] = user.id
       self
     end
@@ -23,7 +23,7 @@ module Activities
       return self unless record
 
       @attrs[:subject] = record
-      @attrs[:subject_type] = ActivityMorphMap.class_to_key(record.class)
+      @attrs[:subject_type] = ::ActivityMorphMap.class_to_key(record.class)
       @attrs[:subject_id] = record.id
       self
     end
@@ -57,7 +57,7 @@ module Activities
         description: @attrs[:description],
         subject_type: @attrs[:subject_type],
         subject_id: @attrs[:subject_id],
-        causer_type: causer && ActivityMorphMap.class_to_key(causer.class),
+        causer_type: causer && ::ActivityMorphMap.class_to_key(causer.class),
         causer_id: causer&.id,
         properties: @attrs[:properties],
         event: @attrs[:event],

@@ -27,6 +27,11 @@ class LocationController < ApplicationController
   def create
     @location = Location.new(location_params)
     audit_on_create(@location)
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@location)
+      .event('location.create')
+      .log('Location created')
 
     respond_to do |format|
       if current_user.has_role?(:admin)
@@ -49,6 +54,11 @@ class LocationController < ApplicationController
     audit_on_update(@location)
     respond_to do |format|
       if @location.update(location_params)
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@location)
+          .event('location.update')
+          .log('Location updated')
         format.html { redirect_to location_index_path, notice: 'Location was successfully updated.' }
       else
         format.html { render 'edit', status: :unprocessable_entity }
@@ -62,6 +72,11 @@ class LocationController < ApplicationController
     else
       @location.destroy
     end
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@location)
+      .event('location.destroy')
+      .log('Location removed')
     respond_to do |format|
       format.html { redirect_to location_index_path, notice: 'Location was successfully deleted.' }
     end

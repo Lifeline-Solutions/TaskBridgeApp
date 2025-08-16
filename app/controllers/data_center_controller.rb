@@ -29,7 +29,14 @@ class DataCenterController < ApplicationController
       respond_to do |format|
         format.html # renders view
         filename = "ticket_status_report_ceo_#{Date.today}.xlsx"
-        format.xlsx { send_data @xlsx_data, filename: filename }
+        format.xlsx do
+          activity('user_activity')
+            .caused_by(current_user)
+            .event('report.download')
+            .with_properties(kind: 'cease_fire_report_ceo', filename: filename)
+            .log('Report downloaded')
+          send_data @xlsx_data, filename: filename
+        end
       end
     elsif params[:client_id].present? || params[:start_date].present? || params[:end_date].present? || params[:status].present?
 
@@ -62,7 +69,14 @@ class DataCenterController < ApplicationController
         format.html # renders view
         client_name = params[:client_id].present? ? Client.find(params[:client_id]).name : 'all_clients'
         filename = "ticket_status_report_#{client_name}_#{Date.today}.xlsx"
-        format.xlsx { send_data @xlsx_data, filename: filename }
+        format.xlsx do
+          activity('user_activity')
+            .caused_by(current_user)
+            .event('report.download')
+            .with_properties(kind: 'cease_fire_report', filename: filename, client_id: params[:client_id])
+            .log('Report downloaded')
+          send_data @xlsx_data, filename: filename
+        end
       end
     else
       @tickets = Ticket.none
@@ -81,6 +95,11 @@ class DataCenterController < ApplicationController
 
     # Use the email from the client model
     UserMailer.cease_fire_report_email(client.client_contact_person_email, client.client_contact_person, client.name, encoded_xlsx_data).deliver_later
+    activity('user_activity')
+      .caused_by(current_user)
+      .event('report.email_sent')
+      .with_properties(kind: 'cease_fire_report', client_id: client.id, email: client.client_contact_person_email)
+      .log('Report emailed')
 
     # Flash a message indicating the email has been sent
     flash[:notice] = "Report sent to #{client.client_contact_person_email}"
@@ -89,7 +108,14 @@ class DataCenterController < ApplicationController
       format.html # renders view
       client_name = params[:client_id].present? ? Client.find(params[:client_id]).name : 'all_clients'
       filename = "ticket_status_report_#{client_name}_#{Date.today}.xlsx"
-      format.xlsx { send_data @xlsx_data, filename: filename }
+      format.xlsx do
+        activity('user_activity')
+          .caused_by(current_user)
+          .event('report.download')
+          .with_properties(kind: 'cease_fire_report', filename: filename, client_id: params[:client_id])
+          .log('Report downloaded')
+        send_data @xlsx_data, filename: filename
+      end
     end
   end
 
@@ -112,7 +138,15 @@ class DataCenterController < ApplicationController
       respond_to do |format|
         format.html # Default view
         client_name = Client.find(params[:client_id]).name if params[:client_id].present?
-        format.csv { send_data generate_breach_details_csv(@tickets), filename: "breach__report_for_#{client_name}_#{Date.today}.csv" }
+        format.csv do
+          filename = "breach__report_for_#{client_name}_#{Date.today}.csv"
+          activity('user_activity')
+            .caused_by(current_user)
+            .event('report.download')
+            .with_properties(kind: 'breach_report', filename: filename, client_id: params[:client_id])
+            .log('Report downloaded')
+          send_data generate_breach_details_csv(@tickets), filename: filename
+        end
       end
     else
       @tickets = Ticket.none
@@ -142,7 +176,15 @@ class DataCenterController < ApplicationController
 
       respond_to do |format|
         format.html # Default view
-        format.csv { send_data generate_user_csv(@users), filename: "user_report_#{Date.today}.csv" }
+        format.csv do
+          filename = "user_report_#{Date.today}.csv"
+          activity('user_activity')
+            .caused_by(current_user)
+            .event('report.download')
+            .with_properties(kind: 'user_report', filename: filename, user_id: params[:user_id], start_date: params[:start_date], end_date: params[:end_date])
+            .log('Report downloaded')
+          send_data generate_user_csv(@users), filename: filename
+        end
       end
     else
       @users = User.none
@@ -251,6 +293,11 @@ class DataCenterController < ApplicationController
           end_str = (params[:end_date].presence && Date.parse(params[:end_date]).strftime('%d-%m-%Y')) || Date.today.strftime('%d-%m-%Y')
           time_str = Time.now.strftime('%I-%M_%p')
           filename = "Team Report for #{team_name}_#{start_str}_to_#{end_str}_at_#{time_str}.csv"
+          activity('user_activity')
+            .caused_by(current_user)
+            .event('report.download')
+            .with_properties(kind: 'project_report', filename: filename, team_id: @team.id, start_date: params[:start_date], end_date: params[:end_date], all_tickets: params[:all_tickets].present?)
+            .log('Report downloaded')
           send_data generate_project_report_csv(csv_tickets), filename: filename
         end
       end

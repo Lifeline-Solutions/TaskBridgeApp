@@ -57,6 +57,11 @@ class TeamController < ApplicationController
 
     respond_to do |format|
       if @team.save
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@team)
+          .event('team.create')
+          .log('Team created')
         format.html { redirect_to team_index_path, notice: 'Team was successfully created.' }
       else
         format.html { render :new, status: :unprocessable_entity }
@@ -70,6 +75,11 @@ class TeamController < ApplicationController
     audit_on_update(@team)
     respond_to do |format|
       if @team.update(team_params)
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@team)
+          .event('team.update')
+          .log('Team updated')
         format.html { redirect_to team_index_path, notice: 'Team was successfully updated.' }
       else
         format.html { render :edit, status: :unprocessable_entity }
@@ -88,6 +98,11 @@ class TeamController < ApplicationController
         format.html { redirect_to team_path, notice: 'Team was successfully deleted.' }
       end
     end
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@team)
+      .event('team.destroy')
+      .log('Team removed')
   end
 
   private

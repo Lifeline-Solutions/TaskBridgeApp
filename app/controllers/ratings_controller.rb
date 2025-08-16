@@ -9,6 +9,12 @@ class RatingsController < ApplicationController
     audit_on_create(@rating)
 
     if @rating.save
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@rating)
+        .event('rating.create')
+        .with_properties(ticket_id: @ticket.id, value: @rating.value)
+        .log("Submitted rating #{@rating.value} for Ticket ##{@ticket.id}")
       redirect_to project_ticket_path(@ticket.project, @ticket), notice: 'Rating submitted successfully.'
     else
       redirect_to project_ticket_path(@ticket.project, @ticket), alert: 'Failed to submit rating.'

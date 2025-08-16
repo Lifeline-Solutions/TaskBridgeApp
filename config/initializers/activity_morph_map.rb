@@ -29,6 +29,8 @@ module ActivityMorphMap
     'QaModule' => 'qa_module',
     'Rating' => 'rating',
     'BankingType' => 'banking_type',
+    'Location' => 'location',
+    'CommonlySelectedClient' => 'commonly_selected_client',
     'Event' => 'event',
     'SystemActivity' => 'system_activity'
   }.freeze

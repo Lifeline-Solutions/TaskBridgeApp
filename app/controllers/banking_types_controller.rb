@@ -25,6 +25,11 @@ class BankingTypesController < ApplicationController
 
     respond_to do |format|
       if @banking_type.save
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@banking_type)
+          .event('banking_type.create')
+          .log('BankingType created')
         format.html { redirect_to banking_types_path, notice: 'Banking type was successfully created.' }
         format.json { render :show, status: :created, location: @banking_type }
       else
@@ -39,6 +44,11 @@ class BankingTypesController < ApplicationController
     audit_on_update(@banking_type)
     respond_to do |format|
       if @banking_type.update(banking_type_params)
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@banking_type)
+          .event('banking_type.update')
+          .log('BankingType updated')
         format.html { redirect_to banking_types_path, notice: 'Banking type was successfully updated.' }
         format.json { render :show, status: :ok, location: @banking_type }
       else
@@ -55,6 +65,11 @@ class BankingTypesController < ApplicationController
     else
       @banking_type.destroy
     end
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@banking_type)
+      .event('banking_type.destroy')
+      .log('BankingType removed')
     respond_to do |format|
       format.html { redirect_to banking_types_url, notice: 'Banking type was successfully deleted.' }
       format.json { head :no_content }

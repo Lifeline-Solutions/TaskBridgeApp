@@ -29,10 +29,16 @@ class ClientController < ApplicationController
   def create
     @client = Client.new(client_params)
     @client.user_id = current_user.id
+    audit_on_create(@client)
 
     respond_to do |format|
       if current_user.has_role?(:admin)
         if @client.save
+          activity('user_activity')
+            .caused_by(current_user)
+            .performed_on(@client)
+            .event('client.create')
+            .log('Client created')
           format.html { redirect_to client_index_path, notice: 'Client was successfully created.' }
         else
           format.html { render :new, status: :unprocessable_entity }
@@ -50,8 +56,14 @@ class ClientController < ApplicationController
   def edit; end
 
   def update
+    audit_on_update(@client)
     respond_to do |format|
       if @client.update(client_params)
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@client)
+          .event('client.update')
+          .log('Client updated')
         format.html { redirect_to client_index_path, notice: 'Client was successfully updated.' }
       else
         format.html { render 'edit', status: :unprocessable_entity }
@@ -60,7 +72,16 @@ class ClientController < ApplicationController
   end
 
   def destroy
-    @client.destroy
+    if audit_soft_delete(@client)
+      # soft-deleted
+    else
+      @client.destroy
+    end
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@client)
+      .event('client.destroy')
+      .log('Client removed')
     respond_to do |format|
       format.html { redirect_to client_index_path, notice: 'Client was successfully destroyed.' }
     end

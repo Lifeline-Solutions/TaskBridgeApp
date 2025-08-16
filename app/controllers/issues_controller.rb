@@ -21,6 +21,12 @@ class IssuesController < ApplicationController
     @issue.user = current_user
     @issue.message_type ||= 'external'
     audit_on_create(@issue)
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@issue)
+      .event('issue.create')
+      .with_properties(project_id: @project.id, ticket_id: @ticket.id, message_type: @issue.message_type)
+      .log('Issue created')
 
     if @issue.content.blank?
       @issue.errors.add(:content, 'Message cannot be blank.')
@@ -85,6 +91,12 @@ class IssuesController < ApplicationController
 
   def update
     audit_on_update(@issue)
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@issue)
+      .event('issue.update')
+      .with_properties(project_id: @project.id, ticket_id: @ticket.id)
+      .log('Issue updated')
     respond_to do |format|
       if @issue.update(issue_params)
         send_email_notifications(@issue, current_user)
@@ -120,6 +132,12 @@ class IssuesController < ApplicationController
     else
       @issue.destroy
     end
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@issue)
+      .event('issue.destroy')
+      .with_properties(project_id: @project.id, ticket_id: @ticket.id)
+      .log('Issue removed')
     respond_to do |format|
       format.turbo_stream do
         render turbo_stream: turbo_stream.remove(dom_id(@issue))

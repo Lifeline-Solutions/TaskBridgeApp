@@ -39,6 +39,12 @@ class GroupwaresController < ApplicationController
     @groupware = @software.groupwares.new(groupware_params)
     @groupware.software_id = params[:software_id] # Ensure software_id is set
     audit_on_create(@groupware)
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@groupware)
+      .event('groupware.create')
+      .with_properties(software_id: @software.id)
+      .log('Groupware created')
 
     respond_to do |format|
       if @groupware.save
@@ -60,6 +66,12 @@ class GroupwaresController < ApplicationController
     audit_on_update(@groupware)
     respond_to do |format|
       if @groupware.update(groupware_params)
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@groupware)
+          .event('groupware.update')
+          .with_properties(software_id: @software.id)
+          .log('Groupware updated')
         format.html { redirect_to software_path(@software), notice: 'Groupware was successfully updated.' }
       else
         format.html { render :edit, status: :unprocessable_entity }
@@ -75,6 +87,12 @@ class GroupwaresController < ApplicationController
     else
       @groupware.destroy
     end
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@groupware)
+      .event('groupware.destroy')
+      .with_properties(software_id: @software.id)
+      .log('Groupware removed')
     respond_to do |format|
       format.html { redirect_to software_path(@software), notice: 'Groupware was successfully deleted.' }
     end

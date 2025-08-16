@@ -25,6 +25,12 @@ class ScriptsController < ApplicationController
 
     respond_to do |format|
       if @script.save
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@script)
+          .event('script.create')
+          .with_properties(software_id: @software.id, groupware_id: @groupware.id)
+          .log('Script created')
         format.html { redirect_to software_groupware_path(@software, @groupware), notice: 'Script was successfully created.' }
       else
         Rails.logger.debug @script.errors.full_messages

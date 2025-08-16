@@ -13,6 +13,12 @@ class CommonlySelectedClientsController < ApplicationController
     @common_clients = current_user.common_clients
     @available_clients = Client.where.not(id: @common_clients.pluck(:id))
     audit_on_create(@common_client)
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@common_client)
+      .event('commonly_selected_client.create')
+      .with_properties(client_id: params[:client_id])
+      .log('Added client to common list')
 
     if @common_client.save
       flash.now[:notice] = 'Client added to your common list.'
@@ -31,6 +37,12 @@ class CommonlySelectedClientsController < ApplicationController
       else
         @common_client.destroy
       end
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@common_client)
+        .event('commonly_selected_client.destroy')
+        .with_properties(client_id: params[:client_id])
+        .log('Removed client from common list')
     end
 
     @common_clients = current_user.common_clients
