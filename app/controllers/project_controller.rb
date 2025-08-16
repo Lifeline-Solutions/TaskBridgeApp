@@ -228,6 +228,14 @@ class ProjectController < ApplicationController
       @project.user = current_user
       @project.users << user
 
+      # Log explicit assignment activity
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@project)
+        .event('project.assign_user')
+        .with_properties(assigned_user_id: user.id, assigned_user_email: user.email)
+        .log("Assigned #{user.name} to Project ##{@project.id}")
+
       # Send email to the newly assigned user
       assigned_user = user # Assuming the first user is the assigned user
       # if current user has role :ceo do not send email to the user
@@ -249,10 +257,16 @@ class ProjectController < ApplicationController
     @project.user = current_user
 
     team.users.each do |user|
-      unless @project.users.include?(user)
-        @project.users << user
-        UserMailer.assignment_email(user, @project, current_user, user).deliver_later
-      end
+      next if @project.users.include?(user)
+
+      @project.users << user
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@project)
+        .event('project.add_team_user')
+        .with_properties(team_id: team.id, user_id: user.id)
+        .log("Added #{user.name} to Project ##{@project.id} via Team ##{team.id}")
+      UserMailer.assignment_email(user, @project, current_user, user).deliver_later
     end
 
     redirect_to @project, notice: 'Team and its users were successfully added to the project.'
@@ -264,6 +278,12 @@ class ProjectController < ApplicationController
 
     team.users.each do |user|
       @project.users.delete(user)
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@project)
+        .event('project.remove_team_user')
+        .with_properties(team_id: team.id, user_id: user.id)
+        .log("Removed #{user.name} from Project ##{@project.id} via Team ##{team.id}")
     end
 
     redirect_to @project, notice: 'Team and its users were successfully removed from the project.'
@@ -273,6 +293,12 @@ class ProjectController < ApplicationController
     @project = Project.find(params[:id])
     user = User.find(params[:user_id])
     @project.users.delete(user)
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@project)
+      .event('project.unassign_user')
+      .with_properties(user_id: user.id)
+      .log("Unassigned #{user.name} from Project ##{@project.id}")
     redirect_to @project, notice: "#{user.name}  was successfully unassigned."
   end
 

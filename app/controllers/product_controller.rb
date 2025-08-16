@@ -202,6 +202,13 @@ class ProductController < ApplicationController
       @product.user = current_user
       @product.users << user
 
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@product)
+        .event('product.assign_user')
+        .with_properties(user_id: user.id)
+        .log("Assigned #{user.name} to Product ##{@product.id}")
+
       assigned_user = user
       UserMailer.assign_product_email(@product.user, @product, current_user, assigned_user).deliver_later
       # @product.users.each do |product_user|
@@ -220,6 +227,12 @@ class ProductController < ApplicationController
     @product.statuses.clear
     @product.user = current_user
     @product.statuses << status
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@product)
+      .event('product.status_update')
+      .with_properties(status_id: status.id, status_name: status.name)
+      .log("Updated Product ##{@product.id} status to #{status.name}")
 
     # Send an email to the developers and select the
     assigned_user = @product.users.pluck(:id)
@@ -232,6 +245,12 @@ class ProductController < ApplicationController
     @product = Product.find(params[:id])
     user = User.find(params[:user_id])
     @product.users.delete(user)
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@product)
+      .event('product.unassign_user')
+      .with_properties(user_id: user.id)
+      .log("Unassigned #{user.name} from Product ##{@product.id}")
     redirect_to @product, notice: "#{user.name}  was successfully removed."
   end
 

@@ -18,6 +18,12 @@ class CommentsController < ApplicationController
 
     respond_to do |format|
       if @comment.save
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@comment)
+          .event('comment.create')
+          .with_properties(ticket_id: @ticket.id, project_id: @project.id)
+          .log("Created Comment ##{@comment.id} on Ticket ##{@ticket.id}")
         # Send email to the selected users
         selected_users = User.where(id: comment_params[:user_ids])
 
@@ -35,9 +41,21 @@ class CommentsController < ApplicationController
   def destroy
     @comment = @ticket.comments.find(params[:id])
     if audit_soft_delete(@comment)
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@comment)
+        .event('comment.soft_delete')
+        .with_properties(ticket_id: @ticket.id)
+        .log("Soft-deleted Comment ##{@comment.id}")
       redirect_to project_ticket_path(@project, @ticket)
     else
       @comment.destroy
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@comment)
+        .event('comment.destroy')
+        .with_properties(ticket_id: @ticket.id)
+        .log("Destroyed Comment ##{@comment.id}")
       redirect_to project_ticket_path(@project, @ticket)
     end
   end
@@ -52,6 +70,12 @@ class CommentsController < ApplicationController
 
     respond_to do |format|
       if @comment.update(comment_params)
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@comment)
+          .event('comment.update')
+          .with_properties(ticket_id: @ticket.id)
+          .log("Updated Comment ##{@comment.id}")
         format.html { redirect_to project_ticket_path(@project, @ticket), notice: 'Comment was successfully updated.' }
       else
         format.html { render 'edit', status: :unprocessable_entity }
