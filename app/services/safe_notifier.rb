@@ -3,6 +3,7 @@ module SafeNotifier
   module_function
 
   def email(exception, context: nil)
+    Rails.logger.info("SafeNotifier: preparing error email for #{exception.class} - #{exception.message}")
     recipients = env_recipients
     payload = ErrorPayload.build(exception, context: context)
     payload[:to] = recipients if recipients.any?
@@ -15,21 +16,23 @@ module SafeNotifier
 
     queue_flag = async_delivery?
     subject = "[Error] #{payload[:exception_class]}: #{payload[:message].to_s.truncate(80)}"
-    body_html = "<pre>#{ERB::Util.html_escape(payload[:message])}</pre>"
+    bt = Array(payload[:backtrace]).join("\n")
+    body_html = "<h4>#{ERB::Util.html_escape(payload[:message])}</h4><pre>#{ERB::Util.html_escape(bt)}</pre>"
     Messaging::EmailSender
       .send_email(
         subject,
         body: body_html,
-        to: Array(payload[:to]).presence || env_recipients,
+        to: Array(payload[:to]).presence || env_recipients.presence || default_recipient,
         actor: nil,
-        priority: :high,
+        priority: :important,
         type: 'error_notification'
       )
       .set_source('system_activity', nil)
       .send(queue: queue_flag)
+    Rails.logger.info("SafeNotifier: enqueued/sent error email for #{exception.class}")
   rescue StandardError => e
     Rails.logger.warn("ErrorNotifierMailer delivery failed (#{e.class}): #{e.message}.")
-  Rails.logger.error("SafeNotifier fallback suppressed; emails now persisted via Emails table")
+    Rails.logger.error('SafeNotifier fallback suppressed; emails now persisted via Emails table')
   end
 
   def async_delivery?
@@ -43,7 +46,17 @@ module SafeNotifier
     raw.split(',').map(&:strip).reject(&:blank?)
   end
 
+  def default_recipient
+    rcpts = []
+    rcpts << ENV['MAIL_FROM'] if ENV['MAIL_FROM'].present?
+    rcpts << 'cspm@craftsilicon.com'
+    rcpts << 'robert.mbugua@craftsilicon.com'
+    rcpts.compact.uniq
+  end
+
   def throttled?(payload)
+    return false if defined?(Rails) && (Rails.env.development? || Rails.env.test?)
+
     ttl = Integer(ENV.fetch('ERROR_NOTIFY_THROTTLE_SECONDS', '300'))
     return false if ttl <= 0
 

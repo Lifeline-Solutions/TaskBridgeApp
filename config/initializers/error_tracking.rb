@@ -13,8 +13,8 @@ Rails.application.config.after_initialize do
     }
 
     ErrorLogger.log(exception, context: context)
-    # Limit subscriber emails to production-like envs to avoid dev noise
-    if Rails.env.production? || Rails.env.staging?
+    # Email in production/staging, and also in development so /crash tests notify
+    if Rails.env.production? || Rails.env.staging? || Rails.env.development?
       SafeNotifier.email(exception, context: context)
     end
   end
