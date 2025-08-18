@@ -61,7 +61,6 @@ class MessagesController < ApplicationController
         .event('message.soft_delete')
         .with_properties(task_id: @task.id)
         .log("Soft-deleted Message ##{@message.id}")
-      redirect_to product_task_path(@task.product, @task), notice: 'Message deleted successfully.'
     else
       @message.destroy
       activity('user_activity')
@@ -70,8 +69,8 @@ class MessagesController < ApplicationController
         .event('message.destroy')
         .with_properties(task_id: @task.id)
         .log("Destroyed Message ##{@message.id}")
-      redirect_to product_task_path(@task.product, @task), notice: 'Message deleted successfully.'
     end
+    redirect_to product_task_path(@task.product, @task), notice: 'Message deleted successfully.'
   end
 
   private

@@ -47,7 +47,7 @@ class DefectController < ApplicationController
   def create
     @defect = Defect.new(defect_params)
     @defect.creator = current_user
-    
+
     if @defect.save
       redirect_to @defect, notice: 'Defect created successfully'
     else
@@ -172,7 +172,7 @@ class DefectController < ApplicationController
   private
 
   def load_resources
-    @qa_modules = QaModule.modules.active  # Only parent modules
+    @qa_modules = QaModule.modules.active # Only parent modules
     @banking_types = BankingType.active
     @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
   end
@@ -182,11 +182,11 @@ class DefectController < ApplicationController
     @banking_types = BankingType.active
     @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
     # Initialize submodules if editing an existing defect
-    if @defect.persisted? && @defect.qa_module_id
-      @submodules = QaModule.where(parent_id: @defect.qa_module_id).active
-    else
-      @submodules = []
-    end
+    @submodules = if @defect.persisted? && @defect.qa_module_id
+                    QaModule.where(parent_id: @defect.qa_module_id).active
+                  else
+                    []
+                  end
   end
 
   def set_defect
@@ -194,16 +194,16 @@ class DefectController < ApplicationController
   end
 
   def defect_params
-  params.require(:defect).permit(
-    :summary,
-    :content,
-    :qa_module_id,
-    :submodule_id,
-    :banking_type_id,
-    :priority,
-    :groupware_id,
-    :status,
-    user_ids: []
-  )
-end
+    params.require(:defect).permit(
+      :summary,
+      :content,
+      :qa_module_id,
+      :submodule_id,
+      :banking_type_id,
+      :priority,
+      :groupware_id,
+      :status,
+      user_ids: []
+    )
+  end
 end

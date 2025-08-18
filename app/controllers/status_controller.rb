@@ -63,12 +63,8 @@ class StatusController < ApplicationController
   end
 
   def destroy
-    if audit_soft_delete(@status)
-      redirect_to status_index_path
-    else
-      @status.destroy
-      redirect_to status_index_path
-    end
+    @status.destroy unless audit_soft_delete(@status)
+    redirect_to status_index_path
     activity('user_activity')
       .caused_by(current_user)
       .performed_on(@status)

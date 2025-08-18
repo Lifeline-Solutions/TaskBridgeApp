@@ -3,7 +3,7 @@ class EmailDispatchJob < ApplicationJob
 
   def perform(email_id)
     email = Email.find_by(id: email_id)
-    return unless email && email.status_queued?
+    return unless email&.status_queued?
 
     email.mark_sending!
     # Defense-in-depth: compute filtered recipients right before send
