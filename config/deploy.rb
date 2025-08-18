@@ -42,4 +42,16 @@ set :keep_releases, 5
 # Uncomment the following to require manually verifying the host key before first deploy.
 # set :ssh_options, verify_host_key: :secure
 
+# Path on your local repo to the ERB template above
+set :maintenance_template_path, File.expand_path('templates/maintenance.html.erb', __dir__)
+
+# Where the generated maintenance.html will live on the server
+# (served via public/system symlink)
+set :maintenance_dir, -> { File.join(shared_path, 'system') }
+
+# Optional but nice: show your app name in the page
+set :application, 'CSPM' unless fetch(:application, nil)
+
+# Make sure public/system is a shared (linked) dir so Nginx can find the file
+set :linked_dirs, fetch(:linked_dirs, []) | %w[log tmp/pids tmp/cache tmp/sockets vendor/bundle public/system storage]
 

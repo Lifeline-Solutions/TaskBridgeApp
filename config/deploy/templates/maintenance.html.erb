@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title><%= @app_name || "Application" %> | Maintenance</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin:0; padding:0; background:#0b1020; color:#e7e9ee; }
+    .wrap { max-width: 640px; margin: 10vh auto; padding: 2rem; text-align:center; }
+    h1 { font-size: 2rem; margin-bottom: .5rem; }
+    p  { line-height: 1.6; opacity:.9; }
+    .card { background:#121a35; border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+    .muted { opacity:.7; font-size:.95rem; }
+    code { background:#0f1530; padding:.15rem .35rem; border-radius:6px;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>We’ll be right back</h1>
+      <p><%= @reason || "We’re deploying a new release." %></p>
+      <% if @until.present? %>
+        <p class="muted">Estimated time: <strong><%= @until %></strong></p>
+      <% end %>
+      <p class="muted">Request ID: <code><%= SecureRandom.hex(6) %></code></p>
+    </div>
+  </div>
+</body>
+</html>

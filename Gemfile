@@ -78,6 +78,7 @@ gem 'active_storage_validations'
 gem 'axlsx'
 gem 'cancancan', '~> 3.5'
 gem 'capistrano'
+gem 'capistrano-maintenance', require: false
 gem 'capistrano-passenger'
 gem 'capistrano-rails'
 gem 'capistrano-rbenv'
