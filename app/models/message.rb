@@ -1,7 +1,9 @@
 # app/models/message.rb
 class Message < ApplicationRecord
-  belongs_to :user
   belongs_to :task
+
+  belongs_to :author, class_name: 'User', foreign_key: 'user_id', inverse_of: :authored_messages
+  has_and_belongs_to_many :users
 
   has_rich_text :content # This stores the rich text in `action_text_rich_texts`.
   has_many_attached :attachments # Allows multiple file uploads.
