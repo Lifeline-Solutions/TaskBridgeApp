@@ -139,6 +139,7 @@ class ProductController < ApplicationController
   def create
     @product = Product.new(product_params)
     @product.user_id = current_user.id
+    audit_on_create(@product)
 
     # Validate presence of name, description, and content (subject)
     @product.errors.add(:content, "can't be blank") if @product.content.blank?
@@ -183,10 +184,11 @@ class ProductController < ApplicationController
   end
 
   def update
+    audit_on_update(@product)
     if @product.update(product_params)
       redirect_to product_path(@product), notice: 'Product was successfully updated.'
     else
-      Sentry.capture_message('Product update failed', extra: { errors: @product.errors.full_messages, params: params })
+      SafeNotifier.email(StandardError.new('Product update failed'), context: { errors: @product.errors.full_messages, params: params.to_unsafe_h })
       render :edit, status: :unprocessable_entity
     end
   end
@@ -200,8 +202,26 @@ class ProductController < ApplicationController
       @product.user = current_user
       @product.users << user
 
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@product)
+        .event('product.assign_user')
+        .with_properties(user_id: user.id)
+        .log("Assigned #{user.name} to Product ##{@product.id}")
+
       assigned_user = user
-      UserMailer.assign_product_email(@product.user, @product, current_user, assigned_user).deliver_later
+      Messaging::EmailSender
+        .send_email(
+          'Product Assignment',
+          to: [assigned_user.email],
+          actor: current_user,
+          priority: :normal,
+          type: 'product_assign'
+        )
+        .use_template(view: 'user_mailer/assign_product_email', assigns: { user: assigned_user, product: @product, current_user:, assigned_user: })
+        .set_source('product', @product.id)
+        .set_party('user', assigned_user.id)
+        .send(queue: true)
       # @product.users.each do |product_user|
       #  next if product_user == current_user
 
@@ -218,11 +238,29 @@ class ProductController < ApplicationController
     @product.statuses.clear
     @product.user = current_user
     @product.statuses << status
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@product)
+      .event('product.status_update')
+      .with_properties(status_id: status.id, status_name: status.name)
+      .log("Updated Product ##{@product.id} status to #{status.name}")
 
     # Send an email to the developers and select the
-    assigned_user = @product.users.pluck(:id)
-
-    UserMailer.finance_sales_email(@product, assigned_user, current_user).deliver_later
+    @product.users.each do |u|
+      subject = "Project Payment Status for #{@product.client.name} for #{@product.groupwares.map(&:name).join(', ').presence} milestone"
+      Messaging::EmailSender
+        .send_email(
+          subject,
+          to: [u.email],
+          actor: current_user,
+          priority: :normal,
+          type: 'finance_sales'
+        )
+        .use_template(view: 'user_mailer/finance_sales_email', assigns: { product: @product, assigned_user: u, current_user: })
+        .set_source('product', @product.id)
+        .set_party('user', u.id)
+        .send(queue: true)
+    end
     redirect_to product_path(@product), notice: 'Product status was successfully updated.'
   end
 
@@ -230,12 +268,22 @@ class ProductController < ApplicationController
     @product = Product.find(params[:id])
     user = User.find(params[:user_id])
     @product.users.delete(user)
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@product)
+      .event('product.unassign_user')
+      .with_properties(user_id: user.id)
+      .log("Unassigned #{user.name} from Product ##{@product.id}")
     redirect_to @product, notice: "#{user.name}  was successfully removed."
   end
 
   def destroy
-    @product.destroy
-    redirect_to product_index_path, notice: 'Product was successfully destroyed.'
+    if audit_soft_delete(@product)
+      redirect_to product_index_path, notice: 'Product was successfully deleted.'
+    else
+      @product.destroy
+      redirect_to product_index_path, notice: 'Product was successfully destroyed.'
+    end
   end
 
   private

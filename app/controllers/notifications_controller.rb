@@ -8,6 +8,11 @@ class NotificationsController < ApplicationController
   def mark_as_read
     @notification = current_user.notifications.find(params[:id])
     if @notification.update(read: true)
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@notification)
+        .event('notification.mark_as_read')
+        .log('Notification marked as read')
       redirect_to notifications_path, notice: 'Notification marked as read.'
     else
       redirect_to notifications_path, alert: 'Failed to mark notification as read.'
@@ -16,7 +21,14 @@ class NotificationsController < ApplicationController
 
   def send_email
     user_email = params[:email]
-    UserMailer.mention_notification(user_email).deliver_later
+    Messaging::EmailSender
+      .send_email('Notification', body: '<p>You have a new notification</p>', to: [user_email], actor: Current.user, priority: :normal, type: 'notification')
+      .send(queue: true)
+    activity('user_activity')
+      .caused_by(current_user)
+      .event('notification.email_sent')
+      .with_properties(email: user_email)
+      .log('Notification email queued')
     render json: { message: 'Email sent successfully' }, status: :ok
   rescue StandardError => e
     render json: { error: e.message }, status: :unprocessable_entity

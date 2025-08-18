@@ -14,14 +14,34 @@ class CommentsController < ApplicationController
     @comment.project = @project
     @comment.user = current_user
     @comment.status = @ticket.statuses.pluck('statuses.name').first
+    audit_on_create(@comment)
 
     respond_to do |format|
       if @comment.save
-        # Send email to the selected users
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@comment)
+          .event('comment.create')
+          .with_properties(ticket_id: @ticket.id, project_id: @project.id)
+          .log("Created Comment ##{@comment.id} on Ticket ##{@ticket.id}")
+        # Send email ONLY to explicitly selected users
         selected_users = User.where(id: comment_params[:user_ids])
 
         selected_users.each do |comment_user|
-          UserMailer.new_comment_email(comment_user, @comment, current_user, @project, @ticket).deliver_later
+          next if comment_user.email.blank?
+
+          Messaging::EmailSender
+            .send_email(
+              "Root Cause Analysis for Ticket ID #{@ticket.unique_id}.",
+              to: [comment_user.email],
+              actor: current_user,
+              priority: :normal,
+              type: 'comment_create'
+            )
+            .use_template(view: 'user_mailer/new_comment_email', assigns: { user: comment_user, comment: @comment, current_user:, project: @project, ticket: @ticket })
+            .set_source('comment', @comment.id)
+            .set_party('user', comment_user.id)
+            .send(queue: true)
         end
 
         format.html { redirect_to project_ticket_path(@project, @ticket), notice: 'Comment was successfully created.' }
@@ -33,8 +53,24 @@ class CommentsController < ApplicationController
 
   def destroy
     @comment = @ticket.comments.find(params[:id])
-    @comment.destroy
-    redirect_to project_ticket_path(@project, @ticket)
+    if audit_soft_delete(@comment)
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@comment)
+        .event('comment.soft_delete')
+        .with_properties(ticket_id: @ticket.id)
+        .log("Soft-deleted Comment ##{@comment.id}")
+      redirect_to project_ticket_path(@project, @ticket)
+    else
+      @comment.destroy
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@comment)
+        .event('comment.destroy')
+        .with_properties(ticket_id: @ticket.id)
+        .log("Destroyed Comment ##{@comment.id}")
+      redirect_to project_ticket_path(@project, @ticket)
+    end
   end
 
   def edit; end
@@ -43,9 +79,16 @@ class CommentsController < ApplicationController
     @comment = @ticket.comments.find(params[:id])
     @comment.project = @project
     @comment.user = current_user
+    audit_on_update(@comment)
 
     respond_to do |format|
       if @comment.update(comment_params)
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@comment)
+          .event('comment.update')
+          .with_properties(ticket_id: @ticket.id)
+          .log("Updated Comment ##{@comment.id}")
         format.html { redirect_to project_ticket_path(@project, @ticket), notice: 'Comment was successfully updated.' }
       else
         format.html { render 'edit', status: :unprocessable_entity }

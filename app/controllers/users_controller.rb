@@ -21,8 +21,14 @@ class UsersController < ApplicationController
   def edit; end
 
   def update
+    audit_on_update(@user)
     respond_to do |format|
       if @user.update(filtered_user_params)
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@user)
+          .event('user.update')
+          .log('User updated')
         format.html { redirect_to users_path, notice: 'User was successfully updated.' }
       else
         format.html { render :edit, status: :unprocessable_entity }
@@ -40,6 +46,12 @@ class UsersController < ApplicationController
   def status
     @user = User.find(params[:id])
     @user.toggle_boolean(:active)
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@user)
+      .event('user.toggle_status')
+      .with_properties(active: @user.active)
+      .log('User status toggled')
     redirect_to users_path, notice: 'User status was successfully updated.'
   end
 

@@ -29,7 +29,14 @@ class DataCenterController < ApplicationController
       respond_to do |format|
         format.html # renders view
         filename = "ticket_status_report_ceo_#{Date.today}.xlsx"
-        format.xlsx { send_data @xlsx_data, filename: filename }
+        format.xlsx do
+          activity('user_activity')
+            .caused_by(current_user)
+            .event('report.download')
+            .with_properties(kind: 'cease_fire_report_ceo', filename: filename)
+            .log('Report downloaded')
+          send_data @xlsx_data, filename: filename
+        end
       end
     elsif params[:client_id].present? || params[:start_date].present? || params[:end_date].present? || params[:status].present?
 
@@ -62,7 +69,14 @@ class DataCenterController < ApplicationController
         format.html # renders view
         client_name = params[:client_id].present? ? Client.find(params[:client_id]).name : 'all_clients'
         filename = "ticket_status_report_#{client_name}_#{Date.today}.xlsx"
-        format.xlsx { send_data @xlsx_data, filename: filename }
+        format.xlsx do
+          activity('user_activity')
+            .caused_by(current_user)
+            .event('report.download')
+            .with_properties(kind: 'cease_fire_report', filename: filename, client_id: params[:client_id])
+            .log('Report downloaded')
+          send_data @xlsx_data, filename: filename
+        end
       end
     else
       @tickets = Ticket.none
@@ -80,7 +94,26 @@ class DataCenterController < ApplicationController
     encoded_xlsx_data = Base64.encode64(xlsx_data)
 
     # Use the email from the client model
-    UserMailer.cease_fire_report_email(client.client_contact_person_email, client.client_contact_person, client.name, encoded_xlsx_data).deliver_later
+    if client.client_contact_person_email.present?
+      Messaging::EmailSender
+        .send_email(
+          "Cease Fire Report for #{client.name}",
+          body: "<p>Dear #{client.client_contact_person},</p><p>Please find attached the cease fire report for #{client.name}.</p>",
+          to: [client.client_contact_person_email],
+          actor: current_user,
+          priority: :normal,
+          type: 'cease_fire_report'
+        )
+        .set_source('client', client.id)
+        .set_party('user', current_user.id)
+        .add_attachment_content(bytes: Base64.decode64(encoded_xlsx_data), filename: "ticket_status_report_#{client.name}_#{Date.today}.xlsx", content_type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        .send(queue: true)
+    end
+    activity('user_activity')
+      .caused_by(current_user)
+      .event('report.email_sent')
+      .with_properties(kind: 'cease_fire_report', client_id: client.id, email: client.client_contact_person_email)
+      .log('Report emailed')
 
     # Flash a message indicating the email has been sent
     flash[:notice] = "Report sent to #{client.client_contact_person_email}"
@@ -89,7 +122,14 @@ class DataCenterController < ApplicationController
       format.html # renders view
       client_name = params[:client_id].present? ? Client.find(params[:client_id]).name : 'all_clients'
       filename = "ticket_status_report_#{client_name}_#{Date.today}.xlsx"
-      format.xlsx { send_data @xlsx_data, filename: filename }
+      format.xlsx do
+        activity('user_activity')
+          .caused_by(current_user)
+          .event('report.download')
+          .with_properties(kind: 'cease_fire_report', filename: filename, client_id: params[:client_id])
+          .log('Report downloaded')
+        send_data @xlsx_data, filename: filename
+      end
     end
   end
 
@@ -112,7 +152,15 @@ class DataCenterController < ApplicationController
       respond_to do |format|
         format.html # Default view
         client_name = Client.find(params[:client_id]).name if params[:client_id].present?
-        format.csv { send_data generate_breach_details_csv(@tickets), filename: "breach__report_for_#{client_name}_#{Date.today}.csv" }
+        format.csv do
+          filename = "breach__report_for_#{client_name}_#{Date.today}.csv"
+          activity('user_activity')
+            .caused_by(current_user)
+            .event('report.download')
+            .with_properties(kind: 'breach_report', filename: filename, client_id: params[:client_id])
+            .log('Report downloaded')
+          send_data generate_breach_details_csv(@tickets), filename: filename
+        end
       end
     else
       @tickets = Ticket.none
@@ -142,7 +190,15 @@ class DataCenterController < ApplicationController
 
       respond_to do |format|
         format.html # Default view
-        format.csv { send_data generate_user_csv(@users), filename: "user_report_#{Date.today}.csv" }
+        format.csv do
+          filename = "user_report_#{Date.today}.csv"
+          activity('user_activity')
+            .caused_by(current_user)
+            .event('report.download')
+            .with_properties(kind: 'user_report', filename: filename, user_id: params[:user_id], start_date: params[:start_date], end_date: params[:end_date])
+            .log('Report downloaded')
+          send_data generate_user_csv(@users), filename: filename
+        end
       end
     else
       @users = User.none
@@ -251,6 +307,11 @@ class DataCenterController < ApplicationController
           end_str = (params[:end_date].presence && Date.parse(params[:end_date]).strftime('%d-%m-%Y')) || Date.today.strftime('%d-%m-%Y')
           time_str = Time.now.strftime('%I-%M_%p')
           filename = "Team Report for #{team_name}_#{start_str}_to_#{end_str}_at_#{time_str}.csv"
+          activity('user_activity')
+            .caused_by(current_user)
+            .event('report.download')
+            .with_properties(kind: 'project_report', filename: filename, team_id: @team.id, start_date: params[:start_date], end_date: params[:end_date], all_tickets: params[:all_tickets].present?)
+            .log('Report downloaded')
           send_data generate_project_report_csv(csv_tickets), filename: filename
         end
       end
@@ -524,10 +585,33 @@ class DataCenterController < ApplicationController
           .distinct
 
         if tagged_tickets.any?
-          UserMailer.daily_ticket_email(user, tagged_tickets.to_a, mail_options).deliver_later
+          Messaging::EmailSender
+            .send_email(
+              "Daily Ticket Report for #{user.name}",
+              body: '<p>Please find your daily ticket report.</p>',
+              to: [user.email],
+              cc: mail_options[:cc],
+              actor: current_user,
+              priority: :normal,
+              type: 'daily_ticket_report'
+            )
+            .set_source('team', team.id)
+            .set_party('user', user.id)
+            .send(queue: true)
         elsif report_type == 'closed'
-          # Send an empty notice for the user with no closed/resolved/declined tickets
-          UserMailer.daily_ticket_email(user, [], mail_options).deliver_later
+          Messaging::EmailSender
+            .send_email(
+              "Daily Ticket Report for #{user.name}",
+              body: '<p>No closed/resolved/declined tickets in the last 24 hours.</p>',
+              to: [user.email],
+              cc: mail_options[:cc],
+              actor: current_user,
+              priority: :normal,
+              type: 'daily_ticket_report_empty'
+            )
+            .set_source('team', team.id)
+            .set_party('user', user.id)
+            .send(queue: true)
         end
       end
 
@@ -551,7 +635,20 @@ class DataCenterController < ApplicationController
 
     team.users.each do |user|
       user_tickets = base_scope.where(taggings: { user_id: user.id }).distinct
-      UserMailer.morning_ticket_email(user, user_tickets.to_a).deliver_later if user_tickets.any?
+      next unless user_tickets.any?
+
+      Messaging::EmailSender
+        .send_email(
+          "Start of Day Ticket Report for #{user.name}",
+          body: '<p>Please find your SOD ticket report.</p>',
+          to: [user.email],
+          actor: current_user,
+          priority: :normal,
+          type: 'morning_ticket_report'
+        )
+        .set_source('team', team.id)
+        .set_party('user', user.id)
+        .send(queue: true)
     end
 
     redirect_back fallback_location: root_path, notice: 'Ticket emails sent to team members.'

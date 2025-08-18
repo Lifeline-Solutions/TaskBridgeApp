@@ -32,7 +32,21 @@ class DailyReportJob < ApplicationJob
         .order('add_statuses.updated_at DESC')
         .distinct
 
-      UserMailer.daily_ticket_email(user, tagged_tickets.to_a, mail_options).deliver_later if tagged_tickets.any?
+      next unless tagged_tickets.any? && user.email.present?
+
+      Messaging::EmailSender
+        .send_email(
+          "Daily Ticket Report for #{user.name}",
+          body: '<p>Please find your daily ticket report.</p>',
+          to: [user.email],
+          cc: mail_options[:cc],
+          actor: nil,
+          priority: :normal,
+          type: 'daily_ticket_report'
+        )
+        .set_source('team', team.id)
+        .set_party('user', user.id)
+        .send(queue: true)
     end
   end
 end

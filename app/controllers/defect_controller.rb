@@ -69,9 +69,16 @@ class DefectController < ApplicationController
 
   def create
     @defect = Defect.new(defect_params)
+    audit_on_create(@defect)
 
     respond_to do |format|
       if @defect.save
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@defect)
+          .event('defect.create')
+          .with_properties(product_id: @defect.product_id)
+          .log("Created Defect ##{@defect.id}")
         format.html { redirect_to defect_index_path, notice: 'Defect was successfully created.' }
       else
         format.html { render :new, status: :unprocessable_entity }
@@ -80,7 +87,14 @@ class DefectController < ApplicationController
   end
 
   def update
+    audit_on_update(@defect)
     if @defect.update(defect_params)
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@defect)
+        .event('defect.update')
+        .with_properties(product_id: @defect.product_id)
+        .log("Updated Defect ##{@defect.id}")
       redirect_to @defect, notice: 'Defect was successfully updated.'
     else
       render :edit
@@ -88,8 +102,22 @@ class DefectController < ApplicationController
   end
 
   def destroy
-    @defect.destroy
-    redirect_to defects_url, notice: 'Defect was successfully destroyed.'
+    if audit_soft_delete(@defect)
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@defect)
+        .event('defect.soft_delete')
+        .log("Soft-deleted Defect ##{@defect.id}")
+      redirect_to defects_url, notice: 'Defect was successfully deleted.'
+    else
+      @defect.destroy
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@defect)
+        .event('defect.destroy')
+        .log("Destroyed Defect ##{@defect.id}")
+      redirect_to defects_url, notice: 'Defect was successfully destroyed.'
+    end
   end
 
   # add a user to the defect
@@ -99,6 +127,12 @@ class DefectController < ApplicationController
     else
       user = User.find(params[:user_id])
       @defect.users << user
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@defect)
+        .event('defect.assign_user')
+        .with_properties(user_id: user.id)
+        .log("Assigned #{user.name} to Defect ##{@defect.id}")
       redirect_to defect_path(@defect), notice: "#{user.name}  was successfully assigned."
     end
   end
@@ -107,6 +141,12 @@ class DefectController < ApplicationController
     @defect = Defect.find(params[:id])
     user = User.find(params[:user_id])
     @defect.users.delete(user)
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@defect)
+      .event('defect.unassign_user')
+      .with_properties(user_id: user.id)
+      .log("Unassigned #{user.name} from Defect ##{@defect.id}")
     redirect_to defect_path(@defect), notice: "#{user.name} was successfully removed from the defect."
   end
 

@@ -20,6 +20,13 @@ class IssuesController < ApplicationController
     @issue.project = @project
     @issue.user = current_user
     @issue.message_type ||= 'external'
+    audit_on_create(@issue)
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@issue)
+      .event('issue.create')
+      .with_properties(project_id: @project.id, ticket_id: @ticket.id, message_type: @issue.message_type)
+      .log('Issue created')
 
     if @issue.content.blank?
       @issue.errors.add(:content, 'Message cannot be blank.')
@@ -42,10 +49,27 @@ class IssuesController < ApplicationController
         current_user.add_role :creator, @issue
 
         if @issue.message_type == 'external'
-          recipients = @ticket.users.to_a
-          recipients << @ticket.user unless recipients.include?(@ticket.user)
-          recipients.each do |recipient|
-            UserMailer.issue_created_email(recipient, @issue, @project, @ticket, current_user).deliver_later
+          # Notify only the current assignee and project owner by default
+          assignee = @ticket.users.first || @project.user
+          owner = @project.user
+          recipients = [assignee, owner].compact.uniq
+
+          recipients.each do |target|
+            next if target.email.blank?
+
+            Messaging::EmailSender
+              .send_email(
+                "New Message for Ticket ##{@ticket.unique_id}",
+                to: [target.email],
+                actor: Current.user,
+                priority: :normal,
+                type: 'issue_created'
+              )
+              .use_template(view: 'user_mailer/issue_created_email', assigns: { user: target, issue: @issue, project: @project, ticket: @ticket,
+                                                                                current_user: Current.user })
+              .set_source('ticket', @ticket.id)
+              .set_party('user', Current.user&.id)
+              .send(queue: true)
           end
         end
 
@@ -83,6 +107,13 @@ class IssuesController < ApplicationController
   end
 
   def update
+    audit_on_update(@issue)
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@issue)
+      .event('issue.update')
+      .with_properties(project_id: @project.id, ticket_id: @ticket.id)
+      .log('Issue updated')
     respond_to do |format|
       if @issue.update(issue_params)
         send_email_notifications(@issue, current_user)
@@ -113,7 +144,17 @@ class IssuesController < ApplicationController
   end
 
   def destroy
-    @issue.destroy
+    if audit_soft_delete(@issue)
+      # soft-deleted
+    else
+      @issue.destroy
+    end
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@issue)
+      .event('issue.destroy')
+      .with_properties(project_id: @project.id, ticket_id: @ticket.id)
+      .log('Issue removed')
     respond_to do |format|
       format.turbo_stream do
         render turbo_stream: turbo_stream.remove(dom_id(@issue))
@@ -141,11 +182,23 @@ class IssuesController < ApplicationController
     @issue = @ticket.issues.find(params[:id])
   end
 
-  def send_email_notifications(issue, sender)
+  def send_email_notifications(_issue, sender)
     selected_users = User.where(id: params.dig(:team, :user_ids)) # Safely fetch user IDs
+    return if selected_users.blank?
 
     selected_users.each do |user|
-      UserMailer.mention_user_in_issue(user, issue, sender, @project, @ticket).deliver_later
+      Messaging::EmailSender
+        .send_email(
+          "New Comment on Ticket ##{@ticket.unique_id}",
+          to: [user.email],
+          actor: sender,
+          priority: :normal,
+          type: 'mention_issue'
+        )
+        .use_template(view: 'user_mailer/mention_user_in_issue', assigns: { user:, issue: @issue, sender:, project: @project, ticket: @ticket })
+        .set_source('ticket', @ticket.id)
+        .set_party('user', sender.id)
+        .send(queue: true)
     end
   end
 
