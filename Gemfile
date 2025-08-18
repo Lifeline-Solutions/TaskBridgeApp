@@ -54,6 +54,7 @@ end
 
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
+  gem 'capistrano-maintenance', require: false
   gem 'web-console'
 
   # Add speed badges [https://github.com/MiniProfiler/rack-mini-profiler]
@@ -78,7 +79,6 @@ gem 'active_storage_validations'
 gem 'axlsx'
 gem 'cancancan', '~> 3.5'
 gem 'capistrano'
-gem 'capistrano-maintenance', require: false
 gem 'capistrano-passenger'
 gem 'capistrano-rails'
 gem 'capistrano-rbenv'
