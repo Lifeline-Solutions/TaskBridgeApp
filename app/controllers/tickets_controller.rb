@@ -200,12 +200,8 @@ class TicketsController < ApplicationController
       .event('ticket.destroy')
       .with_properties(project_id: @project.id)
       .log('Ticket destroyed')
-    if audit_soft_delete(@ticket)
-      redirect_to project_path(@project)
-    else
-      @ticket.destroy
-      redirect_to project_path(@project)
-    end
+    @ticket.destroy unless audit_soft_delete(@ticket)
+    redirect_to project_path(@project)
   end
 
   # Render edit form (logic handled in view)
