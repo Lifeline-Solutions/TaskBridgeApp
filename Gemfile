@@ -77,6 +77,7 @@ end
 # gems to be used
 gem 'active_storage_validations'
 gem 'axlsx'
+gem 'bcrypt_pbkdf', '~> 1.1'
 gem 'cancancan', '~> 3.5'
 gem 'capistrano'
 gem 'capistrano-passenger'
@@ -90,6 +91,7 @@ gem 'country_select', '~> 10.0'
 gem 'devise', '~> 4.9'
 gem 'devise_invitable', '~> 2.0'
 gem 'dotenv-rails', groups: %i[development test]
+gem 'ed25519', '~> 1.2'
 gem 'groupdate'
 gem 'mini_magick', '~> 4.13'
 gem 'ostruct'
