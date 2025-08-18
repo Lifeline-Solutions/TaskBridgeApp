@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # Add this concern to models you want to soft delete and filter by default.
 # It adds a default_scope to hide soft-deleted rows and helpers to query/delete.
 module SoftDeletable

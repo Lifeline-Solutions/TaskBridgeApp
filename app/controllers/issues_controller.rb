@@ -1,5 +1,6 @@
 class IssuesController < ApplicationController
   include ActionView::RecordIdentifier
+
   before_action :set_project
   before_action :set_ticket
   before_action :set_issue, only: %i[show destroy edit update]

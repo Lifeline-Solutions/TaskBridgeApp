@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_16_130000) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_18_074935) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -127,6 +127,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_16_130000) do
     t.index ["deleted_on"], name: "index_assignees_on_deleted_on"
     t.index ["project_id"], name: "index_assignees_on_project_id"
     t.index ["user_id"], name: "index_assignees_on_user_id"
+  end
+
+  create_table "banking_types", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "boards", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -396,6 +402,13 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_16_130000) do
     t.index ["user_id"], name: "index_messages_on_user_id"
   end
 
+  create_table "messages_users", id: false, force: :cascade do |t|
+    t.uuid "message_id", null: false
+    t.uuid "user_id", null: false
+    t.index ["message_id", "user_id"], name: "index_messages_users_on_message_id_and_user_id"
+    t.index ["user_id", "message_id"], name: "index_messages_users_on_user_id_and_message_id"
+  end
+
   create_table "milestones", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "product_id", null: false
     t.uuid "status_id", null: false
@@ -525,6 +538,14 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_16_130000) do
     t.index ["deleted_on"], name: "index_projects_softwares_on_deleted_on"
     t.index ["project_id", "software_id"], name: "index_projects_softwares_on_project_id_and_software_id", unique: true
     t.index ["software_id", "project_id"], name: "index_projects_softwares_on_software_id_and_project_id", unique: true
+  end
+
+  create_table "qa_modules", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.uuid "parent_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["parent_id"], name: "index_qa_modules_on_parent_id"
   end
 
   create_table "ratings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -817,6 +838,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_16_130000) do
     t.uuid "client_id"
     t.boolean "active", default: true
     t.uuid "location_id"
+    t.string "position"
     t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
     t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
     t.uuid "deleted_by"

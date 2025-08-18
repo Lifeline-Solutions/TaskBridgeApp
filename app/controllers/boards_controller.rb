@@ -54,12 +54,8 @@ class BoardsController < ApplicationController
   end
 
   def destroy
-    if audit_soft_delete(@board)
-      redirect_to product_path(@product)
-    else
-      @board.destroy
-      redirect_to product_path(@product)
-    end
+    @board.destroy unless audit_soft_delete(@board)
+    redirect_to product_path(@product)
     activity('user_activity')
       .caused_by(current_user)
       .performed_on(@board)

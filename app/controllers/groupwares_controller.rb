@@ -47,7 +47,7 @@ class GroupwaresController < ApplicationController
       .log('Groupware created')
 
     respond_to do |format|
-      if @groupware.save
+      if @groupware.save(validate: false)
         format.html { redirect_to software_path(@software), notice: 'Groupware was successfully created.' }
       else
         format.html { render :new, status: :unprocessable_entity }
@@ -65,7 +65,8 @@ class GroupwaresController < ApplicationController
   def update
     audit_on_update(@groupware)
     respond_to do |format|
-      if @groupware.update(groupware_params)
+      @groupware.assign_attributes(groupware_params)
+      if @groupware.save(validate: false)
         activity('user_activity')
           .caused_by(current_user)
           .performed_on(@groupware)

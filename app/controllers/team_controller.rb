@@ -88,15 +88,9 @@ class TeamController < ApplicationController
   end
 
   def destroy
-    if audit_soft_delete(@team)
-      respond_to do |format|
-        format.html { redirect_to team_path, notice: 'Team was successfully deleted.' }
-      end
-    else
-      @team.destroy
-      respond_to do |format|
-        format.html { redirect_to team_path, notice: 'Team was successfully deleted.' }
-      end
+    @team.destroy unless audit_soft_delete(@team)
+    respond_to do |format|
+      format.html { redirect_to team_path, notice: 'Team was successfully deleted.' }
     end
     activity('user_activity')
       .caused_by(current_user)
