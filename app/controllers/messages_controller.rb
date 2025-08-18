@@ -29,7 +29,7 @@ class MessagesController < ApplicationController
         .event('message.create')
         .with_properties(task_id: @task.id, product_id: @task.product_id)
         .log("Created Message ##{@message.id} on Task ##{@task.id}")
-       selected_users = User.where(id: message_params[:user_ids])
+      selected_users = User.where(id: message_params[:user_ids])
       selected_users.each do |message_user|
         UserMailer.new_message_email(message_user, @message, current_user).deliver_later
       end
@@ -67,7 +67,6 @@ class MessagesController < ApplicationController
         .event('message.soft_delete')
         .with_properties(task_id: @task.id)
         .log("Soft-deleted Message ##{@message.id}")
-      redirect_to product_task_path(@task.product, @task), notice: 'Message deleted successfully.'
     else
       @message.destroy
       activity('user_activity')
@@ -76,8 +75,8 @@ class MessagesController < ApplicationController
         .event('message.destroy')
         .with_properties(task_id: @task.id)
         .log("Destroyed Message ##{@message.id}")
-      redirect_to product_task_path(@task.product, @task), notice: 'Message deleted successfully.'
     end
+    redirect_to product_task_path(@task.product, @task), notice: 'Message deleted successfully.'
   end
 
   private
