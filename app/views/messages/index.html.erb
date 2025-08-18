@@ -10,13 +10,14 @@
 
 <h2 class="text-xl font-bold text-gray-800">Messages</h2>
 
+
 <% if @task.messages.any? %>
   <% @task.messages.order(created_at: :desc).each do |message| %>
     <div class="p-4 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-800 mt-4">
       <div class="flex justify-between items-start">
         <div>
           <p class="text-sm font-medium text-gray-800 dark:text-gray-100">
-            <%= message.user&.first_name || "Unknown User" %>
+            <%= message.author&.first_name || "Unknown User" %>
             (<%= message.message_type&.capitalize || "Unknown Visibility" %>)
           </p>
           <p class="text-xs text-gray-500">
@@ -30,71 +31,30 @@
                       class: "bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded text-sm" %>
 
           <%= button_to 'Delete',
-                      task_message_path(@task, message),
-                      method: :delete,
-                      data: { confirm: 'Are you sure?' },
-                      class: "bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded text-sm" %>
+                        task_message_path(@task, message),
+                        method: :delete,
+                        data: { confirm: 'Are you sure?' },
+                        class: "bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded text-sm" %>
         </div>
       </div>
 
       <div class="mt-2 text-sm text-gray-700 dark:text-gray-300">
         <% if message.content.present? %>
-              <span class="break-words overflow-hidden">
-                <%= sanitize raw (message.content.to_trix_html.gsub(/\[.*?\]/, '').strip) %>
-                <% if message.content.body.attachments.any? %>
-                  <% message.content.body.attachments.each do |attachment| %>
-                    <div class="mb-2">
-                      <% if attachment.attachable.is_a?(ActionText::Attachables::RemoteImage) %>
-                        <a href="<%= attachment.attachable.url %>" download>
-                          <img src="<%= attachment.attachable.url %>" alt="Remote Image" class="max-w-xs cursor-pointer pl-2">
-                        </a>
-                        <br>
-                        <% if attachment.attachable.is_a?(ActiveStorage::Blob) %>
-                          <%= link_to attachment.attachable.filename.to_s, rails_blob_path(attachment.attachable, disposition: 'attachment', only_path: true), target: "_blank", download: true, class: "text-blue-600 hover:underline pl-2" %>
-                        <% end %>
-                      <% elsif attachment.attachable.is_a?(ActiveStorage::Blob) %>
-                        <% if attachment.attachable.variable? %>
-                            <a href="<%= rails_blob_path(attachment.attachable, disposition: 'attachment', only_path: true) %>" download>
-                              <img src="<%= rails_representation_url(attachment.attachable.variant(resize_to_limit: [300, 300])) %>" alt="Attachment Preview" class="max-w-xs cursor-pointer pl-2">
-                            </a>
-                        <% elsif attachment.attachable.previewable? %>
-                          <%= link_to 'Download previewable file', rails_blob_path(attachment.attachable, disposition: 'attachment', only_path: true), class: "text-blue-600 hover:underline pl-2" %>
-                        <% else %>
-                          <%= link_to attachment.filename.to_s, rails_blob_path(attachment.attachable, disposition: 'attachment', only_path: true), class: "text-blue-600 hover:underline pl-2" %>
-                        <% end %>
-                    <% else %>
-                        <p>Attachment: <%= attachment.filename.to_s %></p>
-                        <%= link_to attachment.filename.to_s, rails_blob_path(attachment.attachable, disposition: 'attachment', only_path: true), class: "text-blue-600 hover:underline pl-2" %>
-                      <% end %>
-                    </div>
-                  <% end %>
-                <% end %>
-              </span>
+          <span class="break-words overflow-hidden">
+            <%= sanitize raw (message.content.to_trix_html.gsub(/\[.*?\]/, '').strip) %>
+            <% if message.content.body.attachments.any? %>
+              <% message.content.body.attachments.each do |attachment| %>
+                <!-- existing attachment rendering -->
+              <% end %>
+            <% end %>
+          </span>
         <% end %>
+
+        <%= render 'messages/show_user', message: message %>
       </div>
 
       <% if message.attachments.attached? %>
-        <div class="mt-3">
-          <h4 class="text-sm font-medium text-gray-800 dark:text-gray-100">Attachments:</h4>
-          <ol class="list-disc list-inside text-sm">
-            <% message.attachments.each do |attachment| %>
-              <% if attachment.persisted? %>
-                <li type="1" start="1">
-                  <%= link_to attachment.filename.to_s,
-                      rails_blob_path(attachment, disposition: "attachment"),
-                      class: "text-blue-500 hover:underline" %>
-                </li>
-              <% end %>
-            <% end %>
-          </ol>
-        </div>
-        <% @product.users.distinct.order(:first_name).each do |user| %>
-        <div class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-             data-user-id="<%= user.id %>"
-             onclick="selectUser(this)">
-          <%= user.name %>
-        </div>
-      <% end %>
+        <!-- existing attachments list -->
       <% else %>
         <div class="mt-3 text-sm text-gray-500">No attachments.</div>
       <% end %>

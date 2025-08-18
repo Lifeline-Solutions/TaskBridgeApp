@@ -10,7 +10,7 @@
 
     <div id="selectedUsers" class="flex flex-wrap gap-2 mt-2"></div>
     <div id="hiddenUserInputs">
-      <%= hidden_field_tag "team[user_ids][]", "" %>
+      <%= hidden_field_tag "message[user_ids][]", "" %>
     </div>
 
     <div id="userDropdown" class="hidden absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
@@ -74,7 +74,7 @@
       // Add hidden input
       let input = document.createElement("input");
       input.type = "hidden";
-      input.name = "team[user_ids][]";
+      input.name = "message[user_ids][]";
       input.value = userId;
       input.classList.add(`user-input-${userId}`);
       document.getElementById("hiddenUserInputs").appendChild(input);

@@ -75,6 +75,15 @@ class User < ApplicationRecord
   belongs_to :client, optional: true
   belongs_to :location, optional: true
   has_and_belongs_to_many :teams
+  has_and_belongs_to_many :messages
+  has_many :authored_messages,
+           class_name: 'Message',
+           foreign_key: :user_id,
+           inverse_of: :author,
+           dependent: :nullify
+  has_and_belongs_to_many :tagged_messages,
+                          class_name: 'Message',
+                          join_table: 'messages_users'
 
   def assign_default_role
     return if invited_by_id.present?
