@@ -19,7 +19,7 @@ class MessagesController < ApplicationController
 
   def create
     @message = @task.messages.build(message_params)
-    @message.user = current_user
+    @message.author = current_user
     audit_on_create(@message)
     if @message.save
       current_user.add_role :creator, @message
