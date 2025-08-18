@@ -1,10 +1,12 @@
 <%# Shows tagged users for a single message %>
 <% tagged = message.users %>
 <% if tagged.any? %>
-  <p class="mt-2 text-xs text-gray-600 dark:text-gray-400">
-    Tagged:
-    <%= tagged.map { |u| u.first_name.presence || u.email }.join(', ') %>
-  </p>
+  <p class="mt-2 text-xs text-bold">
+    <%= tagged.map { |u|
+      full_name = [u.first_name, u.last_name].reject(&:blank?).join(' ')
+      full_name.presence || u.email
+    }.join(', ')
+    %>  </p>
 <% else %>
   <p class="mt-2 text-xs text-gray-500">No tagged users</p>
 <% end %>
