@@ -32,21 +32,21 @@ class DailyReportJob < ApplicationJob
         .order('add_statuses.updated_at DESC')
         .distinct
 
-      if tagged_tickets.any? && user.email.present?
-        Messaging::EmailSender
-          .send_email(
-            "Daily Ticket Report for #{user.name}",
-            body: "<p>Please find your daily ticket report.</p>",
-            to: [user.email],
-            cc: mail_options[:cc],
-            actor: nil,
-            priority: :normal,
-            type: 'daily_ticket_report'
-          )
-          .set_source('team', team.id)
-          .set_party('user', user.id)
-          .send(queue: true)
-      end
+      next unless tagged_tickets.any? && user.email.present?
+
+      Messaging::EmailSender
+        .send_email(
+          "Daily Ticket Report for #{user.name}",
+          body: '<p>Please find your daily ticket report.</p>',
+          to: [user.email],
+          cc: mail_options[:cc],
+          actor: nil,
+          priority: :normal,
+          type: 'daily_ticket_report'
+        )
+        .set_source('team', team.id)
+        .set_party('user', user.id)
+        .send(queue: true)
     end
   end
 end
