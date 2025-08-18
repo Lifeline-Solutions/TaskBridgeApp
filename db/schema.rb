@@ -527,19 +527,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_16_130000) do
     t.index ["software_id", "project_id"], name: "index_projects_softwares_on_software_id_and_project_id", unique: true
   end
 
-  create_table "qa_modules", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.string "name"
-    t.uuid "parent_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
-    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
-    t.uuid "deleted_by"
-    t.datetime "deleted_on"
-    t.index ["deleted_on"], name: "index_qa_modules_on_deleted_on"
-    t.index ["parent_id"], name: "index_qa_modules_on_parent_id"
-  end
-
   create_table "ratings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.integer "value"
     t.uuid "ticket_id", null: false

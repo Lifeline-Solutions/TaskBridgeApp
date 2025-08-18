@@ -39,7 +39,6 @@ class AuditTablesDb < ActiveRecord::Migration[7.2]
   products_statuses
   projects
   projects_softwares
-  qa_modules
   ratings
   roles
   scripts
