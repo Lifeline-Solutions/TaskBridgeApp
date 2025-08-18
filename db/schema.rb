@@ -129,17 +129,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_16_130000) do
     t.index ["user_id"], name: "index_assignees_on_user_id"
   end
 
-  create_table "banking_types", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.string "name"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
-    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
-    t.uuid "deleted_by"
-    t.datetime "deleted_on"
-    t.index ["deleted_on"], name: "index_banking_types_on_deleted_on"
-  end
-
   create_table "boards", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "status"
     t.uuid "product_id", null: false
