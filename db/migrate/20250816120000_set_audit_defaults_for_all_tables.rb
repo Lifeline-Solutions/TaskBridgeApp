@@ -10,7 +10,6 @@ class SetAuditDefaultsForAllTables < ActiveRecord::Migration[7.2]
     add_tasks
     addusers
     assignees
-    banking_types
     boards
     clients
     comments
