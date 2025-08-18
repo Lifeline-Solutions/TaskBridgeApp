@@ -29,8 +29,14 @@ class StatusController < ApplicationController
   def create
     @status = Status.new(status_params)
     @status.user_id = current_user.id
+    audit_on_create(@status)
     respond_to do |format|
       if @status.save
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@status)
+          .event('status.create')
+          .log('Status created')
         format.html { redirect_to status_index_path, notice: 'Status was successfully created.' }
       else
         format.html { render :new, status: :unprocessable_entity }
@@ -41,8 +47,14 @@ class StatusController < ApplicationController
   def edit; end
 
   def update
+    audit_on_update(@status)
     respond_to do |format|
       if @status.update(status_params)
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@status)
+          .event('status.update')
+          .log('Status updated')
         format.html { redirect_to status_index_path, notice: 'Status was successfully updated.' }
       else
         format.html { render 'edit', status: :unprocessable_entity, alert: 'Status was not updated.' }
@@ -51,8 +63,17 @@ class StatusController < ApplicationController
   end
 
   def destroy
-    @status.destroy
-    redirect_to status_index_path
+    if audit_soft_delete(@status)
+      redirect_to status_index_path
+    else
+      @status.destroy
+      redirect_to status_index_path
+    end
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@status)
+      .event('status.destroy')
+      .log('Status removed')
   end
 
   private

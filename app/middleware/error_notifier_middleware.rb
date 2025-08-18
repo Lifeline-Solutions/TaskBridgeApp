@@ -13,7 +13,13 @@ class ErrorNotifierMiddleware
       ip: env['REMOTE_ADDR']
     }
     ErrorLogger.log(e, context: context)
-    SafeNotifier.email(e, context: context)
+    begin
+      Rails.logger.error("ErrorNotifierMiddleware: captured #{e.class} on #{context[:rack_path]} – notifying…")
+      SafeNotifier.email(e, context: context)
+      Rails.logger.error("ErrorNotifierMiddleware: notify queued/sent for #{e.class}")
+    rescue StandardError => notify_err
+      Rails.logger.warn("ErrorNotifierMiddleware: notify failed (#{notify_err.class}) #{notify_err.message}")
+    end
     raise
   end
 end

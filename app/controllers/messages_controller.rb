@@ -20,8 +20,15 @@ class MessagesController < ApplicationController
   def create
     @message = @task.messages.build(message_params)
     @message.user = current_user
+    audit_on_create(@message)
     if @message.save
       current_user.add_role :creator, @message
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@message)
+        .event('message.create')
+        .with_properties(task_id: @task.id, product_id: @task.product_id)
+        .log("Created Message ##{@message.id} on Task ##{@task.id}")
       render :index, notice: 'Message was successfully assigned.'
     else
       flash.now[:alert] = 'Failed to create the message.'
@@ -32,7 +39,14 @@ class MessagesController < ApplicationController
   def edit; end
 
   def update
+    audit_on_update(@message)
     if @message.update(message_params)
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@message)
+        .event('message.update')
+        .with_properties(task_id: @task.id)
+        .log("Updated Message ##{@message.id}")
       redirect_to product_task_path(@product, @task), notice: 'Message was successfully updated.'
     else
       render :edit
@@ -40,8 +54,24 @@ class MessagesController < ApplicationController
   end
 
   def destroy
-    @message.destroy
-    redirect_to product_task_path(@task.product, @task), notice: 'Message deleted successfully.'
+    if audit_soft_delete(@message)
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@message)
+        .event('message.soft_delete')
+        .with_properties(task_id: @task.id)
+        .log("Soft-deleted Message ##{@message.id}")
+      redirect_to product_task_path(@task.product, @task), notice: 'Message deleted successfully.'
+    else
+      @message.destroy
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@message)
+        .event('message.destroy')
+        .with_properties(task_id: @task.id)
+        .log("Destroyed Message ##{@message.id}")
+      redirect_to product_task_path(@task.product, @task), notice: 'Message deleted successfully.'
+    end
   end
 
   private

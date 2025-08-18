@@ -53,9 +53,15 @@ class TeamController < ApplicationController
 
   def create
     @team = Team.new(team_params)
+    audit_on_create(@team)
 
     respond_to do |format|
       if @team.save
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@team)
+          .event('team.create')
+          .log('Team created')
         format.html { redirect_to team_index_path, notice: 'Team was successfully created.' }
       else
         format.html { render :new, status: :unprocessable_entity }
@@ -66,8 +72,14 @@ class TeamController < ApplicationController
   def edit; end
 
   def update
+    audit_on_update(@team)
     respond_to do |format|
       if @team.update(team_params)
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@team)
+          .event('team.update')
+          .log('Team updated')
         format.html { redirect_to team_index_path, notice: 'Team was successfully updated.' }
       else
         format.html { render :edit, status: :unprocessable_entity }
@@ -76,10 +88,21 @@ class TeamController < ApplicationController
   end
 
   def destroy
-    @team.destroy
-    respond_to do |format|
-      format.html { redirect_to team_path, notice: 'Team was successfully deleted.' }
+    if audit_soft_delete(@team)
+      respond_to do |format|
+        format.html { redirect_to team_path, notice: 'Team was successfully deleted.' }
+      end
+    else
+      @team.destroy
+      respond_to do |format|
+        format.html { redirect_to team_path, notice: 'Team was successfully deleted.' }
+      end
     end
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@team)
+      .event('team.destroy')
+      .log('Team removed')
   end
 
   private

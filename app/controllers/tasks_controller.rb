@@ -15,19 +15,34 @@ class TasksController < ApplicationController
   def create
     @task = @product.tasks.new(task_params)
     @task.user = current_user
+    audit_on_create(@task)
 
     respond_to do |format|
       if @task.save
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@task)
+          .event('task.create')
+          .with_properties(product_id: @product.id)
+          .log("Created Task ##{@task.id} for Product ##{@product.id}")
         # Assign one or more users to the task on creation
         if (assignee_id = params.dig(:task, :user_id).presence)
           assignee = User.find_by(id: assignee_id)
           @task.users << assignee if assignee && !@task.users.include?(assignee)
+          if assignee
+            activity('user_activity')
+              .caused_by(current_user)
+              .performed_on(@task)
+              .event('task.assign_user')
+              .with_properties(user_id: assignee.id)
+              .log("Assigned #{assignee&.name} to Task ##{@task.id}")
+          end
         end
 
         current_user.add_role :creator, @task
         format.html { redirect_to product_path(@product), notice: 'Task was successfully created.' }
       else
-        Sentry.capture_message("Task creation failed: #{@task.errors.full_messages.join(', ')}")
+        SafeNotifier.email(StandardError.new('Task creation failed'), context: { errors: @task.errors.full_messages, product_id: @product.id, params: params.to_unsafe_h })
         Rails.logger.error("Task creation failed: #{@task.errors.full_messages.join(', ')}")
         format.html do
           redirect_to new_product_task_path(@product), notice: 'Task was not created.'
@@ -44,6 +59,7 @@ class TasksController < ApplicationController
   def edit; end
 
   def update
+    audit_on_update(@task)
     if @task.update(task_params)
       redirect_to product_path(@product), notice: 'Task was successfully updated.'
     else
@@ -52,8 +68,12 @@ class TasksController < ApplicationController
   end
 
   def destroy
-    @task.destroy
-    redirect_to product_path(@product), notice: 'Task was successfully deleted.'
+    if audit_soft_delete(@task)
+      redirect_to product_path(@product), notice: 'Task was successfully deleted.'
+    else
+      @task.destroy
+      redirect_to product_path(@product), notice: 'Task was successfully deleted.'
+    end
   end
 
   # Assigning User a Task
@@ -67,9 +87,26 @@ class TasksController < ApplicationController
       user = User.find(params[:user_id])
       @task.users.clear
       @task.users << user
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@task)
+        .event('task.assign_user')
+        .with_properties(user_id: user.id)
+        .log("Assigned #{user.name} to Task ##{@task.id}")
       assigned_user = user # Sending to all users added to the product
       # Send email to the newly assigned user
-      UserMailer.task_assignment_email(user, @task, current_user, assigned_user).deliver_later
+      Messaging::EmailSender
+        .send_email(
+          'You have been assigned to a new task',
+          to: [assigned_user.email],
+          actor: current_user,
+          priority: :normal,
+          type: 'task_assign'
+        )
+        .use_template(view: 'user_mailer/task_assignment_email', assigns: { user: assigned_user, task: @task, current_user:, assigned_user: })
+        .set_source('task', @task.id)
+        .set_party('user', assigned_user.id)
+        .send(queue: true)
       # Send email to all users tagged on the product, except the current user
       # @product.users.each do |product_user|
       #   next if product_user == current_user
@@ -83,6 +120,12 @@ class TasksController < ApplicationController
 
   def remove_task
     @task.users.delete(User.find(params[:user_id]))
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@task)
+      .event('task.unassign_user')
+      .with_properties(user_id: params[:user_id])
+      .log("Unassigned User ##{params[:user_id]} from Task ##{@task.id}")
     redirect_to product_task_path(@product, @task), notice: 'Task was successfully unassigned.'
   end
 
@@ -102,7 +145,26 @@ class TasksController < ApplicationController
 
     @task.statuses.clear
     @task.statuses << status
-    UserMailer.add_state_email(@task.user, @task, current_user).deliver_later
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@task)
+      .event('task.status_update')
+      .with_properties(status_id: status.id, status_name: status.name)
+      .log("Updated Task ##{@task.id} status to #{status.name}")
+    if @task.user&.email.present?
+      Messaging::EmailSender
+        .send_email(
+          'Task State Updated',
+          to: [@task.user.email],
+          actor: current_user,
+          priority: :normal,
+          type: 'task_state_update'
+        )
+        .use_template(view: 'user_mailer/add_state_email', assigns: { user: @task.user, task: @task, current_user: })
+        .set_source('task', @task.id)
+        .set_party('user', @task.user.id)
+        .send(queue: true)
+    end
     redirect_to product_task_path(@product, @task), notice: 'Task status updated.'
   end
 

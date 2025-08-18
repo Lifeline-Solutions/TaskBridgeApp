@@ -4,6 +4,9 @@ class CustomDeviseMailer < Devise::Mailer
   default template_path: 'devise/mailer'
 
   def invitation_instructions(record, token, opts = {})
+    # Never send to deactivated users
+    return if record.respond_to?(:active) && record.active == false
+
     @token = token
     @resource = record
 
@@ -17,7 +20,8 @@ class CustomDeviseMailer < Devise::Mailer
     else
       opts[:from] = 'cspm@craftsilicon.com'
       opts[:subject] = 'Your Support Portal Access (TaskBridge)'
-      super
+      # Use Devise's default rendering but still respect the to: and from: set above
+      super if record.respond_to?(:email) && record.email.present?
     end
   end
 end

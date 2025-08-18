@@ -13,6 +13,9 @@ Rails.application.config.after_initialize do
     }
 
     ErrorLogger.log(exception, context: context)
-    SafeNotifier.email(exception, context: context)   # now sends a payload
+    # Email in production/staging, and also in development so /crash tests notify
+    if Rails.env.production? || Rails.env.staging? || Rails.env.development?
+      SafeNotifier.email(exception, context: context)
+    end
   end
 end

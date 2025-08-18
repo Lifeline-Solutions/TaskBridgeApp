@@ -40,9 +40,15 @@ class SoftwareController < ApplicationController
   def create
     @software = Software.new(software_params)
     @software.user_id = current_user.id
+    audit_on_create(@software)
     respond_to do |format|
       if current_user.has_role?(:admin)
         if @software.save
+          activity('user_activity')
+            .caused_by(current_user)
+            .performed_on(@software)
+            .event('software.create')
+            .log('Software created')
           format.html { redirect_to software_index_path, notice: 'Software was successfully created.' }
         else
           format.html { render :new, status: :unprocessable_entity }
@@ -56,15 +62,30 @@ class SoftwareController < ApplicationController
   def edit; end
 
   def destroy
-    @software.destroy
+    if audit_soft_delete(@software)
+      # soft-deleted
+    else
+      @software.destroy
+    end
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@software)
+      .event('software.destroy')
+      .log('Software removed')
     respond_to do |format|
-      format.html { redirect_to software_index_path, notice: 'Software was successfully destroyed.' }
+      format.html { redirect_to software_index_path, notice: 'Software was successfully deleted.' }
     end
   end
 
   def update
+    audit_on_update(@software)
     respond_to do |format|
       if @software.update(software_params)
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@software)
+          .event('software.update')
+          .log('Software updated')
         format.html { redirect_to software_index_path, notice: 'Software was successfully updated.' }
       else
         format.html { render 'edit', status: :unprocessable_entity }

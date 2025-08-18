@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_16_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -22,6 +22,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.uuid "record_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_action_text_rich_texts_on_deleted_on"
     t.index ["record_type", "record_id", "name"], name: "index_action_text_rich_texts_uniqueness", unique: true
   end
 
@@ -31,7 +36,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.uuid "record_id", null: false
     t.uuid "blob_id", null: false
     t.datetime "created_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
     t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
+    t.index ["deleted_on"], name: "index_active_storage_attachments_on_deleted_on"
     t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
   end
 
@@ -44,13 +54,23 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.bigint "byte_size", null: false
     t.string "checksum"
     t.datetime "created_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_active_storage_blobs_on_deleted_on"
     t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
   end
 
   create_table "active_storage_variant_records", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "blob_id", null: false
     t.string "variation_digest", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+    t.index ["deleted_on"], name: "index_active_storage_variant_records_on_deleted_on"
   end
 
   create_table "add_statuses", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -58,6 +78,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.uuid "status_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_add_statuses_on_deleted_on"
     t.index ["status_id"], name: "index_add_statuses_on_status_id"
     t.index ["ticket_id"], name: "index_add_statuses_on_ticket_id"
   end
@@ -67,6 +92,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.uuid "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_add_tasks_on_deleted_on"
     t.index ["task_id"], name: "index_add_tasks_on_task_id"
     t.index ["user_id"], name: "index_add_tasks_on_user_id"
   end
@@ -76,6 +106,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.uuid "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_addusers_on_deleted_on"
     t.index ["product_id"], name: "index_addusers_on_product_id"
     t.index ["user_id"], name: "index_addusers_on_user_id"
   end
@@ -85,6 +120,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.uuid "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_assignees_on_deleted_on"
     t.index ["project_id"], name: "index_assignees_on_project_id"
     t.index ["user_id"], name: "index_assignees_on_user_id"
   end
@@ -93,6 +133,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_banking_types_on_deleted_on"
   end
 
   create_table "boards", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -101,6 +146,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.uuid "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_boards_on_deleted_on"
     t.index ["product_id"], name: "index_boards_on_product_id"
     t.index ["user_id"], name: "index_boards_on_user_id"
   end
@@ -117,6 +167,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "country_code"
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_clients_on_deleted_on"
     t.index ["name"], name: "index_clients_on_name", unique: true
     t.index ["user_id"], name: "index_clients_on_user_id"
   end
@@ -130,6 +185,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.uuid "user_id"
     t.uuid "project_id"
     t.string "status"
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_comments_on_deleted_on"
     t.index ["project_id"], name: "index_comments_on_project_id"
     t.index ["ticket_id"], name: "index_comments_on_ticket_id"
     t.index ["user_id"], name: "index_comments_on_user_id"
@@ -140,7 +200,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.uuid "client_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
     t.index ["client_id"], name: "index_commonly_selected_clients_on_client_id"
+    t.index ["deleted_on"], name: "index_commonly_selected_clients_on_deleted_on"
     t.index ["user_id"], name: "index_commonly_selected_clients_on_user_id"
   end
 
@@ -161,6 +226,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.string "label"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_defects_on_deleted_on"
     t.index ["groupware_id"], name: "index_defects_on_groupware_id"
     t.index ["product_id"], name: "index_defects_on_product_id"
     t.index ["script_id"], name: "index_defects_on_script_id"
@@ -171,7 +241,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
   create_table "defects_users", id: false, force: :cascade do |t|
     t.uuid "defect_id", null: false
     t.uuid "user_id", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
     t.index ["defect_id", "user_id"], name: "index_defects_users_on_defect_id_and_user_id"
+    t.index ["deleted_on"], name: "index_defects_users_on_deleted_on"
     t.index ["user_id", "defect_id"], name: "index_defects_users_on_user_id_and_defect_id"
   end
 
@@ -180,7 +255,52 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.uuid "product_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_documents_on_deleted_on"
     t.index ["product_id"], name: "index_documents_on_product_id"
+  end
+
+  create_table "emails", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "mail_id"
+    t.string "message_id"
+    t.string "email_type"
+    t.string "status", default: "queued", null: false
+    t.string "priority", default: "normal", null: false
+    t.string "from_address"
+    t.text "to_addresses"
+    t.text "cc_addresses"
+    t.text "bcc_addresses"
+    t.string "subject"
+    t.text "body_html"
+    t.text "body_text"
+    t.string "party_type"
+    t.uuid "party_id"
+    t.string "source_type"
+    t.uuid "source_id"
+    t.jsonb "extra", default: {}
+    t.datetime "dated"
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.datetime "created_on"
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.datetime "modified_on"
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.string "email_conversation_id"
+    t.string "reference_id"
+    t.uuid "read_by"
+    t.datetime "read_on"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_emails_on_created_at"
+    t.index ["mail_id"], name: "index_emails_on_mail_id", unique: true
+    t.index ["message_id"], name: "index_emails_on_message_id"
+    t.index ["party_type", "party_id"], name: "index_emails_on_party_type_and_party_id"
+    t.index ["priority"], name: "index_emails_on_priority"
+    t.index ["source_type", "source_id"], name: "index_emails_on_source_type_and_source_id"
+    t.index ["status"], name: "index_emails_on_status"
   end
 
   create_table "events", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -190,6 +310,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.text "details"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_events_on_deleted_on"
     t.index ["ticket_id"], name: "index_events_on_ticket_id"
     t.index ["user_id"], name: "index_events_on_user_id"
   end
@@ -201,6 +326,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.datetime "updated_at", null: false
     t.string "description"
     t.uuid "user_id"
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_groupwares_on_deleted_on"
     t.index ["software_id"], name: "index_groupwares_on_software_id"
     t.index ["user_id"], name: "index_groupwares_on_user_id"
   end
@@ -208,6 +338,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
   create_table "groupwares_products", id: false, force: :cascade do |t|
     t.uuid "product_id", null: false
     t.uuid "groupware_id", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_groupwares_products_on_deleted_on"
     t.index ["groupware_id", "product_id"], name: "index_groupwares_products_on_groupware_id_and_product_id"
     t.index ["product_id", "groupware_id"], name: "index_groupwares_products_on_product_id_and_groupware_id"
   end
@@ -215,6 +350,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
   create_table "groupwares_projects", id: false, force: :cascade do |t|
     t.uuid "project_id", null: false
     t.uuid "groupware_id", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_groupwares_projects_on_deleted_on"
     t.index ["groupware_id", "project_id"], name: "index_groupwares_projects_on_groupware_id_and_project_id", unique: true
     t.index ["project_id", "groupware_id"], name: "index_groupwares_projects_on_project_id_and_groupware_id", unique: true
   end
@@ -228,6 +368,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.datetime "updated_at", null: false
     t.string "message_type", default: "external"
     t.string "unique_id"
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_issues_on_deleted_on"
     t.index ["project_id"], name: "index_issues_on_project_id"
     t.index ["ticket_id"], name: "index_issues_on_ticket_id"
     t.index ["unique_id"], name: "index_issues_on_unique_id", unique: true
@@ -239,6 +384,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.string "country"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_locations_on_deleted_on"
   end
 
   create_table "messages", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -248,6 +398,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.uuid "task_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_messages_on_deleted_on"
     t.index ["task_id"], name: "index_messages_on_task_id"
     t.index ["user_id"], name: "index_messages_on_user_id"
   end
@@ -261,6 +416,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "paid", default: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_milestones_on_deleted_on"
     t.index ["product_id"], name: "index_milestones_on_product_id"
     t.index ["status_id"], name: "index_milestones_on_status_id"
   end
@@ -272,6 +432,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.boolean "read"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_notifications_on_deleted_on"
     t.index ["ticket_id"], name: "index_notifications_on_ticket_id"
     t.index ["user_id"], name: "index_notifications_on_user_id"
   end
@@ -290,7 +455,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.string "status", default: "draft"
     t.integer "budget"
     t.boolean "archive_status", default: false, null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
     t.index ["client_id"], name: "index_products_on_client_id"
+    t.index ["deleted_on"], name: "index_products_on_deleted_on"
     t.index ["groupware_id"], name: "index_products_on_groupware_id"
     t.index ["script_id"], name: "index_products_on_script_id"
     t.index ["software_id"], name: "index_products_on_software_id"
@@ -300,6 +470,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
   create_table "products_scripts", id: false, force: :cascade do |t|
     t.uuid "product_id", null: false
     t.uuid "script_id", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_products_scripts_on_deleted_on"
     t.index ["product_id", "script_id"], name: "index_products_scripts_on_product_id_and_script_id"
     t.index ["script_id", "product_id"], name: "index_products_scripts_on_script_id_and_product_id"
   end
@@ -307,6 +482,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
   create_table "products_softwares", id: false, force: :cascade do |t|
     t.uuid "product_id", null: false
     t.uuid "software_id", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_products_softwares_on_deleted_on"
     t.index ["product_id", "software_id"], name: "index_products_softwares_on_product_id_and_software_id", unique: true
     t.index ["software_id", "product_id"], name: "index_products_softwares_on_software_id_and_product_id", unique: true
   end
@@ -314,6 +494,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
   create_table "products_statuses", id: false, force: :cascade do |t|
     t.uuid "product_id", null: false
     t.uuid "status_id", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_products_statuses_on_deleted_on"
     t.index ["product_id", "status_id"], name: "index_products_statuses_on_product_id_and_status_id"
     t.index ["status_id", "product_id"], name: "index_products_statuses_on_status_id_and_product_id"
   end
@@ -329,7 +514,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.uuid "software_id"
     t.uuid "groupware_id"
     t.boolean "special", default: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
     t.index ["client_id"], name: "index_projects_on_client_id"
+    t.index ["deleted_on"], name: "index_projects_on_deleted_on"
     t.index ["groupware_id"], name: "index_projects_on_groupware_id"
     t.index ["software_id"], name: "index_projects_on_software_id"
     t.index ["title"], name: "index_projects_on_title", unique: true
@@ -339,6 +529,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
   create_table "projects_softwares", id: false, force: :cascade do |t|
     t.uuid "project_id", null: false
     t.uuid "software_id", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_projects_softwares_on_deleted_on"
     t.index ["project_id", "software_id"], name: "index_projects_softwares_on_project_id_and_software_id", unique: true
     t.index ["software_id", "project_id"], name: "index_projects_softwares_on_software_id_and_project_id", unique: true
   end
@@ -348,6 +543,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.uuid "parent_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_qa_modules_on_deleted_on"
     t.index ["parent_id"], name: "index_qa_modules_on_parent_id"
   end
 
@@ -358,6 +558,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.datetime "updated_at", null: false
     t.uuid "user_id", null: false
     t.string "comment"
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_ratings_on_deleted_on"
     t.index ["ticket_id"], name: "index_ratings_on_ticket_id"
     t.index ["user_id"], name: "index_ratings_on_user_id"
   end
@@ -368,6 +573,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.uuid "resource_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_roles_on_deleted_on"
     t.index ["name", "resource_type", "resource_id"], name: "index_roles_on_name_and_resource_type_and_resource_id"
     t.index ["resource_type", "resource_id"], name: "index_roles_on_resource"
   end
@@ -380,6 +590,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.datetime "updated_at", null: false
     t.string "name"
     t.text "description"
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_scripts_on_deleted_on"
     t.index ["groupware_id"], name: "index_scripts_on_groupware_id"
     t.index ["software_id"], name: "index_scripts_on_software_id"
   end
@@ -392,6 +607,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.string "sla_target_response_deadline"
     t.string "sla_resolution_deadline"
     t.uuid "user_id"
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_sla_tickets_on_deleted_on"
     t.index ["ticket_id"], name: "index_sla_tickets_on_ticket_id"
     t.index ["user_id"], name: "index_sla_tickets_on_user_id"
   end
@@ -402,6 +622,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.uuid "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_softwares_on_deleted_on"
     t.index ["name"], name: "index_softwares_on_name", unique: true
     t.index ["user_id"], name: "index_softwares_on_user_id"
   end
@@ -411,6 +636,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.uuid "task_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_states_on_deleted_on"
     t.index ["task_id"], name: "index_states_on_task_id"
     t.index ["user_id"], name: "index_states_on_user_id"
   end
@@ -420,7 +650,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.uuid "status_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
     t.index ["bug_id"], name: "index_status_bugs_on_bug_id"
+    t.index ["deleted_on"], name: "index_status_bugs_on_deleted_on"
     t.index ["status_id"], name: "index_status_bugs_on_status_id"
   end
 
@@ -429,14 +664,46 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.uuid "user_id", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_statuses_on_deleted_on"
     t.index ["user_id"], name: "index_statuses_on_user_id"
   end
 
   create_table "statuses_tasks", id: false, force: :cascade do |t|
     t.uuid "task_id", null: false
     t.uuid "status_id", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_statuses_tasks_on_deleted_on"
     t.index ["status_id", "task_id"], name: "index_statuses_tasks_on_status_id_and_task_id"
     t.index ["task_id", "status_id"], name: "index_statuses_tasks_on_task_id_and_status_id"
+  end
+
+  create_table "system_activities", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "log_name"
+    t.text "description"
+    t.string "subject_type"
+    t.uuid "subject_id"
+    t.string "causer_type"
+    t.uuid "causer_id"
+    t.jsonb "properties", default: {}
+    t.string "event"
+    t.uuid "batch_uuid"
+    t.datetime "deleted_on"
+    t.uuid "deleted_by"
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["causer_type", "causer_id"], name: "index_system_activities_on_causer_type_and_causer_id"
+    t.index ["created_at"], name: "index_system_activities_on_created_at"
+    t.index ["event"], name: "index_system_activities_on_event"
+    t.index ["subject_type", "subject_id"], name: "index_system_activities_on_subject_type_and_subject_id"
   end
 
   create_table "taggings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -444,6 +711,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.uuid "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_taggings_on_deleted_on"
     t.index ["ticket_id"], name: "index_taggings_on_ticket_id"
     t.index ["user_id"], name: "index_taggings_on_user_id"
   end
@@ -459,6 +731,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.date "end_date"
     t.string "priority"
     t.uuid "tasks_id"
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_tasks_on_deleted_on"
     t.index ["product_id"], name: "index_tasks_on_product_id"
     t.index ["tasks_id"], name: "index_tasks_on_tasks_id"
     t.index ["user_id"], name: "index_tasks_on_user_id"
@@ -469,11 +746,21 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.string "description"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_teams_on_deleted_on"
   end
 
   create_table "teams_users", id: false, force: :cascade do |t|
     t.uuid "team_id", null: false
     t.uuid "user_id", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_teams_users_on_deleted_on"
     t.index ["team_id", "user_id"], name: "index_teams_users_on_team_id_and_user_id"
     t.index ["user_id", "team_id"], name: "index_teams_users_on_user_id_and_team_id"
   end
@@ -497,6 +784,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.integer "update_count", default: -1, null: false
     t.datetime "last_updated_at", precision: nil
     t.date "due_date"
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_tickets_on_deleted_on"
     t.index ["groupware_id"], name: "index_tickets_on_groupware_id"
     t.index ["project_id"], name: "index_tickets_on_project_id"
     t.index ["software_id"], name: "index_tickets_on_software_id"
@@ -508,6 +800,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.uuid "user_id"
     t.json "change_details", default: {}, null: false
     t.datetime "updated_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_update_histories_on_deleted_on"
   end
 
   create_table "users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -544,8 +841,13 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.uuid "client_id"
     t.boolean "active", default: true
     t.uuid "location_id"
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
     t.index ["client_id"], name: "index_users_on_client_id"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
+    t.index ["deleted_on"], name: "index_users_on_deleted_on"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["invitation_token"], name: "index_users_on_invitation_token", unique: true
     t.index ["invited_by_id"], name: "index_users_on_invited_by_id"
@@ -557,6 +859,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
   create_table "users_roles", id: false, force: :cascade do |t|
     t.uuid "user_id"
     t.uuid "role_id"
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_users_roles_on_deleted_on"
     t.index ["role_id"], name: "index_users_roles_on_role_id"
     t.index ["user_id", "role_id"], name: "index_users_roles_on_user_id_and_role_id"
     t.index ["user_id"], name: "index_users_roles_on_user_id"
@@ -569,6 +876,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_14_130114) do
     t.string "item_type", null: false
     t.string "event", null: false
     t.text "object"
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_versions_on_deleted_on"
     t.index ["item_type", "item_id"], name: "index_versions_on_item_type_and_item_id"
   end
 

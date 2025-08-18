@@ -158,6 +158,7 @@ class ProjectController < ApplicationController
   # POST /projects
   def create
     @project = Project.new(project_params)
+    audit_on_create(@project)
     respond_to do |format|
       # Check if the user has the appropriate role
       if current_user.has_role?(:admin) || current_user.has_role?('project_manager')
@@ -169,6 +170,23 @@ class ProjectController < ApplicationController
         elsif @project.save
           @project.users << @project.user if @project.users.empty?
           current_user.add_role :creator, @project
+
+          # Persisted email: notify the initially assigned user on project creation
+          assigned = @project.user
+          if assigned.present? && !assigned.has_role?(:ceo)
+            Messaging::EmailSender
+              .send_email(
+                'Support Desk Assignment',
+                to: [assigned.email],
+                actor: current_user,
+                priority: :normal,
+                type: 'project_create_assign'
+              )
+              .use_template(view: 'user_mailer/assignment_email', assigns: { user: assigned, project: @project, current_user:, assigned_user: assigned })
+              .set_source('project', @project.id)
+              .set_party('user', assigned.id)
+              .send(queue: true)
+          end
           format.html { redirect_to project_path(@project), notice: 'Support Desk was successfully created.' }
         else
           format.html { render :new, status: :unprocessable_entity }
@@ -184,6 +202,7 @@ class ProjectController < ApplicationController
 
   # PATCH/PUT /projects/id
   def update
+    audit_on_update(@project)
     respond_to do |format|
       if @project.update(project_params)
         current_user.add_role :editor, @project
@@ -198,9 +217,13 @@ class ProjectController < ApplicationController
 
   # DELETE /projects/id
   def destroy
-    @project.destroy
+    if audit_soft_delete(@project)
+      # soft-deleted
+    else
+      @project.destroy
+    end
     respond_to do |format|
-      format.html { redirect_to project_url, notice: 'Support Desk was successfully destroyed.' }
+      format.html { redirect_to project_url, notice: 'Support Desk was successfully deleted.' }
     end
   end
 
@@ -222,11 +245,31 @@ class ProjectController < ApplicationController
       @project.user = current_user
       @project.users << user
 
+      # Log explicit assignment activity
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@project)
+        .event('project.assign_user')
+        .with_properties(assigned_user_id: user.id, assigned_user_email: user.email)
+        .log("Assigned #{user.name} to Project ##{@project.id}")
+
       # Send email to the newly assigned user
-      assigned_user = user # Assuming the first user is the assigned user
       # if current user has role :ceo do not send email to the user
 
-      UserMailer.assignment_email(user, @project, current_user, assigned_user).deliver_later unless user.has_role?(:ceo)
+      unless user.has_role?(:ceo)
+        Messaging::EmailSender
+          .send_email(
+            'Support Desk Assignment',
+            to: [user.email],
+            actor: current_user,
+            priority: :normal,
+            type: 'project_assign'
+          )
+          .use_template(view: 'user_mailer/assignment_email', assigns: { user:, project: @project, current_user:, assigned_user: user })
+          .set_source('project', @project.id)
+          .set_party('user', user.id)
+          .send(queue: true)
+      end
       # @project.users.each do |project_user|
       #  next if project_user == current_user
 
@@ -243,10 +286,27 @@ class ProjectController < ApplicationController
     @project.user = current_user
 
     team.users.each do |user|
-      unless @project.users.include?(user)
-        @project.users << user
-        UserMailer.assignment_email(user, @project, current_user, user).deliver_later
-      end
+      next if @project.users.include?(user)
+
+      @project.users << user
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@project)
+        .event('project.add_team_user')
+        .with_properties(team_id: team.id, user_id: user.id)
+        .log("Added #{user.name} to Project ##{@project.id} via Team ##{team.id}")
+      Messaging::EmailSender
+        .send_email(
+          'Support Desk Assignment',
+          to: [user.email],
+          actor: current_user,
+          priority: :normal,
+          type: 'project_assign_team'
+        )
+        .use_template(view: 'user_mailer/assignment_email', assigns: { user:, project: @project, current_user:, assigned_user: user })
+        .set_source('project', @project.id)
+        .set_party('user', user.id)
+        .send(queue: true)
     end
 
     redirect_to @project, notice: 'Team and its users were successfully added to the project.'
@@ -258,6 +318,12 @@ class ProjectController < ApplicationController
 
     team.users.each do |user|
       @project.users.delete(user)
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@project)
+        .event('project.remove_team_user')
+        .with_properties(team_id: team.id, user_id: user.id)
+        .log("Removed #{user.name} from Project ##{@project.id} via Team ##{team.id}")
     end
 
     redirect_to @project, notice: 'Team and its users were successfully removed from the project.'
@@ -267,6 +333,12 @@ class ProjectController < ApplicationController
     @project = Project.find(params[:id])
     user = User.find(params[:user_id])
     @project.users.delete(user)
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@project)
+      .event('project.unassign_user')
+      .with_properties(user_id: user.id)
+      .log("Unassigned #{user.name} from Project ##{@project.id}")
     redirect_to @project, notice: "#{user.name}  was successfully unassigned."
   end
 

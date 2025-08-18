@@ -14,7 +14,9 @@
     <%= stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <%= javascript_importmap_tags %>
-  <%= Sentry.get_trace_propagation_meta.html_safe %>
+  <% if defined?(Sentry) && ENV["SENTRY_DSN"].present? %>
+    <%= Sentry.get_trace_propagation_meta.html_safe %>
+  <% end %>
   <%# <%= javascript_include_tag "controllers/tribute_controller", defer: true %>
   <%= javascript_include_tag "loading" %>
   <%= javascript_include_tag "chartkick" %>

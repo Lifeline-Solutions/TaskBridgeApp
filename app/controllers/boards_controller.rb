@@ -12,6 +12,13 @@ class BoardsController < ApplicationController
   def create
     @board = @product.boards.new(board_params)
     @board.user = current_user
+    audit_on_create(@board)
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@board)
+      .event('board.create')
+      .with_properties(product_id: @product.id)
+      .log('Board created')
 
     respond_to do |format|
       if @board.save
@@ -29,9 +36,16 @@ class BoardsController < ApplicationController
   def edit; end
 
   def update
+    audit_on_update(@board)
     respond_to do |format|
       if @board.update(board_params)
         current_user.add_role :editor, @board
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@board)
+          .event('board.update')
+          .with_properties(product_id: @product.id)
+          .log('Board updated')
         format.html { redirect_to product_path(@product.id), notice: 'Board was successfully updated.' }
       else
         format.html { render 'edit', status: :unprocessable_entity, alert: 'Board was not updated.' }
@@ -40,8 +54,18 @@ class BoardsController < ApplicationController
   end
 
   def destroy
-    @board.destroy
-    redirect_to product_path(@product)
+    if audit_soft_delete(@board)
+      redirect_to product_path(@product)
+    else
+      @board.destroy
+      redirect_to product_path(@product)
+    end
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@board)
+      .event('board.destroy')
+      .with_properties(product_id: @product.id)
+      .log('Board removed')
   end
 
   private
