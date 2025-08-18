@@ -34,30 +34,13 @@
               <%= link_to defect.name, defect_path(defect.id) %>
             </th>
             <td class="px-6 py-4">
-              <%= defect.description.truncate(50) %>
+              
             </td>
-            <td class="px-6 py-4 hide-in-sidebar">
-              <%= defect.start_date.strftime("%d-%b-%y") %>
-            </td>
-            <td class="px-6 py-4 hide-in-sidebar">
-              <% if defect.end_date.present? %>
-                <% if defect.end_date <= Date.today %>
-                  <p class="text-red-900 p-1 rounded font-bold">
-                    <%= defect.end_date.strftime("%d-%b-%y") %>
-                  </p>
-                <% else %>
-                  <p class="bg-red-green p-1 rounded">
-                    <%= defect.end_date.strftime("%d-%b-%y") %>
-                  </p>
-                <% end %>
-              <% end %>
-            </td>
+            
             <td class="px-6 py-4">
               <%= defect.users.first&.first_name  %>
             </td>
-            <td class="px-6 py-4">
-              <%= defect.product.client&.name || "N/A" %>
-            </td>
+            
             <!-- Actions 11 -->
             <td class="px-6 py-4 text-right" data-controller="dropdown" data-dropdown-ticket-id-value="<%= defect.id %>">
               <div class="relative w-full flex justify-start">
