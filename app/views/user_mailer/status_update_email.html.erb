@@ -4,7 +4,7 @@
   <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
 </head>
 <body>
-<h1>Hello, <%= @user.name %></h1>
+<h1>Hello, <%= @user&.name || @user&.email || 'User' %></h1>
 
 
 <p>
@@ -12,7 +12,7 @@
   <% @ticket.statuses.each do |status| %>
     <%= status.name %>
   <% end %>
-  by <%= @current_user.name %>.
+  by <%= @current_user&.name || @current_user&.email || 'A user' %>.
 </p>
 
 <p><strong>Ticket Details:</strong></p>
@@ -28,6 +28,6 @@
 <p>Click <a href="<%= @url %>">here</a> to view the ticket.</p>
 
 <p>Best regards,</p>
-<p><%= @current_user.name %></p>
+<p><%= @current_user&.name || @current_user&.email || 'A user' %></p>
 </body>
 </html>

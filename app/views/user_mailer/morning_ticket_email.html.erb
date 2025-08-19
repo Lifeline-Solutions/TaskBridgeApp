@@ -34,7 +34,7 @@
   </style>
 
   <h1>Daily Assigned Ticket Summary</h1>
-  <p>Hello <strong><%= @user.name %></strong>,</p>
+  <p>Hello <strong><%= @user&.name || @user&.email || 'User' %></strong>,</p>
 
   <p>Here is a summary of tickets currently <strong>assigned</strong> to you as of today:</p>
 
@@ -91,7 +91,7 @@
   </style>
 
   <h1>Daily Assigned Ticket Summary</h1>
-  <p>Hello <strong><%= @user.name %></strong>,</p>
+  <p>Hello <strong><%= @user&.name || @user&.email || 'User' %></strong>,</p>
 
   <p>You currently have no tickets assigned to you.</p>
   <p>We’ll notify you as soon as there are tickets needing your attention.</p>

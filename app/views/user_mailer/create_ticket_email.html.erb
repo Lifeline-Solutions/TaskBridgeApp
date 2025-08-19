@@ -4,7 +4,7 @@
   Hello Change Request Team,
 <% end %>
 
-<p>We would like to inform you that you have been assigned a new ticket: <%= @ticket.unique_id %> by <%= @current_user.name %>.</p>
+<p>We would like to inform you that you have been assigned a new ticket: <%= @ticket.unique_id %> by <%= @current_user&.name || @current_user&.email || 'A user' %>.</p>
 
 <p><strong>Ticket Details:</strong></p>
 <ul>
@@ -19,4 +19,4 @@
 <p>Click <a href="<%= @url %>">here</a> to view the ticket.</p>
 
 <p>Best regards,</p>
-<p><%= @current_user.name %></p>
+<p><%= @current_user&.name || @current_user&.email || 'A user' %></p>

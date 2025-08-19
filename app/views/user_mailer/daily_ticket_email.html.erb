@@ -34,7 +34,7 @@
   </style>
 
   <h1>Daily Ticket Summary</h1>
-  <p>Hello <strong><%= @user.name %></strong>,</p>
+  <p>Hello <strong><%= @user&.name || @user&.email || 'User' %></strong>,</p>
 
   <p>Below is a summary of the tickets you <strong>Closed</strong>, <strong>Resolved</strong>, or <strong>Declined</strong> in the last 24 hours:</p>
 
@@ -89,7 +89,7 @@
 
   <h1>Daily Ticket Summary</h1>
   <p>Hello
-    <strong><%= @user.name %></strong>
+  <strong><%= @user&.name || @user&.email || 'User' %></strong>
   </p>
   <p>You did not close, resolve, or decline any tickets in the last 24 hours.</p>
 
