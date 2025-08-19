@@ -101,6 +101,7 @@ Rails.application.routes.draw do
       post :add_user
       delete :remove_user
       post :product_status
+      patch :toggle_paid
     end
     resources :tasks do
       member do
@@ -167,9 +168,6 @@ Rails.application.routes.draw do
 
   resources :groupwares # Independent route for AJAX requests
 
-  resources :milestones, only: [] do
-    patch :toggle_paid, on: :member
-  end
   
   resources :client
   resources :status
