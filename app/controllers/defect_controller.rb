@@ -1,5 +1,5 @@
 class DefectController < ApplicationController
-  before_action :set_defect, only: %i[show edit update destroy add_defect]
+  before_action :set_defect, only: %i[show edit update destroy add_defect add_attachments remove_attachment]
 
   def index
     @defect = Defect.all
@@ -28,14 +28,6 @@ class DefectController < ApplicationController
     @defect = Defect.find(params[:id])
   end
 
-  # def new
-  #   @defect = Defect.new
-  #   @parents = QaModule.where(parent_id: nil) # only top-level modules
-  #   @qa_modules = QaModule.where(parent_id: nil)
-  #   @banking_types = BankingType.all
-  #   @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
-  # end
-
   def new
     @defect = Defect.new
     @qa_modules = QaModule.where(parent_id: nil)
@@ -45,55 +37,28 @@ class DefectController < ApplicationController
   end
 
   def create
-  @defect = Defect.new(defect_params)
-  @defect.creator = current_user
-  @defect.status ||= 'Bug' # Ensure status has a default value
+    @defect = Defect.new(defect_params)
+    @defect.creator = current_user
+    @defect.status ||= 'Bug' # Ensure status has a default value
 
-  # Log the parameters being received
-  Rails.logger.info "Defect creation params: #{defect_params.inspect}"
-  Rails.logger.info "Defect attributes before save: #{@defect.attributes.inspect}"
-
-  if @defect.save
-    # Log successful creation
-    Rails.logger.info "Defect successfully created: #{@defect.inspect}"
-    activity('user_activity')
-      .caused_by(current_user)
-      .performed_on(@defect)
-      .event('defect.create')
-      .with_properties(defect_attributes: @defect.attributes)
-      .log("Created Defect ##{@defect.id}")
-    
-    redirect_to defect_index_path, notice: 'Defect was successfully created.'
-  else
-    # Log validation errors
-    Rails.logger.error "Defect creation failed with errors: #{@defect.errors.full_messages.join(', ')}"
-    Rails.logger.error "Defect attributes: #{@defect.attributes.inspect}"
-    
-    # Reload collections for the form
-    load_form_collections
-    
-    # Add error messages to flash
-    flash.now[:alert] = "Defect creation failed: #{@defect.errors.full_messages.join(', ')}"
-    
-    render :new, status: :unprocessable_entity
+    if @defect.save
+      # Log successful creation
+      Rails.logger.info "Defect successfully created: #{@defect.inspect}"
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@defect)
+        .event('defect.create')
+        .with_properties(defect_attributes: @defect.attributes)
+        .log("Created Defect ##{@defect.id}")
+      
+      redirect_to defect_index_path, notice: 'Defect was successfully created.'
+    else
+      # Add error messages to flash
+      flash.now[:alert] = "Defect creation failed: #{@defect.errors.full_messages.join(', ')}"
+      
+      render :new, status: :unprocessable_entity
+    end
   end
-end
-
-  # def create
-  #   @defect = Defect.new(defect_params)
-  #   @defect.creator = current_user
-
-  #   if @defect.save
-  #     redirect_to @defect, notice: 'Defect created successfully'
-  #   else
-  #     # Reload collections if save fails
-  #     @qa_modules = QaModule.where(parent_id: nil)
-  #     @banking_types = BankingType.all
-  #     @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
-  #     @submodules = @defect.qa_module&.submodules || []
-  #     render :new
-  #   end
-  # end
 
   def edit
     @defect = Defect.find(params[:id])
@@ -113,25 +78,6 @@ end
     @existing_images = @defect.images
     @existing_videos = @defect.videos
   end
-
-  # def create
-  #   @defect = Defect.new(defect_params)
-  #   audit_on_create(@defect)
-
-  #   respond_to do |format|
-  #     if @defect.save
-  #       activity('user_activity')
-  #         .caused_by(current_user)
-  #         .performed_on(@defect)
-  #         .event('defect.create')
-  #         .with_properties(product_id: @defect.product_id)
-  #         .log("Created Defect ##{@defect.id}")
-  #       format.html { redirect_to defect_index_path, notice: 'Defect was successfully created.' }
-  #     else
-  #       format.html { render :new, status: :unprocessable_entity }
-  #     end
-  #   end
-  # end
 
   def update
     audit_on_update(@defect)
@@ -197,32 +143,35 @@ end
     redirect_to defect_path(@defect), notice: "#{user.name} was successfully removed from the defect."
   end
 
-  # app/controllers/defects_controller.rb
   def get_submodules
     parent_module = QaModule.find(params[:module_id])
     @submodules = parent_module.submodules.active
     render json: @submodules
   end
 
+  def add_attachments
+    if params[:attachments].reject(&:blank?).any?
+      params[:attachments].each do |attachment|
+        next if attachment.blank?
+        @defect.attachments.attach(attachment)
+      end
+      redirect_to defect_path(@defect), notice: 'Files were successfully uploaded.'
+    else
+      redirect_to defect_path(@defect), alert: 'No valid files selected.'
+    end
+  rescue ActiveRecord::RecordNotFound
+    redirect_to defects_path, alert: 'Defect not found.'
+  end
+
+  def remove_attachment
+    attachment = @defect.attachments.find(params[:attachment_id])
+    attachment.purge
+    redirect_to defect_path(@defect), notice: 'File was successfully removed.'
+  rescue ActiveRecord::RecordNotFound
+    redirect_to defects_path, alert: 'File or defect not found.'
+  end
+
   private
-
-  def load_resources
-    @qa_modules = QaModule.modules.active # Only parent modules
-    @banking_types = BankingType.active
-    @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
-  end
-
-  def load_form_collections
-    @qa_modules = QaModule.where(parent_id: nil)
-    @banking_types = BankingType.active
-    @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
-    # Initialize submodules if editing an existing defect
-    @submodules = if @defect.persisted? && @defect.qa_module_id
-                    QaModule.where(parent_id: @defect.qa_module_id).active
-                  else
-                    []
-                  end
-  end
 
   def set_defect
     @defect = Defect.find(params[:id])
@@ -238,7 +187,8 @@ end
       :priority,
       :groupware_id,
       :status,
-      user_ids: []
+      user_ids: [],
+      attachments: []
     )
   end
 end

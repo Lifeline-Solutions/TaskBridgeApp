@@ -76,11 +76,12 @@
   </div>
 
   <!-- ActionText Attachments Section -->
-  <% if @defect.content&.embeds&.any? %>
-    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-      <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Attachments</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <% @defect.content.embeds.each do |attachment| %>
+  <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Attachments</h2>
+    
+    <% if @defect.attachments.attached? %>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <% @defect.attachments.each do |attachment| %>
           <div class="border border-gray-200 rounded-lg p-4 dark:border-gray-700">
             <% if attachment.image? || attachment.previewable? %>
               <%= image_tag attachment, class: "w-full h-32 object-cover mb-2" %>
@@ -100,7 +101,7 @@
               <%= link_to attachment.filename, rails_blob_path(attachment, disposition: "attachment"), 
                     class: "text-sm font-medium text-blue-600 dark:text-blue-500 hover:underline truncate" %>
               <%= button_to 'Delete', 
-                    purge_attachment_path(attachment), 
+                    attachment_path(attachment.id), 
                     method: :delete,
                     class: "text-red-600 dark:text-red-500 hover:text-red-900 dark:hover:text-red-700 text-sm",
                     data: { confirm: 'Are you sure?' } %>
@@ -108,6 +109,25 @@
           </div>
         <% end %>
       </div>
-    </div>
-  <% end %>
+    <% else %>
+      <p class="text-gray-500 dark:text-gray-400 mb-6">No attachments yet.</p>
+    <% end %>
+
+    <!-- Upload Form -->
+    <%= form_with url: defect_attachments_path(@defect), method: :post, local: true, class: "mt-4" do |f| %>
+      <div class="flex flex-col space-y-4">
+        <div class="flex items-center space-x-4">
+          <%= f.file_field :attachments, 
+                multiple: true, 
+                direct_upload: true,
+                accept: 'image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx',
+                class: "block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" %>
+          
+          <%= f.submit 'Upload', 
+                class: "px-5 py-2.5 text-white bg-[#3F8CFF] hover:bg-[#3A81EB] font-medium rounded-lg text-sm cursor-pointer" %>
+        </div>
+        <p class="text-xs text-gray-500 dark:text-gray-400">Upload one or multiple files (Max size: 25MB each)</p>
+      </div>
+    <% end %>
+  </div>
 </div>

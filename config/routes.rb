@@ -113,6 +113,8 @@ Rails.application.routes.draw do
   end
 
   resources :defect do
+    post 'attachments', to: 'defect#add_attachments', as: 'attachments'
+    delete 'attachments/:attachment_id', to: 'defect#remove_attachment', as: 'attachment'
     resources :comments, only: [:create, :update, :destroy]
     resources :attachments, only: [:create, :destroy]
     collection do
