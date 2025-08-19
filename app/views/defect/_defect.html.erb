@@ -1,73 +1,44 @@
 <div class="overflow-x-auto shadow-md sm:rounded-lg h-full">
   <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
     <thead class="text-xs uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400 w-[100%]">
-    <tr>
-      <th scope="col" class="px-6 py-3">
-        Summary
-      </th>
-      <th scope="col" class="px-6 py-3">
-        Content
-      </th>
-      <th scope="col" class="px-6 py-3">
-        Module
-      </th>
-      <th scope="col" class="px-6 py-3">
-        Submodule
-      </th>
-      <th scope="col" class="px-6 py-3">
-        Banking Type
-      </th>
-      <th scope="col" class="px-6 py-3">
-        Priority
-      </th>
-      <th scope="col" class="px-6 py-3">
-        Status
-      </th>
-      <th scope="col" class="px-6 py-3">
-        Reporter
-      </th>
-      <th scope="col" class="px-6 py-3">
-        Assignee
-      </th>
-      <th scope="col" class="px-6 py-3">
-        ACTIONS
-      </th>
-    </tr>
+      <tr>
+        <th scope="col" class="px-6 py-3">Summary</th>
+        <th scope="col" class="px-6 py-3">Module</th>
+        <th scope="col" class="px-6 py-3">Priority</th>
+        <th scope="col" class="px-6 py-3">Status</th>
+        <th scope="col" class="px-6 py-3">Reporter</th>
+        <th scope="col" class="px-6 py-3">Assignee(s)</th>
+        <th scope="col" class="px-6 py-3">Created At</th>
+        <th scope="col" class="px-6 py-3">Actions</th>
+      </tr>
     </thead>
     <tbody>
-    <% if @defect.present? %>
-      <% @defect.each do |defect|  %>
-        <% if defect.assigned_to?(current_user) or current_user.has_role?(:admin) %>
+      <% if @defects.present? %>
+        <% @defects.each do |defect| %>
           <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 h-12 text-left" style="cursor:pointer;" onclick="window.location='<%= defect_path(defect.id) %>'">
             <td class="px-6 py-4">
               <%= defect.summary.to_plain_text.truncate(30) %>
             </td>
             <td class="px-6 py-4">
-              <%= defect.content.to_plain_text.truncate(30) %>
+              <%= defect.qa_module&.name || 'N/A' %>
             </td>
             <td class="px-6 py-4">
-              <%= defect.qa_module&.name %>
-            </td>
-            <td class="px-6 py-4">
-              <%= defect.submodule&.name %>
-            </td>
-            <td class="px-6 py-4">
-              <%= defect.banking_type&.name %>
-            </td>
-            <td class="px-6 py-4">
-              <%= defect.priority %>
+              <span class="px-2 py-1 text-xs font-medium rounded <%= priority_badge_class(defect.priority) %>">
+                <%= defect.priority %>
+              </span>
             </td>
             <td class="px-6 py-4">
               <%= defect.status %>
             </td>
             <td class="px-6 py-4">
-              <%= User.find_by(id: defect.creator_id)&.first_name %>
+              <%= User.find_by(id: defect.creator_id)&.first_name || 'Unknown' %>
             </td>
             <td class="px-6 py-4">
-              <%= defect.users.first&.first_name %>
+              <%= defect.users.map(&:first_name).join(', ') || 'Unassigned' %>
             </td>
-            
-            <!-- Actions -->
+            <td class="px-6 py-4">
+              <%= defect.created_at.strftime('%Y-%m-%d') %>
+            </td>
             <td class="px-6 py-4 text-right" data-controller="dropdown" data-dropdown-ticket-id-value="<%= defect.id %>">
               <div class="relative w-full flex justify-start">
                 <%= render partial: 'defect/action_dropdown', locals: { defect: defect } %>
@@ -75,20 +46,26 @@
             </td>
           </tr>
         <% end %>
+      <% else %>
+        <tr>
+          <td colspan="8" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+            No defects found
+          </td>
+        </tr>
       <% end %>
-    <% end %>
     </tbody>
   </table>
 </div>
+
 <div class="flex gap-10 mt-5">
   <!-- Pagination Controls -->
   <div class="pagination">
     <% if @page > 1 %>
-      <%= link_to 'Previous', defect_index_path(@defect, page: @page - 1, query: params[:query]), class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
+      <%= link_to 'Previous', defect_index_path(page: @page - 1, query: params[:query]), class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
     <% end %>
     <span>Page <%= @page %> of <%= @total_pages %></span>
     <% if @page < @total_pages %>
-      <%= link_to 'Next', defect_index_path(@defect, page: @page + 1, query: params[:query]), class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
+      <%= link_to 'Next', defect_index_path(page: @page + 1, query: params[:query]), class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
     <% end %>
   </div>
 </div>
