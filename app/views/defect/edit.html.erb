@@ -199,13 +199,3 @@
     });
   });
 </script>
-
-<!-- DEBUG SECTION - Add this at the bottom of your form -->
-<div class="bg-yellow-100 border border-yellow-400 p-4 mt-4">
-  <h3 class="font-bold">Form Debug Info:</h3>
-  <p>Defect ID: <%= @defect.id %></p>
-  <p>Form action: <%= defect_path(@defect) %></p>
-  <p>Form method: PATCH</p>
-  <p>Form authenticity token: <%= form_authenticity_token.present? %></p>
-  <p>Turbo enabled: <%= true %></p>
-</div>
