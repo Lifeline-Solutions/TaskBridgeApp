@@ -1,7 +1,7 @@
 
 <p>Hello <%= @user.first_name %> <%= @user.last_name %>,</p>
 
-<p>We would like to inform you that <%= @assigned_user.first_name %> <%= @assigned_user.last_name %> has been assigned a new ticket regarding: <%= @ticket.unique_id %> assigned by <%= @current_user.name %>.</p>
+<p>We would like to inform you that <%= [@assigned_user&.first_name, @assigned_user&.last_name].compact.join(' ').presence || @assigned_user&.email || 'Assigned user' %> has been assigned a new ticket regarding: <%= @ticket.unique_id %> assigned by <%= @current_user&.name || @current_user&.email || 'A user' %>.</p>
 
 <p><strong>Ticket Details:</strong></p>
 <ul>
@@ -16,4 +16,4 @@
 <p>Click <a href="<%= @url %>">here</a> to view the ticket.</p>
 
 <p>Best regards,</p>
-<p><%= @current_user.name %></p>
+<p><%= @current_user&.name || @current_user&.email || 'A user' %></p>

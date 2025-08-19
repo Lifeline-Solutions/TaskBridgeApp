@@ -1,7 +1,7 @@
 <!-- app/views/user_mailer/finance_sales_email.html.erb -->
 <p>Hello Team, </p>
 
-<p> The client <%= @product.client.name %> with project </p>
+<p> The client <%= @product.client&.name || 'Client' %> with project </p>
 <div>
   <% current_status = @product.statuses.first&.name %>
   <% if current_status.present? %>
@@ -9,7 +9,7 @@
     for milestone
     <% @product.milestones.each do |milestone| %>
       <% if milestone.status&.name == current_status %>
-        <%= milestone.status.name %>
+        <%= milestone.status&.name || 'Status' %>
         <%= number_with_precision(milestone.amount || (@product.budget * milestone.percentage.to_f / 100), precision: 2) %>
       <% end %>
     <% end %>
