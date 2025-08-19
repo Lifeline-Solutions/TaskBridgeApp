@@ -62,21 +62,12 @@ class DefectController < ApplicationController
 
   def edit
     @defect = Defect.find(params[:id])
-    @product = @defect.product || Product.includes(:client, :groupwares, :statuses)
-      .find_by(statuses: { name: 'Quality Assurance' }) ||
-               Product.includes(:client, :groupwares).first
-
-    @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
-      .select { |product| product.statuses.any? { |status| status.name == 'Quality Assurance' } }
-      .map do |product|
-        client_name = product.client&.name || 'No Client'
-        groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
-        ["#{client_name} - #{groupware_names}", product.id]
-      end
-
-    # Load existing attachments
-    @existing_images = @defect.images
-    @existing_videos = @defect.videos
+    @qa_modules = QaModule.where(parent_id: nil)
+    @banking_types = BankingType.all
+    @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
+    
+    # Load submodules for the current module if exists
+    @submodules = @defect.qa_module ? @defect.qa_module.submodules : []
   end
 
   def update

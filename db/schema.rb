@@ -9,6 +9,7 @@
 # migrations use external dependencies or application code.
 #
 # It's strongly recommended that you check this file into your version control system.
+
 ActiveRecord::Schema[7.2].define(version: 2025_08_19_064138) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
@@ -848,7 +849,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_19_064138) do
     t.uuid "client_id"
     t.boolean "active", default: true
     t.uuid "location_id"
-    t.string "position"
     t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
     t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
     t.uuid "deleted_by"
