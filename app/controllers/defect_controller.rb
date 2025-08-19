@@ -152,14 +152,21 @@ class DefectController < ApplicationController
   end
 
   def add_attachments
-    if params[:attachments].reject(&:blank?).any?
-      params[:attachments].each do |attachment|
-        next if attachment.blank?
-        @defect.attachments.attach(attachment)
+    # Handle the file upload
+    if params[:attachments].present?
+      # params[:attachments] will be an array when using 'attachments[]' field name
+      attachments = Array(params[:attachments]).reject(&:blank?)
+      
+      if attachments.any?
+        attachments.each do |attachment|
+          @defect.attachments.attach(attachment)
+        end
+        redirect_to defect_path(@defect), notice: "#{attachments.size} file(s) were successfully uploaded."
+      else
+        redirect_to defect_path(@defect), alert: 'No valid files selected.'
       end
-      redirect_to defect_path(@defect), notice: 'Files were successfully uploaded.'
     else
-      redirect_to defect_path(@defect), alert: 'No valid files selected.'
+      redirect_to defect_path(@defect), alert: 'Please select at least one file to upload.'
     end
   rescue ActiveRecord::RecordNotFound
     redirect_to defects_path, alert: 'Defect not found.'
@@ -176,7 +183,8 @@ class DefectController < ApplicationController
   private
 
   def set_defect
-    @defect = Defect.find(params[:id])
+    defect_id = params[:defect_id] || params[:id]
+    @defect = Defect.find(defect_id)
   end
 
   def defect_params
