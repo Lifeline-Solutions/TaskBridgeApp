@@ -1,49 +1,113 @@
-<!-- app/views/defects/show.html.erb -->
-<div class="mt-8">
-  <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Attachments</h2>
-  
-  <% if @defect.attachments.any? %>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <% @defect.attachments.each do |attachment| %>
-        <div class="border border-gray-200 rounded-lg p-4 dark:border-gray-700">
-          <% if attachment.image? || attachment.previewable? %>
-            <%= image_tag attachment, class: "w-full h-32 object-cover mb-2" %>
-          <% elsif attachment.video? %>
-            <video controls class="w-full h-32 object-cover mb-2">
-              <source src="<%= url_for(attachment) %>" type="<%= attachment.content_type %>">
-            </video>
-          <% else %>
-            <div class="w-full h-32 bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-2">
-              <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-              </svg>
-            </div>
-          <% end %>
-          
-          <div class="flex justify-between items-center">
-            <%= link_to attachment.filename, rails_blob_path(attachment, disposition: "attachment"), 
-                  class: "text-sm font-medium text-blue-600 dark:text-blue-500 hover:underline truncate" %>
-            <%= button_to 'Delete', defect_attachment_path(@defect, attachment), 
-                  method: :delete, 
-                  class: "text-red-600 dark:text-red-500 hover:text-red-900 dark:hover:text-red-700 text-sm",
-                  data: { confirm: 'Are you sure?' } %>
+<div class="grid grid-cols-1 gap-8">
+  <!-- Defect Details Section -->
+  <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Defect Details</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Left Column -->
+      <div class="space-y-4">
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Summary</h3>
+          <div class="mt-1 text-gray-900 dark:text-white">
+            <%= @defect.summary %>
           </div>
         </div>
-      <% end %>
-    </div>
-  <% else %>
-    <p class="text-gray-500 dark:text-gray-400">No attachments yet.</p>
-  <% end %>
-  
-  <!-- Upload Form -->
-  <div class="mt-6">
-    <%= form_with url: defect_attachments_path(@defect), method: :post, local: true, class: "mt-4" do |f| %>
-      <div class="flex items-center">
-        <%= f.file_field :attachments, multiple: true, 
-              class: "block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" %>
-        <%= f.submit 'Upload', 
-              class: "ml-2 text-white bg-[#3F8CFF] hover:bg-[#3A81EB] focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800" %>
+        
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Content</h3>
+          <div class="mt-1 text-gray-900 dark:text-white">
+            <%= @defect.content %>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Module</h3>
+          <div class="mt-1 text-gray-900 dark:text-white">
+            <%= @defect.qa_module&.name || 'Not specified' %>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Submodule</h3>
+          <div class="mt-1 text-gray-900 dark:text-white">
+            <%= @defect.submodule&.name || 'Not specified' %>
+          </div>
+        </div>
       </div>
-    <% end %>
+      
+      <!-- Right Column -->
+      <div class="space-y-4">
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Banking Type</h3>
+          <div class="mt-1 text-gray-900 dark:text-white">
+            <%= @defect.banking_type&.name || 'Not specified' %>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Priority</h3>
+          <div class="mt-1 text-gray-900 dark:text-white">
+            <%= @defect.priority %>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Status</h3>
+          <div class="mt-1 text-gray-900 dark:text-white">
+            <%= @defect.status %>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Reporter</h3>
+          <div class="mt-1 text-gray-900 dark:text-white">
+            <%= User.find_by(id: @defect.creator_id)&.first_name || 'Unknown' %>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Assignee(s)</h3>
+          <div class="mt-1 text-gray-900 dark:text-white">
+            <%= @defect.users.map(&:first_name).join(', ') || 'Unassigned' %>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <!-- ActionText Attachments Section -->
+  <% if @defect.content&.embeds&.any? %>
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+      <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Attachments</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <% @defect.content.embeds.each do |attachment| %>
+          <div class="border border-gray-200 rounded-lg p-4 dark:border-gray-700">
+            <% if attachment.image? || attachment.previewable? %>
+              <%= image_tag attachment, class: "w-full h-32 object-cover mb-2" %>
+            <% elsif attachment.video? %>
+              <video controls class="w-full h-32 object-cover mb-2">
+                <source src="<%= url_for(attachment) %>" type="<%= attachment.content_type %>">
+              </video>
+            <% else %>
+              <div class="w-full h-32 bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-2">
+                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                </svg>
+              </div>
+            <% end %>
+            
+            <div class="flex justify-between items-center">
+              <%= link_to attachment.filename, rails_blob_path(attachment, disposition: "attachment"), 
+                    class: "text-sm font-medium text-blue-600 dark:text-blue-500 hover:underline truncate" %>
+              <%= button_to 'Delete', 
+                    purge_attachment_path(attachment), 
+                    method: :delete,
+                    class: "text-red-600 dark:text-red-500 hover:text-red-900 dark:hover:text-red-700 text-sm",
+                    data: { confirm: 'Are you sure?' } %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
 </div>
