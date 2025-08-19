@@ -4,12 +4,10 @@ class DefectController < ApplicationController
   def index
     # Base query for defects
     @defects = Defect.includes(:users, :qa_module, :submodule, :banking_type)
-                    .order(created_at: :desc)
-    
+      .order(created_at: :desc)
+
     # Filter defects for non-admin users
-    unless current_user.has_any_role?(:admin, :observer)
-      @defects = @defects.joins(:users).where(users: { id: current_user.id })
-    end
+    @defects = @defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer)
 
     # Pagination
     @per_page = 12
@@ -52,12 +50,12 @@ class DefectController < ApplicationController
         .event('defect.create')
         .with_properties(defect_attributes: @defect.attributes)
         .log("Created Defect ##{@defect.id}")
-      
+
       redirect_to defect_index_path, notice: 'Defect was successfully created.'
     else
       # Add error messages to flash
       flash.now[:alert] = "Defect creation failed: #{@defect.errors.full_messages.join(', ')}"
-      
+
       render :new, status: :unprocessable_entity
     end
   end
@@ -156,7 +154,7 @@ class DefectController < ApplicationController
     if params[:attachments].present?
       # params[:attachments] will be an array when using 'attachments[]' field name
       attachments = Array(params[:attachments]).reject(&:blank?)
-      
+
       if attachments.any?
         attachments.each do |attachment|
           @defect.attachments.attach(attachment)
