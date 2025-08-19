@@ -5,8 +5,6 @@
       <%= link_to "X", product_index_path, data: {
         turbo_frame: "_top"
       }, class: "absolute top-3 right-3 text-xl font-bold text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100" %>
-
-
       <!-- Header -->
       <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6">Add new Project</h2>
 
@@ -24,7 +22,6 @@
             </div>
           <% end %>
 
-
           <!-- Client Name -->
           <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
             <div class="relative z-0 w-full mb-6 group">
@@ -32,7 +29,6 @@
               <%= f.collection_select :client_id, Client.all, :id, :name, { prompt: "Select Client" }, class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500", required: true %>
             </div>
           </div>
-
           <!-- Project Category and Sub Category -->
           <div class="space-y-4">
             <!-- Project Category -->
