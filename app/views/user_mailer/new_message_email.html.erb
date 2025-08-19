@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+</head>
+<body>
+<h1>Hello, <%= @message_user.first_name %></h1>
+
+<ul>
+  <li><strong>Messgae:</strong> <%= @message.content.to_plain_text.truncate(3000) %></li>
+</ul>
+
+<p>Click <a href="<%= @url %>">here</a> to view the comment.</p>
+
+<p>Best regards,</p>
+<p>Your Team</p>
+<p><%= @current_user.name %></p>
+</body>
+</html>

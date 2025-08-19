@@ -173,4 +173,12 @@ class UserMailer < ApplicationMailer
       format.text { render plain: "Project Payment Status for #{@product.client.name}, for #{@product.groupwares.map(&:name).join(', ').presence} for milestone " }
     end
   end
+
+  def new_message_email(message_user, message, current_user)
+    @message_user = message_user
+    @message = message
+    @current_user = current_user
+    @url = product_tasks_path(@product, @tasks)
+    mail(to: @user.email, subject: 'New Message on Task')
+  end
 end
