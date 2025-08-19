@@ -1,182 +1,201 @@
-<% provide(:title, "Edit QA") %>
+<%= form_with model: @defect,
+              url: defect_path(@defect),
+              method: :patch,
+              local: true,
+              html: { multipart: true } do |f| %>
 
-<%= form_with model: @defect, data: { turbo: true }, local: true do |f| %>
+<!-- Summary (rich text) -->
+  <div class="relative z-0 w-full mb-6 group">
+    <%= f.label :summary, 'Summary', class: "capitalize block mb-1 text-sm font-medium text-gray-900 dark:text-white" %>
+    <%= f.rich_text_area :summary, class: "min-h-[200px] border border-gray-300 rounded-md focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:text-white" %>
+  </div>
+
+  <!-- Description (was Subject) -->
+  <div class="relative z-0 w-full mb-6 group">
+    <%= f.label :content, 'Description *', class: "capitalize block mb-1 text-sm font-medium text-gray-900 dark:text-white" %>
+    <%= f.rich_text_area :content, class: "min-h-[300px] border border-gray-300 rounded-md focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:text-white", required: true %>
+  </div>
+
+  <!-- Project: Module & Submodule -->
   <div class="md:gap-6">
     <div class="grid grid-cols-2 gap-2">
       <!-- Module -->
       <div class="relative z-0 w-full mb-6 group">
-        <%= f.label :name, ('Module *'), class: "capitalize block mb-1 text-sm font-medium text-gray-900 dark:text-white", required: true %><br />
-        <%= f.text_field :name, class: "border border-gray-300 rounded-md focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500", required: true %>
+        <%= f.label :qa_module_id, 'Module *', class: "capitalize block mb-1 text-sm font-medium text-gray-900 dark:text-white" %>
+        <%= f.collection_select :qa_module_id, 
+              @qa_modules || [], 
+              :id, 
+              :name, 
+              { selected: @defect.qa_module_id, prompt: "Select Module" },
+              { class: "border border-gray-300 rounded-md focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500", 
+                required: true, 
+                id: "qa-module-select",
+                data: { action: "change->modules#loadSubmodules" } } %>
       </div>
-
       <!-- Submodule -->
       <div class="relative z-0 w-full mb-6 group">
-        <%= f.label :submodule, ('Sub Module *'), class: "capitalize block mb-1 text-sm font-medium text-gray-900 dark:text-white", required: true %><br />
-        <%= f.text_field :submodule, class: "border border-gray-300 rounded-md focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500", required: true %>
+        <%= f.label :submodule_id, 'Sub Module', class: "capitalize block mb-1 text-sm font-medium text-gray-900 dark:text-white" %>
+        <%= f.collection_select :submodule_id, 
+              @submodules || [], 
+              :id, 
+              :name, 
+              { selected: @defect.submodule_id, prompt: "Select Submodule" },
+              { class: "border border-gray-300 rounded-md focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500", 
+                id: "submodule-select" } %>
       </div>
     </div>
   </div>
 
-  <!-- Project Name -->
-  <div class="grid grid-cols-1 gap-2">
-    <div class="relative z-0 w-full mb-6 group">
-      <%= f.label :product_id, ('Project Name *'), class: "capitalize block mb-6 text-sm font-medium" %>
-      <%= f.select :product_id, @products_and_clients_defects,
-                   { prompt: "Select Project" },
-                   class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500",
-                   required: true %>
-    </div>
-  </div>
-
   <div class="grid grid-cols-2 gap-2">
-    <!-- Project Description -->
+    <!-- Banking Type -->
     <div class="relative z-0 w-full mb-6 group">
-      <%= f.label :description, ('Project Description *'), class: "capitalize block mb-1 text-sm font-medium" %><br />
-      <%= f.text_field :description, class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500", required: true %>
+      <%= f.label :banking_type_id, 'Banking Type *', class: "capitalize block mb-1 text-sm font-medium text-gray-900 dark:text-white" %>
+      <%= f.collection_select :banking_type_id, 
+            @banking_types || [], 
+            :id, 
+            :name, 
+            { selected: @defect.banking_type_id, prompt: "Select Banking Type" },
+            { class: "border border-gray-300 rounded-md focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500", 
+              required: true } %>
     </div>
-
-    <!-- Assignee -->
-    <div class="relative z-0 w-full mb-6 group">
-      <%= f.label :user_id, ('Assignee *'), class: "capitalize block mb-1 text-sm font-medium text-gray-900 dark:text-white" %><br />
-      <%= f.select :user_id, User.with_agent_project_manager_role.order(:first_name, :last_name).map { |user| [user.name, user.id] }, {},
-                   class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500",
-                   placeholder: 'Assign User', required: true %>
-    </div>
-  </div>
-
-  <div class="grid grid-cols-2 gap-2">
-    <!-- Start Date -->
-    <div class="relative z-0 w-full mb-6 group">
-      <%= f.label :start_date, 'Start Date *', class: "capitalize block mb-1 text-sm font-medium" %><br />
-      <%= f.date_field :start_date, class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500", required: true %>
-    </div>
-
-    <!-- End Date -->
-    <div class="relative z-0 w-full mb-6 group">
-      <%= f.label :end_date, 'End Date *', class: "capitalize block mb-1 text-sm font-medium" %><br />
-      <%= f.date_field :end_date, class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500", required: true %>
-    </div>
-  </div>
-
-  <!-- Issue -->
-  <div class="grid grid-cols-2 gap-2 mt-4">
-    <div class="relative z-0 w-[100%] mb-6 group">
-      <%= f.label :issue, 'Work Type *', class: "capitalize block mb-1 text-sm font-medium" %><br />
-      <%= f.select :issue, options_for_select(['BUG'], @defect.issue), {},
-                   class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:text-white", required: true %>
-    </div>
-
     <!-- Priority -->
-    <div class="relative z-0 w-[100%] mb-6 group">
-      <%= f.label :priority, 'Priority *', class: "capitalize block mb-1 text-sm font-medium" %><br />
-      <%= f.select :priority, options_for_select(['SEVERITY 1','SEVERITY 2','SEVERITY 3','SEVERITY 4'], @defect.priority), {},
-                   class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:text-white", required: true %>
+    <div class="relative z-0 w-full mb-6 group">
+      <%= f.label :priority, 'Priority *', class: "capitalize block mb-1 text-sm font-medium text-gray-900 dark:text-white" %>
+      <%= f.select :priority, 
+            options_for_select(['SEVERITY 1', 'SEVERITY 2', 'SEVERITY 3', 'SEVERITY 4'], @defect.priority),
+            {},
+            { class: "border border-gray-300 rounded-md focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500",
+              required: true } %>
     </div>
   </div>
 
-  <!-- Uploads -->
-  <div class="grid grid-cols-2 gap-2 mt-4">
+  <div class="grid grid-cols-2 gap-2">
+    <!-- Assignees (multi-select) -->
     <div class="relative z-0 w-full mb-6 group">
-      <%= f.label :videos, 'Upload Video', class: "capitalize block mb-1 text-sm font-medium" %><br />
-      <%= f.file_field :videos, multiple: true, class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" %>
+      <%= f.label :user_ids, 'Assignees *', class: "capitalize block mb-1 text-sm font-medium text-gray-900 dark:text-white" %>
+      <%= select_tag "defect[user_ids][]",
+            options_from_collection_for_select(@users, :id, :name, @defect.user_ids),
+            multiple: true,
+            class: "border border-gray-300 rounded-md focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:text-white",
+            required: true %>
     </div>
+    <!-- Status (editable in edit form) -->
     <div class="relative z-0 w-full mb-6 group">
-      <%= f.label :images, 'Images', class: "capitalize block mb-1 text-sm font-medium" %><br />
-      <%= f.file_field :images, multiple: true, class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5" %>
+      <%= f.label :status, 'Status *', class: "capitalize block mb-1 text-sm font-medium text-gray-900 dark:text-white" %>
+      <%= f.select :status, 
+            options_for_select(['Bug', 'In Progress', 'Resolved', 'Closed', 'Reopened'], @defect.status),
+            {},
+            { class: "border border-gray-300 rounded-md focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500",
+              required: true } %>
     </div>
   </div>
 
-  <!-- Labels -->
-  <div class="grid grid-cols-2 gap-2 mt-4">
-    <div class="relative z-0 w-full mb-6 group">
-      <%= f.label :label, 'Labels *', class: "capitalize block mb-1 text-sm font-medium" %>
-      <%= f.select :label, options_for_select(['QA','Mobile Banking','Core Banking','USSD'], @defect.label), {},
-                   class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:text-white", required: true %>
-    </div>
-  </div>
-
-  <!-- Software / Groupware -->
-  <div class="grid grid-cols-2 gap-2 mt-4">
-    <div class="relative z-0 w-full mb-6 group">
-      <%= f.label :software_id, 'Product *', class: "capitalize block mb-1 text-sm font-medium" %>
-      <%= f.collection_select :software_id, @product.softwares, :id, :name,
-                              { prompt: "Select Product" },
-                              { class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:text-white",
-                                id: "software-select" } %>
-    </div>
-    <div class="relative z-0 w-full mb-6 group" id="groupware-field">
-      <%= f.label :groupware_id, 'Banking Type *', class: "capitalize block mb-1 text-sm font-medium" %>
-      <%= f.collection_select :groupware_id,
-            @product&.groupwares || [],
-            :id,
-            :name,
-            { prompt: "Select The Product" },
-            { class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:text-white",
-              id: "groupware-select" } %>
-    </div>
-  </div>
-
-  <!-- Summary -->
+  <!-- Creator (disabled) -->
   <div class="relative z-0 w-full mb-6 group">
-    <%= f.label :summary, 'Summary', class: "capitalize block mb-1 text-sm font-medium" %><br />
-    <%= f.text_field :summary, class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:text-white" %>
+    <%= f.label :creator_id, 'Creator', class: "capitalize block mb-1 text-sm font-medium text-gray-900 dark:text-white" %>
+    <%= text_field_tag :creator_name, @defect.creator&.name, disabled: true,
+          class: "border border-gray-300 rounded-md focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:text-white bg-gray-100 dark:bg-gray-800" %>
   </div>
 
-  <!-- Content -->
+  <!-- Attachments Section for Editing -->
   <div class="relative z-0 w-full mb-6 group">
-    <%= f.label :content, 'Subject *', class: "capitalize block mb-1 text-sm font-medium" %><br />
-    <div data-controller="text-limit" data-text-limit-limit-value="30000">
-      <p id="char-count">0/3000</p>
-      <%= f.rich_text_area :content, id: "content",
-                           data: { text_limit_target: "content" },
-                           class: "min-h-[300px] #{'border-red-500' if @defect.errors[:content].any?}",
-                           required: true %>
-    </div>
-    <% if @defect.errors[:content].any? %>
-      <div class="text-red-500 text-sm"><%= @defect.errors[:content].join(', ') %></div>
+    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Attachments</h3>
+    
+    <% if @defect.attachments.attached? %>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <% @defect.attachments.each do |attachment| %>
+          <div class="border border-gray-200 rounded-lg p-4 dark:border-gray-700">
+            <% if attachment.image? || attachment.previewable? %>
+              <%= image_tag attachment, class: "w-full h-32 object-cover mb-2" %>
+            <% elsif attachment.video? %>
+              <video controls class="w-full h-32 object-cover mb-2">
+                <source src="<%= url_for(attachment) %>" type="<%= attachment.content_type %>">
+              </video>
+            <% else %>
+              <div class="w-full h-32 bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-2">
+                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                </svg>
+              </div>
+            <% end %>
+            
+            <div class="flex justify-between items-center">
+              <%= link_to attachment.filename, rails_blob_path(attachment, disposition: "attachment"), 
+                    class: "text-sm font-medium text-blue-600 dark:text-blue-500 hover:underline truncate" %>
+              <%= link_to 'Delete',
+      defect_attachment_path(@defect, attachment_id: attachment.id),
+      data: { turbo_method: :delete, turbo_confirm: 'Are you sure?' },
+      class: "text-red-600 dark:text-red-500 hover:text-red-900 dark:hover:text-red-700 text-sm" %>
+
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-gray-500 dark:text-gray-400 mb-6">No attachments yet.</p>
     <% end %>
+
+    <!-- Add more attachments -->
+    <div class="mt-4">
+      <h4 class="text-md font-medium text-gray-900 dark:text-white mb-2">Add More Attachments</h4>
+      <%= f.file_field :attachments,
+            multiple: true,
+            direct_upload: true,
+            accept: 'image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx',
+            class: "block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" %>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Upload additional files (Max size: 25MB each)</p>
+
+    </div>
   </div>
 
   <%= f.submit 'Update Defect', class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100', id: 'button' %>
 <% end %>
 
+<!-- Dynamic Submodule Dropdown -->
 <script>
   document.addEventListener('turbo:load', function () {
-    const softwareSelect = document.getElementById('software-select');
-    const groupwareSelect = document.getElementById('groupware-select');
-    const groupwareField = document.getElementById('groupware-field');
+    const moduleSelect = document.getElementById('qa-module-select');
+    const submoduleSelect = document.getElementById('submodule-select');
 
-    softwareSelect.addEventListener('change', function (event) {
-      const softwareId = event.target.value;
-      const productId = '<%= @defect.id %>';
-
-      groupwareSelect.innerHTML = '<option value="">Select The Product</option>';
-
-      if (softwareId) {
-        groupwareField.style.display = 'block';
-
-        fetch(`/product/${productId}/groupwares/show_product_groupware?software_id=${softwareId}`)
+    // Load submodules for the initially selected module
+    function loadSubmodulesForSelectedModule() {
+      const moduleId = moduleSelect.value;
+      if (moduleId) {
+        fetch(`/qa_modules/${moduleId}/submodules`)
           .then(response => response.json())
-          .then(groupwares => {
-            groupwareSelect.innerHTML = '<option value="">Select The Product</option>';
-            groupwares.forEach(groupware => {
+          .then(submodules => {
+            submoduleSelect.innerHTML = '<option value="">Select Submodule</option>';
+            submodules.forEach(submodule => {
               const option = document.createElement('option');
-              option.value = groupware.id;
-              option.textContent = groupware.name;
-              groupwareSelect.appendChild(option);
+              option.value = submodule.id;
+              option.textContent = submodule.name;
+              option.selected = submodule.id === '<%= @defect.submodule_id %>';
+              submoduleSelect.appendChild(option);
             });
-          })
-          .catch(error => {
-            console.error('Error fetching groupwares:', error);
-            groupwareSelect.innerHTML = '<option value="">Error loading groupwares</option>';
           });
-      } else {
-        groupwareField.style.display = 'none';
+      }
+    }
+
+    // Load submodules on page load if module is selected
+    if (moduleSelect.value) {
+      loadSubmodulesForSelectedModule();
+    }
+
+    moduleSelect.addEventListener('change', function () {
+      const moduleId = this.value;
+      submoduleSelect.innerHTML = '<option value="">Select Submodule</option>';
+      if (moduleId) {
+        fetch(`/qa_modules/${moduleId}/submodules`)
+          .then(response => response.json())
+          .then(submodules => {
+            submodules.forEach(submodule => {
+              const option = document.createElement('option');
+              option.value = submodule.id;
+              option.textContent = submodule.name;
+              submoduleSelect.appendChild(option);
+            });
+          });
       }
     });
-
-    if (!softwareSelect.value) {
-      groupwareField.style.display = 'none';
-    }
   });
 </script>

@@ -1,7 +1,7 @@
 <!-- app/views/user_mailer/assignment_email.html.erb -->
 <p>Hello <%= @user.first_name %> <%= @user.last_name %>,</p>
 
-<p> <span><b><%= @assigned_user.first_name %> <%= @assigned_user.last_name %></b></span> has been assigned to the project: <%= @project.title %>  by <%= @current_user.name %></p>
+<p> <span><b><%= [@assigned_user&.first_name, @assigned_user&.last_name].compact.join(' ').presence || @assigned_user&.email || 'Assigned user' %></b></span> has been assigned to the project: <%= @project.title %>  by <%= @current_user&.name || @current_user&.email || 'A user' %></p>
 
 <p>Click <a href="<%= @url %>">here</a> to view the project.</p>
 

@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # Mix into models to automatically set audit fields on create and update.
 # Works alongside controller service, useful when records are created outside controllers.
 module Auditable
@@ -28,7 +26,7 @@ module Auditable
 
   def _current_uid
     user = Current.user if defined?(Current)
-    return user.id if user && user.respond_to?(:id)
+    return user.id if user.respond_to?(:id)
 
     AuditTrailService::SYSTEM_USER_ID
   end

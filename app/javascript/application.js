@@ -13,3 +13,6 @@ import '@rails/actiontext';
 // import "./channels"
 //= require 'trix_custom_formatting_controller.js'
 
+
+import "trix"
+import "@rails/actiontext"

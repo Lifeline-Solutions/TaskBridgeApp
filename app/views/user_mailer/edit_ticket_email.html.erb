@@ -1,6 +1,6 @@
 <p>Hello <%= @assigned_user.first_name %> <%= @assigned_user.last_name %>,</p>
 
-<p>We would like to inform you that the ticket <%= @ticket.unique_id %> has been updated by <%= @current_user.name %>.</p>
+<p>We would like to inform you that the ticket <%= @ticket.unique_id %> has been updated by <%= @current_user&.name || @current_user&.email || 'A user' %>.</p>
 <p>It is currently assigned to <%= @user.first_name %> <%= @user.last_name %>.</p>
 
 <p><strong>Updated Ticket Details:</strong></p>
@@ -16,4 +16,4 @@
 <p>Click <a href="<%= @url %>">here</a> to view the updated ticket.</p>
 
 <p>Best regards,</p>
-<p><%= @current_user.name %></p>
+<p><%= @current_user&.name || @current_user&.email || 'A user' %></p>

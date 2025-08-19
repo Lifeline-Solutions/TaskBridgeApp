@@ -42,6 +42,7 @@ class Ability
       can :read, Board
       can :read, Task
       can :manage, Message
+      can :manage, Defect
       can :generate, :report
 
     elsif user.has_role? :client

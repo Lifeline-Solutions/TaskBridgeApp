@@ -13,6 +13,8 @@
         <% end %>
       </div>
     </div>
-    <%= form.submit "Post Message", class: "px-4 py-2 bg-blue-500 text-white rounded" %>
+    <%= render 'messages/tag-user' %>
+    <%= form.submit "Post Message", class: "mt-4 px-4 py-2 bg-blue-500 text-white rounded" %>
   <% end %>
 </div>
+

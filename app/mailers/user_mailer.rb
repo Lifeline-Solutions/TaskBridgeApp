@@ -144,33 +144,64 @@ class UserMailer < ApplicationMailer
 
   # Report email for all user
   def daily_ticket_email(user, tickets, mail_options = {})
+    return if user.blank?
+
+    recipient_email = user.respond_to?(:email) ? user.email : user
+    return if recipient_email.blank?
+
     @user = user
     @tickets = tickets
+    user_name = @user&.name.presence || @user&.email || 'User'
 
-    mail(to: @user.email, cc: mail_options[:cc], subject: "Daily Ticket Report for #{@user.name}") do |format|
+    mail(to: recipient_email, cc: mail_options[:cc], subject: "Daily Ticket Report for #{user_name}") do |format|
       format.html { render 'daily_ticket_email' }
-      format.text { render plain: "Daily Ticket Report for #{@user.name}" }
+      format.text { render plain: "Daily Ticket Report for #{user_name}" }
     end
   end
 
   def morning_ticket_email(user, tickets, mail_options = {})
+    return if user.blank?
+
+    recipient_email = user.respond_to?(:email) ? user.email : user
+    return if recipient_email.blank?
+
     @user = user
     @tickets = tickets
+    user_name = @user&.name.presence || @user&.email || 'User'
 
-    mail(to: @user.email, cc: mail_options[:cc], subject: "Start of Day Ticket Report for #{@user.name}") do |format|
+    mail(to: recipient_email, cc: mail_options[:cc], subject: "Start of Day Ticket Report for #{user_name}") do |format|
       format.html { render 'morning_ticket_email' }
-      format.text { render plain: "Morning Ticket Report for #{@user.name}" }
+      format.text { render plain: "Morning Ticket Report for #{user_name}" }
     end
   end
 
   def finance_sales_email(product, assigned_user, current_user)
+    return if assigned_user.blank?
+
+    recipient_email = assigned_user.respond_to?(:email) ? assigned_user.email : assigned_user
+    return if recipient_email.blank?
+    return if product.blank?
+
     @product = product
     @assigned_user = assigned_user
     @current_user = current_user
     @url = product_url(@product)
-    mail(to: @assigned_user.email, subject: "Project Payment Status for #{@product.client.name} for #{@product.groupwares.map(&:name).join(', ').presence} milestone ") do |format|
+
+    client_name = @product.client&.name.presence || 'Client'
+    groupware_names = @product.groupwares.map(&:name).join(', ').presence || ''
+    subject_text = "Project Payment Status for #{client_name} #{groupware_names} milestone"
+
+    mail(to: recipient_email, subject: subject_text) do |format|
       format.html { render 'finance_sales_email' }
-      format.text { render plain: "Project Payment Status for #{@product.client.name}, for #{@product.groupwares.map(&:name).join(', ').presence} for milestone " }
+      format.text { render plain: subject_text }
     end
+  end
+
+  def new_message_email(message_user, message, current_user)
+    @message_user = message_user
+    @message = message
+    @current_user = current_user
+    @url = product_tasks_path(@product, @tasks)
+    mail(to: @user.email, subject: 'New Message on Task')
   end
 end

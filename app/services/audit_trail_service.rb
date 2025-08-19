@@ -1,12 +1,10 @@
-# frozen_string_literal: true
-
 # AuditTrailService centralizes setting audit attributes on records.
 # Usage (in controllers):
 #   AuditTrailService.apply_create(record, current_user)
 #   AuditTrailService.apply_update(record, current_user)
 #   AuditTrailService.soft_delete(record, current_user)
 class AuditTrailService
-  SYSTEM_USER_ID = 'c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da'
+  SYSTEM_USER_ID = 'c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da'.freeze
 
   class << self
     def apply_create(record, user)

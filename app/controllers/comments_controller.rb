@@ -60,7 +60,6 @@ class CommentsController < ApplicationController
         .event('comment.soft_delete')
         .with_properties(ticket_id: @ticket.id)
         .log("Soft-deleted Comment ##{@comment.id}")
-      redirect_to project_ticket_path(@project, @ticket)
     else
       @comment.destroy
       activity('user_activity')
@@ -69,8 +68,8 @@ class CommentsController < ApplicationController
         .event('comment.destroy')
         .with_properties(ticket_id: @ticket.id)
         .log("Destroyed Comment ##{@comment.id}")
-      redirect_to project_ticket_path(@project, @ticket)
     end
+    redirect_to project_ticket_path(@project, @ticket)
   end
 
   def edit; end

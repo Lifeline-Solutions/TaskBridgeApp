@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # Include in ApplicationController to auto-apply audit trail in create/update/destroy.
 # It hooks into standard controller actions via around_action helpers you call manually.
 # Example:

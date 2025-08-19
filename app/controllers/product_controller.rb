@@ -247,7 +247,9 @@ class ProductController < ApplicationController
 
     # Send an email to the developers and select the
     @product.users.each do |u|
-      subject = "Project Payment Status for #{@product.client.name} for #{@product.groupwares.map(&:name).join(', ').presence} milestone"
+      client_name = @product.client&.name.presence || 'Client'
+      groupware_names = @product.groupwares.map(&:name).join(', ').presence || ''
+      subject = "Project Payment Status for #{client_name} #{groupware_names} milestone"
       Messaging::EmailSender
         .send_email(
           subject,

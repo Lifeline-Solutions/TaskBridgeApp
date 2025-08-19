@@ -68,12 +68,8 @@ class TasksController < ApplicationController
   end
 
   def destroy
-    if audit_soft_delete(@task)
-      redirect_to product_path(@product), notice: 'Task was successfully deleted.'
-    else
-      @task.destroy
-      redirect_to product_path(@product), notice: 'Task was successfully deleted.'
-    end
+    @task.destroy unless audit_soft_delete(@task)
+    redirect_to product_path(@product), notice: 'Task was successfully deleted.'
   end
 
   # Assigning User a Task

@@ -37,12 +37,16 @@ class DailyReportJob < ApplicationJob
       Messaging::EmailSender
         .send_email(
           "Daily Ticket Report for #{user.name}",
-          body: '<p>Please find your daily ticket report.</p>',
           to: [user.email],
           cc: mail_options[:cc],
           actor: nil,
           priority: :normal,
           type: 'daily_ticket_report'
+        )
+        .use_template(
+          view: 'user_mailer/daily_ticket_email',
+          assigns: { user: user, tickets: tagged_tickets },
+          layout: nil
         )
         .set_source('team', team.id)
         .set_party('user', user.id)

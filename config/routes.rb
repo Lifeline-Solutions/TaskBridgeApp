@@ -113,6 +113,13 @@ Rails.application.routes.draw do
   end
 
   resources :defect do
+    post 'attachments', to: 'defect#add_attachments', as: 'attachments'
+  delete 'attachments/:attachment_id', to: 'defect#remove_attachment', as: 'attachment'
+    resources :comments, only: [:create, :update, :destroy]
+    resources :attachments, only: [:create, :destroy]
+    collection do
+      get 'get_submodules'  # For loading submodules dynamically
+    end
     member do
       post :add_defect
       delete :remove_defect
@@ -180,5 +187,7 @@ Rails.application.routes.draw do
   end
   resources :location
 
-  resources :qa_modules
+  resources :qa_modules do
+    get :submodules, on: :member
+  end
 end
