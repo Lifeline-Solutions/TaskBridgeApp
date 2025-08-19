@@ -85,6 +85,8 @@ class User < ApplicationRecord
                           class_name: 'Message',
                           join_table: 'messages_users'
 
+  has_and_belongs_to_many :defects, join_table: :defects_users
+
   def assign_default_role
     return if invited_by_id.present?
 

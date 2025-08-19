@@ -1,78 +1,133 @@
-<% provide(:title, "QA Details for: #{@defect.name}") %>
-
-<% if flash[:notice] %>
-  <div class="bg-[#1a237e] border border-[#4caf50] text-white px-4 py-3 rounded mb-4 shadow-md">
-    <p><%= flash[:notice] %></p>
+<div class="grid grid-cols-1 gap-8">
+  <!-- Defect Details Section -->
+  <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Defect Details</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Left Column -->
+      <div class="space-y-4">
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Summary</h3>
+          <div class="mt-1 text-gray-900 dark:text-white">
+            <%= @defect.summary %>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Content</h3>
+          <div class="mt-1 text-gray-900 dark:text-white">
+            <%= @defect.content %>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Module</h3>
+          <div class="mt-1 text-gray-900 dark:text-white">
+            <%= @defect.qa_module&.name || 'Not specified' %>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Submodule</h3>
+          <div class="mt-1 text-gray-900 dark:text-white">
+            <%= @defect.submodule&.name || 'Not specified' %>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Right Column -->
+      <div class="space-y-4">
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Banking Type</h3>
+          <div class="mt-1 text-gray-900 dark:text-white">
+            <%= @defect.banking_type&.name || 'Not specified' %>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Priority</h3>
+          <div class="mt-1 text-gray-900 dark:text-white">
+            <%= @defect.priority %>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Status</h3>
+          <div class="mt-1 text-gray-900 dark:text-white">
+            <%= @defect.status %>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Reporter</h3>
+          <div class="mt-1 text-gray-900 dark:text-white">
+            <%= User.find_by(id: @defect.creator_id)&.first_name || 'Unknown' %>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Assignee(s)</h3>
+          <div class="mt-1 text-gray-900 dark:text-white">
+            <%= @defect.users.map(&:first_name).join(', ') || 'Unassigned' %>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-<% elsif flash[:alert] %>
-  <div class="bg-red-600 border border-red-400 text-white px-4 py-3 rounded mb-4 shadow-md">
-    <p><%= flash[:alert] %></p>
+
+  <!-- Attachments Section -->
+  <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Attachments</h2>
+    
+    <% if @defect.attachments.attached? %>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <% @defect.attachments.each do |attachment| %>
+          <div class="border border-gray-200 rounded-lg p-4 dark:border-gray-700">
+            <% if attachment.image? || attachment.previewable? %>
+              <%= image_tag attachment, class: "w-full h-32 object-cover mb-2" %>
+            <% elsif attachment.video? %>
+              <video controls class="w-full h-32 object-cover mb-2">
+                <source src="<%= url_for(attachment) %>" type="<%= attachment.content_type %>">
+              </video>
+            <% else %>
+              <div class="w-full h-32 bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-2">
+                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                </svg>
+              </div>
+            <% end %>
+            
+            <div class="flex justify-between items-center">
+              <%= link_to attachment.filename, rails_blob_path(attachment, disposition: "attachment"), 
+                    class: "text-sm font-medium text-blue-600 dark:text-blue-500 hover:underline truncate" %>
+              <%= button_to 'Delete',
+                defect_attachment_path(@defect, attachment_id: attachment.id),
+                method: :delete,
+                class: "text-red-600 dark:text-red-500 hover:text-red-900 dark:hover:text-red-700 text-sm",
+                data: { confirm: 'Are you sure?' } %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-gray-500 dark:text-gray-400 mb-6">No attachments yet.</p>
+    <% end %>
+
+    <!-- Upload Form -->
+    <%= form_with url: defect_attachments_path(@defect), method: :post, local: true, multipart: true, data: { turbo: false } do |f| %>
+      <div class="flex flex-col space-y-4">
+        <div class="flex items-center space-x-4">
+          <%= file_field_tag 'attachments[]', 
+                multiple: true, 
+                direct_upload: true,
+                accept: 'image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx',
+                class: "block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" %>
+          
+          <%= submit_tag 'Upload', 
+                class: "px-5 py-2.5 text-white bg-[#3F8CFF] hover:bg-[#3A81EB] font-medium rounded-lg text-sm cursor-pointer" %>
+        </div>
+        <p class="text-xs text-gray-50 dark:text-gray-400">Upload one or multiple files (Max size: 25MB each)</p>
+      </div>
+    <% end %>
   </div>
-<% end %>
-
-<div class="p-2">
-  <!-- Topbar and Alert -->
-
-  <%= render 'layouts/alert', class: "" %>
-  <div class="grid grid-cols-3 gap-4 mb-4">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-  <!-- Defect Header -->
-  <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-      Defect Details
-    </h1>
-
-    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
-      <div>
-        <dt class="font-medium text-gray-500 dark:text-gray-400">Defect ID</dt>
-        <dd class="mt-1 text-gray-900 dark:text-white"><%= @defect.id %></dd>
-      </div>
-
-      <div>
-        <dt class="font-medium text-gray-500 dark:text-gray-400">Title</dt>
-        <dd class="mt-1 text-gray-900 dark:text-white"><%= @defect.name %></dd>
-      </div>
-
-      <div>
-        <dt class="font-medium text-gray-500 dark:text-gray-400">Status</dt>
-        <dd class="mt-1">
-  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-    <%= case @defect.priority
-        when 'High' then 'bg-red-100 text-red-800'
-        when 'Medium' then 'bg-yellow-100 text-yellow-800'
-        when 'Low' then 'bg-green-100 text-green-800'
-        else 'bg-gray-100 text-gray-800'
-       end %>">
-    <%= @defect.priority || "Not Set" %>
-  </span>
-</dd>
-
-      </div>
-
-      <div>
-        <dt class="font-medium text-gray-500 dark:text-gray-400">Priority</dt>
-        <dd class="mt-1 text-gray-900 dark:text-white"><%= @defect.priority %></dd>
-      </div>
-
-      <div>
-        <dt class="font-medium text-gray-500 dark:text-gray-400">Assigned To</dt>
-        <dd class="mt-1 text-gray-900 dark:text-white">
-          <% if @defect.users.any? %>
-            <%= @defect.users.map(&:name).join(", ") %>
-          <% else %>
-            <span class="text-gray-400">No users assigned</span>
-          <% end %>
-        </dd>
-      </div>
-
-      <div>
-        <dt class="font-medium text-gray-500 dark:text-gray-400">Created At</dt>
-        <dd class="mt-1 text-gray-900 dark:text-white"><%= l(@defect.created_at, format: :long) %></dd>
-      </div>
-    </dl>
-  </div>
-</div>
-
-  </div>
-  
 </div>

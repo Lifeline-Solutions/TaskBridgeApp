@@ -79,6 +79,12 @@ class QaModulesController < ApplicationController
       .log('QA Module removed')
   end
 
+  # filepath: app/controllers/qa_modules_controller.rb
+  def submodules
+    @submodules = QaModule.where(parent_id: params[:id])
+    render json: @submodules.select(:id, :name)
+  end
+
   private
 
   def set_qa_module

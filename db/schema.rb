@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_18_074935) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_19_064138) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -133,6 +133,16 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_18_074935) do
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by_id"
+    t.uuid "modified_by_id"
+    t.uuid "deleted_by_id"
+    t.datetime "deleted_on"
+    t.boolean "archive_status", default: false, null: false
+    t.index ["archive_status"], name: "index_banking_types_on_archive_status"
+    t.index ["created_by_id"], name: "index_banking_types_on_created_by_id"
+    t.index ["deleted_by_id"], name: "index_banking_types_on_deleted_by_id"
+    t.index ["deleted_on"], name: "index_banking_types_on_deleted_on"
+    t.index ["modified_by_id"], name: "index_banking_types_on_modified_by_id"
   end
 
   create_table "boards", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -205,32 +215,23 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_18_074935) do
   end
 
   create_table "defects", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.string "name"
-    t.string "description"
-    t.date "start_date"
-    t.date "end_date"
-    t.uuid "product_id"
-    t.uuid "user_id"
-    t.string "submodule"
-    t.string "issue"
     t.string "priority"
-    t.string "summary"
-    t.uuid "software_id"
-    t.uuid "groupware_id"
-    t.uuid "script_id"
-    t.string "label"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
     t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
     t.uuid "deleted_by"
     t.datetime "deleted_on"
+    t.uuid "qa_module_id"
+    t.uuid "submodule_id"
+    t.uuid "banking_type_id"
+    t.uuid "creator_id"
+    t.string "status", default: "Bug", null: false
+    t.index ["banking_type_id"], name: "index_defects_on_banking_type_id"
+    t.index ["creator_id"], name: "index_defects_on_creator_id"
     t.index ["deleted_on"], name: "index_defects_on_deleted_on"
-    t.index ["groupware_id"], name: "index_defects_on_groupware_id"
-    t.index ["product_id"], name: "index_defects_on_product_id"
-    t.index ["script_id"], name: "index_defects_on_script_id"
-    t.index ["software_id"], name: "index_defects_on_software_id"
-    t.index ["user_id"], name: "index_defects_on_user_id"
+    t.index ["qa_module_id"], name: "index_defects_on_qa_module_id"
+    t.index ["submodule_id"], name: "index_defects_on_submodule_id"
   end
 
   create_table "defects_users", id: false, force: :cascade do |t|
@@ -545,6 +546,16 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_18_074935) do
     t.uuid "parent_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by_id"
+    t.uuid "modified_by_id"
+    t.uuid "deleted_by_id"
+    t.datetime "deleted_on"
+    t.boolean "archive_status", default: false, null: false
+    t.index ["archive_status"], name: "index_qa_modules_on_archive_status"
+    t.index ["created_by_id"], name: "index_qa_modules_on_created_by_id"
+    t.index ["deleted_by_id"], name: "index_qa_modules_on_deleted_by_id"
+    t.index ["deleted_on"], name: "index_qa_modules_on_deleted_on"
+    t.index ["modified_by_id"], name: "index_qa_modules_on_modified_by_id"
     t.index ["parent_id"], name: "index_qa_modules_on_parent_id"
   end
 
@@ -838,7 +849,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_18_074935) do
     t.uuid "client_id"
     t.boolean "active", default: true
     t.uuid "location_id"
-    t.string "position"
     t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
     t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
     t.uuid "deleted_by"
@@ -892,6 +902,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_18_074935) do
   add_foreign_key "addusers", "users"
   add_foreign_key "assignees", "projects"
   add_foreign_key "assignees", "users"
+  add_foreign_key "banking_types", "users", column: "created_by_id"
+  add_foreign_key "banking_types", "users", column: "deleted_by_id"
+  add_foreign_key "banking_types", "users", column: "modified_by_id"
   add_foreign_key "boards", "products"
   add_foreign_key "boards", "users"
   add_foreign_key "clients", "users"
@@ -900,6 +913,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_18_074935) do
   add_foreign_key "comments", "users"
   add_foreign_key "commonly_selected_clients", "clients"
   add_foreign_key "commonly_selected_clients", "users"
+  add_foreign_key "defects", "banking_types"
+  add_foreign_key "defects", "qa_modules"
+  add_foreign_key "defects", "qa_modules", column: "submodule_id"
+  add_foreign_key "defects", "users", column: "creator_id"
   add_foreign_key "documents", "products"
   add_foreign_key "events", "tickets"
   add_foreign_key "events", "users"
@@ -923,6 +940,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_18_074935) do
   add_foreign_key "projects", "groupwares"
   add_foreign_key "projects", "softwares"
   add_foreign_key "projects", "users"
+  add_foreign_key "qa_modules", "users", column: "created_by_id"
+  add_foreign_key "qa_modules", "users", column: "deleted_by_id"
+  add_foreign_key "qa_modules", "users", column: "modified_by_id"
   add_foreign_key "ratings", "tickets"
   add_foreign_key "ratings", "users"
   add_foreign_key "scripts", "groupwares"
