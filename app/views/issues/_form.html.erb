@@ -9,6 +9,17 @@
       <div class="space-y-4">
         <h3 class="text-lg font-bold text-gray-900 dark:text-white">Message *</h3>
 
+        <% unless current_user.has_role?(:client) %>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Message Visibility</label>
+            <%= f.select :message_type,
+                         options_for_select([["Public", "external"], ["Private", "internal"]],
+                                            selected: issue.message_type || "external"),
+                         {},
+                         class: "w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-sm dark:bg-gray-700 dark:text-white" %>
+          </div>
+          <% end %>
+
         <!-- Message Content -->
         <div data-controller="text-limit" data-text-limit-limit-value="3000">
           <p class="text-xs text-gray-500 dark:text-gray-400 mb-1" id="char-count">0/3000</p>
@@ -72,14 +83,6 @@
           </div>
 
           <!-- Message Type -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Message Visibility</label>
-            <%= f.select :message_type,
-                         options_for_select([["Reply To Customer", "external"], ["Add Internal Note", "internal"]],
-                                            selected: issue.message_type || "external"),
-                         {},
-                         class: "w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2.5 text-sm dark:bg-gray-700 dark:text-white" %>
-          </div>
         <% end %>
 
         <!-- Form Actions -->

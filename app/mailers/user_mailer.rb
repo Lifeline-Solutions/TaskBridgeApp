@@ -181,4 +181,13 @@ class UserMailer < ApplicationMailer
     @url = product_tasks_path(@product, @tasks)
     mail(to: @user.email, subject: 'New Message on Task')
   end
+
+  def milestone_payment_toggled(product, milestone, current_user, assigned_user)
+    @product = product
+    @milestone = milestone
+    @current_user = current_user
+    @assigned_user = assigned_user
+    @url = product_url(@product)
+    mail(to: @assigned_user.email, subject: 'Milestone Payment Status Updated')
+  end
 end
