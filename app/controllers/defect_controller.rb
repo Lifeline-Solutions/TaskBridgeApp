@@ -45,20 +45,55 @@ class DefectController < ApplicationController
   end
 
   def create
-    @defect = Defect.new(defect_params)
-    @defect.creator = current_user
+  @defect = Defect.new(defect_params)
+  @defect.creator = current_user
+  @defect.status ||= 'Bug' # Ensure status has a default value
 
-    if @defect.save
-      redirect_to @defect, notice: 'Defect created successfully'
-    else
-      # Reload collections if save fails
-      @qa_modules = QaModule.where(parent_id: nil)
-      @banking_types = BankingType.all
-      @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
-      @submodules = @defect.qa_module&.submodules || []
-      render :new
-    end
+  # Log the parameters being received
+  Rails.logger.info "Defect creation params: #{defect_params.inspect}"
+  Rails.logger.info "Defect attributes before save: #{@defect.attributes.inspect}"
+
+  if @defect.save
+    # Log successful creation
+    Rails.logger.info "Defect successfully created: #{@defect.inspect}"
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@defect)
+      .event('defect.create')
+      .with_properties(defect_attributes: @defect.attributes)
+      .log("Created Defect ##{@defect.id}")
+    
+    redirect_to defect_index_path, notice: 'Defect was successfully created.'
+  else
+    # Log validation errors
+    Rails.logger.error "Defect creation failed with errors: #{@defect.errors.full_messages.join(', ')}"
+    Rails.logger.error "Defect attributes: #{@defect.attributes.inspect}"
+    
+    # Reload collections for the form
+    load_form_collections
+    
+    # Add error messages to flash
+    flash.now[:alert] = "Defect creation failed: #{@defect.errors.full_messages.join(', ')}"
+    
+    render :new, status: :unprocessable_entity
   end
+end
+
+  # def create
+  #   @defect = Defect.new(defect_params)
+  #   @defect.creator = current_user
+
+  #   if @defect.save
+  #     redirect_to @defect, notice: 'Defect created successfully'
+  #   else
+  #     # Reload collections if save fails
+  #     @qa_modules = QaModule.where(parent_id: nil)
+  #     @banking_types = BankingType.all
+  #     @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
+  #     @submodules = @defect.qa_module&.submodules || []
+  #     render :new
+  #   end
+  # end
 
   def edit
     @defect = Defect.find(params[:id])

@@ -16,10 +16,6 @@ class Defect < ApplicationRecord
     where(roles: { name: ['admin', 'project manager'] })
   }, class_name: 'User', through: :roles, source: :users
 
-  # has_and_belongs_to_many :users, join_table: :defects_users
-
-  belongs_to :product
-  has_many :bugs, dependent: :destroy
   has_and_belongs_to_many :users
 
   def assigned_to?(user)
