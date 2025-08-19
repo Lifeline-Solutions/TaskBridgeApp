@@ -1,6 +1,10 @@
-<!-- filepath: app/views/defect/_edit_form.html.erb -->
-<%= form_with model: @defect, url: defect_path(@defect), method: :patch, data: { turbo: true }, local: true do |f| %>
-  <!-- Summary (rich text) -->
+<%= form_with model: @defect,
+              url: defect_path(@defect),
+              method: :patch,
+              local: true,
+              html: { multipart: true } do |f| %>
+
+<!-- Summary (rich text) -->
   <div class="relative z-0 w-full mb-6 group">
     <%= f.label :summary, 'Summary', class: "capitalize block mb-1 text-sm font-medium text-gray-900 dark:text-white" %>
     <%= f.rich_text_area :summary, class: "min-h-[200px] border border-gray-300 rounded-md focus:ring-primary-600 focus:border-primary-600 block w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:text-white" %>
@@ -118,11 +122,11 @@
             <div class="flex justify-between items-center">
               <%= link_to attachment.filename, rails_blob_path(attachment, disposition: "attachment"), 
                     class: "text-sm font-medium text-blue-600 dark:text-blue-500 hover:underline truncate" %>
-              <%= button_to 'Delete',
-                    defect_attachment_path(@defect, attachment_id: attachment.id),
-                    method: :delete,
-                    class: "text-red-600 dark:text-red-500 hover:text-red-900 dark:hover:text-red-700 text-sm",
-                    data: { confirm: 'Are you sure?' } %>
+              <%= link_to 'Delete',
+      defect_attachment_path(@defect, attachment_id: attachment.id),
+      data: { turbo_method: :delete, turbo_confirm: 'Are you sure?' },
+      class: "text-red-600 dark:text-red-500 hover:text-red-900 dark:hover:text-red-700 text-sm" %>
+
             </div>
           </div>
         <% end %>
@@ -134,12 +138,13 @@
     <!-- Add more attachments -->
     <div class="mt-4">
       <h4 class="text-md font-medium text-gray-900 dark:text-white mb-2">Add More Attachments</h4>
-      <%= file_field_tag 'attachments[]', 
-            multiple: true, 
+      <%= f.file_field :attachments,
+            multiple: true,
             direct_upload: true,
             accept: 'image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx',
             class: "block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" %>
       <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Upload additional files (Max size: 25MB each)</p>
+
     </div>
   </div>
 
@@ -194,3 +199,13 @@
     });
   });
 </script>
+
+<!-- DEBUG SECTION - Add this at the bottom of your form -->
+<div class="bg-yellow-100 border border-yellow-400 p-4 mt-4">
+  <h3 class="font-bold">Form Debug Info:</h3>
+  <p>Defect ID: <%= @defect.id %></p>
+  <p>Form action: <%= defect_path(@defect) %></p>
+  <p>Form method: PATCH</p>
+  <p>Form authenticity token: <%= form_authenticity_token.present? %></p>
+  <p>Turbo enabled: <%= true %></p>
+</div>

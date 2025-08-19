@@ -71,19 +71,33 @@ class DefectController < ApplicationController
   end
 
   def update
-    audit_on_update(@defect)
-    if @defect.update(defect_params)
-      activity('user_activity')
-        .caused_by(current_user)
-        .performed_on(@defect)
-        .event('defect.update')
-        .with_properties(product_id: @defect.product_id)
-        .log("Updated Defect ##{@defect.id}")
-      redirect_to @defect, notice: 'Defect was successfully updated.'
-    else
-      render :edit
-    end
+  audit_on_update(@defect)
+
+  # Collect files from either place (prefer model-scoped)
+  files = []
+  files += Array(params.dig(:defect, :attachments)).reject(&:blank?) if params.dig(:defect, :attachments).present?
+  files += Array(params[:attachments]).reject(&:blank?) if params[:attachments].present?
+
+  files.each { |file| @defect.attachments.attach(file) } if files.any?
+
+  if @defect.update(defect_params)
+    activity('user_activity')
+      .caused_by(current_user)
+      .performed_on(@defect)
+      .event('defect.update')
+      .with_properties(
+        defect_id: @defect.id,
+        qa_module_id: @defect.qa_module_id # optional, only if you want this info
+      )
+      .log("Updated Defect ##{@defect.id}")
+
+    redirect_to @defect, notice: 'Defect was successfully updated.'
+  else
+    render :edit
   end
+end
+
+
 
   def destroy
     if audit_soft_delete(@defect)
