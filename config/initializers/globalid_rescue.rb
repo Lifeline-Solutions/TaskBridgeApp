@@ -16,16 +16,19 @@ begin
   if defined?(::GlobalID)
     if ::GlobalID.is_a?(Module)
       # Patch GlobalID::Locator.locate to rescue RecordNotFound and return nil
-      ::GlobalID::Locator.singleton_class.class_eval do
+      locator = ::GlobalID::Locator
+      locator.singleton_class.class_eval do
         if method_defined?(:locate) || private_method_defined?(:locate)
           alias_method :__orig_locate, :locate
         end
 
-        define_method(:locate) do |gid|
+        # Accept any args/kwargs and forward them to the original locate implementation.
+        # This avoids arity errors when globalid's locate signature changes (signed, context, etc).
+        define_method(:locate) do |*args, **kwargs, &block|
           begin
-            __orig_locate(gid)
+            __orig_locate(*args, **kwargs, &block)
           rescue ::ActiveRecord::RecordNotFound => _e
-            Rails.logger.warn("GlobalID locate: referenced record not found for gid=#{gid}") if defined?(Rails)
+            Rails.logger.warn("GlobalID locate: referenced record not found for gid=#{args.first}") if defined?(Rails)
             nil
           end
         end
