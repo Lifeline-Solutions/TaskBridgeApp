@@ -1,26 +1,35 @@
 <div class="overflow-x-auto shadow-md sm:rounded-lg h-full">
   <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-    <thead class="text-xs  uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400 w-[100%]">
+    <thead class="text-xs uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400 w-[100%]">
     <tr>
       <th scope="col" class="px-6 py-3">
-        Name of Project
+        Summary
       </th>
       <th scope="col" class="px-6 py-3">
-        Production Description
+        Content
       </th>
-      <th scope="col" class="px-6 py-3 hide-in-sidebar">
-        Start Date
+      <th scope="col" class="px-6 py-3">
+        Module
       </th>
-      <th scope="col" class="px-6 py-3 hide-in-sidebar">
-        End Date
+      <th scope="col" class="px-6 py-3">
+        Submodule
+      </th>
+      <th scope="col" class="px-6 py-3">
+        Banking Type
+      </th>
+      <th scope="col" class="px-6 py-3">
+        Priority
+      </th>
+      <th scope="col" class="px-6 py-3">
+        Status
+      </th>
+      <th scope="col" class="px-6 py-3">
+        Reporter
       </th>
       <th scope="col" class="px-6 py-3">
         Assignee
       </th>
       <th scope="col" class="px-6 py-3">
-        Clients
-      </th>
-      <th scope="col" class="px-6 py-3 ">
         ACTIONS
       </th>
     </tr>
@@ -30,24 +39,40 @@
       <% @defect.each do |defect|  %>
         <% if defect.assigned_to?(current_user) or current_user.has_role?(:admin) %>
           <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 h-12 text-left" style="cursor:pointer;" onclick="window.location='<%= defect_path(defect.id) %>'">
-            <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap text-left">
-              <%= link_to defect.name, defect_path(defect.id) %>
-            </th>
             <td class="px-6 py-4">
-              
+              <%= defect.summary.to_plain_text.truncate(30) %>
+            </td>
+            <td class="px-6 py-4">
+              <%= defect.content.to_plain_text.truncate(30) %>
+            </td>
+            <td class="px-6 py-4">
+              <%= defect.qa_module&.name %>
+            </td>
+            <td class="px-6 py-4">
+              <%= defect.submodule&.name %>
+            </td>
+            <td class="px-6 py-4">
+              <%= defect.banking_type&.name %>
+            </td>
+            <td class="px-6 py-4">
+              <%= defect.priority %>
+            </td>
+            <td class="px-6 py-4">
+              <%= defect.status %>
+            </td>
+            <td class="px-6 py-4">
+              <%= User.find_by(id: defect.creator_id)&.first_name %>
+            </td>
+            <td class="px-6 py-4">
+              <%= defect.users.first&.first_name %>
             </td>
             
-            <td class="px-6 py-4">
-              <%= defect.users.first&.first_name  %>
-            </td>
-            
-            <!-- Actions 11 -->
+            <!-- Actions -->
             <td class="px-6 py-4 text-right" data-controller="dropdown" data-dropdown-ticket-id-value="<%= defect.id %>">
               <div class="relative w-full flex justify-start">
                 <%= render partial: 'defect/action_dropdown', locals: { defect: defect } %>
               </div>
             </td>
-
           </tr>
         <% end %>
       <% end %>
