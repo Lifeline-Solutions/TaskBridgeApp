@@ -125,5 +125,7 @@
 
   </div>
 
-  <%= f.submit "Submit", class: 'mt-4 w-2/5 h-12 mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100'  %>
+  <%= f.submit "Submit",
+               data: { disable_with: "Creating..." },
+               class: 'mt-4 w-2/5 h-12 mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
 <% end %>

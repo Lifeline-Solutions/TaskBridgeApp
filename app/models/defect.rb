@@ -29,10 +29,43 @@ class Defect < ApplicationRecord
   end
 
   before_validation :set_default_status, on: :create
+  after_create :defect_unique_id
 
   private
 
   def set_default_status
     self.status ||= Status.find_by(name: 'TO DO')
+  end
+
+  def defect_unique_id
+    initials =
+      if product&.client&.name.present?
+        product.client.name.split.map { |word| word[0] }.join.upcase
+      else
+        'DEFAULT'
+      end
+
+    last_defect =
+      Defect.where(product_id: product_id)
+        .where("defect_unique ~ '^[^-]+-\\d+$'")
+        .order(Arel.sql("CAST(SPLIT_PART(defect_unique, '-', 2) AS INTEGER) DESC"))
+        .first ||
+      Defect.where(product_id: product_id).order(:created_at).last
+
+    next_number =
+      if last_defect&.defect_unique.present?
+        last_defect.unique_id.split('-').last.to_i + 1
+      else
+        1
+      end
+
+    loop do
+      self.defect_unique = "#{initials}-#{next_number.to_s.rjust(4, '0')}"
+      break unless Defect.exists?(defect_unique: defect_unique)
+
+      next_number += 1
+    end
+
+    save
   end
 end

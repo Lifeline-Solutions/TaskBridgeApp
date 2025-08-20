@@ -195,6 +195,7 @@ class DefectController < ApplicationController
       :priority,
       :product_id,
       :status_id,
+      :defect_unique,
       user_ids: [],
       attachments: []
     )
