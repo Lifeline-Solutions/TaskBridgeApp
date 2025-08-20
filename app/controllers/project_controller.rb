@@ -167,7 +167,7 @@ class ProjectController < ApplicationController
           @project.errors.add(:content, 'Subject cannot be blank.') # Add validation error
           # Render the form with validation errors
           format.html { render :new, status: :unprocessable_entity }
-        elsif @project.save
+        elsif @project.save(validate: false)
           @project.users << @project.user if @project.users.empty?
           current_user.add_role :creator, @project
 
@@ -201,10 +201,12 @@ class ProjectController < ApplicationController
   end
 
   # PATCH/PUT /projects/id
+  # PATCH/PUT /projects/id
   def update
     audit_on_update(@project)
     respond_to do |format|
-      if @project.update(project_params)
+      @project.assign_attributes(project_params)
+      if @project.save(validate: false)
         current_user.add_role :editor, @project
         format.html { redirect_to project_path(@project), notice: 'Support Desk was successfully updated.' }
       else
