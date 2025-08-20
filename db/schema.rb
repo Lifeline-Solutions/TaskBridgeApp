@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_20_100042) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_20_122834) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -218,10 +218,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_20_100042) do
     t.uuid "banking_type_id"
     t.uuid "creator_id"
     t.uuid "product_id"
-    t.string "summary", null: false
+    t.string "summary"
     t.uuid "status_id"
+    t.string "defect_unique"
     t.index ["banking_type_id"], name: "index_defects_on_banking_type_id"
     t.index ["creator_id"], name: "index_defects_on_creator_id"
+    t.index ["defect_unique"], name: "index_defects_on_defect_unique", unique: true
     t.index ["deleted_on"], name: "index_defects_on_deleted_on"
     t.index ["product_id"], name: "index_defects_on_product_id"
     t.index ["qa_module_id"], name: "index_defects_on_qa_module_id"

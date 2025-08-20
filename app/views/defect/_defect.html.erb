@@ -17,7 +17,9 @@
         <% @defects.each do |defect| %>
           <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 h-12 text-left" style="cursor:pointer;" onclick="window.location='<%= defect_path(defect.id) %>'">
             <td class="px-6 py-4">
-              <%= defect.summary.truncate(30) %>
+              <% if defect.summary.present? %>
+                <%= defect.summary.truncate(30) %>
+              <% end %>
             </td>
             <td class="px-6 py-4">
               <%= defect.qa_module&.name || 'N/A' %>
@@ -28,7 +30,7 @@
               </span>
             </td>
             <td class="px-6 py-4">
-              <%= defect.status.name %>
+              <%#= defect.status.name %>
             </td>
             <td class="px-6 py-4">
               <%= User.find_by(id: defect.creator_id)&.first_name || 'Unknown' %>
