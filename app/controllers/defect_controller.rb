@@ -65,39 +65,37 @@ class DefectController < ApplicationController
     @qa_modules = QaModule.where(parent_id: nil)
     @banking_types = BankingType.all
     @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
-    
+
     # Load submodules for the current module if exists
     @submodules = @defect.qa_module ? @defect.qa_module.submodules : []
   end
 
   def update
-  audit_on_update(@defect)
+    audit_on_update(@defect)
 
-  # Collect files from either place (prefer model-scoped)
-  files = []
-  files += Array(params.dig(:defect, :attachments)).reject(&:blank?) if params.dig(:defect, :attachments).present?
-  files += Array(params[:attachments]).reject(&:blank?) if params[:attachments].present?
+    # Collect files from either place (prefer model-scoped)
+    files = []
+    files += Array(params.dig(:defect, :attachments)).reject(&:blank?) if params.dig(:defect, :attachments).present?
+    files += Array(params[:attachments]).reject(&:blank?) if params[:attachments].present?
 
-  files.each { |file| @defect.attachments.attach(file) } if files.any?
+    files.each { |file| @defect.attachments.attach(file) } if files.any?
 
-  if @defect.update(defect_params)
-    activity('user_activity')
-      .caused_by(current_user)
-      .performed_on(@defect)
-      .event('defect.update')
-      .with_properties(
-        defect_id: @defect.id,
-        qa_module_id: @defect.qa_module_id # optional, only if you want this info
-      )
-      .log("Updated Defect ##{@defect.id}")
+    if @defect.update(defect_params)
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@defect)
+        .event('defect.update')
+        .with_properties(
+          defect_id: @defect.id,
+          qa_module_id: @defect.qa_module_id # optional, only if you want this info
+        )
+        .log("Updated Defect ##{@defect.id}")
 
-    redirect_to @defect, notice: 'Defect was successfully updated.'
-  else
-    render :edit
+      redirect_to @defect, notice: 'Defect was successfully updated.'
+    else
+      render :edit
+    end
   end
-end
-
-
 
   def destroy
     if audit_soft_delete(@defect)
