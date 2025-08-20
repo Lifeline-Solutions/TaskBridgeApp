@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_19_064138) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_20_100042) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -217,11 +217,15 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_19_064138) do
     t.uuid "submodule_id"
     t.uuid "banking_type_id"
     t.uuid "creator_id"
-    t.string "status", default: "Bug", null: false
+    t.uuid "product_id"
+    t.string "summary", null: false
+    t.uuid "status_id"
     t.index ["banking_type_id"], name: "index_defects_on_banking_type_id"
     t.index ["creator_id"], name: "index_defects_on_creator_id"
     t.index ["deleted_on"], name: "index_defects_on_deleted_on"
+    t.index ["product_id"], name: "index_defects_on_product_id"
     t.index ["qa_module_id"], name: "index_defects_on_qa_module_id"
+    t.index ["status_id"], name: "index_defects_on_status_id"
     t.index ["submodule_id"], name: "index_defects_on_submodule_id"
   end
 
@@ -892,8 +896,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_19_064138) do
   add_foreign_key "commonly_selected_clients", "clients"
   add_foreign_key "commonly_selected_clients", "users"
   add_foreign_key "defects", "banking_types"
+  add_foreign_key "defects", "products"
   add_foreign_key "defects", "qa_modules"
   add_foreign_key "defects", "qa_modules", column: "submodule_id"
+  add_foreign_key "defects", "statuses"
   add_foreign_key "defects", "users", column: "creator_id"
   add_foreign_key "documents", "products"
   add_foreign_key "events", "tickets"
