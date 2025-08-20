@@ -201,10 +201,12 @@ class ProjectController < ApplicationController
   end
 
   # PATCH/PUT /projects/id
+  # PATCH/PUT /projects/id
   def update
     audit_on_update(@project)
     respond_to do |format|
-      if @project.update(project_params)
+      @project.assign_attributes(project_params)
+      if @project.save(validate: false)
         current_user.add_role :editor, @project
         format.html { redirect_to project_path(@project), notice: 'Support Desk was successfully updated.' }
       else
@@ -214,6 +216,7 @@ class ProjectController < ApplicationController
       format.html { redirect_to edit_project_path(@project), alert: 'Duplicate groupware assignment detected. Please check your input.' }
     end
   end
+
 
   # DELETE /projects/id
   def destroy
