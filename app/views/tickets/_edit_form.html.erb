@@ -99,6 +99,8 @@
         <%= f.rich_text_area :content, id: "content", data: { text_limit_target: "content", is_admin: current_user.has_role?(:admin) || current_user.has_role?('project manager') || current_user.has_role?('agent') }, class: "min-h-[300px] #{'border-red-500' if @ticket.errors[:content].any?}" %>
       </div>
     </div>
-    <%= f.submit "Submit", class: 'mt-4 w-2/5 h-12 mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100'  %>
+    <%= f.submit "Submit",
+                 data: { disable_with: "Creating..." },
+                 class: 'mt-4 w-2/5 h-12 mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100'  %>
   </div>
 <% end %>
