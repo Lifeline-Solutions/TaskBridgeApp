@@ -279,6 +279,31 @@ class ProductController < ApplicationController
     redirect_to @product, notice: "#{user.name}  was successfully removed."
   end
 
+  def toggle_paid
+    @product = Product.find(params[:id])
+    @milestone = @product.milestones.find(params[:milestone_id])
+
+    if @milestone.update(paid: params[:paid] == '1')
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@milestone)
+        .event('milestone.toggle_paid')
+        .with_properties(paid: @milestone.paid, status: @milestone.status&.name, product_id: @milestone.product_id)
+        .log('Milestone payment toggled')
+      respond_to do |format|
+        format.html do
+          redirect_back fallback_location: product_path(@product), notice: "Milestone with status '#{@milestone.status&.name}' is now #{@milestone.paid? ? 'paid' : 'unpaid'}."
+        end
+        format.js
+      end
+    else
+      respond_to do |format|
+        format.html { render :edit, alert: 'Failed to update milestone.' }
+        format.js
+      end
+    end
+  end
+
   def destroy
     if audit_soft_delete(@product)
       redirect_to product_index_path, notice: 'Product was successfully deleted.'
