@@ -1,4 +1,5 @@
 class DefectController < ApplicationController
+  before_action :authenticate_user!
   before_action :set_defect, only: %i[show edit update destroy add_defect add_attachments remove_attachment]
 
   def index
