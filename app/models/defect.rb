@@ -47,9 +47,9 @@ class Defect < ApplicationRecord
 
     last_defect =
       Defect.where(product_id: product_id)
-            .where("defect_unique ~ '^[^-]+-\\d+$'")
-            .order(Arel.sql("CAST(SPLIT_PART(defect_unique, '-', 2) AS INTEGER) DESC"))
-            .first ||
+        .where("defect_unique ~ '^[^-]+-\\d+$'")
+        .order(Arel.sql("CAST(SPLIT_PART(defect_unique, '-', 2) AS INTEGER) DESC"))
+        .first ||
       Defect.where(product_id: product_id).order(:created_at).last
 
     next_number =
@@ -62,6 +62,7 @@ class Defect < ApplicationRecord
     loop do
       self.defect_unique = "#{initials}-#{next_number.to_s.rjust(4, '0')}"
       break unless Defect.exists?(defect_unique: defect_unique)
+
       next_number += 1
     end
 
