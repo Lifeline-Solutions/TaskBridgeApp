@@ -33,17 +33,16 @@ class DefectController < ApplicationController
     @qa_modules = QaModule.where(parent_id: nil)
     @banking_types = BankingType.all
     @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
-    @submodules = [] # Initialize empty array
+    @submodules = []
+    @products = Product.with_quality_assurance_status
+    @statuses = Status.all
   end
 
   def create
     @defect = Defect.new(defect_params)
     @defect.creator = current_user
-    @defect.status ||= 'Bug' # Ensure status has a default value
 
     if @defect.save
-      # Log successful creation
-      Rails.logger.info "Defect successfully created: #{@defect.inspect}"
       activity('user_activity')
         .caused_by(current_user)
         .performed_on(@defect)
@@ -53,9 +52,7 @@ class DefectController < ApplicationController
 
       redirect_to defect_index_path, notice: 'Defect was successfully created.'
     else
-      # Add error messages to flash
       flash.now[:alert] = "Defect creation failed: #{@defect.errors.full_messages.join(', ')}"
-
       render :new, status: :unprocessable_entity
     end
   end
@@ -196,8 +193,8 @@ class DefectController < ApplicationController
       :submodule_id,
       :banking_type_id,
       :priority,
-      :groupware_id,
-      :status,
+      :product_id,
+      :status_id,
       user_ids: [],
       attachments: []
     )
