@@ -217,7 +217,6 @@ class ProjectController < ApplicationController
     end
   end
 
-
   # DELETE /projects/id
   def destroy
     if audit_soft_delete(@project)
