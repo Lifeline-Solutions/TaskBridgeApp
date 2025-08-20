@@ -1,4 +1,5 @@
 class DefectController < ApplicationController
+  before_action :authenticate_user!
   before_action :set_defect, only: %i[show edit update destroy add_defect add_attachments remove_attachment]
 
   def index
@@ -16,7 +17,6 @@ class DefectController < ApplicationController
     @start_count = ((@page - 1) * @per_page) + 1
     @end_count = [@page * @per_page, @defects.count].min
     @total_count = @defects.count
-
     @defects = @defects.offset((@page - 1) * @per_page).limit(@per_page)
   end
 
