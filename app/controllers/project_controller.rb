@@ -167,7 +167,7 @@ class ProjectController < ApplicationController
           @project.errors.add(:content, 'Subject cannot be blank.') # Add validation error
           # Render the form with validation errors
           format.html { render :new, status: :unprocessable_entity }
-        elsif @project.save
+        elsif @project.save(validate: false)
           @project.users << @project.user if @project.users.empty?
           current_user.add_role :creator, @project
 
