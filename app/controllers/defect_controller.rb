@@ -177,7 +177,6 @@ class DefectController < ApplicationController
 
   private
 
-
   def set_form_data
     @qa_modules = QaModule.where(parent_id: nil)
     @banking_types = BankingType.all
@@ -194,14 +193,10 @@ class DefectController < ApplicationController
 
   def defect_params
     # Handle the qa_submodule_id to submodule_id mapping
-    if params[:defect] && params[:defect][:qa_submodule_id].present?
-      params[:defect][:submodule_id] = params[:defect].delete(:qa_submodule_id)
-    end
+    params[:defect][:submodule_id] = params[:defect].delete(:qa_submodule_id) if params[:defect] && params[:defect][:qa_submodule_id].present?
 
     # Convert user_ids from string to array if needed
-    if params[:defect] && params[:defect][:user_ids].is_a?(String)
-      params[:defect][:user_ids] = [params[:defect][:user_ids]].reject(&:blank?)
-    end
+    params[:defect][:user_ids] = [params[:defect][:user_ids]].reject(&:blank?) if params[:defect] && params[:defect][:user_ids].is_a?(String)
 
     params.require(:defect).permit(
       :summary,

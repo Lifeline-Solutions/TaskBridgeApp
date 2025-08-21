@@ -34,7 +34,7 @@ class Defect < ApplicationRecord
 
   def set_default_status
     default_status = Status.find_by(name: 'TO DO')
-    self.statuses << default_status if default_status
+    statuses << default_status if default_status
   end
 
   def defect_unique_id
