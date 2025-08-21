@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_20_122834) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_21_120959) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -205,6 +205,20 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_20_122834) do
     t.index ["user_id"], name: "index_commonly_selected_clients_on_user_id"
   end
 
+  create_table "defect_statuses", id: false, force: :cascade do |t|
+    t.uuid "defect_id", null: false
+    t.uuid "status_id", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["defect_id", "status_id"], name: "index_defect_statuses_on_defect_id_and_status_id"
+    t.index ["deleted_on"], name: "index_defect_statuses_on_deleted_on"
+    t.index ["status_id", "defect_id"], name: "index_defect_statuses_on_status_id_and_defect_id"
+  end
+
   create_table "defects", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "priority"
     t.datetime "created_at", null: false
@@ -218,8 +232,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_20_122834) do
     t.uuid "banking_type_id"
     t.uuid "creator_id"
     t.uuid "product_id"
-    t.string "summary"
-    t.uuid "status_id"
+    t.string "summary", null: false
     t.string "defect_unique"
     t.index ["banking_type_id"], name: "index_defects_on_banking_type_id"
     t.index ["creator_id"], name: "index_defects_on_creator_id"
@@ -227,7 +240,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_20_122834) do
     t.index ["deleted_on"], name: "index_defects_on_deleted_on"
     t.index ["product_id"], name: "index_defects_on_product_id"
     t.index ["qa_module_id"], name: "index_defects_on_qa_module_id"
-    t.index ["status_id"], name: "index_defects_on_status_id"
     t.index ["submodule_id"], name: "index_defects_on_submodule_id"
   end
 
@@ -897,11 +909,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_20_122834) do
   add_foreign_key "comments", "users"
   add_foreign_key "commonly_selected_clients", "clients"
   add_foreign_key "commonly_selected_clients", "users"
+  add_foreign_key "defect_statuses", "defects"
+  add_foreign_key "defect_statuses", "statuses"
   add_foreign_key "defects", "banking_types"
   add_foreign_key "defects", "products"
   add_foreign_key "defects", "qa_modules"
   add_foreign_key "defects", "qa_modules", column: "submodule_id"
-  add_foreign_key "defects", "statuses"
   add_foreign_key "defects", "users", column: "creator_id"
   add_foreign_key "documents", "products"
   add_foreign_key "events", "tickets"

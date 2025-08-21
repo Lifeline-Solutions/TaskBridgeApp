@@ -7,9 +7,7 @@ class Defect < ApplicationRecord
   belongs_to :submodule, class_name: 'QaModule', optional: true
   belongs_to :banking_type
   belongs_to :product
-  belongs_to :status
   belongs_to :creator, class_name: 'User'
-  has_and_belongs_to_many :users, join_table: :defects_users
 
   resourcify
   has_many :users, through: :roles, class_name: 'User', source: :users
@@ -19,6 +17,7 @@ class Defect < ApplicationRecord
   }, class_name: 'User', through: :roles, source: :users
 
   has_and_belongs_to_many :users
+  has_and_belongs_to_many :statuses, join_table: :defect_statuses
 
   def assigned_to?(user)
     users.include?(user)
@@ -34,7 +33,8 @@ class Defect < ApplicationRecord
   private
 
   def set_default_status
-    self.status ||= Status.find_by(name: 'TO DO')
+    default_status = Status.find_by(name: 'TO DO')
+    statuses << default_status if default_status
   end
 
   def defect_unique_id
