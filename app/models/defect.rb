@@ -28,7 +28,7 @@ class Defect < ApplicationRecord
     User.where('email LIKE ANY (array[?, ?, ?]) AND active = ?', '%@craftsilicon.com', '%@craftsilicon.co.tz', '%@little.africa', true)
   end
 
-  before_validation :set_default_status, on: :create
+  before_create :set_default_status
   after_create :defect_unique_id
 
   private
