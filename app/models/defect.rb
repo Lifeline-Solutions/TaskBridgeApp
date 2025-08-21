@@ -54,7 +54,7 @@ class Defect < ApplicationRecord
 
     next_number =
       if last_defect&.defect_unique.present?
-        last_defect.unique_id.split('-').last.to_i + 1
+        last_defect.defect_unique.split('-').last.to_i + 1
       else
         1
       end
