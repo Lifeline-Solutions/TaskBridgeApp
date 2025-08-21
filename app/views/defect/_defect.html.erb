@@ -29,9 +29,6 @@
               </span>
             </td>
             <td class="px-6 py-4">
-              <%= User.find_by(id: defect.creator_id)&.first_name || 'Unknown' %>
-            </td>
-            <td class="px-6 py-4">
               <%= defect.users.map { |u| [u.first_name, u.last_name].compact.join(' ') }
                         .reject(&:blank?)
                         .join(', ')
