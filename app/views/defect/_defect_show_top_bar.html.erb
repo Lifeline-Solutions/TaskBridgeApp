@@ -1,0 +1,48 @@
+<div class="grid grid-cols-2 mb-2 ">
+  <div class="col-span-1 flex">
+    <div class="flex flex-wrap gap-1">
+      <button onclick="history.back()" class="bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 h-12 items-center rounded font-bold rounded-md text-slate-100">
+        &#8656; Back
+      </button>
+    </div>
+    <div class="flex items-center gap-3 sm:gap-4">
+      <div class="flex-shrink-0">
+          <%= image_tag 'default.png', class: 'w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full object-cover' %>
+      </div>
+
+      <div class="flex flex-col">
+        <h1 class="text-lg sm:text-xl md:text-2xl font-semibold">
+          <%= @defect.summary %> /
+          <span class="font-medium text-md">
+            Bug
+          </span>
+        </h1>
+        <p class="text-xs sm:text-sm md:text-base">
+          <span class="font-medium">
+            <%= User.find_by(id: @defect.creator_id)&.first_name || 'Unknown' %>
+          </span>
+          /
+          <span class="font-medium uppercase">
+            <%= @defect.defect_unique %>
+          </span>
+          /
+          <span class="font-medium">
+            <%= @defect.priority %>
+          </span>
+        </p>
+      </div>
+    </div>
+  </div>
+  <!-- Search on the right -->
+  <div class="grid col-span-1 justify-end">
+    <div class="flex flex-col md:flex-row items-start md:items-center w-full">
+      <%= form_with url: defect_path(), method: :get, class: 'flex gap-2' do |f| %>
+        <%= f.text_field :query, placeholder: "Search ", class: "border bg-white dark:bg-gray-800  border-[#3F8CFF] p-1 hover:border-[#3A81EB] border-2 rounded-lg" %>
+        <%= f.submit "Search", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100 mr-2'  %>
+      <% end %>
+      <%= form_with url: defect_path(), method: :get, class: 'flex' do |f| %>
+        <%= f.submit "Clear", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100'  %>
+      <% end %>
+    </div>
+  </div>
+</div>
