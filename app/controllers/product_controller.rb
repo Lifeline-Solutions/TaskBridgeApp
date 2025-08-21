@@ -146,6 +146,8 @@ class ProductController < ApplicationController
 
     respond_to do |format|
       if (current_user.has_role?(:admin) || current_user.has_role?('project manager')) && @product.errors.empty?
+        @product.users << @product.user if @product.users.empty?
+
         case params[:commit]
         when 'create'
           @product.status = 'published'
