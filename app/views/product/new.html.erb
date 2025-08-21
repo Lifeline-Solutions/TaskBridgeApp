@@ -175,9 +175,9 @@
     addBtn.replaceWith(freshAddBtn);
 
     // Master list of statuses from Rails (id, name) — safe JSON
-    const STATUSES = <%= raw Status.where(name: ['Development','User Acceptance Test','Pilot','Quality Assurance','Deploy','Production']).pluck(:id,:name).to_json %>;
+    const STATUSES = <%= raw Status.where(name: ['Pre Initiation','End Of Initiation','Pre Development','End Of Development','Pre User Acceptance Test','End Of User Acceptance Test','Pre Pilot','End Of Pilot','Pre Quality Assurance','End Of Quality Assurance','Pre Deploy','End Of Deply','Pre Production', 'End Of Production']).pluck(:id,:name).to_json %>;
 
-    // Add row
+    // Add rowr
     freshAddBtn.addEventListener('click', () => {
       addMilestoneRow(container);
       syncAllStatusSelects(container, STATUSES);

@@ -43,7 +43,7 @@ class Product < ApplicationRecord
   end
 
   def set_default_status
-    status = Status.find_by(name: 'Initiation')
+    status = Status.find_by(name: 'Pre Initiation')
     statuses << status if status
   end
 

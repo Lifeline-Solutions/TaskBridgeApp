@@ -3,11 +3,11 @@
 <%
   status_options = case current_status
   in nil | 'Pre Initiation'
-    Status.where(name: ['End of Initiation']).pluck(:name, :id)
+    Status.where(name: ['End Of Initiation']).pluck(:name, :id)
   in nil | 'End of Initiation'
     Status.where(name: ['Pre Development']).pluck(:name, :id)
   in nil | 'Pre Development'
-    Status.where(name: ['End of Development']).pluck(:name, :id)
+    Status.where(name: ['End Of Development']).pluck(:name, :id)
   in 'End of Development'
     Status.where(name: ['Pre Quality Assurance']).pluck(:name, :id)
   in nil | 'Pre Quality Assurance'
