@@ -30,12 +30,7 @@ class DefectController < ApplicationController
 
   def new
     @defect = Defect.new
-    @qa_modules = QaModule.where(parent_id: nil)
-    @banking_types = BankingType.all
-    @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
-    @submodules = []
-    @products = Product.with_quality_assurance_status
-    @statuses = Status.all
+    set_form_data
   end
 
   def create
@@ -52,6 +47,8 @@ class DefectController < ApplicationController
 
       redirect_to defect_index_path, notice: 'Defect was successfully created.'
     else
+      # Set the form data when rendering new
+      set_form_data
       flash.now[:alert] = "Defect creation failed: #{@defect.errors.full_messages.join(', ')}"
       render :new, status: :unprocessable_entity
     end
@@ -180,12 +177,32 @@ class DefectController < ApplicationController
 
   private
 
+
+  def set_form_data
+    @qa_modules = QaModule.where(parent_id: nil)
+    @banking_types = BankingType.all
+    @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
+    @submodules = []
+    @products = Product.with_quality_assurance_status
+    @statuses = Status.all
+  end
+
   def set_defect
     defect_id = params[:defect_id] || params[:id]
     @defect = Defect.find(defect_id)
   end
 
   def defect_params
+    # Handle the qa_submodule_id to submodule_id mapping
+    if params[:defect] && params[:defect][:qa_submodule_id].present?
+      params[:defect][:submodule_id] = params[:defect].delete(:qa_submodule_id)
+    end
+
+    # Convert user_ids from string to array if needed
+    if params[:defect] && params[:defect][:user_ids].is_a?(String)
+      params[:defect][:user_ids] = [params[:defect][:user_ids]].reject(&:blank?)
+    end
+
     params.require(:defect).permit(
       :summary,
       :content,
@@ -194,7 +211,6 @@ class DefectController < ApplicationController
       :banking_type_id,
       :priority,
       :product_id,
-      :status_id,
       :defect_unique,
       user_ids: [],
       attachments: []
