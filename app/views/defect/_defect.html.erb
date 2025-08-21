@@ -8,6 +8,7 @@
         <th scope="col" class="px-6 py-3">Priority</th>
         <th scope="col" class="px-6 py-3">Assignee(s)</th>
         <th scope="col" class="px-6 py-3">Created At</th>
+        <th scope="col" class="px-6 py-3">Project</th>
         <th scope="col" class="px-6 py-3">Actions</th>
       </tr>
     </thead>
@@ -42,6 +43,9 @@
                 </svg>
                 <%= defect.created_at.strftime('%d-%m-%Y') %>
               </div>
+            </td>
+            <td class="px-6 py-4">
+              <%= defect.product.client.name %>
             </td>
             <td class="px-6 py-4 text-right" data-controller="dropdown" data-dropdown-ticket-id-value="<%= defect.id %>">
               <div class="relative w-full flex justify-start">
