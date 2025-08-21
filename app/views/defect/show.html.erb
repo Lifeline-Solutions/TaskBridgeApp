@@ -1,4 +1,8 @@
-<div class="grid grid-cols-1 gap-8">
+<div class="container p-2">
+
+  <%= render 'defect/defect_show_top_bar', defect: @defect %>
+
+  <div class="grid grid-cols-1 gap-8">
   <!-- Defect Details Section -->
   <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
     <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Defect Details</h2>
@@ -137,4 +141,5 @@
       </div>
     <% end %>
   </div>
+</div>
 </div>
