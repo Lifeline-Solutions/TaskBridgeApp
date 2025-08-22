@@ -1,0 +1,36 @@
+<div class="mb-2.5 font-bold capitalize flex">
+  <span class="font-medium ml-1">
+    <div class="mb-2.5 font-bold capitalize">
+      Module:
+      <span class="font-light">
+        <%= @defect.qa_module&.name || 'Not specified' %>
+      </span>
+    </div>
+    <div class="mb-2.5 font-bold capitalize">Sub-Module:
+      <span class="font-light">
+        <%= @defect.submodule&.name || 'Not specified' %>
+      </span>
+    </div>
+    <div class="mb-2.5 font-bold capitalize">Product:
+      <span class="font-light">
+        <%= @defect.product&.content&.to_plain_text&.truncate(30) || 'Not specified' %>
+      </span>
+    </div>
+    <div class="mb-2.5 font-bold capitalize">Banking Type:
+      <span class="font-light">
+        <%= @defect.banking_type&.name || 'Not specified' %>
+      </span>
+    </div>
+  </span>
+</div>
+
+<!-- Assigned Users Section -->
+<div class="col-span-2 mt-6">
+  <div class="flex items-center justify-between mb-2">
+    <div class="text-sm font-semibold uppercase tracking-wider">Assigned Users</div>
+      <button class="ml-2 px-2 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition">
+          Select
+      </button>
+  </div>
+</div>
+
