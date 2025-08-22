@@ -1,0 +1,15 @@
+<div class="flex flex-wrap items-center gap-2">
+  <% if @defect.users.any? %> Assigned to:
+    <% @defect.users.each do |user| %>
+          <span class="text-base">
+              <%= user.name %>
+            <% unless user == @defect.users.last %>,
+            <% end %>
+          </span>
+    <% end %>
+  <% else %>
+    <p class="text-red-500 text-sm">
+      No agents assigned. Please assign at least one agent to this ticket.
+    </p>
+  <% end %>
+</div>

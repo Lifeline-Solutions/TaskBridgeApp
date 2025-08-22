@@ -116,6 +116,7 @@ class DefectController < ApplicationController
       redirect_to @defect, notice: 'User has already been assigned.'
     else
       user = User.find(params[:user_id])
+      @defect.users.clear
       @defect.users << user
       activity('user_activity')
         .caused_by(current_user)
