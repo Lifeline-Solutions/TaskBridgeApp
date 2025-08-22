@@ -161,6 +161,21 @@
           </tr>
         <% end %>
         </tbody>
+
+        <!-- Average row in the table footer -->
+        <tfoot>
+        <tr>
+          <td colspan="6" class="border border-black dark:border-slate-100 px-4 py-2 font-semibold bg-gray-50 dark:bg-gray-800">
+            <% if @avg_assignment_to_resolved_seconds %>
+              Average time from assignment to resolution across
+              <%= pluralize(@avg_assignment_to_resolved_count, 'ticket') %>:
+              <%= @avg_assignment_to_resolved_human %>
+            <% else %>
+              No resolved tickets with an assignment time to compute an average.
+            <% end %>
+          </td>
+        </tr>
+        </tfoot>
       </table>
     <% else %>
       <p class="text-sm text-gray-600">No assignment events found for the selected criteria.</p>
