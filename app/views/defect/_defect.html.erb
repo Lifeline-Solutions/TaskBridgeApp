@@ -21,7 +21,7 @@
             </td>
             <td class="px-6 py-4">
               <% if defect.summary.present? %>
-                <%= defect.summary.truncate(70) %>
+                <%= defect.summary.truncate(50) %>
               <% end %>
             </td>
             <td class="px-6 py-4">
@@ -46,8 +46,9 @@
               </div>
             </td>
             <td class="px-6 py-4">
-              <%= defect.product.client.name %>
+              <%= "#{defect.product.client.name} #{defect.product.groupwares.first&.name}".truncate(30) %>
             </td>
+
             <td class="px-6 py-4 text-right" data-controller="dropdown" data-dropdown-ticket-id-value="<%= defect.id %>">
               <div class="relative w-full flex justify-start">
                 <%= render partial: 'defect/action_dropdown', locals: { defect: defect } %>
