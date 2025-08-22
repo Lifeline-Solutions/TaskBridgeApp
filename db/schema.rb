@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_22_091704) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_22_132255) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -203,6 +203,15 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_22_091704) do
     t.index ["client_id"], name: "index_commonly_selected_clients_on_client_id"
     t.index ["deleted_on"], name: "index_commonly_selected_clients_on_deleted_on"
     t.index ["user_id"], name: "index_commonly_selected_clients_on_user_id"
+  end
+
+  create_table "defect_messages", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "user_id", null: false
+    t.uuid "defect_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["defect_id"], name: "index_defect_messages_on_defect_id"
+    t.index ["user_id"], name: "index_defect_messages_on_user_id"
   end
 
   create_table "defect_statuses", id: false, force: :cascade do |t|
@@ -910,6 +919,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_22_091704) do
   add_foreign_key "comments", "users"
   add_foreign_key "commonly_selected_clients", "clients"
   add_foreign_key "commonly_selected_clients", "users"
+  add_foreign_key "defect_messages", "defects"
+  add_foreign_key "defect_messages", "users"
   add_foreign_key "defect_statuses", "defects"
   add_foreign_key "defect_statuses", "statuses"
   add_foreign_key "defects", "banking_types"
