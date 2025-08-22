@@ -1,0 +1,84 @@
+<div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mt-6">
+  <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Defect Timeline</h2>
+  
+  <div class="relative">
+    <!-- Horizontal timeline -->
+    <div class="hidden sm:block absolute top-1/2 left-0 w-full h-0.5 bg-gray-200 dark:bg-gray-700 transform -translate-y-1/2"></div>
+    
+    <div class="flex justify-between relative">
+      <!-- Creation event -->
+      <div class="relative flex flex-col items-center">
+        <div class="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full border-4 border-white dark:border-gray-800 mb-2 z-10">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 dark:text-blue-300" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="text-center">
+          <p class="text-sm font-medium text-gray-900 dark:text-white">Created</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400"><%= @defect.created_at&.strftime("%b %d") %></p>
+        </div>
+      </div>
+      
+      <!-- To Do status -->
+      <div class="relative flex flex-col items-center">
+        <div class="flex items-center justify-center w-10 h-10 bg-green-100 rounded-full border-4 border-white dark:border-gray-800 mb-2 z-10">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600 dark:text-green-300" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-5.414V13a1 1 0 102 0v-3a1 1 0 00-.293-.707l-2-2a1 1 0 10-1.414 1.414L9 10.586z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="text-center">
+          <p class="text-sm font-medium text-gray-900 dark:text-white">To Do</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400"><%= @defect.created_at&.strftime("%b %d") %></p>
+        </div>
+      </div>
+      
+      <!-- In Progress status -->
+      <div class="relative flex flex-col items-center">
+        <div class="flex items-center justify-center w-10 h-10 bg-yellow-100 rounded-full border-4 border-white dark:border-gray-800 mb-2 z-10">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-600 dark:text-yellow-300" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="text-center">
+          <p class="text-sm font-medium text-gray-900 dark:text-white">In Progress</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">-</p>
+        </div>
+      </div>
+      
+      <!-- QA Testing status -->
+      <div class="relative flex flex-col items-center">
+        <div class="flex items-center justify-center w-10 h-10 bg-indigo-100 rounded-full border-4 border-white dark:border-gray-800 mb-2 z-10">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600 dark:text-indigo-300" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="text-center">
+          <p class="text-sm font-medium text-gray-900 dark:text-white">QA Testing</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">-</p>
+        </div>
+      </div>
+      
+      <!-- Resolved status -->
+      <div class="relative flex flex-col items-center">
+        <div class="flex items-center justify-center w-10 h-10 bg-gray-200 rounded-full border-4 border-white dark:border-gray-800 mb-2 z-10">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600 dark:text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="text-center">
+          <p class="text-sm font-medium text-gray-900 dark:text-white">Closed</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">-</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Current Status Indicator -->
+    <div class="mt-8 text-center">
+      <span class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
+        Current Status: <%= @defect.statuses.first&.name || 'Open' %>
+      </span>
+      <p class="text-sm text-gray-500 mt-2">Last updated: <%= @defect.updated_at&.strftime("%b %d, %Y at %I:%M %p") %></p>
+    </div>
+  </div>
+</div>
