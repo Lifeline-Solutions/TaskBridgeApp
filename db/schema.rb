@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_22_132255) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_22_133237) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -210,7 +210,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_22_132255) do
     t.uuid "defect_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by_id"
+    t.uuid "modified_by_id"
+    t.uuid "deleted_by_id"
+    t.datetime "deleted_on"
+    t.boolean "archive_status", default: false, null: false
+    t.index ["archive_status"], name: "index_defect_messages_on_archive_status"
+    t.index ["created_by_id"], name: "index_defect_messages_on_created_by_id"
     t.index ["defect_id"], name: "index_defect_messages_on_defect_id"
+    t.index ["deleted_by_id"], name: "index_defect_messages_on_deleted_by_id"
+    t.index ["deleted_on"], name: "index_defect_messages_on_deleted_on"
+    t.index ["modified_by_id"], name: "index_defect_messages_on_modified_by_id"
     t.index ["user_id"], name: "index_defect_messages_on_user_id"
   end
 
@@ -921,6 +931,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_22_132255) do
   add_foreign_key "commonly_selected_clients", "users"
   add_foreign_key "defect_messages", "defects"
   add_foreign_key "defect_messages", "users"
+  add_foreign_key "defect_messages", "users", column: "created_by_id"
+  add_foreign_key "defect_messages", "users", column: "deleted_by_id"
+  add_foreign_key "defect_messages", "users", column: "modified_by_id"
   add_foreign_key "defect_statuses", "defects"
   add_foreign_key "defect_statuses", "statuses"
   add_foreign_key "defects", "banking_types"
