@@ -124,6 +124,7 @@ Rails.application.routes.draw do
     member do
       post :add_defect
       delete :remove_defect
+      post :defect_status
     end
     resources :bugs do
       member do
@@ -132,6 +133,7 @@ Rails.application.routes.draw do
         post :bug_status
       end
     end
+
   end
 
   resources :projects, controller: 'project' do
