@@ -213,8 +213,7 @@ class DefectController < ApplicationController
       :priority,
       :product_id,
       :defect_unique,
-      user_ids: [],
-      attachments: []
+      user_ids: []
     )
   end
 end
