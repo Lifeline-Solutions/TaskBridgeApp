@@ -123,32 +123,50 @@ class DataCenterController < ApplicationController
 
   # User activity report for the admin
   def user_report
+    # ... existing code ...
     authorize! :generate, :report # Check if the user can generate reports
     if params[:user_id].present? || params[:start_date].present? || params[:end_date].present?
-      @users = User.includes(tickets: { project: :client })
-        .where(id: params[:user_id])
+      # Keep the selected user for header/context
+      @users = User.where(id: params[:user_id])
+
+      # Build one relation that finds tickets where the user is:
+      # - the ticket owner, OR
+      # - appears on any related event, OR
+      # - appears on any related issue
+      @tickets = Ticket.left_outer_joins(:events, :issues)
+        .where('tickets.user_id = :uid OR events.user_id = :uid OR issues.user_id = :uid', uid: params[:user_id])
+        .includes({ project: :client }, :events, :issues, :statuses)
+        .distinct
 
       start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : nil
       end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
 
-      @status_counts = @users.flat_map(&:tickets)
-        .select { |ticket| (start_date.nil? || ticket.created_at >= start_date) && (end_date.nil? || ticket.created_at <= end_date) }
+      filtered_tickets = @tickets.select do |ticket|
+        (start_date.nil? || ticket.created_at >= start_date) &&
+          (end_date.nil? || ticket.created_at <= end_date)
+      end
+
+      @status_counts = filtered_tickets
         .group_by { |ticket| ticket.statuses.first&.name || 'N/A' }
         .transform_values(&:count)
 
-      @tickets_by_client = @users.flat_map(&:tickets)
-        .select { |ticket| (start_date.nil? || ticket.created_at >= start_date) && (end_date.nil? || ticket.created_at <= end_date) }
-        .group_by { |ticket| ticket.project.client.name }
+      @tickets_by_client = filtered_tickets
+        .group_by { |ticket| ticket.project&.client&.name || 'Unknown Client' }
+
+      @events = filtered_tickets.flat_map(&:events)
+      @issues = filtered_tickets.flat_map(&:issues)
 
       respond_to do |format|
-        format.html # Default view
+        format.html
         format.csv { send_data generate_user_csv(@users), filename: "user_report_#{Date.today}.csv" }
       end
+
     else
       @users = User.none
       flash[:alert] = 'Please provide a valid date range.'
       render :user_report
     end
+    # ... existing code ...
   end
 
   def user_report_view

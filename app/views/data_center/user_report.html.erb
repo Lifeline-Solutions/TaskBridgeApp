@@ -107,6 +107,80 @@
       </tbody>
     </table>
   </div>
+
+  <!-- Events Section -->
+  <div class="mx-auto mb-8 px-4 sm:px-6 lg:px-8">
+    <h3 class="text-lg font-bold mb-3">All Events</h3>
+    <% if @events.present? %>
+      <table class="table-auto w-full">
+        <thead>
+        <tr>
+          <th class="border border-black dark:border-slate-100 px-4 py-2">Ticket ID</th>
+          <th class="border border-black dark:border-slate-100 px-4 py-2">Event</th>
+          <th class="border border-black dark:border-slate-100 px-4 py-2">View</th>
+          <th class="border border-black dark:border-slate-100 px-4 py-2">Created At</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% @events.each do |event| %>
+          <% ticket = event.try(:ticket) %>
+          <tr>
+            <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket&.unique_id || "-" %></td>
+            <td class="border border-black dark:border-slate-100 px-4 py-2">
+              <%= event.try(:details) || event.try(:name) || event.try(:title) || "Event ##{event.id}" %>
+            </td>
+            <td class="border border-black dark:border-slate-100 px-4 py-2">
+              <% if ticket %>
+                <%= link_to 'VIEW', polymorphic_path([ticket.project, ticket]), class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
+              <% end %>
+            </td>
+            <td class="border border-black dark:border-slate-100 px-4 py-2"><%= event.try(:created_at).strftime('%d-%m-%Y') %></td>
+          </tr>
+        <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="text-sm text-gray-600">No events found for the selected criteria.</p>
+    <% end %>
+  </div>
+
+  <!-- Issues Section -->
+  <div class="mx-auto mb-8 px-4 sm:px-6 lg:px-8">
+    <h3 class="text-lg font-bold mb-3">All Issues</h3>
+    <% if @issues.present? %>
+      <table class="table-auto w-full">
+        <thead>
+        <tr>
+          <th class="border border-black dark:border-slate-100 px-4 py-2">Ticket ID</th>
+          <th class="border border-black dark:border-slate-100 px-4 py-2">Issue</th>
+          <th class="border border-black dark:border-slate-100 px-4 py-2">View</th>
+          <th class="border border-black dark:border-slate-100 px-4 py-2">Created At</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% @issues.each do |issue| %>
+          <% ticket = issue.try(:ticket) %>
+          <tr>
+            <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket&.unique_id || "-" %></td>
+            <td class="border border-black dark:border-slate-100 px-4 py-2 w-full">
+              <%= (issue.try(:content)&.to_plain_text&.truncate(30)) || issue.try(:name) || issue.try(:title) || "Issue ##{issue.id}" %>
+            </td>
+            <td class="border border-black dark:border-slate-100 px-4 py-2">
+              <% if ticket %>
+                <%= link_to 'VIEW', polymorphic_path([ticket.project, ticket]), class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
+              <% end %>
+            </td>
+            <td class="border border-black dark:border-slate-100 px-4 py-2">
+              <%= issue.try(:created_at).strftime('%d-%m-%Y') %>
+            </td>
+          </tr>
+        <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="text-sm text-gray-600">No issues found for the selected criteria.</p>
+    <% end %>
+  </div>
 <% end %>
 
 <script>
