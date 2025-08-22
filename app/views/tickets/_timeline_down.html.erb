@@ -1,0 +1,16 @@
+<div class="p-5 mb-4 border border-gray-100 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+  <% @events.each_with_index do |event, index| %>
+    <time class="text-lg font-semibold text-gray-900 dark:text-white"><%= event.created_at.strftime("%B %d, %Y %H:%M") %></time>
+    <ol class="mt-3 divide-y divide-gray-200 dark:divide-gray-700">
+      <li>
+        <div class="items-center block p-3 sm:flex hover:bg-gray-100 dark:hover:bg-gray-700 gap-2">
+          <%= render 'tickets/ticket_user_initials', event: event %>
+          <div class="text-gray-600 dark:text-gray-400">
+            <div class="text-base font-normal"><span class="font-medium text-gray-900 dark:text-white"><%= event.user.name %></span></div>
+            <div class="text-sm font-normal"><%= event.details %></div>
+          </div>
+        </div>
+      </li>
+    </ol>
+  <% end %>
+</div>
