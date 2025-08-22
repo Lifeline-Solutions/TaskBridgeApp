@@ -28,6 +28,7 @@ class Defect < ApplicationRecord
   end
 
   before_create :set_default_status
+  before_create :set_default_issue_type
   after_create :defect_unique_id
 
   private
@@ -35,6 +36,10 @@ class Defect < ApplicationRecord
   def set_default_status
     default_status = Status.find_by(name: 'TO DO')
     statuses << default_status if default_status
+  end
+
+  def set_default_issue_type
+    self.issue_type ||= 'Bug'
   end
 
   def defect_unique_id
