@@ -58,11 +58,21 @@ class DefectController < ApplicationController
     @defect = Defect.find(params[:id])
     @qa_modules = QaModule.where(parent_id: nil)
     @banking_types = BankingType.all
+    @products = Product.with_quality_assurance_status
+    @statuses = Status.where(name: [
+      'To Do', 'In Progress', 'On hold', 'Awaiting client info', 
+      'Awaiting build', 'QA testing', 'Closed', 'Failed QA', 
+      'Blocked', 'Reopened'
+    ])
     @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
-
-    # Load submodules for the current module if exists
     @submodules = @defect.qa_module ? @defect.qa_module.submodules : []
+
+    respond_to do |format|
+      format.html # normal full-page
+      format.turbo_stream { render layout: false } # only return the turbo frame
+    end
   end
+
 
   def update
     audit_on_update(@defect)
@@ -191,8 +201,24 @@ class DefectController < ApplicationController
     @banking_types = BankingType.all
     @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
     @submodules = []
-    @products = Product.with_quality_assurance_status
-    @statuses = Status.all
+     # Fallback: If no QA product found, just pick first product
+    @product ||= Product.includes(:client, :groupwares).first
+
+    # Dropdown options for product selection
+    @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
+      .select { |product| product.statuses.any? { |status| status.name == 'Quality Assurance' } }
+      .map do |product|
+        client_name = product.client&.name || 'No Client'
+        groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
+        ["#{client_name} - #{groupware_names}", product.id]
+    end
+    
+    # Get all available statuses for the workflow
+    @statuses = Status.where(name: [
+      'To Do', 'In Progress', 'On hold', 'Awaiting client info', 
+      'Awaiting build', 'QA testing', 'Closed', 'Failed QA', 
+      'Blocked', 'Reopened'
+    ])
   end
 
   def set_defect
@@ -215,9 +241,9 @@ class DefectController < ApplicationController
       :banking_type_id,
       :priority,
       :product_id,
+      :issue_type,
       :defect_unique,
-      user_ids: [],
-      attachments: []
+      user_ids: []
     )
   end
 end
