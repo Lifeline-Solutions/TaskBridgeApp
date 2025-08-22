@@ -3,47 +3,32 @@
   <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
     <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Defect Details</h2>
     
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="grid grid-cols-5 gap-6">
       <!-- Left Column -->
-      <div class="space-y-4">
+      <div class="space-y-4 col-span-4">
         <div>
           <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Summary</h3>
           <div class="mt-1 text-gray-900 dark:text-white">
             <%= @defect.summary %>
           </div>
         </div>
-        
+
         <div>
           <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Content</h3>
           <div class="mt-1 text-gray-900 dark:text-white">
             <%= @defect.content %>
           </div>
         </div>
-        
-        <div>
-          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Module</h3>
-          <div class="mt-1 text-gray-900 dark:text-white">
-            <%= @defect.qa_module&.name || 'Not specified' %>
-          </div>
-        </div>
-        
-        <div>
-          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Submodule</h3>
-          <div class="mt-1 text-gray-900 dark:text-white">
-            <%= @defect.submodule&.name || 'Not specified' %>
-          </div>
-        </div>
-
-        <div>
-          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Project</h3>
-          <div class="mt-1 text-gray-900 dark:text-white">
-            <%= @defect.product&.content&.to_plain_text&.truncate(30) || 'Not specified' %>
-          </div>
-        </div>
       </div>
       
       <!-- Right Column -->
-      <div class="space-y-4">
+      <div class="space-y-4 col-span-1">
+        <div>
+          <h3 class="text-sm font-medium">Assignee(s)</h3>
+          <div class="mt-1">
+            <%= render partial: "defect/assign_defect_status" %>
+          </div>
+        </div>
         <div>
           <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Banking Type</h3>
           <div class="mt-1 text-gray-900 dark:text-white">
@@ -78,12 +63,28 @@
             <%= @defect.users.map(&:first_name).join(', ') || 'Unassigned' %>
           </div>
         </div>
+
         <div>
-          <h3 class="text-sm font-medium">Assignee(s)</h3>
-          <div class="mt-1">
-            <%= render partial: "defect/assign_defect_status" %>>
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Module</h3>
+          <div class="mt-1 text-gray-900 dark:text-white">
+            <%= @defect.qa_module&.name || 'Not specified' %>
           </div>
         </div>
+
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Submodule</h3>
+          <div class="mt-1 text-gray-900 dark:text-white">
+            <%= @defect.submodule&.name || 'Not specified' %>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Project</h3>
+          <div class="mt-1 text-gray-900 dark:text-white">
+            <%= @defect.product&.content&.to_plain_text&.truncate(30) || 'Not specified' %>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
