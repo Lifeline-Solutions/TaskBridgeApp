@@ -89,19 +89,6 @@
                         required: true } %>
               </div>
 
-              <!-- Status (editable in edit form) -->
-              <div>
-                <%= f.label :status_ids, 'Status *', class: "block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300" %>
-                <%= f.collection_select :status_ids,
-                      @statuses,
-                      :id,
-                      :name,
-                      { prompt: "Select Status" },
-                      { class: "px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white",
-                        required: true } %>
-              </div>
-
-
               <!-- Assignees -->
               <div>
                 <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Assignees *</label>
