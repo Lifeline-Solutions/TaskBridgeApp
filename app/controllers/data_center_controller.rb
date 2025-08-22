@@ -643,6 +643,23 @@ class DataCenterController < ApplicationController
     @issues = @issues.where(created_at: from_time..to_time) if from_time || to_time
     @issues = @issues.includes(:ticket).to_a
 
+    # Average time from assignment to resolution across resolved tickets
+    durations = []
+    @tickets.each do |t|
+      a = assigned_at_for(t)
+      r = resolved_at_for(t)
+      durations << (r - a).to_i if a && r
+    end
+    @avg_assignment_to_resolved_count = durations.size
+    if durations.any?
+      avg_seconds = (durations.sum / durations.size.to_f).round
+      @avg_assignment_to_resolved_seconds = avg_seconds
+      @avg_assignment_to_resolved_human = helpers.distance_of_time_in_words(Time.at(0), Time.at(avg_seconds), include_seconds: true)
+    else
+      @avg_assignment_to_resolved_seconds = nil
+      @avg_assignment_to_resolved_human = nil
+    end
+
     respond_to do |format|
       format.html
       format.csv { send_data generate_user_csv(@users), filename: "user_report_#{Date.today}.csv" }

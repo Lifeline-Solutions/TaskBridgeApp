@@ -60,10 +60,10 @@ class DefectController < ApplicationController
     @banking_types = BankingType.all
     @products = Product.with_quality_assurance_status
     @statuses = Status.where(name: [
-      'To Do', 'In Progress', 'On hold', 'Awaiting client info', 
-      'Awaiting build', 'QA testing', 'Closed', 'Failed QA', 
-      'Blocked', 'Reopened'
-    ])
+                               'To Do', 'In Progress', 'On hold', 'Awaiting client info',
+                               'Awaiting build', 'QA testing', 'Closed', 'Failed QA',
+                               'Blocked', 'Reopened'
+                             ])
     @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
     @submodules = @defect.qa_module ? @defect.qa_module.submodules : []
 
@@ -72,7 +72,6 @@ class DefectController < ApplicationController
       format.turbo_stream { render layout: false } # only return the turbo frame
     end
   end
-
 
   def update
     audit_on_update(@defect)
@@ -202,24 +201,24 @@ class DefectController < ApplicationController
     @banking_types = BankingType.all
     @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
     @submodules = []
-     # Fallback: If no QA product found, just pick first product
+    # Fallback: If no QA product found, just pick first product
     @product ||= Product.includes(:client, :groupwares).first
 
     # Dropdown options for product selection
     @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
       .select { |product| product.statuses.any? { |status| status.name == 'Quality Assurance' } }
       .map do |product|
-        client_name = product.client&.name || 'No Client'
-        groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
-        ["#{client_name} - #{groupware_names}", product.id]
+      client_name = product.client&.name || 'No Client'
+      groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
+      ["#{client_name} - #{groupware_names}", product.id]
     end
-    
+
     # Get all available statuses for the workflow
     @statuses = Status.where(name: [
-      'To Do', 'In Progress', 'On hold', 'Awaiting client info', 
-      'Awaiting build', 'QA testing', 'Closed', 'Failed QA', 
-      'Blocked', 'Reopened'
-    ])
+                               'To Do', 'In Progress', 'On hold', 'Awaiting client info',
+                               'Awaiting build', 'QA testing', 'Closed', 'Failed QA',
+                               'Blocked', 'Reopened'
+                             ])
   end
 
   def set_defect
