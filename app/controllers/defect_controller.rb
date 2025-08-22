@@ -58,11 +58,17 @@ class DefectController < ApplicationController
     @defect = Defect.find(params[:id])
     @qa_modules = QaModule.where(parent_id: nil)
     @banking_types = BankingType.all
+    @products = Product.with_quality_assurance_status
+    @statuses = Status.all
     @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
-
-    # Load submodules for the current module if exists
     @submodules = @defect.qa_module ? @defect.qa_module.submodules : []
+
+    respond_to do |format|
+      format.html # normal full-page
+      format.turbo_stream { render layout: false } # only return the turbo frame
+    end
   end
+
 
   def update
     audit_on_update(@defect)
