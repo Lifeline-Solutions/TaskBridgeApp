@@ -69,17 +69,12 @@ class DefectMessagesController < ApplicationController
 
   def destroy
     if audit_soft_delete(@defect_message)
-      respond_to do |format|
-        format.turbo_stream
-        format.html { redirect_to @defect, notice: "Message archived successfully." }
-      end
+      @defect_message.destroy
     else
       @defect_message.destroy
-      respond_to do |format|
-        format.turbo_stream
-        format.html { redirect_to @defect, notice: "Message deleted permanently." }
-      end
     end
+    
+    redirect_to defect_path(@defect), notice: "Message deleted successfully."
   end
 
   private
