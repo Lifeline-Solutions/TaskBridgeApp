@@ -3,12 +3,12 @@
 
   <div class="grid grid-cols-5 md:items-center mt-4">
     <div class="w-full col-span-4 h-full flex">
-      <div class="grid grid-cols-4">
+      <div class="w-full">
         <%= render 'defect/defect_details' %>
-
-        <!-- Messages Section -->
-        <div id="defect-messages" class="mt-8">
-          <h2 class="text-xl font-semibold mb-4">Messages</h2>
+        
+        <!-- Messages Section - Make it span all 4 columns -->
+        <div class="">
+          <%= render 'defect_messages/defect_message' %>
         </div>
       </div>
     </div>
@@ -20,12 +20,4 @@
   <div class="mt-6">
     <%#= render 'defect/defect_timeline' %>
   </div>
-</div>
-
-<div class="space-y-4">
-  <%= render "defect_messages/messages", defect_messages: @defect.defect_messages.order(created_at: :asc) %>
-</div>
-
-<div class="mt-6">
-  <%= render "defect_messages/new_button", defect: @defect %>
 </div>

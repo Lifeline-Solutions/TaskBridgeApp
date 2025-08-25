@@ -1,9 +1,25 @@
-<div class="p-4 bg-gray-50 border rounded-lg shadow-sm">
-  <div class="text-sm text-gray-700">
-    <%= defect_message.content %>
+<!-- Messages Section -->
+<div id="defect-messages" class="mt-8 w-full">
+  <h2 class="text-xl font-semibold mb-4">Messages</h2>
+
+  <div class="space-y-4 w-full">
+    <% if @defect.defect_messages.any? %>
+      <ul class="space-y-4 w-full">
+        <% @defect.defect_messages.order(created_at: :asc).each do |message| %>
+          <%= render partial: "defect_messages/message", locals: { message: message } %>
+        <% end %>
+      </ul>
+    <% else %>
+      <div class="text-center py-8 bg-gray-50 rounded-lg">
+        <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+        </svg>
+        <p class="text-gray-500">No messages yet. Be the first to add one!</p>
+      </div>
+    <% end %>
   </div>
-  <div class="text-xs text-gray-500 mt-2">
-    Posted by <%= defect_message.user.name if defect_message.user %> · 
-    <%= time_ago_in_words(defect_message.created_at) %> ago
+
+  <div class="mt-6">
+    <%= render "defect_messages/new_button", defect: @defect %>
   </div>
 </div>
