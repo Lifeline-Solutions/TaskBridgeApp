@@ -76,12 +76,12 @@
 <!-- Pagination Links -->
 <div class="mt-4">
   <% if @page > 1 %>
-    <%= link_to 'Previous', all_tickets_project_tickets_path(@project, page: @page - 1),
+    <%= link_to 'Previous', show_all_tickets_user_inactive_project_tickets_path(@project, page: @page - 1),
                 class: 'bg-blue-600 hover:bg-blue-500 px-4 rounded text-white text-sm font-semibold transition-all p-2 uppercase'
     %>
   <% end %>
   <% if @page < @total_pages %>
-    <%= link_to 'Next', all_tickets_project_tickets_path(@project, page: @page + 1),
+    <%= link_to 'Next', show_all_tickets_user_inactive_project_tickets_path(@project, page: @page + 1),
                 class: 'bg-blue-600 hover:bg-blue-500 px-4 rounded text-white text-sm font-semibold transition-all p-2 uppercase'
     %>
   <% end %>
