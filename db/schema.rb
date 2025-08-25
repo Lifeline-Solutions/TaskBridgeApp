@@ -10,7 +10,8 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_22_133237) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_25_082717) do
+
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -251,7 +252,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_22_133237) do
     t.uuid "banking_type_id"
     t.uuid "creator_id"
     t.uuid "product_id"
-    t.string "summary", null: false
+    t.string "summary"
     t.string "defect_unique"
     t.string "issue_type", default: "Bug"
     t.index ["banking_type_id"], name: "index_defects_on_banking_type_id"
@@ -819,6 +820,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_22_133237) do
     t.index ["groupware_id"], name: "index_tickets_on_groupware_id"
     t.index ["project_id"], name: "index_tickets_on_project_id"
     t.index ["software_id"], name: "index_tickets_on_software_id"
+    t.index ["unique_id"], name: "index_tickets_on_unique_id", unique: true
     t.index ["user_id"], name: "index_tickets_on_user_id"
   end
 

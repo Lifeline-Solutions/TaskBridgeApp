@@ -7,9 +7,7 @@
       <div class="flex flex-col gap-2">
         <%= f.label :user_id, "Taskbridge Users", class: "capitalize text-sm font-bold w-full align-middle pt-3" %>
         <div class="relative w-full">
-          <!-- Searchable Input -->
           <input type="text" id="searchUser" class="border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full" autocomplete="off" onclick="showDropdown()" placeholder="Search User..." onkeyup="filterUserDropdown()">
-          <!-- Dropdown List -->
           <div id="userDropdown" class="absolute border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none bg-white dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full hidden">
             <% users = User.with_role(:agent).or(User.with_role(:project_manager)).or(User.with_role(:admin)) %>
             <% users.each do |user| %>
@@ -18,8 +16,6 @@
               </div>
             <% end %>
           </div>
-
-          <!-- Hidden Input to store selected user ID -->
           <input type="hidden" id="selectedUserId" name="user_id" required>
         </div>
       </div>
@@ -38,11 +34,14 @@
   <% end %>
 </div>
 
-<% if @users.any? %>
+<% if @users&.any? %>
   <div class="flex justify-between gap-2">
-    <div class="mb-4 px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-4 px-4 sm:px-6 lg:px-8 py-8 w-full">
       <h2 class="text-xl font-bold mb-4 text-center">
-        User Report for <%= @users.first.name %> from <%= params[:start_date] %> to <%= params[:end_date] %>
+        Assignment Report for <%= @users.first.name || "#{@users.first.first_name} #{@users.first.last_name}" %>
+        <% if params[:start_date].present? || params[:end_date].present? %>
+          from <%= params[:start_date] %> to <%= params[:end_date] %>
+        <% end %>
       </h2>
       <div class="grid grid-cols-5">
         <div class="mb-4 px-4 sm:px-6 lg:px-8 py-8 col-span-4">
@@ -74,8 +73,6 @@
                           ["Pending", @users.sum { |user| user.tickets.count { |ticket| SlaTicket.find_by(ticket_id: ticket.id)&.sla_target_response_deadline.nil? } }]
                         ] %>
         </div>
-
-
       </div>
     </div>
   </div>
@@ -100,7 +97,9 @@
           <td class="border border-black dark:border-slate-100 px-4 py-2"><%= client_name %></td>
           <td class="border border-black dark:border-slate-100 px-4 py-2"><%= tickets.count %></td>
           <td class="border border-black dark:border-slate-100 px-4 py-2">
-            <%= link_to "View Tickets", user_report_view_path(user_id: params[:user_id], client_name: client_name, start_date: params[:start_date], end_date: params[:end_date]), class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
+            <%= link_to "View Tickets",
+                        user_report_view_path(user_id: params[:user_id], client_name: client_name, start_date: params[:start_date], end_date: params[:end_date]),
+                        class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
           </td>
         </tr>
       <% end %>
@@ -108,17 +107,19 @@
     </table>
   </div>
 
-  <!-- Events Section -->
+  <!-- Assignment Events Section -->
   <div class="mx-auto mb-8 px-4 sm:px-6 lg:px-8">
-    <h3 class="text-lg font-bold mb-3">All Events</h3>
+    <h3 class="text-lg font-bold mb-3">Assignment Events</h3>
     <% if @events.present? %>
       <table class="table-auto w-full">
         <thead>
         <tr>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">Ticket Unique ID (Count)</th>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">Event</th>
+          <th class="border border-black dark:border-slate-100 px-4 py-2">Ticket Unique ID (Assign Count)</th>
+          <th class="border border-black dark:border-slate-100 px-4 py-2">Assigned To / SLA Status / Deadline</th>
           <th class="border border-black dark:border-slate-100 px-4 py-2">View Ticket</th>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">Latest Event Date</th>
+          <th class="border border-black dark:border-slate-100 px-4 py-2">Assigned At</th>
+          <th class="border border-black dark:border-slate-100 px-4 py-2">Resolved At</th>
+          <th class="border border-black dark:border-slate-100 px-4 py-2">Time to Resolved / Open Since</th>
         </tr>
         </thead>
         <tbody>
@@ -126,27 +127,62 @@
         <% grouped_events.each do |unique_id, events| %>
           <% latest_event = events.max_by(&:created_at) %>
           <% ticket = latest_event.try(:ticket) %>
+          <% info = parse_assignment_details(latest_event.try(:details)) %>
+          <% assigned_at = assigned_at_for(ticket) %>
+          <% resolved_at = resolved_at_for(ticket) %>
+          <% duration = resolution_duration_for(ticket) %>
           <tr>
             <td class="border border-black dark:border-slate-100 px-4 py-2"><%= "#{unique_id} (#{events.size})" %></td>
             <td class="border border-black dark:border-slate-100 px-4 py-2">
-              <%= (latest_event.try(:details)&.truncate(80)) || latest_event.try(:name) || latest_event.try(:title) || "Event ##{latest_event.id}" %>
+              <div>
+                <div><strong>Assigned To:</strong> <%= info[:assigned_to] || "Unknown" %></div>
+                <div><strong>SLA Status:</strong> <%= info[:sla_status] || "N/A" %></div>
+                <div><strong>Target Response Deadline:</strong> <%= info[:target_deadline] || "N/A" %></div>
+              </div>
             </td>
             <td class="border border-black dark:border-slate-100 px-4 py-2">
               <% if ticket %>
                 <%= link_to 'VIEW', polymorphic_path([ticket.project, ticket]), class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
               <% end %>
             </td>
-            <td class="border border-black dark:border-slate-100 px-4 py-2"><%= latest_event.try(:created_at)&.strftime('%d-%m-%Y') %></td>
+            <td class="border border-black dark:border-slate-100 px-4 py-2">
+              <%= assigned_at ? assigned_at.strftime('%d-%m-%Y %H:%M') : "-" %>
+            </td>
+            <td class="border border-black dark:border-slate-100 px-4 py-2">
+              <%= resolved_at ? resolved_at.strftime('%d-%m-%Y %H:%M') : "-" %>
+            </td>
+            <td class="border border-black dark:border-slate-100 px-4 py-2">
+              <% if duration %>
+                <%= "#{duration[:human]} (from #{(assigned_at || ticket.created_at).strftime('%d-%m-%Y %H:%M')})" %>
+              <% else %>
+                <%= "#{ticket.created_at.strftime('%d-%m-%Y %H:%M')} to #{Time.current.strftime('%d-%m-%Y %H:%M')} (#{time_ago_in_words(ticket.created_at)} and counting)" %>
+              <% end %>
+            </td>
           </tr>
         <% end %>
         </tbody>
+
+        <!-- Average row in the table footer -->
+        <tfoot>
+        <tr>
+          <td colspan="6" class="border border-black dark:border-slate-100 px-4 py-2 font-semibold bg-gray-50 dark:bg-gray-800">
+            <% if @avg_assignment_to_resolved_seconds %>
+              Average time from assignment to resolution across
+              <%= pluralize(@avg_assignment_to_resolved_count, 'ticket') %>:
+              <%= @avg_assignment_to_resolved_human %>
+            <% else %>
+              No resolved tickets with an assignment time to compute an average.
+            <% end %>
+          </td>
+        </tr>
+        </tfoot>
       </table>
     <% else %>
-      <p class="text-sm text-gray-600">No events found for the selected criteria.</p>
+      <p class="text-sm text-gray-600">No assignment events found for the selected criteria.</p>
     <% end %>
   </div>
 
-  <!-- Issues Section -->
+  <!-- Comments (Issues) Section -->
   <div class="mx-auto mb-8 px-4 sm:px-6 lg:px-8">
     <h3 class="text-lg font-bold mb-3">All Comments</h3>
     <% if @issues.present? %>
@@ -165,14 +201,13 @@
         <% grouped_issues.each do |unique_id, issues| %>
           <% ticket = issues.first.ticket %>
           <tr>
+            <td class="border border-black dark:border-slate-100 px-4 py-2"><%= "#{unique_id} (#{issues.size})" %></td>
             <td class="border border-black dark:border-slate-100 px-4 py-2">
-              <%= "#{unique_id} (#{issues.size})" %>
-            </td>
-            <td class="border border-black dark:border-slate-100 px-4 py-2">
-
-                <% issues.each do |issue| %>
-                    <%= (issue.try(:content)&.to_plain_text&.truncate(80)) || issue.try(:name) || issue.try(:title) || "Issue ##{issue.id}" %>
-                <% end %>
+              <% issues.each do |issue| %>
+                <div class="mb-1">
+                  <%= (issue.try(:content)&.to_plain_text&.truncate(80)) || issue.try(:name) || issue.try(:title) || "Issue ##{issue.id}" %>
+                </div>
+              <% end %>
             </td>
             <td class="border border-black dark:border-slate-100 px-4 py-2">
               <% if ticket %>
@@ -180,29 +215,21 @@
               <% end %>
             </td>
             <td class="border border-black dark:border-slate-100 px-4 py-2">
-              <%= issues.first.try(:created_at).strftime('%d-%m-%Y') %>
+              <%= issues.first.try(:created_at)&.strftime('%d-%m-%Y') %>
             </td>
           </tr>
         <% end %>
-
         </tbody>
       </table>
     <% else %>
       <p class="text-sm text-gray-600">No issues found for the selected criteria.</p>
     <% end %>
-
   </div>
 <% end %>
 
 <script>
   function showDropdown() {
     document.getElementById("userDropdown").classList.remove("hidden");
-  }
-
-  function hideDropdown(event) {
-    if (!event.target.closest(".relative")) {
-      document.getElementById("userDropdown").classList.add("hidden");
-    }
   }
 
   function filterUserDropdown() {
@@ -234,8 +261,8 @@
 
     let inputField = document.getElementById("searchUser");
     inputField.value = userName;
-    inputField.style.paddingRight = "12px"; // Prevents text from being cut off
-    inputField.style.overflow = "visible"; // Ensures full visibility
+    inputField.style.paddingRight = "12px";
+    inputField.style.overflow = "visible";
 
     document.getElementById("selectedUserId").value = userId;
     document.getElementById("userDropdown").classList.add("hidden");

@@ -122,52 +122,6 @@ class DataCenterController < ApplicationController
   end
 
   # User activity report for the admin
-  def user_report
-    # ... existing code ...
-    authorize! :generate, :report # Check if the user can generate reports
-    if params[:user_id].present? || params[:start_date].present? || params[:end_date].present?
-      # Keep the selected user for header/context
-      @users = User.where(id: params[:user_id])
-
-      # Build one relation that finds tickets where the user is:
-      # - the ticket owner, OR
-      # - appears on any related event, OR
-      # - appears on any related issue
-      @tickets = Ticket.left_outer_joins(:events, :issues)
-        .where('tickets.user_id = :uid OR events.user_id = :uid OR issues.user_id = :uid', uid: params[:user_id])
-        .includes({ project: :client }, :events, :issues, :statuses)
-        .distinct
-
-      start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : nil
-      end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
-
-      filtered_tickets = @tickets.select do |ticket|
-        (start_date.nil? || ticket.created_at >= start_date) &&
-          (end_date.nil? || ticket.created_at <= end_date)
-      end
-
-      @status_counts = filtered_tickets
-        .group_by { |ticket| ticket.statuses.first&.name || 'N/A' }
-        .transform_values(&:count)
-
-      @tickets_by_client = filtered_tickets
-        .group_by { |ticket| ticket.project&.client&.name || 'Unknown Client' }
-
-      @events = filtered_tickets.flat_map(&:events)
-      @issues = filtered_tickets.flat_map(&:issues)
-
-      respond_to do |format|
-        format.html
-        format.csv { send_data generate_user_csv(@users), filename: "user_report_#{Date.today}.csv" }
-      end
-
-    else
-      @users = User.none
-      flash[:alert] = 'Please provide a valid date range.'
-      render :user_report
-    end
-    # ... existing code ...
-  end
 
   def user_report_view
     if params[:user_id] && params[:client_name]
@@ -605,7 +559,180 @@ class DataCenterController < ApplicationController
     end
   end
 
+  def user_report
+    authorize! :generate, :report
+
+    # Always initialize instance variables
+    @users = []
+    @tickets = Ticket.none
+    @events = []
+    @issues = []
+    @status_counts = {}
+    @tickets_by_client = {}
+    @assigned_at_by_ticket_id = {}
+    @all_ticket_events_by_ticket = {}
+
+    # If no filters, render the form normally
+    return respond_to(&:html) unless params[:user_id].present? || params[:start_date].present? || params[:end_date].present?
+
+    @users = User.where(id: params[:user_id])
+    @selected_user = @users.first
+
+    start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : nil
+    end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
+    from_time = start_date&.beginning_of_day
+    to_time = end_date&.end_of_day
+
+    # Identify assignment events via details text (no events.name column available)
+    assignment_events_scope = Event.where('events.details ILIKE ?', '%was assigned to the ticket%')
+
+    if @selected_user.present?
+      display_name = [@selected_user.first_name, @selected_user.last_name].compact.join(' ').strip
+      if display_name.present?
+        escaped = ActiveRecord::Base.sanitize_sql_like(display_name)
+        # Support the known formatting issue: missing space before "was"
+        assignment_events_scope = assignment_events_scope.where(
+          'events.details ILIKE ? OR events.details ILIKE ?',
+          "%#{escaped} was assigned to the ticket%",
+          "%#{escaped}was assigned to the ticket%"
+        )
+      end
+    end
+
+    if from_time || to_time
+      from_time ||= Time.at(0)
+      to_time ||= Time.current
+      assignment_events_scope = assignment_events_scope.where(created_at: from_time..to_time)
+    end
+
+    # Ticket IDs assigned to the selected user within the range
+    ticket_ids = assignment_events_scope.where.not(ticket_id: nil).distinct.pluck(:ticket_id)
+
+    # Preload for display
+    @assignment_events = assignment_events_scope.includes(:ticket)
+
+    # Map the earliest assignment time per ticket for the selected user
+    @assigned_at_by_ticket_id = @assignment_events
+      .group_by(&:ticket_id)
+      .transform_values { |evs| evs.min_by(&:created_at)&.created_at }
+
+    # Preload all events for those tickets (used for resolved detection)
+    @all_ticket_events_by_ticket = Event
+      .where(ticket_id: ticket_ids)
+      .select(:ticket_id, :details, :created_at)
+      .group_by(&:ticket_id)
+
+    @tickets = Ticket.where(id: ticket_ids)
+      .includes({ project: :client }, :events, :issues, :statuses, :sla_tickets)
+      .distinct
+
+    # Status counts with your original logic
+    filtered_tickets = @tickets
+    @status_counts = filtered_tickets
+      .group_by { |ticket| ticket.statuses.first&.name || 'N/A' }
+      .transform_values(&:count)
+
+    @tickets_by_client = filtered_tickets
+      .group_by { |ticket| ticket.project&.client&.name || 'Unknown Client' }
+
+    # Only assignment events for the events table
+    @events = @assignment_events.to_a
+
+    # Issues related to the matched tickets (optionally filter by date range)
+    @issues = Issue.where(ticket_id: ticket_ids)
+    @issues = @issues.where(created_at: from_time..to_time) if from_time || to_time
+    @issues = @issues.includes(:ticket).to_a
+
+    # Average time from assignment to resolution across resolved tickets
+    durations = []
+    @tickets.each do |t|
+      a = assigned_at_for(t)
+      r = resolved_at_for(t)
+      durations << (r - a).to_i if a && r
+    end
+    @avg_assignment_to_resolved_count = durations.size
+    if durations.any?
+      avg_seconds = (durations.sum / durations.size.to_f).round
+      @avg_assignment_to_resolved_seconds = avg_seconds
+      @avg_assignment_to_resolved_human = helpers.distance_of_time_in_words(Time.at(0), Time.at(avg_seconds), include_seconds: true)
+    else
+      @avg_assignment_to_resolved_seconds = nil
+      @avg_assignment_to_resolved_human = nil
+    end
+
+    respond_to do |format|
+      format.html
+      format.csv { send_data generate_user_csv(@users), filename: "user_report_#{Date.today}.csv" }
+    end
+  end
+
+  helper_method :parse_assignment_details, :assigned_at_for, :resolved_at_for, :resolution_duration_for
+
   private
+
+  # Parse "Assigned To", "SLA Status", "Target Response Deadline" from details text
+  # Example: "#{user.first_name} #{user.last_name}was assigned to the ticket, with Status:  #{sla_ticket.sla_status} and Target Response Deadline #{sla_target_response_deadline}"
+  def parse_assignment_details(details)
+    return { assigned_to: nil, sla_status: nil, target_deadline: nil } if details.blank?
+
+    normalized = details.to_s.gsub('was assigned', ' was assigned')
+
+    assigned_to = normalized[/\A\s*(.+?)\s+was assigned to the ticket/i, 1]&.strip
+    sla_status = normalized[/Status:\s*([^,]+)/i, 1]&.strip
+    target_deadline = normalized[/Target Response Deadline\s*(.+)\z/i, 1]&.strip
+
+    { assigned_to: assigned_to, sla_status: sla_status, target_deadline: target_deadline }
+  end
+
+  # First assignment timestamp for the selected user on this ticket
+  def assigned_at_for(ticket)
+    return nil unless ticket&.id
+
+    @assigned_at_by_ticket_id&.[](ticket.id)
+  end
+
+  # Best-effort detection of when a ticket changed status to "Resolved"
+  # 1) ticket.resolved_at or ticket.closed_at if present
+  # 2) First event whose details indicate "Resolved"
+  def resolved_at_for(ticket)
+    return nil unless ticket
+
+    return ticket.resolved_at if ticket.respond_to?(:resolved_at) && ticket.resolved_at.present?
+    return ticket.closed_at if ticket.respond_to?(:closed_at) && ticket.closed_at.present?
+
+    events = @all_ticket_events_by_ticket&.[](ticket.id) || []
+    events.sort_by!(&:created_at)
+
+    resolved_event = events.find do |e|
+      d = e.details.to_s.downcase
+      d.include?('resolved') && (
+        d.include?('status') ||
+          d.include?('status changed') ||
+          d.include?('changed status') ||
+          d.include?('to resolved')
+      )
+    end
+
+    resolved_event&.created_at
+  end
+
+  # Returns a hash describing the time taken to reach Resolved.
+  # Prefer duration from assignment to resolved; fall back to ticket.created_at if no assignment found.
+  # { from: Time, to: Time, seconds: Integer, human: "x days y hours ..." }
+  def resolution_duration_for(ticket)
+    return nil unless ticket
+
+    to_time = resolved_at_for(ticket)
+    return nil unless to_time
+
+    from_time = assigned_at_for(ticket) || ticket.created_at
+    return nil unless from_time
+
+    seconds = (to_time - from_time).to_i
+    human = helpers.distance_of_time_in_words(from_time, to_time, include_seconds: true)
+
+    { from: from_time, to: to_time, seconds: seconds, human: human }
+  end
 
   def generate_orm_report_csv(tickets, ticket_counts, project_status_counts)
     CSV.generate(headers: true) do |csv|

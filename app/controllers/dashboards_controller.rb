@@ -14,11 +14,6 @@ class DashboardsController < ApplicationController
     if team
       session[:team_id] = team.id # Store the team ID in the session
       user_ids = team.users.pluck(:id)
-      activity('user_activity')
-        .caused_by(current_user)
-        .event('dashboard.fetch_stats')
-        .with_properties(team_id: team.id, team_name: team.name)
-        .log('Dashboard stats fetched')
 
       tickets_from_inception = Ticket.joins(:users, :statuses)
         .where(users: { id: user_ids })
