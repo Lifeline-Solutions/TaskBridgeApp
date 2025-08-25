@@ -1,0 +1,7 @@
+<%= turbo_stream.append "defect_messages" do %>
+  <%= render partial: "defect_messages/defect_message", locals: { defect_message: @defect_message } %>
+<% end %>
+
+<%= turbo_stream.replace "new_defect_message" do %>
+  <%= render partial: "defect_messages/new_button", locals: { defect: @defect } %>
+<% end %>

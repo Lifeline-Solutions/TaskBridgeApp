@@ -205,6 +205,25 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_25_082717) do
     t.index ["user_id"], name: "index_commonly_selected_clients_on_user_id"
   end
 
+  create_table "defect_messages", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "user_id", null: false
+    t.uuid "defect_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.uuid "created_by_id"
+    t.uuid "modified_by_id"
+    t.uuid "deleted_by_id"
+    t.datetime "deleted_on"
+    t.boolean "archive_status", default: false, null: false
+    t.index ["archive_status"], name: "index_defect_messages_on_archive_status"
+    t.index ["created_by_id"], name: "index_defect_messages_on_created_by_id"
+    t.index ["defect_id"], name: "index_defect_messages_on_defect_id"
+    t.index ["deleted_by_id"], name: "index_defect_messages_on_deleted_by_id"
+    t.index ["deleted_on"], name: "index_defect_messages_on_deleted_on"
+    t.index ["modified_by_id"], name: "index_defect_messages_on_modified_by_id"
+    t.index ["user_id"], name: "index_defect_messages_on_user_id"
+  end
+
   create_table "defect_statuses", id: false, force: :cascade do |t|
     t.uuid "defect_id", null: false
     t.uuid "status_id", null: false
@@ -232,7 +251,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_25_082717) do
     t.uuid "banking_type_id"
     t.uuid "creator_id"
     t.uuid "product_id"
-    t.string "summary"
+    t.string "summary", null: false
     t.string "defect_unique"
     t.string "issue_type", default: "Bug"
     t.index ["banking_type_id"], name: "index_defects_on_banking_type_id"
@@ -911,6 +930,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_25_082717) do
   add_foreign_key "comments", "users"
   add_foreign_key "commonly_selected_clients", "clients"
   add_foreign_key "commonly_selected_clients", "users"
+  add_foreign_key "defect_messages", "defects"
+  add_foreign_key "defect_messages", "users"
+  add_foreign_key "defect_messages", "users", column: "created_by_id"
+  add_foreign_key "defect_messages", "users", column: "deleted_by_id"
+  add_foreign_key "defect_messages", "users", column: "modified_by_id"
   add_foreign_key "defect_statuses", "defects"
   add_foreign_key "defect_statuses", "statuses"
   add_foreign_key "defects", "banking_types"
