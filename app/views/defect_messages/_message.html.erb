@@ -1,29 +1,49 @@
-<div id="<%= dom_id(message) %>"
-     class="p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-  
-  <div class="flex justify-between items-center mb-2">
-    <span class="font-medium text-gray-900 dark:text-gray-100">
-      <%= message.user.email %> <!-- Or user.name if available -->
-    </span>
-    <span class="text-xs text-gray-500">
-      <%= message.created_at.strftime("%b %d, %Y %H:%M") %>
-    </span>
-  </div>
+<div class="relative pl-8" id="<%= dom_id(message) %>">
+  <!-- Timeline dot -->
+  <span class="absolute left-0 flex items-center justify-center w-6 h-6 bg-blue-100 rounded-full ring-8 ring-white dark:ring-gray-800 dark:bg-blue-900">
+    <svg class="w-3 h-3 text-blue-800 dark:text-blue-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+      <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
+    </svg>
+  </span>
 
-  <div class="prose dark:prose-invert">
-    <%= message.content.to_s %> <!-- rich text -->
-  </div>
+  <!-- Message Card -->
+  <div class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+    <!-- Message Header -->
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center gap-3">
+        <span class="font-medium text-gray-900 dark:text-white">
+          <%= message.user.first_name %> <%= message.user.last_name %>
+        </span>
+        <span class="text-xs text-gray-500 dark:text-gray-400">
+          <%= message.created_at.strftime("%I:%M %p at %d %B %Y") %>
+        </span>
+      </div>
+      
+      <!-- Message Actions -->
+      <div class="flex gap-2">
+        <% if can?(:edit, message) %>
+          <%= link_to edit_defect_defect_message_path(message.defect, message),
+                      data: { turbo_frame: dom_id(message, :edit) },
+                      class: "text-xs px-2.5 py-0.5 rounded bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:hover:bg-blue-900" do %>
+            Edit
+          <% end %>
+        <% end %>
 
-  <div class="mt-2 flex gap-2 text-sm">
-    <%= link_to "✏️ Edit",
-                edit_defect_defect_message_path(message.defect, message),
-                data: { turbo_frame: dom_id(message, :edit) },
-                class: "text-blue-600 hover:underline" %>
+        <% if can?(:delete, message) %>
+          <%= link_to 'Delete', 
+                      defect_defect_message_path(message.defect, message),
+                      method: :delete,
+                      data: { turbo_method: :delete, turbo_confirm: 'Are you sure?' },
+                      class: 'text-xs px-2.5 py-0.5 rounded bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/50 dark:text-red-300 dark:hover:bg-red-900' %>
+        <% end %>
+      </div>
+    </div>
 
-    <%= link_to "🗑️ Delete",
-                defect_defect_message_path(message.defect, message),
-                method: :delete,
-                data: { confirm: "Are you sure?" },
-                class: "text-red-600 hover:underline" %>
+    <!-- Message Content -->
+    <div class="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
+      <%= message.content.to_s %>
+    </div>
   </div>
 </div>
+
+<%= turbo_frame_tag dom_id(message, :edit) %>
