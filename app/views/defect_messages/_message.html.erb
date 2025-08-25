@@ -1,0 +1,29 @@
+<div id="<%= dom_id(message) %>"
+     class="p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+  
+  <div class="flex justify-between items-center mb-2">
+    <span class="font-medium text-gray-900 dark:text-gray-100">
+      <%= message.user.email %> <!-- Or user.name if available -->
+    </span>
+    <span class="text-xs text-gray-500">
+      <%= message.created_at.strftime("%b %d, %Y %H:%M") %>
+    </span>
+  </div>
+
+  <div class="prose dark:prose-invert">
+    <%= message.content.to_s %> <!-- rich text -->
+  </div>
+
+  <div class="mt-2 flex gap-2 text-sm">
+    <%= link_to "✏️ Edit",
+                edit_defect_defect_message_path(message.defect, message),
+                data: { turbo_frame: dom_id(message, :edit) },
+                class: "text-blue-600 hover:underline" %>
+
+    <%= link_to "🗑️ Delete",
+                defect_defect_message_path(message.defect, message),
+                method: :delete,
+                data: { confirm: "Are you sure?" },
+                class: "text-red-600 hover:underline" %>
+  </div>
+</div>

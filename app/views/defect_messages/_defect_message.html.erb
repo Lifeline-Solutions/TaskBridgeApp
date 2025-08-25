@@ -1,0 +1,9 @@
+<div class="p-4 bg-gray-50 border rounded-lg shadow-sm">
+  <div class="text-sm text-gray-700">
+    <%= defect_message.content %>
+  </div>
+  <div class="text-xs text-gray-500 mt-2">
+    Posted by <%= defect_message.user.name if defect_message.user %> · 
+    <%= time_ago_in_words(defect_message.created_at) %> ago
+  </div>
+</div>
