@@ -6,10 +6,11 @@
     'Awaiting build' => 'In Progress',
     'QA testing' => 'In Progress',
     'On Hold' => 'On Hold',
-    'Awaiting client info' => 'On Hold'
+    'Awaiting client info' => 'On Hold',
+    'Closed' => 'Complete'
   }
 
-  statuses_order = ['To Do', 'In Progress', 'On Hold']
+  statuses_order = ['To Do', 'In Progress', 'On Hold', 'Complete']
 
   grouped_defects = Hash.new { |h, k| h[k] = [] }
   @defects.each do |defect|
