@@ -251,7 +251,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_25_082717) do
     t.uuid "banking_type_id"
     t.uuid "creator_id"
     t.uuid "product_id"
-    t.string "summary", null: false
+    t.string "summary"
     t.string "defect_unique"
     t.string "issue_type", default: "Bug"
     t.index ["banking_type_id"], name: "index_defects_on_banking_type_id"

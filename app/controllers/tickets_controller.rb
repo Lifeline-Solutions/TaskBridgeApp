@@ -590,6 +590,28 @@ class TicketsController < ApplicationController
     @tickets = @tickets.offset((@page - 1) * @per_page).limit(@per_page)
   end
 
+  # Show all tickets where user active is not true
+
+  def show_all_tickets_user_inactive
+    @tickets = Ticket.joins(:statuses, :project, :users)
+      .where.not(statuses: { name: %w[Closed Resolved Declined Approved] })
+      .where(users: { active: false })
+      .distinct
+
+    if params[:search].present?
+      search = "%#{params[:search]}%"
+      @tickets = @tickets.where(
+        'projects.title ILIKE :search OR statuses.name ILIKE :search OR users.first_name ILIKE :search OR users.last_name ILIKE :search',
+        search: search
+      )
+    end
+
+    @per_page = 50
+    @page = (params[:page] || 1).to_i
+    @total_pages = (@tickets.count / @per_page.to_f).ceil
+    @tickets = @tickets.offset((@page - 1) * @per_page).limit(@per_page)
+  end
+
   def modal_show
     @ticket_items = if params[:query].present?
                       @ticket.issues.left_joins(:rich_text_content)

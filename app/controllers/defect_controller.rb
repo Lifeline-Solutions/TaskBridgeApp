@@ -11,7 +11,7 @@ class DefectController < ApplicationController
     @defects = @defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer)
 
     # Pagination
-    @per_page = 12
+    @per_page = 20
     @page = (params[:page] || 1).to_i
     @total_pages = (@defects.count / @per_page.to_f).ceil
     @start_count = ((@page - 1) * @per_page) + 1

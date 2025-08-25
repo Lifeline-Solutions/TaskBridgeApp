@@ -80,6 +80,7 @@ Rails.application.routes.draw do
         get 'created_tickets_one_week'
         get 'all_open_tickets'
         get 'non_breached_sla_tickets'
+        get 'show_all_tickets_user_inactive'
       end
       member do
         get :modal_show

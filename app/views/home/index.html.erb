@@ -114,6 +114,21 @@
           </p>
         </div>
       <% end %>
+      <% if current_user.projects.any? %>
+        <%= link_to show_all_tickets_user_inactive_project_tickets_path(project_id: current_user.projects.first.id) do %>
+          <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+            <p class="text-xs sm:text-sm truncate">
+              All Tickets created by inactive users
+            </p>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+          <p class="text-xs sm:text-sm truncate">
+            No Tickets Created in the last one week
+          </p>
+        </div>
+      <% end %>
     </div>
   <% end %>
 
