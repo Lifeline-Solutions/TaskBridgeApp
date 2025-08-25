@@ -1,6 +1,6 @@
 <%= turbo_frame_tag dom_id(@defect_message, :edit) do %>
   <div class="p-4 border rounded-lg bg-gray-50 dark:bg-gray-900">
-    <%= form_with(model: [@defect, @defect_message], local: false) do |f| %>
+    <%= form_with(model: [@defect, @defect_message], data: { turbo_frame: "_top" }) do |f| %>
       <div class="mb-4">
         <%= f.rich_text_area :content, class: "w-full" %>
       </div>

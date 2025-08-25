@@ -58,10 +58,7 @@ class DefectMessagesController < ApplicationController
     audit_on_update(@defect_message)
 
     if @defect_message.update(defect_message_params)
-      respond_to do |format|
-        format.turbo_stream
-        format.html { redirect_to @defect, notice: "Message updated successfully." }
-      end
+      redirect_to defect_path(@defect), notice: "Message updated successfully."
     else
       render :edit, status: :unprocessable_entity
     end
