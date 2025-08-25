@@ -4,11 +4,11 @@
   status_options = case current_status
   in nil | 'Pre Initiation'
     Status.where(name: ['End Of Initiation']).pluck(:name, :id)
-  in nil | 'End of Initiation'
+  in nil | 'End Of Initiation'
     Status.where(name: ['Pre Development']).pluck(:name, :id)
   in nil | 'Pre Development'
     Status.where(name: ['End Of Development']).pluck(:name, :id)
-  in 'End of Development'
+  in 'End Of Development'
     Status.where(name: ['Pre Quality Assurance']).pluck(:name, :id)
   in nil | 'Pre Quality Assurance'
     Status.where(name: ['End Of Quality Assurance']).pluck(:name, :id)
@@ -16,10 +16,12 @@
     Status.where(name: ['Pre User Acceptance Test']).pluck(:name, :id)
   in 'Pre User Acceptance Test'
     Status.where(name: ['End Of User Acceptance Test']).pluck(:name, :id)
-  in 'End of User Acceptance Test'
+  in 'End Of User Acceptance Test'
     Status.where(name: ['Pre Deploy']).pluck(:name, :id)
   in 'Pre Deploy'
     Status.where(name: ['End Of Deploy']).pluck(:name, :id)
+  in 'End Of Deploy'
+    Status.where(name: ['Pre Production']).pluck(:name, :id)
   in 'Pre Production'
     Status.where(name: ['End Of Production']).pluck(:name, :id)
 
