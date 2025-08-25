@@ -130,9 +130,14 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_22_091704) do
   end
 
   create_table "banking_types", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.string "name", null: false
+    t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_banking_types_on_deleted_on"
     t.index ["name"], name: "index_banking_types_on_name", unique: true
   end
 
@@ -232,7 +237,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_22_091704) do
     t.uuid "banking_type_id"
     t.uuid "creator_id"
     t.uuid "product_id"
-    t.string "summary", null: false
+    t.string "summary"
     t.string "defect_unique"
     t.string "issue_type", default: "Bug"
     t.index ["banking_type_id"], name: "index_defects_on_banking_type_id"
@@ -556,6 +561,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_22_091704) do
     t.uuid "parent_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_qa_modules_on_deleted_on"
     t.index ["parent_id"], name: "index_qa_modules_on_parent_id"
   end
 
