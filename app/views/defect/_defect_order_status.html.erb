@@ -1,15 +1,35 @@
-<% statuses_order = ['TO DO', 'In Progress'] %>
-<% status_groups = @defects.group_by { |d| d.statuses.first&.name } %>
+<%
+  status_to_group = {
+    'TO DO' => 'To Do',
+    'In Progress' => 'In Progress',
+    'On hold' => 'In Progress',
+    'Awaiting build' => 'In Progress',
+    'QA testing' => 'In Progress',
+    'On Hold' => 'On Hold',
+    'Awaiting client info' => 'On Hold'
+  }
 
-<% statuses_order.each do |status| %>
-  <% defects_for_status = status_groups[status]&.uniq { |defect| defect.id } || [] %>
-  <% if defects_for_status.any? %>
+  statuses_order = ['To Do', 'In Progress', 'On Hold']
+
+  grouped_defects = Hash.new { |h, k| h[k] = [] }
+  @defects.each do |defect|
+    status_name = defect.statuses.first&.name
+    group = status_to_group[status_name]
+    # If status isn't mapped, you can skip or put in 'Other'
+    grouped_defects[group] << defect if group
+  end
+%>
+
+<% statuses_order.each do |group| %>
+  <% defects_for_group = grouped_defects[group].uniq { |defect| defect.id } %>
+  <% if defects_for_group.any? %>
     <tr>
       <th colspan="8" class="bg-gray-100 dark:bg-gray-900 text-lg font-bold px-6 py-3 border-b border-t dark:border-gray-700">
-        <%= status %>
+        <%= group %>
       </th>
     </tr>
-    <% defects_for_status.each do |defect| %>
+    <% defects_for_group.each do |defect| %>
+      <!-- Your defect row rendering here, unchanged -->
       <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 h-12 text-left" style="cursor:pointer;" onclick="window.location='<%= defect_path(defect.id) %>'">
         <td class="px-6 py-4">
           <%= defect.defect_unique %>
