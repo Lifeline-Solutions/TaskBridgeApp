@@ -40,15 +40,17 @@ class DefectMessagesController < ApplicationController
   def create
     @defect_message = @defect.defect_messages.build(defect_message_params)
     @defect_message.user = current_user
-    audit_on_create(@defect_message)
 
     if @defect_message.save
       respond_to do |format|
         format.turbo_stream
-        format.html { redirect_to @defect, notice: "Message created successfully." }
+        format.html { redirect_to defect_path(@defect), notice: "Message posted!" }
       end
     else
-      render :new, status: :unprocessable_entity
+      respond_to do |format|
+        format.turbo_stream { render turbo_stream: turbo_stream.replace("new_defect_message", partial: "defect_messages/form", locals: { defect: @defect, defect_message: @defect_message }) }
+        format.html { render "defect/show", status: :unprocessable_entity }
+      end
     end
   end
 
