@@ -59,11 +59,6 @@ class DefectController < ApplicationController
     @qa_modules = QaModule.where(parent_id: nil)
     @banking_types = BankingType.all
     @products = Product.with_quality_assurance_status
-    @statuses = Status.where(name: [
-                               'To Do', 'In Progress', 'On hold', 'Awaiting client info',
-                               'Awaiting build', 'QA testing', 'Closed', 'Failed QA',
-                               'Blocked', 'Reopened'
-                             ])
     @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
     @submodules = @defect.qa_module ? @defect.qa_module.submodules : []
 
