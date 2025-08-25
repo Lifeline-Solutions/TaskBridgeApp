@@ -133,12 +133,12 @@ class DefectController < ApplicationController
   end
 
   def defect_status
-    @defect = Product.find(params[:id])
+    @defect = Defect.find(params[:id])
     status = Status.find(params[:status_id])
     @defect.statuses.clear
     @defect.statuses << status
 
-    redirect_to product_path(@product), notice: 'Product status was successfully updated.'
+    redirect_to defect_path(@defect), notice: 'Product status was successfully updated.'
   end
 
   def remove_defect
