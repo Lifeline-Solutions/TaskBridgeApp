@@ -55,7 +55,7 @@ class TicketsController < ApplicationController
                        0
                      end
     # Prevent clients from creating more than 10 pending tickets
-    if current_user.has_role?(:client) && @tickets_count >= 10
+    if current_user.has_role?(:client) && @tickets_count >= 15
       redirect_to project_path(@project),
                   flash: { prompt: 'You can have a maximum of 10 pending tickets. Please resolve at least one ticket under "Client Pending Confirmation" to proceed.' }
       return
