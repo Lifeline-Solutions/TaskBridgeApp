@@ -3,6 +3,7 @@ class Defect < ApplicationRecord
   has_many_attached :images
   has_many_attached :videos
   has_many_attached :attachments
+  has_many :defect_messages, dependent: :destroy
   belongs_to :qa_module, class_name: 'QaModule'
   belongs_to :submodule, class_name: 'QaModule', optional: true
   belongs_to :banking_type
