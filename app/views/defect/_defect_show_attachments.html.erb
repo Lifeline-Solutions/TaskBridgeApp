@@ -38,11 +38,13 @@
             <%= link_to 'Download',
                         rails_blob_path(attachment, disposition: "attachment"),
                         class: "text-sm font-medium text-blue-600 dark:text-blue-500 hover:underline" %>
-            <%= button_to 'Delete',
-                  defect_attachment_path(@defect, attachment_id: attachment.id),
-                  method: :delete,
-                  class: "text-red-600 dark:text-red-500 hover:text-red-900 dark:hover:text-red-700 text-sm",
-                  data: { confirm: 'Are you sure?' } %>
+            <% if @defect.creator == current_user %>
+                <%= button_to 'Delete',
+                        defect_attachment_path(@defect, attachment_id: attachment.id),
+                        method: :delete,
+                        class: "text-red-600 dark:text-red-500 hover:text-red-900 dark:hover:text-red-700 text-sm",
+                        data: { confirm: 'Are you sure?' } %>
+            <% end %>
           </div>
         </div>
       <% end %>
