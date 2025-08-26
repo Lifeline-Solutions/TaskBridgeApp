@@ -298,7 +298,12 @@ class Ticket < ApplicationRecord
       next_number += 1
     end
 
-    save
+    # Persist unique_id without running validations again to avoid recursive validation issues
+    begin
+      update_column(:unique_id, unique_id)
+    rescue StandardError => e
+      Rails.logger.error("[Ticket#ticket_unique_id] Failed to persist unique_id: #{e.message}")
+    end
   end
 
   def content_length_within_limit
