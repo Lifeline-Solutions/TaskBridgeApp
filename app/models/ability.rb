@@ -43,7 +43,6 @@ class Ability
       can :read, Task
       can :manage, Message
       can :manage, Defect
-      can :manage, DefectMessage, user_id: user.id
       can :generate, :report
 
     elsif user.has_role? :client
