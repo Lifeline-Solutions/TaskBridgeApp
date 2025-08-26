@@ -126,7 +126,7 @@
         <%= link_to show_all_tickets_user_inactive_project_tickets_path(project_id: current_user.projects.first.id) do %>
           <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
             <p class="text-xs sm:text-sm truncate">
-              All Tickets created by inactive users
+              All Tickets for Inactive Users
             </p>
             <span class="text-lg sm:text-xl font-bold">
               <%= @all_tickets_created_by_inactive_users %>
@@ -142,13 +142,13 @@
       <% end %>
       <!-- All tickets created by inactive users that are part of a team-->
       <% if current_user.projects.any? %>
-        <%= link_to show_all_tickets_user_inactive_project_tickets_path(project_id: current_user.projects.first.id) do %>
+        <%= link_to all_tickets_created_by_inactive_team_members_project_tickets_path(project_id: current_user.projects.first.id) do %>
           <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
             <p class="text-xs sm:text-sm truncate">
-              All Tickets created by inactive users
+              All Tickets Assigned Inactive by Team Members
             </p>
             <span class="text-lg sm:text-xl font-bold">
-              <%= @all_tickets_created_by_inactive_users %>
+              <%= @all_tickets_created_by_inactive_team_members %>
             </span>
           </div>
         <% end %>

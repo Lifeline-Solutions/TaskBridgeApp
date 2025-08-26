@@ -81,6 +81,7 @@ Rails.application.routes.draw do
         get 'all_open_tickets'
         get 'non_breached_sla_tickets'
         get 'show_all_tickets_user_inactive'
+        get 'all_tickets_created_by_inactive_team_members'
       end
       member do
         get :modal_show
