@@ -82,6 +82,8 @@ class DefectMessagesController < ApplicationController
         format.html { redirect_to @defect, notice: 'Message deleted permanently.' }
       end
     end
+
+    redirect_to defect_path(@defect), notice: 'Message deleted successfully.'
   end
 
   private
