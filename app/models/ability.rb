@@ -44,6 +44,7 @@ class Ability
       can :read, Board
       can :read, Task
       can :manage, Message
+      can %i[edit update destroy], DefectMessage, user_id: user.id
       can :manage, Defect
       can :generate, :report
 
@@ -68,8 +69,5 @@ class Ability
       cannot :manage, Board
       cannot :manage, Task
     end
-
-    # Only message owner can edit/update/destroy their defect messages
-    can %i[edit update destroy], Message, user_id: user.id
   end
 end
