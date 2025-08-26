@@ -3,7 +3,15 @@
 
 <p> <span><b><%= [@assigned_user&.first_name, @assigned_user&.last_name].compact.join(' ').presence || @assigned_user&.email || 'Assigned user' %></b></span> has been assigned to the project: <%= @project.title %>  by <%= @current_user&.name || @current_user&.email || 'A user' %></p>
 
-<p>Click <a href="<%= @url %>">here</a> to view the project.</p>
+<p>
+	<%# Ensure link is absolute and safe for email clients; fall back to project_url if @url missing %>
+	<% safe_url = @url.presence || (defined?(project_url) ? project_url(@project) : nil) %>
+	<% if safe_url.present? %>
+		Click <%= link_to 'here', safe_url, target: '_blank', rel: 'noopener noreferrer nofollow' %> to view the project.
+	<% else %>
+		Click here to view the project (link unavailable).
+	<% end %>
+</p>
 
 <p>Best regards,</p>
 <p>Your Team</p>

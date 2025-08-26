@@ -91,6 +91,16 @@ class TicketsController < ApplicationController
 
       # If validation fails or save fails, re-render form
       if @ticket.errors.any? || !@ticket.save
+        # Log detailed errors and relevant params to help diagnose 422s in production
+        begin
+          Rails.logger.error("[TicketsController#create] Ticket save failed: #{@ticket.errors.full_messages.join('; ')}")
+          Rails.logger.error("[TicketsController#create] ticket_params: #{ticket_params.to_h.inspect}")
+        rescue StandardError => e
+          Rails.logger.error("[TicketsController#create] Failed to log ticket errors: #{e.message}")
+        end
+
+        # Surface errors to the form so the UI (and devs) can see why the request was unprocessable
+        flash.now[:alert] = @ticket.errors.full_messages.join(', ').presence || 'Unable to create ticket due to validation errors.'
         format.html { render :new, status: :unprocessable_entity }
       else
         # Assign tagged user or default project user
