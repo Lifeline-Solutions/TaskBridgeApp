@@ -46,6 +46,11 @@ class DefectController < ApplicationController
         .log("Created Defect ##{@defect.id}")
 
       redirect_to defect_index_path, notice: 'Defect was successfully created.'
+      if current_user.present?
+        log_event(@defect, current_user, 'created and assign', "Defect was created and assigned to #{current_user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}")
+      else
+        log_event(@ticket, current_user, 'created and assign', "Ticket was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}")
+      end
     else
       # Set the form data when rendering new
       set_form_data
@@ -222,6 +227,10 @@ class DefectController < ApplicationController
   def set_defect
     defect_id = params[:defect_id] || params[:id]
     @defect = Defect.find(defect_id)
+  end
+
+  def log_event(defect, user, history_type, history)
+    DefectHistory.create(defect: defect, user: user, history_type: history_type, history: history)
   end
 
   def defect_params

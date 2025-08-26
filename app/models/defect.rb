@@ -19,6 +19,7 @@ class Defect < ApplicationRecord
 
   has_and_belongs_to_many :users
   has_and_belongs_to_many :statuses, join_table: :defect_statuses
+  has_many :defect_histories
 
   def assigned_to?(user)
     users.include?(user)
