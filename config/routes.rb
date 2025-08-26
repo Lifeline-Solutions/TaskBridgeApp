@@ -80,6 +80,7 @@ Rails.application.routes.draw do
         get 'created_tickets_one_week'
         get 'all_open_tickets'
         get 'non_breached_sla_tickets'
+        get 'show_all_tickets_user_inactive'
       end
       member do
         get :modal_show
@@ -114,8 +115,9 @@ Rails.application.routes.draw do
   end
 
   resources :defect do
+    resources :defect_messages, only: [:new, :create, :edit, :update, :destroy]
     post 'attachments', to: 'defect#add_attachments', as: 'attachments'
-  delete 'attachments/:attachment_id', to: 'defect#remove_attachment', as: 'attachment'
+    delete 'attachments/:attachment_id', to: 'defect#remove_attachment', as: 'attachment'
     resources :comments, only: [:create, :update, :destroy]
     resources :attachments, only: [:create, :destroy]
     collection do
@@ -124,6 +126,7 @@ Rails.application.routes.draw do
     member do
       post :add_defect
       delete :remove_defect
+      post :defect_status
     end
     resources :bugs do
       member do
@@ -132,6 +135,7 @@ Rails.application.routes.draw do
         post :bug_status
       end
     end
+
   end
 
   resources :projects, controller: 'project' do

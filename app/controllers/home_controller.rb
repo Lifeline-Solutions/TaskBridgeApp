@@ -176,6 +176,12 @@ class HomeController < ApplicationController
       # COunt of all tickets created in the last one week count
       @tickets_created_in_last_one_week_count = Ticket.where('created_at >= ?', 1.week.ago).count
 
+      @all_tickets_created_by_inactive_users = Ticket.joins(:statuses, :project, :users)
+        .where.not(statuses: { name: %w[Closed Resolved Declined Approved] })
+        .where(users: { active: false })
+        .distinct
+        .count
+
       # Get the total number of open tickets for the current user count
       @total_no_of_open_tickets_for_current_user_count = Ticket.joins(:statuses, :project)
         .where(projects: { id: current_user.projects.ids })
@@ -212,6 +218,7 @@ class HomeController < ApplicationController
 
       # Count the total number of service desks\
       @all_service_desks_count = Project.distinct.count
+
     end
   end
 end

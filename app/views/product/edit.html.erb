@@ -190,7 +190,7 @@
         <select name="product[milestones_attributes][${timestamp}][status_id]"
                 class="status-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
           <%= options_from_collection_for_select(
-                Status.where(name: ['Development', 'User Acceptance Test', 'Pilot', 'Quality Assurance', 'Deploy', 'Production']),
+              Status.where(name: ['Pre Initiation','End Of Initiation','Pre Development','End Of Development','Pre User Acceptance Test','End Of User Acceptance Test','Pre Pilot','End Of Pilot','Pre Quality Assurance','End Of Quality Assurance','Pre Deploy','End Of Deploy','Pre Production', 'End Of Production']),
                 :id,
                 :name
               ) %>

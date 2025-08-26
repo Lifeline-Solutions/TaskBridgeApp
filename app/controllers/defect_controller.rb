@@ -11,7 +11,7 @@ class DefectController < ApplicationController
     @defects = @defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer)
 
     # Pagination
-    @per_page = 12
+    @per_page = 20
     @page = (params[:page] || 1).to_i
     @total_pages = (@defects.count / @per_page.to_f).ceil
     @start_count = ((@page - 1) * @per_page) + 1
@@ -30,12 +30,7 @@ class DefectController < ApplicationController
 
   def new
     @defect = Defect.new
-    @qa_modules = QaModule.where(parent_id: nil)
-    @banking_types = BankingType.all
-    @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
-    @submodules = []
-    @products = Product.with_quality_assurance_status
-    @statuses = Status.all
+    set_form_data
   end
 
   def create
@@ -52,6 +47,8 @@ class DefectController < ApplicationController
 
       redirect_to defect_index_path, notice: 'Defect was successfully created.'
     else
+      # Set the form data when rendering new
+      set_form_data
       flash.now[:alert] = "Defect creation failed: #{@defect.errors.full_messages.join(', ')}"
       render :new, status: :unprocessable_entity
     end
@@ -61,10 +58,14 @@ class DefectController < ApplicationController
     @defect = Defect.find(params[:id])
     @qa_modules = QaModule.where(parent_id: nil)
     @banking_types = BankingType.all
+    @products = Product.with_quality_assurance_status
     @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
-
-    # Load submodules for the current module if exists
     @submodules = @defect.qa_module ? @defect.qa_module.submodules : []
+
+    respond_to do |format|
+      format.html # normal full-page
+      format.turbo_stream { render layout: false } # only return the turbo frame
+    end
   end
 
   def update
@@ -119,6 +120,7 @@ class DefectController < ApplicationController
       redirect_to @defect, notice: 'User has already been assigned.'
     else
       user = User.find(params[:user_id])
+      @defect.users.clear
       @defect.users << user
       activity('user_activity')
         .caused_by(current_user)
@@ -128,6 +130,15 @@ class DefectController < ApplicationController
         .log("Assigned #{user.name} to Defect ##{@defect.id}")
       redirect_to defect_path(@defect), notice: "#{user.name}  was successfully assigned."
     end
+  end
+
+  def defect_status
+    @defect = Defect.find(params[:id])
+    status = Status.find(params[:status_id])
+    @defect.statuses.clear
+    @defect.statuses << status
+
+    redirect_to defect_path(@defect), notice: 'Product status was successfully updated.'
   end
 
   def remove_defect
@@ -180,12 +191,46 @@ class DefectController < ApplicationController
 
   private
 
+  def set_form_data
+    @qa_modules = QaModule.where(parent_id: nil)
+    @banking_types = BankingType.all
+    @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
+    @submodules = []
+    # Fallback: If no QA product found, just pick first product
+    @product ||= Product.includes(:client, :groupwares).first
+
+    # Dropdown options for product selection
+    @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
+      .select do |product|
+      product.statuses.any? do |status|
+        status.name == 'Pre Quality Assurance' || status.name == 'End Of Quality Assurance'
+      end
+    end.map do |product|
+      client_name = product.client&.name || 'No Client'
+      groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
+      ["#{client_name} - #{groupware_names}", product.id]
+    end
+
+    # Get all available statuses for the workflow
+    @statuses = Status.where(name: [
+                               'To Do', 'In Progress', 'On hold', 'Awaiting client info',
+                               'Awaiting build', 'QA testing', 'Closed', 'Failed QA',
+                               'Blocked', 'Reopened'
+                             ])
+  end
+
   def set_defect
     defect_id = params[:defect_id] || params[:id]
     @defect = Defect.find(defect_id)
   end
 
   def defect_params
+    # Handle the qa_submodule_id to submodule_id mapping
+    params[:defect][:submodule_id] = params[:defect].delete(:qa_submodule_id) if params[:defect] && params[:defect][:qa_submodule_id].present?
+
+    # Convert user_ids from string to array if needed
+    params[:defect][:user_ids] = [params[:defect][:user_ids]].reject(&:blank?) if params[:defect] && params[:defect][:user_ids].is_a?(String)
+
     params.require(:defect).permit(
       :summary,
       :content,
@@ -194,10 +239,9 @@ class DefectController < ApplicationController
       :banking_type_id,
       :priority,
       :product_id,
-      :status_id,
+      :issue_type,
       :defect_unique,
-      user_ids: [],
-      attachments: []
+      user_ids: []
     )
   end
 end

@@ -91,6 +91,16 @@ class TicketsController < ApplicationController
 
       # If validation fails or save fails, re-render form
       if @ticket.errors.any? || !@ticket.save
+        # Log detailed errors and relevant params to help diagnose 422s in production
+        begin
+          Rails.logger.error("[TicketsController#create] Ticket save failed: #{@ticket.errors.full_messages.join('; ')}")
+          Rails.logger.error("[TicketsController#create] ticket_params: #{ticket_params.to_h.inspect}")
+        rescue StandardError => e
+          Rails.logger.error("[TicketsController#create] Failed to log ticket errors: #{e.message}")
+        end
+
+        # Surface errors to the form so the UI (and devs) can see why the request was unprocessable
+        flash.now[:alert] = @ticket.errors.full_messages.join(', ').presence || 'Unable to create ticket due to validation errors.'
         format.html { render :new, status: :unprocessable_entity }
       else
         # Assign tagged user or default project user
@@ -585,6 +595,28 @@ class TicketsController < ApplicationController
     @tickets = @project.tickets.joins(:sla_tickets).where("sla_tickets.sla_status = 'Not Breached'")
 
     @per_page = 10
+    @page = (params[:page] || 1).to_i
+    @total_pages = (@tickets.count / @per_page.to_f).ceil
+    @tickets = @tickets.offset((@page - 1) * @per_page).limit(@per_page)
+  end
+
+  # Show all tickets where user active is not true
+
+  def show_all_tickets_user_inactive
+    @tickets = Ticket.joins(:statuses, :project, :users)
+      .where.not(statuses: { name: %w[Closed Resolved Declined Approved] })
+      .where(users: { active: false })
+      .distinct
+
+    if params[:search].present?
+      search = "%#{params[:search]}%"
+      @tickets = @tickets.where(
+        'projects.title ILIKE :search OR statuses.name ILIKE :search OR users.first_name ILIKE :search OR users.last_name ILIKE :search',
+        search: search
+      )
+    end
+
+    @per_page = 50
     @page = (params[:page] || 1).to_i
     @total_pages = (@tickets.count / @per_page.to_f).ceil
     @tickets = @tickets.offset((@page - 1) * @per_page).limit(@per_page)

@@ -29,14 +29,7 @@ class DataCenterController < ApplicationController
       respond_to do |format|
         format.html # renders view
         filename = "ticket_status_report_ceo_#{Date.today}.xlsx"
-        format.xlsx do
-          activity('user_activity')
-            .caused_by(current_user)
-            .event('report.download')
-            .with_properties(kind: 'cease_fire_report_ceo', filename: filename)
-            .log('Report downloaded')
-          send_data @xlsx_data, filename: filename
-        end
+        format.xlsx { send_data @xlsx_data, filename: filename }
       end
     elsif params[:client_id].present? || params[:start_date].present? || params[:end_date].present? || params[:status].present?
 
@@ -69,14 +62,7 @@ class DataCenterController < ApplicationController
         format.html # renders view
         client_name = params[:client_id].present? ? Client.find(params[:client_id]).name : 'all_clients'
         filename = "ticket_status_report_#{client_name}_#{Date.today}.xlsx"
-        format.xlsx do
-          activity('user_activity')
-            .caused_by(current_user)
-            .event('report.download')
-            .with_properties(kind: 'cease_fire_report', filename: filename, client_id: params[:client_id])
-            .log('Report downloaded')
-          send_data @xlsx_data, filename: filename
-        end
+        format.xlsx { send_data @xlsx_data, filename: filename }
       end
     else
       @tickets = Ticket.none
@@ -94,26 +80,7 @@ class DataCenterController < ApplicationController
     encoded_xlsx_data = Base64.encode64(xlsx_data)
 
     # Use the email from the client model
-    if client.client_contact_person_email.present?
-      Messaging::EmailSender
-        .send_email(
-          "Cease Fire Report for #{client.name}",
-          body: "<p>Dear #{client.client_contact_person},</p><p>Please find attached the cease fire report for #{client.name}.</p>",
-          to: [client.client_contact_person_email],
-          actor: current_user,
-          priority: :normal,
-          type: 'cease_fire_report'
-        )
-        .set_source('client', client.id)
-        .set_party('user', current_user.id)
-        .add_attachment_content(bytes: Base64.decode64(encoded_xlsx_data), filename: "ticket_status_report_#{client.name}_#{Date.today}.xlsx", content_type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        .send(queue: true)
-    end
-    activity('user_activity')
-      .caused_by(current_user)
-      .event('report.email_sent')
-      .with_properties(kind: 'cease_fire_report', client_id: client.id, email: client.client_contact_person_email)
-      .log('Report emailed')
+    UserMailer.cease_fire_report_email(client.client_contact_person_email, client.client_contact_person, client.name, encoded_xlsx_data).deliver_later
 
     # Flash a message indicating the email has been sent
     flash[:notice] = "Report sent to #{client.client_contact_person_email}"
@@ -122,14 +89,7 @@ class DataCenterController < ApplicationController
       format.html # renders view
       client_name = params[:client_id].present? ? Client.find(params[:client_id]).name : 'all_clients'
       filename = "ticket_status_report_#{client_name}_#{Date.today}.xlsx"
-      format.xlsx do
-        activity('user_activity')
-          .caused_by(current_user)
-          .event('report.download')
-          .with_properties(kind: 'cease_fire_report', filename: filename, client_id: params[:client_id])
-          .log('Report downloaded')
-        send_data @xlsx_data, filename: filename
-      end
+      format.xlsx { send_data @xlsx_data, filename: filename }
     end
   end
 
@@ -152,15 +112,7 @@ class DataCenterController < ApplicationController
       respond_to do |format|
         format.html # Default view
         client_name = Client.find(params[:client_id]).name if params[:client_id].present?
-        format.csv do
-          filename = "breach__report_for_#{client_name}_#{Date.today}.csv"
-          activity('user_activity')
-            .caused_by(current_user)
-            .event('report.download')
-            .with_properties(kind: 'breach_report', filename: filename, client_id: params[:client_id])
-            .log('Report downloaded')
-          send_data generate_breach_details_csv(@tickets), filename: filename
-        end
+        format.csv { send_data generate_breach_details_csv(@tickets), filename: "breach__report_for_#{client_name}_#{Date.today}.csv" }
       end
     else
       @tickets = Ticket.none
@@ -170,42 +122,6 @@ class DataCenterController < ApplicationController
   end
 
   # User activity report for the admin
-  def user_report
-    authorize! :generate, :report # Check if the user can generate reports
-    if params[:user_id].present? || params[:start_date].present? || params[:end_date].present?
-      @users = User.includes(tickets: { project: :client })
-        .where(id: params[:user_id])
-
-      start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : nil
-      end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
-
-      @status_counts = @users.flat_map(&:tickets)
-        .select { |ticket| (start_date.nil? || ticket.created_at >= start_date) && (end_date.nil? || ticket.created_at <= end_date) }
-        .group_by { |ticket| ticket.statuses.first&.name || 'N/A' }
-        .transform_values(&:count)
-
-      @tickets_by_client = @users.flat_map(&:tickets)
-        .select { |ticket| (start_date.nil? || ticket.created_at >= start_date) && (end_date.nil? || ticket.created_at <= end_date) }
-        .group_by { |ticket| ticket.project.client.name }
-
-      respond_to do |format|
-        format.html # Default view
-        format.csv do
-          filename = "user_report_#{Date.today}.csv"
-          activity('user_activity')
-            .caused_by(current_user)
-            .event('report.download')
-            .with_properties(kind: 'user_report', filename: filename, user_id: params[:user_id], start_date: params[:start_date], end_date: params[:end_date])
-            .log('Report downloaded')
-          send_data generate_user_csv(@users), filename: filename
-        end
-      end
-    else
-      @users = User.none
-      flash[:alert] = 'Please provide a valid date range.'
-      render :user_report
-    end
-  end
 
   def user_report_view
     if params[:user_id] && params[:client_name]
@@ -307,11 +223,6 @@ class DataCenterController < ApplicationController
           end_str = (params[:end_date].presence && Date.parse(params[:end_date]).strftime('%d-%m-%Y')) || Date.today.strftime('%d-%m-%Y')
           time_str = Time.now.strftime('%I-%M_%p')
           filename = "Team Report for #{team_name}_#{start_str}_to_#{end_str}_at_#{time_str}.csv"
-          activity('user_activity')
-            .caused_by(current_user)
-            .event('report.download')
-            .with_properties(kind: 'project_report', filename: filename, team_id: @team.id, start_date: params[:start_date], end_date: params[:end_date], all_tickets: params[:all_tickets].present?)
-            .log('Report downloaded')
           send_data generate_project_report_csv(csv_tickets), filename: filename
         end
       end
@@ -585,33 +496,10 @@ class DataCenterController < ApplicationController
           .distinct
 
         if tagged_tickets.any?
-          Messaging::EmailSender
-            .send_email(
-              "Daily Ticket Report for #{user.name}",
-              body: '<p>Please find your daily ticket report.</p>',
-              to: [user.email],
-              cc: mail_options[:cc],
-              actor: current_user,
-              priority: :normal,
-              type: 'daily_ticket_report'
-            )
-            .set_source('team', team.id)
-            .set_party('user', user.id)
-            .send(queue: true)
+          UserMailer.daily_ticket_email(user, tagged_tickets.to_a, mail_options).deliver_later
         elsif report_type == 'closed'
-          Messaging::EmailSender
-            .send_email(
-              "Daily Ticket Report for #{user.name}",
-              body: '<p>No closed/resolved/declined tickets in the last 24 hours.</p>',
-              to: [user.email],
-              cc: mail_options[:cc],
-              actor: current_user,
-              priority: :normal,
-              type: 'daily_ticket_report_empty'
-            )
-            .set_source('team', team.id)
-            .set_party('user', user.id)
-            .send(queue: true)
+          # Send an empty notice for the user with no closed/resolved/declined tickets
+          UserMailer.daily_ticket_email(user, [], mail_options).deliver_later
         end
       end
 
@@ -635,20 +523,7 @@ class DataCenterController < ApplicationController
 
     team.users.each do |user|
       user_tickets = base_scope.where(taggings: { user_id: user.id }).distinct
-      next unless user_tickets.any?
-
-      Messaging::EmailSender
-        .send_email(
-          "Start of Day Ticket Report for #{user.name}",
-          body: '<p>Please find your SOD ticket report.</p>',
-          to: [user.email],
-          actor: current_user,
-          priority: :normal,
-          type: 'morning_ticket_report'
-        )
-        .set_source('team', team.id)
-        .set_party('user', user.id)
-        .send(queue: true)
+      UserMailer.morning_ticket_email(user, user_tickets.to_a).deliver_later if user_tickets.any?
     end
 
     redirect_back fallback_location: root_path, notice: 'Ticket emails sent to team members.'
@@ -684,7 +559,180 @@ class DataCenterController < ApplicationController
     end
   end
 
+  def user_report
+    authorize! :generate, :report
+
+    # Always initialize instance variables
+    @users = []
+    @tickets = Ticket.none
+    @events = []
+    @issues = []
+    @status_counts = {}
+    @tickets_by_client = {}
+    @assigned_at_by_ticket_id = {}
+    @all_ticket_events_by_ticket = {}
+
+    # If no filters, render the form normally
+    return respond_to(&:html) unless params[:user_id].present? || params[:start_date].present? || params[:end_date].present?
+
+    @users = User.where(id: params[:user_id])
+    @selected_user = @users.first
+
+    start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : nil
+    end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
+    from_time = start_date&.beginning_of_day
+    to_time = end_date&.end_of_day
+
+    # Identify assignment events via details text (no events.name column available)
+    assignment_events_scope = Event.where('events.details ILIKE ?', '%was assigned to the ticket%')
+
+    if @selected_user.present?
+      display_name = [@selected_user.first_name, @selected_user.last_name].compact.join(' ').strip
+      if display_name.present?
+        escaped = ActiveRecord::Base.sanitize_sql_like(display_name)
+        # Support the known formatting issue: missing space before "was"
+        assignment_events_scope = assignment_events_scope.where(
+          'events.details ILIKE ? OR events.details ILIKE ?',
+          "%#{escaped} was assigned to the ticket%",
+          "%#{escaped}was assigned to the ticket%"
+        )
+      end
+    end
+
+    if from_time || to_time
+      from_time ||= Time.at(0)
+      to_time ||= Time.current
+      assignment_events_scope = assignment_events_scope.where(created_at: from_time..to_time)
+    end
+
+    # Ticket IDs assigned to the selected user within the range
+    ticket_ids = assignment_events_scope.where.not(ticket_id: nil).distinct.pluck(:ticket_id)
+
+    # Preload for display
+    @assignment_events = assignment_events_scope.includes(:ticket)
+
+    # Map the earliest assignment time per ticket for the selected user
+    @assigned_at_by_ticket_id = @assignment_events
+      .group_by(&:ticket_id)
+      .transform_values { |evs| evs.min_by(&:created_at)&.created_at }
+
+    # Preload all events for those tickets (used for resolved detection)
+    @all_ticket_events_by_ticket = Event
+      .where(ticket_id: ticket_ids)
+      .select(:ticket_id, :details, :created_at)
+      .group_by(&:ticket_id)
+
+    @tickets = Ticket.where(id: ticket_ids)
+      .includes({ project: :client }, :events, :issues, :statuses, :sla_tickets)
+      .distinct
+
+    # Status counts with your original logic
+    filtered_tickets = @tickets
+    @status_counts = filtered_tickets
+      .group_by { |ticket| ticket.statuses.first&.name || 'N/A' }
+      .transform_values(&:count)
+
+    @tickets_by_client = filtered_tickets
+      .group_by { |ticket| ticket.project&.client&.name || 'Unknown Client' }
+
+    # Only assignment events for the events table
+    @events = @assignment_events.to_a
+
+    # Issues related to the matched tickets (optionally filter by date range)
+    @issues = Issue.where(ticket_id: ticket_ids)
+    @issues = @issues.where(created_at: from_time..to_time) if from_time || to_time
+    @issues = @issues.includes(:ticket).to_a
+
+    # Average time from assignment to resolution across resolved tickets
+    durations = []
+    @tickets.each do |t|
+      a = assigned_at_for(t)
+      r = resolved_at_for(t)
+      durations << (r - a).to_i if a && r
+    end
+    @avg_assignment_to_resolved_count = durations.size
+    if durations.any?
+      avg_seconds = (durations.sum / durations.size.to_f).round
+      @avg_assignment_to_resolved_seconds = avg_seconds
+      @avg_assignment_to_resolved_human = helpers.distance_of_time_in_words(Time.at(0), Time.at(avg_seconds), include_seconds: true)
+    else
+      @avg_assignment_to_resolved_seconds = nil
+      @avg_assignment_to_resolved_human = nil
+    end
+
+    respond_to do |format|
+      format.html
+      format.csv { send_data generate_user_csv(@users), filename: "user_report_#{Date.today}.csv" }
+    end
+  end
+
+  helper_method :parse_assignment_details, :assigned_at_for, :resolved_at_for, :resolution_duration_for
+
   private
+
+  # Parse "Assigned To", "SLA Status", "Target Response Deadline" from details text
+  # Example: "#{user.first_name} #{user.last_name}was assigned to the ticket, with Status:  #{sla_ticket.sla_status} and Target Response Deadline #{sla_target_response_deadline}"
+  def parse_assignment_details(details)
+    return { assigned_to: nil, sla_status: nil, target_deadline: nil } if details.blank?
+
+    normalized = details.to_s.gsub('was assigned', ' was assigned')
+
+    assigned_to = normalized[/\A\s*(.+?)\s+was assigned to the ticket/i, 1]&.strip
+    sla_status = normalized[/Status:\s*([^,]+)/i, 1]&.strip
+    target_deadline = normalized[/Target Response Deadline\s*(.+)\z/i, 1]&.strip
+
+    { assigned_to: assigned_to, sla_status: sla_status, target_deadline: target_deadline }
+  end
+
+  # First assignment timestamp for the selected user on this ticket
+  def assigned_at_for(ticket)
+    return nil unless ticket&.id
+
+    @assigned_at_by_ticket_id&.[](ticket.id)
+  end
+
+  # Best-effort detection of when a ticket changed status to "Resolved"
+  # 1) ticket.resolved_at or ticket.closed_at if present
+  # 2) First event whose details indicate "Resolved"
+  def resolved_at_for(ticket)
+    return nil unless ticket
+
+    return ticket.resolved_at if ticket.respond_to?(:resolved_at) && ticket.resolved_at.present?
+    return ticket.closed_at if ticket.respond_to?(:closed_at) && ticket.closed_at.present?
+
+    events = @all_ticket_events_by_ticket&.[](ticket.id) || []
+    events.sort_by!(&:created_at)
+
+    resolved_event = events.find do |e|
+      d = e.details.to_s.downcase
+      d.include?('resolved') && (
+        d.include?('status') ||
+          d.include?('status changed') ||
+          d.include?('changed status') ||
+          d.include?('to resolved')
+      )
+    end
+
+    resolved_event&.created_at
+  end
+
+  # Returns a hash describing the time taken to reach Resolved.
+  # Prefer duration from assignment to resolved; fall back to ticket.created_at if no assignment found.
+  # { from: Time, to: Time, seconds: Integer, human: "x days y hours ..." }
+  def resolution_duration_for(ticket)
+    return nil unless ticket
+
+    to_time = resolved_at_for(ticket)
+    return nil unless to_time
+
+    from_time = assigned_at_for(ticket) || ticket.created_at
+    return nil unless from_time
+
+    seconds = (to_time - from_time).to_i
+    human = helpers.distance_of_time_in_words(from_time, to_time, include_seconds: true)
+
+    { from: from_time, to: to_time, seconds: seconds, human: human }
+  end
 
   def generate_orm_report_csv(tickets, ticket_counts, project_status_counts)
     CSV.generate(headers: true) do |csv|

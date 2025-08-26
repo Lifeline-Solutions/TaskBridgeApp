@@ -3,7 +3,7 @@
 <div class="p-4 border-2 border-white rounded-lg flex flex-col items-center">
   <!-- Topbar Section  for admin and observer-->
   <% if current_user.has_role?(:admin) or current_user.has_role?(:observer) %>
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-6 w-full ">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 mb-6 w-full ">
       <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
         <p class="text-xs sm:text-sm truncate">
           All Service Desks
@@ -104,6 +104,24 @@
             </p>
             <span class="text-lg sm:text-xl font-bold">
               <%= @tickets_created_in_last_one_week_count %>
+            </span>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+          <p class="text-xs sm:text-sm truncate">
+            No Tickets Created in the last one week
+          </p>
+        </div>
+      <% end %>
+      <% if current_user.projects.any? %>
+        <%= link_to show_all_tickets_user_inactive_project_tickets_path(project_id: current_user.projects.first.id) do %>
+          <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+            <p class="text-xs sm:text-sm truncate">
+              All Tickets created by inactive users
+            </p>
+            <span class="text-lg sm:text-xl font-bold">
+              <%= @all_tickets_created_by_inactive_users %>
             </span>
           </div>
         <% end %>

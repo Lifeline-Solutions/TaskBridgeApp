@@ -1,0 +1,33 @@
+<% current_status = @defect.statuses.first&.name %>
+
+<%
+  status_options = case current_status
+  in nil | 'TO DO'
+    Status.where(name: ['In Progress']).pluck(:name, :id)
+  in nil | 'In Progress'
+    Status.where(name: ['On-Hold']).pluck(:name, :id)
+  in nil | 'On-Hold'
+    Status.where(name: ['Awaiting Client Info']).pluck(:name, :id)
+  in 'Awaiting Client Info'
+    Status.where(name: ['Awaiting Build']).pluck(:name, :id)
+  in nil | 'Awaiting Build'
+    Status.where(name: ['QA Testing']).pluck(:name, :id)
+  in nil | 'QA Testing'
+    Status.where(name: ['Closed', 'Failed QA']).pluck(:name, :id)
+  in ['Closed', 'Failed QA']
+    Status.where(name: ['Blocked', 'Reopened']).pluck(:name, :id)
+                   else
+                     []
+                   end
+%>
+
+<% unless current_status == 'End Of Production' %>
+  <%= form_with url: defect_status_defect_path(@defect), local: true do %>
+    <div class="relative flex flex-col gap-2 mt-2">
+      <%= select_tag :status_id,
+                     options_for_select(status_options),
+                     class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500" %>
+      <%= submit_tag "UPDATE", class: 'font-semibold bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg mt-2' %>
+    </div>
+  <% end %>
+<% end %>

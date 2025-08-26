@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_20_122834) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_25_082717) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -130,9 +130,14 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_20_122834) do
   end
 
   create_table "banking_types", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.string "name", null: false
+    t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_banking_types_on_deleted_on"
     t.index ["name"], name: "index_banking_types_on_name", unique: true
   end
 
@@ -205,6 +210,39 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_20_122834) do
     t.index ["user_id"], name: "index_commonly_selected_clients_on_user_id"
   end
 
+  create_table "defect_messages", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "user_id", null: false
+    t.uuid "defect_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.uuid "created_by_id"
+    t.uuid "modified_by_id"
+    t.uuid "deleted_by_id"
+    t.datetime "deleted_on"
+    t.boolean "archive_status", default: false, null: false
+    t.index ["archive_status"], name: "index_defect_messages_on_archive_status"
+    t.index ["created_by_id"], name: "index_defect_messages_on_created_by_id"
+    t.index ["defect_id"], name: "index_defect_messages_on_defect_id"
+    t.index ["deleted_by_id"], name: "index_defect_messages_on_deleted_by_id"
+    t.index ["deleted_on"], name: "index_defect_messages_on_deleted_on"
+    t.index ["modified_by_id"], name: "index_defect_messages_on_modified_by_id"
+    t.index ["user_id"], name: "index_defect_messages_on_user_id"
+  end
+
+  create_table "defect_statuses", id: false, force: :cascade do |t|
+    t.uuid "defect_id", null: false
+    t.uuid "status_id", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["defect_id", "status_id"], name: "index_defect_statuses_on_defect_id_and_status_id"
+    t.index ["deleted_on"], name: "index_defect_statuses_on_deleted_on"
+    t.index ["status_id", "defect_id"], name: "index_defect_statuses_on_status_id_and_defect_id"
+  end
+
   create_table "defects", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "priority"
     t.datetime "created_at", null: false
@@ -219,15 +257,14 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_20_122834) do
     t.uuid "creator_id"
     t.uuid "product_id"
     t.string "summary"
-    t.uuid "status_id"
     t.string "defect_unique"
+    t.string "issue_type", default: "Bug"
     t.index ["banking_type_id"], name: "index_defects_on_banking_type_id"
     t.index ["creator_id"], name: "index_defects_on_creator_id"
     t.index ["defect_unique"], name: "index_defects_on_defect_unique", unique: true
     t.index ["deleted_on"], name: "index_defects_on_deleted_on"
     t.index ["product_id"], name: "index_defects_on_product_id"
     t.index ["qa_module_id"], name: "index_defects_on_qa_module_id"
-    t.index ["status_id"], name: "index_defects_on_status_id"
     t.index ["submodule_id"], name: "index_defects_on_submodule_id"
   end
 
@@ -543,6 +580,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_20_122834) do
     t.uuid "parent_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_qa_modules_on_deleted_on"
     t.index ["parent_id"], name: "index_qa_modules_on_parent_id"
   end
 
@@ -787,6 +829,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_20_122834) do
     t.index ["groupware_id"], name: "index_tickets_on_groupware_id"
     t.index ["project_id"], name: "index_tickets_on_project_id"
     t.index ["software_id"], name: "index_tickets_on_software_id"
+    t.index ["unique_id"], name: "index_tickets_on_unique_id", unique: true
     t.index ["user_id"], name: "index_tickets_on_user_id"
   end
 
@@ -882,7 +925,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_20_122834) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "add_statuses", "statuses"
-  add_foreign_key "add_statuses", "tickets"
+  add_foreign_key "add_statuses", "tickets", on_delete: :cascade
   add_foreign_key "add_tasks", "tasks"
   add_foreign_key "add_tasks", "users"
   add_foreign_key "addusers", "products"
@@ -893,29 +936,35 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_20_122834) do
   add_foreign_key "boards", "users"
   add_foreign_key "clients", "users"
   add_foreign_key "comments", "projects"
-  add_foreign_key "comments", "tickets"
+  add_foreign_key "comments", "tickets", on_delete: :cascade
   add_foreign_key "comments", "users"
   add_foreign_key "commonly_selected_clients", "clients"
   add_foreign_key "commonly_selected_clients", "users"
+  add_foreign_key "defect_messages", "defects"
+  add_foreign_key "defect_messages", "users"
+  add_foreign_key "defect_messages", "users", column: "created_by_id"
+  add_foreign_key "defect_messages", "users", column: "deleted_by_id"
+  add_foreign_key "defect_messages", "users", column: "modified_by_id"
+  add_foreign_key "defect_statuses", "defects"
+  add_foreign_key "defect_statuses", "statuses"
   add_foreign_key "defects", "banking_types"
   add_foreign_key "defects", "products"
   add_foreign_key "defects", "qa_modules"
   add_foreign_key "defects", "qa_modules", column: "submodule_id"
-  add_foreign_key "defects", "statuses"
   add_foreign_key "defects", "users", column: "creator_id"
   add_foreign_key "documents", "products"
-  add_foreign_key "events", "tickets"
+  add_foreign_key "events", "tickets", on_delete: :cascade
   add_foreign_key "events", "users"
   add_foreign_key "groupwares", "softwares"
   add_foreign_key "groupwares", "users"
   add_foreign_key "issues", "projects"
-  add_foreign_key "issues", "tickets"
+  add_foreign_key "issues", "tickets", on_delete: :cascade
   add_foreign_key "issues", "users"
   add_foreign_key "messages", "tasks"
   add_foreign_key "messages", "users"
   add_foreign_key "milestones", "products"
   add_foreign_key "milestones", "statuses"
-  add_foreign_key "notifications", "tickets"
+  add_foreign_key "notifications", "tickets", on_delete: :cascade
   add_foreign_key "notifications", "users"
   add_foreign_key "products", "clients"
   add_foreign_key "products", "groupwares"
@@ -926,18 +975,18 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_20_122834) do
   add_foreign_key "projects", "groupwares"
   add_foreign_key "projects", "softwares"
   add_foreign_key "projects", "users"
-  add_foreign_key "ratings", "tickets"
+  add_foreign_key "ratings", "tickets", on_delete: :cascade
   add_foreign_key "ratings", "users"
   add_foreign_key "scripts", "groupwares"
   add_foreign_key "scripts", "softwares"
-  add_foreign_key "sla_tickets", "tickets"
+  add_foreign_key "sla_tickets", "tickets", on_delete: :cascade
   add_foreign_key "sla_tickets", "users"
   add_foreign_key "softwares", "users"
   add_foreign_key "states", "tasks"
   add_foreign_key "states", "users"
   add_foreign_key "status_bugs", "statuses"
   add_foreign_key "statuses", "users"
-  add_foreign_key "taggings", "tickets"
+  add_foreign_key "taggings", "tickets", on_delete: :cascade
   add_foreign_key "taggings", "users"
   add_foreign_key "tasks", "products"
   add_foreign_key "tasks", "tasks", column: "tasks_id"
