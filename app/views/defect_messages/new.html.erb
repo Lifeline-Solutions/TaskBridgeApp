@@ -5,12 +5,16 @@
         <%= f.rich_text_area :content, class: "w-full" %>
       </div>
       <div class="flex space-x-2">
-        <%= f.submit "Post Message",
-                     class: "px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700" %>
-        <%= link_to "Cancel",
-                    defect_path(@defect),
-                    class: "px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400",
-                    data: { turbo_frame: "_top" } %>
+        <div class="flex space-x-2">
+          <%= f.submit "Post Message",
+                class: "px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700",
+                data: { turbo: false }, 
+                onclick: "window.location.reload();" %>
+
+          <%= link_to "Cancel",
+                defect_path(@defect),
+                class: "px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700" %>
+        </div>
       </div>
     <% end %>
   </div>

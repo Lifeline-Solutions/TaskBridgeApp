@@ -33,13 +33,16 @@
             <% end %>
           <% end %>
 
-          <% if can?(:delete, message) %>
-            <%= link_to 'Delete', 
-                        defect_defect_message_path(message.defect, message),
-                        method: :delete,
-                        data: { turbo_method: :delete, turbo_confirm: 'Are you sure?' },
-                        class: "text-xs px-2.5 py-0.5 rounded #{message.user == current_user ? 'bg-red-200 text-red-900 hover:bg-red-300 dark:bg-red-700 dark:text-red-100' : 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/50 dark:text-red-300'} hover:no-underline" %>
-          <% end %>
+         <% if can?(:delete, message) %>
+            <%= link_to 'Delete',
+                defect_defect_message_path(message.defect, message),
+                data: { 
+                    turbo_method: :delete,
+                    turbo_confirm: 'Are you sure?',
+                    turbo_frame: "_top"
+                },
+                class: "text-xs px-2.5 py-0.5 rounded #{message.user == current_user ? 'bg-red-200 text-red-900 hover:bg-red-300 dark:bg-red-700 dark:text-red-100' : 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/50 dark:text-red-300'} hover:no-underline" %>
+        <% end %>
         </div>
       <% end %>
     </div>
