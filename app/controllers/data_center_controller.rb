@@ -465,7 +465,7 @@ class DataCenterController < ApplicationController
 
       base_scope = Ticket.joins(:users, project: :client)
         .joins(:statuses, :add_statuses, :taggings)
-        .where(users: { id: user_ids })
+        .where(users: { id: user_ids, active: true })
 
       tickets = if current_user.has_role?(:admin) || current_user.has_role?(:observer)
                   base_scope
@@ -518,7 +518,7 @@ class DataCenterController < ApplicationController
 
     base_scope = Ticket.joins(:users, project: :client)
       .joins(:statuses, :taggings)
-      .where(users: { id: user_ids })
+      .where(users: { id: user_ids, active: true })
       .where.not(statuses: { name: outstanding_statuses })
 
     team.users.each do |user|

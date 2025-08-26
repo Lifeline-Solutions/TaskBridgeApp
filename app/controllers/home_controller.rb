@@ -182,6 +182,16 @@ class HomeController < ApplicationController
         .distinct
         .count
 
+      # All Tickets count for inactive Team Members
+
+      @all_tickets_created_by_inactive_team_members = Ticket.joins(users: :teams)
+        .joins(:statuses, :project)
+        .where.not(statuses: { name: %w[Closed Resolved Declined Approved] })
+        .where(users: { active: false })
+        .where(teams: { id: current_user.team_ids })
+        .distinct
+        .count
+
       # Get the total number of open tickets for the current user count
       @total_no_of_open_tickets_for_current_user_count = Ticket.joins(:statuses, :project)
         .where(projects: { id: current_user.projects.ids })

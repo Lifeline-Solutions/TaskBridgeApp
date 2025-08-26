@@ -55,7 +55,7 @@ class TicketsController < ApplicationController
                        0
                      end
     # Prevent clients from creating more than 10 pending tickets
-    if current_user.has_role?(:client) && @tickets_count >= 10
+    if current_user.has_role?(:client) && @tickets_count >= 15
       redirect_to project_path(@project),
                   flash: { prompt: 'You can have a maximum of 10 pending tickets. Please resolve at least one ticket under "Client Pending Confirmation" to proceed.' }
       return
@@ -606,6 +606,28 @@ class TicketsController < ApplicationController
     @tickets = Ticket.joins(:statuses, :project, :users)
       .where.not(statuses: { name: %w[Closed Resolved Declined Approved] })
       .where(users: { active: false })
+      .distinct
+
+    if params[:search].present?
+      search = "%#{params[:search]}%"
+      @tickets = @tickets.where(
+        'projects.title ILIKE :search OR statuses.name ILIKE :search OR users.first_name ILIKE :search OR users.last_name ILIKE :search',
+        search: search
+      )
+    end
+
+    @per_page = 50
+    @page = (params[:page] || 1).to_i
+    @total_pages = (@tickets.count / @per_page.to_f).ceil
+    @tickets = @tickets.offset((@page - 1) * @per_page).limit(@per_page)
+  end
+
+  def all_tickets_created_by_inactive_team_members
+    @tickets = Ticket.joins(users: :teams)
+      .joins(:statuses, :project)
+      .where.not(statuses: { name: %w[Closed Resolved Declined Approved] })
+      .where(users: { active: false })
+      .where(teams: { id: current_user.team_ids })
       .distinct
 
     if params[:search].present?

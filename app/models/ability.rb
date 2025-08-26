@@ -10,7 +10,8 @@ class Ability
     elsif user.has_role? :observer
       can :read, :all
       can %i[generate report cease_fire_report email_report user_report breach_report user_report], :report
-      can %i[add_status add_status update_issue_type update_due_date update_priority index_home all_tickets], Ticket
+      can %i[add_status add_status update_issue_type update_due_date update_priority index_home all_tickets all_tickets_created_by_inactive_team_members all_tickets_created_by_inactive_users],
+          Ticket
       can :manage, Issue, user_id: user.id
 
     elsif user.has_role? :ceo
@@ -18,7 +19,8 @@ class Ability
 
     elsif user.has_role?('project manager')
       can %i[read assign_user unassign_user add_team manage_users], Project
-      can %i[create read assign_tag unassign_tag add_status update_issue_type update_due_date update_priority index_home all_tickets modal_show], Ticket
+      can %i[create read assign_tag unassign_tag add_status update_issue_type update_due_date update_priority index_home all_tickets modal_show all_tickets_created_by_inactive_team_members all_tickets_created_by_inactive_users],
+          Ticket
       can %i[edit destroy update], Ticket, user_id: user.id
       can :manage, Issue, user_id: user.id
       can %i[create read add_user remove_user edit update manage_users product_status], Product
