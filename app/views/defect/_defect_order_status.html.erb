@@ -33,7 +33,7 @@
     </tr>
     <% defects_for_group.each do |defect| %>
       <!-- Your defect row rendering here, unchanged -->
-      <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 h-12 text-left" style="cursor:pointer;" onclick="window.location='<%= defect_path(defect.id) %>'">
+      <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 h-12 text-left">
         <td class="px-6 py-4">
           <%= defect.defect_unique %>
         </td>

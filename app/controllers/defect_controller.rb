@@ -21,11 +21,12 @@ class DefectController < ApplicationController
   end
 
   def show
-    return if current_user.has_any_role?(:admin, :observer) || @defect.users.include?(current_user)
-
-    redirect_to defect_index_path, alert: 'You are not authorized to view this defect.' and return
-
+    unless current_user.has_any_role?(:admin, :observer) || Defect.joins(:users).where(id: params[:id], users: { id: current_user.id }).exists?
+      redirect_to defect_index_path, alert: 'You are not authorized to view this defect.' and return
+    end
     @defect = Defect.find(params[:id])
+    # Defects History
+    @defects_history = DefectHistory.where(defect_id: @defect.id).order(created_at: :desc)
   end
 
   def new
@@ -36,23 +37,27 @@ class DefectController < ApplicationController
   def create
     @defect = Defect.new(defect_params)
     @defect.creator = current_user
+    selected_user_ids = params[:defect][:user_ids] # This will be an array of user IDs
 
     if @defect.save
+      @defect.user_ids = selected_user_ids
       activity('user_activity')
         .caused_by(current_user)
         .performed_on(@defect)
         .event('defect.create')
-        .with_properties(defect_attributes: @defect.attributes)
-        .log("Created Defect ##{@defect.id}")
+        .with_properties(
+          defect_attributes: @defect.attributes,
+          assigned_user_ids: selected_user_ids # <-- Add to log properties
+        )
+        .log("Created Defect ##{@defect.id}, assigned to User IDs: #{selected_user_ids.join(', ')}")
 
       redirect_to defect_index_path, notice: 'Defect was successfully created.'
-      if current_user.present?
-        log_event(@defect, current_user, 'created and assign', "Defect was created and assigned to #{current_user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}")
-      else
-        log_event(@defect, current_user, 'created and assign', "Ticket was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}")
-      end
+      assigned_names = @defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', ')
+      log_event(
+        @defect, current_user, 'Created and Assigned',
+        assigned_names.present? ? "Defect was created and assigned to #{assigned_names} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
+      )
     else
-      # Set the form data when rendering new
       set_form_data
       flash.now[:alert] = "Defect creation failed: #{@defect.errors.full_messages.join(', ')}"
       render :new, status: :unprocessable_entity
@@ -66,6 +71,7 @@ class DefectController < ApplicationController
     @products = Product.with_quality_assurance_status
     @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
     @submodules = @defect.qa_module ? @defect.qa_module.submodules : []
+    set_form_data
 
     respond_to do |format|
       format.html # normal full-page
@@ -83,6 +89,8 @@ class DefectController < ApplicationController
 
     files.each { |file| @defect.attachments.attach(file) } if files.any?
 
+    selected_user_ids = params[:defect][:user_ids] # This will be an array of user IDs
+
     if @defect.update(defect_params)
       activity('user_activity')
         .caused_by(current_user)
@@ -93,8 +101,14 @@ class DefectController < ApplicationController
           qa_module_id: @defect.qa_module_id # optional, only if you want this info
         )
         .log("Updated Defect ##{@defect.id}")
+      @defect.user_ids = selected_user_ids
 
       redirect_to @defect, notice: 'Defect was successfully updated.'
+      assigned_names = @defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', ')
+      log_event(
+        @defect, current_user, 'Updated and Assigned',
+        assigned_names.present? ? "Defect was updated and assigned to #{assigned_names} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was Updated but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
+      )
     else
       render :edit
     end
@@ -134,6 +148,11 @@ class DefectController < ApplicationController
         .with_properties(user_id: user.id)
         .log("Assigned #{user.name} to Defect ##{@defect.id}")
       redirect_to defect_path(@defect), notice: "#{user.name}  was successfully assigned."
+
+      log_event(
+        @defect, current_user, 'Assigned to',
+        user.present? ? "Defect was assigned to #{user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was Updated but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
+      )
     end
   end
 
@@ -144,6 +163,11 @@ class DefectController < ApplicationController
     @defect.statuses << status
 
     redirect_to defect_path(@defect), notice: 'Product status was successfully updated.'
+
+    log_event(
+      @defect, current_user, 'Status Changed',
+      status.present? ? "Defect Status was changed to #{status.name} by #{current_user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was Updated but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
+    )
   end
 
   def remove_defect
@@ -229,10 +253,6 @@ class DefectController < ApplicationController
     @defect = Defect.find(defect_id)
   end
 
-  def log_event(defect, user, history_type, history)
-    DefectHistory.create(defect: defect, user: user, history_type: history_type, history: history)
-  end
-
   def defect_params
     # Handle the qa_submodule_id to submodule_id mapping
     params[:defect][:submodule_id] = params[:defect].delete(:qa_submodule_id) if params[:defect] && params[:defect][:qa_submodule_id].present?
@@ -252,5 +272,9 @@ class DefectController < ApplicationController
       :defect_unique,
       user_ids: []
     )
+  end
+
+  def log_event(defect, user, history_type, history)
+    DefectHistory.create(defect: defect, user: user, history_type: history_type, history: history)
   end
 end

@@ -14,6 +14,9 @@ class Ability
           Ticket
       can :manage, Issue, user_id: user.id
 
+    elsif user.has_role? :hod
+      can %i[all_tickets_created_by_inactive_team_members all_tickets_created_by_inactive_users], Ticket
+
     elsif user.has_role? :ceo
       can :generate, :report # allow ceo to do anything cept manage all
 
