@@ -279,11 +279,12 @@ class Ticket < ApplicationRecord
                  'DEFAULT' # Fallback initials
                end
 
-    last_ticket = Ticket
+    last_ticket = Ticket.with_deleted
       .where(project_id: project.id)
       .where("unique_id ~ '^[^-]+-\\d+$'") # Only process valid formats
       .order(Arel.sql("CAST(SPLIT_PART(unique_id, '-', 2) AS INTEGER) DESC"))
-      .first || Ticket.where(project_id: project.id).order(:created_at).last
+      .first ||
+                  Ticket.with_deleted.where(project_id: project.id).order(:created_at).last
 
     next_number = if last_ticket&.unique_id.present?
                     last_ticket.unique_id.split('-').last.to_i + 1
@@ -293,7 +294,7 @@ class Ticket < ApplicationRecord
 
     loop do
       self.unique_id = "#{initials}-#{next_number.to_s.rjust(4, '0')}"
-      break unless Ticket.exists?(unique_id: unique_id)
+      break unless Ticket.with_deleted.exists?(unique_id: unique_id)
 
       next_number += 1
     end

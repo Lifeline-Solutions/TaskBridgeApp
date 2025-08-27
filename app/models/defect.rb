@@ -18,7 +18,8 @@ class Defect < ApplicationRecord
   }, class_name: 'User', through: :roles, source: :users
 
   has_and_belongs_to_many :users
-  has_and_belongs_to_many :statuses, join_table: :defect_statuses
+  has_and_belongs_to_many :statuses, join_table: :defect_statuses, dependent: :destroy
+  has_many :defect_histories
 
   def assigned_to?(user)
     users.include?(user)
@@ -51,12 +52,14 @@ class Defect < ApplicationRecord
         'DEFAULT'
       end
 
+    # 👇 include soft-deleted defects
     last_defect =
-      Defect.where(product_id: product_id)
+      Defect.with_deleted
+        .where(product_id: product_id)
         .where("defect_unique ~ '^[^-]+-\\d+$'")
         .order(Arel.sql("CAST(SPLIT_PART(defect_unique, '-', 2) AS INTEGER) DESC"))
         .first ||
-      Defect.where(product_id: product_id).order(:created_at).last
+      Defect.with_deleted.where(product_id: product_id).order(:created_at).last
 
     next_number =
       if last_defect&.defect_unique.present?
@@ -67,7 +70,8 @@ class Defect < ApplicationRecord
 
     loop do
       self.defect_unique = "#{initials}-#{next_number.to_s.rjust(4, '0')}"
-      break unless Defect.exists?(defect_unique: defect_unique)
+      # 👇 check existence including soft-deleted
+      break unless Defect.with_deleted.exists?(defect_unique: defect_unique)
 
       next_number += 1
     end
