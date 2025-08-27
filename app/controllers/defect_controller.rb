@@ -55,7 +55,7 @@ class DefectController < ApplicationController
       redirect_to defect_index_path, notice: 'Defect was successfully created.'
       assigned_names = @defect.users.pluck(:first_name, :last_name).join(' ')
       log_event(
-        @defect, current_user, 'created and assign',
+        @defect, current_user, 'Created and Assigned',
         assigned_names.present? ? "Defect was created and assigned to #{assigned_names} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
       )
     else
@@ -72,6 +72,7 @@ class DefectController < ApplicationController
     @products = Product.with_quality_assurance_status
     @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
     @submodules = @defect.qa_module ? @defect.qa_module.submodules : []
+    set_form_data
 
     respond_to do |format|
       format.html # normal full-page
@@ -89,6 +90,8 @@ class DefectController < ApplicationController
 
     files.each { |file| @defect.attachments.attach(file) } if files.any?
 
+    selected_user_ids = params[:defect][:user_ids] # This will be an array of user IDs
+
     if @defect.update(defect_params)
       activity('user_activity')
         .caused_by(current_user)
@@ -99,8 +102,14 @@ class DefectController < ApplicationController
           qa_module_id: @defect.qa_module_id # optional, only if you want this info
         )
         .log("Updated Defect ##{@defect.id}")
+      @defect.user_ids = selected_user_ids
 
       redirect_to @defect, notice: 'Defect was successfully updated.'
+      assigned_names = @defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', ')
+      log_event(
+        @defect, current_user, 'Updated and Assigned',
+        assigned_names.present? ? "Defect was updated and assigned to #{assigned_names} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was Updated but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
+      )
     else
       render :edit
     end

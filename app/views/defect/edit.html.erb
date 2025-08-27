@@ -28,10 +28,10 @@
             <!-- Project -->
             <div>
               <%= f.label :product_id, 'Project (Product) *', class: "block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300" %>
-              <%= f.collection_select :product_id, 
-                    @products, :id, :content,
-                    { selected: @defect.product_id, prompt: "Select Project" },
-                    { class: "w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600", required: true } %>
+              <%= f.select :product_id,
+                           options_for_select(@products_and_clients_defects),
+                           { prompt: "Select Project" },
+                           { class: "w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600", required: true } %>
             </div>
 
             <!-- Banking type / Module / Submodule -->
