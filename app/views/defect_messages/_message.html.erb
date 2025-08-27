@@ -33,10 +33,11 @@
           <%= link_to 'Delete',
               defect_defect_message_path(message.defect, message),
               data: { 
-                  turbo_method: :delete,
-                  turbo_confirm: 'Are you sure?',
-                  turbo_frame: "_top"
+                turbo_method: :delete,
+                turbo_confirm: 'Are you sure?',
+                turbo_frame: "_top"
               },
+              onclick: "setTimeout(function(){ window.location.reload(); }, 500)",
               class: "text-xs px-2.5 py-0.5 rounded bg-red-200 text-red-900 hover:bg-red-300 dark:bg-red-700 dark:text-red-100 hover:no-underline" %>
         </div>
       <% end %>
@@ -81,3 +82,12 @@
 </div>
 
 <%= turbo_frame_tag dom_id(message, :edit) %>
+
+
+<script>
+  document.addEventListener("turbo:submit-end", function(e) {
+    if (e.detail.success) {
+      window.location.reload();
+    }
+  });
+</script>

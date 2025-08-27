@@ -6,7 +6,9 @@
       </div>
       <div class="flex space-x-2">
         <%= f.submit "Update",
-                     class: "px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" %>
+          class: "px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700",
+          onclick: "setTimeout(function(){ window.location.reload(); }, 500)" %>
+
         <%= link_to "Cancel",
                     defect_path(@defect),
                     class: "px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400",
