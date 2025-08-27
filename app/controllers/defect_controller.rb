@@ -149,6 +149,11 @@ class DefectController < ApplicationController
         .with_properties(user_id: user.id)
         .log("Assigned #{user.name} to Defect ##{@defect.id}")
       redirect_to defect_path(@defect), notice: "#{user.name}  was successfully assigned."
+
+      log_event(
+        @defect, current_user, 'Assigned to',
+        user.present? ? "Defect was assigned to #{user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was Updated but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
+      )
     end
   end
 
@@ -159,6 +164,11 @@ class DefectController < ApplicationController
     @defect.statuses << status
 
     redirect_to defect_path(@defect), notice: 'Product status was successfully updated.'
+
+    log_event(
+      @defect, current_user, 'Status Changed',
+      status.present? ? "Defect Status was changed to #{status.name} by #{current_user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was Updated but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
+    )
   end
 
   def remove_defect
