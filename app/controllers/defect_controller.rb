@@ -21,11 +21,13 @@ class DefectController < ApplicationController
   end
 
   def show
-    return if current_user.has_any_role?(:admin, :observer) || @defect.users.include?(current_user)
-
-    redirect_to defect_index_path, alert: 'You are not authorized to view this defect.' and return
-
     @defect = Defect.find(params[:id])
+    unless current_user.has_any_role?(:admin, :observer) || @defect.users.include?(current_user)
+      redirect_to defect_index_path, alert: 'You are not authorized to view this defect.' and return
+    end
+
+    # Defects History
+    @defects_history = DefectHistory.where(defect_id: @defect.id).order(created_at: :desc)
   end
 
   def new
@@ -229,10 +231,6 @@ class DefectController < ApplicationController
     @defect = Defect.find(defect_id)
   end
 
-  def log_event(defect, user, history_type, history)
-    DefectHistory.create(defect: defect, user: user, history_type: history_type, history: history)
-  end
-
   def defect_params
     # Handle the qa_submodule_id to submodule_id mapping
     params[:defect][:submodule_id] = params[:defect].delete(:qa_submodule_id) if params[:defect] && params[:defect][:qa_submodule_id].present?
@@ -252,5 +250,9 @@ class DefectController < ApplicationController
       :defect_unique,
       user_ids: []
     )
+  end
+
+  def log_event(defect, user, history_type, history)
+    DefectHistory.create(defect: defect, user: user, history_type: history_type, history: history)
   end
 end
