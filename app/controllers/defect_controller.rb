@@ -8,7 +8,7 @@ class DefectController < ApplicationController
       .order(created_at: :desc)
 
     # Filter defects for non-admin users
-    @defects = @defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer)
+    @defects = @defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa)
 
     # Pagination
     @per_page = 20
@@ -21,7 +21,7 @@ class DefectController < ApplicationController
   end
 
   def show
-    unless current_user.has_any_role?(:admin, :observer) || Defect.joins(:users).where(id: params[:id], users: { id: current_user.id }).exists?
+    unless current_user.has_any_role?(:admin, :observer, :qa) || Defect.joins(:users).where(id: params[:id], users: { id: current_user.id }).exists?
       redirect_to defect_index_path, alert: 'You are not authorized to view this defect.' and return
     end
     @defect = Defect.find(params[:id])

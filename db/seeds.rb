@@ -19,6 +19,7 @@ Role.find_or_create_by!(name: 'observer')
 Role.find_or_create_by!(name: 'sales')
 Role.find_or_create_by!(name: 'ceo')
 Role.find_or_create_by!(name: 'hod')
+Role.find_or_create_by!(name: 'qa')
 
 a = User.create!(email: 'admin@craftsilicon.com', password: 'password', confirmed_at: DateTime.now , confirmation_sent_at: DateTime.now, first_name: 'Jay', last_name: 'Admin')
 a.add_role(:admin)
