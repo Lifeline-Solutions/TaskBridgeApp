@@ -44,6 +44,7 @@ class Ability
       can :read, Board
       can :read, Task
       can :manage, Message
+      can %i[create edit update destroy], DefectMessage, user_id: user.id
       can :manage, Defect
       can :generate, :report
 

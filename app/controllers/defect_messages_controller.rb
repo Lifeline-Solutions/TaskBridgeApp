@@ -3,6 +3,7 @@ class DefectMessagesController < ApplicationController
   before_action :set_defect
   before_action :set_defect_message, only: %i[edit update destroy]
   load_and_authorize_resource through: :defect
+  before_action :authorize_message_owner, only: %i[edit update destroy]
 
   def index
     @defect_messages = @defect.defect_messages
@@ -58,7 +59,6 @@ class DefectMessagesController < ApplicationController
 
   def update
     audit_on_update(@defect_message)
-
     if @defect_message.update(defect_message_params)
       respond_to do |format|
         format.turbo_stream
@@ -71,7 +71,6 @@ class DefectMessagesController < ApplicationController
 
   def destroy
     if audit_soft_delete(@defect_message)
-
       respond_to do |format|
         format.turbo_stream
         format.html { redirect_to @defect, notice: 'Message archived successfully.' }
@@ -88,6 +87,17 @@ class DefectMessagesController < ApplicationController
   end
 
   private
+
+  def authorize_message_owner
+    return if @defect_message.user == current_user
+
+    respond_to do |format|
+      format.html { redirect_to defect_path(@defect), alert: 'You are not authorized to edit or delete this message.' }
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.replace(dom_id(@defect_message), partial: 'defect_messages/message', locals: { message: @defect_message }), status: :forbidden
+      end
+    end
+  end
 
   def set_defect
     @defect = Defect.find(params[:defect_id])
