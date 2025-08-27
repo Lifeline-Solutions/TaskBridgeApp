@@ -97,7 +97,6 @@ class DefectMessagesController < ApplicationController
         render turbo_stream: turbo_stream.replace(dom_id(@defect_message), partial: 'defect_messages/message', locals: { message: @defect_message }), status: :forbidden
       end
     end
-    nil
   end
 
   def set_defect
