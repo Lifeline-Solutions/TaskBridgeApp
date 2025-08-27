@@ -21,11 +21,10 @@ class DefectController < ApplicationController
   end
 
   def show
-    @defect = Defect.find(params[:id])
-    unless current_user.has_any_role?(:admin, :observer) || @defect.users.include?(current_user)
+    unless current_user.has_any_role?(:admin, :observer) || Defect.joins(:users).where(id: params[:id], users: { id: current_user.id }).exists?
       redirect_to defect_index_path, alert: 'You are not authorized to view this defect.' and return
     end
-
+    @defect = Defect.find(params[:id])
     # Defects History
     @defects_history = DefectHistory.where(defect_id: @defect.id).order(created_at: :desc)
   end
@@ -53,7 +52,7 @@ class DefectController < ApplicationController
         .log("Created Defect ##{@defect.id}, assigned to User IDs: #{selected_user_ids.join(', ')}")
 
       redirect_to defect_index_path, notice: 'Defect was successfully created.'
-      assigned_names = @defect.users.pluck(:first_name, :last_name).join(' ')
+      assigned_names = @defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', ')
       log_event(
         @defect, current_user, 'Created and Assigned',
         assigned_names.present? ? "Defect was created and assigned to #{assigned_names} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
