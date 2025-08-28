@@ -24,6 +24,7 @@ class DefectController < ApplicationController
     unless current_user.has_any_role?(:admin, :observer, :qa) || Defect.joins(:users).where(id: params[:id], users: { id: current_user.id }).exists?
       redirect_to defect_index_path, alert: 'You are not authorized to view this defect.' and return
     end
+
     @defect = Defect.find(params[:id])
     # Defects History
     @defects_history = DefectHistory.where(defect_id: @defect.id).order(created_at: :desc)
@@ -121,7 +122,7 @@ class DefectController < ApplicationController
         .performed_on(@defect)
         .event('defect.soft_delete')
         .log("Soft-deleted Defect ##{@defect.id}")
-      redirect_to defects_url, notice: 'Defect was successfully deleted.'
+      redirect_to defect_url, notice: 'Defect was successfully deleted.'
     else
       @defect.destroy
       activity('user_activity')
@@ -129,7 +130,7 @@ class DefectController < ApplicationController
         .performed_on(@defect)
         .event('defect.destroy')
         .log("Destroyed Defect ##{@defect.id}")
-      redirect_to defects_url, notice: 'Defect was successfully destroyed.'
+      redirect_to defect_url, notice: 'Defect was successfully destroyed.'
     end
   end
 

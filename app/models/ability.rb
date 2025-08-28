@@ -10,12 +10,12 @@ class Ability
     elsif user.has_role? :observer
       can :read, :all
       can %i[generate report cease_fire_report email_report user_report breach_report user_report], :report
-      can %i[add_status add_status update_issue_type update_due_date update_priority index_home all_tickets all_tickets_created_by_inactive_team_members all_tickets_created_by_inactive_users],
+      can %i[add_status add_status update_issue_type update_due_date update_priority index_home all_tickets show_all_tickets_user_inactive all_tickets_created_by_inactive_team_members],
           Ticket
       can :manage, Issue, user_id: user.id
 
     elsif user.has_role? :hod
-      can %i[all_tickets_created_by_inactive_team_members all_tickets_created_by_inactive_users], Ticket
+      can %i[show_all_tickets_user_inactive all_tickets_created_by_inactive_team_members], Ticket
 
     elsif user.has_role? :ceo
       can :generate, :report # allow ceo to do anything cept manage all
