@@ -227,6 +227,14 @@ class DefectController < ApplicationController
         .with_properties(priority: @defect.priority)
         .log("Updated priority to #{@defect.priority} for Defect ##{@defect.id}")
       
+      # Add history log
+      log_event(
+        @defect,
+        current_user,
+        'Priority Updated',
+        "Priority was updated to #{@defect.priority} by #{current_user.name} at #{Time.now.strftime('%H:%M of %d-%m-%Y')}"
+      )
+
       respond_to do |format|
         format.js 
         format.html { redirect_to @defect, notice: 'Priority updated successfully.' }
