@@ -121,7 +121,7 @@ class DefectController < ApplicationController
         .performed_on(@defect)
         .event('defect.soft_delete')
         .log("Soft-deleted Defect ##{@defect.id}")
-      redirect_to defects_url, notice: 'Defect was successfully deleted.'
+      redirect_to defect_url, notice: 'Defect was successfully deleted.'
     else
       @defect.destroy
       activity('user_activity')
@@ -129,7 +129,7 @@ class DefectController < ApplicationController
         .performed_on(@defect)
         .event('defect.destroy')
         .log("Destroyed Defect ##{@defect.id}")
-      redirect_to defects_url, notice: 'Defect was successfully destroyed.'
+      redirect_to defect_url, notice: 'Defect was successfully destroyed.'
     end
   end
 
