@@ -30,11 +30,17 @@
   <!-- Pagination Controls -->
   <div class="pagination">
     <% if @page > 1 %>
-      <%= link_to 'Previous', defect_index_path(page: @page - 1, query: params[:query]), class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
+      <%= link_to 'Previous',
+        defect_index_path(page: @page - 1, query: params[:query], status: params[:status]),
+        class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
     <% end %>
+
     <span>Page <%= @page %> of <%= @total_pages %></span>
+
     <% if @page < @total_pages %>
-      <%= link_to 'Next', defect_index_path(page: @page + 1, query: params[:query]), class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
+      <%= link_to 'Next',
+        defect_index_path(page: @page + 1, query: params[:query], status: params[:status]),
+        class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
     <% end %>
   </div>
 </div>
