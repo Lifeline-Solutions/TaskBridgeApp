@@ -644,6 +644,14 @@ class TicketsController < ApplicationController
     @tickets = @tickets.offset((@page - 1) * @per_page).limit(@per_page)
   end
 
+  def all_tickets_and_no_team_member
+    @tickets = Ticket.joins(:users).joins(:statuses, :project)
+      .left_outer_joins(users: :teams)
+      .where.not(statuses: { name: %w[Closed Resolved Declined Approved] })
+      .where(teams: { id: nil }) # users without any team
+      .distinct
+  end
+
   def modal_show
     @ticket_items = if params[:query].present?
                       @ticket.issues.left_joins(:rich_text_content)
