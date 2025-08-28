@@ -128,6 +128,7 @@ Rails.application.routes.draw do
       post :add_defect
       delete :remove_defect
       post :defect_status
+      patch 'update_priority'
     end
     resources :bugs do
       member do
