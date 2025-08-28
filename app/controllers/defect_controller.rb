@@ -5,20 +5,16 @@ class DefectController < ApplicationController
   def index
     # Base query for defects
     @defects = Defect.includes(:users, :qa_module, :submodule, :banking_type, :statuses)
-                    .order(created_at: :desc)
+      .order(created_at: :desc)
 
     # Filter defects for non-admin users
     @defects = @defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa)
 
     # Status filter
-    if params[:status].present?
-      @defects = @defects.joins(:statuses).where(statuses: { id: params[:status] })
-    end
+    @defects = @defects.joins(:statuses).where(statuses: { id: params[:status] }) if params[:status].present?
 
     # Search filter
-    if params[:query].present?
-      @defects = @defects.where("summary ILIKE ?", "%#{params[:query]}%")
-    end
+    @defects = @defects.where('summary ILIKE ?', "%#{params[:query]}%") if params[:query].present?
 
     # Pagination
     @per_page = 20
@@ -31,9 +27,9 @@ class DefectController < ApplicationController
 
     # ✅ Collect distinct statuses for dropdown (only from the currently matching defects)
     @statuses = Status.joins(:defects)
-                      .where(defects: { id: @defects.pluck(:id) })
-                      .distinct
-                      .order(:name)
+      .where(defects: { id: @defects.pluck(:id) })
+      .distinct
+      .order(:name)
   end
 
   def show
