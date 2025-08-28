@@ -2,7 +2,7 @@
 lock "~> 3.19.1"
 
 set :application, "CSPM"
-set :repo_url, "https://github.com/Kanyorok/TaskBridgeApp.git"
+set :repo_url, "https://devopsuat.craftsilicon.com/TaskBridge/TaskBridge/_git/TaskBridge"
 set :branch, 'dev'
 
 # Default branch is :master
