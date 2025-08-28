@@ -1,6 +1,14 @@
 <% if @ticket.content.present? %>
   <span class="break-words overflow-hidden">
-    <%= sanitize raw (@ticket.content.to_trix_html.gsub(/\[.*?\]/, '').strip) %>
+    <%= sanitize(
+          raw(
+            @ticket.content.to_trix_html.gsub(/\[.*?\]/, '').strip
+          ),
+          tags: %w[strong em b i u p br span div h1 h2 h3 h4 h5 h6 blockquote ul ol li a table tr td th thead tbody],
+          attributes: %w[href style border]
+        )
+    %>
+
     <% if @ticket.content.body.attachments.any? %>
       <% @ticket.content.body.attachments.each_with_index do |attachment, idx| %>
         <% if attachment.attachable.is_a?(ActiveStorage::Blob) && attachment.attachable.image? %>
