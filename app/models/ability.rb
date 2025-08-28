@@ -15,14 +15,26 @@ class Ability
       can :manage, Issue, user_id: user.id
 
     elsif user.has_role? :hod
-      can %i[show_all_tickets_user_inactive all_tickets_created_by_inactive_team_members], Ticket
+      can %i[read assign_user unassign_user add_team manage_users], Project
+      can %i[create read assign_tag unassign_tag add_status update_issue_type update_due_date update_priority index_home all_tickets modal_show show_all_tickets_user_inactive all_tickets_created_by_inactive_team_members],
+          Ticket
+      can %i[edit destroy update], Ticket, user_id: user.id
+      can :manage, Issue, user_id: user.id
+      can %i[create read add_user remove_user edit update manage_users product_status], Product
+      cannot %i[delete], Product
+      can %i[create edit read], User, roles: { name: ['agent', 'client', 'project manager'] }
+      cannot :manage, User, roles: { name: 'admin' }
+      can :manage, Board
+      can :manage, Task
+      can :generate, :report
+      can :manage, Team
 
     elsif user.has_role? :ceo
       can :generate, :report # allow ceo to do anything cept manage all
 
     elsif user.has_role?('project manager')
       can %i[read assign_user unassign_user add_team manage_users], Project
-      can %i[create read assign_tag unassign_tag add_status update_issue_type update_due_date update_priority index_home all_tickets modal_show all_tickets_created_by_inactive_team_members all_tickets_created_by_inactive_users],
+      can %i[create read assign_tag unassign_tag add_status update_issue_type update_due_date update_priority index_home all_tickets modal_show],
           Ticket
       can %i[edit destroy update], Ticket, user_id: user.id
       can :manage, Issue, user_id: user.id
