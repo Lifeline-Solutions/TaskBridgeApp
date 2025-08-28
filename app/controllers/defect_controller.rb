@@ -162,9 +162,7 @@ class DefectController < ApplicationController
     status = Status.find(params[:status_id])
     @defect.statuses.clear
     @defect.statuses << status
-
     redirect_to defect_path(@defect), notice: 'Product status was successfully updated.'
-
     log_event(
       @defect, current_user, 'Status Changed',
       status.present? ? "Defect Status was changed to #{status.name} by #{current_user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was Updated but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
