@@ -23,15 +23,24 @@
         <% end %>
 
         <%= form_with model: @defect, url: defect_path(@defect), method: :patch, local: true, html: { multipart: true }, data: { turbo: false } do |f| %>
-          <div class="space-y-4">
+          <div class="space-y-4"
+               data-controller="project-modules"
+               data-project-modules-modules-url-value="<%= modules_by_product_defect_index_path %>"
+               data-project-modules-no-modules-message-value="No modules available"
+               data-project-modules-select-prompt-value="Select Module">
             
             <!-- Project -->
             <div>
               <%= f.label :product_id, 'Project (Product) *', class: "block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300" %>
               <%= f.select :product_id,
-                           options_for_select(@products_and_clients_defects),
+                           options_for_select(@products_and_clients_defects, @defect.product_id),
                            { prompt: "Select Project" },
-                           { class: "w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600", required: true } %>
+                           { class: "w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600", 
+                             required: true,
+                             data: { 
+                               action: "change->project-modules#loadModules",
+                               "project-modules-target": "projectSelect"
+                             } } %>
             </div>
 
             <!-- Banking type / Module / Submodule -->
@@ -47,19 +56,21 @@
 
               <!-- Module -->
               <%= f.collection_select :qa_module_id, 
-                    @qa_modules || [], :id, :name,
+                    @qa_modules.where(product_id: @defect.product_id) || [], :id, :name,
                     { selected: @defect.qa_module_id, prompt: "Select Module" },
                     { class: "flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600",
                       required: true,
-                      id: "qa-module-select",
-                      data: { action: "change->modules#loadSubmodules" } } %>
+                      data: { 
+                        "project-modules-target": "moduleSelect",
+                        action: "change->project-modules#loadSubmodules" 
+                      } } %>
 
               <!-- Submodule -->
               <%= f.collection_select :submodule_id, 
                     @submodules || [], :id, :name,
                     { selected: @defect.submodule_id, prompt: "Select Sub-Module" },
                     { class: "flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600",
-                      id: "submodule-select" } %>
+                      data: { "project-modules-target": "submoduleSelect" } } %>
             </div>
 
             <!-- Ticket Title -->
@@ -141,7 +152,7 @@
                       <% else %>
                         <div class="w-full h-32 bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-2">
                           <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 极 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 极 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 极 0 00-.293-.707l-5.414-5.414A1 1 极 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                           </svg>
                         </div>
                       <% end %>
@@ -189,8 +200,9 @@
 <!-- Dynamic Submodule Dropdown -->
 <script>
   document.addEventListener('turbo:load', function () {
-    const moduleSelect = document.getElementById('qa-module-select');
-    const submoduleSelect = document.getElementById('submodule-select');
+    const projectSelect = document.querySelector('[data-project-modules-target="projectSelect"]');
+    const moduleSelect = document.querySelector('[data-project-modules-target="moduleSelect"]');
+    const submoduleSelect = document.querySelector('[data-project-modules-target="submoduleSelect"]');
 
     // Load submodules for the initially selected module
     function loadSubmodulesForSelectedModule() {
@@ -233,6 +245,13 @@
             });
         }
       });
+    }
+
+    // Initialize modules based on selected project when page loads
+    if (projectSelect && projectSelect.value) {
+      // Trigger the loadModules event to populate modules for the selected project
+      const event = new Event('change');
+      projectSelect.dispatchEvent(event);
     }
   });
 </script>
