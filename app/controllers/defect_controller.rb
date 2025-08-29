@@ -14,7 +14,22 @@ class DefectController < ApplicationController
     @defects = @defects.joins(:statuses).where(statuses: { id: params[:status] }) if params[:status].present?
 
     # Search filter
-    @defects = @defects.where('summary ILIKE ?', "%#{params[:query]}%") if params[:query].present?
+
+    if params[:query].present?
+      @defects = @defects
+        .left_joins(:users, product: %i[client groupwares])
+        .where(
+          'defects.summary ILIKE :q
+       OR defects.defect_unique ILIKE :q
+       OR defects.priority ILIKE :q
+       OR users.first_name ILIKE :q
+       OR users.last_name ILIKE :q
+       OR clients.name ILIKE :q
+       OR groupwares.name ILIKE :q
+       OR CAST(defects.created_at AS TEXT) ILIKE :q',
+          q: "%#{params[:query]}%"
+        )
+    end
 
     # Pagination
     @per_page = 20
