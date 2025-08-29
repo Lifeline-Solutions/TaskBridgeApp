@@ -329,7 +329,8 @@ class DefectController < ApplicationController
       :product_id,
       :issue_type,
       :defect_unique,
-      user_ids: []
+      user_ids: [],
+      attachments: []
     )
   end
 

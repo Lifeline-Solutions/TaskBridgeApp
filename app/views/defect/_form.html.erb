@@ -78,6 +78,17 @@
             class: "px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" %>
     </div>
 
+    <!-- Attachments -->
+    <div>
+      <%= f.label :attachments, "Attachments", class: "block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300" %>
+      <%= f.file_field :attachments,
+            multiple: true,
+            direct_upload: true,
+            name: "defect[attachments][]",
+            class: "w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" %>
+      <p class="text-xs text-gray-500 mt-1">You can upload one or multiple files.</p>
+    </div>
+
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <!-- Creator (disabled) -->
       <div>
