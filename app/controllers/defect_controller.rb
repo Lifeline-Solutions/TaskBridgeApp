@@ -1,6 +1,6 @@
 class DefectController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_defect, only: %i[show edit update update_priority destroy add_defect add_attachments remove_attachment]
+  before_action :set_defect, only: %i[show edit update update_priority destroy add_defect add_attachments remove_attachment update_label]
 
   def index
     # Base query for defects
@@ -264,6 +264,36 @@ class DefectController < ApplicationController
       respond_to do |format|
         format.js 
         format.html { render :show, alert: 'Failed to update priority.' }
+      end
+    end
+  end
+
+  def update_label
+    if @defect.update(label: params[:defect][:label])
+      # Activity log
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@defect)
+        .event('defect.update_label')
+        .with_properties(label: @defect.label)
+        .log("Updated label to #{@defect.label} for Defect ##{@defect.id}")
+
+      # History log
+      log_event(
+        @defect,
+        current_user,
+        'Label Updated',
+        "Label was updated to #{@defect.label} by #{current_user.name} at #{Time.now.strftime('%H:%M of %d-%m-%Y')}"
+      )
+
+      respond_to do |format|
+        format.js
+        format.html { redirect_to @defect, notice: 'Label updated successfully.' }
+      end
+    else
+      respond_to do |format|
+        format.js
+        format.html { render :show, alert: 'Failed to update label.' }
       end
     end
   end
