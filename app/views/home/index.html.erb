@@ -159,6 +159,26 @@
           </p>
         </div>
       <% end %>
+
+      <!-- All tickets created by inactive users that are part of a team-->
+      <% if current_user.projects.any? %>
+        <%= link_to all_tickets_and_no_team_member_project_tickets_path(project_id: current_user.projects.first.id) do %>
+          <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+            <p class="text-xs sm:text-sm truncate">
+              User with Tickets & No Team Assigned
+            </p>
+            <span class="text-lg sm:text-xl font-bold">
+              <%= @all_tickets_and_no_team_member %>
+            </span>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+          <p class="text-xs sm:text-sm truncate">
+            No User with Tickets & No Team Assigned
+          </p>
+        </div>
+      <% end %>
     </div>
     <% end %>
 
