@@ -91,12 +91,20 @@
 
               <!-- Assignees -->
               <div>
-                <label class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Assignees *</label>
+                <%= f.label :user_ids, 'Assignees *', class: "block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300" %>
                 <%= select_tag "defect[user_ids][]",
                       options_from_collection_for_select(@users, :id, :name, @defect.user_ids),
                       multiple: true,
                       class: "px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white",
                       required: true %>
+              </div>
+
+              <!-- Label -->
+              <div>
+                <%= f.label :label, 'Label', class: "block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300" %>
+                <%= f.text_field :label,
+                      placeholder: "Enter label",
+                      class: "px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" %>
               </div>
             </div>
 

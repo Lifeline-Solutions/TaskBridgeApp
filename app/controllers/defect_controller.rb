@@ -1,6 +1,6 @@
 class DefectController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_defect, only: %i[show edit update update_priority destroy add_defect add_attachments remove_attachment]
+  before_action :set_defect, only: %i[show edit update update_priority destroy add_defect add_attachments remove_attachment update_label]
 
   def index
     # Base query for defects
@@ -94,51 +94,61 @@ class DefectController < ApplicationController
 
   def edit
     @defect = Defect.find(params[:id])
-    @qa_modules = QaModule.where(parent_id: nil)
+
+    @qa_modules   = QaModule.where(parent_id: nil)
     @banking_types = BankingType.all
-    @products = Product.with_quality_assurance_status
-    @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
-    @submodules = @defect.qa_module ? @defect.qa_module.submodules : []
-    set_form_data
+    @products     = Product.with_quality_assurance_status
+    @users        = User.with_agent_project_manager_role.order(:first_name, :last_name)
+    @submodules   = @defect.qa_module ? @defect.qa_module.submodules : []
+
+    @statuses = Status.where(name: [
+      'To Do', 'In Progress', 'On hold', 'Awaiting client info',
+      'Awaiting build', 'QA testing', 'Closed', 'Failed QA',
+      'Blocked', 'Reopened'
+    ])
+
+    # Dropdown options for product selection
+      @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
+        .select do |product|
+        product.statuses.any? do |status|
+          status.name == 'Pre Quality Assurance' || status.name == 'End Of Quality Assurance'
+        end
+      end.map do |product|
+        client_name = product.client&.name || 'No Client'
+        groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
+        ["#{client_name} - #{groupware_names}", product.id]
+      end
 
     respond_to do |format|
-      format.html # normal full-page
-      format.turbo_stream { render layout: false } # only return the turbo frame
+      format.html
+      format.turbo_stream { render layout: false }
     end
   end
 
   def update
     audit_on_update(@defect)
 
-    # Collect files from either place (prefer model-scoped)
-    files = []
-    files += Array(params.dig(:defect, :attachments)).reject(&:blank?) if params.dig(:defect, :attachments).present?
-    files += Array(params[:attachments]).reject(&:blank?) if params[:attachments].present?
+    selected_user_ids = params[:defect][:user_ids]
 
-    files.each { |file| @defect.attachments.attach(file) } if files.any?
+    if @defect.update(defect_params.except(:attachments))
+      # Attach new files without removing old ones
+      if params[:defect][:attachments].present?
+        params[:defect][:attachments].each do |file|
+          @defect.attachments.attach(file)
+        end
+      end
 
-    selected_user_ids = params[:defect][:user_ids] # This will be an array of user IDs
+      @defect.user_ids = selected_user_ids
 
-    if @defect.update(defect_params)
       activity('user_activity')
         .caused_by(current_user)
         .performed_on(@defect)
         .event('defect.update')
-        .with_properties(
-          defect_id: @defect.id,
-          qa_module_id: @defect.qa_module_id # optional, only if you want this info
-        )
         .log("Updated Defect ##{@defect.id}")
-      @defect.user_ids = selected_user_ids
 
       redirect_to @defect, notice: 'Defect was successfully updated.'
-      assigned_names = @defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', ')
-      log_event(
-        @defect, current_user, 'Updated and Assigned',
-        assigned_names.present? ? "Defect was updated and assigned to #{assigned_names} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was Updated but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
-      )
     else
-      render :edit
+      render :edit, status: :unprocessable_entity
     end
   end
 
@@ -273,6 +283,36 @@ class DefectController < ApplicationController
     end
   end
 
+  def update_label
+    if @defect.update(label: params[:defect][:label])
+      # Activity log
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@defect)
+        .event('defect.update_label')
+        .with_properties(label: @defect.label)
+        .log("Updated label to #{@defect.label} for Defect ##{@defect.id}")
+
+      # History log
+      log_event(
+        @defect,
+        current_user,
+        'Label Updated',
+        "Label was updated to #{@defect.label} by #{current_user.name} at #{Time.now.strftime('%H:%M of %d-%m-%Y')}"
+      )
+
+      respond_to do |format|
+        format.js
+        format.html { redirect_to @defect, notice: 'Label updated successfully.' }
+      end
+    else
+      respond_to do |format|
+        format.js
+        format.html { render :show, alert: 'Failed to update label.' }
+      end
+    end
+  end
+
   private
 
   def set_form_data
@@ -322,10 +362,12 @@ class DefectController < ApplicationController
       :submodule_id,
       :banking_type_id,
       :priority,
+      :label,
       :product_id,
       :issue_type,
       :defect_unique,
-      user_ids: []
+      user_ids: [],
+      attachments: []
     )
   end
 
