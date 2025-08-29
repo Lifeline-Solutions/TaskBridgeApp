@@ -243,7 +243,7 @@ class DefectController < ApplicationController
     @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
       .select do |product|
       product.statuses.any? do |status|
-        status.name == 'Pre Quality Assurance' || status.name == 'End Of Quality Assurance'
+        ['Pre Quality Assurance', 'End Of Quality Assurance'].include?(status.name)
       end
     end.map do |product|
       client_name = product.client&.name || 'No Client'
