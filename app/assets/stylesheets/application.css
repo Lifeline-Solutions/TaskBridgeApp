@@ -247,3 +247,17 @@
 .trix-content .text-highlight { background-color: yellow; }
 .trix-content .text-large { font-size: 1.5em; }
 .trix-content .text-small { font-size: 0.75em; }
+
+    input[required]::after,
+    label[required]::after,
+    label.required::after {
+      content: " *";
+      color: red;
+    }
+
+/* Optionally, for accessibility, you can highlight required fields */
+input[required],
+select[required],
+textarea[required] {
+  border-color: #fa9c23;
+}
