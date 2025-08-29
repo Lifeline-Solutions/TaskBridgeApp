@@ -55,6 +55,16 @@ class DefectController < ApplicationController
     @defect = Defect.find(params[:id])
     # Defects History
     @defects_history = DefectHistory.where(defect_id: @defect.id).order(created_at: :desc)
+
+    # Attachment paginations
+    @attachments_per_page = 6
+    @attachments_page = (params[:attachments_page] || 1).to_i
+    @attachments_total = @defect.attachments.count
+    @attachments_total_pages = (@attachments_total / @attachments_per_page.to_f).ceil
+
+    @attachments = @defect.attachments
+                          .offset((@attachments_page - 1) * @attachments_per_page)
+                          .limit(@attachments_per_page)
   end
 
   def new
