@@ -33,6 +33,13 @@ class Defect < ApplicationRecord
   before_create :set_default_issue_type
   after_create :defect_unique_id
 
+  # Validations
+  validates :summary, presence: true
+  validates :priority, presence: true
+  validates :issue_type, presence: true
+  validates :product_id, presence: true
+  validates :creator_id, presence: true
+
   private
 
   def set_default_status
