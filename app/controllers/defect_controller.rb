@@ -1,6 +1,6 @@
 class DefectController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_defect, only: %i[show edit update destroy add_defect add_attachments remove_attachment]
+  before_action :set_defect, only: %i[show edit update update_priority destroy add_defect add_attachments remove_attachment]
 
   def index
     # Base query for defects
@@ -227,6 +227,35 @@ class DefectController < ApplicationController
     redirect_to defect_path(@defect), notice: 'File was successfully removed.'
   rescue ActiveRecord::RecordNotFound
     redirect_to defects_path, alert: 'File or defect not found.'
+  end
+
+  def update_priority
+    if @defect.update(priority: params[:defect][:priority])
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@defect)
+        .event('defect.update_priority')
+        .with_properties(priority: @defect.priority)
+        .log("Updated priority to #{@defect.priority} for Defect ##{@defect.id}")
+      
+      # Add history log
+      log_event(
+        @defect,
+        current_user,
+        'Priority Updated',
+        "Priority was updated to #{@defect.priority} by #{current_user.name} at #{Time.now.strftime('%H:%M of %d-%m-%Y')}"
+      )
+
+      respond_to do |format|
+        format.js 
+        format.html { redirect_to @defect, notice: 'Priority updated successfully.' }
+      end
+    else
+      respond_to do |format|
+        format.js 
+        format.html { render :show, alert: 'Failed to update priority.' }
+      end
+    end
   end
 
   private
