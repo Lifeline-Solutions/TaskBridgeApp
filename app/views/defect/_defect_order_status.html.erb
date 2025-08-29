@@ -34,7 +34,11 @@
       </div>
     </td>
     <td class="px-6 py-4">
-      <%= "#{defect.product.client.name} #{defect.product.groupwares.first&.name}".truncate(30) %>
+      <%= link_to(
+            "#{defect.product.client.name} #{defect.product.groupwares.first&.name}".truncate(30),
+            product_path(defect.product),
+            class: "text-blue-600 hover:underline"
+          ) %>
     </td>
     <td class="px-6 py-4 text-right" data-controller="dropdown" data-dropdown-ticket-id-value="<%= defect.id %>">
       <div class="relative w-full flex justify-start">
