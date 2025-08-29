@@ -12,7 +12,7 @@ server '172.16.2.15', user: 'deploy', roles: %w[app db web]
 # set :deploy_to, '/home/deploy/CSPM'
 
 # Link the env-specific credentials key (DO NOT commit this file)
-append :linked_files, 'config/credentials/staging.key'
+
 
 # Usual shared directories
 append :linked_dirs,
