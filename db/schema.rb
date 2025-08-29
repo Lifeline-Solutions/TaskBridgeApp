@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_26_130525) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_29_085429) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -262,9 +262,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_26_130525) do
     t.uuid "banking_type_id"
     t.uuid "creator_id"
     t.uuid "product_id"
-    t.string "summary"
+    t.string "summary", null: false
     t.string "defect_unique"
     t.string "issue_type", default: "Bug"
+    t.string "label"
     t.index ["banking_type_id"], name: "index_defects_on_banking_type_id"
     t.index ["creator_id"], name: "index_defects_on_creator_id"
     t.index ["defect_unique"], name: "index_defects_on_defect_unique", unique: true
@@ -586,11 +587,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_26_130525) do
     t.uuid "parent_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
-    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
-    t.uuid "deleted_by"
-    t.datetime "deleted_on"
-    t.index ["deleted_on"], name: "index_qa_modules_on_deleted_on"
     t.index ["parent_id"], name: "index_qa_modules_on_parent_id"
   end
 
@@ -931,7 +927,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_26_130525) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "add_statuses", "statuses"
-  add_foreign_key "add_statuses", "tickets", on_delete: :cascade
+  add_foreign_key "add_statuses", "tickets"
   add_foreign_key "add_tasks", "tasks"
   add_foreign_key "add_tasks", "users"
   add_foreign_key "addusers", "products"
@@ -942,7 +938,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_26_130525) do
   add_foreign_key "boards", "users"
   add_foreign_key "clients", "users"
   add_foreign_key "comments", "projects"
-  add_foreign_key "comments", "tickets", on_delete: :cascade
+  add_foreign_key "comments", "tickets"
   add_foreign_key "comments", "users"
   add_foreign_key "commonly_selected_clients", "clients"
   add_foreign_key "commonly_selected_clients", "users"
@@ -961,18 +957,18 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_26_130525) do
   add_foreign_key "defects", "qa_modules", column: "submodule_id"
   add_foreign_key "defects", "users", column: "creator_id"
   add_foreign_key "documents", "products"
-  add_foreign_key "events", "tickets", on_delete: :cascade
+  add_foreign_key "events", "tickets"
   add_foreign_key "events", "users"
   add_foreign_key "groupwares", "softwares"
   add_foreign_key "groupwares", "users"
   add_foreign_key "issues", "projects"
-  add_foreign_key "issues", "tickets", on_delete: :cascade
+  add_foreign_key "issues", "tickets"
   add_foreign_key "issues", "users"
   add_foreign_key "messages", "tasks"
   add_foreign_key "messages", "users"
   add_foreign_key "milestones", "products"
   add_foreign_key "milestones", "statuses"
-  add_foreign_key "notifications", "tickets", on_delete: :cascade
+  add_foreign_key "notifications", "tickets"
   add_foreign_key "notifications", "users"
   add_foreign_key "products", "clients"
   add_foreign_key "products", "groupwares"
@@ -983,18 +979,18 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_26_130525) do
   add_foreign_key "projects", "groupwares"
   add_foreign_key "projects", "softwares"
   add_foreign_key "projects", "users"
-  add_foreign_key "ratings", "tickets", on_delete: :cascade
+  add_foreign_key "ratings", "tickets"
   add_foreign_key "ratings", "users"
   add_foreign_key "scripts", "groupwares"
   add_foreign_key "scripts", "softwares"
-  add_foreign_key "sla_tickets", "tickets", on_delete: :cascade
+  add_foreign_key "sla_tickets", "tickets"
   add_foreign_key "sla_tickets", "users"
   add_foreign_key "softwares", "users"
   add_foreign_key "states", "tasks"
   add_foreign_key "states", "users"
   add_foreign_key "status_bugs", "statuses"
   add_foreign_key "statuses", "users"
-  add_foreign_key "taggings", "tickets", on_delete: :cascade
+  add_foreign_key "taggings", "tickets"
   add_foreign_key "taggings", "users"
   add_foreign_key "tasks", "products"
   add_foreign_key "tasks", "tasks", column: "tasks_id"
