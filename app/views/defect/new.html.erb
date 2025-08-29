@@ -2,7 +2,7 @@
 
 <%= turbo_frame_tag "modal", data: { controller: "modal" } do %>
   <div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 overflow-y-scroll">
-    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-2xl relative">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-[90%] h-[90%] relative">
       <!-- Close Button -->
       <%= link_to "✕", defect_index_path,
         data: { turbo_frame: "_top" },
