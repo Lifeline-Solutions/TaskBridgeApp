@@ -2,7 +2,7 @@
   <div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
     <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-2xl relative">
       <!-- Close Button -->
-      <%= link_to "X", qa_modules_path, data: { action: "modal#close" },
+      <%= link_to "X", qa_modules_path, data: { action: "modal#close" }, data: { turbo_frame: "_top" },
             class: "absolute top-3 right-3 text-xl font-bold text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100" %>
 
       <%= render "form" %>
