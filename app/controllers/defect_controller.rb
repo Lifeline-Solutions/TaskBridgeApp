@@ -63,8 +63,8 @@ class DefectController < ApplicationController
     @attachments_total_pages = (@attachments_total / @attachments_per_page.to_f).ceil
 
     @attachments = @defect.attachments
-                          .offset((@attachments_page - 1) * @attachments_per_page)
-                          .limit(@attachments_per_page)
+      .offset((@attachments_page - 1) * @attachments_per_page)
+      .limit(@attachments_per_page)
   end
 
   def new
@@ -105,29 +105,29 @@ class DefectController < ApplicationController
   def edit
     @defect = Defect.find(params[:id])
 
-    @qa_modules   = QaModule.where(parent_id: nil)
+    @qa_modules = QaModule.where(parent_id: nil)
     @banking_types = BankingType.all
-    @products     = Product.with_quality_assurance_status
-    @users        = User.with_agent_project_manager_role.order(:first_name, :last_name)
-    @submodules   = @defect.qa_module ? @defect.qa_module.submodules : []
+    @products = Product.with_quality_assurance_status
+    @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
+    @submodules = @defect.qa_module ? @defect.qa_module.submodules : []
 
     @statuses = Status.where(name: [
-      'To Do', 'In Progress', 'On hold', 'Awaiting client info',
-      'Awaiting build', 'QA testing', 'Closed', 'Failed QA',
-      'Blocked', 'Reopened'
-    ])
+                               'To Do', 'In Progress', 'On hold', 'Awaiting client info',
+                               'Awaiting build', 'QA testing', 'Closed', 'Failed QA',
+                               'Blocked', 'Reopened'
+                             ])
 
     # Dropdown options for product selection
-      @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
-        .select do |product|
-        product.statuses.any? do |status|
-          status.name == 'Pre Quality Assurance' || status.name == 'End Of Quality Assurance'
-        end
-      end.map do |product|
-        client_name = product.client&.name || 'No Client'
-        groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
-        ["#{client_name} - #{groupware_names}", product.id]
+    @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
+      .select do |product|
+      product.statuses.any? do |status|
+        status.name == 'Pre Quality Assurance' || status.name == 'End Of Quality Assurance'
       end
+    end.map do |product|
+      client_name = product.client&.name || 'No Client'
+      groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
+      ["#{client_name} - #{groupware_names}", product.id]
+    end
 
     respond_to do |format|
       format.html
@@ -272,7 +272,7 @@ class DefectController < ApplicationController
         .event('defect.update_priority')
         .with_properties(priority: @defect.priority)
         .log("Updated priority to #{@defect.priority} for Defect ##{@defect.id}")
-      
+
       # Add history log
       log_event(
         @defect,
@@ -282,12 +282,12 @@ class DefectController < ApplicationController
       )
 
       respond_to do |format|
-        format.js 
+        format.js
         format.html { redirect_to @defect, notice: 'Priority updated successfully.' }
       end
     else
       respond_to do |format|
-        format.js 
+        format.js
         format.html { render :show, alert: 'Failed to update priority.' }
       end
     end

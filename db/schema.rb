@@ -30,18 +30,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_29_115235) do
     t.index ["record_type", "record_id", "name"], name: "index_action_text_rich_texts_uniqueness", unique: true
   end
 
-  create_table "action_text_tables", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.jsonb "content", default: [["", ""], ["", ""]], null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "action_text_tables_table", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.jsonb "content", default: [["", ""], ["", ""]], null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
   create_table "active_storage_attachments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -238,7 +226,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_29_115235) do
     t.uuid "deleted_by_id"
     t.datetime "deleted_on"
     t.boolean "archive_status", default: false, null: false
-    t.text "content"
     t.index ["archive_status"], name: "index_defect_messages_on_archive_status"
     t.index ["created_by_id"], name: "index_defect_messages_on_created_by_id"
     t.index ["defect_id"], name: "index_defect_messages_on_defect_id"
@@ -522,21 +509,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_29_115235) do
     t.index ["script_id"], name: "index_products_on_script_id"
     t.index ["software_id"], name: "index_products_on_software_id"
     t.index ["user_id"], name: "index_products_on_user_id"
-  end
-
-  create_table "products_qa_modules", id: false, force: :cascade do |t|
-    t.uuid "product_id", null: false
-    t.uuid "qa_module_id", null: false
-    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da"
-    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da"
-    t.uuid "deleted_by"
-    t.datetime "deleted_on"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["deleted_on"], name: "index_products_qa_modules_on_deleted_on"
-    t.index ["product_id", "qa_module_id"], name: "index_products_qa_modules_on_product_id_and_qa_module_id", unique: true
-    t.index ["product_id"], name: "index_products_qa_modules_on_product_id"
-    t.index ["qa_module_id"], name: "index_products_qa_modules_on_qa_module_id"
   end
 
   create_table "products_scripts", id: false, force: :cascade do |t|

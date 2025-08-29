@@ -74,7 +74,7 @@ class Ability
       cannot :manage, Task
       can :manage, Message
       can :generate, :report
-    
+
     elsif user.has_role? :qa
       can %i[create edit update destroy], DefectMessage, user_id: user.id
 

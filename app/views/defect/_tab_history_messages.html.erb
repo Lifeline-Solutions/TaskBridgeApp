@@ -1,0 +1,55 @@
+<div class="mb-10 text-center mt-10">
+  <ul class="flex flex-wrap justify-center space-x-2 sm:space-x-6">
+    <li>
+      <button
+        class= "p-2 text-slate-100 bg-blue-600 rounded-lg hover:bg-blue-700 hover:underline"
+        id="tab-comments"
+        onclick="openCity(event, 'Comments')"
+      >
+        Comments
+      </button>
+    </li>
+    <li>
+      <button
+        class= "p-2 text-slate-100 bg-blue-600 rounded-lg hover:bg-blue-700 hover:underline"
+        id="tab-history"
+        onclick="openCity(event, 'History')"
+      >
+        History
+      </button>
+    </li>
+  </ul>
+</div>
+
+<div id="Comments" class="tabcontent active">
+  <%= render 'defect_messages/defect_message' %>
+</div>
+
+<div id="History" class="tabcontent">
+  <%= render 'defect/timeline' %>
+
+</div>
+
+<script>
+  function openCity(evt, cityName) {
+    const tabcontent = document.getElementsByClassName("tabcontent");
+    const tablinks = document.getElementsByClassName("tablinks");
+
+    // Hide all tab content
+    for (let i = 0; i < tabcontent.length; i++) {
+      tabcontent[i].style.display = "none";
+    }
+
+    // Remove active class from all tab links
+    for (let i = 0; i < tablinks.length; i++) {
+      tablinks[i].classList.remove("underline");
+    }
+
+    // Show current tab content and add active class to clicked tab
+    document.getElementById(cityName).style.display = "block";
+    evt.currentTarget.classList.add( "underline");
+  }
+
+  // Set default tab to open
+  document.getElementById("tab-comments").click();
+</script>
