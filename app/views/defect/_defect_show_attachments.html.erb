@@ -1,10 +1,10 @@
 <!-- Attachments Section -->
-<div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+<div id="attachments" class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
   <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Attachments</h2>
   
   <% if @defect.attachments.attached? %>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <% @defect.attachments.each do |attachment| %>
+      <% @attachments.each do |attachment| %>
         <div class="border border-gray-200 rounded-lg p-4 dark:border-gray-700">
           <% if attachment.image? || attachment.previewable? %>
             <%= image_tag attachment, class: "w-full h-32 object-cover mb-2 rounded" %>
@@ -40,7 +40,7 @@
                         class: "text-sm font-medium text-blue-600 dark:text-blue-500 hover:underline" %>
             <% if @defect.creator == current_user %>
                 <%= button_to 'Delete',
-                        defect_attachment_path(@defect, attachment_id: attachment.id),
+                        defect_attachment_path(@defect, attachment_id: attachment.id, attachments_page: @attachments_page),
                         method: :delete,
                         class: "text-red-600 dark:text-red-500 hover:text-red-900 dark:hover:text-red-700 text-sm",
                         data: { confirm: 'Are you sure?' } %>
@@ -49,6 +49,30 @@
         </div>
       <% end %>
     </div>
+
+    <!-- Pagination Controls -->
+    <% if @attachments_total_pages > 1 %>
+      <div class="flex justify-between items-center my-8">
+        <% if @attachments_page > 1 %>
+          <%= link_to "← Previous", defect_path(@defect, attachments_page: @attachments_page - 1, anchor: 'attachments'), 
+                class: "px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600" %>
+        <% else %>
+          <span class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded text-gray-400 dark:text-gray-600 cursor-not-allowed">← Previous</span>
+        <% end %>
+
+        <span class="text-sm text-gray-600 dark:text-gray-400">
+          Page <%= @attachments_page %> of <%= @attachments_total_pages %>
+        </span>
+
+        <% if @attachments_page < @attachments_total_pages %>
+          <%= link_to "Next →", defect_path(@defect, attachments_page: @attachments_page + 1, anchor: 'attachments'), 
+                class: "px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600" %>
+        <% else %>
+          <span class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded text-gray-400 dark:text-gray-600 cursor-not-allowed">Next →</span>
+        <% end %>
+      </div>
+    <% end %>
+
   <% else %>
     <p class="text-gray-500 dark:text-gray-400 mb-6">No attachments yet.</p>
   <% end %>
