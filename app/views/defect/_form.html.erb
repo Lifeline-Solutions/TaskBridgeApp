@@ -1,3 +1,4 @@
+<!-- app/views/defect/new.html.erb -->
 <% if @defect.errors.any? %>
   <div id="error_explanation" class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
     <h2 class="font-semibold mb-2"><%= pluralize(@defect.errors.count, "error") %> prohibited this defect from being saved:</h2>
@@ -10,16 +11,22 @@
 <% end %>
 
 <%= form_with model: @defect, url: defect_index_url, method: :post, data: { turbo: false }, local: true do |f| %>
-  <div class="space-y-4">
+  <div class="space-y-4"
+       data-controller="project-modules"
+       data-project-modules-modules-url-value="<%= modules_by_product_defect_index_path %>">
     
     <!-- Project -->
     <div>
       <%= f.select :product_id, 
             options_for_select(@products_and_clients_defects), 
             { prompt: "Select Project" },
-            { class: "w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600", required: true } %>
+            { class: "w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600", 
+              required: true,
+              data: { 
+                action: "change->project-modules#loadModules",
+                "project-modules-target": "projectSelect"
+              } } %>
     </div>
-
 
     <!-- Banking type / Module / Submodule -->
     <div class="flex gap-2">
@@ -33,18 +40,24 @@
 
       <!-- Module -->
       <%= f.collection_select :qa_module_id, 
-            @qa_modules || [], :id, :name,
+            [], # Empty array initially, will be populated dynamically
+            :id, :name,
             { prompt: "Select Module" },
-            { class: "flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600", required: true ,
-              id: "qa-module-select",
-              data: { action: "change->modules#loadSubmodules" } } %>
+            { class: "flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600", 
+              required: true,
+              disabled: true,
+              data: { 
+                "project-modules-target": "moduleSelect",
+                action: "change->project-modules#loadSubmodules" 
+              } } %>
 
       <!-- Submodule -->
       <%= f.collection_select :qa_submodule_id, 
-            @submodules || [], :id, :name,
+            [], # Will be populated when module is selected
+            :id, :name,
             { prompt: "Select Sub-Module" },
             { class: "flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600",
-              id: "submodule-select" } %>
+              data: { "project-modules-target": "submoduleSelect" } } %>
     </div>
 
     <!-- Ticket Title -->
@@ -104,12 +117,10 @@
         <%= f.text_field :issue_type, value: 'Bug', disabled: true,
               class: "border border-gray-300 rounded-md focus:ring-primary-600 focus:border-primary-600 block w-full p-2 bg-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" %>
       </div>
-
     </div>
 
     <!-- Footer -->
     <div class="flex items-center justify-between pt-4 border-t">
-      
       <%= f.submit "Create",
        data: { disable_with: "Creating..." },
             class: "bg-[#3F8CFF] hover:bg-[#3A81EB] text-white font-medium rounded-lg px-6 py-2 shadow-md" %>
@@ -119,24 +130,26 @@
 
 <script>
   document.addEventListener('turbo:load', function () {
-    const moduleSelect = document.getElementById('qa-module-select');
-    const submoduleSelect = document.getElementById('submodule-select');
+    const moduleSelect = document.querySelector('[data-project-modules-target="moduleSelect"]');
+    const submoduleSelect = document.querySelector('[data-project-modules-target="submoduleSelect"]');
 
     if (moduleSelect) {
       moduleSelect.addEventListener('change', function () {
         const moduleId = this.value;
-        submoduleSelect.innerHTML = '<option value="">Select Sub-Module</option>';
-        if (moduleId) {
-          fetch(`/qa_modules/${moduleId}/submodules`)
-            .then(response => response.json())
-            .then(submodules => {
-              submodules.forEach(submodule => {
-                const option = document.createElement('option');
-                option.value = submodule.id;
-                option.textContent = submodule.name;
-                submoduleSelect.appendChild(option);
+        if (submoduleSelect) {
+          submoduleSelect.innerHTML = '<option value="">Select Sub-Module</option>';
+          if (moduleId) {
+            fetch(`/qa_modules/${moduleId}/submodules`)
+              .then(response => response.json())
+              .then(submodules => {
+                submodules.forEach(submodule => {
+                  const option = document.createElement('option');
+                  option.value = submodule.id;
+                  option.textContent = submodule.name;
+                  submoduleSelect.appendChild(option);
+                });
               });
-            });
+          }
         }
       });
     }
