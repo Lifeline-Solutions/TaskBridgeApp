@@ -123,6 +123,7 @@ Rails.application.routes.draw do
     resources :comments, only: [:create, :update, :destroy]
     resources :attachments, only: [:create, :destroy]
     collection do
+      get 'modules_by_product'
       get 'get_submodules'  # For loading submodules dynamically
     end
     member do

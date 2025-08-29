@@ -39,8 +39,18 @@ class Defect < ApplicationRecord
   validates :issue_type, presence: true
   validates :product_id, presence: true
   validates :creator_id, presence: true
+  # Add validation to ensure module belongs to selected project
+  validate :qa_module_belongs_to_product
 
   private
+
+  def qa_module_belongs_to_product
+    return if product_id.blank? || qa_module_id.blank?
+    
+    unless QaModule.where(id: qa_module_id, product_id: product_id).exists?
+      errors.add(:qa_module_id, "must belong to the selected project")
+    end
+  end
 
   def set_default_status
     default_status = Status.find_by(name: 'TO DO')
