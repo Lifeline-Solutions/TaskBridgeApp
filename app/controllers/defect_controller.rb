@@ -307,6 +307,7 @@ class DefectController < ApplicationController
       :submodule_id,
       :banking_type_id,
       :priority,
+      :label,
       :product_id,
       :issue_type,
       :defect_unique,
