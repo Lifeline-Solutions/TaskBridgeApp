@@ -21,6 +21,7 @@ class Project < ApplicationRecord
   # Assingnee
   has_many :assignees
   has_many :users, through: :assignees, dependent: :destroy
+  has_many :qa_modules, dependent: :destroy
 
   validates :title, presence: true, uniqueness: true
 
