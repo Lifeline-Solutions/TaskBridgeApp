@@ -41,10 +41,10 @@ class HomeController < ApplicationController
 
       # Count issues created by the current user per project (duplicate, can be removed)
       @issues_count_per_project_for_current_user = current_user.projects
-        .joins(tickets: :issues)
-        .where('issues.user_id = ?', current_user.id)
+        .joins(tickets: :statuses)
+        .where.not(statuses: { name: %w[Declined Resolved Closed] })
         .group('projects.title')
-        .count('issues.id')
+        .count('tickets.id')
 
       # Count all tickets per project (duplicate, can be removed)
       @tickets_count_per_project = current_user.projects

@@ -16,10 +16,35 @@
 
   <div id="dropdown-<%= defect.id %>"
        data-dropdown-target="menu"
-       class="hidden z-50 p-4 origin-top-right absolute right-0 mt-2 w-44 bg-white dark:bg-gray-600 rounded-md shadow-lg focus:outline-none"
+       class="hidden z-40 p-4 origin-top-right absolute right-0 mt-2 w-44 bg-white dark:bg-gray-600 rounded-md shadow-lg focus:outline-none"
        style="max-height: calc(100vh - 100px); overflow-y: auto;">
        
     <div class="flex flex-col space-y-2" role="none">
+      <div class="flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg"
+             fill="none"
+             viewBox="0 0 24 24"
+             stroke-width="1.5"
+             stroke="currentColor"
+             class="h-5 w-5">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M2.25 12s3.75-6.75 9.75-6.75 9.75 6.75 9.75 6.75-3.75 6.75-9.75 6.75S2.25 12 2.25 12z" />
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+
+
+        <%= link_to 'QUICK VIEW',
+                    defect_modal_show_path(defect.id),
+                    data: {
+                      turbo_frame: "modal",
+                      action: "click->dropdown#hide contextmenu->dropdown#prevent"
+                    },
+                    class: 'text-sm hover:text-blue-600 hover:underline',
+                    oncontextmenu: "return false;" %>
+
+      </div>
+
       <div class="flex items-center gap-2">
         <svg xmlns="http://www.w3.org/2000/svg"
              fill="none"

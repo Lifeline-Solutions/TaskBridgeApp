@@ -1,0 +1,117 @@
+<%= turbo_frame_tag "modal" do %>
+  <div class="fixed inset-0 z-50 overflow-hidden" data-controller="modal">
+    <!-- Blurred background -->
+    <div class="absolute inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm transition-opacity duration-300"></div>
+
+    <!-- Modal container -->
+    <div class="fixed inset-y-0 right-0 w-full max-w-xl flex overflow-hidden">
+      <!-- Content panel -->
+      <div class="w-full bg-white dark:bg-gray-800 shadow-xl overflow-y-auto relative">
+        <div class="p-6">
+          <!-- Close button -->
+          <button class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  data-action="click->modal#close">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                 viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+
+          <!-- SECTION 1: Ticket header -->
+          <div class="border-b border-gray-200 dark:border-gray-700 pb-4 mb-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+              Defect ID <%= @defect.defect_unique %>
+            </h2>
+            <div class="flex items-center justify-between mt-2">
+              <p class="text-sm">
+                Created by: <%= @defect.users.map { |u| [u.first_name, u.last_name].compact.join(" ") }
+                           .reject(&:blank?)
+                           .join(", ")
+                           .presence || "Unassigned" %>
+              </p>
+              <p class="text-sm">
+              <span class="font-medium">Date Created: </span>
+              <%= @defect.created_at.strftime('%d-%m-%Y').presence || "N/A" %>
+              </p>
+            </div>
+          </div>
+          <div class="text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-1">
+            <p>
+              Content
+              <span class="capitalize"><%= @defect.summary %></span>
+            </p>
+           Label: <%= @defect.label %>
+          </div>
+
+
+          <!-- Metadata -->
+          <%= render "defect/defect_metadata" %>
+          <!-- Subject and Content -->
+          <div class="col-span-1 mt-6">
+            <div class="mb-4">
+              <div class="text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-1">
+                Content
+              </div>
+              <div class="mt-1 text-base text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                <%= sanitize(
+                      raw(
+                        @defect.content.to_trix_html.gsub(/\[.*?\]/, "").strip
+                      ),
+                      tags: %w[strong em b i u p br span div h1 h2 h3 h4 h5 h6 blockquote ul ol li a table tr td th thead tbody],
+                      attributes: %w[href style border]
+                    ) %>
+
+                <% if @defect.content.body.attachments.any? %>
+                  <% @defect.content.body.attachments.each_with_index do |attachment, idx| %>
+                    <% if attachment.attachable.is_a?(ActiveStorage::Blob) && attachment.attachable.image? %>
+                      <!-- Image attachments -->
+                      <div class="mb-2 image-preview-block">
+                        <a href="#"
+                           class="image-preview-link"
+                           data-image-url="<%= rails_blob_url(attachment.attachable) %>"
+                           data-image-download-url="<%= rails_blob_path(attachment.attachable, disposition: 'attachment', only_path: true) %>"
+                           data-image-name="<%= attachment.attachable.filename.to_s %>"
+                           data-image-size="<%= number_to_human_size(attachment.attachable.byte_size) %>"
+                           data-image-created-at="<%= attachment.attachable.created_at.strftime('%Y-%m-%d %H:%M') %>"
+                           data-image-index="<%= idx %>">
+                          <img src="<%= rails_representation_url(attachment.attachable.variant(resize_to_limit: [72,72])) %>"
+                               alt="Image Preview"
+                               class="max-w-xs cursor-pointer pl-2 image-preview-thumb">
+                        </a>
+                        <br>
+                        <%= link_to attachment.attachable.filename.to_s,
+                                    rails_blob_path(attachment.attachable, disposition: 'attachment', only_path: true),
+                                    target: "_blank", download: true,
+                                    class: "text-blue-600 hover:underline pl-2" %>
+                      </div>
+                    <% else %>
+                      <!-- Non-image attachments -->
+                      <%= link_to attachment.attachable.filename.to_s,
+                                  rails_blob_path(attachment.attachable, disposition: 'attachment', only_path: true),
+                                  class: "text-blue-600 hover:underline pl-2" %>
+                    <% end %>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image modal -->
+  <div id="imageModal"
+       class="modal hidden fixed inset-0 z-50 overflow-auto bg-opacity-75"
+       data-controller="image-modal"
+       data-image-modal-target="modal">
+    <span class="close absolute top-4 right-4 text-3xl cursor-pointer"
+          data-action="click->image-modal#closeModal"
+          data-image-modal-target="closeButton">&times;</span>
+    <img class="modal-content block max-w-full max-h-screen m-auto"
+         id="fullImage"
+         data-image-modal-target="modalImage"
+         alt="show image">
+  </div>
+<% end %>
