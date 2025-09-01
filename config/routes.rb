@@ -128,6 +128,7 @@ Rails.application.routes.draw do
       get 'get_submodules'  # For loading submodules dynamically
     end
     member do
+      patch :publish
       post :add_defect
       delete :remove_defect
       post :defect_status

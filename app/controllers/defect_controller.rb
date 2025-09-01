@@ -240,13 +240,22 @@ class DefectController < ApplicationController
     @total_count = @defects.count
     @defects = @defects.offset((@page - 1) * @per_page).limit(@per_page)
 
-    # ✅ Collect distinct statuses for dropdown (only from the currently matching defects)
+    # Collect distinct statuses for dropdown (only from the currently matching defects)
     @statuses = Status.joins(:defects)
       .where(defects: { id: @defects.pluck(:id) })
       .distinct
       .order(:name)
-      
+
     render :index
+  end
+
+  def publish
+    @defect = Defect.find(params[:id])
+    if @defect.update(draft: false)
+      redirect_to @defect, notice: "Defect has been published successfully."
+    else
+      redirect_to @defect, alert: "Failed to publish defect."
+    end
   end
 
 
