@@ -77,6 +77,14 @@ class DefectController < ApplicationController
     @defect.creator = current_user
     selected_user_ids = params[:defect][:user_ids]
 
+    # Explicitly set draft flag based on which button was clicked
+    if params[:commit] == "draft"
+      @defect.draft = true
+      @defect.label = "Draft"
+    else
+      @defect.draft = false
+    end
+
     if @defect.save
       @defect.user_ids = selected_user_ids
 
@@ -220,7 +228,25 @@ class DefectController < ApplicationController
   end
 
   def drafts
+    # @defects = current_user.defects.drafts
     @defects = Defect.drafts.includes(:users, :qa_module, :submodule).order(updated_at: :desc)
+    
+    # Pagination
+    @per_page = 20
+    @page = (params[:page] || 1).to_i
+    @total_pages = (@defects.count / @per_page.to_f).ceil
+    @start_count = ((@page - 1) * @per_page) + 1
+    @end_count = [@page * @per_page, @defects.count].min
+    @total_count = @defects.count
+    @defects = @defects.offset((@page - 1) * @per_page).limit(@per_page)
+
+    # ✅ Collect distinct statuses for dropdown (only from the currently matching defects)
+    @statuses = Status.joins(:defects)
+      .where(defects: { id: @defects.pluck(:id) })
+      .distinct
+      .order(:name)
+      
+    render :index
   end
 
 
