@@ -46,10 +46,10 @@ class Defect < ApplicationRecord
 
   def qa_module_belongs_to_product
     return if product_id.blank? || qa_module_id.blank?
-    
-    unless QaModule.where(id: qa_module_id, product_id: product_id).exists?
-      errors.add(:qa_module_id, "must belong to the selected project")
-    end
+
+    return if QaModule.where(id: qa_module_id, product_id: product_id).exists?
+
+    errors.add(:qa_module_id, 'must belong to the selected project')
   end
 
   def set_default_status
