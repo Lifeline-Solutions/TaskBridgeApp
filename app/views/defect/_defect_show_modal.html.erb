@@ -24,19 +24,26 @@
               Defect ID <%= @defect.defect_unique %>
             </h2>
             <div class="flex items-center justify-between mt-2">
-              <p class="text-sm text-gray-600 dark:text-gray-300">
-                <span class="font-medium">Created by: </span>
-                <%= render partial: "defect/user_initials", locals: { defect: @defect } %>
-                <%= @defect.users.map { |u| [u.first_name, u.last_name].compact.join(" ") }
+              <p class="text-sm">
+                Created by: <%= @defect.users.map { |u| [u.first_name, u.last_name].compact.join(" ") }
                            .reject(&:blank?)
                            .join(", ")
                            .presence || "Unassigned" %>
-                |
-                <span class="font-medium">Issue Type: </span>
-                <%= @defect.issue_type.presence || "N/A" %>
+              </p>
+              <p class="text-sm">
+              <span class="font-medium">Date Created: </span>
+              <%= @defect.created_at.strftime('%d-%m-%Y').presence || "N/A" %>
               </p>
             </div>
           </div>
+          <div class="text-sm font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-1">
+            <p>
+              Content
+              <span class="capitalize"><%= @defect.summary %></span>
+            </p>
+           Label: <%= @defect.label %>
+          </div>
+
 
           <!-- Metadata -->
           <%= render "defect/defect_metadata" %>
