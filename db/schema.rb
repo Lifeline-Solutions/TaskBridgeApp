@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_29_115235) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_01_113804) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -266,6 +266,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_29_115235) do
     t.string "defect_unique"
     t.string "issue_type", default: "Bug"
     t.string "label"
+    t.boolean "draft", default: false, null: false
     t.index ["banking_type_id"], name: "index_defects_on_banking_type_id"
     t.index ["creator_id"], name: "index_defects_on_creator_id"
     t.index ["defect_unique"], name: "index_defects_on_defect_unique", unique: true
