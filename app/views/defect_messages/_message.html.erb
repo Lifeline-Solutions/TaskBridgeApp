@@ -46,7 +46,7 @@
 
     <!-- Message Content -->
     <div class="prose dark:prose-invert max-w-none <%= message.user == current_user ? 'text-blue-900 dark:text-blue-100' : 'text-gray-700 dark:text-gray-300' %>">
-      <%= message.content.to_s %>
+      <%= render "defect_messages/content_defect_message", message: message %>
     </div>
 
     <!-- Attachments Preview -->
