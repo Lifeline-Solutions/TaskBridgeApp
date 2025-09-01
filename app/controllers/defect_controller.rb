@@ -4,7 +4,7 @@ class DefectController < ApplicationController
 
   def index
     # Base query for defects
-    @defects = Defect.includes(:users, :qa_module, :submodule, :banking_type, :statuses)
+    @defects = Defect.published.includes(:users, :qa_module, :submodule, :banking_type, :statuses)
       .order(created_at: :desc)
 
     # Filter defects for non-admin users
