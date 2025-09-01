@@ -124,6 +124,12 @@
       <%= f.submit "Create",
        data: { disable_with: "Creating..." },
             class: "bg-[#3F8CFF] hover:bg-[#3A81EB] text-white font-medium rounded-lg px-6 py-2 shadow-md" %>
+
+      <%= f.submit "Save as Draft",
+        name: "commit",
+        value: "draft",
+        data: { disable_with: "Saving..." },
+        class: "bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg px-6 py-2 shadow-md" %>
     </div>
   </div>
 <% end %>
