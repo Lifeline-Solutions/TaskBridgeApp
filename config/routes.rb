@@ -122,6 +122,7 @@ Rails.application.routes.draw do
     delete 'attachments/:attachment_id', to: 'defect#remove_attachment', as: 'attachment'
     resources :comments, only: [:create, :update, :destroy]
     resources :attachments, only: [:create, :destroy]
+    get :modal_show
     collection do
       get 'modules_by_product'
       get 'get_submodules'  # For loading submodules dynamically

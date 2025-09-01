@@ -1,6 +1,6 @@
 class DefectController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_defect, only: %i[show edit update update_priority destroy add_defect add_attachments remove_attachment update_label]
+  before_action :set_defect, only: %i[show edit update update_priority destroy add_defect add_attachments remove_attachment update_label modal_show]
 
   def index
     # Base query for defects
@@ -67,6 +67,21 @@ class DefectController < ApplicationController
       .limit(@attachments_per_page)
   end
 
+  def modal_show
+    # @ticket_items = if params[:query].present?
+    # @ticket.issues.left_joins(:rich_text_content)
+    #  .where('action_text_rich_texts.body ILIKE ?', "%#{params[:query]}%")
+    #          .order('created_at DESC')
+    #        else
+    #                @ticket.issues.with_rich_text_content.order('created_at DESC')
+    #                end
+
+    # @issue = Issue.new
+    # @sla_ticket = @ticket.sla_ticket if current_user.has_role?(:admin) || current_user.has_role?('project manager') || current_user.has_role?(:agent)
+
+    render partial: 'defect/defect_show_modal', layout: false
+  end
+
   def new
     @defect = Defect.new
     set_form_data
@@ -104,12 +119,12 @@ class DefectController < ApplicationController
 
   def modules_by_product
     product_id = params[:product_id]
-    
-    if product_id.present?
-      @modules = QaModule.where(product_id: product_id, parent_id: nil).order(:name)
-    else
-      @modules = []
-    end
+
+    @modules = if product_id.present?
+                 QaModule.where(product_id: product_id, parent_id: nil).order(:name)
+               else
+                 []
+               end
 
     render json: @modules.select(:id, :name)
   end
