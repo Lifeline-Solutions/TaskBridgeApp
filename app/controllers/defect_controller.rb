@@ -4,7 +4,7 @@ class DefectController < ApplicationController
 
   def index
     # Base query for defects
-    @defects = Defect.includes(:users, :qa_module, :submodule, :banking_type, :statuses)
+    @defects = Defect.published.includes(:users, :qa_module, :submodule, :banking_type, :statuses)
       .order(created_at: :desc)
 
     # Filter defects for non-admin users
@@ -79,26 +79,37 @@ class DefectController < ApplicationController
   def create
     @defect = Defect.new(defect_params)
     @defect.creator = current_user
-    selected_user_ids = params[:defect][:user_ids] # This will be an array of user IDs
+    selected_user_ids = params[:defect][:user_ids]
+
+    # Explicitly set draft flag based on which button was clicked
+    if params[:commit] == "draft"
+      @defect.draft = true
+      @defect.label = "Draft"
+    else
+      @defect.draft = false
+    end
 
     if @defect.save
       @defect.user_ids = selected_user_ids
-      activity('user_activity')
-        .caused_by(current_user)
-        .performed_on(@defect)
-        .event('defect.create')
-        .with_properties(
-          defect_attributes: @defect.attributes,
-          assigned_user_ids: selected_user_ids # <-- Add to log properties
-        )
-        .log("Created Defect ##{@defect.id}, assigned to User IDs: #{selected_user_ids.join(', ')}")
 
-      redirect_to defect_index_path, notice: 'Defect was successfully created.'
-      assigned_names = @defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', ')
-      log_event(
-        @defect, current_user, 'Created and Assigned',
-        assigned_names.present? ? "Defect was created and assigned to #{assigned_names} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
-      )
+      if @defect.draft?
+        redirect_to defect_index_path, notice: "Draft defect saved successfully."
+      else
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@defect)
+          .event('defect.create')
+          .with_properties(defect_attributes: @defect.attributes, assigned_user_ids: selected_user_ids)
+          .log("Created Defect ##{@defect.id}, assigned to User IDs: #{selected_user_ids.join(', ')}")
+
+        assigned_names = @defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', ')
+        log_event(
+          @defect, current_user, 'Created and Assigned',
+          assigned_names.present? ? "Defect was created and assigned to #{assigned_names} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
+        )
+
+        redirect_to defect_index_path, notice: 'Defect was successfully created.'
+      end
     else
       set_form_data
       flash.now[:alert] = "Defect creation failed: #{@defect.errors.full_messages.join(', ')}"
@@ -219,6 +230,38 @@ class DefectController < ApplicationController
       )
     end
   end
+
+  def drafts
+    # @defects = current_user.defects.drafts
+    @defects = Defect.drafts.includes(:users, :qa_module, :submodule).order(updated_at: :desc)
+    
+    # Pagination
+    @per_page = 20
+    @page = (params[:page] || 1).to_i
+    @total_pages = (@defects.count / @per_page.to_f).ceil
+    @start_count = ((@page - 1) * @per_page) + 1
+    @end_count = [@page * @per_page, @defects.count].min
+    @total_count = @defects.count
+    @defects = @defects.offset((@page - 1) * @per_page).limit(@per_page)
+
+    # Collect distinct statuses for dropdown (only from the currently matching defects)
+    @statuses = Status.joins(:defects)
+      .where(defects: { id: @defects.pluck(:id) })
+      .distinct
+      .order(:name)
+
+    render :index
+  end
+
+  def publish
+    @defect = Defect.find(params[:id])
+    if @defect.update(draft: false)
+      redirect_to @defect, notice: "Defect has been published successfully."
+    else
+      redirect_to @defect, alert: "Failed to publish defect."
+    end
+  end
+
 
   def defect_status
     @defect = Defect.find(params[:id])
@@ -389,6 +432,7 @@ class DefectController < ApplicationController
       :banking_type_id,
       :priority,
       :label,
+      :draft,
       :product_id,
       :issue_type,
       :defect_unique,

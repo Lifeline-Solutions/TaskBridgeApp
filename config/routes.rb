@@ -124,10 +124,12 @@ Rails.application.routes.draw do
     resources :attachments, only: [:create, :destroy]
     get :modal_show
     collection do
+      get :drafts
       get 'modules_by_product'
       get 'get_submodules'  # For loading submodules dynamically
     end
     member do
+      patch :publish
       post :add_defect
       delete :remove_defect
       post :defect_status

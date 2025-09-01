@@ -27,6 +27,13 @@
             <%= @defect.priority %>
           </span>
         </p>
+
+        <% if @defect.draft? %>
+          <%= button_to "Publish",
+              publish_defect_path(@defect),
+              method: :patch,
+              class: "bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded" %>
+        <% end %>
       </div>
     </div>
   </div>
