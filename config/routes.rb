@@ -130,6 +130,8 @@ Rails.application.routes.draw do
       get 'get_submodules'  # For loading submodules dynamically
     end
     member do
+      patch :add_label
+      delete 'remove_label/:label_id', to: 'defect#remove_label', as: 'remove_label'
       patch :publish
       post :add_defect
       delete :remove_defect
