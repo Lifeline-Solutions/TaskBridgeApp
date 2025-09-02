@@ -3,7 +3,6 @@ class DefectController < ApplicationController
   before_action :set_defect, only: %i[show edit update update_priority destroy add_defect add_attachments remove_attachment update_label modal_show]
 
   def index
-    # Base query for defects
     @defects = Defect.published.includes(:users, :qa_module, :submodule, :banking_type, :statuses)
       .order(created_at: :desc)
 
@@ -20,13 +19,13 @@ class DefectController < ApplicationController
         .left_joins(:users, product: %i[client groupwares])
         .where(
           'defects.summary ILIKE :q
-       OR defects.defect_unique ILIKE :q
-       OR defects.priority ILIKE :q
-       OR users.first_name ILIKE :q
-       OR users.last_name ILIKE :q
-       OR clients.name ILIKE :q
-       OR groupwares.name ILIKE :q
-       OR CAST(defects.created_at AS TEXT) ILIKE :q',
+         OR defects.defect_unique ILIKE :q
+         OR defects.priority ILIKE :q
+         OR users.first_name ILIKE :q
+         OR users.last_name ILIKE :q
+         OR clients.name ILIKE :q
+         OR groupwares.name ILIKE :q
+         OR CAST(defects.created_at AS TEXT) ILIKE :q',
           q: "%#{params[:query]}%"
         )
     end
@@ -45,6 +44,53 @@ class DefectController < ApplicationController
       .where(defects: { id: @defects.pluck(:id) })
       .distinct
       .order(:name)
+  end
+
+  def index_show
+    # Base query for defects
+    @defects = Defect.published.includes(:users, :qa_module, :submodule, :banking_type, :statuses)
+      .order(created_at: :desc)
+
+    # Filter by client name (coming from your link_to param)
+    @defects = @defects.joins(product: :client).where(clients: { name: params[:client_name] }) if params[:client_name].present?
+
+    # Restrict for non-admin users
+    @defects = @defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa)
+
+    # Status filter
+    @defects = @defects.joins(:statuses).where(statuses: { id: params[:status] }) if params[:status].present?
+
+    # Search filter
+    if params[:query].present?
+      @defects = @defects
+        .left_joins(:users, product: %i[client groupwares])
+        .where(
+          'defects.summary ILIKE :q
+         OR defects.defect_unique ILIKE :q
+         OR defects.priority ILIKE :q
+         OR users.first_name ILIKE :q
+         OR users.last_name ILIKE :q
+         OR clients.name ILIKE :q
+         OR groupwares.name ILIKE :q
+         OR CAST(defects.created_at AS TEXT) ILIKE :q',
+          q: "%#{params[:query]}%"
+        )
+    end
+
+    # Pagination
+    @per_page = 20
+    @page = (params[:page] || 1).to_i
+    @total_count = @defects.count
+    @total_pages = (@total_count / @per_page.to_f).ceil
+    @start_count = ((@page - 1) * @per_page) + 1
+    @end_count = [@page * @per_page, @total_count].min
+    @defects = @defects.offset((@page - 1) * @per_page).limit(@per_page)
+
+    # Distinct statuses for dropdown
+    @statuses = Status.joins(:defects).where(defects: { id: @defects.ids }).distinct.order(:name)
+
+    # ✅ Render using the defects index or show-like template
+    render :index_show
   end
 
   def show
@@ -82,9 +128,9 @@ class DefectController < ApplicationController
     selected_user_ids = params[:defect][:user_ids]
 
     # Explicitly set draft flag based on which button was clicked
-    if params[:commit] == "draft"
+    if params[:commit] == 'draft'
       @defect.draft = true
-      @defect.label = "Draft"
+      @defect.label = 'Draft'
     else
       @defect.draft = false
     end
@@ -93,7 +139,7 @@ class DefectController < ApplicationController
       @defect.user_ids = selected_user_ids
 
       if @defect.draft?
-        redirect_to defect_index_path, notice: "Draft defect saved successfully."
+        redirect_to defect_index_path, notice: 'Draft defect saved successfully.'
       else
         activity('user_activity')
           .caused_by(current_user)
@@ -234,7 +280,7 @@ class DefectController < ApplicationController
   def drafts
     # @defects = current_user.defects.drafts
     @defects = Defect.drafts.includes(:users, :qa_module, :submodule).order(updated_at: :desc)
-    
+
     # Pagination
     @per_page = 20
     @page = (params[:page] || 1).to_i
@@ -256,12 +302,11 @@ class DefectController < ApplicationController
   def publish
     @defect = Defect.find(params[:id])
     if @defect.update(draft: false)
-      redirect_to @defect, notice: "Defect has been published successfully."
+      redirect_to @defect, notice: 'Defect has been published successfully.'
     else
-      redirect_to @defect, alert: "Failed to publish defect."
+      redirect_to @defect, alert: 'Failed to publish defect.'
     end
   end
-
 
   def defect_status
     @defect = Defect.find(params[:id])
