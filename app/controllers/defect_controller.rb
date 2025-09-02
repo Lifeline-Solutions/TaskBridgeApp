@@ -1,6 +1,6 @@
 class DefectController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_defect, only: %i[show edit update update_priority destroy add_defect add_attachments remove_attachment update_label modal_show]
+  before_action :set_defect, only: %i[show edit update update_priority destroy add_defect add_attachments remove_attachment update_label modal_show add_label remove_label]
 
   def index
     # Base query for defects
@@ -84,7 +84,7 @@ class DefectController < ApplicationController
     # Explicitly set draft flag based on which button was clicked
     if params[:commit] == "draft"
       @defect.draft = true
-      @defect.label = "Draft"
+      # @defect.label = "Draft"
     else
       @defect.draft = false
     end
@@ -228,6 +228,28 @@ class DefectController < ApplicationController
         @defect, current_user, 'Assigned to',
         user.present? ? "Defect was assigned to #{user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was Updated but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
       )
+    end
+  end
+
+  def add_label
+    label_name = params[:label_name].strip
+    label = Label.find_or_create_by(name: label_name.downcase)
+
+    @defect.labels << label unless @defect.labels.include?(label)
+
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to @defect, notice: "Label added successfully." }
+    end
+  end
+
+  def remove_label
+    label = @defect.labels.find(params[:label_id])
+    @defect.labels.destroy(label)
+
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to @defect, notice: "Label removed successfully." }
     end
   end
 
@@ -431,12 +453,12 @@ class DefectController < ApplicationController
       :submodule_id,
       :banking_type_id,
       :priority,
-      :label,
       :draft,
       :product_id,
       :issue_type,
       :defect_unique,
       user_ids: [],
+      label_ids: [],
       attachments: []
     )
   end
