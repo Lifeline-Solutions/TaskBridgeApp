@@ -42,11 +42,10 @@ class DefectController < ApplicationController
   end
 
   def index_show
-    # Base query for defects
     @defects = Defect.published.includes(:users, :qa_module, :submodule, :banking_type, :statuses)
       .order(created_at: :desc)
 
-    # Filter by client name (coming from your link_to param)
+    # Filter by client name
     @defects = @defects.joins(product: :client).where(clients: { name: params[:client_name] }) if params[:client_name].present?
 
     # Restrict for non-admin users
@@ -61,13 +60,13 @@ class DefectController < ApplicationController
         .left_joins(:users, product: %i[client groupwares])
         .where(
           'defects.summary ILIKE :q
-         OR defects.defect_unique ILIKE :q
-         OR defects.priority ILIKE :q
-         OR users.first_name ILIKE :q
-         OR users.last_name ILIKE :q
-         OR clients.name ILIKE :q
-         OR groupwares.name ILIKE :q
-         OR CAST(defects.created_at AS TEXT) ILIKE :q',
+       OR defects.defect_unique ILIKE :q
+       OR defects.priority ILIKE :q
+       OR users.first_name ILIKE :q
+       OR users.last_name ILIKE :q
+       OR clients.name ILIKE :q
+       OR groupwares.name ILIKE :q
+       OR CAST(defects.created_at AS TEXT) ILIKE :q',
           q: "%#{params[:query]}%"
         )
     end
@@ -84,7 +83,6 @@ class DefectController < ApplicationController
     # Distinct statuses for dropdown
     @statuses = Status.joins(:defects).where(defects: { id: @defects.ids }).distinct.order(:name)
 
-    # ✅ Render using the defects index or show-like template
     render :index_show
   end
 
