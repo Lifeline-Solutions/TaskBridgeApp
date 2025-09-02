@@ -1,0 +1,2 @@
+class AssuranceController < ApplicationController
+end
