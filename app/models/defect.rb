@@ -1,4 +1,6 @@
 class Defect < ApplicationRecord
+  include SoftDeletable
+  
   has_rich_text :content
   has_many_attached :images
   has_many_attached :videos
@@ -9,6 +11,9 @@ class Defect < ApplicationRecord
   belongs_to :banking_type
   belongs_to :product
   belongs_to :creator, class_name: 'User'
+
+  has_many :defect_labels, dependent: :destroy
+  has_many :labels, through: :defect_labels
 
   resourcify
   has_many :users, through: :roles, class_name: 'User', source: :users
