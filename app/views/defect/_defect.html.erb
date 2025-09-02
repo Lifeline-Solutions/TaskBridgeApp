@@ -8,8 +8,9 @@
       </tr>
     </thead>
     <tbody>
-      <% if @defects.present? %>
-      <% @defects.group_by { |defect| "#{defect.product.client.name} #{defect.product.groupwares.first&.name}" }.each do |group_name, defects| %>
+    <tbody>
+    <% if @defect_groups.present? %>
+      <% @defect_groups.each do |group_name, defects| %>
         <!-- Group Header -->
         <tr class="bg-gray-100 dark:bg-gray-700">
           <td class="px-6 py-3 font-semibold text-left">
@@ -24,34 +25,35 @@
             <%= defects.size %>
           </td>
         </tr>
-
       <% end %>
-      <% else %>
-        <tr>
-          <td class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-            No defects found
-          </td>
-        </tr>
-      <% end %>
+    <% else %>
+      <tr>
+        <td class="px-6 py-4 text-center text-gray-500 dark:text-gray-400" colspan="3">
+          No defects found
+        </td>
+      </tr>
+    <% end %>
     </tbody>
   </table>
 </div>
 
-<div class="flex gap-10 mt-5">
-  <!-- Pagination Controls -->
-  <div class="pagination">
-    <% if @page > 1 %>
-      <%= link_to 'Previous',
-        defect_index_path(page: @page - 1, query: params[:query], status: params[:status]),
-        class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
-    <% end %>
+<% if @defect_groups.present? %>
+  <div class="flex gap-10 mt-5">
+    <!-- Pagination Controls -->
+    <div class="pagination">
+      <% if @page > 1 %>
+        <%= link_to 'Previous',
+                    defect_index_path(page: @page - 1, query: params[:query], status: params[:status]),
+                    class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
+      <% end %>
 
-    <span>Page <%= @page %> of <%= @total_pages %></span>
+      <span>Page <%= @page %> of <%= @total_pages %></span>
 
-    <% if @page < @total_pages %>
-      <%= link_to 'Next',
-        defect_index_path(page: @page + 1, query: params[:query], status: params[:status]),
-        class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
-    <% end %>
+      <% if @page < @total_pages %>
+        <%= link_to 'Next',
+                    defect_index_path(page: @page + 1, query: params[:query], status: params[:status]),
+                    class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
+      <% end %>
+    </div>
   </div>
-</div>
+<% end %>

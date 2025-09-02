@@ -3,40 +3,48 @@ class DefectController < ApplicationController
   before_action :set_defect, only: %i[show edit update update_priority destroy add_defect add_attachments remove_attachment update_label modal_show]
 
   def index
-    @defects = Defect.published.includes(:users, :qa_module, :submodule, :banking_type, :statuses)
+    # Load defects with needed associations
+    raw_defects = Defect.published.includes(:users, :qa_module, :submodule, :banking_type, :statuses, product: %i[client groupwares])
       .order(created_at: :desc)
 
     # Filter defects for non-admin users
-    @defects = @defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa)
+    raw_defects = raw_defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa)
 
     # Status filter
-    @defects = @defects.joins(:statuses).where(statuses: { id: params[:status] }) if params[:status].present?
+    raw_defects = raw_defects.joins(:statuses).where(statuses: { id: params[:status] }) if params[:status].present?
 
     # Search filter
-
     if params[:query].present?
-      @defects = @defects
-        .left_joins(:users, product: %i[client groupwares])
-        .where(
-          'clients.name ILIKE :q
-         OR groupwares.name ILIKE :q
-         ',
-          q: "%#{params[:query]}%"
-        )
+      raw_defects = raw_defects.left_joins(:users, product: %i[client groupwares]).where(
+        'clients.name ILIKE :q OR groupwares.name ILIKE :q',
+        q: "%#{params[:query]}%"
+      )
     end
 
-    # Pagination
+    # Group by client and first groupware name
+    grouped = raw_defects.group_by do |defect|
+      client_name = defect.product&.client&.name
+      groupware_name = defect.product&.groupwares&.first&.name
+      "#{client_name} #{groupware_name}"
+    end
+
+    # Paginate the groups instead of the defects.
     @per_page = 20
     @page = (params[:page] || 1).to_i
-    @total_pages = (@defects.count / @per_page.to_f).ceil
-    @start_count = ((@page - 1) * @per_page) + 1
-    @end_count = [@page * @per_page, @defects.count].min
-    @total_count = @defects.count
-    @defects = @defects.offset((@page - 1) * @per_page).limit(@per_page)
 
-    # ✅ Collect distinct statuses for dropdown (only from the currently matching defects)
+    group_keys = grouped.keys.sort # Optional: sort for stable pagination
+    @total_pages = (group_keys.size / @per_page.to_f).ceil
+    @start_count = ((@page - 1) * @per_page) + 1
+    @end_count = [@page * @per_page, group_keys.size].min
+    @total_count = group_keys.size
+
+    # Only keep the groups for the current page
+    paged_group_keys = group_keys[((@page - 1) * @per_page)...(((@page - 1) * @per_page) + @per_page)]
+    @defect_groups = paged_group_keys.to_h { |k| [k, grouped[k]] }
+
+    # Collect distinct statuses for dropdown (from currently matching defects)
     @statuses = Status.joins(:defects)
-      .where(defects: { id: @defects.pluck(:id) })
+      .where(defects: { id: raw_defects.pluck(:id) })
       .distinct
       .order(:name)
   end
