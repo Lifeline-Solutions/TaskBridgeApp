@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_01_113804) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_02_074413) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -415,6 +415,18 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_01_113804) do
     t.index ["ticket_id"], name: "index_issues_on_ticket_id"
     t.index ["unique_id"], name: "index_issues_on_unique_id", unique: true
     t.index ["user_id"], name: "index_issues_on_user_id"
+  end
+
+  create_table "labels", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name", null: false
+    t.uuid "created_by"
+    t.uuid "modified_by"
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((name)::text)", name: "index_labels_on_lower_name", unique: true
+    t.index ["name"], name: "index_labels_on_name"
   end
 
   create_table "locations", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
