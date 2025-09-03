@@ -19,12 +19,10 @@
               <!-- Icon + Filename -->
               <td class="py-3 px-4 flex items-center space-x-2">
                 <% if attachment.image? %>
-                  <!-- Image Thumbnail -->
                   <%= image_tag attachment, 
                         class: "w-6 h-6 rounded cursor-pointer hover:opacity-80", 
                         data: { action: "click->preview#open", url: url_for(attachment), type: attachment.content_type } %>
                 <% elsif attachment.video? %>
-                  <!-- Video Icon -->
                   <svg class="w-6 h-6 text-gray-400 cursor-pointer hover:text-gray-600" 
                        fill="currentColor" viewBox="0 0 24 24"
                        data-action="click->preview#open"
@@ -33,7 +31,6 @@
                     <path d="M17 10.5V7c0-1.1-.9-2-2-2H5C3.9 5 3 5.9 3 7v10c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-3.5l4 4v-11l-4 4z"/>
                   </svg>
                 <% else %>
-                  <!-- Generic File Icon -->
                   <svg class="w-6 h-6 text-gray-400 cursor-pointer hover:text-gray-600" 
                        fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
                        data-action="click->preview#open"
@@ -143,51 +140,77 @@
 
 <!-- Fullscreen Preview Modal -->
 <div id="previewModal" class="hidden fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
-  <button onclick="closePreview()" class="absolute top-5 right-5 text-white text-3xl">&times;</button>
-  <!-- Container to dynamically load preview -->
+  <button id="closePreviewBtn" class="absolute top-5 right-5 text-white text-3xl">&times;</button>
   <div id="previewContent" class="max-h-full max-w-full"></div>
 </div>
 
 <!-- Script for Preview -->
 <script>
+  function safePreview(url, type) {
+    const container = document.createElement("div");
+
+    if (type.startsWith("image/")) {
+      const img = document.createElement("img");
+      img.src = url;
+      img.className = "max-h-full max-w-full rounded shadow-lg";
+      container.appendChild(img);
+    } else if (type.startsWith("video/")) {
+      const video = document.createElement("video");
+      video.controls = true;
+      video.className = "max-h-full max-w-full rounded shadow-lg";
+      const source = document.createElement("source");
+      source.src = url;
+      source.type = type;
+      video.appendChild(source);
+      container.appendChild(video);
+    } else if (type.startsWith("audio/")) {
+      const audio = document.createElement("audio");
+      audio.controls = true;
+      audio.className = "w-full";
+      const source = document.createElement("source");
+      source.src = url;
+      source.type = type;
+      audio.appendChild(source);
+      container.appendChild(audio);
+    } else if (type === "application/pdf") {
+      const iframe = document.createElement("iframe");
+      iframe.src = url;
+      iframe.className = "w-[90vw] h-[90vh] rounded bg-white shadow-lg";
+      iframe.setAttribute("sandbox", "allow-same-origin allow-scripts allow-popups");
+      container.appendChild(iframe);
+    } else {
+      const fallback = document.createElement("div");
+      fallback.className = "p-6 bg-white rounded shadow-lg text-center";
+      fallback.innerHTML = `
+        <p class="mb-4">Preview not available for this file type.</p>
+        <a href="${url}" target="_blank" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Download</a>
+      `;
+      container.appendChild(fallback);
+    }
+
+    return container;
+  }
+
   document.addEventListener("click", (e) => {
     const el = e.target.closest("[data-action='click->preview#open']");
     if (!el) return;
 
     e.preventDefault();
-
     const url = el.dataset.url;
     const type = el.dataset.type || "";
 
     const modal = document.getElementById("previewModal");
     const previewContent = document.getElementById("previewContent");
 
-    let html = "";
-
-    if (type.startsWith("image/")) {
-      html = `<img src="${url}" class="max-h-full max-w-full rounded shadow-lg" />`;
-    } else if (type.startsWith("video/")) {
-      html = `<video controls autoplay class="max-h-full max-w-full rounded shadow-lg"><source src="${url}" type="${type}"></video>`;
-    } else if (type.startsWith("audio/")) {
-      html = `<audio controls autoplay class="w-full"><source src="${url}" type="${type}"></audio>`;
-    } else if (type === "application/pdf") {
-      html = `<iframe src="${url}" class="w-[90vw] h-[90vh] rounded bg-white shadow-lg"></iframe>`;
-    } else {
-      html = `
-        <div class="p-6 bg-white rounded shadow-lg text-center">
-          <p class="mb-4">Preview not available for this file type.</p>
-          <a href="${url}" target="_blank" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Download</a>
-        </div>`;
-    }
-
-    previewContent.innerHTML = html;
+    previewContent.innerHTML = "";
+    previewContent.appendChild(safePreview(url, type));
     modal.classList.remove("hidden");
   });
 
-  window.closePreview = () => {
+  document.getElementById("closePreviewBtn").addEventListener("click", () => {
     const modal = document.getElementById("previewModal");
     const previewContent = document.getElementById("previewContent");
     modal.classList.add("hidden");
     previewContent.innerHTML = "";
-  };
+  });
 </script>
