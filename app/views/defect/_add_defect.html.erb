@@ -1,122 +1,44 @@
 <div class="col-span-1 text-xs">
-  <%= form_with url: add_defect_defect_path(@defect), local: true do %>
-    <div class="flex flex-row gap-2 gap-2">
+  <%= form_with url: add_defect_defect_path(@defect), 
+                local: true, 
+                html: { id: "craftUserForm" } do %>
+    <div class="flex flex-row gap-2">
       <div class="relative w-80">
-        <input type="text" id="searchCraftUser" class="border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full" placeholder="Search User..." onkeyup="filterCraftDropdown()">
-        <div id="craftDropdown" class="absolute w-full border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none bg-white  dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full hidden">
+        <!-- Search input -->
+        <input type="text" 
+               id="searchCraftUser" 
+               class="border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full" 
+               placeholder="Search User..." 
+               onkeyup="filterCraftDropdown()">
+
+        <!-- Dropdown -->
+        <div id="craftDropdown" 
+             class="absolute w-full border border-gray-300 rounded-md font-medium placeholder-current bg-white dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 hidden z-10">
           <% @defect.craftsilicon_users.where.not(id: @defect.users.pluck(:id)).distinct.each do |user| %>
-            <div class="dropdown-item px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-500 cursor-pointer" data-user-id="<%= user.id %>" onclick="selectCraftUser(this)">
+            <div class="dropdown-item px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-500 cursor-pointer" 
+                 data-user-id="<%= user.id %>" 
+                 onclick="selectCraftUser(this)">
               <%= user.name %>
             </div>
           <% end %>
         </div>
+
+        <!-- Hidden field to store selected user -->
         <input type="hidden" id="selectedCraftUserId" name="user_id" required>
-      </div>
-      <div class="col-span-1">
-        <%= submit_tag "ADD USER", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold text-xs rounded-md text-slate-100' %>
       </div>
     </div>
   <% end %>
 </div>
+
 <script>
-  function filterRemoveUserDropdown() {
-    let input = document.getElementById("searchRemoveUser").value.toLowerCase();
-    let dropdown = document.getElementById("removeUserDropdown");
-    let items = dropdown.getElementsByClassName("dropdown-item");
-
-    dropdown.classList.remove("hidden");
-
-    let hasMatch = false;
-    for (let item of items) {
-      let text = item.textContent.toLowerCase();
-      if (text.includes(input)) {
-        item.style.display = "block";
-        hasMatch = true;
-      } else {
-        item.style.display = "none";
-      }
-    }
-
-    if (!hasMatch) {
-      dropdown.classList.add("hidden");
-    }
-  }
-
-  function selectRemoveUser(element) {
-    let userName = element.textContent.trim();
-    let userId = element.getAttribute("data-user-id");
-
-    let inputField = document.getElementById("searchRemoveUser");
-    inputField.value = userName;
-    inputField.style.paddingRight = "12px"; // Prevents text from being cut off
-    inputField.style.overflow = "visible"; // Ensures full visibility
-
-    document.getElementById("selectedRemoveUserId").value = userId;
-    document.getElementById("removeUserDropdown").classList.add("hidden");
-  }
-
-  document.addEventListener("click", function(event) {
-    let dropdown = document.getElementById("removeUserDropdown");
-    let searchInput = document.getElementById("searchRemoveUser");
-
-    if (!searchInput.contains(event.target) && !dropdown.contains(event.target)) {
-      dropdown.classList.add("hidden");
-    }
-  });
-
-  function filterClientUserDropdown() {
-    let input = document.getElementById("searchClientUser").value.toLowerCase();
-    let dropdown = document.getElementById("clientUserDropdown");
-    let items = dropdown.getElementsByClassName("dropdown-item");
-
-    dropdown.classList.remove("hidden");
-
-    let hasMatch = false;
-    for (let item of items) {
-      let text = item.textContent.toLowerCase();
-      if (text.includes(input)) {
-        item.style.display = "block";
-        hasMatch = true;
-      } else {
-        item.style.display = "none";
-      }
-    }
-
-    if (!hasMatch) {
-      dropdown.classList.add("hidden");
-    }
-  }
-
-  function selectClientUser(element) {
-    let userName = element.textContent.trim();
-    let userId = element.getAttribute("data-user-id");
-
-    let inputField = document.getElementById("searchClientUser");
-    inputField.value = userName;
-    inputField.style.paddingRight = "12px"; // Prevents text from being cut off
-    inputField.style.overflow = "visible"; // Ensures full visibility
-
-    document.getElementById("selectedClientUserId").value = userId;
-    document.getElementById("clientUserDropdown").classList.add("hidden");
-  }
-
-  document.addEventListener("click", function(event) {
-    let dropdown = document.getElementById("clientUserDropdown");
-    let searchInput = document.getElementById("searchClientUser");
-
-    if (!searchInput.contains(event.target) && !dropdown.contains(event.target)) {
-      dropdown.classList.add("hidden");
-    }
-  });
-
   function filterCraftDropdown() {
     let input = document.getElementById("searchCraftUser").value.toLowerCase();
     let dropdown = document.getElementById("craftDropdown");
     let items = dropdown.getElementsByClassName("dropdown-item");
 
     dropdown.classList.remove("hidden");
-
     let hasMatch = false;
+
     for (let item of items) {
       let text = item.textContent.toLowerCase();
       if (text.includes(input)) {
@@ -136,15 +58,21 @@
     let userName = element.textContent.trim();
     let userId = element.getAttribute("data-user-id");
 
+    // Fill search box
     let inputField = document.getElementById("searchCraftUser");
     inputField.value = userName;
-    inputField.style.paddingRight = "12px"; // Prevents text from being cut off
-    inputField.style.overflow = "visible"; // Ensures full visibility
 
+    // Store selected user ID
     document.getElementById("selectedCraftUserId").value = userId;
+
+    // Hide dropdown
     document.getElementById("craftDropdown").classList.add("hidden");
+
+    // Auto-submit form
+    document.getElementById("craftUserForm").requestSubmit();
   }
 
+  // Hide dropdown on outside click
   document.addEventListener("click", function(event) {
     let dropdown = document.getElementById("craftDropdown");
     let searchInput = document.getElementById("searchCraftUser");
