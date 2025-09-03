@@ -11,7 +11,7 @@
                                                     'Awaiting Client API', 'Resolved', 'Closed']) %>
             <% if available_statuses %>
               <%= select_tag :status_id,
-                             options_for_select(available_statuses.pluck(:name, :id)),
+                             options_for_select(available_statuses.pluck(:name, :id), include_blank: true),
                              class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500",
                              required: true %>
             <% end %>
