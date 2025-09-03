@@ -145,38 +145,34 @@
 
 <!-- Script for Preview -->
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("click", (e) => {
+    const el = e.target.closest("[data-action='click->preview#open']");
+    if (!el) return;
+
+    e.preventDefault();
+
+    const url = el.dataset.url;
+    const type = el.dataset.type;
     const modal = document.getElementById("previewModal");
     const previewContent = document.getElementById("previewContent");
 
-    document.querySelectorAll("[data-action='click->preview#open']").forEach(el => {
-      el.addEventListener("click", () => {
-        const url = el.dataset.url;
-        const type = el.dataset.type;
+    if (type === "image") {
+      previewContent.innerHTML = `<img src="${url}" class="max-h-full max-w-full rounded shadow-lg" />`;
+    } else if (type === "video") {
+      previewContent.innerHTML = `
+        <video controls autoplay class="max-h-full max-w-full rounded shadow-lg">
+          <source src="${url}" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>`;
+    }
 
-        if (type === "image") {
-          previewContent.innerHTML = `<img src="${url}" class="max-h-full max-w-full rounded shadow-lg" />`;
-        } else if (type === "video") {
-          previewContent.innerHTML = `
-            <video controls autoplay class="max-h-full max-w-full rounded shadow-lg">
-              <source src="${url}" type="video/mp4">
-              Your browser does not support the video tag.
-            </video>`;
-        }
-
-        modal.classList.remove("hidden");
-      });
-    });
-
-    window.closePreview = () => {
-      modal.classList.add("hidden");
-      previewContent.innerHTML = "";
-    };
-
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        closePreview();
-      }
-    });
+    modal.classList.remove("hidden");
   });
+
+  window.closePreview = () => {
+    const modal = document.getElementById("previewModal");
+    const previewContent = document.getElementById("previewContent");
+    modal.classList.add("hidden");
+    previewContent.innerHTML = "";
+  };
 </script>
