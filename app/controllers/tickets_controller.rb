@@ -45,19 +45,36 @@ class TicketsController < ApplicationController
     # Find the status for 'Client Confirmation Pending'
     confirmation_pending_status = Status.find_by(name: 'Client Confirmation Pending')
 
-    # Count how many tickets the current user has in that status
+    # Define non-open statuses
+    non_open_status_names = %w[Closed Declined Resolved]
+    non_open_statuses = Status.where(name: non_open_status_names)
+
+    # Count total tickets in open statuses for the project (i.e., NOT Closed/Declined/Resolved)
+    open_tickets_count = @project.tickets
+      .joins(:statuses)
+      .where.not(statuses: { id: non_open_statuses.ids })
+      .distinct
+      .count
+
+    # Calculate the dynamic limit: 50% of open tickets, rounded down (minimum 1)
+    pending_limit = [(open_tickets_count * 0.5).floor, 1].max
+
+    # Count how many tickets the current user has in 'Client Confirmation Pending'
     @tickets_count = if confirmation_pending_status
                        @project.tickets
                          .joins(:statuses)
-                         .where(statuses: { id: confirmation_pending_status.id })
+                         .where(statuses: { id: confirmation_pending_status.id }, user_id: current_user.id)
                          .count
                      else
                        0
                      end
-    # Prevent clients from creating more than 10 pending tickets
-    if current_user.has_role?(:client) && @tickets_count >= 15
+
+    # Prevent clients from creating more than the dynamic limit of pending tickets
+    if current_user.has_role?(:client) && @tickets_count >= pending_limit
       redirect_to project_path(@project),
-                  flash: { prompt: 'You can have a maximum of 10 pending tickets. Please resolve at least one ticket under "Client Pending Confirmation" to proceed.' }
+                  flash: {
+                    prompt: "You can have a maximum of #{pending_limit} pending tickets (50% of all tickets with open statuses). Please resolve at least one ticket under 'Client Confirmation Pending' to proceed."
+                  }
       return
     end
 
@@ -328,7 +345,7 @@ class TicketsController < ApplicationController
       Messaging::EmailSender
         .send_email(
           "Ticket assigned with Ticket ID #{@ticket.unique_id}.",
-          body: "<p>Ticket ##{@ticket.unique_id} has been assigned to you.</p><p><a href='#{project_ticket_url(@project, @ticket)}'>Open Ticket</a></p>",
+          body: "<p>Ticket ##{@ticket.unique_id} has been assigned to you.</p><p><a href='#{project_ticket_url(@ticket.project, @ticket)}'>Open Ticket</a></p>",
           to: [user.email],
           actor: current_user,
           priority: :normal,
@@ -344,7 +361,7 @@ class TicketsController < ApplicationController
         Messaging::EmailSender
           .send_email(
             "Ticket assigned with Ticket ID #{@ticket.unique_id}.",
-            body: "<p>Ticket ##{@ticket.unique_id} has been assigned to #{user.name}.</p><p><a href='#{project_ticket_url(@project, @ticket)}'>Open Ticket</a></p>",
+            body: "<p>Ticket ##{@ticket.unique_id} has been assigned to #{user.name}.</p><p><a href='#{project_ticket_url(@ticket.project, @ticket)}'>Open Ticket</a></p>",
             to: [owner.email],
             actor: current_user,
             priority: :normal,

@@ -129,12 +129,7 @@ class DefectController < ApplicationController
     selected_user_ids = params[:defect][:user_ids]
 
     # Explicitly set draft flag based on which button was clicked
-    if params[:commit] == 'draft'
-      @defect.draft = true
-
-    else
-      @defect.draft = false
-    end
+    @defect.draft = params[:commit] == 'draft'
 
     if @defect.save
       @defect.user_ids = selected_user_ids
@@ -286,7 +281,7 @@ class DefectController < ApplicationController
 
     respond_to do |format|
       format.turbo_stream
-      format.html { redirect_to @defect, notice: "Label added successfully." }
+      format.html { redirect_to @defect, notice: 'Label added successfully.' }
     end
   end
 
@@ -296,7 +291,7 @@ class DefectController < ApplicationController
 
     respond_to do |format|
       format.turbo_stream
-      format.html { redirect_to @defect, notice: "Label removed successfully." }
+      format.html { redirect_to @defect, notice: 'Label removed successfully.' }
     end
   end
 
