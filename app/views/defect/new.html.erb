@@ -3,7 +3,7 @@
 <%= turbo_frame_tag "modal", data: { controller: "modal" } do %>
   <div class="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-hidden bg-black/40 backdrop-blur-sm" data-action="click->modal#closeOnBackdrop">
     <!-- Dialog (90vh cap, internal scroll only in body) -->
-    <div class="w-full max-w-6xl max-h-[90vh] bg-white dark:bg-gray-800 rounded-lg shadow-xl flex flex-col overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="new-defect-title">
+    <div class="w-full max-w-[80%] h-[95%] bg-white dark:bg-gray-800 rounded-lg shadow-xl flex flex-col overflow-hidden p-4" role="dialog" aria-modal="true" aria-labelledby="new-defect-title">
       <!-- Header -->
       <div class="shrink-0 px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-start">
         <h2 id="new-defect-title" class="text-xl font-semibold text-gray-800 dark:text-white">New Defect</h2>
@@ -30,30 +30,30 @@
       <div data-controller="project-modules"
        data-project-modules-modules-url-value="<%= modules_by_product_defect_index_path %>"
        class="space-y-3">
-    <div>
-      <%= f.select :product_id,
-        options_for_select(@products_and_clients_defects),
-        { prompt: 'Select Project' },
-        class: 'w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600',
-        required: true,
-        data: { action: 'change->project-modules#loadModules', "project-modules-target": 'projectSelect' } %>
-    </div>
-    <div class="flex flex-col sm:flex-row gap-2">
-      <%= f.collection_select :banking_type_id, (@banking_types || []), :id, :name,
-        { prompt: 'Select Banking Type' },
-        class: 'flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600', required: true %>
+        <div>
+          <%= f.select :product_id,
+            options_for_select(@products_and_clients_defects),
+            { prompt: 'Select Project' },
+            class: 'w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600',
+            required: true,
+            data: { action: 'change->project-modules#loadModules', "project-modules-target": 'projectSelect' } %>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <%= f.collection_select :banking_type_id, (@banking_types || []), :id, :name,
+            { prompt: 'Select Banking Type' },
+            class: 'flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600', required: true %>
 
-      <%= f.collection_select :qa_module_id, [], :id, :name,
-        { prompt: 'Select Module' },
-        class: 'flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 disabled:opacity-60', required: true,
-        data: { "project-modules-target": 'moduleSelect', action: 'change->project-modules#loadSubmodules' } %>
+          <%= f.collection_select :qa_module_id, [], :id, :name,
+            { prompt: 'Select Module' },
+            class: 'flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 disabled:opacity-60', required: true,
+            data: { "project-modules-target": 'moduleSelect', action: 'change->project-modules#loadSubmodules' } %>
 
-      <%= f.collection_select :qa_submodule_id, [], :id, :name,
-        { prompt: 'Select Sub-Module' },
-        class: 'flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600',
-        data: { "project-modules-target": 'submoduleSelect' } %>
-    </div>
-      </div>
+          <%= f.collection_select :qa_submodule_id, [], :id, :name,
+            { prompt: 'Select Sub-Module' },
+            class: 'flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600',
+            data: { "project-modules-target": 'submoduleSelect' } %>
+        </div>
+        </div>
 
             <!-- Summary -->
             <div>
@@ -129,60 +129,97 @@
       <% end %>
     </div>
   </div>
-  <style>
-    /* CKEditor containment inside modal body */
-    #defect-modal-body .ck-editor__editable_inline { max-height: 40vh; overflow-y:auto; }
-  </style>
-  <script>
-    // Dynamic module/submodule loading (ported from previous partial)
-    document.addEventListener('turbo:load', function () {
-      const modSelect = document.querySelector('[data-project-modules-target="moduleSelect"]');
-      const submodSelect = document.querySelector('[data-project-modules-target="submoduleSelect"]');
-      if (modSelect) {
-        modSelect.addEventListener('change', function () {
-          const moduleId = this.value;
-            if (submodSelect) {
-              submodSelect.innerHTML = '<option value="">Select Sub-Module</option>';
-              if (moduleId) {
-                fetch(`/qa_modules/${moduleId}/submodules`).then(r => r.json()).then(submodules => {
-                  submodules.forEach(sm => {
-                    const opt = document.createElement('option');
-                    opt.value = sm.id; opt.textContent = sm.name; submodSelect.appendChild(opt);
-                  });
+
+<% end %>
+<script>
+  document.addEventListener('turbo:load', function () {
+    // ===== Dynamic module/submodule loading =====
+    const modSelect = document.querySelector('[data-project-modules-target="moduleSelect"]');
+    const submodSelect = document.querySelector('[data-project-modules-target="submoduleSelect"]');
+    if (modSelect) {
+      modSelect.addEventListener('change', function () {
+        const moduleId = this.value;
+        if (submodSelect) {
+          submodSelect.innerHTML = '<option value="">Select Sub-Module</option>';
+          if (moduleId) {
+            fetch(`/qa_modules/${moduleId}/submodules`)
+              .then(r => r.json())
+              .then(submodules => {
+                submodules.forEach(sm => {
+                  const opt = document.createElement('option');
+                  opt.value = sm.id;
+                  opt.textContent = sm.name;
+                  submodSelect.appendChild(opt);
                 });
-              }
-            }
-        });
-      }
-    });
-  </script>
-  <script>
-    // TomSelect for modal labels
-    document.addEventListener('turbo:load', function(){
-      const el = document.getElementById('defect_label_ids_modal');
-      if(!el || el.tomselect) return;
+              });
+          }
+        }
+      });
+    }
+
+    // ===== TomSelect for modal labels =====
+    const el = document.getElementById('defect_label_ids_modal');
+    if (el && !el.tomselect) {
       new TomSelect(el, {
         placeholder: 'Labels: Type to search or add. Press Enter to create new.',
-        plugins:['remove_button'],
-        persist:false,
-        preload:'focus',
-        valueField:'id', labelField:'name', searchField:['name'],
-        load:function(q, cb){
+        plugins: ['remove_button'],
+        persist: false,
+        preload: 'focus',
+        valueField: 'id',
+        labelField: 'name',
+        searchField: ['name'],
+        load: function (q, cb) {
           const url = new URL('/labels.json', window.location.origin);
-          if(q) url.searchParams.set('q', q);
-          url.searchParams.set('limit','100');
-            fetch(url.toString()).then(r=>r.json()).then(d=>cb(d)).catch(()=>cb());
+          if (q) url.searchParams.set('q', q);
+          url.searchParams.set('limit', '100');
+          fetch(url.toString())
+            .then(r => r.json())
+            .then(d => cb(d))
+            .catch(() => cb());
         },
-        create:function(input, callback){
-          let name = input.trim().replace(/\s+/g,'-').toLowerCase(); if(!name) return callback();
-          fetch('/labels', {method:'POST', headers:{'Content-Type':'application/json','X-CSRF-Token':document.querySelector('meta[name="csrf-token"]').content}, body: JSON.stringify({name})})
-            .then(r=>r.json()).then(data=>{ if(data.id){ callback({id:data.id,name:data.name}); } else { callback(); } }).catch(()=>callback());
+        create: function (input, callback) {
+          let name = input.trim().replace(/\s+/g, '-').toLowerCase();
+          if (!name) return callback();
+          fetch('/labels', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({ name })
+          })
+            .then(r => r.json())
+            .then(data => {
+              if (data.id) {
+                callback({ id: data.id, name: data.name });
+              } else {
+                callback();
+              }
+            })
+            .catch(() => callback());
         },
-        render:{ item:(d,e)=>`<div class='ts-chip'>${e(d.name)}</div>`, option:(d,e)=>`<div class='px-2 py-1'>${e(d.name)}</div>` },
-        onItemAdd:function(){ if(this.items.length>0){ this.inputState(); this.control_input.placeholder=''; } },
-        onClear:function(){ this.control_input.placeholder='Labels: Type to search or add. Press Enter to create new.' }
+        render: {
+          item: (d, e) => `<div class='ts-chip'>${e(d.name)}</div>`,
+          option: (d, e) => `<div class='px-2 py-1'>${e(d.name)}</div>`
+        },
+        onItemAdd: function () {
+          if (this.items.length > 0) {
+            this.inputState();
+            this.control_input.placeholder = '';
+          }
+        },
+        onClear: function () {
+          this.control_input.placeholder =
+            'Labels: Type to search or add. Press Enter to create new.';
+        }
       });
-      el.addEventListener('focus', ()=>{ if(el.tomselect && el.tomselect.items.length>0){ el.tomselect.control_input.placeholder=''; }});
-    });
-  </script>
-<% end %>
+
+      // Adjust placeholder when focused and already has items
+      el.addEventListener('focus', () => {
+        if (el.tomselect && el.tomselect.items.length > 0) {
+          el.tomselect.control_input.placeholder = '';
+        }
+      });
+    }
+  });
+</script>
