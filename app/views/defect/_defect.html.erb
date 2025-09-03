@@ -12,7 +12,7 @@
     <% if @defect_groups.present? %>
       <% @defect_groups.each do |group_name, defects| %>
         <!-- Group Header -->
-        <tr class="bg-gray-100 dark:bg-gray-700">
+        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 h-12 text-left">
           <td class="px-6 py-3 font-semibold text-left">
             <%= link_to "#{group_name.truncate(30)}",
                         index_show_defect_index_path(client_name: defects.first.product.client.name),
