@@ -3,18 +3,66 @@ class DefectController < ApplicationController
   before_action :set_defect, only: %i[show edit update update_priority destroy add_defect add_attachments remove_attachment update_label modal_show add_label remove_label]
 
   def index
-    # Base query for defects
-    @defects = Defect.published.includes(:users, :qa_module, :submodule, :banking_type, :statuses)
+    # Load defects with needed associations
+    raw_defects = Defect.published.includes(:users, :qa_module, :submodule, :banking_type, :statuses, product: %i[client groupwares])
       .order(created_at: :desc)
 
     # Filter defects for non-admin users
+    raw_defects = raw_defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa)
+
+    # Status filter
+    raw_defects = raw_defects.joins(:statuses).where(statuses: { id: params[:status] }) if params[:status].present?
+
+    # Search filter
+    if params[:query].present?
+      raw_defects = raw_defects.left_joins(:users, product: %i[client groupwares]).where(
+        'clients.name ILIKE :q OR groupwares.name ILIKE :q',
+        q: "%#{params[:query]}%"
+      )
+    end
+
+    # Group by client and first groupware name
+    grouped = raw_defects.group_by do |defect|
+      client_name = defect.product&.client&.name
+      groupware_name = defect.product&.groupwares&.first&.name
+      "#{client_name} #{groupware_name}"
+    end
+
+    # Paginate the groups instead of the defects.
+    @per_page = 20
+    @page = (params[:page] || 1).to_i
+
+    group_keys = grouped.keys.sort # Optional: sort for stable pagination
+    @total_pages = (group_keys.size / @per_page.to_f).ceil
+    @start_count = ((@page - 1) * @per_page) + 1
+    @end_count = [@page * @per_page, group_keys.size].min
+    @total_count = group_keys.size
+
+    # Only keep the groups for the current page
+    paged_group_keys = group_keys[((@page - 1) * @per_page)...(((@page - 1) * @per_page) + @per_page)]
+    @defect_groups = paged_group_keys.to_h { |k| [k, grouped[k]] }
+
+    # Collect distinct statuses for dropdown (from currently matching defects)
+    @statuses = Status.joins(:defects)
+      .where(defects: { id: raw_defects.pluck(:id) })
+      .distinct
+      .order(:name)
+  end
+
+  def index_show
+    @defects = Defect.published.includes(:users, :qa_module, :submodule, :banking_type, :statuses)
+      .order(created_at: :desc)
+
+    # Filter by client name
+    @defects = @defects.joins(product: :client).where(clients: { name: params[:client_name] }) if params[:client_name].present?
+
+    # Restrict for non-admin users
     @defects = @defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa)
 
     # Status filter
     @defects = @defects.joins(:statuses).where(statuses: { id: params[:status] }) if params[:status].present?
 
     # Search filter
-
     if params[:query].present?
       @defects = @defects
         .left_joins(:users, product: %i[client groupwares])
@@ -34,17 +82,16 @@ class DefectController < ApplicationController
     # Pagination
     @per_page = 20
     @page = (params[:page] || 1).to_i
-    @total_pages = (@defects.count / @per_page.to_f).ceil
-    @start_count = ((@page - 1) * @per_page) + 1
-    @end_count = [@page * @per_page, @defects.count].min
     @total_count = @defects.count
+    @total_pages = (@total_count / @per_page.to_f).ceil
+    @start_count = ((@page - 1) * @per_page) + 1
+    @end_count = [@page * @per_page, @total_count].min
     @defects = @defects.offset((@page - 1) * @per_page).limit(@per_page)
 
-    # ✅ Collect distinct statuses for dropdown (only from the currently matching defects)
-    @statuses = Status.joins(:defects)
-      .where(defects: { id: @defects.pluck(:id) })
-      .distinct
-      .order(:name)
+    # Distinct statuses for dropdown
+    @statuses = Status.joins(:defects).where(defects: { id: @defects.ids }).distinct.order(:name)
+
+    render :index_show
   end
 
   def show
@@ -82,9 +129,9 @@ class DefectController < ApplicationController
     selected_user_ids = params[:defect][:user_ids]
 
     # Explicitly set draft flag based on which button was clicked
-    if params[:commit] == "draft"
+    if params[:commit] == 'draft'
       @defect.draft = true
-      # @defect.label = "Draft"
+
     else
       @defect.draft = false
     end
@@ -93,7 +140,7 @@ class DefectController < ApplicationController
       @defect.user_ids = selected_user_ids
 
       if @defect.draft?
-        redirect_to defect_index_path, notice: "Draft defect saved successfully."
+        redirect_to defect_index_path, notice: 'Draft defect saved successfully.'
       else
         activity('user_activity')
           .caused_by(current_user)
@@ -256,7 +303,7 @@ class DefectController < ApplicationController
   def drafts
     # @defects = current_user.defects.drafts
     @defects = Defect.drafts.includes(:users, :qa_module, :submodule).order(updated_at: :desc)
-    
+
     # Pagination
     @per_page = 20
     @page = (params[:page] || 1).to_i
@@ -278,12 +325,11 @@ class DefectController < ApplicationController
   def publish
     @defect = Defect.find(params[:id])
     if @defect.update(draft: false)
-      redirect_to @defect, notice: "Defect has been published successfully."
+      redirect_to @defect, notice: 'Defect has been published successfully.'
     else
-      redirect_to @defect, alert: "Failed to publish defect."
+      redirect_to @defect, alert: 'Failed to publish defect.'
     end
   end
-
 
   def defect_status
     @defect = Defect.find(params[:id])

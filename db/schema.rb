@@ -276,7 +276,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_02_074743) do
     t.uuid "banking_type_id"
     t.uuid "creator_id"
     t.uuid "product_id"
-    t.string "summary", null: false
+    t.string "summary"
     t.string "defect_unique"
     t.string "issue_type", default: "Bug"
     t.boolean "draft", default: false, null: false

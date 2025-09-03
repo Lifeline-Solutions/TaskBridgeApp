@@ -1,11 +1,4 @@
 Rails.application.routes.draw do
-  # get "banking_types/index"
-  # get "banking_types/show"
-  # get "banking_types/destroy"
-  # get "banking_types/new"
-  # get "banking_types/update"
-  # get "banking_types/edit"
-  # get "banking_types/create"
   resources :banking_types
   resources :sales, only: [:index]
 
@@ -128,6 +121,7 @@ Rails.application.routes.draw do
       get :drafts
       get 'modules_by_product'
       get 'get_submodules'  # For loading submodules dynamically
+      get :index_show
     end
     member do
       patch :add_label
