@@ -2,8 +2,13 @@
 
 import '@hotwired/turbo-rails';
 import 'controllers';
+// Action Text (Trix) should be loaded before controllers so any code that
+// registers Trix attributes runs before editors initialize.
 import 'trix';
 import '@rails/actiontext';
+
+import './controllers/ckeditor_init'
+import './controllers/label_tomselect_init'
 
 //= require rails-ujs
 //= require turbolinks

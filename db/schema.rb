@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_01_113804) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_02_074743) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -216,6 +216,20 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_01_113804) do
     t.index ["user_id"], name: "index_defect_histories_on_user_id"
   end
 
+  create_table "defect_labels", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "defect_id", null: false
+    t.uuid "label_id", null: false
+    t.uuid "created_by"
+    t.uuid "modified_by"
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["defect_id", "label_id"], name: "index_defect_labels_on_defect_id_and_label_id", unique: true
+    t.index ["defect_id"], name: "index_defect_labels_on_defect_id"
+    t.index ["label_id"], name: "index_defect_labels_on_label_id"
+  end
+
   create_table "defect_messages", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "user_id", null: false
     t.uuid "defect_id", null: false
@@ -265,7 +279,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_01_113804) do
     t.string "summary"
     t.string "defect_unique"
     t.string "issue_type", default: "Bug"
-    t.string "label"
     t.boolean "draft", default: false, null: false
     t.index ["banking_type_id"], name: "index_defects_on_banking_type_id"
     t.index ["creator_id"], name: "index_defects_on_creator_id"
@@ -415,6 +428,18 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_01_113804) do
     t.index ["ticket_id"], name: "index_issues_on_ticket_id"
     t.index ["unique_id"], name: "index_issues_on_unique_id", unique: true
     t.index ["user_id"], name: "index_issues_on_user_id"
+  end
+
+  create_table "labels", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name", null: false
+    t.uuid "created_by"
+    t.uuid "modified_by"
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((name)::text)", name: "index_labels_on_lower_name", unique: true
+    t.index ["name"], name: "index_labels_on_name"
   end
 
   create_table "locations", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|

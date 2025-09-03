@@ -8,10 +8,16 @@ export default class extends Controller {
 
     // ✅ Bind once and store references
     this.boundCloseWithKey = this.closeWithKey.bind(this);
-    this.boundCloseOnClickOutside = this.closeOnClickOutside.bind(this);
+    this.boundCloseOnClickOutside = this.closeOnBackdrop.bind(this);
+    this.boundTrapFocus = this.trapFocus.bind(this);
 
     document.addEventListener('keydown', this.boundCloseWithKey);
-    this.element.addEventListener('click', this.boundCloseOnClickOutside);
+    // this.element.addEventListener('click', this.boundCloseOnClickOutside);
+
+    document.addEventListener('keydown', this.boundTrapFocus, true);
+
+    // Initial focus
+    this.focusFirstElement();
   }
 
   disconnect() {
@@ -19,7 +25,8 @@ export default class extends Controller {
 
     // ✅ Use stored reference when removing
     document.removeEventListener('keydown', this.boundCloseWithKey);
-    this.element.removeEventListener('click', this.boundCloseOnClickOutside);
+    // this.element.removeEventListener('click', this.boundCloseOnClickOutside);
+    document.removeEventListener('keydown', this.boundTrapFocus, true);
   }
 
   async close() {
@@ -39,9 +46,49 @@ export default class extends Controller {
     }
   }
 
+  closeOnBackdrop(event) {
+    if (event.target === this.element) {
+      this.close();
+    }
+  }
+
   closeWithKey(event) {
     if (event.key === 'Escape') {
+      event.preventDefault();
       this.close();
+    }
+  }
+
+  focusableSelectors() {
+    return [
+      'a[href]','area[href]','input:not([disabled])','select:not([disabled])',
+      'textarea:not([disabled])','button:not([disabled])','iframe','object','embed',
+      '[contenteditable]','[tabindex]:not([tabindex="-1"])'
+    ].join(',');
+  }
+
+  focusFirstElement() {
+    const focusables = this.element.querySelectorAll(this.focusableSelectors());
+    if (focusables.length) {
+      focusables[0].focus();
+    } else {
+      this.element.setAttribute('tabindex','-1');
+      this.element.focus();
+    }
+  }
+
+  trapFocus(event) {
+    if (event.key !== 'Tab') return;
+    const focusables = Array.from(this.element.querySelectorAll(this.focusableSelectors())).filter(el => el.offsetParent !== null);
+    if (!focusables.length) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
     }
   }
 }

@@ -117,12 +117,15 @@ Rails.application.routes.draw do
     resources :attachments, only: [:create, :destroy]
     get :modal_show
     collection do
+      get 'labels'
       get :drafts
       get 'modules_by_product'
       get 'get_submodules'  # For loading submodules dynamically
       get :index_show
     end
     member do
+      patch :add_label
+      delete 'remove_label/:label_id', to: 'defect#remove_label', as: 'remove_label'
       patch :publish
       post :add_defect
       delete :remove_defect
@@ -130,7 +133,16 @@ Rails.application.routes.draw do
       patch 'update_priority'
       patch 'update_label'
     end
+    resources :bugs do
+      member do
+        post :add_bug
+        delete :remove_bug
+        post :bug_status
+      end
+    end
   end
+
+  resources :labels, only: [:index, :create]
 
   resources :projects, controller: 'project' do
     member do
