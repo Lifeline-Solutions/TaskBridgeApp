@@ -1,96 +1,216 @@
 <!-- Attachments Section -->
 <div id="attachments" class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
   <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Attachments</h2>
-  
+
   <% if @defect.attachments.attached? %>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <% @attachments.each do |attachment| %>
-        <div class="border border-gray-200 rounded-lg p-4 dark:border-gray-700">
-          <% if attachment.image? || attachment.previewable? %>
-            <%= image_tag attachment, class: "w-full h-32 object-cover mb-2 rounded" %>
-          <% elsif attachment.video? %>
-            <video controls class="w-full h-32 object-cover mb-2 rounded">
-              <source src="<%= url_for(attachment) %>" type="<%= attachment.content_type %>">
-            </video>
-          <% else %>
-            <div class="w-full h-32 bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-2 rounded">
-              <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-              </svg>
-            </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm text-left text-gray-600 dark:text-gray-300 border-separate border-spacing-y-2">
+        <thead>
+          <tr class="text-xs uppercase text-gray-500 dark:text-gray-400">
+            <th class="py-2">Name</th>
+            <th class="py-2">Size</th>
+            <th class="py-2">Date added</th>
+            <th class="py-2"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @attachments.each do |attachment| %>
+            <tr class="bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg">
+              <!-- Icon + Filename -->
+              <td class="py-3 px-4 flex items-center space-x-2">
+                <% if attachment.image? %>
+                  <%= image_tag attachment, 
+                        class: "w-6 h-6 rounded cursor-pointer hover:opacity-80", 
+                        data: { action: "click->preview#open", url: url_for(attachment), type: attachment.content_type } %>
+                <% elsif attachment.video? %>
+                  <svg class="w-6 h-6 text-gray-400 cursor-pointer hover:text-gray-600" 
+                       fill="currentColor" viewBox="0 0 24 24"
+                       data-action="click->preview#open"
+                       data-url="<%= url_for(attachment) %>" 
+                       data-type="<%= attachment.content_type %>">
+                    <path d="M17 10.5V7c0-1.1-.9-2-2-2H5C3.9 5 3 5.9 3 7v10c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-3.5l4 4v-11l-4 4z"/>
+                  </svg>
+                <% else %>
+                  <svg class="w-6 h-6 text-gray-400 cursor-pointer hover:text-gray-600" 
+                       fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+                       data-action="click->preview#open"
+                       data-url="<%= url_for(attachment) %>" 
+                       data-type="<%= attachment.content_type %>">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.4a1 1 0 00-.3-.7L13.3 3.3A1 1 0 0012.6 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                  </svg>
+                <% end %>
+
+                <%= link_to attachment.filename,
+                      rails_blob_path(attachment, disposition: "attachment"),
+                      class: "font-medium text-blue-600 dark:text-blue-400 hover:underline truncate max-w-xs",
+                      title: attachment.filename.to_s %>
+              </td>
+
+              <!-- Size -->
+              <td class="py-3 px-4 whitespace-nowrap">
+                <%= number_to_human_size(attachment.byte_size) %>
+              </td>
+
+              <!-- Date Added -->
+              <td class="py-3 px-4 whitespace-nowrap">
+                <%= l(attachment.created_at, format: :short) %>
+              </td>
+
+              <!-- Actions -->
+              <td class="py-3 px-4 flex space-x-3">
+                <%= link_to rails_blob_path(attachment, disposition: "attachment"),
+                            class: "text-blue-600 dark:text-blue-500 hover:text-blue-800" do %>
+                  <svg xmlns="http://www.w3.org/2000/svg" 
+                      width="20" height="20" viewBox="0 0 24 24" 
+                      fill="none" stroke="currentColor" stroke-width="2" 
+                      stroke-linecap="round" stroke-linejoin="round" 
+                      class="w-5 h-5">
+                    <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                <% end %>
+
+                <% if @defect.creator == current_user %>
+                  <%= button_to defect_attachment_path(@defect, attachment_id: attachment.id, attachments_page: @attachments_page),
+                                method: :delete,
+                                class: "text-red-600 dark:text-red-500 hover:text-red-800",
+                                data: { confirm: 'Are you sure?' } do %>
+                    <svg xmlns="http://www.w3.org/2000/svg" 
+                        width="20" height="20" viewBox="0 0 24 24" 
+                        fill="none" stroke="currentColor" stroke-width="2" 
+                        stroke-linecap="round" stroke-linejoin="round" 
+                        class="w-5 h-5">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                      <path d="M10 11v6"/>
+                      <path d="M14 11v6"/>
+                    </svg>
+                  <% end %>
+                <% end %>
+              </td>
+            </tr>
           <% end %>
-
-          <!-- Metadata -->
-          <div class="text-sm text-gray-700 dark:text-gray-300 space-y-1 mb-3">
-            <p class="truncate font-medium">
-              <%= link_to attachment.filename,
-                          rails_blob_path(attachment, disposition: "attachment"),
-                          class: "text-blue-600 dark:text-blue-400 hover:underline",
-                          title: attachment.filename.to_s %>
-            </p>
-            <p><span class="font-semibold">Size:</span> <%= number_to_human_size(attachment.byte_size) %></p>
-            <p><span class="font-semibold">Type:</span> <%= attachment.content_type.presence || "unknown" %></p>
-            <p><span class="font-semibold">Uploaded:</span> <%= l(attachment.created_at, format: :short) %></p>
-          </div>
-
-          <!-- Actions -->
-          <div class="flex justify-between items-center">
-            <%= link_to 'Download',
-                        rails_blob_path(attachment, disposition: "attachment"),
-                        class: "text-sm font-medium text-blue-600 dark:text-blue-500 hover:underline" %>
-            <% if @defect.creator == current_user %>
-                <%= button_to 'Delete',
-                        defect_attachment_path(@defect, attachment_id: attachment.id, attachments_page: @attachments_page),
-                        method: :delete,
-                        class: "text-red-600 dark:text-red-500 hover:text-red-900 dark:hover:text-red-700 text-sm",
-                        data: { confirm: 'Are you sure?' } %>
-            <% end %>
-          </div>
-        </div>
-      <% end %>
+        </tbody>
+      </table>
     </div>
 
-    <!-- Pagination Controls -->
+    <!-- Pagination -->
     <% if @attachments_total_pages > 1 %>
-      <div class="flex justify-between items-center my-8">
+      <div class="flex justify-between items-center mt-6 text-sm text-gray-600 dark:text-gray-400">
         <% if @attachments_page > 1 %>
-          <%= link_to "← Previous", defect_path(@defect, attachments_page: @attachments_page - 1, anchor: 'attachments'), 
+          <%= link_to "← Previous", defect_path(@defect, attachments_page: @attachments_page - 1, anchor: 'attachments'),
                 class: "px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600" %>
         <% else %>
-          <span class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded text-gray-400 dark:text-gray-600 cursor-not-allowed">← Previous</span>
+          <span class="px-3 py-1 text-gray-400">← Previous</span>
         <% end %>
 
-        <span class="text-sm text-gray-600 dark:text-gray-400">
-          Page <%= @attachments_page %> of <%= @attachments_total_pages %>
-        </span>
+        <span>Page <%= @attachments_page %> of <%= @attachments_total_pages %></span>
 
         <% if @attachments_page < @attachments_total_pages %>
-          <%= link_to "Next →", defect_path(@defect, attachments_page: @attachments_page + 1, anchor: 'attachments'), 
+          <%= link_to "Next →", defect_path(@defect, attachments_page: @attachments_page + 1, anchor: 'attachments'),
                 class: "px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600" %>
         <% else %>
-          <span class="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded text-gray-400 dark:text-gray-600 cursor-not-allowed">Next →</span>
+          <span class="px-3 py-1 text-gray-400">Next →</span>
         <% end %>
       </div>
     <% end %>
 
   <% else %>
-    <p class="text-gray-500 dark:text-gray-400 mb-6">No attachments yet.</p>
+    <p class="text-gray-500 dark:text-gray-400">No attachments yet.</p>
   <% end %>
 
   <!-- Upload Form -->
-  <%= form_with url: defect_attachments_path(@defect), method: :post, local: true, multipart: true, data: { turbo: false } do |f| %>
-    <div class="flex flex-col space-y-4">
+  <div class="mt-6">
+    <%= form_with url: defect_attachments_path(@defect), method: :post, local: true, multipart: true, data: { turbo: false } do |f| %>
       <div class="flex items-center space-x-4">
-        <%= file_field_tag 'attachments[]', 
-              multiple: true, 
+        <%= file_field_tag 'attachments[]',
+              multiple: true,
               direct_upload: true,
-              accept: 'image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx',
-              class: "block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" %>
-        
-        <%= submit_tag 'Upload', 
+              accept: 'image/*,video/*,audio/*,application/pdf,.doc,.docx,.xls,.xlsx',
+              class: "block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" %>
+
+        <%= submit_tag 'Upload',
               class: "px-5 py-2.5 text-white bg-[#3F8CFF] hover:bg-[#3A81EB] font-medium rounded-lg text-sm cursor-pointer" %>
       </div>
-      <p class="text-xs text-gray-500 dark:text-gray-400">Upload one or multiple files (Max size: 1GB each)</p>
-    </div>
-  <% end %>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Upload one or multiple files (Max size: 1GB each)</p>
+    <% end %>
+  </div>
 </div>
+
+<!-- Fullscreen Preview Modal -->
+<div id="previewModal" class="hidden fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+  <button id="closePreviewBtn" class="absolute top-5 right-5 text-white text-3xl">&times;</button>
+  <div id="previewContent" class="max-h-full max-w-full"></div>
+</div>
+
+<!-- Script for Preview -->
+<script>
+  function safePreview(url, type) {
+    const container = document.createElement("div");
+
+    if (type.startsWith("image/")) {
+      const img = document.createElement("img");
+      img.src = url;
+      img.className = "max-h-full max-w-full rounded shadow-lg";
+      container.appendChild(img);
+    } else if (type.startsWith("video/")) {
+      const video = document.createElement("video");
+      video.controls = true;
+      video.className = "max-h-full max-w-full rounded shadow-lg";
+      const source = document.createElement("source");
+      source.src = url;
+      source.type = type;
+      video.appendChild(source);
+      container.appendChild(video);
+    } else if (type.startsWith("audio/")) {
+      const audio = document.createElement("audio");
+      audio.controls = true;
+      audio.className = "w-full";
+      const source = document.createElement("source");
+      source.src = url;
+      source.type = type;
+      audio.appendChild(source);
+      container.appendChild(audio);
+    } else if (type === "application/pdf") {
+      const iframe = document.createElement("iframe");
+      iframe.src = url;
+      iframe.className = "w-[90vw] h-[90vh] rounded bg-white shadow-lg";
+      iframe.setAttribute("sandbox", "allow-same-origin allow-scripts allow-popups");
+      container.appendChild(iframe);
+    } else {
+      const fallback = document.createElement("div");
+      fallback.className = "p-6 bg-white rounded shadow-lg text-center";
+      fallback.innerHTML = `
+        <p class="mb-4">Preview not available for this file type.</p>
+        <a href="${url}" target="_blank" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Download</a>
+      `;
+      container.appendChild(fallback);
+    }
+
+    return container;
+  }
+
+  document.addEventListener("click", (e) => {
+    const el = e.target.closest("[data-action='click->preview#open']");
+    if (!el) return;
+
+    e.preventDefault();
+    const url = el.dataset.url;
+    const type = el.dataset.type || "";
+
+    const modal = document.getElementById("previewModal");
+    const previewContent = document.getElementById("previewContent");
+
+    previewContent.innerHTML = "";
+    previewContent.appendChild(safePreview(url, type));
+    modal.classList.remove("hidden");
+  });
+
+  document.getElementById("closePreviewBtn").addEventListener("click", () => {
+    const modal = document.getElementById("previewModal");
+    const previewContent = document.getElementById("previewContent");
+    modal.classList.add("hidden");
+    previewContent.innerHTML = "";
+  });
+</script>
