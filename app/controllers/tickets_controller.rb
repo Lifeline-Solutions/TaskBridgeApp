@@ -328,7 +328,7 @@ class TicketsController < ApplicationController
       Messaging::EmailSender
         .send_email(
           "Ticket assigned with Ticket ID #{@ticket.unique_id}.",
-          body: "<p>Ticket ##{@ticket.unique_id} has been assigned to you.</p><p><a href='#{project_ticket_url(@project, @ticket)}'>Open Ticket</a></p>",
+          body: "<p>Ticket ##{@ticket.unique_id} has been assigned to you.</p><p><a href='#{project_ticket_url(@ticket.project, @ticket)}'>Open Ticket</a></p>",
           to: [user.email],
           actor: current_user,
           priority: :normal,
@@ -344,7 +344,7 @@ class TicketsController < ApplicationController
         Messaging::EmailSender
           .send_email(
             "Ticket assigned with Ticket ID #{@ticket.unique_id}.",
-            body: "<p>Ticket ##{@ticket.unique_id} has been assigned to #{user.name}.</p><p><a href='#{project_ticket_url(@project, @ticket)}'>Open Ticket</a></p>",
+            body: "<p>Ticket ##{@ticket.unique_id} has been assigned to #{user.name}.</p><p><a href='#{project_ticket_url(@ticket.project, @ticket)}'>Open Ticket</a></p>",
             to: [owner.email],
             actor: current_user,
             priority: :normal,
