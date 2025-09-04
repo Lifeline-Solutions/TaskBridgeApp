@@ -144,6 +144,14 @@ class DefectController < ApplicationController
           .with_properties(defect_attributes: @defect.attributes, assigned_user_ids: selected_user_ids)
           .log("Created Defect ##{@defect.id}, assigned to User IDs: #{selected_user_ids.join(', ')}")
 
+        # Process mentions in defect content asynchronously
+        ProcessMentionsJob.perform_later(
+          @defect.content&.body&.to_html,
+          @defect.id,
+          current_user.id,
+          'defect_content'
+        )
+
         assigned_names = @defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', ')
         log_event(
           @defect, current_user, 'Created and Assigned',
@@ -218,6 +226,14 @@ class DefectController < ApplicationController
       end
 
       @defect.user_ids = selected_user_ids
+
+      # Process mentions in updated defect content asynchronously
+      ProcessMentionsJob.perform_later(
+        @defect.content&.body&.to_html,
+        @defect.id,
+        current_user.id,
+        'defect_content'
+      )
 
       activity('user_activity')
         .caused_by(current_user)

@@ -43,6 +43,14 @@ class DefectMessagesController < ApplicationController
     @defect_message.user = current_user
 
     if @defect_message.save
+      # Process mentions asynchronously - pass the ActionText content directly
+      ProcessMentionsJob.perform_later(
+        @defect_message.content,
+        @defect.id,
+        current_user.id,
+        'message'
+      )
+
       respond_to do |format|
         format.turbo_stream
         format.html { redirect_to defect_path(@defect), notice: 'Message posted!' }
@@ -60,6 +68,14 @@ class DefectMessagesController < ApplicationController
   def update
     audit_on_update(@defect_message)
     if @defect_message.update(defect_message_params)
+      # Process mentions asynchronously for updated message - pass the ActionText content directly
+      ProcessMentionsJob.perform_later(
+        @defect_message.content,
+        @defect.id,
+        current_user.id,
+        'message'
+      )
+
       respond_to do |format|
         format.turbo_stream
         format.html { redirect_to @defect, notice: 'Message updated successfully.' }

@@ -1,0 +1,283 @@
+/* Mention System Styles */
+.mention-dropdown {
+  position: absolute;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  display: none;
+  min-width: 250px;
+}
+
+.dark .mention-dropdown {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.mention-item {
+  transition: background-color 0.15s ease;
+}
+
+.mention-item.selected {
+  background-color: #f3f4f6;
+}
+
+.dark .mention-item.selected {
+  background-color: #4b5563;
+}
+
+.mention-item:hover {
+  background-color: #f9fafb;
+}
+
+.dark .mention-item:hover {
+  background-color: #4b5563;
+}
+
+/* Mention Tags in Editor and Display */
+.mention, a.mention {
+  display: inline-block;
+  padding: 2px 6px;
+  margin: 0 1px;
+  border-radius: 4px;
+  font-weight: 500;
+  text-decoration: none !important;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.mention:hover, a.mention:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-decoration: none !important;
+}
+
+.mention-user, a.mention-user {
+  background-color: #e3f2fd;
+  color: #1976d2 !important;
+  border: 1px solid #bbdefb;
+}
+
+.mention-user:hover, a.mention-user:hover {
+  background-color: #bbdefb;
+  color: #1565c0 !important;
+}
+
+.mention-defect, a.mention-defect {
+  background-color: #fff3e0;
+  color: #f57c00 !important;
+  border: 1px solid #ffe0b2;
+}
+
+.mention-defect:hover, a.mention-defect:hover {
+  background-color: #ffe0b2;
+  color: #e65100 !important;
+}
+
+.dark .mention-user, .dark a.mention-user {
+  background-color: #1e3a8a;
+  color: #93c5fd !important;
+  border-color: #3730a3;
+}
+
+.dark .mention-user:hover, .dark a.mention-user:hover {
+  background-color: #3730a3;
+  color: #bfdbfe !important;
+}
+
+.dark .mention-defect, .dark a.mention-defect {
+  background-color: #92400e;
+  color: #fbbf24 !important;
+  border-color: #d97706;
+}
+
+.dark .mention-defect:hover, .dark a.mention-defect:hover {
+  background-color: #d97706;
+  color: #fde047 !important;
+}
+
+/* Deleted mentions */
+.mention-deleted {
+  opacity: 0.6;
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+.mention-deleted:hover {
+  opacity: 0.8;
+}
+
+/* Rich Text Editor Enhancements */
+.rich-text-editor {
+  position: relative;
+}
+
+.rich-text-editor trix-editor {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 12px;
+  min-height: 120px;
+  background: white;
+  color: #374151;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.rich-text-editor trix-editor:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.dark .rich-text-editor trix-editor {
+  background: #374151;
+  color: #f9fafb;
+  border-color: #4b5563;
+}
+
+.dark .rich-text-editor trix-editor:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+}
+
+/* Custom Table Styling */
+.rich-text-editor table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 16px 0;
+  border: 1px solid #e5e7eb;
+}
+
+.rich-text-editor table th,
+.rich-text-editor table td {
+  border: 1px solid #e5e7eb;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.rich-text-editor table th {
+  background-color: #f9fafb;
+  font-weight: 600;
+}
+
+.rich-text-editor table tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+.dark .rich-text-editor table {
+  border-color: #4b5563;
+}
+
+.dark .rich-text-editor table th,
+.dark .rich-text-editor table td {
+  border-color: #4b5563;
+}
+
+.dark .rich-text-editor table th {
+  background-color: #374151;
+}
+
+.dark .rich-text-editor table tr:nth-child(even) {
+  background-color: #374151;
+}
+
+/* Trix Toolbar Enhancements */
+.rich-text-editor trix-toolbar {
+  border: 1px solid #d1d5db;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  background: #f9fafb;
+  padding: 8px;
+}
+
+.dark .rich-text-editor trix-toolbar {
+  background: #4b5563;
+  border-color: #4b5563;
+}
+
+.rich-text-editor trix-toolbar .trix-button-group {
+  border-radius: 4px;
+  overflow: hidden;
+  margin-right: 8px;
+}
+
+.rich-text-editor trix-toolbar .trix-button {
+  background: white;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  padding: 6px 8px;
+}
+
+.rich-text-editor trix-toolbar .trix-button:hover {
+  background: #f3f4f6;
+}
+
+.rich-text-editor trix-toolbar .trix-button.trix-active {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.dark .rich-text-editor trix-toolbar .trix-button {
+  background: #374151;
+  border-color: #6b7280;
+  color: #f9fafb;
+}
+
+.dark .rich-text-editor trix-toolbar .trix-button:hover {
+  background: #4b5563;
+}
+
+/* Loading Animation for Mentions */
+.mention-dropdown.loading::after {
+  content: '';
+  display: block;
+  width: 20px;
+  height: 20px;
+  margin: 10px auto;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Mention Suggestions Help Text */
+.mention-help {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.dark .mention-help {
+  color: #9ca3af;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .mention-dropdown {
+    min-width: 200px;
+    max-height: 200px;
+  }
+  
+  .rich-text-editor trix-editor {
+    min-height: 100px;
+    padding: 8px;
+  }
+  
+  .rich-text-editor trix-toolbar {
+    padding: 4px;
+  }
+  
+  .rich-text-editor trix-toolbar .trix-button {
+    padding: 4px 6px;
+    font-size: 12px;
+  }
+}
