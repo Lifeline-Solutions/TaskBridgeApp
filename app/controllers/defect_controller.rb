@@ -137,7 +137,7 @@ class DefectController < ApplicationController
       @defect.user_ids = selected_user_ids
 
       if @defect.draft?
-        redirect_to defect_index_path, notice: 'Draft defect saved successfully.'
+        redirect_to @defect, notice: 'Draft defect saved successfully.'
       else
         activity('user_activity')
           .caused_by(current_user)
@@ -160,7 +160,7 @@ class DefectController < ApplicationController
           assigned_names.present? ? "Defect was created and assigned to #{assigned_names} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
         )
 
-        redirect_to defect_index_path, notice: 'Defect was successfully created.'
+        redirect_to @defect, notice: 'Defect was successfully created.'
       end
     else
       set_form_data
@@ -517,6 +517,7 @@ class DefectController < ApplicationController
       :defect_unique,
       user_ids: [],
       label_ids: [],
+      status_ids: [],
       attachments: []
     )
   end

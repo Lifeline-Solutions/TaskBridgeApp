@@ -124,24 +124,17 @@
               </div>
             </div>
 
-            <% if @defect.persisted? %>
-              <div class="relative flex flex-col gap-2 mt-2">
-                <%= select_tag :status_id,
-                              options_from_collection_for_select(@statuses, :id, :name, @defect.statuses.first&.id || Status.find_by(name: "To Do")&.id),
-                              data: { defect_status_url: defect_status_defect_path(@defect) },
-                              class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 p-2.5
-                                      dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500
-                                      dark:focus:border-blue-500" %>
-              </div>
-            <% else %>
-              <div class="relative flex flex-col gap-2 mt-2">
-                <%= f.collection_select :status_ids, @statuses, :id, :name,
-                      { prompt: "Select Status", selected: Status.find_by(name: "To Do")&.id },
-                      class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 p-2.5
-                              dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500
-                              dark:focus:border-blue-500" %>
-              </div>
-            <% end %>
+            
+            <div class="relative flex flex-col gap-2 mt-2">
+              <%= select_tag "defect[status_ids][]",
+                 options_from_collection_for_select(@statuses, :id, :name,
+                   @defect.statuses.first&.id || Status.find_by(name: "To Do")&.id),
+                     class: "border border-gray-300 rounded-lg
+                       focus:ring-primary-600 focus:border-primary-600 p-2.5
+                       dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400
+                       dark:focus:ring-blue-500 dark:focus:border-blue-500" %>
+
+            </div>
 
             <!-- Attachments -->
             <div>
