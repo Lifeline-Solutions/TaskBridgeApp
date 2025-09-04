@@ -74,14 +74,30 @@
 
             <!-- Priority / Users / Labels -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="relative">
+                <label for="assignee-search"
+                      class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+                  Assignee
+                </label>
+
+                <!-- Search input -->
+                <input type="text"
+                      id="assignee-search"
+                      placeholder="Type to search users..."
+                      class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
+                              focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+
+                <!-- Hidden field for selected user ID -->
+                <%= hidden_field_tag 'defect[user_id]', nil, id: "assignee-id-field" %>
+
+                <!-- Results dropdown -->
+                <ul id="assignee-results"
+                    class="absolute mt-1 border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-sm hidden z-10 w-full">
+                </ul>
+              </div>
               <div>
                 <label for="defect_priority" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Priority</label>
                 <%= f.select :priority, options_for_select(['SEVERITY 1','SEVERITY 2','SEVERITY 3','SEVERITY 4'], @defect.priority), { prompt: 'Select Priority' },
-                      class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600', required: true %>
-              </div>
-              <div>
-                <label for="defect_user_ids" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Assignee(s)</label>
-                <%= select_tag 'defect[user_ids]', options_from_collection_for_select(@users, :id, :name, @defect.user_ids),
                       class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600', required: true %>
               </div>
               <div>
@@ -224,5 +240,50 @@
         }
       });
     }
+
+    const assigneeInput = document.getElementById("assignee-search");
+    const assigneeResults = document.getElementById("assignee-results");
+    const assigneeHidden = document.getElementById("assignee-id-field");
+
+    // Embed @users directly into JS
+    let assigneeUsers = <%= raw @users.map { |u| { id: u.id, name: u.name } }.to_json %>;
+
+    assigneeInput.addEventListener("input", () => {
+      const query = assigneeInput.value.toLowerCase();
+      assigneeResults.innerHTML = "";
+
+      if (query.length === 0) {
+        assigneeResults.classList.add("hidden");
+        return;
+      }
+
+      const matches = assigneeUsers.filter(user =>
+        user.name.toLowerCase().includes(query)
+      );
+
+      if (matches.length > 0) {
+        assigneeResults.classList.remove("hidden");
+        matches.forEach(user => {
+          const li = document.createElement("li");
+          li.textContent = user.name;
+          li.className = "px-3 py-2 hover:bg-blue-500 hover:text-white cursor-pointer";
+          li.addEventListener("click", () => {
+            assigneeInput.value = user.name;
+            assigneeHidden.value = user.id;
+            assigneeResults.classList.add("hidden");
+          });
+          assigneeResults.appendChild(li);
+        });
+      } else {
+        assigneeResults.classList.add("hidden");
+      }
+    });
+
+    // Hide results if clicking outside
+    document.addEventListener("click", (e) => {
+      if (!assigneeResults.contains(e.target) && e.target !== assigneeInput) {
+        assigneeResults.classList.add("hidden");
+      }
+    });
   });
 </script>
