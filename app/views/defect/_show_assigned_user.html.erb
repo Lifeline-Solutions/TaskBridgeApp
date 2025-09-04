@@ -1,15 +1,20 @@
-<div class="flex flex-wrap items-center gap-2">
-  <% if @defect.users.any? %> Assigned to:
-    <% @defect.users.each do |user| %>
-          <span class="text-base">
-              <%= user.name %>
-            <% unless user == @defect.users.last %>,
-            <% end %>
-          </span>
+<div class="flex flex-col gap-2">
+  <!-- Assignee -->
+  <div class="flex items-center gap-2">
+    <span class="text-gray-600 w-24">Assignee</span>
+    <% if @defect.users.any? %>
+      <% @defect.users.each do |user| %>
+        <div class="flex items-center gap-2">
+          <!-- Avatar circle with initials -->
+          <div class="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-900 text-white text-xs font-semibold">
+            <%= user.name.split.map { |n| n[0] }.join.upcase %>
+          </div>
+          <!-- Full name -->
+          <span class="text-gray-800"><%= user.name %></span>
+        </div>
+      <% end %>
+    <% else %>
+      <p class="text-red-500 text-sm">No agents assigned</p>
     <% end %>
-  <% else %>
-    <p class="text-red-500 text-sm">
-      No agents assigned. Please assign at least one agent to this ticket.
-    </p>
-  <% end %>
+  </div>
 </div>
