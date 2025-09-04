@@ -91,7 +91,7 @@ Rails.application.routes.draw do
       resources :ratings, only: :create
     end
   end
-  
+
   resources :product do
     member do
       post :add_user
@@ -142,6 +142,14 @@ Rails.application.routes.draw do
     end
   end
 
+  # Mention system routes
+  resources :mention, only: [] do
+    collection do
+      get :users
+      get :defects
+    end
+  end
+
   resources :labels, only: [:index, :create]
 
   resources :projects, controller: 'project' do
@@ -185,7 +193,7 @@ Rails.application.routes.draw do
 
   resources :groupwares # Independent route for AJAX requests
 
-  
+
   resources :client
   resources :status
   resources :team do
