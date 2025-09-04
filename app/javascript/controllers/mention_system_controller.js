@@ -302,6 +302,7 @@ export default class extends Controller {
                data-action="click->mention-system#selectItem"
                data-id="${item.id}"
                data-name="${item.defect_unique}"
+               data-summary="${item.summary}"
                data-type="defect">
             <div class="flex items-center space-x-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
               <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-xs">
@@ -354,9 +355,10 @@ export default class extends Controller {
     const item = event.currentTarget
     const id = item.dataset.id
     const name = item.dataset.name
+    const summary = item.dataset.summary
     const type = item.dataset.type
 
-    this.insertMention(id, name, type)
+    this.insertMention(id, name, type, summary)
     this.closeMentionDropdown()
   }
 
@@ -367,7 +369,7 @@ export default class extends Controller {
     }
   }
 
-  insertMention(id, name, type) {
+  insertMention(id, name, type, summary = null) {
     if (!this.trixEditor || this.mentionStartPosition === null) return
 
     const editor = this.trixEditor.editor
@@ -378,8 +380,14 @@ export default class extends Controller {
     const startPos = this.mentionStartPosition
     const endPos = currentPosition
     
-    // Create the mention text
-    const mentionText = type === 'user' ? `@${name}` : `#${name}`
+    // Create the mention text - include summary for defects
+    let mentionText
+    if (type === 'user') {
+      mentionText = `@${name}`
+    } else {
+      // For defects, include summary if available
+      mentionText = summary ? `#${name}: ${summary}` : `#${name}`
+    }
     
     // Replace the trigger and query text with the mention
     editor.setSelectedRange([startPos, endPos])
