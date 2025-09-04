@@ -151,7 +151,7 @@ class DefectController < ApplicationController
 
         # Process mentions in defect content asynchronously
         ProcessMentionsJob.perform_later(
-          @defect.content.body.to_html,
+          @defect.content&.body&.to_html,
           @defect.id,
           current_user.id,
           'defect_content'
@@ -234,7 +234,7 @@ class DefectController < ApplicationController
 
       # Process mentions in updated defect content asynchronously
       ProcessMentionsJob.perform_later(
-        @defect.content.body.to_html,
+        @defect.content&.body&.to_html,
         @defect.id,
         current_user.id,
         'defect_content'

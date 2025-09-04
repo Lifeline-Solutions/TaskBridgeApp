@@ -7,8 +7,6 @@ export default class extends Controller {
   }
 
   connect() {
-    console.log('MentionSystemController connected!')
-    
     this.isOpen = false
     this.currentMentionType = null
     this.currentQuery = ""
@@ -27,7 +25,6 @@ export default class extends Controller {
     const trixEditor = this.element.querySelector('trix-editor')
     if (trixEditor) {
       this.trixEditor = trixEditor
-      console.log('Found Trix editor:', trixEditor)
       
       // Use a debounced approach to avoid interrupting typing
       this.mentionCheckTimer = null
@@ -36,7 +33,6 @@ export default class extends Controller {
       trixEditor.addEventListener('trix-change', this.debouncedMentionCheck.bind(this))
       trixEditor.addEventListener('keydown', this.handleKeyDown.bind(this))
     } else {
-      console.log('No Trix editor found, falling back to regular editor')
       // Fallback for regular editors
       if (this.hasEditorTarget) {
         this.editorTarget.addEventListener('keyup', this.debouncedMentionCheck.bind(this))
@@ -58,8 +54,6 @@ export default class extends Controller {
   }
 
   handleKeyDown(event) {
-    console.log('Key down:', event.key)
-    
     if (!this.isOpen) {
       // If dropdown is not open, let normal processing happen
       return
@@ -100,16 +94,12 @@ export default class extends Controller {
     const document = editor.getDocument()
     const text = document.toString()
     
-    console.log('Checking for mentions in text:', text.substring(Math.max(0, position - 20), position + 5))
-    console.log('Current position:', position)
-    
     // Find the current text before cursor
     const textBeforeCursor = text.substring(0, position)
     
     // Check for @ mentions
     const atMatch = this.findMentionTrigger(textBeforeCursor, '@')
     if (atMatch) {
-      console.log('Found @ mention:', atMatch)
       this.currentMentionType = 'user'
       this.currentQuery = atMatch.query
       this.mentionStartPosition = atMatch.startPosition
@@ -120,7 +110,6 @@ export default class extends Controller {
     // Check for # mentions  
     const hashMatch = this.findMentionTrigger(textBeforeCursor, '#')
     if (hashMatch) {
-      console.log('Found # mention:', hashMatch)
       this.currentMentionType = 'defect'
       this.currentQuery = hashMatch.query
       this.mentionStartPosition = hashMatch.startPosition
@@ -226,7 +215,6 @@ export default class extends Controller {
 
   async fetchUsers(query = '') {
     try {
-      console.log('Fetching users with query:', query)
       const url = new URL('/mention/users', window.location.origin)
       url.searchParams.append('query', query)
       url.searchParams.append('defect_id', this.defectIdValue)
@@ -241,7 +229,6 @@ export default class extends Controller {
       if (!response.ok) throw new Error('Failed to fetch users')
       
       const users = await response.json()
-      console.log('Fetched users:', users)
       this.cachedUsers = users
       return users
     } catch (error) {
@@ -252,7 +239,6 @@ export default class extends Controller {
 
   async fetchDefects(query = '') {
     try {
-      console.log('Fetching defects with query:', query)
       const url = new URL('/mention/defects', window.location.origin)
       url.searchParams.append('query', query)
       url.searchParams.append('current_defect_id', this.defectIdValue)
@@ -267,7 +253,6 @@ export default class extends Controller {
       if (!response.ok) throw new Error('Failed to fetch defects')
       
       const defects = await response.json()
-      console.log('Fetched defects:', defects)
       this.cachedDefects = defects
       return defects
     } catch (error) {
@@ -277,8 +262,6 @@ export default class extends Controller {
   }
 
   showMentionDropdown(items) {
-    console.log('Showing dropdown with items:', items)
-    
     if (items.length === 0) {
       this.closeMentionDropdown()
       return
@@ -387,8 +370,6 @@ export default class extends Controller {
   insertMention(id, name, type) {
     if (!this.trixEditor || this.mentionStartPosition === null) return
 
-    console.log('Inserting mention:', { id, name, type, startPos: this.mentionStartPosition })
-
     const editor = this.trixEditor.editor
     const document = editor.getDocument()
     const currentPosition = editor.getPosition()
@@ -419,7 +400,6 @@ export default class extends Controller {
   }
 
   closeMentionDropdown() {
-    console.log('Closing mention dropdown')
     this.isOpen = false
     this.currentMentionType = null
     this.currentQuery = ""
@@ -461,7 +441,6 @@ export default class extends Controller {
   // Method called before form submission
   beforeSubmit(event) {
     const mentions = this.extractMentions()
-    console.log('Extracted mentions before submit:', mentions)
     return mentions
   }
 }

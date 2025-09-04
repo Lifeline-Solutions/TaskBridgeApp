@@ -180,7 +180,7 @@ class MentionNotificationService
     elsif product.respond_to?(:title) && product.title.present?
       product.title
     else
-      "Product ##{product.id[0..7]}"
+      "Product ##{product.id.to_s[0..7]}"
     end
   end
 

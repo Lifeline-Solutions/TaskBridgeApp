@@ -59,7 +59,13 @@ class MentionController < ApplicationController
         defect_unique: defect.defect_unique,
         summary: defect.summary,
         priority: defect.priority,
-        product_name: defect.product&.content&.to_plain_text&.truncate(30) || 'No product'
+        product_name: (
+          if defect.product&.content.respond_to?(:to_plain_text)
+            defect.product.content.to_plain_text.truncate(30)
+          else
+            'No product'
+          end
+        )
       }
     end
 
