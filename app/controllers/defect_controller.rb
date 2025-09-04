@@ -487,10 +487,9 @@ class DefectController < ApplicationController
 
     # Get all available statuses for the workflow
     @statuses = Status.where(name: [
-                               'To Do', 'In Progress', 'On hold', 'Awaiting client info',
-                               'Awaiting build', 'QA testing', 'Closed', 'Failed QA',
-                               'Blocked', 'Reopened'
-                             ])
+             'TO DO', 'In Progress', 'On-Hold', 'Awaiting Client Info', 'Awaiting Build',
+             'QA Testing', 'Closed', 'Failed QA', 'Blocked', 'Reopened'
+    ])
   end
 
   def set_defect

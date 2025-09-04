@@ -124,6 +124,25 @@
               </div>
             </div>
 
+            <% if @defect.persisted? %>
+              <div class="relative flex flex-col gap-2 mt-2">
+                <%= select_tag :status_id,
+                              options_from_collection_for_select(@statuses, :id, :name, @defect.statuses.first&.id || Status.find_by(name: "To Do")&.id),
+                              data: { defect_status_url: defect_status_defect_path(@defect) },
+                              class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 p-2.5
+                                      dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500
+                                      dark:focus:border-blue-500" %>
+              </div>
+            <% else %>
+              <div class="relative flex flex-col gap-2 mt-2">
+                <%= f.collection_select :status_ids, @statuses, :id, :name,
+                      { prompt: "Select Status", selected: Status.find_by(name: "To Do")&.id },
+                      class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 p-2.5
+                              dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500
+                              dark:focus:border-blue-500" %>
+              </div>
+            <% end %>
+
             <!-- Attachments -->
             <div>
               <label for="defect_attachments" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Attachments</label>
@@ -344,5 +363,28 @@
         bankingTypeResults.classList.add("hidden");
       }
     });
+
+    const statusDropdown = document.querySelector("select[name='status_id']");
+
+  if (statusDropdown) {
+    statusDropdown.addEventListener("change", () => {
+      const url = statusDropdown.dataset.defectStatusUrl;
+      const statusId = statusDropdown.value;
+
+      fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": document.querySelector("meta[name='csrf-token']").content
+        },
+        body: JSON.stringify({ status_id: statusId })
+      })
+      .then(resp => resp.json())
+      .then(data => {
+        console.log("Status updated:", data);
+      })
+      .catch(err => console.error("Status update failed:", err));
+    });
+  }
   });
 </script>
