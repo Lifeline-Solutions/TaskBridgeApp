@@ -1,11 +1,13 @@
 <% if message.content.present? %>
   <span class="break-words overflow-hidden">
-    <%= sanitize(
-          raw(
-            message.content.to_trix_html.gsub(/\[.*?\]/, '').strip
-          ),
-          tags: %w[strong em b i u p br span div h1 h2 h3 h4 h5 h6 blockquote ul ol li a table tr td th thead tbody],
-          attributes: %w[href style border]
+    <%= render_mentions(
+          sanitize(
+            raw(
+              message.content.to_trix_html.gsub(/\[.*?\]/, '').strip
+            ),
+            tags: %w[strong em b i u p br span div h1 h2 h3 h4 h5 h6 blockquote ul ol li a table tr td th thead tbody],
+            attributes: %w[href style border class title data-mention-id data-mention-type target rel]
+          )
         )
     %>
 
