@@ -1,0 +1,176 @@
+<% if item && item.content.present? %>
+  <span class="break-words overflow-hidden">
+    <%= sanitize(
+          raw(
+            item.content.to_trix_html.gsub(/\[.*?\]/, '').strip
+          ),
+          tags: %w[strong em b i u p br span div h1 h2 h3 h4 h5 h6 blockquote ul ol li a table tr td th thead tbody],
+          attributes: %w[href style border]
+        )
+    %>
+
+    <% if item.content.body.attachments.any? %>
+      <% item.content.body.attachments.each_with_index do |attachment, idx| %>
+        <% if attachment.attachable.is_a?(ActiveStorage::Blob) && attachment.attachable.image? %>
+          <div class="mb-2 image-preview-block flex items-center gap-3">
+            <a href="#"
+               class="image-preview-link"
+               data-image-url="<%= rails_blob_url(attachment.attachable) %>"
+               data-image-download-url="<%= rails_blob_path(attachment.attachable, disposition: 'attachment', only_path: true) %>"
+               data-image-name="<%= attachment.attachable.filename.to_s %>"
+               data-image-size="<%= number_to_human_size(attachment.attachable.byte_size) %>"
+               data-image-created-at="<%= attachment.attachable.created_at.strftime('%Y-%m-%d %H:%M') %>"
+               data-image-index="<%= idx %>">
+              <img src="<%= rails_representation_url(attachment.attachable.variant(resize_to_limit: [48,48])) %>"
+                   alt="Image Preview"
+                   class="max-w-xs cursor-pointer pl-2 image-preview-thumb">
+            </a>
+            <%= link_to attachment.attachable.filename.to_s, rails_blob_path(attachment.attachable, disposition: 'attachment', only_path: true), target: "_blank", download: true, class: "text-blue-600 hover:underline pl-2" %>
+          </div>
+        <% elsif attachment.attachable.is_a?(ActiveStorage::Blob) %>
+          <!-- Non-image attachments -->
+          <%= link_to attachment.attachable.filename.to_s, rails_blob_path(attachment.attachable, disposition: 'attachment', only_path: true), class: "text-blue-600 hover:underline pl-2" %>
+        <% end %>
+      <% end %>
+    <% end %>
+  </span>
+
+  <!-- Modal for image magnification -->
+  <div id="imageModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-80 flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-lg flex flex-row overflow-hidden max-w-3xl w-full">
+      <div class="flex-1 flex items-center justify-center p-4 bg-gray-900">
+        <img id="modalImage" src="" alt="Magnified Image" class="max-h-[75vh] max-w-[50vw] rounded shadow-lg">
+      </div>
+      <div class="w-64 p-4 bg-gray-100 border-l">
+        <h3 class="font-bold text-lg mb-2">Image Info</h3>
+        <p><strong>Name:</strong> <span id="modalImageName"></span></p>
+        <p><strong>Size:</strong> <span id="modalImageSize"></span></p>
+        <p><strong>Created:</strong> <span id="modalImageCreated"></span></p>
+        <p><strong>Updated:</strong> <span id="modalImageUpdated"></span></p>
+        <div class="mt-3 flex gap-2">
+          <a id="downloadImage" href="#" download class="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700">Download</a>
+          <button id="closeModal" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<script>
+  // Will reload modal markup to ensure listeners are always fresh after closing
+  function reloadImageModal() {
+    var modal = document.getElementById('imageModal');
+    if (!modal) return;
+    // Remove modal from DOM
+    modal.parentNode.removeChild(modal);
+    // Insert fresh modal markup (same as erb above)
+    var modalHtml = `
+      <div id="imageModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-80 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-lg flex flex-row overflow-hidden max-w-3xl w-full">
+          <div class="flex-1 flex items-center justify-center p-4 bg-gray-900">
+            <img id="modalImage" src="" alt="Magnified Image" class="max-h-[75vh] max-w-[50vw] rounded shadow-lg">
+          </div>
+          <div class="w-64 p-4 bg-gray-100 border-l">
+            <h3 class="font-bold text-lg mb-2">Image Info</h3>
+            <p><strong>Name:</strong> <span id="modalImageName"></span></p>
+            <p><strong>Size:</strong> <span id="modalImageSize"></span></p>
+            <p><strong>Created:</strong> <span id="modalImageCreated"></span></p>
+            <p><strong>Updated:</strong> <span id="modalImageUpdated"></span></p>
+            <div class="mt-3 flex gap-2">
+              <a id="downloadImage" href="#" download class="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700">Download</a>
+              <button id="closeModal" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    // Reinitialize listeners
+    initImagePreviewModal();
+  }
+
+  function initImagePreviewModal() {
+    var modal = document.getElementById("imageModal");
+    var modalImage = document.getElementById("modalImage");
+    var nameEl = document.getElementById("modalImageName");
+    var sizeEl = document.getElementById("modalImageSize");
+    var createdEl = document.getElementById("modalImageCreated");
+    var updatedEl = document.getElementById("modalImageUpdated");
+    var downloadBtn = document.getElementById("downloadImage");
+    var closeBtn = document.getElementById("closeModal");
+
+    function openModalFromLink(link) {
+      if (!link) return;
+      modalImage.src = link.dataset.imageUrl || "";
+      nameEl.textContent = link.dataset.imageName || "";
+      sizeEl.textContent = link.dataset.imageSize || "";
+      createdEl.textContent = link.dataset.imageCreatedAt || "";
+      updatedEl.textContent = link.dataset.imageUpdatedAt || "";
+
+      var downloadUrl = link.dataset.imageDownloadUrl || link.dataset.imageUrl || "#";
+      downloadBtn.href = downloadUrl;
+      downloadBtn.setAttribute("download", link.dataset.imageName || "image");
+
+      modal.classList.remove("hidden");
+    }
+
+    function closeModal() {
+      modal.classList.add("hidden");
+      setTimeout(function () {
+        modalImage.src = "";
+        reloadImageModal(); // Re-render modal to reset all event listeners!
+      }, 150);
+    }
+
+    document.querySelectorAll(".image-preview-link").forEach(function (link) {
+      link.addEventListener("click", function (e) {
+        e.preventDefault();
+        openModalFromLink(link);
+      });
+    });
+
+    if (closeBtn) {
+      closeBtn.addEventListener("click", function () {
+        closeModal();
+      });
+    }
+
+    if (modal) {
+      modal.addEventListener("click", function (e) {
+        if (e.target === modal) {
+          closeModal();
+        }
+      });
+    }
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+        closeModal();
+      }
+    });
+  }
+
+  // Initialize on DOM ready and Turbo load
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initImagePreviewModal);
+  } else {
+    initImagePreviewModal();
+  }
+  document.addEventListener("turbo:load", initImagePreviewModal);
+</script>
+
+<style>
+    #imageModal {
+        transition: opacity 0.2s;
+    }
+    #imageModal.hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
+    .image-preview-thumb {
+        transition: transform 0.2s;
+    }
+    .image-preview-thumb:hover {
+        transform: scale(1.08);
+        box-shadow: 0 0 8px #222;
+    }
+</style>
