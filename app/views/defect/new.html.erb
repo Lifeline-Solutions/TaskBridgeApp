@@ -39,9 +39,23 @@
             data: { action: 'change->project-modules#loadModules', "project-modules-target": 'projectSelect' } %>
         </div>
         <div class="flex flex-col sm:flex-row gap-2">
-          <%= f.collection_select :banking_type_id, (@banking_types || []), :id, :name,
-            { prompt: 'Select Banking Type' },
-            class: 'flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600', required: true %>
+          <div class="relative">
+            <!-- Search input -->
+            <input type="text"
+                  id="banking-type-search"
+                  placeholder="Type to search banking types..."
+                  value="<%= @defect.banking_type&.name %>"
+                  class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
+                          focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+
+            <!-- Hidden field for selected banking_type_id -->
+            <%= f.hidden_field :banking_type_id, id: "banking-type-id-field" %>
+
+            <!-- Results dropdown -->
+            <ul id="banking-type-results"
+                class="absolute mt-1 border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-sm hidden z-10 w-full">
+            </ul>
+          </div>
 
           <%= f.collection_select :qa_module_id, [], :id, :name,
             { prompt: 'Select Module' },
@@ -283,6 +297,51 @@
     document.addEventListener("click", (e) => {
       if (!assigneeResults.contains(e.target) && e.target !== assigneeInput) {
         assigneeResults.classList.add("hidden");
+      }
+    });
+
+    const bankingTypeInput = document.getElementById("banking-type-search");
+    const bankingTypeResults = document.getElementById("banking-type-results");
+    const bankingTypeHidden = document.getElementById("banking-type-id-field");
+
+    // Embed @banking_types directly into JS
+    let bankingTypes = <%= raw (@banking_types || []).map { |bt| { id: bt.id, name: bt.name } }.to_json %>;
+
+    bankingTypeInput.addEventListener("input", () => {
+      const query = bankingTypeInput.value.toLowerCase();
+      bankingTypeResults.innerHTML = "";
+
+      if (query.length === 0) {
+        bankingTypeResults.classList.add("hidden");
+        return;
+      }
+
+      const matches = bankingTypes.filter(bt =>
+        bt.name.toLowerCase().includes(query)
+      );
+
+      if (matches.length > 0) {
+        bankingTypeResults.classList.remove("hidden");
+        matches.forEach(bt => {
+          const li = document.createElement("li");
+          li.textContent = bt.name;
+          li.className = "px-3 py-2 hover:bg-blue-500 hover:text-white cursor-pointer";
+          li.addEventListener("click", () => {
+            bankingTypeInput.value = bt.name;
+            bankingTypeHidden.value = bt.id;
+            bankingTypeResults.classList.add("hidden");
+          });
+          bankingTypeResults.appendChild(li);
+        });
+      } else {
+        bankingTypeResults.classList.add("hidden");
+      }
+    });
+
+    // Hide results if clicking outside
+    document.addEventListener("click", (e) => {
+      if (!bankingTypeResults.contains(e.target) && e.target !== bankingTypeInput) {
+        bankingTypeResults.classList.add("hidden");
       }
     });
   });
