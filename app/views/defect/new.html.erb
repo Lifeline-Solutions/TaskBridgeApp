@@ -102,7 +102,7 @@
                               focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
 
                 <!-- Hidden field for selected user ID -->
-                <%= hidden_field_tag 'defect[user_id]', nil, id: "assignee-id-field" %>
+                <%= hidden_field_tag 'defect[user_ids][]', nil, id: "assignee-id-field" %>
 
                 <!-- Results dropdown -->
                 <ul id="assignee-results"

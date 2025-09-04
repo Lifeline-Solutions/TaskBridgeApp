@@ -126,7 +126,9 @@ class DefectController < ApplicationController
   def create
     @defect = Defect.new(defect_params)
     @defect.creator = current_user
-    selected_user_ids = params[:defect][:user_ids]
+    selected_user_ids = Array(params[:defect][:user_ids]).reject(&:blank?)
+
+    # selected_user_ids = params[:defect][:user_ids]
 
     # Explicitly set draft flag based on which button was clicked
     @defect.draft = params[:commit] == 'draft'
