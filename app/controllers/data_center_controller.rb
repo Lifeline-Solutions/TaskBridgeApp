@@ -416,7 +416,7 @@ class DataCenterController < ApplicationController
       base_scope = Ticket.joins(:users, project: :client)
         .joins(:statuses)
         .joins(:add_statuses)
-        .where(users: { id: user_ids })
+        .where(users: { id: user_ids, active: true })
 
       # Apply role-based filtering if not admin or observer
       @tickets = if current_user.has_role?(:admin) || current_user.has_role?(:observer)
