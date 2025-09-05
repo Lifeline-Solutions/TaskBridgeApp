@@ -126,7 +126,9 @@ class DefectController < ApplicationController
   def create
     @defect = Defect.new(defect_params)
     @defect.creator = current_user
-    selected_user_ids = params[:defect][:user_ids]
+    selected_user_ids = Array(params[:defect][:user_ids]).reject(&:blank?)
+
+    # selected_user_ids = params[:defect][:user_ids]
 
     # Explicitly set draft flag based on which button was clicked
     @defect.draft = params[:commit] == 'draft'
@@ -135,7 +137,7 @@ class DefectController < ApplicationController
       @defect.user_ids = selected_user_ids
 
       if @defect.draft?
-        redirect_to defect_index_path, notice: 'Draft defect saved successfully.'
+        redirect_to @defect, notice: 'Draft defect saved successfully.'
       else
         activity('user_activity')
           .caused_by(current_user)
@@ -158,7 +160,7 @@ class DefectController < ApplicationController
           assigned_names.present? ? "Defect was created and assigned to #{assigned_names} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
         )
 
-        redirect_to defect_index_path, notice: 'Defect was successfully created.'
+        redirect_to @defect, notice: 'Defect was successfully created.'
       end
     else
       set_form_data
@@ -485,10 +487,9 @@ class DefectController < ApplicationController
 
     # Get all available statuses for the workflow
     @statuses = Status.where(name: [
-                               'To Do', 'In Progress', 'On hold', 'Awaiting client info',
-                               'Awaiting build', 'QA testing', 'Closed', 'Failed QA',
-                               'Blocked', 'Reopened'
-                             ])
+             'TO DO', 'In Progress', 'On-Hold', 'Awaiting Client Info', 'Awaiting Build',
+             'QA Testing', 'Closed', 'Failed QA', 'Blocked', 'Reopened'
+    ])
   end
 
   def set_defect
@@ -516,6 +517,7 @@ class DefectController < ApplicationController
       :defect_unique,
       user_ids: [],
       label_ids: [],
+      status_ids: [],
       attachments: []
     )
   end

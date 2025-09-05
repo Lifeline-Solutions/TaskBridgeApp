@@ -61,8 +61,10 @@ class Defect < ApplicationRecord
   end
 
   def set_default_status
-    default_status = Status.find_by(name: 'TO DO')
-    statuses << default_status if default_status
+    if statuses.empty?
+      default_status = Status.find_by(name: 'To Do')
+      statuses << default_status if default_status
+    end
   end
 
   def set_default_issue_type
