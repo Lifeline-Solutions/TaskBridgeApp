@@ -62,15 +62,15 @@
               <div class="flex-1">
                 <label for="defect_qa_module_id" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Modulesss</label>
                 <%= f.collection_select :qa_module_id, 
-      @qa_modules, :id, :name,
-      { selected: @defect.qa_module_id, prompt: "Select Module" },
-      { class: "w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600",
-        required: true,
-        data: { 
-          "project-modules-target": "moduleSelect",
-          currentModuleId: @defect.qa_module_id, # 🔥 preselect
-          action: "change->project-modules#loadSubmodules" 
-        } } %>
+                    @qa_modules, :id, :name,
+                    { selected: @defect.qa_module_id, prompt: "Select Module" },
+                    { class: "w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600",
+                      required: true,
+                      data: { 
+                        "project-modules-target": "moduleSelect",
+                        currentModuleId: @qa_modules,
+                        action: "change->project-modules#loadSubmodules" 
+                      } } %>
 
               </div>
 
@@ -98,27 +98,20 @@
               <label for="defect_content" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Description</label>
               <%= text_area_tag 'defect[content]', @defect.content&.body&.to_s, id: 'defect_content', class: 'min-h-[200px] w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600', data: { required: true } %>
               <p id="defect_content_error" class="mt-1 text-xs text-red-600 hidden">Description is required.</p>
-              <p class="mention-help mt-1 text-xs text-gray-500 dark:text-gray-400">
-                💡 Type <strong>@</strong> to mention users or <strong>#</strong> to reference defects. Use <strong>ESC</strong> to close suggestions.
-              </p>
             </div>
 
             <!-- Priority / Users / Status -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <!-- Assignee Search -->
               <div class="relative">
-                <label for="assignee-search" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Assignee</label>
-                <input type="text"
-                      id="assignee-search"
-                      placeholder="Type to search users..."
-                      value="<%= @defect.users.first&.name %>"
-                      class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+                <%= f.label :user_ids, "Assignee", class: "block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase" %>
 
-                <%= hidden_field_tag 'defect[user_ids][]', @defect.users.first&.id, id: "assignee-id-field" %>
-
-                <ul id="assignee-results"
-                    class="absolute mt-1 border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-sm hidden z-10 w-full">
-                </ul>
+                <%= f.collection_select :user_ids,
+                      @users,                # list of users from controller
+                      :id, :name,            # value and label
+                      { prompt: "Select Assignee" },
+                      { class: "w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600",
+                        required: true } %>
               </div>
 
               <!-- Priority -->
@@ -137,16 +130,6 @@
                      options_from_collection_for_select(@statuses, :id, :name, @defect.statuses.first&.id),
                      { class: "w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" } %>
               </div>
-            </div>
-
-            <!-- Labels -->
-            <div>
-              <label for="defect_label_ids_modal" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Labels</label>
-              <select id="defect_label_ids_modal" name="defect[label_ids][]" multiple placeholder="Labels: Type to search or add. Press Enter to create new." class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600">
-                <% Label.where(deleted_on: nil).order(:name).each do |label| %>
-                  <option value="<%= label.id %>" <%= @defect.labels.include?(label) ? 'selected' : '' %>><%= label.name %></option>
-                <% end %>
-              </select>
             </div>
 
             <!-- Attachments -->
@@ -212,12 +195,6 @@
               <%= f.submit "Update Defect",
                     data: { disable_with: "Updating..." },
                     class: "bg-[#3F8CFF] hover:bg-[#3A81EB] text-white font-medium rounded-lg px-6 py-2 shadow-md" %>
-
-              <%= f.submit "Save as Draft",
-                    name: "commit",
-                    value: "draft",
-                    data: { disable_with: "Saving..." },
-                    class: "bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg px-6 py-2 shadow-md" %>
             </div>
           </div>
         <% end %>
