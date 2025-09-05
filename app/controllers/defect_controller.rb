@@ -200,7 +200,7 @@ class DefectController < ApplicationController
     @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
       .select do |product|
       product.statuses.any? do |status|
-        status.name == 'Pre Quality Assurance' || status.name == 'End Of Quality Assurance'
+        ['Pre Quality Assurance', 'End Of Quality Assurance'].include?(status.name)
       end
     end.map do |product|
       client_name = product.client&.name || 'No Client'
@@ -487,9 +487,9 @@ class DefectController < ApplicationController
 
     # Get all available statuses for the workflow
     @statuses = Status.where(name: [
-             'TO DO', 'In Progress', 'On-Hold', 'Awaiting Client Info', 'Awaiting Build',
-             'QA Testing', 'Closed', 'Failed QA', 'Blocked', 'Reopened'
-    ])
+                               'TO DO', 'In Progress', 'On-Hold', 'Awaiting Client Info', 'Awaiting Build',
+                               'QA Testing', 'Closed', 'Failed QA', 'Blocked', 'Reopened'
+                             ])
   end
 
   def set_defect
