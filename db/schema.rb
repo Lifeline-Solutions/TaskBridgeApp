@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_02_074743) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_05_123209) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -133,6 +133,16 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_02_074743) do
     t.string "name", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "created_by_id"
+    t.uuid "modified_by_id"
+    t.uuid "deleted_by_id"
+    t.datetime "deleted_on"
+    t.boolean "archive_status", default: false, null: false
+    t.index ["archive_status"], name: "index_banking_types_on_archive_status"
+    t.index ["created_by_id"], name: "index_banking_types_on_created_by_id"
+    t.index ["deleted_by_id"], name: "index_banking_types_on_deleted_by_id"
+    t.index ["deleted_on"], name: "index_banking_types_on_deleted_on"
+    t.index ["modified_by_id"], name: "index_banking_types_on_modified_by_id"
     t.index ["name"], name: "index_banking_types_on_name", unique: true
   end
 
@@ -276,7 +286,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_02_074743) do
     t.uuid "banking_type_id"
     t.uuid "creator_id"
     t.uuid "product_id"
-    t.string "summary"
+    t.string "summary", null: false
     t.string "defect_unique"
     t.string "issue_type", default: "Bug"
     t.boolean "draft", default: false, null: false
@@ -962,6 +972,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_02_074743) do
   add_foreign_key "addusers", "users"
   add_foreign_key "assignees", "projects"
   add_foreign_key "assignees", "users"
+  add_foreign_key "banking_types", "users", column: "created_by_id"
+  add_foreign_key "banking_types", "users", column: "deleted_by_id"
+  add_foreign_key "banking_types", "users", column: "modified_by_id"
   add_foreign_key "boards", "products"
   add_foreign_key "boards", "users"
   add_foreign_key "clients", "users"
