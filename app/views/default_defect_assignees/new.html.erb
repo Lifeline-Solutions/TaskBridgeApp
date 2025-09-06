@@ -1,0 +1,21 @@
+<turbo-frame id="modal">
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6">
+      <h3 class="text-lg font-semibold mb-4">Set Default Assignee</h3>
+
+      <%= form_with url: default_defect_assignee_path, method: :post, local: false, data: { turbo_frame: "modal" } do %>
+        <div class="mb-4">
+          <label class="block mb-2 text-sm font-medium">User</label>
+          <%= select_tag :user_id,
+                options_from_collection_for_select(@users, :id, :name, DefaultDefectAssignee.user_id),
+                class: "w-full border rounded px-3 py-2 text-sm" %>
+        </div>
+
+        <div class="flex justify-end gap-2">
+          <%= submit_tag "Save", class: "px-4 py-2 bg-blue-600 text-white rounded" %>
+          <%= link_to "Cancel", "#", data: { turbo_frame: "modal", action: "click->turbo#visit" }, class: "px-4 py-2 bg-gray-200 rounded" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</turbo-frame>
