@@ -120,54 +120,181 @@ class DefectController < ApplicationController
 
   def new
     @defect = Defect.new
+
+    default_assignee = DefaultDefectAssignee.where(archive_status: false).order(created_at: :desc).first
+    if default_assignee&.user_id.present?
+      @defect.user_ids = [default_assignee.user_id]
+    end
+
     set_form_data
   end
 
+  # def create
+  #   @defect = Defect.new(defect_params)
+  #   @defect.creator = current_user
+
+  #   # Extract user_ids from params and reject blanks
+  #   selected_user_ids = Array(params[:defect][:user_ids]).reject(&:blank?)
+
+  #   # If no assignee(s) were selected, fall back to the global default
+  #   if selected_user_ids.blank?
+  #     default_assignee = DefaultDefectAssignee.where(archive_status: false).order(created_at: :desc).first
+  #     if default_assignee&.user_id.present?
+  #       selected_user_ids = [default_assignee.user_id.to_s]
+  #     end
+  #   end
+
+  #   # Assign before saving
+  #   @defect.user_ids = selected_user_ids
+
+  #   # Explicitly set draft flag based on which button was clicked
+  #   @defect.draft = params[:commit] == 'draft'
+
+  #   if @defect.save
+  #     if @defect.draft?
+  #       redirect_to @defect, notice: 'Draft defect saved successfully.'
+  #     else
+  #       activity('user_activity')
+  #         .caused_by(current_user)
+  #         .performed_on(@defect)
+  #         .event('defect.create')
+  #         .with_properties(defect_attributes: @defect.attributes, assigned_user_ids: selected_user_ids)
+  #         .log("Created Defect ##{@defect.id}, assigned to User IDs: #{selected_user_ids.join(', ')}")
+
+  #       ProcessMentionsJob.perform_later(
+  #         @defect.content&.body&.to_html,
+  #         @defect.id,
+  #         current_user.id,
+  #         'defect_content'
+  #       )
+
+  #       assigned_names = @defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', ')
+  #       log_event(
+  #         @defect, current_user, 'Created and Assigned',
+  #         assigned_names.present? ? "Defect was created and assigned to #{assigned_names} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
+  #       )
+
+  #       redirect_to @defect, notice: 'Defect was successfully created.'
+  #     end
+  #   else
+  #     set_form_data
+  #     flash.now[:alert] = "Defect creation failed: #{@defect.errors.full_messages.join(', ')}"
+  #     render :new, status: :unprocessable_entity
+  #   end
+  # end
+
+  # def create
+  #   @defect = Defect.new(defect_params)
+  #   @defect.creator = current_user
+
+  #   # Extract user_ids from params, ignore nil/blank/empty string
+  #   selected_user_ids = Array(params[:defect][:user_ids]).reject { |id| id.blank? }
+
+  #   # If no valid assignee(s) selected, fall back to the global default
+  #   if selected_user_ids.blank?
+  #     default_assignee = DefaultDefectAssignee.where(archive_status: false).order(created_at: :desc).first
+  #     if default_assignee&.user_id.present?
+  #       selected_user_ids = [default_assignee.user_id.to_s]
+  #     end
+  #   end
+
+  #   # Assign before saving
+  #   @defect.user_ids = selected_user_ids
+
+  #   # Explicitly set draft flag based on which button was clicked
+  #   @defect.draft = params[:commit] == 'draft'
+
+  #   if @defect.save
+  #     if @defect.draft?
+  #       redirect_to @defect, notice: 'Draft defect saved successfully.'
+  #     else
+  #       activity('user_activity')
+  #         .caused_by(current_user)
+  #         .performed_on(@defect)
+  #         .event('defect.create')
+  #         .with_properties(defect_attributes: @defect.attributes, assigned_user_ids: selected_user_ids)
+  #         .log("Created Defect ##{@defect.id}, assigned to User IDs: #{selected_user_ids.join(', ')}")
+
+  #       ProcessMentionsJob.perform_later(
+  #         @defect.content&.body&.to_html,
+  #         @defect.id,
+  #         current_user.id,
+  #         'defect_content'
+  #       )
+
+  #       assigned_names = @defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', ')
+  #       log_event(
+  #         @defect, current_user, 'Created and Assigned',
+  #         assigned_names.present? ? "Defect was created and assigned to #{assigned_names} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
+  #       )
+
+  #       redirect_to @defect, notice: 'Defect was successfully created.'
+  #     end
+  #   else
+  #     set_form_data
+  #     flash.now[:alert] = "Defect creation failed: #{@defect.errors.full_messages.join(', ')}"
+  #     render :new, status: :unprocessable_entity
+  #   end
+  # end
+
   def create
-    @defect = Defect.new(defect_params)
-    @defect.creator = current_user
-    selected_user_ids = Array(params[:defect][:user_ids]).reject(&:blank?)
+  @defect = Defect.new(defect_params)
+  @defect.creator = current_user
 
-    # selected_user_ids = params[:defect][:user_ids]
+  # Clean user_ids coming from hidden field (will be [""] if none selected)
+  selected_user_ids = Array(params[:defect][:user_ids]).reject(&:blank?)
 
-    # Explicitly set draft flag based on which button was clicked
-    @defect.draft = params[:commit] == 'draft'
-
-    if @defect.save
-      @defect.user_ids = selected_user_ids
-
-      if @defect.draft?
-        redirect_to @defect, notice: 'Draft defect saved successfully.'
-      else
-        activity('user_activity')
-          .caused_by(current_user)
-          .performed_on(@defect)
-          .event('defect.create')
-          .with_properties(defect_attributes: @defect.attributes, assigned_user_ids: selected_user_ids)
-          .log("Created Defect ##{@defect.id}, assigned to User IDs: #{selected_user_ids.join(', ')}")
-
-        # Process mentions in defect content asynchronously
-        ProcessMentionsJob.perform_later(
-          @defect.content&.body&.to_html,
-          @defect.id,
-          current_user.id,
-          'defect_content'
-        )
-
-        assigned_names = @defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', ')
-        log_event(
-          @defect, current_user, 'Created and Assigned',
-          assigned_names.present? ? "Defect was created and assigned to #{assigned_names} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
-        )
-
-        redirect_to @defect, notice: 'Defect was successfully created.'
-      end
-    else
-      set_form_data
-      flash.now[:alert] = "Defect creation failed: #{@defect.errors.full_messages.join(', ')}"
-      render :new, status: :unprocessable_entity
+  # Fallback to global default assignee if no one selected
+  if selected_user_ids.blank?
+    default_assignee = DefaultDefectAssignee.where(archive_status: false)
+                                           .order(created_at: :desc)
+                                           .first
+    if default_assignee&.user_id.present?
+      selected_user_ids = [default_assignee.user_id.to_s]
     end
   end
+
+  # Assign before saving
+  @defect.user_ids = selected_user_ids
+
+  # Explicitly set draft flag
+  @defect.draft = params[:commit] == 'draft'
+
+  if @defect.save
+    if @defect.draft?
+      redirect_to @defect, notice: 'Draft defect saved successfully.'
+    else
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@defect)
+        .event('defect.create')
+        .with_properties(defect_attributes: @defect.attributes,
+                         assigned_user_ids: selected_user_ids)
+        .log("Created Defect ##{@defect.id}, assigned to User IDs: #{selected_user_ids.join(', ')}")
+
+      ProcessMentionsJob.perform_later(
+        @defect.content&.body&.to_html,
+        @defect.id,
+        current_user.id,
+        'defect_content'
+      )
+
+      assigned_names = @defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', ')
+      log_event(
+        @defect, current_user, 'Created and Assigned',
+        assigned_names.present? ? "Defect was created and assigned to #{assigned_names} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" :
+                                  "Defect was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
+      )
+
+      redirect_to @defect, notice: 'Defect was successfully created.'
+    end
+  else
+    set_form_data
+    flash.now[:alert] = "Defect creation failed: #{@defect.errors.full_messages.join(', ')}"
+    render :new, status: :unprocessable_entity
+  end
+end
+
 
   def modules_by_product
     product_id = params[:product_id]
