@@ -101,8 +101,12 @@
                     <span class="font-semibold"><%= default_assignee.user.first_name %> <%= default_assignee.user.last_name %></span>,
                     or type to search for a different user.
                   </p>
+                <% else %>
+                  <p class="mb-2 text-xs text-red-500 dark:text-red-400 italic">
+                    No default assignee is set. Please search and select a user.
+                  </p>
                 <% end %>
-
+                
                 <!-- Search input -->
                 <input type="text"
                       id="assignee-search"
