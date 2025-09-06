@@ -139,7 +139,6 @@ class DashboardsController < ApplicationController
         ticket_details: ticket_details,
         tickets_from_inception_count: tickets_from_inception_count,
         tickets_from_inception_by_status: tickets_from_inception_by_status
-
       }
 
       render json: stats
@@ -195,8 +194,21 @@ class DashboardsController < ApplicationController
           .where(statuses: { name: %w[Closed Resolved] })
       when 'target_resolution_time_not_breached'
         @tickets = @tickets.where(sla_tickets: { sla_resolution_deadline: ['Not Breached', nil] })
+        # === CHANGE START: show only selected status tickets when status param is present
       when 'tickets_from_inception_by_status'
-        @tickets = Status.left_outer_joins(tickets: [:users]).where(users: { id: user_ids }).where.not(statuses: { name: %w[Declined Closed Resolved] }).group('statuses.name')
+        status_filter = params[:status]
+        @tickets = if status_filter.present?
+                     Ticket.joins(:statuses, :users)
+                       .where(users: { id: user_ids })
+                       .where(statuses: { name: status_filter })
+                       .where.not(statuses: { name: %w[Declined Closed Resolved] })
+                   else
+                     Status.left_outer_joins(tickets: [:users])
+                       .where(users: { id: user_ids })
+                       .where.not(statuses: { name: %w[Declined Closed Resolved] })
+                       .group('statuses.name')
+                   end
+        # === CHANGE END
       when 'tickets_from_inception_count'
         # Show all tickets from the team that are not closed, resolved or declined
         @tickets = Ticket.joins(:statuses, :users, :taggings)

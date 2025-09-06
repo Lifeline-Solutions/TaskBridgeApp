@@ -270,38 +270,47 @@
 
         const statusData = data.tickets_from_inception_by_status;
 
+        // === CHANGE START: clickable status cells for filtering tickets by status
         if (statusData && Object.keys(statusData).length > 0) {
           let statuses = Object.keys(statusData);
           let counts = Object.values(statusData);
 
           let html = `
-              <table class="min-w-full border text-center bg-white dark:bg-gray-700">
-                <thead>
-                  <tr>
-                    ${statuses.map(status => `<th class="px-2 py-1 border-b font-bold text-md">${status}</th>`).join('')}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    ${counts.map(count => `<td class="px-2 py-1 border-b font-bold text-xl">${count}</td>`).join('')}
-                  </tr>
-                </tbody>
-              </table>
-            `;
+            <table class="min-w-full border text-center bg-white dark:bg-gray-700">
+              <thead>
+                <tr>
+                  ${statuses.map((status, idx) => `<th class="px-2 py-1 border-b font-bold text-md cursor-pointer status-cell" data-status="${status}">${status}</th>`).join('')}
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  ${counts.map((count, idx) => `<td class="px-2 py-1 border-b font-bold text-xl cursor-pointer status-cell" data-status="${statuses[idx]}">${count}</td>`).join('')}
+                </tr>
+              </tbody>
+            </table>
+          `;
           container.innerHTML = html;
+
+          // Attach event listeners to status cells
+          container.querySelectorAll('.status-cell').forEach(el => {
+            el.addEventListener('click', function(e) {
+              const selectedStatus = this.dataset.status;
+              // Only show tickets of the selected status
+              fetchTicketDetails(selectedTeam, 'tickets_from_inception_by_status', selectedStatus);
+            });
+          });
         } else {
           container.innerHTML = `<div class="text-gray-400">No status breakdown available.</div>`;
         }
+        // === CHANGE END
 
-
-        // Refresh charts
+        // Rest of your chart and ticket rendering code remains unchanged
         document.getElementById("responseTimeChart").innerHTML = "";
         new Chartkick.PieChart("responseTimeChart", [
           [`Breached (${data.response_breached_tickets_last_30_days})`, data.response_breached_tickets_last_30_days],
           [`Not Breached (${data.not_response_breached_tickets_last_30_days})`, data.not_response_breached_tickets_last_30_days]
         ], { colors: ["#ff0000", "#36a2eb"] });
 
-        // Refresh charts
         document.getElementById("responseOpenClosedTimeChart").innerHTML = "";
         new Chartkick.PieChart("responseOpenClosedTimeChart", [
           [`Closed (${data.response_breached_tickets_closed_last_30_days})`, data.response_breached_tickets_closed_last_30_days],
@@ -320,8 +329,6 @@
           [`Not Breached (${data.not_resolution_breached_tickets_last_30_days})`, data.not_resolution_breached_tickets_last_30_days]
         ], { colors: ["#ff0000", "#36a2eb"] });
 
-        // Generate Assignee Breached Tickets Pie Chart
-        // Generate Assignee Breached Tickets Pie Chart
         document.getElementById("breachedTicketsAssigneeChart").innerHTML = "";
         let assigneeData = Object.entries(data.breached_tickets_per_assignee)
           .map(([name, count]) => {
@@ -379,29 +386,19 @@
       .catch(error => console.error("Error fetching stats:", error));
   }
 
-  document.addEventListener("click", function(event) {
-    let searchInput = document.getElementById("search");
-    let dropdown = document.getElementById("dropdown");
-    if (!searchInput.contains(event.target) && !dropdown.contains(event.target)) {
-      dropdown.classList.add("hidden");
-    }
-  });
-
-  function openModal() {
-    document.getElementById("ticketModal").classList.remove("hidden");
-  }
-
-  function closeModal() {
-    document.getElementById("ticketModal").classList.add("hidden");
-  }
-
-  function fetchTicketDetails(teamName, type) {
+  // === CHANGE START: Accept statusFilter param and send it to backend for filtering
+  function fetchTicketDetails(teamName, type, statusFilter = null) {
     if (!selectedTeam) {
       alert("Please select a team first.");
       return;
     }
 
-    fetch(`/dashboards/tickets?team_name=${teamName}&type=${type}`)
+    let url = `/dashboards/tickets?team_name=${teamName}&type=${type}`;
+    if (type === 'tickets_from_inception_by_status' && statusFilter) {
+      url += `&status=${encodeURIComponent(statusFilter)}`;
+    }
+
+    fetch(url)
       .then(response => response.json())
       .then(data => {
         const ticketDetailsContainer = document.getElementById("ticketDetails");
@@ -478,28 +475,28 @@
             }
 
             ticketElement.innerHTML = `
-              <td class="p-2">${count}</td>
-              <td class="p-2 text-gray-500">
-                ${new Date(ticket.created_at).toLocaleString()}
-              </td>
-              <td class="p-2">${ticket.unique_id}</td>
-              <td class="p-2">${ticket.issue}</td>
-              <td class="p-2">
-                <p class="${priorityClass} p-1 text-center text-white font-bold rounded">
-                  ${ticket.priority}
-                </p>
-              </td>
-              <td class="p-2">${ticket.subject}</td>
-              <td class="p-2">${ticket.user_name}</td>
-              <td class="p-2">
-                <p class="${statusClass} text-center font-semibold rounded p-1 border-r-2 border-b-4">
-                  ${ticket.status_name}
-                </p>
-              </td>
-              <td class="p-2">
-                <a href="${ticketURL}" class="text-blue-500 hover:underline">View Ticket</a>
-              </td>
-            `;
+            <td class="p-2">${count}</td>
+            <td class="p-2 text-gray-500">
+              ${new Date(ticket.created_at).toLocaleString()}
+            </td>
+            <td class="p-2">${ticket.unique_id}</td>
+            <td class="p-2">${ticket.issue}</td>
+            <td class="p-2">
+              <p class="${priorityClass} p-1 text-center text-white font-bold rounded">
+                ${ticket.priority}
+              </p>
+            </td>
+            <td class="p-2">${ticket.subject}</td>
+            <td class="p-2">${ticket.user_name}</td>
+            <td class="p-2">
+              <p class="${statusClass} text-center font-semibold rounded p-1 border-r-2 border-b-4">
+                ${ticket.status_name}
+              </p>
+            </td>
+            <td class="p-2">
+              <a href="${ticketURL}" class="text-blue-500 hover:underline">View Ticket</a>
+            </td>
+          `;
             ticketDetailsContainer.appendChild(ticketElement);
           });
         } else {
@@ -510,7 +507,25 @@
       })
       .catch(error => console.error("Error fetching ticket details:", error));
   }
+  // === CHANGE END
 
+  document.addEventListener("click", function(event) {
+    let searchInput = document.getElementById("search");
+    let dropdown = document.getElementById("dropdown");
+    if (!searchInput.contains(event.target) && !dropdown.contains(event.target)) {
+      dropdown.classList.add("hidden");
+    }
+  });
+
+  function openModal() {
+    document.getElementById("ticketModal").classList.remove("hidden");
+  }
+
+  function closeModal() {
+    document.getElementById("ticketModal").classList.add("hidden");
+  }
+
+  // Update stat-card-link click handler if needed for consistency (calls fetchTicketDetails with the new param if needed)
   document.querySelectorAll(".stat-card-link").forEach(link => {
     link.addEventListener("click", function(event) {
       event.preventDefault();
