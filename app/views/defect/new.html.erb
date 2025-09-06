@@ -7,9 +7,14 @@
       <!-- Header -->
       <div class="shrink-0 px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-start">
         <h2 id="new-defect-title" class="text-xl font-semibold text-gray-800 dark:text-white">New Defect</h2>
-        <%= link_to "✕", defect_index_path,
-          data: { turbo_frame: "_top" },
-          class: "ml-auto text-xl font-bold text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded" %>
+
+        <button type="button"
+                class="ml-auto text-xl font-bold text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded cursor-pointer"
+                onclick="history.back()"
+                aria-label="Close modal">
+          X
+        </button>
+
       </div>
       <!-- Form wrapper (flex) -->
       <%= form_with model: @defect, url: defect_index_url, method: :post, data: { turbo: false }, local: true, html: { class: 'flex flex-col grow overflow-hidden', multipart: true } do |f| %>
@@ -53,7 +58,7 @@
 
             <!-- Results dropdown -->
             <ul id="banking-type-results"
-                class="absolute mt-1 border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-sm hidden z-10 w-full">
+                class="absolute mt-1 border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-sm hidden z-10 w-full max-h-60 overflow-y-auto">
             </ul>
           </div>
 
@@ -94,34 +99,60 @@
                   Assignee
                 </label>
 
+                <!-- Info note about default assignee -->
+                <% if (default_assignee = DefaultDefectAssignee.instance)&.user.present? %>
+                  <p class="mb-2 text-xs text-gray-500 dark:text-gray-400 italic">
+                    You can leave this blank. The default assignee is
+                    <span class="font-semibold"><%= default_assignee.user.first_name %> <%= default_assignee.user.last_name %></span>,
+                    or type to search for a different user.
+                  </p>
+                <% else %>
+                  <p class="mb-2 text-xs text-red-500 dark:text-red-400 italic">
+                    No default assignee is set. Please search and select a user.
+                  </p>
+                <% end %>
+                
                 <!-- Search input -->
                 <input type="text"
                       id="assignee-search"
                       placeholder="Type to search users..."
                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
-                              focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+                            focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
 
                 <!-- Hidden field for selected user ID -->
-                <%= hidden_field_tag 'defect[user_ids][]', nil, id: "assignee-id-field" %>
+                <%= hidden_field_tag 'defect[user_ids][]',
+                      @defect.user_ids.first,
+                      id: "assignee-id-field" %>
 
                 <!-- Results dropdown -->
                 <ul id="assignee-results"
-                    class="absolute mt-1 border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-sm hidden z-10 w-full">
+                    class="absolute mt-1 border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-sm hidden z-10 w-full max-h-60 overflow-y-auto">
                 </ul>
               </div>
+
               <div>
                 <label for="defect_priority" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Priority</label>
                 <%= f.select :priority, options_for_select(['SEVERITY 1','SEVERITY 2','SEVERITY 3','SEVERITY 4'], @defect.priority), { prompt: 'Select Priority' },
                       class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600', required: true %>
               </div>
               <div>
-                <label for="defect_label_ids_modal" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Labels</label>
-                <select id="defect_label_ids_modal" name="defect[label_ids][]" multiple placeholder="Labels: Type to search or add. Press Enter to create new." class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600">
-                  <% Label.where(deleted_on: nil).order(:name).each do |label| %>
-                    <option value="<%= label.id %>" <%= @defect.labels.include?(label) ? 'selected' : '' %>><%= label.name %></option>
-                  <% end %>
-                </select>
-              </div>
+  <label for="defect_label_ids_modal" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+    Labels
+  </label>
+
+  <select id="defect_label_ids_modal"
+          name="defect[label_ids][]"
+          multiple
+          placeholder="Labels: Type to search or add. Press Enter to create new."
+          class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600">
+    <% Label.where(deleted_on: nil).order(:name).each do |label| %>
+      <option value="<%= label.id %>" <%= @defect.labels.include?(label) ? 'selected' : '' %>>
+        <%= label.name %>
+      </option>
+    <% end %>
+  </select>
+</div>
+
             </div>
 
             
@@ -132,13 +163,13 @@
                      class: "border border-gray-300 rounded-lg
                        focus:ring-primary-600 focus:border-primary-600 p-2.5
                        dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400
-                       dark:focus:ring-blue-500 dark:focus:border-blue-500" %>
+                       dark:极:ring-blue-500 dark:focus:border-blue-500" %>
 
             </div>
 
             <!-- Attachments -->
             <div>
-              <label for="defect_attachments" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Attachments</label>
+              <label for="defect_attachments极 class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Attachments</label>
               <%= f.file_field :attachments, multiple: true, direct_upload: true, name: 'defect[attachments][]',
                     class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600' %>
               <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">You can upload one or multiple files.</p>
@@ -152,7 +183,7 @@
                       class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-not-allowed' %>
               </div>
               <div>
-                <label class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Issue Type</label>
+                <label class="block mb-1 text-xs font-medium text-gray-700 dark:text极-gray-300 tracking-wide uppercase">Issue Type</label>
                 <%= f.text_field :issue_type, value: 'Bug', disabled: true,
                       class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-not-allowed' %>
               </div>
@@ -176,35 +207,107 @@
   </div>
 
 <% end %>
+
 <script>
-  document.addEventListener('turbo:load', function () {
-    // ===== Dynamic module/submodule loading =====
-    const modSelect = document.querySelector('[data-project-modules-target="moduleSelect"]');
-    const submodSelect = document.querySelector('[data-project-modules-target="submoduleSelect"]');
-    if (modSelect) {
-      modSelect.addEventListener('change', function () {
-        const moduleId = this.value;
-        if (submodSelect) {
-          submodSelect.innerHTML = '<option value="">Select Sub-Module</option>';
-          if (moduleId) {
-            fetch(`/qa_modules/${moduleId}/submodules`)
-              .then(r => r.json())
-              .then(submodules => {
-                submodules.forEach(sm => {
-                  const opt = document.createElement('option');
-                  opt.value = sm.id;
-                  opt.textContent = sm.name;
-                  submodSelect.appendChild(opt);
-                });
-              });
-          }
+  // Store the data in global variables so they're accessible
+  window.bankingTypesData = <%= raw (@banking_types || []).map { |bt| { id: bt.id, name: bt.name } }.to_json %>;
+  window.assigneeUsersData = <%= raw @users.map { |u| { id: u.id, name: u.name } }.to_json %>;
+
+  function initSearchableDropdowns() {
+    // ===== Banking Type Search =====
+    const bankingTypeInput = document.getElementById("banking-type-search");
+    const bankingTypeResults = document.getElementById("banking-type-results");
+    const bankingTypeHidden = document.getElementById("banking-type-id-field");
+
+    if (bankingTypeInput && bankingTypeResults && window.bankingTypesData) {
+      bankingTypeInput.addEventListener("input", function() {
+        const query = this.value.toLowerCase();
+        bankingTypeResults.innerHTML = "";
+
+        if (query.length === 0) {
+          bankingTypeResults.classList.add("hidden");
+          return;
+        }
+
+        const matches = window.bankingTypesData.filter(bt =>
+          bt.name.toLowerCase().includes(query)
+        );
+
+        if (matches.length > 0) {
+          bankingTypeResults.classList.remove("hidden");
+          matches.forEach(bt => {
+            const li = document.createElement("li");
+            li.textContent = bt.name;
+            li.className = "px-3 py-2 hover:bg-blue-500 hover:text-white cursor-pointer";
+            li.addEventListener("click", function() {
+              bankingTypeInput.value = bt.name;
+              if (bankingTypeHidden) bankingTypeHidden.value = bt.id;
+              bankingTypeResults.classList.add("hidden");
+            });
+            bankingTypeResults.appendChild(li);
+          });
+        } else {
+          bankingTypeResults.classList.add("hidden");
+        }
+      });
+
+      // Hide results when clicking outside
+      document.addEventListener("click", function(e) {
+        if (bankingTypeResults && !bankingTypeResults.contains(e.target) && e.target !== bankingTypeInput) {
+          bankingTypeResults.classList.add("hidden");
         }
       });
     }
 
-    // ===== TomSelect for modal labels =====
+    // ===== Assignee Search =====
+    const assigneeInput = document.getElementById("assignee-search");
+    const assigneeResults = document.getElementById("assignee-results");
+    const assigneeHidden = document.getElementById("assignee-id-field");
+
+    if (assigneeInput && assigneeResults && window.assigneeUsersData) {
+      assigneeInput.addEventListener("input", function() {
+        const query = this.value.toLowerCase();
+        assigneeResults.innerHTML = "";
+
+        if (query.length === 0) {
+          assigneeResults.classList.add("hidden");
+          return;
+        }
+
+        const matches = window.assigneeUsersData.filter(user =>
+          user.name.toLowerCase().includes(query)
+        );
+
+        if (matches.length > 0) {
+          assigneeResults.classList.remove("hidden");
+          matches.forEach(user => {
+            const li = document.createElement("li");
+            li.textContent = user.name;
+            li.className = "px-3 py-2 hover:bg-blue-500 hover:text-white cursor-pointer";
+            li.addEventListener("click", function() {
+              assigneeInput.value = user.name;
+              if (assigneeHidden) assigneeHidden.value = user.id;
+              assigneeResults.classList.add("hidden");
+            });
+            assigneeResults.appendChild(li);
+          });
+        } else {
+          assigneeResults.classList.add("hidden");
+        }
+      });
+
+      // Hide results when clicking outside
+      document.addEventListener("click", function(e) {
+        if (assigneeResults && !assigneeResults.contains(e.target) && e.target !== assigneeInput) {
+          assigneeResults.classList.add("hidden");
+        }
+      });
+    }
+  }
+
+  function initTomSelect() {
     const el = document.getElementById('defect_label_ids_modal');
-    if (el && !el.tomselect) {
+    if (el && typeof TomSelect !== 'undefined' && !el.tomselect) {
       new TomSelect(el, {
         placeholder: 'Labels: Type to search or add. Press Enter to create new.',
         plugins: ['remove_button'],
@@ -214,7 +317,7 @@
         labelField: 'name',
         searchField: ['name'],
         load: function (q, cb) {
-          const url = new URL('/labels.json', window.location.origin);
+          const url = new URL('/labels.json', window.location.origin); // ✅ fixed
           if (q) url.searchParams.set('q', q);
           url.searchParams.set('limit', '100');
           fetch(url.toString())
@@ -223,7 +326,7 @@
             .catch(() => cb());
         },
         create: function (input, callback) {
-          let name = input.trim().replace(/\s+/g, '-').toLowerCase();
+          let name = input.trim();
           if (!name) return callback();
           fetch('/labels', {
             method: 'POST',
@@ -246,138 +349,87 @@
         render: {
           item: (d, e) => `<div class='ts-chip'>${e(d.name)}</div>`,
           option: (d, e) => `<div class='px-2 py-1'>${e(d.name)}</div>`
-        },
-        onItemAdd: function () {
-          if (this.items.length > 0) {
-            this.inputState();
-            this.control_input.placeholder = '';
-          }
-        },
-        onClear: function () {
-          this.control_input.placeholder =
-            'Labels: Type to search or add. Press Enter to create new.';
         }
       });
+    }
+  }
 
-      // Adjust placeholder when focused and already has items
-      el.addEventListener('focus', () => {
-        if (el.tomselect && el.tomselect.items.length > 0) {
-          el.tomselect.control_input.placeholder = '';
+  function initModuleSubmoduleLoading() {
+    // ===== Dynamic module/submodule loading =====
+    const modSelect = document.querySelector('[data-project-modules-target="moduleSelect"]');
+    const submodSelect = document.querySelector('[data-project-modules-target="submoduleSelect"]');
+    
+    if (modSelect) {
+      modSelect.addEventListener('change', function () {
+        const moduleId = this.value;
+        if (submodSelect) {
+          submodSelect.innerHTML = '<option value="">Select Sub-Module</option>';
+          if (moduleId) {
+            fetch(`/qa_modules/${moduleId}/submodules`)
+              .then(r => r.json())
+              .then(submodules => {
+                submodules.forEach(sm => {
+                  const opt = document.createElement('option');
+                  opt.value = sm.id;
+                  opt.textContent = sm.name;
+                  submodSelect.appendChild(opt);
+                });
+              })
+              .catch(error => {
+                console.error('Error loading submodules:', error);
+              });
+          }
         }
       });
     }
 
-    const assigneeInput = document.getElementById("assignee-search");
-    const assigneeResults = document.getElementById("assignee-results");
-    const assigneeHidden = document.getElementById("assignee-id-field");
-
-    // Embed @users directly into JS
-    let assigneeUsers = <%= raw @users.map { |u| { id: u.id, name: u.name } }.to_json %>;
-
-    assigneeInput.addEventListener("input", () => {
-      const query = assigneeInput.value.toLowerCase();
-      assigneeResults.innerHTML = "";
-
-      if (query.length === 0) {
-        assigneeResults.classList.add("hidden");
-        return;
-      }
-
-      const matches = assigneeUsers.filter(user =>
-        user.name.toLowerCase().includes(query)
-      );
-
-      if (matches.length > 0) {
-        assigneeResults.classList.remove("hidden");
-        matches.forEach(user => {
-          const li = document.createElement("li");
-          li.textContent = user.name;
-          li.className = "px-3 py-2 hover:bg-blue-500 hover:text-white cursor-pointer";
-          li.addEventListener("click", () => {
-            assigneeInput.value = user.name;
-            assigneeHidden.value = user.id;
-            assigneeResults.classList.add("hidden");
-          });
-          assigneeResults.appendChild(li);
-        });
-      } else {
-        assigneeResults.classList.add("hidden");
-      }
-    });
-
-    // Hide results if clicking outside
-    document.addEventListener("click", (e) => {
-      if (!assigneeResults.contains(e.target) && e.target !== assigneeInput) {
-        assigneeResults.classList.add("hidden");
-      }
-    });
-
-    const bankingTypeInput = document.getElementById("banking-type-search");
-    const bankingTypeResults = document.getElementById("banking-type-results");
-    const bankingTypeHidden = document.getElementById("banking-type-id-field");
-
-    // Embed @banking_types directly into JS
-    let bankingTypes = <%= raw (@banking_types || []).map { |bt| { id: bt.id, name: bt.name } }.to_json %>;
-
-    bankingTypeInput.addEventListener("input", () => {
-      const query = bankingTypeInput.value.toLowerCase();
-      bankingTypeResults.innerHTML = "";
-
-      if (query.length === 0) {
-        bankingTypeResults.classList.add("hidden");
-        return;
-      }
-
-      const matches = bankingTypes.filter(bt =>
-        bt.name.toLowerCase().includes(query)
-      );
-
-      if (matches.length > 0) {
-        bankingTypeResults.classList.remove("hidden");
-        matches.forEach(bt => {
-          const li = document.createElement("li");
-          li.textContent = bt.name;
-          li.className = "px-3 py-2 hover:bg-blue-500 hover:text-white cursor-pointer";
-          li.addEventListener("click", () => {
-            bankingTypeInput.value = bt.name;
-            bankingTypeHidden.value = bt.id;
-            bankingTypeResults.classList.add("hidden");
-          });
-          bankingTypeResults.appendChild(li);
-        });
-      } else {
-        bankingTypeResults.classList.add("hidden");
-      }
-    });
-
-    // Hide results if clicking outside
-    document.addEventListener("click", (e) => {
-      if (!bankingTypeResults.contains(e.target) && e.target !== bankingTypeInput) {
-        bankingTypeResults.classList.add("hidden");
-      }
-    });
-
-    const statusDropdown = document.querySelector("select[name='status_id']");
-
-  if (statusDropdown) {
-    statusDropdown.addEventListener("change", () => {
-      const url = statusDropdown.dataset.defectStatusUrl;
-      const statusId = statusDropdown.value;
-
-      fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": document.querySelector("meta[name='csrf-token']").content
-        },
-        body: JSON.stringify({ status_id: statusId })
-      })
-      .then(resp => resp.json())
-      .then(data => {
-        console.log("Status updated:", data);
-      })
-      .catch(err => console.error("Status update failed:", err));
-    });
+    // Also trigger change event if module is already selected on page load
+    if (modSelect && modSelect.value) {
+      const event = new Event('change');
+      modSelect.dispatchEvent(event);
+    }
   }
-  });
+
+  function initStatusDropdown() {
+    const statusDropdown = document.querySelector("select[name='status_id']");
+    if (statusDropdown) {
+      statusDropdown.addEventListener("change", () => {
+        const url = statusDropdown.dataset.defectStatusUrl;
+        const statusId = statusDropdown.value;
+
+        if (url && statusId) {
+          fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRF-Token": document.querySelector("meta[name='csrf-token']").content
+            },
+            body: JSON.stringify({ status_id: statusId })
+          })
+          .then(resp => resp.json())
+          .then(data => {
+            console.log("Status updated:", data);
+          })
+          .catch(err => console.error("Status update failed:", err));
+        }
+      });
+    }
+  }
+
+  // Initialize everything
+  function initializeAll() {
+    initSearchableDropdowns();
+    initTomSelect();
+    initModuleSubmoduleLoading();
+    initStatusDropdown();
+  }
+
+  // Initialize when DOM is loaded
+  document.addEventListener('DOMContentLoaded', initializeAll);
+
+  // Also initialize when Turbo loads the content
+  document.addEventListener('turbo:load', initializeAll);
+
+  // Initialize when the frame is loaded (for modals)
+  document.addEventListener('turbo:frame-load', initializeAll);
 </script>
