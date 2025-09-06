@@ -11,51 +11,45 @@ class DefaultDefectAssigneesController < ApplicationController
 
   # Create or update the single global default
   def create
-    user = User.find(params[:user_id])
+  user = User.find(params[:user_id])
+  @default_assignee = DefaultDefectAssignee.instance
 
-    @default_assignee = DefaultDefectAssignee.instance
+  if @default_assignee.present?
+    # update existing record
+    @default_assignee.user = user
+    audit_on_update(@default_assignee)
 
-    if @default_assignee.present?
-      # update existing record (so we preserve auditability patterns)
-      @default_assignee.user = user
-      audit_on_update(@default_assignee)
+    if @default_assignee.save
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@default_assignee)
+        .event('default_defect_assignee.update')
+        .log("Updated DefaultDefectAssignee -> #{user.name} (#{user.id})")
 
-      if @default_assignee.save
-        activity('user_activity')
-          .caused_by(current_user)
-          .performed_on(@default_assignee)
-          .event('default_defect_assignee.update')
-          .log("Updated DefaultDefectAssignee -> #{user.name} (#{user.id})")
-
-        respond_to do |format|
-          format.turbo_stream { render turbo_stream: turbo_stream.replace('default-assignee-button', partial: 'default_defect_assignees/button') }
-          format.html { redirect_back fallback_location: defect_index_path, notice: 'Default assignee updated.' }
-        end
-      else
-        @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
-        render :new, status: :unprocessable_entity, layout: false
-      end
+      redirect_to defect_index_path, notice: 'Default assignee updated.'
     else
-      @default_assignee = DefaultDefectAssignee.new(user: user)
-      audit_on_create(@default_assignee)
+      @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
+      render :new, status: :unprocessable_entity, layout: false
+    end
+  else
+    @default_assignee = DefaultDefectAssignee.new(user: user)
+    audit_on_create(@default_assignee)
 
-      if @default_assignee.save
-        activity('user_activity')
-          .caused_by(current_user)
-          .performed_on(@default_assignee)
-          .event('default_defect_assignee.create')
-          .log("Set DefaultDefectAssignee -> #{user.name} (#{user.id})")
+    if @default_assignee.save
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@default_assignee)
+        .event('default_defect_assignee.create')
+        .log("Set DefaultDefectAssignee -> #{user.name} (#{user.id})")
 
-        respond_to do |format|
-          format.turbo_stream { render turbo_stream: turbo_stream.replace('default-assignee-button', partial: 'default_defect_assignees/button') }
-          format.html { redirect_back fallback_location: defect_index_path, notice: 'Default assignee set.' }
-        end
-      else
-        @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
-        render :new, status: :unprocessable_entity, layout: false
-      end
+      redirect_to defect_index_path, notice: 'Default assignee set.'
+    else
+      @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
+      render :new, status: :unprocessable_entity, layout: false
     end
   end
+end
+
 
   # Soft-delete the record (audit_soft_delete used)
   def destroy
