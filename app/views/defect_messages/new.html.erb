@@ -1,41 +1,37 @@
 <%= turbo_frame_tag "new_defect_message" do %>
   <div class="p-4 border rounded-lg bg-gray-50 dark:bg-gray-900">
     <%= form_with(model: [@defect, @defect_message], local: false, data: { controller: "mention-system", mention_system_defect_id_value: @defect.id }) do |f| %>
+
       <div class="mb-4 rich-text-editor" data-mention-system-target="editor">
-        <%= f.rich_text_area :content, 
-            class: "w-full", 
-            data: { 
-              mention_system_target: "editor",
-              action: "mention-system#handleInput"
-            } %>
-        
+        <%= f.rich_text_area :content,
+                             class: "w-full",
+                             data: {
+                               mention_system_target: "editor",
+                               action: "mention-system#handleInput"
+                             } %>
+
         <!-- Mention dropdown -->
         <div class="mention-dropdown" data-mention-system-target="dropdown"></div>
-        
+
         <!-- Hidden input for mentions data -->
         <%= f.hidden_field :mentions_data, data: { mention_system_target: "input" } %>
       </div>
-      
+
       <div class="mb-2">
         <p class="mention-help">
           💡 Type <strong>@</strong> to mention users or <strong>#</strong> to reference defects. Use <strong>ESC</strong> to close suggestions.
         </p>
       </div>
-      
-      <div class="flex space-x-2">
-        <div class="flex space-x-2">
-          <%= f.submit "Post Message",
-                class: "px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700",
-                data: { 
-                  turbo: false,
-                  action: "click->mention-system#beforeSubmit"
-                }, 
-                onclick: "window.location.reload();" %>
 
-          <%= link_to "Cancel",
-                defect_path(@defect),
-                class: "px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700" %>
-        </div>
+      <div class="flex space-x-2">
+        <%= f.submit "Post Message",
+                     class: "px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700",
+                     data: { turbo: false, action: "click->mention-system#beforeSubmit" },
+                     onclick: "window.location.reload();" %>
+
+        <%= link_to "Cancel",
+                    defect_path(@defect),
+                    class: "px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700" %>
       </div>
     <% end %>
   </div>
