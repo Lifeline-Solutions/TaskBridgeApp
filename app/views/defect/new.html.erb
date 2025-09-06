@@ -94,23 +94,33 @@
                   Assignee
                 </label>
 
+                <!-- Info note about default assignee -->
+                <% if (default_assignee = DefaultDefectAssignee.instance)&.user.present? %>
+                  <p class="mb-2 text-xs text-gray-500 dark:text-gray-400 italic">
+                    You can leave this blank. The default assignee is
+                    <span class="font-semibold"><%= default_assignee.user.first_name %> <%= default_assignee.user.last_name %></span>,
+                    or type to search for a different user.
+                  </p>
+                <% end %>
+
                 <!-- Search input -->
                 <input type="text"
                       id="assignee-search"
                       placeholder="Type to search users..."
                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
-                              focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+                            focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
 
                 <!-- Hidden field for selected user ID -->
                 <%= hidden_field_tag 'defect[user_ids][]',
-                  @defect.user_ids.first,
-                  id: "assignee-id-field" %>
+                      @defect.user_ids.first,
+                      id: "assignee-id-field" %>
 
                 <!-- Results dropdown -->
                 <ul id="assignee-results"
                     class="absolute mt-1 border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-sm hidden z-10 w-full max-h-60 overflow-y-auto">
                 </ul>
               </div>
+
               <div>
                 <label for="defect_priority" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Priority</label>
                 <%= f.select :priority, options_for_select(['SEVERITY 1','SEVERITY 2','SEVERITY 3','SEVERITY 4'], @defect.priority), { prompt: 'Select Priority' },
