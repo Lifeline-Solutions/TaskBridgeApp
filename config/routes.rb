@@ -142,6 +142,9 @@ Rails.application.routes.draw do
     end
   end
 
+  # config/routes.rb
+  resource :default_defect_assignee, only: %i[new create destroy]
+
   # Mention system routes
   resources :mention, only: [] do
     collection do
