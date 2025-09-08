@@ -354,7 +354,7 @@ class DefectController < ApplicationController
       .distinct
       .order(:name)
 
-    render :index
+    render :index_show
   end
 
   def publish
