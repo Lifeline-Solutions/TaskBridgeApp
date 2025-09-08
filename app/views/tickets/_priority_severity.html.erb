@@ -1,10 +1,18 @@
 
 <% if ticket.priority == 'SEVERITY 1' %>
-  <span class="p-2 rounded-md font-semibold text-sm bg-red-100 text-red-800">SEVERITY 1</span>
+  <span class="inline-flex items-center px-2 py-1 rounded-md font-semibold text-xs sm:text-sm bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400">
+    SEVERITY 1
+  </span>
 <% elsif ticket.priority == 'SEVERITY 2' %>
-  <span class="p-2  rounded-md font-semibold text-sm bg-orange-100 text-orange-800">SEVERITY 2</span>
+  <span class="inline-flex items-center px-2 py-1 rounded-md font-semibold text-xs sm:text-sm bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400">
+    SEVERITY 2
+  </span>
 <% elsif ticket.priority == 'SEVERITY 3' %>
-  <span class="p-2 rounded-md font-semibold text-sm bg-yellow-100 text-yellow-800">SEVERITY 3</span>
+  <span class="inline-flex items-center px-2 py-1 rounded-md font-semibold text-xs sm:text-sm bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
+    SEVERITY 3
+  </span>
 <% else %>
-  <span class="p-2 rounded-md font-semibold text-sm bg-blue-100 text-blue-800">SEVERITY 4</span>
+  <span class="inline-flex items-center px-2 py-1 rounded-md font-semibold text-xs sm:text-sm bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+    SEVERITY 4
+  </span>
 <% end %>
