@@ -1,0 +1,43 @@
+<%# Mobile-friendly chart configuration %>
+<script>
+document.addEventListener('turbo:load', function() {
+  // Customize chart.js for mobile displays
+  if (typeof Chart !== 'undefined') {
+    // Get all charts
+    const charts = Chart.instances || [];
+    
+    // Mobile-friendly defaults
+    const isMobile = window.innerWidth < 640;
+    
+    // Apply to all charts
+    charts.forEach(chart => {
+      // Adjust tooltip and font sizes on mobile
+      if (chart.options && chart.options.plugins && chart.options.plugins.tooltip) {
+        chart.options.plugins.tooltip.titleFont = { size: isMobile ? 10 : 12 };
+        chart.options.plugins.tooltip.bodyFont = { size: isMobile ? 10 : 12 };
+      }
+      
+      // Reduce legend font size on mobile
+      if (chart.options && chart.options.plugins && chart.options.plugins.legend) {
+        chart.options.plugins.legend.labels = { 
+          ...chart.options.plugins.legend.labels,
+          font: { size: isMobile ? 10 : 12 }
+        };
+      }
+      
+      // Ensure x-axis labels are readable on mobile
+      if (chart.options && chart.options.scales && chart.options.scales.x) {
+        chart.options.scales.x.ticks = {
+          ...chart.options.scales.x.ticks,
+          maxRotation: isMobile ? 90 : 0,
+          minRotation: isMobile ? 45 : 0,
+          font: { size: isMobile ? 8 : 10 }
+        };
+      }
+      
+      // Update the chart with new options
+      chart.update();
+    });
+  }
+});
+</script>
