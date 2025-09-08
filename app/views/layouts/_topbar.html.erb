@@ -1,160 +1,365 @@
-<% if current_user && user_signed_in?  %>
-<div class="flex justify-between items-center p-4 mb-6 bg-white shadow-md dark:bg-gray-800">
-  <div class="text-lg font-semibold text-gray-700 dark:text-gray-200 capitalize">
-    <%= greeting_message %>, <%= current_user.first_name %> <%= current_user.last_name %>
-  </div>
-
-  <div class="flex items-center gap-4 text-gray-700 dark:text-gray-200 relative">
-    <!-- Notification Button -->
-    <button id="dropdownNotificationButton" data-dropdown-toggle="dropdownNotification" class="relative inline-flex items-center text-sm font-medium text-center text-gray-500 hover:text-gray-900 focus:outline-none dark:hover:text-white dark:text-gray-400" type="button">
-      <svg class="w-8 h-8 text-[#0A1629] animate-wiggle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21">
-        <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-              d="M15.585 15.5H5.415A1.65 1.65 0 0 1 4 13a10.526 10.526 0 0 0 1.5-5.415V6.5a4 4 0 0 1 4-4h2a4 4 0 0 1 4 4v1.085c0 1.907.518 3.78 1.5 5.415a1.65 1.65 0 0 1-1.415 2.5zm1.915-11c-.267-.934-.6-1.6-1-2s-1.066-.733-2-1m-10.912 3c.209-.934.512-1.6.912-2s1.096-.733 2.088-1M13 17c-.667 1-1.5 1.5-2.5 1.5S8.667 18 8 17" />
-      </svg>
-      <% if @notifications&.any? { |notification| !notification.read } %>
-        <div class="absolute block w-3 h-3 bg-red-500 border-2 border-white rounded-full -top-0.5 start-2.9 dark:border-gray-900"></div>
-      <% end %>
-    </button>
-
-    <!-- Notification Dropdown Menu -->
-    <div id="dropdownNotification" class="z-50 hidden absolute top-0 right-0 mt-8 w-80 bg-white shadow-lg rounded-xl dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-      <%= link_to notifications_path, class: "block px-4 py-3 font-semibold text-center text-gray-700 dark:text-white bg-gray-100 dark:bg-gray-700 rounded-t-xl" do %>
-        <div class="flex items-center justify-center gap-2">
-          <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14V10A6 6 0 006 10v4c0 .386-.149.76-.405 1.04L4 17h5m6 0a3 3 0 01-6 0"></path>
-          </svg>
-          <span>Notifications</span>
-        </div>
-      <% end %>
-
-      <div class="divide-y divide-gray-200 dark:divide-gray-700">
-        <% if @notifications.present? && @notifications.any? %>
-          <div class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-            <span class="font-medium text-blue-600 dark:text-blue-400">You have new notifications</span>
+<% if current_user && user_signed_in? %>
+<div class="flex flex-col lg:flex-row justify-between items-start lg:items-center px-4 py-3 lg:px-6 lg:py-4 mb-4 lg:mb-6 bg-white shadow-sm border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700 space-y-3 lg:space-y-0">
+  
+  <!-- Mobile: Profile and Notifications Row -->
+  <div class="flex items-center justify-between w-full lg:hidden order-1">
+    <!-- Mobile Profile section -->
+    <div class="relative group">
+      <div class="flex items-center cursor-pointer">
+        <% if current_user.profile_picture.attached? %>
+          <%= image_tag current_user.profile_picture, class: 'w-9 h-9 rounded-lg border-2 border-gray-200' %>
+        <% elsif current_user.name_initials.present? %>
+          <div class="w-9 h-9 flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg text-white text-sm font-medium shadow-sm">
+            <%= current_user.name_initials %>
           </div>
-          <ul class="max-h-64 overflow-y-auto">
-            <% @notifications.each do |notification| %>
-              <li class="flex items-center justify-between px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                <div class="flex items-start gap-3">
-                  <svg class="w-5 h-5 text-green-500 dark:text-green-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12.74A9 9 0 1112 3a9 9 0 019 9.74z"></path>
-                  </svg>
-                  <div>
-                    <p class="text-sm text-gray-700 dark:text-gray-300"><%= notification.message %></p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400"><%= notification.created_at.strftime("%d %b %Y, %I:%M %p") %></p>
+        <% else %>
+          <%= image_tag 'default.png', class: 'w-9 h-9 rounded-lg border-2 border-gray-200' %>
+        <% end %>
+        <div class="ml-3">
+          <p class="text-sm font-medium text-gray-900 dark:text-white truncate max-w-32">
+            <%= current_user.name || current_user.email.split('@').first %>
+          </p>
+          <% unless %w[editor creator].include?(current_user.roles.first.name.downcase) %>
+            <p class="text-xs text-gray-500 dark:text-gray-400 capitalize">
+              <%= current_user.roles.first.name %>
+            </p>
+          <% end %>
+        </div>
+        <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"></path>
+        </svg>
+      </div>
+      
+      <!-- Mobile Profile Dropdown -->
+      <div class="absolute z-50 right-0 top-full mt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 bg-white dark:bg-gray-800 shadow-lg rounded-lg w-48 border border-gray-200 dark:border-gray-700">
+        <%= link_to edit_user_registration_path, class: "block" do %>
+          <div class="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-t-lg">
+            <svg class="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>
+            Edit Profile
+          </div>
+        <% end %>
+        <%= link_to destroy_user_session_path, method: :delete, data: { 'turbo_method': :delete, 'turbo-confirm': 'Are you sure?' }, class: "block" do %>
+          <div class="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-b-lg border-t border-gray-100 dark:border-gray-600">
+            <svg class="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+            </svg>
+            Sign Out
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Mobile Notification Button -->
+    <div class="relative group">
+      <div class="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white cursor-pointer rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14V10A6 6 0 006 10v4c0 .386-.149.76-.405 1.04L4 17h5m6 0a3 3 0 01-6 0"></path>
+        </svg>
+        <% if @notifications&.any? { |notification| !notification.read } %>
+          <div class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border-2 border-white rounded-full dark:border-gray-800"></div>
+        <% end %>
+      </div>
+      
+      <!-- Mobile Notification Dropdown -->
+      <div class="absolute z-50 right-0 top-full mt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 w-80 max-w-[calc(100vw-2rem)] bg-white shadow-lg rounded-xl dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+        <%= link_to notifications_path, class: "block px-4 py-3 font-medium text-center text-gray-700 dark:text-white bg-gray-50 dark:bg-gray-700 rounded-t-xl border-b border-gray-200 dark:border-gray-600" do %>
+          <div class="flex items-center justify-center gap-2">
+            <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14V10A6 6 0 006 10v4c0 .386-.149.76-.405 1.04L4 17h5m6 0a3 3 0 01-6 0"></path>
+            </svg>
+            <span class="text-sm">Notifications</span>
+          </div>
+        <% end %>
+        
+        <div class="max-h-80 overflow-y-auto">
+          <% if @notifications.present? %>
+            <% @notifications.limit(5).each do |notification| %>
+              <div class="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-600 last:border-b-0">
+                <div class="flex items-start space-x-3">
+                  <div class="flex-shrink-0">
+                    <% if notification.read %>
+                      <div class="w-2 h-2 bg-gray-300 rounded-full mt-2"></div>
+                    <% else %>
+                      <div class="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                    <% end %>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      <%= notification.message.truncate(50) %>
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <%= time_ago_in_words(notification.created_at) %> ago
+                    </p>
                   </div>
                 </div>
-                <% unless notification.read %>
-                  <%= button_to 'Mark as Read', mark_as_read_notification_path(notification), method: :patch, class: 'text-blue-500 hover:underline' %>
-                <% else %>
-                  <span class="text-gray-500 text-xs">Read</span>
-                <% end %>
-              </li>
+              </div>
             <% end %>
-          </ul>
-        <% else %>
-          <div class="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
-            <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12.74A9 9 0 1112 3a9 9 0 019 9.74z"></path>
+          <% else %>
+            <div class="px-4 py-8 text-center">
+              <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14V10A6 6 0 006 10v4c0 .386-.149.76-.405 1.04L4 17h5m6 0a3 3 0 01-6 0"></path>
+              </svg>
+              <p class="text-sm text-gray-500 dark:text-gray-400">No notifications</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Desktop: Search Bar -->
+  <div class="hidden lg:flex items-center flex-1 max-w-2xl order-1">
+    <div class="relative w-full">
+      <%= form_with url: project_index_path, method: :get, class: 'relative flex items-center' do |f| %>
+        <div class="relative w-full">
+          <%= f.text_field :query, class: "border border-gray-300 h-11 w-full px-5 pr-12 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 pl-12 transition-all duration-200", id: "searchInput", autocomplete: "off", placeholder: "Search" %>
+          <!-- Search Icon -->
+          <button type="submit" class="absolute left-4 top-3 flex items-center text-gray-400 dark:text-gray-300 hover:text-blue-600 focus:outline-none transition-colors">
+            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.9 14.32a8 8 0 111.414-1.414l4.387 4.387a1 1 0 01-1.414 1.414l-4.387-4.387zM8 14a6 6 0 100-12 6 6 0 000 12z" />
             </svg>
-            <p class="mt-3 text-sm">No new notifications</p>
+          </button>
+          <!-- Clear Button -->
+          <button type="button" id="clearSearch" class="absolute right-4 top-3.5 text-gray-500 hover:text-gray-700 dark:text-gray-200 dark:hover:text-white hidden transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+          <!-- Keyboard Shortcut -->
+          <div class="absolute right-4 top-3 text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded border pointer-events-none">
+            ⌘K
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Desktop: Notifications and Profile -->
+  <div class="hidden lg:flex items-center gap-6 text-gray-700 dark:text-gray-200 order-2">
+    <!-- Desktop Notification Button -->
+    <div class="relative group">
+      <div class="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white cursor-pointer rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14V10A6 6 0 006 10v4c0 .386-.149.76-.405 1.04L4 17h5m6 0a3 3 0 01-6 0"></path>
+        </svg>
+        <% if @notifications&.any? { |notification| !notification.read } %>
+          <div class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border-2 border-white rounded-full dark:border-gray-800"></div>
+        <% end %>
+      </div>
+      
+      <!-- Desktop Notification Dropdown -->
+      <div class="absolute z-50 right-0 top-full mt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 w-96 bg-white shadow-lg rounded-xl dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+        <%= link_to notifications_path, class: "block px-4 py-3 font-medium text-center text-gray-700 dark:text-white bg-gray-50 dark:bg-gray-700 rounded-t-xl border-b border-gray-200 dark:border-gray-600" do %>
+          <div class="flex items-center justify-center gap-2">
+            <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14V10A6 6 0 006 10v4c0 .386-.149.76-.405 1.04L4 17h5m6 0a3 3 0 01-6 0"></path>
+            </svg>
+            <span class="text-sm">Notifications</span>
+          </div>
+        <% end %>
+        
+        <div class="max-h-96 overflow-y-auto">
+          <% if @notifications.present? %>
+            <% @notifications.limit(6).each do |notification| %>
+              <div class="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-600 last:border-b-0 cursor-pointer">
+                <div class="flex items-start space-x-3">
+                  <div class="flex-shrink-0">
+                    <% if notification.read %>
+                      <div class="w-2 h-2 bg-gray-300 rounded-full mt-2"></div>
+                    <% else %>
+                      <div class="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                    <% end %>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                      <%= notification.message.truncate(60) %>
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <%= time_ago_in_words(notification.created_at) %> ago
+                    </p>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+            <% if @notifications.count > 6 %>
+              <%= link_to notifications_path, class: "block px-4 py-3 text-center text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-b-xl" do %>
+                View all notifications
+              <% end %>
+            <% end %>
+          <% else %>
+            <div class="px-4 py-8 text-center">
+              <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14V10A6 6 0 006 10v4c0 .386-.149.76-.405 1.04L4 17h5m6 0a3 3 0 01-6 0"></path>
+              </svg>
+              <p class="text-sm text-gray-500 dark:text-gray-400">No notifications yet</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desktop Profile Dropdown -->
+    <div class="relative group">
+      <div class="flex items-center cursor-pointer group">
+        <% if current_user.profile_picture.attached? %>
+          <%= image_tag current_user.profile_picture, class: 'w-10 h-10 rounded-xl border-2 border-gray-200 group-hover:border-blue-300 transition-colors' %>
+        <% elsif current_user.name_initials.present? %>
+          <div class="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl text-white font-medium shadow-sm group-hover:shadow-md transition-shadow">
+            <%= current_user.name_initials %>
+          </div>
+        <% else %>
+          <%= image_tag 'default.png', class: 'w-10 h-10 rounded-xl border-2 border-gray-200 group-hover:border-blue-300 transition-colors' %>
+        <% end %>
+        <div class="ml-3">
+          <p class="text-sm font-medium text-gray-900 dark:text-white">
+            <%= current_user.name || current_user.email.split('@').first %>
+          </p>
+          <% unless %w[editor creator].include?(current_user.roles.first.name.downcase) %>
+            <p class="text-xs text-gray-500 dark:text-gray-400 capitalize">
+              <%= current_user.roles.first.name %>
+            </p>
+          <% end %>
+        </div>
+        <svg class="w-4 h-4 ml-2 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 9-7 7-7-7"></path>
+        </svg>
+      </div>
+      
+      <!-- Profile Dropdown Menu -->
+      <div class="absolute z-50 right-0 top-full mt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 bg-white dark:bg-gray-800 shadow-lg rounded-xl w-48 border border-gray-200 dark:border-gray-700">
+        <%= link_to edit_user_registration_path, class: "block" do %>
+          <div class="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-t-xl transition-colors">
+            <svg class="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>
+            Edit Profile
+          </div>
+        <% end %>
+        <%= link_to destroy_user_session_path, method: :delete, data: { 'turbo_method': :delete, 'turbo-confirm': 'Are you sure?' }, class: "block" do %>
+          <div class="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-b-xl border-t border-gray-100 dark:border-gray-600 transition-colors">
+            <svg class="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+            </svg>
+            Sign Out
           </div>
         <% end %>
       </div>
     </div>
   </div>
 
-  <div class="flex items-center gap-4 text-gray-700 dark:text-gray-200 relative">
-    <div class="relative mx-auto text-gray-600">
+  <!-- Mobile: Search Bar -->
+  <div class="w-full lg:hidden order-3">
+    <div class="relative">
       <%= form_with url: project_index_path, method: :get, class: 'relative flex items-center' do |f| %>
-        <%= f.text_field :query, placeholder: "Search", class: "border border-gray-300 h-10 w-96 px-5 pr-10 rounded-lg text-sm placeholder-current focus:outline-none dark:bg-gray-500 dark:border-gray-50 dark:text-gray-200", id: "searchInput" %>
-
-        <!-- Clear Button (X) -->
-        <button type="button" id="clearSearch" class="absolute right-10 top-0 mt-2 mr-4 text-gray-500 hover:text-gray-700 dark:text-gray-200 dark:hover:text-white hidden">
-          &times;
-        </button>
-
-        <!-- Search Button -->
-        <button type="submit" class="absolute right-1 top-0 mt-3 mr-4">
-          <svg class="text-gray-600 dark:text-gray-200 h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56.966 56.966">
-            <path d="M55.146,51.887L41.588,37.786c3.486-4.144,5.396-9.358,5.396-14.786c0-12.682-10.318-23-23-23s-23,10.318-23,23 s10.318,23,23,23c4.761,0,9.298-1.436,13.177-4.162l13.661,14.208c0.571,0.593,1.339,0.92,2.162,0.92 c0.779,0,1.518-0.297,2.079-0.837C56.255,54.982,56.293,53.08,55.146,51.887z M23.984,6c9.374,0,17,7.626,17,17s-7.626,17-17,17 s-17-7.626-17-17S14.61,6,23.984,6z"/>
-          </svg>
-        </button>
+        <div class="relative w-full flex items-center">
+          <span class="absolute left-3 top-1/2 transform -translate-y-1/2 flex items-center pointer-events-none">
+            <svg class="h-5 w-5 text-gray-400 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.9 14.32a8 8 0 111.414-1.414l4.387 4.387a1 1 0 01-1.414 1.414l-4.387-4.387zM8 14a6 6 0 100-12 6 6 0 000 12z" />
+            </svg>
+          </span>
+          <%= f.text_field :query, class: "border border-gray-300 h-10 w-full pl-10 pr-10 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 transition-all duration-200", id: "mobileSearchInput", autocomplete: "off", placeholder: "Search..." %>
+          <%# <button type="submit" aria-label="Search" class="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center justify-center text-gray-400 dark:text-gray-300 hover:text-blue-600 focus:outline-none transition-colors">
+            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.9 14.32a8 8 0 111.414-1.414l4.387 4.387a1 1 0 01-1.414 1.414l-4.387-4.387zM8 14a6 6 0 100-12 6 6 0 000 12z" />
+            </svg>
+          </button> %>
+          <!-- Clear Button -->
+          <button type="button" id="clearMobileSearch" class="absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-200 dark:hover:text-white hidden transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
       <% end %>
     </div>
-    <div class="Relative">
-      <ul id="dropdownProfile" class="flex items-center space-x-4">
-        <li class="flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-            <% if current_user.profile_picture.attached? %>
-              <%= image_tag current_user.profile_picture, class: 'w-10 h-10 rounded-md' %>
-            <% elsif current_user.name_initials.present? %>
-              <p class="w-10 h-10 flex items-center justify-center bg-gray-300 dark:bg-gray-600 rounded-full text-white"><%= current_user.name_initials %></p>
-            <% else %>
-              <%= image_tag 'default.png', class: 'w-10 h-10 rounded-full' %>
-            <% end %>
-            <span class="ml-3 text-gray-700 dark:text-gray-200">
-              <% unless %w[editor creator].include?(current_user.roles.first.name.downcase) %>
-                Role: <span class="capitalize"><%= current_user.roles.first.name %></span>
-              <% end %>
-            </span>
-            <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
-            </svg>
-          </li>
-      </ul>
-      <!-- Profile Dropdown Items -->
-      <ul id="dropdownItem" class="absolute z-50 top-2 mt-8 hidden bg-white dark:bg-gray-800 shadow-md rounded-md w-40 mt-4 space-y-2">
-        <%= link_to edit_user_registration_path  do %>
-          <li>
-            <div class="flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 group">
-              <span class="flex-1 ms-3 whitespace-nowrap dark:">Edit Profile</span>
-            </div>
-          </li>
-        <% end %>
-        <%= link_to destroy_user_session_path, method: :delete, data: { 'turbo_method': :delete, 'turbo-confirm': 'Are you sure?' } do  %>
-          <li>
-            <div class="flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 group">
-              <span class="flex-1 ms-3 whitespace-nowrap">
-                Sign Out
-              </span>
-            </div>
-          </li>
-        <% end %>
-      </ul>
-    </div>
   </div>
-
 </div>
 <% end %>
 
 <script>
-   document.addEventListener("turbo:load", function() {
+  document.addEventListener("turbo:load", function() {
+    // Desktop search functionality
     const searchInput = document.getElementById("searchInput");
     const clearSearch = document.getElementById("clearSearch");
 
-    searchInput.addEventListener("input", function() {
+    if (searchInput && clearSearch) {
+      // Initialize clear button visibility
       clearSearch.style.display = searchInput.value ? "block" : "none";
+      
+      searchInput.addEventListener("input", function() {
+        clearSearch.style.display = searchInput.value ? "block" : "none";
+      });
+
+      clearSearch.addEventListener("click", function() {
+        searchInput.value = "";
+        clearSearch.style.display = "none";
+        searchInput.focus();
+      });
+
+      // Enter key submission for desktop search
+      searchInput.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          searchInput.closest('form').submit();
+        }
+      });
+    }
+
+    // Mobile search functionality
+    const mobileSearchInput = document.getElementById("mobileSearchInput");
+    const clearMobileSearch = document.getElementById("clearMobileSearch");
+
+    if (mobileSearchInput && clearMobileSearch) {
+      // Initialize clear button visibility
+      clearMobileSearch.style.display = mobileSearchInput.value ? "block" : "none";
+      
+      mobileSearchInput.addEventListener("input", function() {
+        clearMobileSearch.style.display = mobileSearchInput.value ? "block" : "none";
+      });
+
+      clearMobileSearch.addEventListener("click", function() {
+        mobileSearchInput.value = "";
+        clearMobileSearch.style.display = "none";
+        mobileSearchInput.focus();
+      });
+
+      // Enter key submission for mobile search
+      mobileSearchInput.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          mobileSearchInput.closest('form').submit();
+        }
+      });
+    }
+
+    // Global keyboard shortcuts
+    document.addEventListener("keydown", function(e) {
+      // Ctrl+K or Cmd+K to focus search
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        const activeSearchInput = window.innerWidth >= 1024 ? searchInput : mobileSearchInput;
+        if (activeSearchInput) {
+          activeSearchInput.focus();
+          activeSearchInput.select(); // Select all text for easy replacement
+        }
+      }
+      
+      // Escape key to clear and blur search
+      if (e.key === "Escape") {
+        const activeInput = document.activeElement;
+        if (activeInput === searchInput || activeInput === mobileSearchInput) {
+          activeInput.value = "";
+          activeInput.blur();
+          if (activeInput === searchInput && clearSearch) {
+            clearSearch.style.display = "none";
+          }
+          if (activeInput === mobileSearchInput && clearMobileSearch) {
+            clearMobileSearch.style.display = "none";
+          }
+        }
+      }
     });
-
-    clearSearch.addEventListener("click", function() {
-      searchInput.value = "";
-      clearSearch.style.display = "none";
-    });
-  });
-
-  document.querySelector('#dropdownNotificationButton').addEventListener('click', function() {
-    const dropdown = document.querySelector('#dropdownNotification');
-    dropdown.classList.toggle('hidden');
-  });
-
-  // Toggle the profile dropdown
-  document.getElementById("dropdownProfile").addEventListener("click", function() {
-      const dropdownMenu = document.getElementById("dropdownItem");
-      dropdownMenu.classList.toggle("hidden");
-  });
-
-  document.getElementById("dropdownNavbarLink").addEventListener("click", function() {
-      const dropdownMenu = document.getElementById("dropdownNavbar");
-      dropdownMenu.classList.toggle("hidden");
   });
 </script>
