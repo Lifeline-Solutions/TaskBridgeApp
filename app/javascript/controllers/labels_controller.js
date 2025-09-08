@@ -11,17 +11,18 @@ export default class extends Controller {
     const value = this.inputTarget.value.trim()
     if (!value) return
 
-    // Check if already exists in hidden select
-    let option = Array.from(this.selectTarget.options).find(opt => opt.text === value)
-    if (option) {
-      option.selected = true
+    // 🔎 Check if value matches an existing label option in <select>
+    let existingOption = Array.from(this.selectTarget.options).find(opt => opt.text.toLowerCase() === value.toLowerCase())
+
+    if (existingOption) {
+      existingOption.selected = true
       this.inputTarget.value = ""
       this.renderChips()
       return
     }
 
     try {
-      // Create label in backend
+      // 🌱 Create label in backend if it doesn’t exist
       const response = await fetch("/labels", {
         method: "POST",
         headers: {
@@ -48,11 +49,8 @@ export default class extends Controller {
 
   remove(event) {
     const id = event.currentTarget.dataset.id
-
-    // Unselect from hidden select
     let option = Array.from(this.selectTarget.options).find(opt => opt.value == id)
     if (option) option.selected = false
-
     this.renderChips()
   }
 
