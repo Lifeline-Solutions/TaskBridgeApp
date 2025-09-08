@@ -1,24 +1,48 @@
 // app/javascript/loading.js.erb
 document.addEventListener('turbo:load', () => {
   const includedPaths = [ '/' ];
-  const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+  
+  // Check if we're using the Performance Timing API
+  let loadTime;
+  if (window.performance && performance.timing) {
+    loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+  } else {
+    loadTime = 0; // Default to showing loader if timing API not available
+  }
 
+  // Skip loading screen on certain pages or if load was fast (improves mobile experience)
   if (!includedPaths.includes(window.location.pathname) && loadTime <= 5000) {
     return;
   }
 
+  // Create mobile-friendly loader
   const loadingLogo = document.createElement('img');
   loadingLogo.src = '<%= asset_path("loading.png") %>';
   loadingLogo.id = 'loading-logo';
+  loadingLogo.alt = 'Loading...'; // For accessibility
 
   const loadingBackground = document.createElement('div');
   loadingBackground.id = 'loading-background';
 
+  // Add to DOM
   document.body.appendChild(loadingBackground);
   document.body.appendChild(loadingLogo);
 
+  // Adjust timeout based on device type (shorter for mobile to improve perceived performance)
+  const isMobile = window.innerWidth < 640;
+  const timeout = isMobile ? 1000 : 1500;
+
   setTimeout(() => {
-    loadingLogo.remove();
-    loadingBackground.remove();
-  }, 1500);
+    // Fade out effect for smoother transition
+    loadingLogo.style.opacity = 0;
+    loadingBackground.style.opacity = 0;
+    loadingLogo.style.transition = 'opacity 0.3s ease';
+    loadingBackground.style.transition = 'opacity 0.3s ease';
+    
+    // Remove elements after fade completes
+    setTimeout(() => {
+      loadingLogo.remove();
+      loadingBackground.remove();
+    }, 300);
+  }, timeout);
 });
