@@ -57,10 +57,26 @@ class DefectController < ApplicationController
     @defects = @defects.joins(product: :client).where(clients: { name: params[:client_name] }) if params[:client_name].present?
 
     # Restrict for non-admin users
-    @defects = @defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa)
+    @defects = @defects.joins(:users).where(users: { id: current_user.id })
 
     # Status filter
     @defects = @defects.joins(:statuses).where(statuses: { id: params[:status] }) if params[:status].present?
+
+    # Ordering
+    @selected_order = params[:order]
+    @defects = @defects.order(created_at: params[:order] == 'asc' ? :asc : :desc)
+
+    # Filters
+    if params[:start_date].present? && params[:end_date].present?
+      @defects = @defects.where('defects.created_at::date BETWEEN ? AND ?', params[:start_date], params[:end_date])
+    elsif params[:start_date].present?
+      @defects = @defects.where('defects.created_at::date >= ?', params[:start_date])
+    elsif params[:end_date].present?
+      @defects = @defects.where('defects.created_at::date <= ?', params[:end_date])
+    end
+
+    @defects = @defects.where('priority ILIKE ?', params[:priority]) if params[:priority].present?
+    @defects = @defects.where(users: { id: params[:user_id] }) if params[:user_id].present?
 
     # Search filter
     if params[:query].present?
@@ -122,9 +138,7 @@ class DefectController < ApplicationController
     @defect = Defect.new
 
     default_assignee = DefaultDefectAssignee.where(archive_status: false).order(created_at: :desc).first
-    if default_assignee&.user_id.present?
-      @defect.user_ids = [default_assignee.user_id]
-    end
+    @defect.user_ids = [default_assignee.user_id] if default_assignee&.user_id.present?
 
     set_form_data
   end
@@ -139,11 +153,9 @@ class DefectController < ApplicationController
     # Fallback to global default assignee if no one selected
     if selected_user_ids.blank?
       default_assignee = DefaultDefectAssignee.where(archive_status: false)
-                                            .order(created_at: :desc)
-                                            .first
-      if default_assignee&.user_id.present?
-        selected_user_ids = [default_assignee.user_id.to_s]
-      end
+        .order(created_at: :desc)
+        .first
+      selected_user_ids = [default_assignee.user_id.to_s] if default_assignee&.user_id.present?
     end
 
     # Assign before saving
@@ -161,7 +173,7 @@ class DefectController < ApplicationController
           .performed_on(@defect)
           .event('defect.create')
           .with_properties(defect_attributes: @defect.attributes,
-                          assigned_user_ids: selected_user_ids)
+                           assigned_user_ids: selected_user_ids)
           .log("Created Defect ##{@defect.id}, assigned to User IDs: #{selected_user_ids.join(', ')}")
 
         ProcessMentionsJob.perform_later(
@@ -174,8 +186,7 @@ class DefectController < ApplicationController
         assigned_names = @defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', ')
         log_event(
           @defect, current_user, 'Created and Assigned',
-          assigned_names.present? ? "Defect was created and assigned to #{assigned_names} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" :
-                                    "Defect was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
+          assigned_names.present? ? "Defect was created and assigned to #{assigned_names} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
         )
 
         redirect_to @defect, notice: 'Defect was successfully created.'
@@ -224,10 +235,10 @@ class DefectController < ApplicationController
     end
 
     @qa_modules = if @defect.product_id.present?
-                 QaModule.where(product_id: @defect.product_id)
-               else
-                 QaModule.all
-               end
+                    QaModule.where(product_id: @defect.product_id)
+                  else
+                    QaModule.all
+                  end
     @submodules = @defect.qa_module ? @defect.qa_module.submodules : []
 
     respond_to do |format|
