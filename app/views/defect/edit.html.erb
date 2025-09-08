@@ -24,7 +24,10 @@
 
         <%= form_with model: @defect, url: defect_path(@defect), method: :patch, local: true, html: { multipart: true, class: 'space-y-6' }, data: { turbo: false } do |f| %>
           <div data-controller="project-modules"
-               data-project-modules-modules-url-value="<%= modules_by_product_defect_index_path %>">
+            data-project-modules-modules-url-value="<%= modules_by_product_defect_index_path %>"
+            data-project-modules-current-module-id-value="<%= @selected_module_id %>"
+            data-project-modules-current-submodule-id-value="<%= @selected_submodule_id %>">
+
             
             <!-- Project -->
             <div>
@@ -211,10 +214,10 @@
     const submodSelect = document.querySelector('[data-project-modules-target="submoduleSelect"]');
 
     // Load modules for the selected project on page load
-    if (projectSelect && projectSelect.value) {
-      const event = new Event('change');
-      projectSelect.dispatchEvent(event);
-    }
+    # if (projectSelect && projectSelect.value) {
+    #   const event = new Event('change');
+    #   projectSelect.dispatchEvent(event);
+    # }
 
     // Load submodules for the selected module on page load
     if (modSelect && modSelect.value) {
