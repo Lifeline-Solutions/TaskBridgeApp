@@ -201,12 +201,9 @@ class DefectController < ApplicationController
 
   def edit
     @defect = Defect.find(params[:id])
-
-    @qa_modules = QaModule.where(parent_id: nil)
     @banking_types = BankingType.all
     @products = Product.with_quality_assurance_status
     @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
-    @submodules = @defect.qa_module ? @defect.qa_module.submodules : []
 
     @statuses = Status.where(name: [
                                'To Do', 'In Progress', 'On hold', 'Awaiting client info',
@@ -225,6 +222,13 @@ class DefectController < ApplicationController
       groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
       ["#{client_name} - #{groupware_names}", product.id]
     end
+
+    @qa_modules = if @defect.product_id.present?
+                 QaModule.where(product_id: @defect.product_id)
+               else
+                 QaModule.all
+               end
+    @submodules = @defect.qa_module ? @defect.qa_module.submodules : []
 
     respond_to do |format|
       format.html
@@ -350,7 +354,7 @@ class DefectController < ApplicationController
       .distinct
       .order(:name)
 
-    render :index
+    render :index_show
   end
 
   def publish
