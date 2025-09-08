@@ -7,7 +7,7 @@ import 'controllers';
 import 'trix';
 import '@rails/actiontext';
 
-/* import './controllers/ckeditor_init' */
+import './controllers/ckeditor_init'
 import './controllers/label_tomselect_init' 
 
 //= require rails-ujs

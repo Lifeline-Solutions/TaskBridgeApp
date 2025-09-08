@@ -12,3 +12,4 @@ pin "tributejs", to: "https://ga.jspm.io/npm:tributejs@5.1.3/dist/tribute.min.js
 pin "@rails/actioncable", to: "actioncable.esm.js"
 pin_all_from "app/javascript/channels", under: "channels"
 #Add CK editor
+pin "ckeditor", to: "https://cdn.ckeditor.com/4.21.0/standard-all/ckeditor.js"
