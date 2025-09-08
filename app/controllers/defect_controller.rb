@@ -57,7 +57,7 @@ class DefectController < ApplicationController
     @defects = @defects.joins(product: :client).where(clients: { name: params[:client_name] }) if params[:client_name].present?
 
     # Restrict for non-admin users
-    @defects = @defects.joins(:users).where(users: { id: current_user.id })
+    # @defects = @defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa)
 
     # Status filter
     @defects = @defects.joins(:statuses).where(statuses: { id: params[:status] }) if params[:status].present?
