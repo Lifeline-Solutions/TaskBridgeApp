@@ -1,62 +1,63 @@
-<table class="min-w-full bg-white dark:bg-gray-800">
-  <thead>
-  <tr>
-    <th class="py-2 px-4 border-b">ID</th>
-    <th class="py-2 px-4 border-b">Date</th>
-    <th class="py-2 px-4 border-b">SERVICE DESK NAME</th>
-    <th class="py-2 px-4 border-b">ISSUE</th>
-    <th class="py-2 px-4 border-b">PRIORITY</th>
-    <th class="py-2 px-4 border-b">SUMMARY</th>
-    <th class="py-2 px-4 border-b">ASSIGNEE</th>
-    <th class="py-2 px-4 border-b">STATUS</th>
-    <th class="py-2 px-4 border-b">PROGRESS</th>
-    <th class="py-2 px-4 border-b">TIME FROM CREATED</th>
-    <th class="py-2 px-4 border-b">VIEW</th>
-  </tr>
-  </thead>
-  <tbody>
+<div class="overflow-x-auto">
+  <table class="min-w-full bg-white dark:bg-gray-800 text-xs sm:text-sm">
+    <thead>
+    <tr>
+      <th class="py-1 sm:py-2 px-2 sm:px-4 border-b">ID</th>
+      <th class="py-1 sm:py-2 px-2 sm:px-4 border-b hidden sm:table-cell">Date</th>
+      <th class="py-1 sm:py-2 px-2 sm:px-4 border-b hidden md:table-cell">SERVICE DESK</th>
+      <th class="py-1 sm:py-2 px-2 sm:px-4 border-b hidden lg:table-cell">ISSUE</th>
+      <th class="py-1 sm:py-2 px-2 sm:px-4 border-b">PRIORITY</th>
+      <th class="py-1 sm:py-2 px-2 sm:px-4 border-b">SUMMARY</th>
+      <th class="py-1 sm:py-2 px-2 sm:px-4 border-b hidden md:table-cell">ASSIGNEE</th>
+      <th class="py-1 sm:py-2 px-2 sm:px-4 border-b">STATUS</th>
+      <th class="py-1 sm:py-2 px-2 sm:px-4 border-b hidden sm:table-cell">PROGRESS</th>
+      <th class="py-1 sm:py-2 px-2 sm:px-4 border-b hidden lg:table-cell">TIME FROM CREATED</th>
+      <th class="py-1 sm:py-2 px-2 sm:px-4 border-b">VIEW</th>
+    </tr>
+    </thead>
+  <tbody class="text-xs sm:text-sm">
   <% @tickets.each do |ticket| %>
     <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-      <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
-        <%= link_to ticket.unique_id, project_ticket_path(ticket.project, ticket) if ticket.unique_id.present? %>
+      <th scope="row" class="px-1 sm:px-2 py-1 sm:py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
+        <%= link_to ticket.unique_id.to_s.truncate(8), project_ticket_path(ticket.project, ticket) if ticket.unique_id.present? %>
       </th>
-      <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+      <th scope="row" class="px-1 sm:px-2 py-1 sm:py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white hidden sm:table-cell">
         <%= link_to ticket.created_at.strftime("%d %b %Y"), project_ticket_path(ticket.project, ticket) %>
       </th>
-      <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-        <%= link_to ticket.project.title, project_ticket_path(ticket.project, ticket) %>
+      <th scope="row" class="px-1 sm:px-2 py-1 sm:py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white hidden md:table-cell">
+        <%= link_to ticket.project.title.truncate(15), project_ticket_path(ticket.project, ticket) %>
       </th>
-      <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+      <th scope="row" class="px-1 sm:px-2 py-1 sm:py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white hidden lg:table-cell">
         <%= link_to ticket.issue, project_ticket_path(ticket.project, ticket) %>
       </th>
       <!-- Priority and severity -->
-      <td class="px-2 py-2">
+      <td class="px-1 sm:px-2 py-1 sm:py-2">
         <div class="relative w-full flex justify-center">
           <%= render partial: "tickets/priority_severity", locals: { ticket: ticket } %>
         </div>
       </td>
-      <td class="px-4 py-4 grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-4">
+      <td class="px-2 sm:px-4 py-2 sm:py-4 grid grid-cols-[auto_1fr_auto] items-center gap-1 sm:gap-3">
         <%= render partial: 'tickets/summary', locals: { ticket: ticket } %>
       </td>
 
 
-      <td class="px-2 py-2 font-bold">
+      <td class="px-1 sm:px-2 py-1 sm:py-2 font-bold hidden md:table-cell">
         <div class="relative w-full flex justify-center">
           <% ticket.users.each do |user| %>
-            <%= user.name if user.name.present? %>
+            <%= user.name.truncate(10) if user.name.present? %>
           <% end %>
         </div>
       </td>
 
       <!-- Ticket Status -->
-      <td class="2">
+      <td class="px-1 sm:px-2 py-1 sm:py-2">
         <div class="relative w-full flex justify-center">
           <%= render partial: "tickets/ticket_status", locals: { ticket: ticket } %>
         </div>
       </td>
 
       <!-- Progress Bar -->
-      <td class="px-2 py-2">
+      <td class="px-1 sm:px-2 py-1 sm:py-2 hidden sm:table-cell">
         <div class="relative w-full flex justify-center">
             <%= render partial: "tickets/progress_bar", locals: { ticket: ticket } %>
         </div>
