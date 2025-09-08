@@ -61,15 +61,23 @@ export default class extends Controller {
       const span = document.createElement("span")
       span.className =
         "px-2 py-1 bg-gray-200 text-gray-800 rounded-md text-xs font-medium flex items-center gap-1 rounded"
-      span.innerHTML = `
-        ${opt.text}
-        <button type="button"
-                class="ml-1 text-red-500 hover:text-red-700 text-xs font-bold cursor-pointer"
-                data-action="click->labels#remove"
-                data-id="${opt.value}">
-          ✕
-        </button>
-      `
+
+      // Label text (safe with textContent)
+      const labelText = document.createElement("span")
+      labelText.textContent = opt.text
+
+      // Remove button
+      const button = document.createElement("button")
+      button.type = "button"
+      button.textContent = "✕"
+      button.className =
+        "ml-1 text-red-500 hover:text-red-700 text-xs font-bold cursor-pointer"
+      button.dataset.action = "click->labels#remove"
+      button.dataset.id = opt.value
+
+      span.appendChild(labelText)
+      span.appendChild(button)
+
       this.chipsTarget.appendChild(span)
     })
   }
