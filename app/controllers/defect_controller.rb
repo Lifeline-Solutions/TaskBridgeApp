@@ -57,7 +57,7 @@ class DefectController < ApplicationController
     @defects = @defects.joins(product: :client).where(clients: { name: params[:client_name] }) if params[:client_name].present?
 
     # Restrict for non-admin users
-    @defects = @defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa)
+    @defects = @defects.joins(:users).where(users: { id: current_user.id })
 
     # Status filter
     @defects = @defects.joins(:statuses).where(statuses: { id: params[:status] }) if params[:status].present?
@@ -73,11 +73,6 @@ class DefectController < ApplicationController
       @defects = @defects.where('defects.created_at::date >= ?', params[:start_date])
     elsif params[:end_date].present?
       @defects = @defects.where('defects.created_at::date <= ?', params[:end_date])
-    end
-
-    if params[:status].present?
-      statuses = Array(params[:status])
-      @defects = @defects.where(statuses: { name: statuses })
     end
 
     @defects = @defects.where('priority ILIKE ?', params[:priority]) if params[:priority].present?
