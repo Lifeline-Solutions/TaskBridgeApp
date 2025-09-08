@@ -1,68 +1,89 @@
-<div class="flex items-center justify-between w-full p-3 rounded-lg border mb-4">
+<div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between w-full p-3 lg:p-4 rounded-lg border border-gray-200 dark:border-gray-600 mb-4 bg-white dark:bg-gray-800 shadow-sm">
   <!-- Search Input -->
-  <div class="relative flex-1 max-w-md mr-4">
-    <%= form_with url: project_path(@project), method: :get, class: 'flex gap-2' do |f| %>
-      <%= f.text_field :query, class: "block w-full p-2 pl-10 text-sm border-gray-300 dark:bg-gray-500 dark:border-gray-50 dark:text-gray-200 border rounded-l-lg focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-300", placeholder: "Search by either issue or subject" %>
+  <div class="relative flex-1 mb-4 lg:mb-0 lg:mr-4">
+    <%= form_with url: project_path(@project), method: :get, class: 'flex gap-2 w-full' do |f| %>
+      <div class="relative flex-1">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </div>
+        <%= f.text_field :query, 
+            class: "block w-full pl-10 pr-3 py-2 sm:py-2.5 text-sm border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-300 transition-colors", 
+            placeholder: "Search by issue or subject...",
+            value: params[:query] %>
+      </div>
+      <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors lg:hidden">
+        Search
+      </button>
     <% end %>
   </div>
 
   <!-- Right Side Controls -->
-  <div class="flex items-center space-x-4">
+  <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 lg:space-x-4">
     <!-- Filter Dropdown -->
-    <div class="relative">
-      <button id="filterDropdownButton" class="flex items-center text-sm hover:text-blue-600">
-        <svg class="w-8 h-8 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+    <div class="relative flex-1 sm:flex-none">
+      <button id="filterDropdownButton" 
+              class="flex items-center justify-center w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+        <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
         </svg>
-        Filter
+        <span class="hidden sm:inline">Filter</span>
+        <span class="sm:hidden">Filters & Sort</span>
+        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
       </button>
       
       <!-- Filter Dropdown Menu -->
-      <div id="filterDropdown" class="hidden absolute bg-white dark:bg-gray-700 right-0 mt-2 w-56 origin-top-right rounded-md shadow-lg border border-gray-200 z-10">
-        <%= form_with url: project_path(@project), method: :get, class: 'p-2 space-y-2' do |f| %>
+      <div id="filterDropdown" class="hidden absolute bg-white dark:bg-gray-800 right-0 mt-2 w-80 sm:w-72 origin-top-right rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 z-50 max-h-96 overflow-y-auto">
+        <%= form_with url: project_path(@project), method: :get, class: 'p-4 space-y-4' do |f| %>
           <!-- Order Filter -->
           <div>
-            <%= label_tag :order, 'Sort By', class: 'block font-medium mb-1 text-sm border-gray-300 dark:bg-gray-500' %>
+            <%= label_tag :order, 'Sort By', class: 'block font-semibold mb-2 text-sm text-gray-900 dark:text-white' %>
             <%= select_tag :order, options_for_select([['Latest First', 'desc'], ['Oldest First', 'asc']], params[:order]), 
-                          class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
+                          class: "w-full p-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
           </div>
           
           <!-- Date Range -->
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <%= label_tag :start_date, 'From', class: 'block font-medium mb-1 text-sm border-gray-300 dark:bg-gray-500' %>
-              <%= date_field_tag :start_date, params[:start_date], class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
-            </div>
-            <div>
-              <%= label_tag :end_date, 'To', class: 'block font-medium mb-1 text-sm border-gray-300 dark:bg-gray-500' %>
-              <%= date_field_tag :end_date, params[:end_date], class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
+          <div>
+            <label class='block font-semibold mb-2 text-sm text-gray-900 dark:text-white'>Date Range</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <%= label_tag :start_date, 'From', class: 'block font-medium mb-1 text-xs text-gray-600 dark:text-gray-400' %>
+                <%= date_field_tag :start_date, params[:start_date], class: "w-full p-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500" %>
+              </div>
+              <div>
+                <%= label_tag :end_date, 'To', class: 'block font-medium mb-1 text-xs text-gray-600 dark:text-gray-400' %>
+                <%= date_field_tag :end_date, params[:end_date], class: "w-full p-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500" %>
+              </div>
             </div>
           </div>
           
-          <!-- Status Filter (Made as a checkbox drop down) -->
+          <!-- Status Filter -->
           <div>
-            <%= label_tag 'status[]', 'Status', class: 'block text-sm border-gray-300 dark:bg-gray-500 font-medium mb-1' %>
+            <%= label_tag 'status[]', 'Status', class: 'block text-sm font-semibold mb-2 text-gray-900 dark:text-white' %>
             <div class="relative inline-block text-left w-full">
               <button type="button"
                       id="statusDropdownButton"
-                      class="w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded text-left inline-flex justify-between items-center"
+                      class="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-left inline-flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-600 focus:ring-2 focus:ring-blue-500 transition-colors"
                       onclick="document.getElementById('statusDropdown').classList.toggle('hidden')">
-                Filter by Status
+                <span>Filter by Status</span>
                 <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M19 9l-7 7-7-7"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                 </svg>
               </button>
 
               <div id="statusDropdown"
-                  class="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg w-full hidden">
-                <div class="p-2 max-h-60 overflow-y-auto space-y-2">
+                  class="absolute z-10 mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg w-full hidden">
+                <div class="p-2 max-h-48 overflow-y-auto space-y-1">
                   <% @statuses.each do |status| %>
-                    <div class="flex items-center">
+                    <div class="flex items-center p-2 hover:bg-gray-50 dark:hover:bg-gray-600 rounded">
                       <%= check_box_tag 'status[]', status, Array(params[:status]).include?(status),
                                         id: "status_#{status.parameterize}",
-                                        class: "mr-2" %>
-                      <%= label_tag "status_#{status.parameterize}", status.capitalize, class: "text-sm" %>
+                                        class: "w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" %>
+                      <%= label_tag "status_#{status.parameterize}", status.capitalize, 
+                          class: "ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer" %>
                     </div>
                   <% end %>
                 </div>
@@ -72,74 +93,63 @@
           
           <!-- Priority Filter -->
           <div>
-            <%= label_tag :priority, 'Priority', class: 'block text-sm border-gray-300 dark:bg-gray-500 font-medium mb-1' %>
-            <%= select_tag :priority, options_for_select(['SEVERITY 1', 'SEVERITY 2', 'SEVERITY 3', 'SEVERITY 4'], params[:priority]), 
+            <%= label_tag :priority, 'Priority', class: 'block text-sm font-semibold mb-2 text-gray-900 dark:text-white' %>
+            <%= select_tag :priority, options_for_select([['Severity 1', 'SEVERITY 1'], ['Severity 2', 'SEVERITY 2'], ['Severity 3', 'SEVERITY 3'], ['Severity 4', 'SEVERITY 4']], params[:priority]), 
                          include_blank: 'All Priorities',
-                         class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
+                         class: "w-full p-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
           </div>
           
           <!-- Issue Type Filter -->
           <div>
-            <%= label_tag :issue, 'Issue Type', class: 'block text-xs font-medium mb-1' %>
-            <%= select_tag :issue, options_for_select(['SUPPORT', 'NEW FEATURE', 'BUG', 'REQUEST', 'INCIDENT'], params[:issue]), 
+            <%= label_tag :issue, 'Issue Type', class: 'block text-sm font-semibold mb-2 text-gray-900 dark:text-white' %>
+            <%= select_tag :issue, options_for_select([['Support', 'SUPPORT'], ['New Feature', 'NEW FEATURE'], ['Bug', 'BUG'], ['Request', 'REQUEST'], ['Incident', 'INCIDENT']], params[:issue]), 
                          include_blank: 'All Types',
-                         class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
+                         class: "w-full p-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
           </div>
           
           <% if current_user.has_role?(:agent) || current_user.has_role?('project manager') || current_user.has_role?(:admin) || current_user.has_role?(:observer) %>
             <div>
-              <%= label_tag :user_id, 'Assignee', class: 'block text-xs font-medium mb-1' %>
+              <%= label_tag :user_id, 'Assignee', class: 'block text-sm font-semibold mb-2 text-gray-900 dark:text-white' %>
               <%= select_tag :user_id, options_from_collection_for_select(@project.users.with_assigned_role, :id, ->(u) { "#{u.first_name} #{u.last_name}" }, params[:user_id]), 
                            include_blank: 'All Assignees',
-                           class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
+                           class: "w-full p-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
             </div>
           <% end %>
           
-          <div class="pt-2 flex justify-between">
-            <%= submit_tag 'Apply', class: 'px-3 py-1 text-sm bg-blue-600 rounded-r-lg border border-blue-600 hover:bg-blue-700 focus:outline-none' %>
-            <%= link_to 'Reset', project_path(@project), class: 'px-3 py-1 text-sm bg-red-600 rounded-r-lg border border-red-600 hover:bg-red-700 focus:outline-none' %>
+          <!-- Filter Actions -->
+          <div class="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200 dark:border-gray-600">
+            <%= submit_tag 'Apply Filters', class: 'flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors' %>
+            <%= link_to 'Clear All', project_path(@project), class: 'flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors text-center' %>
           </div>
         <% end %>
       </div>
     </div>
 
-    <!-- Last Month Filter -->
-    <%= form_with url: project_path(@project), method: :get, class: 'flex items-center' do |f| %>
-      <%= hidden_field_tag :last_month, true %>
-      <button type="submit" class="flex items-center text-sm hover:text-blue-600 <%= 'text-blue-600 font-semibold' if @use_last_month_filter %>">
-        <svg class="w-5 h-5 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
-        </svg>
-        Last Month
-      </button>
-    <% end %>
+    <!-- Quick Actions -->
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+      <!-- Last Month Filter -->
+      <%= form_with url: project_path(@project), method: :get, class: 'flex-1 sm:flex-none' do |f| %>
+        <%= hidden_field_tag :last_month, true %>
+        <button type="submit" 
+                class="flex items-center justify-center w-full sm:w-auto px-4 py-2 text-sm font-medium border rounded-lg transition-colors <%= @use_last_month_filter ? 'text-blue-700 bg-blue-50 border-blue-300 dark:text-blue-400 dark:bg-blue-900/20 dark:border-blue-800' : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600' %>">
+          <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+          </svg>
+          <span class="hidden sm:inline">Last Month</span>
+          <span class="sm:hidden">Recent</span>
+        </button>
+      <% end %>
 
-    <!-- View Toggle
-    <div class="flex border border-gray-300 rounded-md overflow-hidden">
-      <button class="p-2 text-sm border border-gray-300 dark:bg-gray-500 
-       hover:bg-gray-100 dark:hover:bg-gray-600 
-       hover:border-gray-400 transition-colors duration-150">
-        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+      <!-- View All Link -->
+      <%= link_to project_path(@project), 
+          class: "flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" do %>
+        <span class="hidden sm:inline">View All Tickets</span>
+        <span class="sm:hidden">View All</span>
+        <svg class="w-4 h-4 ml-2" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
         </svg>
-      </button>
-      <button class="p-2 text-sm border border-gray-300 dark:bg-gray-500 
-       hover:bg-gray-100 dark:hover:bg-gray-600 
-       hover:border-gray-400 transition-colors duration-150">
-        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
-        </svg>
-      </button>
+      <% end %>
     </div>
-    -->
-
-    <!-- View All Link -->
-    <%= link_to project_path(@project), class: "text-sm font-medium flex items-center border border-gray-300 rounded px-3 py-2 bg-blue-600 text-slate-100 hover:border-slate-100 hover:text-white focus:bg-blue-600 focus:border-blue-600 focus:text-white transition" do %>
-      <span>View All</span>
-      <svg class="w-4 h-4 ml-1" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-      </svg>
-    <% end %>
   </div>
 </div>
 
