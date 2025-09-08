@@ -1,10 +1,10 @@
 <% provide(:title, "Home") %>
 
-<div class="p-4 border-2 border-white rounded-lg flex flex-col items-center">
+<div class="p-2 sm:p-4 border-2 border-white rounded-lg flex flex-col items-center w-full">
   <!-- Topbar Section  for admin and observer-->
   <% if current_user.has_role?(:admin) or current_user.has_role?(:observer) %>
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-6 w-full ">
-      <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-6 w-full overflow-x-auto">
+      <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
         <p class="text-xs sm:text-sm truncate">
           All Service Desks
         </p>
@@ -13,7 +13,7 @@
         </span>
       </div>
       <%= link_to active_users_path, class: 'flex items-center justify-between w-full' do %>
-      <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+      <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
         <p class="text-xs sm:text-sm truncate">
           Active Users<br>(User who have login more than once)
         </p>
@@ -23,7 +23,7 @@
       </div>
       <% end %>
       <%= link_to active_client_users_path, class: 'flex items-center justify-between w-full' do %>
-      <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+      <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
         <p class="text-xs sm:text-sm truncate">
           Active Clients<br>(Clients who have logged in more than once)
         </p>
@@ -33,7 +33,7 @@
       </div>
       <% end %>
       <%= link_to active_manager_users_path, class: 'flex items-center justify-between w-full' do %>
-      <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+      <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
         <p class="text-xs sm:text-sm truncate">
           Active Project Manager<br>(Project Managers who have logged in more than once)
         </p>
@@ -43,7 +43,7 @@
       </div>
       <% end %>
       <%= link_to active_agent_users_path, class: 'flex items-center justify-between w-full' do %>
-      <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+      <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
         <p class="text-xs sm:text-sm truncate">
           Active Internal Users<br>(Agents who have logged in more than once)
         </p>
@@ -54,7 +54,7 @@
       <% end %>
       <% if current_user.projects.any? %>
         <%= link_to closed_tickets_one_week_project_tickets_path(project_id: current_user.projects.first.id) do %>
-          <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+          <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
             <p class="text-xs sm:text-sm truncate">
               Tickets Closed in the last one week
             </p>
@@ -64,13 +64,13 @@
           </div>
         <% end %>
       <% else %>
-        <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+        <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
           <p class="text-xs sm:text-sm truncate">
             No Tickets Closed in the last one week
           </p>
         </div>
       <% end %>
-      <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+      <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
         <p class="text-xs sm:text-sm truncate">
           All Tickets
         </p>
@@ -80,7 +80,7 @@
       </div>
       <% if current_user.projects.any? %>
         <%= link_to all_open_tickets_project_tickets_path(project_id: current_user.projects.first.id) do %>
-          <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+          <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
             <p class="text-xs sm:text-sm truncate">
               All Open Tickets
             </p>
@@ -90,7 +90,7 @@
           </div>
         <% end %>
       <% else %>
-        <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+        <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
           <p class="text-xs sm:text-sm truncate">
             No Open Tickets Available
           </p>
@@ -98,7 +98,7 @@
       <% end %>
       <% if current_user.projects.any? %>
         <%= link_to created_tickets_one_week_project_tickets_path(project_id: current_user.projects.first.id) do %>
-          <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+          <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
             <p class="text-xs sm:text-sm truncate">
               All Tickets created in the last one week
             </p>
@@ -108,7 +108,7 @@
           </div>
         <% end %>
       <% else %>
-        <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+        <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
           <p class="text-xs sm:text-sm truncate">
             No Tickets Created in the last one week
           </p>
@@ -121,10 +121,10 @@
 
 
   <% if current_user.has_role?(:hod) or current_user.has_role?(:admin) or current_user.has_role?(:observer) %>
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-6 w-full ">
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-6 w-full overflow-x-auto">
       <% if current_user.projects.any? %>
         <%= link_to show_all_tickets_user_inactive_project_tickets_path(project_id: current_user.projects.first.id) do %>
-          <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+          <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
             <p class="text-xs sm:text-sm truncate">
               All Tickets for Inactive Users
             </p>
@@ -134,7 +134,7 @@
           </div>
         <% end %>
       <% else %>
-        <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+        <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
           <p class="text-xs sm:text-sm truncate">
             No Tickets for Inactive Users
           </p>
@@ -143,7 +143,7 @@
       <!-- All tickets created by inactive users that are part of a team-->
       <% if current_user.projects.any? %>
         <%= link_to all_tickets_created_by_inactive_team_members_project_tickets_path(project_id: current_user.projects.first.id) do %>
-          <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+          <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
             <p class="text-xs sm:text-sm truncate">
               All Tickets Assigned Inactive by Team Members
             </p>
@@ -153,7 +153,7 @@
           </div>
         <% end %>
       <% else %>
-        <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+        <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
           <p class="text-xs sm:text-sm truncate">
             No Tickets Assigned Inactive by Team Members
           </p>
@@ -163,7 +163,7 @@
       <!-- All tickets created by inactive users that are part of a team-->
       <% if current_user.projects.any? %>
         <%= link_to all_tickets_and_no_team_member_project_tickets_path(project_id: current_user.projects.first.id) do %>
-          <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+          <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
             <p class="text-xs sm:text-sm truncate">
               User with Tickets & No Team Assigned
             </p>
@@ -173,7 +173,7 @@
           </div>
         <% end %>
       <% else %>
-        <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+        <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
           <p class="text-xs sm:text-sm truncate">
             No User with Tickets & No Team Assigned
           </p>
@@ -184,9 +184,9 @@
 
   <!-- First Grid Section -->
 
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4 w-full">
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-4 w-full overflow-x-auto">
   <%= link_to project_index_path do %>
-    <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+    <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
       <p class="text-xs sm:text-sm truncate">
         Number of Service Desks
       </p>
@@ -197,7 +197,7 @@
   <% end %>
     <% if current_user.projects.any? %>
       <%= link_to project_tickets_path(project_id: current_user.projects.first.id, status: 'open', user_id: current_user.id), class: 'flex items-center justify-between w-full' do %>
-        <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+        <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
           <p class="text-xs sm:text-sm truncate">
             My Open Tickets
           </p>
@@ -207,7 +207,7 @@
         </div>
       <% end %>
     <% else %>
-      <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+      <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
 
       <p class="text-xs sm:text-sm truncate">
         No Tickets Available
@@ -217,7 +217,7 @@
 
   <% if current_user.projects.any? %>
     <%= link_to all_tickets_project_tickets_path(project_id: current_user.projects.first.id, status: 'open'), class: 'flex items-center justify-between w-full' do %>
-      <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+      <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
         <p class="text-xs sm:text-sm truncate">
           Total Number of Open Tickets
         </p>
@@ -227,7 +227,7 @@
       </div>
     <% end %>
   <% else %>
-    <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full">
+    <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
       <p class="text-xs sm:text-sm truncate">
         No Open Tickets Available
       </p>
@@ -243,7 +243,7 @@
   </div>
   <!-- Conditional Admin Section -->
   <% if current_user.has_role?('admin') or current_user.has_role?('project manager') or current_user.has_role?('agent') %>
-    <div class="grid gap-4 mb-4 bg-gray-50 dark:bg-gray-800 p-2 sm:p-4 w-full">
+  <div class="grid gap-4 mb-4 bg-gray-50 dark:bg-gray-800 p-2 sm:p-4 w-full">
       <%= render 'home/breach_visualisation' %>
     </div>
   <% end %>
@@ -254,17 +254,17 @@
   </div>
 
   <!-- Responsive Grid Section -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 w-full">
-    <div class="flex items-center justify-center rounded bg-gray-50 p-2 dark:bg-gray-800 w-full">
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 w-full overflow-x-auto">
+  <div class="flex items-center justify-center rounded bg-gray-50 p-2 dark:bg-gray-800 w-full">
       <%= render 'home/closed_reopened' %>
     </div>
-    <div class="flex items-center justify-center rounded bg-gray-50 p-2 dark:bg-gray-800 w-full">
+  <div class="flex items-center justify-center rounded bg-gray-50 p-2 dark:bg-gray-800 w-full">
       <%= render 'home/total_number_tickets' %>
     </div>
-    <div class="flex items-center justify-center rounded bg-gray-50 p-2 dark:bg-gray-800 w-full">
+  <div class="flex items-center justify-center rounded bg-gray-50 p-2 dark:bg-gray-800 w-full">
       <%= render 'home/pie_charts' %>
     </div>
-    <div class="flex items-center justify-center rounded bg-gray-50 p-2 dark:bg-gray-800 w-full">
+  <div class="flex items-center justify-center rounded bg-gray-50 p-2 dark:bg-gray-800 w-full">
       <%= render 'home/list_project' %>
     </div>
   </div>
@@ -272,4 +272,7 @@
   <div class="flex items-center justify-center mb-4 rounded bg-gray-50 dark:bg-gray-800 p-2 sm:p-4 w-full">
     <%= render 'home/chart_data_per_user' %>
   </div>
+  
+  <!-- Mobile-friendly chart configuration -->
+  <%= render 'home/chart_mobile_config' %>
 </div>
