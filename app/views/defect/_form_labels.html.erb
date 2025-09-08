@@ -1,0 +1,42 @@
+<div id="labels_section" data-controller="labels">
+  <!-- Chips -->
+  <div data-labels-target="chips" class="flex flex-wrap gap-2 mb-2">
+    <% defect.labels.each do |label| %>
+      <span class="px-2 py-1 bg-gray-200 text-gray-800 rounded-md text-xs font-medium flex items-center gap-1 rounded">
+        <%= label.name %>
+        <button type="button"
+                class="ml-1 text-red-500 hover:text-red-700 text-xs font-bold cursor-pointer"
+                data-action="click->labels#remove"
+                data-id="<%= label.id %>">
+          ✕
+        </button>
+      </span>
+    <% end %>
+  </div>
+
+  <!-- Hidden select for Rails (populates label_ids[]) -->
+  <select name="defect[label_ids][]" multiple hidden data-labels-target="select">
+    <% Label.where(deleted_on: nil).order(:name).each do |label| %>
+      <option value="<%= label.id %>" <%= defect.labels.include?(label) ? "selected" : "" %>>
+        <%= label.name %>
+      </option>
+    <% end %>
+  </select>
+
+  <!-- Input with autocomplete -->
+  <div>
+    <div class="text-sm font-semibold uppercase tracking-wider mb-1">Add Label</div>
+    <input type="text"
+           placeholder="Enter or select a label..."
+           list="available_labels"
+           class="block min-w-[220px] max-w-[280px] border border-gray-300 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600"
+           data-labels-target="input"
+           data-action="keydown.enter->labels#add blur->labels#add" />
+
+    <datalist id="available_labels">
+      <% Label.where(deleted_on: nil).order(:name).each do |label| %>
+        <option value="<%= label.name %>"></option>
+      <% end %>
+    </datalist>
+  </div>
+</div>
