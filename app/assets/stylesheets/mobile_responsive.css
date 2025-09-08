@@ -1,0 +1,52 @@
+/* Mobile responsive styles */
+
+/* General mobile adjustments */
+@media (max-width: 640px) {
+  /* Smaller text for table headers and cells on small screens */
+  table th, table td {
+    padding: 0.25rem !important;
+    font-size: 0.75rem !important;
+  }
+  
+  /* Ensure buttons are easy to tap on mobile */
+  button, .button, a.button, input[type="submit"] {
+    min-height: 44px; /* Apple's recommended minimum touch target size */
+    min-width: 44px;
+  }
+  
+  /* Make action buttons stack nicely on mobile */
+  .action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+/* For tables that need horizontal scrolling on mobile */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Make sure action dropdowns appear above other content */
+.action-dropdown {
+  z-index: 40;
+}
+
+/* Ticket summary improvements for mobile */
+@media (max-width: 640px) {
+  .ticket-summary-text {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* For sticky headers that need to remain visible on scroll */
+.sticky-header {
+  position: sticky;
+  top: 0;
+  background-color: inherit;
+  z-index: 10;
+}
