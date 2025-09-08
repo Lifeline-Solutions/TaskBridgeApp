@@ -33,6 +33,10 @@
            data-labels-target="input"
            data-action="keydown.enter->labels#add blur->labels#add" />
 
+    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+      Type a label name and press <kbd>Enter</kbd> to add (you can add one or many).
+    </p>
+
     <datalist id="available_labels">
       <% Label.where(deleted_on: nil).order(:name).each do |label| %>
         <option value="<%= label.name %>"></option>
