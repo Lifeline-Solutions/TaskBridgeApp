@@ -7,43 +7,73 @@
                 controller: 'ticket-form',
                 'ticket-form-project-id-value': @project.id 
               }) do |f| %>
-  <div class="relative overflow-x-auto shadow-md sm:rounded-lg w-[100%] p-1">
-    <div class="grid grid-cols-2 gap-2 h-[100%] w-[100%]">
+  <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-4 sm:p-6 lg:p-8 w-full">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
 
       <!-- Issue Field -->
-      <div class="relative z-0 w-[100%] mb-6 group">
-        <%= f.label :issue, ('issue *'), class: "capitalize block mb-1 text-sm font-medium"  %><br />
+      <div class="space-y-2">
+        <%= f.label :issue, 'Issue Type *', class: "block text-sm font-semibold text-gray-900 dark:text-white" %>
         <% if project.special %>
-        <%= f.select :issue, options_for_select(['SUPPORT', 'NEW FEATURE', 'BUG', 'REQUEST', 'INCIDENT', 'CHANGE REQUEST']), {}, class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:text-white", placeholder: 'Select The Issue', required: true %>
-          <% else %>
-        <%= f.select :issue, options_for_select(['SUPPORT', 'NEW FEATURE', 'BUG', 'REQUEST', 'INCIDENT']), {}, class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:text-white", placeholder: 'Select The Issue', required: true %>
-          <% end %>
+          <%= f.select :issue, 
+              options_for_select(['SUPPORT', 'NEW FEATURE', 'BUG', 'REQUEST', 'INCIDENT', 'CHANGE REQUEST']), 
+              { prompt: "Select issue type..." },
+              { class: "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-200", 
+                required: true } %>
+        <% else %>
+          <%= f.select :issue, 
+              options_for_select(['SUPPORT', 'NEW FEATURE', 'BUG', 'REQUEST', 'INCIDENT']), 
+              { prompt: "Select issue type..." },
+              { class: "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-200", 
+                required: true } %>
+        <% end %>
         <% if @ticket.errors[:issue].any? %>
-          <div class="text-red-500 text-sm"><%= @ticket.errors[:issue].join(", ") %></div>
+          <div class="text-red-600 dark:text-red-400 text-sm flex items-center">
+            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <%= @ticket.errors[:issue].join(", ") %>
+          </div>
         <% end %>
       </div>
 
       <!-- Priority Field -->
-      <div class="relative z-0 w-full mb-6 group">
-        <%= f.label :priority, ('Severity *'), class: "capitalize block mb-1 text-sm font-medium text-gray-900 dark:text-white"  %><br />
-        <%= f.select :priority, options_for_select(['SEVERITY 1','SEVERITY 2','SEVERITY 3','SEVERITY 4']), {}, class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500", placeholder: 'Select The Issue', required: true %>
+      <div class="space-y-2">
+        <%= f.label :priority, 'Severity Level *', class: "block text-sm font-semibold text-gray-900 dark:text-white" %>
+        <%= f.select :priority, 
+            options_for_select(['SEVERITY 1','SEVERITY 2','SEVERITY 3','SEVERITY 4']), 
+            { prompt: "Select severity level..." },
+            { class: "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-200", 
+              required: true } %>
         <% if @ticket.errors[:priority].any? %>
-          <div class="text-red-500 text-sm"><%= @ticket.errors[:priority].join(", ") %></div>
+          <div class="text-red-600 dark:text-red-400 text-sm flex items-center">
+            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <%= @ticket.errors[:priority].join(", ") %>
+          </div>
         <% end %>
       </div>
 
       <!-- Software Field -->
-      <div class="relative z-0 w-full mb-6 group">
-        <%= f.label :software_id, 'Product Categories *', class: "capitalize block mb-1 text-sm font-medium" %>
+      <div class="space-y-2">
+        <%= f.label :software_id, 'Product Category *', class: "block text-sm font-semibold text-gray-900 dark:text-white" %>
         <%= f.collection_select :software_id, @project.softwares, :id, :name,
-                                { prompt: "Select Product" },
-                                { class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:text-white",
-                                  id: "software-select",
-                                  data: { 
-                                    'ticket-form-target': "software",
-                                    action: "change->ticket-form#updateGroupwareOptions" 
-                                  } }
+            { prompt: "Select product category..." },
+            { class: "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-200",
+              id: "software-select",
+              data: { 
+                'ticket-form-target': "software",
+                action: "change->ticket-form#updateGroupwareOptions" 
+              } }
         %>
+        <% if @ticket.errors[:software_id].any? %>
+          <div class="text-red-600 dark:text-red-400 text-sm flex items-center">
+            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <%= @ticket.errors[:software_id].join(", ") %>
+          </div>
+        <% end %>
       </div>
 
       <!-- Groupware Field -->
