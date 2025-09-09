@@ -5,6 +5,7 @@ class Task < ApplicationRecord
   has_one_attached :file
   has_many :messages, dependent: :destroy
   before_create :set_default_state
+  after_create :task_unique_id
   # app/models/task.rb
 
   belongs_to :prerequisite_task, class_name: 'Task', foreign_key: 'tasks_id', optional: true
@@ -52,29 +53,27 @@ class Task < ApplicationRecord
     errors.add(:base, "Prerequisite task must be resolved before updating this task's status.")
   end
 
-  private
-
-
-  def unique_task_id
+  def task_unique_id
     initials =
-      if product&.client&.name.present?
-        product.client.name.split.map { |word| word[0] }.join.upcase
+      if product&.client&.name.present? && product.groupwares.any?
+        client_initials = product.client.name.split.map { |word| word[0] }.join.upcase
+        groupware_initials = product.groupwares.map { |gw| gw.name.split.map { |w| w[0] }.join.upcase }.join
+        "#{client_initials}#{groupware_initials}"
       else
         'DEFAULT'
       end
-
     # 👇 include soft-deleted defects
     last_task =
       Task.with_deleted
-          .where(product_id: product_id)
-          .where("unique_task_id ~ '^[^-]+-\\d+$'")
-          .order(Arel.sql("CAST(SPLIT_PART(unique_task_id, '-', 2) AS INTEGER) DESC"))
-          .first ||
+        .where(product_id: product_id)
+        .where("unique_task_id ~ '^[^-]+-\\d+$'")
+        .order(Arel.sql("CAST(SPLIT_PART(unique_task_id, '-', 2) AS INTEGER) DESC"))
+        .first ||
       Task.with_deleted.where(product_id: product_id).order(:created_at).last
 
     next_number =
       if last_task&.unique_task_id.present?
-        last_tast.unique_task_id.split('-').last.to_i + 1
+        last_task.unique_task_id.split('-').last.to_i + 1
       else
         1
       end
@@ -89,6 +88,8 @@ class Task < ApplicationRecord
 
     save
   end
+
+  private
 
   def end_date_after_start_date
     return unless end_date.present? && start_date.present? && end_date < start_date
