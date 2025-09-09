@@ -17,7 +17,7 @@
   <%= favicon_link_tag asset_path('loading.png') %>
   <%= stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-  <%#= javascript_include_tag 'controllers/ckeditor_init' %> or
+  <%= javascript_include_tag 'controllers/ckeditor_init' %> or
   <%= javascript_importmap_tags %>
   <% if defined?(Sentry) && ENV["SENTRY_DSN"].present? %>
     <%= Sentry.get_trace_propagation_meta.html_safe %>
@@ -33,26 +33,26 @@
     rel="stylesheet"
     type="text/css"
     href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
-  />
+    />
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
-  
+
+
 </head>
 <body class="bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-slate-100">
 <main class="flex">
   <!-- Sidebar -->
   <% if current_user && user_signed_in?  %>
-  <div id="sidebar" class="transparent h-screen transition-all duration-300 w-64">
-    <%= render 'layouts/sidebar' %>
-  </div>
+    <div id="sidebar" class="transparent h-screen transition-all duration-300 w-64">
+      <%= render 'layouts/sidebar' %>
+    </div>
 
-  <!-- Main Content -->
-  <div id="mainContent" class="p-4 flex-1 transition-all duration-300 bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-slate-100">
-    <%= turbo_frame_tag "modal" %>
-    <%= render 'layouts/topbar' %>
-    <%= yield %>
-  </div>
+    <!-- Main Content -->
+    <div id="mainContent" class="p-4 flex-1 transition-all duration-300 bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-slate-100">
+      <%= turbo_frame_tag "modal" %>
+      <%= render 'layouts/topbar' %>
+      <%= yield %>
+    </div>
   <% else %>
     <main class="mx-auto bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-slate-100">
       <%= render 'layouts/sidebar' %>
@@ -70,13 +70,13 @@
     const sidebar = document.getElementById('sidebar');
     const mainContent = document.getElementById('mainContent');
 
-      if (sidebar.classList.contains('w-64')) {
-        mainContent.classList.add('ml-16');
-        mainContent.classList.remove('ml-64');
-      } else {
-        mainContent.classList.add('ml-64');
-        mainContent.classList.remove('ml-16');
-      }
+    if (sidebar.classList.contains('w-64')) {
+      mainContent.classList.add('ml-16');
+      mainContent.classList.remove('ml-64');
+    } else {
+      mainContent.classList.add('ml-64');
+      mainContent.classList.remove('ml-16');
+    }
   });
 </script>
 
