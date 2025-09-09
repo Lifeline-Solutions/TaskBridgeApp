@@ -37,9 +37,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
-  <!-- CKEditor 5 -->
-  <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor5.css" />
-  <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js" crossorigin></script>
+  
 </head>
 <body class="bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-slate-100">
 <main class="flex">
@@ -81,5 +79,20 @@
       }
   });
 </script>
+
+<!-- place before closing </body> -->
+<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js" crossorigin="anonymous"></script>
+
+<script>
+  document.addEventListener("turbo:load", function () {
+    document.querySelectorAll('textarea.rich').forEach(function (el) {
+      if (!el.dataset.ckeditorInstantiated) {
+        ClassicEditor.create(el).catch(e => console.error(e));
+        el.dataset.ckeditorInstantiated = true;
+      }
+    });
+  });
+</script>
+
 </body>
 </html>
