@@ -1,76 +1,120 @@
 <% if current_user.has_role?(:admin) || current_user.has_role?('project manager') || current_user.has_role?(:agent) %>
-  <div class="col-span-2 mt-6" data-controller="status-modal">
-    <div class="flex items-center justify-between mb-2">
-      <div class="text-sm font-semibold uppercase tracking-wider">Assigned Users</div>
+  <div class="col-span-full lg:col-span-2 mt-4 lg:mt-6 bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700" data-controller="status-modal">
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 border-b border-gray-200 dark:border-gray-600 pb-3">
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300">Assigned Users</h3>
+      </div>
       <% unless (@ticket.statuses.first&.name == 'Closed' or @ticket.statuses.first&.name == 'Resolved') && !current_user.has_role?(:admin) %>
         <button
             data-action="click->status-modal#openModal"
-            class="ml-2 px-2 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:focus:ring-blue-400 transition"
+            class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-medium text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors shadow-sm"
             aria-label="Assign users"
           >
-            Select
-          </button>
-      <% end %>
-
-    </div>
-
-    <div class="flex flex-wrap items-center gap-2">
-      <% if @ticket.users.any? %>
-        <% @ticket.users.each do |user| %>
-          <span class="text-base font-medium">
-            <%= user.name %>
-            <% unless user == @ticket.users.last %>,
-          <% end %>
-          </span>
-        <% end %>
-      <% else %>
-        <p class="text-red-500 text-sm">
-          No agents assigned. Please assign at least one agent to this ticket.
-        </p>
-      <% end %>
-    </div>
-
-    <!-- Assign Users Modal -->
-    <div class="hidden fixed inset-0 bg-gray-500 bg-opacity-50 overflow-y-auto h-full w-full z-50" 
-         data-status-modal-target="modal">
-      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-medium">Assign Users Modal</h3>
-          <button
-            data-action="click->status-modal#closeModal"
-            class="focus:outline-none text-gray-500 hover:text-gray-700"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
             </svg>
+            <span class="hidden sm:inline">Assign Users</span>
+            <span class="sm:hidden">Assign</span>
           </button>
+      <% end %>
+    </div>
+
+    <!-- Assigned Users Display -->
+    <div class="space-y-3">
+      <% if @ticket.users.any? %>
+        <div class="flex flex-wrap gap-2">
+          <% @ticket.users.each do |user| %>
+            <div class="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-full border border-gray-200 dark:border-gray-600">
+              <div class="w-6 h-6 bg-indigo-600 dark:bg-indigo-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                <%= user.name.split.map(&:first).join.upcase %>
+              </div>
+              <span class="text-sm font-medium text-gray-900 dark:text-white">
+                <%= user.name %>
+              </span>
+            </div>
+          <% end %>
         </div>
-
-        <%= form_with url: assign_tag_project_ticket_path(@project, @ticket, data: { turbo: false }), local: true do %>
-          <div class="mb-4">
-            <%= label_tag :user_id, "Select User", class: "block text-sm font-medium mb-1" %>
-            <% available_users = User.with_assigned_role.where.not(id: @ticket.users.pluck(:id)).where(id: @project.users.pluck(:id)).order(:first_name).distinct %>
-            <% if available_users.any? %>
-              <%= select_tag :user_id, options_from_collection_for_select(available_users, :id, :name || :email),
-                  class: "mt-1 block w-full pl-3 pr-10 py-2 text-base dark:bg-gray-700 border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" %>
-            <% else %>
-              <p class="text-sm">No available users to assign.</p>
-            <% end %>
+        <div class="text-xs text-gray-500 dark:text-gray-400">
+          <%= pluralize(@ticket.users.count, 'user') %> assigned to this ticket
+        </div>
+      <% else %>
+        <div class="flex items-center gap-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+          </svg>
+          <div>
+            <p class="text-sm font-medium text-red-800 dark:text-red-200">No agents assigned</p>
+            <p class="text-xs text-red-600 dark:text-red-300 mt-1">Please assign at least one agent to this ticket</p>
           </div>
+        </div>
+      <% end %>
+    </div>
 
-          <div class="flex justify-end space-x-3">
+    <!-- Responsive Assign Users Modal -->
+    <div class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm overflow-y-auto z-50 p-4" 
+         data-status-modal-target="modal">
+      <div class="flex items-center justify-center min-h-full">
+        <div class="relative w-full max-w-md mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700">
+          <!-- Modal Header -->
+          <div class="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-600">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg flex items-center justify-center">
+                <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"/>
+                </svg>
+              </div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Assign User</h3>
+            </div>
             <button
-              type="button"
               data-action="click->status-modal#closeModal"
-              class="px-4 py-2 text-sm font-medium border border-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
-              Cancel
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
-            <% if available_users.any? %>
-              <%= submit_tag "Assign User", class: "px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" %>
+          </div>
+
+          <!-- Modal Content -->
+          <div class="p-6">
+            <%= form_with url: assign_tag_project_ticket_path(@project, @ticket, data: { turbo: false }), local: true, class: "space-y-4" do %>
+              <div>
+                <%= label_tag :user_id, "Select User", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" %>
+                <% available_users = User.with_assigned_role.where.not(id: @ticket.users.pluck(:id)).where(id: @project.users.pluck(:id)).order(:first_name).distinct %>
+                <% if available_users.any? %>
+                  <%= select_tag :user_id, options_from_collection_for_select(available_users, :id, :name || :email),
+                      { prompt: "Choose a user to assign..." },
+                      { class: "block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2.5 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors" } %>
+                <% else %>
+                  <div class="flex items-center gap-3 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                    <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    <p class="text-sm text-yellow-800 dark:text-yellow-200">No available users to assign.</p>
+                  </div>
+                <% end %>
+              </div>
+
+              <!-- Modal Actions -->
+              <div class="flex flex-col sm:flex-row gap-3 pt-4">
+                <button
+                  type="button"
+                  data-action="click->status-modal#closeModal"
+                  class="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                >
+                  Cancel
+                </button>
+                <% if available_users.any? %>
+                  <%= submit_tag "Assign User", class: "flex-1 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-sm transition-colors" %>
+                <% end %>
+              </div>
             <% end %>
           </div>
-        <% end %>
+        </div>
       </div>
     </div>
   </div>
