@@ -1,42 +1,49 @@
-<div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between w-full p-3 lg:p-4 rounded-lg border border-gray-200 dark:border-gray-600 mb-4 bg-white dark:bg-gray-800 shadow-sm">
-  <!-- Search Input -->
-  <div class="relative flex-1 mb-4 lg:mb-0 lg:mr-4">
-    <%= form_with url: project_path(@project), method: :get, class: 'flex gap-2 w-full' do |f| %>
+<div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 mb-6 shadow-sm overflow-hidden">
+  <!-- Mobile-first layout -->
+  <div class="p-4 space-y-4">
+    <!-- Search Input -->
+    <%= form_with url: project_path(@project), method: :get, class: 'space-y-4 lg:space-y-0 lg:flex lg:items-center lg:gap-4' do |f| %>
       <div class="relative flex-1">
         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
           </svg>
         </div>
         <%= f.text_field :query, 
-            class: "block w-full pl-10 pr-3 py-2 sm:py-2.5 text-sm border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 dark:placeholder-gray-300 transition-colors", 
-            placeholder: "Search by issue or subject...",
+            class: "block w-full pl-10 pr-4 py-3 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white dark:focus:bg-gray-600 placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200", 
+            placeholder: "Search tickets by ID, subject, or description...",
             value: params[:query] %>
       </div>
-      <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors lg:hidden">
-        Search
+
+      <!-- Mobile search button -->
+      <button type="submit" class="w-full lg:hidden bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        Search Tickets
       </button>
     <% end %>
-  </div>
 
-  <!-- Right Side Controls -->
-  <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 lg:space-x-4">
-    <!-- Filter Dropdown -->
-    <div class="relative flex-1 sm:flex-none">
-      <button id="filterDropdownButton" 
-              class="flex items-center justify-center w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
-        <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
-        </svg>
-        <span class="hidden sm:inline">Filter</span>
-        <span class="sm:hidden">Filters & Sort</span>
-        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
-      </button>
-      
-      <!-- Filter Dropdown Menu -->
-      <div id="filterDropdown" class="hidden absolute bg-white dark:bg-gray-800 right-0 mt-2 w-80 sm:w-72 origin-top-right rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 z-50 max-h-96 overflow-y-auto">
+    <!-- Controls Row -->
+    <div class="flex flex-col sm:flex-row gap-3">
+      <!-- Filter Dropdown -->
+      <div class="relative flex-1 sm:flex-none">
+        <button id="filterDropdownButton" 
+                class="flex items-center justify-between w-full sm:w-auto sm:min-w-[140px] px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200">
+          <div class="flex items-center">
+            <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
+            </svg>
+            <span class="hidden sm:inline">Filter & Sort</span>
+            <span class="sm:hidden">Filters</span>
+          </div>
+          <svg class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+        
+        <!-- Filter Dropdown Menu -->
+        <div id="filterDropdown" class="hidden absolute bg-white dark:bg-gray-800 right-0 sm:left-0 mt-2 w-screen max-w-sm sm:max-w-md origin-top rounded-xl shadow-2xl border border-gray-200 dark:border-gray-600 z-50 max-h-96 overflow-y-auto">
         <%= form_with url: project_path(@project), method: :get, class: 'p-4 space-y-4' do |f| %>
           <!-- Order Filter -->
           <div>
