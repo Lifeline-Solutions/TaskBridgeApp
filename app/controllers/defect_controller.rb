@@ -49,51 +49,106 @@ class DefectController < ApplicationController
       .order(:name)
   end
 
+  #     @statuses = Status.joins(:defects).where(defects: { id: @defects.ids }).distinct.order(:name)
   def index_show
-    @defects = Defect.published.includes(:users, :qa_module, :submodule, :banking_type, :statuses)
-      .order(created_at: :desc)
+    # Base scope
+    @defects = Defect.published
+      .includes(:users, :qa_module, :submodule, :banking_type, :statuses, product: %i[client groupwares])
 
-    # Filter by client name
-    @defects = @defects.joins(product: :client).where(clients: { name: params[:client_name] }) if params[:client_name].present?
+    # Client filter (exact, case-insensitive)
+    if params[:client_name].present?
+      @defects = @defects.joins(product: :client)
+        .where('LOWER(clients.name) = ?', params[:client_name].to_s.downcase.strip)
+    end
 
-    # Restrict for non-admin users
-    # @defects = @defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa)
+    # Status filter (multiple checkboxes -> status[])
+    selected_statuses = Array(params[:status]).reject(&:blank?)
+    if selected_statuses.any?
+      downcased = selected_statuses.map { |s| s.to_s.downcase }
+      @defects = @defects.joins(:statuses)
+        .where('LOWER(statuses.name) IN (?)', downcased)
+    end
 
-    # Status filter
-    @defects = @defects.joins(:statuses).where(statuses: { id: params[:status] }) if params[:status].present?
+    # Priority filter (exact, case-insensitive)
+    @defects = @defects.where('LOWER(defects.priority) = ?', params[:priority].to_s.downcase) if params[:priority].present?
+
+    # Assignee filter
+    @defects = @defects.joins(:users).where(users: { id: params[:user_id] }) if params[:user_id].present?
+
+    # NEW: Module/Submodule/BankingType filters (by id)
+    @defects = @defects.where(qa_module_id: params[:qa_module_id]) if params[:qa_module_id].present?
+    @defects = @defects.where(submodule_id: params[:submodule_id]) if params[:submodule_id].present?
+    @defects = @defects.where(banking_type_id: params[:banking_type_id]) if params[:banking_type_id].present?
+    @statuses = Status.joins(:defects).where(defects: { id: @defects.ids }).distinct.order(:name)
+
+    # Date range filters
+    start_date = params[:start_date].presence
+    end_date = params[:end_date].presence
+    begin
+      if start_date.present? && end_date.present?
+        from = Date.parse(start_date).beginning_of_day
+        to = Date.parse(end_date).end_of_day
+        @defects = @defects.where(defects: { created_at: from..to })
+      elsif start_date.present?
+        from = Date.parse(start_date).beginning_of_day
+        @defects = @defects.where('defects.created_at >= ?', from)
+      elsif end_date.present?
+        to = Date.parse(end_date).end_of_day
+        @defects = @defects.where('defects.created_at <= ?', to)
+      end
+    rescue ArgumentError
+      # Ignore invalid dates without breaking the page
+    end
+
+    # Full-text search across related tables (now includes qa_modules, submodules, banking_types)
+    if params[:query].present?
+      q = "%#{params[:query].to_s.strip}%"
+      @defects = @defects.left_joins(:users, :qa_module, :submodule, :banking_type, product: %i[client groupwares]).where(
+        "defects.summary ILIKE :q
+         OR defects.defect_unique ILIKE :q
+         OR defects.priority ILIKE :q
+         OR users.first_name ILIKE :q
+         OR users.last_name ILIKE :q
+         OR clients.name ILIKE :q
+         OR groupwares.name ILIKE :q
+         OR qa_modules.name ILIKE :q
+         OR submodules.name ILIKE :q
+         OR banking_types.name ILIKE :q
+         OR to_char(defects.created_at, 'YYYY-MM-DD HH24:MI') ILIKE :q",
+        q: q
+      )
+    end
 
     # Ordering
     @selected_order = params[:order]
-    @defects = @defects.order(created_at: params[:order] == 'asc' ? :asc : :desc)
+    direction = %w[asc desc].include?(@selected_order) ? @selected_order : 'desc'
+    @defects = @defects.order(created_at: direction)
 
-    # Filters
-    if params[:start_date].present? && params[:end_date].present?
-      @defects = @defects.where('defects.created_at::date BETWEEN ? AND ?', params[:start_date], params[:end_date])
-    elsif params[:start_date].present?
-      @defects = @defects.where('defects.created_at::date >= ?', params[:start_date])
-    elsif params[:end_date].present?
-      @defects = @defects.where('defects.created_at::date <= ?', params[:end_date])
-    end
+    # Ensure uniqueness after joins (affects count and pagination)
+    @defects = @defects.distinct
 
-    @defects = @defects.where('priority ILIKE ?', params[:priority]) if params[:priority].present?
-    @defects = @defects.where(users: { id: params[:user_id] }) if params[:user_id].present?
+    # Build option lists for dropdowns from the CURRENT filtered (but unpaginated) result set
+    filtered_ids = @defects.except(:select, :order, :limit, :offset).select(:id)
+    @statuses = Status.joins(:defects)
+      .where(defects: { id: filtered_ids })
+      .distinct
+      .order(:name)
 
-    # Search filter
-    if params[:query].present?
-      @defects = @defects
-        .left_joins(:users, product: %i[client groupwares])
-        .where(
-          'defects.summary ILIKE :q
-       OR defects.defect_unique ILIKE :q
-       OR defects.priority ILIKE :q
-       OR users.first_name ILIKE :q
-       OR users.last_name ILIKE :q
-       OR clients.name ILIKE :q
-       OR groupwares.name ILIKE :q
-       OR CAST(defects.created_at AS TEXT) ILIKE :q',
-          q: "%#{params[:query]}%"
-        )
-    end
+    # NEW: option lists for QA Module, Submodule, Banking Type
+    @qa_modules = QaModule.joins(:defects)
+      .where(defects: { id: filtered_ids })
+      .distinct
+      .order(:name)
+
+    @submodules = QaModule.joins(:defects)
+      .where(defects: { id: filtered_ids })
+      .distinct
+      .order(:name)
+
+    @banking_types = BankingType.joins(:defects)
+      .where(defects: { id: filtered_ids })
+      .distinct
+      .order(:name)
 
     # Pagination
     @per_page = 20
@@ -103,9 +158,6 @@ class DefectController < ApplicationController
     @start_count = ((@page - 1) * @per_page) + 1
     @end_count = [@page * @per_page, @total_count].min
     @defects = @defects.offset((@page - 1) * @per_page).limit(@per_page)
-
-    # Distinct statuses for dropdown
-    @statuses = Status.joins(:defects).where(defects: { id: @defects.ids }).distinct.order(:name)
 
     render :index_show
   end
