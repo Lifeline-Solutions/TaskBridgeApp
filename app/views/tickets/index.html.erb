@@ -1,64 +1,190 @@
-<div class="overflow-x-auto">
-  <table class="min-w-full bg-white dark:bg-gray-800 text-xs sm:text-sm">
-    <thead>
+<!-- Mobile Card Layout (visible on small screens) -->
+<div class="lg:hidden space-y-4 p-4">
+  <% @tickets.each do |ticket| %>
+         <td class="px-3 py-3 whitespace-nowrap hidden 2xl:table-cell">
+          <%= render partial: 'tickets/progress_bar', locals: { ticket: ticket } %>
+        </td>
+
+        <td class="px-3 py-3 text-center text-gray-900 dark:text-gray-100 text-xs hidden 2xl:table-cell">
+          <% closed_status = ticket.add_statuses.joins(:status).where(statuses: { name: %w[Closed Resolved Declined] }).order(updated_at: :desc).first %>
+          <% if ticket.created_at %>
+            <% if closed_status %>
+              <div class="flex flex-col">
+                <span><%= distance_of_time_in_words(ticket.created_at, closed_status.updated_at).gsub('about ', '') %></span>
+                <span class="text-gray-500 dark:text-gray-400">closed</span>
+              </div>
+            <% else %>
+              <div class="flex flex-col">
+                <span><%= distance_of_time_in_words(ticket.created_at, Time.current).gsub('about ', '') %></span>
+                <span class="text-gray-500 dark:text-gray-400">open</span>
+              </div>
+            <% end %>
+          <% else %>
+            <span class="text-gray-400">N/A</span>
+          <% end %>
+        </td>
+
+        <!-- Actions -->
+        <td class="px-3 py-3 whitespace-nowrap text-right" data-controller="dropdown" data-dropdown-ticket-id-value="<%= ticket.id %>">
+          <%= render partial: 'tickets/action_dropdown', locals: { ticket: ticket } %>
+        </td>
+
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+</div>-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden hover:shadow-md transition-all duration-200">
+      <!-- Card Header -->
+      <div class="px-4 py-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <%= link_to project_ticket_path(ticket.project, ticket), class: "font-bold text-sm text-blue-600 dark:text-blue-400" do %>
+              <%= ticket.unique_id if ticket.unique_id.present? %>
+            <% end %>
+            <span class="text-xs text-gray-500 dark:text-gray-400">•</span>
+            <span class="text-xs text-gray-600 dark:text-gray-300 font-medium">
+              <%= ticket.project.title.truncate(15) %>
+            </span>
+          </div>
+          <span class="text-xs text-gray-500 dark:text-gray-400">
+            <%= ticket.created_at.strftime("%d %b %Y") %>
+          </span>
+        </div>
+      </div>
+      
+      <!-- Card Content -->
+      <div class="p-4 space-y-3">
+        <!-- Title/Subject -->
+        <h3 class="font-semibold text-gray-900 dark:text-gray-100 leading-tight">
+          <%= link_to project_ticket_path(ticket.project, ticket), class: "hover:text-blue-600 dark:hover:text-blue-400 transition-colors" do %>
+            <%= ticket.subject.present? ? ticket.subject.truncate(60) : "Untitled Ticket" %>
+          <% end %>
+        </h3>
+        
+        <!-- Status and Priority Row -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <%= render partial: 'tickets/priority_severity', locals: { ticket: ticket } %>
+            <%= render partial: 'tickets/ticket_status', locals: { ticket: ticket } %>
+          </div>
+        </div>
+        
+        <!-- Progress for Mobile -->
+        <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-600">
+          <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Progress:</span>
+          <div class="flex items-center space-x-2 flex-1 max-w-24 ml-3">
+            <%= render partial: 'tickets/progress_bar', locals: { ticket: ticket } %>
+          </div>
+        </div>
+        
+        <!-- Assignment Info (if exists) -->
+        <% if defined?(ticket.users) && ticket.users.any? %>
+          <div class="text-sm text-gray-600 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-600">
+            <span class="font-medium">Assigned to:</span>
+            <%= ticket.users.limit(2).map(&:name).join(", ").truncate(40) %>
+            <% if ticket.users.count > 2 %>
+              <span class="text-gray-500"> +<%= ticket.users.count - 2 %> more</span>
+            <% end %>
+          </div>
+        <% end %>
+        
+        <!-- Action Button -->
+        <div class="pt-2 border-t border-gray-100 dark:border-gray-600">
+          <%= link_to "View Details", project_ticket_path(ticket.project, ticket), 
+              class: "inline-flex items-center text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300" %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<!-- Desktop Table Layout (visible on large screens) -->
+<div class="hidden lg:block overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+  <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+    <thead class="bg-gray-50 dark:bg-gray-700">
     <tr>
-      <th class="py-1 sm:py-2 px-2 sm:px-4 border-b">ID</th>
-      <th class="py-1 sm:py-2 px-2 sm:px-4 border-b hidden sm:table-cell">Date</th>
-      <th class="py-1 sm:py-2 px-2 sm:px-4 border-b hidden md:table-cell">SERVICE DESK</th>
-      <th class="py-1 sm:py-2 px-2 sm:px-4 border-b hidden lg:table-cell">ISSUE</th>
-      <th class="py-1 sm:py-2 px-2 sm:px-4 border-b">PRIORITY</th>
-      <th class="py-1 sm:py-2 px-2 sm:px-4 border-b">SUMMARY</th>
-      <th class="py-1 sm:py-2 px-2 sm:px-4 border-b hidden md:table-cell">ASSIGNEE</th>
-      <th class="py-1 sm:py-2 px-2 sm:px-4 border-b">STATUS</th>
-      <th class="py-1 sm:py-2 px-2 sm:px-4 border-b hidden sm:table-cell">PROGRESS</th>
-      <th class="py-1 sm:py-2 px-2 sm:px-4 border-b hidden lg:table-cell">TIME FROM CREATED</th>
-      <th class="py-1 sm:py-2 px-2 sm:px-4 border-b">VIEW</th>
+      <th class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider">ID</th>
+      <th class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider">Date</th>
+      <th class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider">Service Desk</th>
+      <th class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider hidden xl:table-cell">Issue Type</th>
+      <th class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider">Priority</th>
+      <th class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider">Summary</th>
+      <th class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider hidden xl:table-cell">Assignee</th>
+      <th class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider">Status</th>
+      <th class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider hidden xl:table-cell">Reporter</th>
+      <th class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider hidden 2xl:table-cell">Progress</th>
+      <th class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider hidden 2xl:table-cell">Age</th>
+      <th class="px-3 py-3 text-right text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider">Actions</th>
     </tr>
     </thead>
-  <tbody class="text-xs sm:text-sm">
-  <% @tickets.each do |ticket| %>
-    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-      <th scope="row" class="px-1 sm:px-2 py-1 sm:py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
-        <%= link_to ticket.unique_id.to_s.truncate(8), project_ticket_path(ticket.project, ticket) if ticket.unique_id.present? %>
+    <tbody class="divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+    <% @tickets.each do |ticket| %>
+      <tr class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
+        <td class="px-3 py-3 whitespace-nowrap font-bold uppercase text-blue-600 dark:text-blue-400">
+          <%= link_to ticket.unique_id.to_s.truncate(10), project_ticket_path(ticket.project, ticket), 
+              class: "hover:text-blue-800 dark:hover:text-blue-300 transition-colors" if ticket.unique_id.present? %>
       </th>
-      <th scope="row" class="px-1 sm:px-2 py-1 sm:py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white hidden sm:table-cell">
-        <%= link_to ticket.created_at.strftime("%d %b %Y"), project_ticket_path(ticket.project, ticket) %>
-      </th>
-      <th scope="row" class="px-1 sm:px-2 py-1 sm:py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white hidden md:table-cell">
-        <%= link_to ticket.project.title.truncate(15), project_ticket_path(ticket.project, ticket) %>
-      </th>
-      <th scope="row" class="px-1 sm:px-2 py-1 sm:py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white hidden lg:table-cell">
-        <%= link_to ticket.issue, project_ticket_path(ticket.project, ticket) %>
-      </th>
-      <!-- Priority and severity -->
-      <td class="px-1 sm:px-2 py-1 sm:py-2">
-        <div class="relative w-full flex justify-center">
+      </td>
+        
+        <td class="px-3 py-3 whitespace-nowrap text-gray-900 dark:text-gray-100">
+          <%= link_to ticket.created_at.strftime("%d %b %Y"), project_ticket_path(ticket.project, ticket), 
+              class: "hover:text-blue-600 dark:hover:text-blue-400 transition-colors" %>
+        </td>
+        
+        <td class="px-3 py-3 whitespace-nowrap text-gray-900 dark:text-gray-100">
+          <%= link_to ticket.project.title.truncate(20), project_ticket_path(ticket.project, ticket), 
+              class: "hover:text-blue-600 dark:hover:text-blue-400 transition-colors" %>
+        </td>
+        
+        <td class="px-3 py-3 whitespace-nowrap text-gray-900 dark:text-gray-100 hidden xl:table-cell">
+          <%= link_to ticket.issue, project_ticket_path(ticket.project, ticket), 
+              class: "hover:text-blue-600 dark:hover:text-blue-400 transition-colors" %>
+        </td>
+        
+        <td class="px-3 py-3 whitespace-nowrap">
           <%= render partial: "tickets/priority_severity", locals: { ticket: ticket } %>
-        </div>
-      </td>
-      <td class="px-2 sm:px-4 py-2 sm:py-4 grid grid-cols-[auto_1fr_auto] items-center gap-1 sm:gap-3">
-        <%= render partial: 'tickets/summary', locals: { ticket: ticket } %>
-      </td>
+        </td>
+        
+        <td class="px-3 py-3 max-w-xs">
+          <div class="flex items-center gap-3">
+            <%= render partial: 'tickets/summary', locals: { ticket: ticket } %>
+          </div>
+        </td>
 
+        <td class="px-3 py-3 whitespace-nowrap text-gray-900 dark:text-gray-100 hidden xl:table-cell">
+          <div class="max-w-24 truncate">
+            <% ticket.users.limit(1).each do |user| %>
+              <%= user.name.truncate(15) if user.name.present? %>
+            <% end %>
+            <% if ticket.users.count > 1 %>
+              <span class="text-xs text-gray-500 dark:text-gray-400">+<%= ticket.users.count - 1 %></span>
+            <% end %>
+          </div>
+        </td>
 
-      <td class="px-1 sm:px-2 py-1 sm:py-2 font-bold hidden md:table-cell">
-        <div class="relative w-full flex justify-center">
-          <% ticket.users.each do |user| %>
-            <%= user.name.truncate(10) if user.name.present? %>
-          <% end %>
-        </div>
-      </td>
-
-      <!-- Ticket Status -->
-      <td class="px-1 sm:px-2 py-1 sm:py-2">
-        <div class="relative w-full flex justify-center">
+        <td class="px-3 py-3 whitespace-nowrap">
           <%= render partial: "tickets/ticket_status", locals: { ticket: ticket } %>
-        </div>
-      </td>
+        </td>
 
-      <!-- Progress Bar -->
-      <td class="px-1 sm:px-2 py-1 sm:py-2 hidden sm:table-cell">
-        <div class="relative w-full flex justify-center">
+        <!-- Reporter column for desktop -->
+        <td class="px-3 py-3 whitespace-nowrap text-gray-900 dark:text-gray-100 hidden xl:table-cell max-w-28">
+          <% if ticket.user&.name.present? %>
+            <div class="flex flex-col">
+              <div class="truncate font-medium text-sm"><%= ticket.user.name.truncate(16) %></div>
+              <div class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                <% if ticket.user.teams.any? %>
+                  <%= ticket.user.teams.first.name.truncate(12) %>
+                <% else %>
+                  Reporter
+                <% end %>
+              </div>
+            </div>
+          <% else %>
+            <span class="text-gray-400 italic text-sm">Unknown</span>
+          <% end %>
+        </td>
+
+        <td class="px-3 py-3 whitespace-nowrap hidden 2xl:table-cell">
             <%= render partial: "tickets/progress_bar", locals: { ticket: ticket } %>
         </div>
       </td>
@@ -85,16 +211,40 @@
   </tbody>
 </table>
 
-<!-- Pagination Links -->
-<div class="mt-4">
-  <% if @page > 1 %>
-    <%= link_to 'Previous', project_tickets_path(@project, page: @page - 1),
-                class: 'bg-blue-600 hover:bg-blue-500 px-4 rounded text-white text-sm font-semibold transition-all p-2 uppercase'
-    %>
-  <% end %>
-  <% if @page < @total_pages %>
-    <%= link_to 'Next', project_tickets_path(@project, page: @page + 1),
-                class: 'bg-blue-600 hover:bg-blue-500 px-4 rounded text-white text-sm font-semibold transition-all p-2 uppercase'
-    %>
-  <% end %>
+<!-- Responsive Pagination -->
+<div class="mt-6 px-4 lg:px-0">
+  <div class="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0">
+    <!-- Page info -->
+    <div class="text-sm text-gray-700 dark:text-gray-300">
+      <% if defined?(@tickets) && @tickets.respond_to?(:count) %>
+        Showing <%= @tickets.count %> tickets
+        <% if defined?(@total_pages) && @total_pages > 1 %>
+          (Page <%= @page || 1 %> of <%= @total_pages %>)
+        <% end %>
+      <% end %>
+    </div>
+    
+    <!-- Navigation buttons -->
+    <div class="flex items-center space-x-2">
+      <% if defined?(@page) && @page && @page > 1 %>
+        <%= link_to project_tickets_path(@project, page: @page - 1),
+            class: 'inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200' do %>
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+          Previous
+        <% end %>
+      <% end %>
+      
+      <% if defined?(@page) && defined?(@total_pages) && @page && @total_pages && @page < @total_pages %>
+        <%= link_to project_tickets_path(@project, page: @page + 1),
+            class: 'inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200' do %>
+          Next
+          <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+          </svg>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
 </div>
