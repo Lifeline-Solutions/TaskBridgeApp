@@ -1,32 +1,38 @@
 <div class="flex-shrink-0">
   <% if ticket.ticket_image.attached? %>
-    <%= image_tag ticket.ticket_image, class: "h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-cover border border-gray-200 dark:border-gray-600" %>
+    <%= image_tag ticket.ticket_image, class: "h-9 w-9 sm:h-10 sm:w-10 rounded-lg object-cover border border-gray-200/50 dark:border-gray-600/50 shadow-sm" %>
   <% elsif @project&.image.present? %>
-    <%= image_tag @project.image, class: 'h-8 w-8 sm:h-10 sm:w-10 rounded-lg object-cover border border-gray-200 dark:border-gray-600' %>
+    <%= image_tag @project.image, class: 'h-9 w-9 sm:h-10 sm:w-10 rounded-lg object-cover border border-gray-200/50 dark:border-gray-600/50 shadow-sm' %>
   <% else %>
-    <div class="h-8 w-8 sm:h-10 sm:w-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center border border-gray-200 dark:border-gray-600">
-      <svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+    <div class="h-9 w-9 sm:h-10 sm:w-10 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-lg flex items-center justify-center border border-gray-200/50 dark:border-gray-600/50 shadow-sm">
+      <svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd"></path>
       </svg>
     </div>
   <% end %>
 </div>
-<div class="flex-1 min-w-0">
-  <div class="font-medium text-gray-900 dark:text-gray-100 text-sm sm:text-base leading-tight">
+<div class="flex-1 min-w-0 pl-1">
+  <div class="font-semibold text-gray-900 dark:text-gray-100 text-sm lg:text-base leading-tight">
     <%= link_to project_ticket_path(ticket.project, ticket), 
-        class: "hover:text-blue-600 dark:hover:text-blue-400 transition-colors" do %>
+        class: "hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 block" do %>
       <% if ticket.subject.present? %>
-        <span class="block sm:hidden"><%= ticket.subject.truncate(25, omission: '...') %></span>
-        <span class="hidden sm:block"><%= ticket.subject.truncate(40, omission: '...') %></span>
+        <span class="block lg:hidden"><%= ticket.subject.truncate(35, omission: '...') %></span>
+        <span class="hidden lg:block"><%= ticket.subject.truncate(55, omission: '...') %></span>
       <% else %>
-        <span class="text-gray-500 dark:text-gray-400 italic">No subject</span>
+        <span class="text-gray-500 dark:text-gray-400 italic text-sm">No subject provided</span>
       <% end %>
     <% end %>
   </div>
   <% if ticket.content.present? %>
-    <div class="mt-1 text-gray-500 dark:text-gray-400 text-xs sm:text-sm leading-tight">
-      <span class="block sm:hidden"><%= ticket.content.to_plain_text.truncate(30, omission: '...') %></span>
-      <span class="hidden sm:block"><%= ticket.content.to_plain_text.truncate(60, omission: '...') %></span>
+    <div class="mt-1 text-gray-600 dark:text-gray-400 text-xs lg:text-sm leading-tight">
+      <span class="block lg:hidden"><%= ticket.content.to_plain_text.truncate(40, omission: '...') %></span>
+      <span class="hidden lg:block"><%= ticket.content.to_plain_text.truncate(80, omission: '...') %></span>
     </div>
   <% end %>
+  <!-- Show issue type on mobile within summary for desktop table -->
+  <div class="mt-1 xl:hidden">
+    <span class="inline-block text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md font-medium">
+      <%= ticket.issue %>
+    </span>
+  </div>
 </div>
