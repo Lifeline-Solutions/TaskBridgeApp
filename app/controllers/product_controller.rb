@@ -84,11 +84,12 @@ class ProductController < ApplicationController
       if params[:query].present?
         search_query = "%#{params[:query].strip}%"
         @tasks = @tasks.left_joins(:users).where(
-          "tasks.name ILIKE ? OR
+          "tasks.unique_task_id ILIKE ? OR
+          tasks.name ILIKE ? OR
           tasks.description ILIKE ? OR
           tasks.priority ILIKE ? OR
           users.first_name ILIKE ?",
-          search_query, search_query, search_query, search_query
+          search_query, search_query, search_query, search_query, search_query
         ).distinct
       end
 
