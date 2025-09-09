@@ -216,12 +216,6 @@
     const modSelect = document.querySelector('[data-project-modules-target="moduleSelect"]');
     const submodSelect = document.querySelector('[data-project-modules-target="submoduleSelect"]');
 
-    // Load modules for the selected project on page load
-    # if (projectSelect && projectSelect.value) {
-    #   const event = new Event('change');
-    #   projectSelect.dispatchEvent(event);
-    # }
-
     // Load submodules for the selected module on page load
     if (modSelect && modSelect.value) {
       const moduleId = modSelect.value;
@@ -244,64 +238,6 @@
             });
         }
       }
-    }
-
-    // ===== TomSelect for modal labels =====
-    const el = document.getElementById('defect_label_ids_modal');
-    if (el && !el.tomselect) {
-      new TomSelect(el, {
-        placeholder: 'Labels: Type to search or add. Press Enter to create new.',
-        plugins: ['remove_button'],
-        persist: false,
-        preload: 'focus',
-        valueField: 'id',
-        labelField: 'name',
-        searchField: ['name'],
-        load: function (q, cb) {
-          const url = new URL('/labels.json', window.location.origin);
-          if (q) url.searchParams.set('q', q);
-          url.searchParams.set('limit', '100');
-          fetch(url.toString())
-            .then(r => r.json())
-            .then(d => cb(d))
-            .catch(() => cb());
-        },
-        create: function (input, callback) {
-          let name = input.trim().replace(/\s+/g, '-').toLowerCase();
-          if (!name) return callback();
-          fetch('/labels', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
-            },
-            body: JSON.stringify({ name })
-          })
-            .then(r => r.json())
-            .then(data => {
-              if (data.id) {
-                callback({ id: data.id, name: data.name });
-              } else {
-                callback();
-              }
-            })
-            .catch(() => callback());
-        },
-        render: {
-          item: (d, e) => `<div class='ts-chip'>${e(d.name)}</div>`,
-          option: (d, e) => `<div class='px-2 py-1'>${e(d.name)}</div>`
-        },
-        onItemAdd: function () {
-          if (this.items.length > 0) {
-            this.inputState();
-            this.control_input.placeholder = '';
-          }
-        },
-        onClear: function () {
-          this.control_input.placeholder =
-            'Labels: Type to search or add. Press Enter to create new.';
-        }
-      });
     }
 
     // ===== Assignee Search =====
