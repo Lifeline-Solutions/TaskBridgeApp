@@ -17,7 +17,7 @@
   <%= favicon_link_tag asset_path('loading.png') %>
   <%= stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-  <%= javascript_include_tag 'controllers/ckeditor_init' %> or
+  <%#= javascript_include_tag 'controllers/ckeditor_init' %> or
   <%= javascript_importmap_tags %>
   <% if defined?(Sentry) && ENV["SENTRY_DSN"].present? %>
     <%= Sentry.get_trace_propagation_meta.html_safe %>

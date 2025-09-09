@@ -175,6 +175,6 @@ class TasksController < ApplicationController
   end
 
   def task_params
-    params.require(:task).permit(:name, :start_date, :end_date, :image, :file, :user_id, :priority, :tasks_id)
+    params.require(:task).permit(:name, :start_date, :end_date, :image, :file, :user_id, :priority, :tasks_id, :unique_task_id)
   end
 end

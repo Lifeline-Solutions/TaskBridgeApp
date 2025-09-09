@@ -58,7 +58,7 @@
                 </div>
               </div>
 
-              <!-- Status Filter (Made as a checkbox drop down) -->
+              <!-- Status Filter (checkbox multi-select) -->
               <div>
                 <%= label_tag 'status[]', 'Status', class: 'block text-sm border-gray-300 dark:bg-gray-500 font-medium mb-1' %>
                 <div class="relative inline-block text-left w-full">
@@ -76,15 +76,17 @@
                   <div id="statusDropdown"
                        class="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg w-full hidden">
                     <div class="p-2 max-h-60 overflow-y-auto space-y-2">
-                        <% @statuses.each do |status| %>
-                        <% selected_statuses = Array(params[:status]).map(&:downcase) %>
+                      <% selected_statuses = Array(params[:status]).map { |s| s.to_s.downcase } %>
+                      <% @statuses.each do |status| %>
                         <div class="flex items-center">
-                          <%= check_box_tag 'status[]', status.name, selected_statuses.include?(status.name.downcase),
+                          <%= check_box_tag 'status[]',
+                                            status.name,
+                                            selected_statuses.include?(status.name.downcase),
                                             id: "status_#{status.name.parameterize}",
                                             class: "mr-2" %>
                           <%= label_tag "status_#{status.name.parameterize}", status.name.capitalize, class: "text-sm" %>
                         </div>
-                        <% end %>
+                      <% end %>
                     </div>
                   </div>
                 </div>
@@ -98,12 +100,40 @@
                                class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
               </div>
 
+              <!-- Assignee Filter -->
               <div>
                 <%= label_tag :user_id, 'Assignee', class: 'block text-xs font-medium mb-1' %>
                 <%= select_tag :user_id, options_from_collection_for_select(
                   User.joins(:defects).distinct, :id, ->(u) { "#{u.first_name} #{u.last_name}" }, params[:user_id]
                 ),
                                include_blank: 'All Assignees',
+                               class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
+              </div>
+
+              <!-- NEW: QA Module Filter -->
+              <div>
+                <%= label_tag :qa_module_id, 'Module', class: 'block text-xs font-medium mb-1' %>
+                <%= select_tag :qa_module_id,
+                               options_from_collection_for_select(@qa_modules, :id, :name, params[:qa_module_id]),
+                               include_blank: 'All Modules',
+                               class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
+              </div>
+
+              <!-- NEW: Submodule Filter -->
+              <div>
+                <%= label_tag :submodule_id, 'Submodule', class: 'block text-xs font-medium mb-1' %>
+                <%= select_tag :submodule_id,
+                               options_from_collection_for_select(@submodules, :id, :name, params[:submodule_id]),
+                               include_blank: 'All Submodules',
+                               class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
+              </div>
+
+              <!-- NEW: Banking Type Filter -->
+              <div>
+                <%= label_tag :banking_type_id, 'Banking Type', class: 'block text-xs font-medium mb-1' %>
+                <%= select_tag :banking_type_id,
+                               options_from_collection_for_select(@banking_types, :id, :name, params[:banking_type_id]),
+                               include_blank: 'All Banking Types',
                                class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
               </div>
 
@@ -114,6 +144,7 @@
             <% end %>
           </div>
         </div>
+
         <!-- View All Link -->
         <%= link_to index_show_defect_index_path, class: "text-sm font-medium flex items-center border border-gray-300 rounded px-3 py-2 bg-blue-600 text-slate-100 hover:border-slate-100 hover:text-white focus:bg-blue-600 focus:border-blue-600 focus:text-white transition" do %>
           <span>View All</span>
