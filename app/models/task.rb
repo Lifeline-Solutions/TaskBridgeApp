@@ -54,6 +54,41 @@ class Task < ApplicationRecord
 
   private
 
+  def unique_task_id
+    initials =
+      if product&.client&.name.present?
+        product.client.name.split.map { |word| word[0] }.join.upcase
+      else
+        'DEFAULT'
+      end
+
+    # 👇 include soft-deleted defects
+    last_defect =
+      Task.with_deleted
+            .where(product_id: product_id)
+            .where("defect_unique ~ '^[^-]+-\\d+$'")
+            .order(Arel.sql("CAST(SPLIT_PART(defect_unique, '-', 2) AS INTEGER) DESC"))
+            .first ||
+      Task.with_deleted.where(product_id: product_id).order(:created_at).last
+
+    next_number =
+      if last_defect&.defect_unique.present?
+        last_defect.defect_unique.split('-').last.to_i + 1
+      else
+        1
+      end
+
+    loop do
+      self.defect_unique = "#{initials}-#{next_number.to_s.rjust(4, '0')}"
+      # 👇 check existence including soft-deleted
+      break unless Task.with_deleted.exists?(defect_unique: defect_unique)
+
+      next_number += 1
+    end
+
+    save
+  end
+
   def end_date_after_start_date
     return unless end_date.present? && start_date.present? && end_date < start_date
 

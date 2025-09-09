@@ -77,31 +77,8 @@ class ProductController < ApplicationController
     if current_user.has_role?('project manager') || current_user.has_role?(:admin) || @product.users.include?(current_user) || current_user.has_role?(:hod)
       @days_remaining = (@product.end_date - Date.today).to_i if @product.end_date.present?
 
-      # Define status groups
-      @open_statuses = ['TO DO', 'In Progress', 'On-Hold', 'Failed-QA', 'QA-testing',
-                        'Await Client Information', 'Reopened',
-                        'Awaiting Build', 'Support Testing', 'Awaiting Client API']
-      @closed_statuses = %w[Blocked Resolved Closed]
-      @awaiting_client_statuses = ['Await Client Information', 'Awaiting Client API']
-
       # Base tasks query with all necessary includes
       @tasks = @product.tasks.includes(:statuses, :users).order(created_at: 'desc')
-
-      # Apply filtering if status param is present
-      if params[:filter].present?
-        case params[:filter]
-        when 'open'
-          @tasks = @tasks.joins(:board).where(boards: { status: @open_statuses })
-        when 'closed'
-          @tasks = @tasks.joins(:board).where(boards: { status: @closed_statuses })
-        when 'awaiting_client'
-          @tasks = @tasks.joins(:board).where(boards: { status: @awaiting_client_statuses })
-        when 'my_open_tasks'
-          @tasks = @tasks.joins(:board, :users)
-            .where(boards: { status: @open_statuses })
-            .where(users: { id: current_user.id })
-        end
-      end
 
       # Apply search query if present
       if params[:query].present?
