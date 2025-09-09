@@ -1,18 +1,46 @@
-<tr>
-  <th scope="col" class="p-1 sm:p-2 text-left text-xs sm:text-sm font-medium uppercase tracking-wider hidden sm:table-cell">Date</th>
-  <th scope="col" class="p-1 sm:p-2 text-left text-xs sm:text-sm font-medium uppercase tracking-wider">ID</th>
-  <th scope="col" class="p-1 sm:p-2 text-left text-xs sm:text-sm font-medium uppercase tracking-wider hidden md:table-cell">Issue Type</th>
-  <th scope="col" class="p-1 sm:p-2 text-left text-xs sm:text-sm font-medium uppercase tracking-wider">Severity</th>
-  <th scope="col" class="p-1 sm:p-2 text-left text-xs sm:text-sm font-medium uppercase tracking-wider">Summary</th>
-  <th scope="col" class="p-1 sm:p-2 text-left text-xs sm:text-sm font-medium uppercase tracking-wider hidden md:table-cell">Assigned</th>
-  <th scope="col" class="p-1 sm:p-2 text-left text-xs sm:text-sm font-medium uppercase tracking-wider">Status</th>
-  <th scope="col" class="p-1 sm:p-2 text-left text-xs sm:text-sm font-medium uppercase tracking-wider hidden sm:table-cell">Progress</th>
-  <th scope="col" class="p-1 sm:p-2 text-left text-xs sm:text-sm font-medium uppercase tracking-wider hidden md:table-cell">Reported</th>
-  <th scope="col" class="p-1 sm:p-2 text-left text-xs sm:text-sm font-medium uppercase tracking-wider hidden lg:table-cell">Updated</th>
-  <th scope="col" class="p-1 sm:p-2 text-right text-xs sm:text-sm font-medium uppercase tracking-wider">Actions</th>
+<tr class="bg-gray-50 dark:bg-gray-700">
+  <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors hidden lg:table-cell">
+    Date
+  </th>
+  <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+    Ticket ID
+  </th>
+  <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors hidden xl:table-cell">
+    Type
+  </th>
+  <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+    Priority
+  </th>
+  <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider">
+    Summary
+  </th>
+  <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors hidden xl:table-cell">
+    Assigned
+  </th>
+  <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+    Status
+  </th>
+  <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors hidden xl:table-cell">
+    Reporter
+  </th>
+  <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider hidden 2xl:table-cell">
+    Progress
+  </th>
+  <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors hidden 2xl:table-cell">
+    Last Update
+  </th>
+  <th scope="col" class="px-3 py-3 text-right text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider">
+    Actions
+  </th>
   <% if current_user.has_role?(:admin) || current_user.has_role?(:agent) || current_user.has_role?('project manager') || current_user.has_role?(:observer) %>
-    <th scope="col" class="p-1 sm:p-2 text-left text-xs sm:text-sm font-medium uppercase tracking-wider hide-on-sidebar hidden lg:table-cell">Days</th>
-    <th scope="col" class="p-1 sm:p-2 text-left text-xs sm:text-sm font-medium uppercase tracking-wider hide-on-sidebar hidden lg:table-cell">Edits</th>
-    <th scope="col" class="p-1 sm:p-2 text-left text-xs sm:text-sm font-medium uppercase tracking-wider hide-on-sidebar hidden lg:table-cell">Last Edit</th>
+    <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors hide-on-sidebar hidden 2xl:table-cell">
+      Days Open
+    </th>
+    <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors hide-on-sidebar hidden 2xl:table-cell">
+      Updates
+    </th>
+    <th scope="col" class="px-3 py-3 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors hide-on-sidebar hidden 2xl:table-cell">
+      Last Edit
+    </th>
   <% end %>
 </tr>
