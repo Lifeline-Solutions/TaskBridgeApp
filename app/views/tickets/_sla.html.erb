@@ -1,29 +1,49 @@
-<div>
+<div class="bg-white dark:bg-gray-800 rounded-lg p-4 lg:p-6 border border-gray-200 dark:border-gray-700 space-y-4">
+  <div class="flex items-center gap-2 border-b border-gray-200 dark:border-gray-600 pb-3">
+    <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+    </svg>
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">SLA Information</h3>
+  </div>
+
   <% if current_user.has_role? :admin or current_user.has_role?('project manager') or current_user.has_role?(:agent)%>
-    <p class="font-bold">
-      Time Created:
-      <span class="font-extralight">
-        <%= @ticket.created_at.strftime("%d %b %Y at %I:%M %p") %>
-      </span>
-    </p>
-    <p class="font-bold">
-      Target Response Time:
-      <span class="font-extralight">
-        <%= @ticket.initial_response_deadline.strftime("%d %b %Y at %I:%M %p") %>
-      </span>
-    </p>
-    <p class="font-bold">
-      Target Repair Time:
-      <span class="font-extralight">
-        <%= @ticket.target_repair_deadline.strftime("%d %b %Y at %I:%M %p") %>
-      </span>
-    </p>
-    <p class="font-bold">
-      Target Resolution Time:
-      <span class="font-extralight">
-        <%= @ticket.resolution_deadline.strftime("%d %b %Y at %I:%M %p") %>
-      </span>
-    </p>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="space-y-3">
+        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+          <dt class="text-sm font-medium text-gray-600 dark:text-gray-400">Time Created</dt>
+          <dd class="text-sm text-gray-900 dark:text-white mt-1 font-mono">
+            <span class="block sm:hidden"><%= @ticket.created_at.strftime("%d %b %Y") %></span>
+            <span class="hidden sm:block"><%= @ticket.created_at.strftime("%d %b %Y at %I:%M %p") %></span>
+          </dd>
+        </div>
+        
+        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+          <dt class="text-sm font-medium text-gray-600 dark:text-gray-400">Target Response Time</dt>
+          <dd class="text-sm text-gray-900 dark:text-white mt-1 font-mono">
+            <span class="block sm:hidden"><%= @ticket.initial_response_deadline.strftime("%d %b %Y") %></span>
+            <span class="hidden sm:block"><%= @ticket.initial_response_deadline.strftime("%d %b %Y at %I:%M %p") %></span>
+          </dd>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+          <dt class="text-sm font-medium text-gray-600 dark:text-gray-400">Target Repair Time</dt>
+          <dd class="text-sm text-gray-900 dark:text-white mt-1 font-mono">
+            <span class="block sm:hidden"><%= @ticket.target_repair_deadline.strftime("%d %b %Y") %></span>
+            <span class="hidden sm:block"><%= @ticket.target_repair_deadline.strftime("%d %b %Y at %I:%M %p") %></span>
+          </dd>
+        </div>
+        
+        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+          <dt class="text-sm font-medium text-gray-600 dark:text-gray-400">Target Resolution Time</dt>
+          <dd class="text-sm text-gray-900 dark:text-white mt-1 font-mono">
+            <span class="block sm:hidden"><%= @ticket.resolution_deadline.strftime("%d %b %Y") %></span>
+            <span class="hidden sm:block"><%= @ticket.resolution_deadline.strftime("%d %b %Y at %I:%M %p") %></span>
+          </dd>
+        </div>
+      </div>
+    </div>
 <!--
     <p class="font-bold">
       SLA Initial Response Deadline Breached:
@@ -56,50 +76,58 @@
     -->
 
 
-    <p>
-      <span class="font-bold capitalize">
-        Target Response Time SLA Status:
-      </span>
-      <span class="font-extralight">
-        <% if @sla_ticket.present? %>
-          <%= @sla_ticket.sla_status %>
-        <% end %>
-      </span>
+    <!-- SLA Status Section -->
+    <div class="mt-6 border-t border-gray-200 dark:border-gray-600 pt-4">
+      <h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">SLA Status</h4>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
+          <dt class="text-xs font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">Response SLA</dt>
+          <dd class="text-sm text-blue-900 dark:text-blue-100 mt-1 capitalize">
+            <% if @sla_ticket.present? %>
+              <%= @sla_ticket.sla_status %>
+            <% else %>
+              <span class="text-gray-500 dark:text-gray-400">Not set</span>
+            <% end %>
+          </dd>
+        </div>
 
-    </p>
+        <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-3 border border-orange-200 dark:border-orange-800">
+          <dt class="text-xs font-medium text-orange-600 dark:text-orange-400 uppercase tracking-wide">Repair SLA</dt>
+          <dd class="text-sm text-orange-900 dark:text-orange-100 mt-1">
+            <% if @sla_ticket.present? %>
+              <%= @sla_ticket.sla_target_response_deadline %>
+            <% else %>
+              <span class="text-gray-500 dark:text-gray-400">Not set</span>
+            <% end %>
+          </dd>
+        </div>
 
-    <p>
-      <span class="font-bold">
-        Target Repair Time SLA Status:
-      </span>
-      <span class="font-extralight">
-        <% if @sla_ticket.present? %>
-          <%= @sla_ticket.sla_target_response_deadline %>
-        <% end %>
-      </span>
-
-    </p>
-    <p>
-      <span class="font-bold">
-        Target Resolution Time SLA Status:
-      </span>
-      <span class="font-extralight">
-        <% if @sla_ticket.present? %>
-          <%= @sla_ticket.sla_resolution_deadline %>
-        <% end %>
-      </span>
-
-    </p>
+        <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 border border-green-200 dark:border-green-800 sm:col-span-2 lg:col-span-1">
+          <dt class="text-xs font-medium text-green-600 dark:text-green-400 uppercase tracking-wide">Resolution SLA</dt>
+          <dd class="text-sm text-green-900 dark:text-green-100 mt-1">
+            <% if @sla_ticket.present? %>
+              <%= @sla_ticket.sla_resolution_deadline %>
+            <% else %>
+              <span class="text-gray-500 dark:text-gray-400">Not set</span>
+            <% end %>
+          </dd>
+        </div>
+      </div>
+    </div>
   <% end %>
-  <p>
-      <span class="font-bold">
-        Target Due Date:
-      </span>
-      <span class="font-extralight">
-        <% if @ticket.due_date.present? %>
-          <%= @ticket.due_date %> (<%= distance_of_time_in_words(DateTime.now, @ticket.due_date) %>)
-        <% end %>
-      </span>
 
-    </p>
+  <!-- Due Date Section -->
+  <div class="mt-4 bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+    <dt class="text-sm font-medium text-gray-600 dark:text-gray-400">Target Due Date</dt>
+    <dd class="text-sm text-gray-900 dark:text-white mt-1">
+      <% if @ticket.due_date.present? %>
+        <span class="font-mono"><%= @ticket.due_date %></span>
+        <span class="text-gray-500 dark:text-gray-400 ml-2">
+          (<%= distance_of_time_in_words(DateTime.now, @ticket.due_date) %>)
+        </span>
+      <% else %>
+        <span class="text-gray-500 dark:text-gray-400 italic">No due date set</span>
+      <% end %>
+    </dd>
+  </div>
 </div>
