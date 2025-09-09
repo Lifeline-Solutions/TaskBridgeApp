@@ -1,194 +1,229 @@
-<div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 mb-6 shadow-sm overflow-hidden">
-  <!-- Mobile-first layout -->
-  <div class="p-4 space-y-4">
-    <!-- Search Input -->
-    <%= form_with url: project_path(@project), method: :get, class: 'space-y-4 lg:space-y-0 lg:flex lg:items-center lg:gap-4' do |f| %>
+<div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-6 shadow-sm">
+  <!-- Main Search and Filter Form -->
+  <%= form_with url: project_path(@project), method: :get, local: true, class: 'space-y-4' do |f| %>
+    <!-- Search Input Row -->
+    <div class="flex flex-col sm:flex-row gap-3">
       <div class="relative flex-1">
         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <svg class="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
         </div>
         <%= f.text_field :query, 
-            class: "block w-full pl-10 pr-4 py-3 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white dark:focus:bg-gray-600 placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200", 
-            placeholder: "Search tickets by ID, subject, or description...",
-            value: params[:query] %>
+            value: params[:query],
+            class: "block w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-colors", 
+            placeholder: "Search by issue or subject..." %>
       </div>
-
-      <!-- Mobile search button -->
-      <button type="submit" class="w-full lg:hidden bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200 flex items-center justify-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-        </svg>
-        Search Tickets
-      </button>
-    <% end %>
-
-    <!-- Controls Row -->
-    <div class="flex flex-col sm:flex-row gap-3">
-      <!-- Filter Dropdown -->
-      <div class="relative flex-1 sm:flex-none">
-        <button id="filterDropdownButton" 
-                class="flex items-center justify-between w-full sm:w-auto sm:min-w-[140px] px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200">
-          <div class="flex items-center">
-            <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
-            </svg>
-            <span class="hidden sm:inline">Filter & Sort</span>
-            <span class="sm:hidden">Filters</span>
-          </div>
-          <svg class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+      
+      <!-- Quick Actions -->
+      <div class="flex items-center gap-2">
+        <button type="submit" class="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
+          Search
         </button>
         
-        <!-- Filter Dropdown Menu -->
-        <div id="filterDropdown" class="hidden absolute bg-white dark:bg-gray-800 right-0 sm:left-0 mt-2 w-screen max-w-sm sm:max-w-md origin-top rounded-xl shadow-2xl border border-gray-200 dark:border-gray-600 z-50 max-h-96 overflow-y-auto">
-        <%= form_with url: project_path(@project), method: :get, class: 'p-4 space-y-4' do |f| %>
-          <!-- Order Filter -->
-          <div>
-            <%= label_tag :order, 'Sort By', class: 'block font-semibold mb-2 text-sm text-gray-900 dark:text-white' %>
-            <%= select_tag :order, options_for_select([['Latest First', 'desc'], ['Oldest First', 'asc']], params[:order]), 
-                          class: "w-full p-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
-          </div>
-          
-          <!-- Date Range -->
-          <div>
-            <label class='block font-semibold mb-2 text-sm text-gray-900 dark:text-white'>Date Range</label>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <%= label_tag :start_date, 'From', class: 'block font-medium mb-1 text-xs text-gray-600 dark:text-gray-400' %>
-                <%= date_field_tag :start_date, params[:start_date], class: "w-full p-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500" %>
-              </div>
-              <div>
-                <%= label_tag :end_date, 'To', class: 'block font-medium mb-1 text-xs text-gray-600 dark:text-gray-400' %>
-                <%= date_field_tag :end_date, params[:end_date], class: "w-full p-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500" %>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Status Filter -->
-          <div>
-            <%= label_tag 'status[]', 'Status', class: 'block text-sm font-semibold mb-2 text-gray-900 dark:text-white' %>
-            <div class="relative inline-block text-left w-full">
-              <button type="button"
-                      id="statusDropdownButton"
-                      class="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-left inline-flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-600 focus:ring-2 focus:ring-blue-500 transition-colors"
-                      onclick="document.getElementById('statusDropdown').classList.toggle('hidden')">
-                <span>Filter by Status</span>
-                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                </svg>
-              </button>
+        <!-- Toggle Advanced Filters -->
+        <button type="button" id="toggleFilters" class="inline-flex items-center px-3 py-2.5 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+          <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"/>
+          </svg>
+          Filters
+          <svg id="filtersChevron" class="w-4 h-4 ml-1 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+      </div>
+    </div>
 
-              <div id="statusDropdown"
-                  class="absolute z-10 mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg w-full hidden">
-                <div class="p-2 max-h-48 overflow-y-auto space-y-1">
-                  <% @statuses.each do |status| %>
-                    <div class="flex items-center p-2 hover:bg-gray-50 dark:hover:bg-gray-600 rounded">
-                      <%= check_box_tag 'status[]', status, Array(params[:status]).include?(status),
-                                        id: "status_#{status.parameterize}",
-                                        class: "w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" %>
-                      <%= label_tag "status_#{status.parameterize}", status.capitalize, 
-                          class: "ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer" %>
-                    </div>
-                  <% end %>
-                </div>
+    <!-- Advanced Filters Section (Hidden by default) -->
+    <div id="advancedFilters" class="hidden border-t border-gray-200 dark:border-gray-600 pt-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <!-- Sort Order -->
+        <div>
+          <%= f.label :order, 'Sort By', class: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1' %>
+          <%= f.select :order, 
+              options_for_select([['Latest First', 'desc'], ['Oldest First', 'asc']], params[:order]), 
+              { include_blank: 'Default' },
+              { class: "block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors" } %>
+        </div>
+        
+        <!-- Date Range -->
+        <div>
+          <%= f.label :start_date, 'From Date', class: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1' %>
+          <%= f.date_field :start_date, 
+              value: params[:start_date],
+              class: "block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors" %>
+        </div>
+        
+        <div>
+          <%= f.label :end_date, 'To Date', class: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1' %>
+          <%= f.date_field :end_date, 
+              value: params[:end_date],
+              class: "block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors" %>
+        </div>
+        
+        <!-- Priority -->
+        <div>
+          <%= f.label :priority, 'Priority', class: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1' %>
+          <%= f.select :priority, 
+              options_for_select([['SEVERITY 1', 'SEVERITY 1'], ['SEVERITY 2', 'SEVERITY 2'], ['SEVERITY 3', 'SEVERITY 3'], ['SEVERITY 4', 'SEVERITY 4']], params[:priority]), 
+              { include_blank: 'All Priorities' },
+              { class: "block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors" } %>
+        </div>
+        
+        <!-- Issue Type -->
+        <div>
+          <%= f.label :issue, 'Issue Type', class: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1' %>
+          <%= f.select :issue, 
+              options_for_select([['SUPPORT', 'SUPPORT'], ['NEW FEATURE', 'NEW FEATURE'], ['BUG', 'BUG'], ['REQUEST', 'REQUEST'], ['INCIDENT', 'INCIDENT']], params[:issue]), 
+              { include_blank: 'All Types' },
+              { class: "block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors" } %>
+        </div>
+        
+        <!-- Status Filter -->
+        <div>
+          <%= f.label 'status[]', 'Status', class: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1' %>
+          <div class="relative">
+            <button type="button" id="statusDropdownButton" class="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white text-sm text-left focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors">
+              <span id="statusButtonText">
+                <% selected_statuses = Array(params[:status]) %>
+                <% if selected_statuses.any? %>
+                  <%= selected_statuses.length == 1 ? selected_statuses.first.capitalize : "#{selected_statuses.length} statuses" %>
+                <% else %>
+                  All Statuses
+                <% end %>
+              </span>
+              <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            
+            <div id="statusDropdown" class="hidden absolute z-20 mt-1 w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              <div class="p-3 space-y-2">
+                <% @statuses&.each do |status| %>
+                  <label class="flex items-center">
+                    <%= check_box_tag 'status[]', 
+                        status, 
+                        Array(params[:status]).include?(status),
+                        { class: "rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2" } %>
+                    <span class="text-sm text-gray-700 dark:text-gray-300"><%= status.capitalize %></span>
+                  </label>
+                <% end %>
               </div>
             </div>
           </div>
-          
-          <!-- Priority Filter -->
+        </div>
+        
+        <!-- Assignee -->
+        <% if current_user.has_role?(:agent) || current_user.has_role?('project manager') || current_user.has_role?(:admin) || current_user.has_role?(:observer) %>
           <div>
-            <%= label_tag :priority, 'Priority', class: 'block text-sm font-semibold mb-2 text-gray-900 dark:text-white' %>
-            <%= select_tag :priority, options_for_select([['Severity 1', 'SEVERITY 1'], ['Severity 2', 'SEVERITY 2'], ['Severity 3', 'SEVERITY 3'], ['Severity 4', 'SEVERITY 4']], params[:priority]), 
-                         include_blank: 'All Priorities',
-                         class: "w-full p-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
-          </div>
-          
-          <!-- Issue Type Filter -->
-          <div>
-            <%= label_tag :issue, 'Issue Type', class: 'block text-sm font-semibold mb-2 text-gray-900 dark:text-white' %>
-            <%= select_tag :issue, options_for_select([['Support', 'SUPPORT'], ['New Feature', 'NEW FEATURE'], ['Bug', 'BUG'], ['Request', 'REQUEST'], ['Incident', 'INCIDENT']], params[:issue]), 
-                         include_blank: 'All Types',
-                         class: "w-full p-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
-          </div>
-          
-          <% if current_user.has_role?(:agent) || current_user.has_role?('project manager') || current_user.has_role?(:admin) || current_user.has_role?(:observer) %>
-            <div>
-              <%= label_tag :user_id, 'Assignee', class: 'block text-sm font-semibold mb-2 text-gray-900 dark:text-white' %>
-              <%= select_tag :user_id, options_from_collection_for_select(@project.users.with_assigned_role, :id, ->(u) { "#{u.first_name} #{u.last_name}" }, params[:user_id]), 
-                           include_blank: 'All Assignees',
-                           class: "w-full p-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
-            </div>
-          <% end %>
-          
-          <!-- Filter Actions -->
-          <div class="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200 dark:border-gray-600">
-            <%= submit_tag 'Apply Filters', class: 'flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors' %>
-            <%= link_to 'Clear All', project_path(@project), class: 'flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors text-center' %>
+            <%= f.label :user_id, 'Assignee', class: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1' %>
+            <%= f.select :user_id, 
+                options_from_collection_for_select(@project&.users&.with_assigned_role || [], :id, ->(u) { "#{u.first_name} #{u.last_name}" }, params[:user_id]), 
+                { include_blank: 'All Assignees' },
+                { class: "block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors" } %>
           </div>
         <% end %>
       </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-      <!-- Last Month Filter -->
-      <%= form_with url: project_path(@project), method: :get, class: 'flex-1 sm:flex-none' do |f| %>
-        <%= hidden_field_tag :last_month, true %>
-        <button type="submit" 
-                class="flex items-center justify-center w-full sm:w-auto px-4 py-2 text-sm font-medium border rounded-lg transition-colors <%= @use_last_month_filter ? 'text-blue-700 bg-blue-50 border-blue-300 dark:text-blue-400 dark:bg-blue-900/20 dark:border-blue-800' : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600' %>">
-          <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+      
+      <!-- Filter Actions -->
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
+        <div class="flex items-center gap-3">
+          <%= f.submit 'Apply Filters', class: 'inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors' %>
+          <%= link_to 'Clear All Filters', project_path(@project), class: 'inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors' %>
+        </div>
+        
+        <!-- Quick Filter: Last Month -->
+        <%= link_to project_path(@project, last_month: true), class: "inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg #{'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-900/20' if params[:last_month]} #{'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600' unless params[:last_month]} transition-colors" do %>
+          <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
           </svg>
-          <span class="hidden sm:inline">Last Month</span>
-          <span class="sm:hidden">Recent</span>
-        </button>
-      <% end %>
-
-      <!-- View All Link -->
-      <%= link_to project_path(@project), 
-          class: "flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" do %>
-        <span class="hidden sm:inline">View All Tickets</span>
-        <span class="sm:hidden">View All</span>
-        <svg class="w-4 h-4 ml-2" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-        </svg>
-      <% end %>
+          Last Month
+        <% end %>
+      </div>
     </div>
-  </div>
+  <% end %>
 </div>
 
 <script>
 document.addEventListener("turbo:load", function () {
-  const filterButton = document.getElementById("filterDropdownButton");
-  const filterDropdown = document.getElementById("filterDropdown");
+  // Toggle Advanced Filters
+  const toggleButton = document.getElementById("toggleFilters");
+  const filtersSection = document.getElementById("advancedFilters");
+  const chevron = document.getElementById("filtersChevron");
 
-  // Remove any previously attached event listeners (cleanup)
-  const newButton = filterButton.cloneNode(true);
-  filterButton.parentNode.replaceChild(newButton, filterButton);
+  if (toggleButton && filtersSection && chevron) {
+    toggleButton.addEventListener("click", function (e) {
+      e.preventDefault();
+      const isHidden = filtersSection.classList.contains("hidden");
+      
+      if (isHidden) {
+        filtersSection.classList.remove("hidden");
+        chevron.style.transform = "rotate(180deg)";
+      } else {
+        filtersSection.classList.add("hidden");
+        chevron.style.transform = "rotate(0deg)";
+      }
+    });
+  }
 
-  const newDropdown = filterDropdown.cloneNode(true);
-  filterDropdown.parentNode.replaceChild(newDropdown, filterDropdown);
+  // Status Dropdown Toggle
+  const statusButton = document.getElementById("statusDropdownButton");
+  const statusDropdown = document.getElementById("statusDropdown");
+  const statusButtonText = document.getElementById("statusButtonText");
 
-  // Re-query after DOM replacement
-  const button = document.getElementById("filterDropdownButton");
-  const dropdown = document.getElementById("filterDropdown");
-
-  if (button && dropdown) {
-    button.addEventListener("click", function (e) {
+  if (statusButton && statusDropdown) {
+    statusButton.addEventListener("click", function (e) {
+      e.preventDefault();
       e.stopPropagation();
-      dropdown.classList.toggle("hidden");
+      statusDropdown.classList.toggle("hidden");
     });
 
-    document.addEventListener("click", function () {
-      dropdown.classList.add("hidden");
+    // Update button text when checkboxes change
+    const statusCheckboxes = statusDropdown.querySelectorAll('input[type="checkbox"]');
+    statusCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        updateStatusButtonText();
+      });
     });
 
-    dropdown.addEventListener("click", function (e) {
+    function updateStatusButtonText() {
+      const checkedBoxes = statusDropdown.querySelectorAll('input[type="checkbox"]:checked');
+      const checkedCount = checkedBoxes.length;
+      
+      if (checkedCount === 0) {
+        statusButtonText.textContent = 'All Statuses';
+      } else if (checkedCount === 1) {
+        const label = checkedBoxes[0].closest('label').textContent.trim();
+        statusButtonText.textContent = label;
+      } else {
+        statusButtonText.textContent = `${checkedCount} statuses`;
+      }
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener("click", function (e) {
+      if (!statusButton.contains(e.target) && !statusDropdown.contains(e.target)) {
+        statusDropdown.classList.add("hidden");
+      }
+    });
+
+    // Prevent dropdown from closing when clicking inside
+    statusDropdown.addEventListener("click", function (e) {
       e.stopPropagation();
     });
+  }
+
+  // Show advanced filters if any filter parameters are present (except query)
+  const urlParams = new URLSearchParams(window.location.search);
+  const filterParams = ['order', 'start_date', 'end_date', 'priority', 'issue', 'status', 'user_id', 'last_month'];
+  const hasFilters = filterParams.some(param => urlParams.has(param));
+  
+  if (hasFilters && filtersSection && chevron) {
+    filtersSection.classList.remove("hidden");
+    chevron.style.transform = "rotate(180deg)";
   }
 });
 </script>
