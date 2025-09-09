@@ -1,30 +1,52 @@
-  <div class="mt-6 col-span-3 flex mr-2 flex-col gap-4 p-4 w-full">
-    <h1 class="text-3xl text-center mb-10">Communication Center</h1>
-    <!-- Tabs Section -->
-    <div id="history" class="tabcontent active">
+  <div class="mt-4 lg:mt-6 col-span-full lg:col-span-3 flex flex-col gap-4 p-4 w-full bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+    <!-- Responsive Header -->
+    <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-600 pb-4">
+      <h2 class="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-900 dark:text-white">Communication Center</h2>
+      <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clip-rule="evenodd"/>
+        </svg>
+        Messages
+      </div>
+    </div>
+    
+    <!-- Messages/History Section -->
+    <div id="history" class="tabcontent active flex-1">
       <%= render partial: 'issues/issues_table' %>
     </div>
 
     <% if current_page?(project_ticket_path(@project, @ticket)) %>
-
-      <!-- New message button -->
+      <!-- New message section -->
       <% unless @ticket.statuses.first&.name == 'Closed' %>
-        <div data-controller="messages">
-          <!-- Single New Message Button -->
-          <div class="p-4 border-t border-gray-200 dark:border-gray-600">
+        <div data-controller="messages" class="border-t border-gray-200 dark:border-gray-600 pt-4">
+          <!-- Responsive New Message Button -->
+          <div class="flex justify-center sm:justify-start">
             <button id="newMessageButton"
-                    class="flex items-center justify-center gap-2 w-2xl px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition-colors"
+                    class="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-3 sm:py-2 bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 text-white rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md"
                     data-action="click->messages#toggleForm">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
               </svg>
-              New Message
+              <span class="sm:inline">Add New Message</span>
             </button>
           </div>
 
-          <!-- Form Container (initially hidden) -->
-          <div id="messageFormContainer" class="hidden" data-messages-target="form">
-            <%= render 'issues/form', project: @project, ticket: @ticket, issue: Issue.new %>
+          <!-- Responsive Form Container -->
+          <div id="messageFormContainer" class="hidden mt-4" data-messages-target="form">
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+              <%= render 'issues/form', project: @project, ticket: @ticket, issue: Issue.new %>
+            </div>
+          </div>
+        </div>
+      <% else %>
+        <!-- Closed ticket message -->
+        <div class="border-t border-gray-200 dark:border-gray-600 pt-4">
+          <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 text-center">
+            <svg class="w-8 h-8 mx-auto mb-2 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+            </svg>
+            <p class="text-sm text-gray-600 dark:text-gray-300 font-medium">This ticket is closed</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">No new messages can be added</p>
           </div>
         </div>
       <% end %>
