@@ -54,6 +54,7 @@ class Task < ApplicationRecord
 
   private
 
+
   def unique_task_id
     initials =
       if product&.client&.name.present?
@@ -63,25 +64,25 @@ class Task < ApplicationRecord
       end
 
     # 👇 include soft-deleted defects
-    last_defect =
+    last_task =
       Task.with_deleted
-            .where(product_id: product_id)
-            .where("defect_unique ~ '^[^-]+-\\d+$'")
-            .order(Arel.sql("CAST(SPLIT_PART(defect_unique, '-', 2) AS INTEGER) DESC"))
-            .first ||
+          .where(product_id: product_id)
+          .where("unique_task_id ~ '^[^-]+-\\d+$'")
+          .order(Arel.sql("CAST(SPLIT_PART(unique_task_id, '-', 2) AS INTEGER) DESC"))
+          .first ||
       Task.with_deleted.where(product_id: product_id).order(:created_at).last
 
     next_number =
-      if last_defect&.defect_unique.present?
-        last_defect.defect_unique.split('-').last.to_i + 1
+      if last_task&.unique_task_id.present?
+        last_tast.unique_task_id.split('-').last.to_i + 1
       else
         1
       end
 
     loop do
-      self.defect_unique = "#{initials}-#{next_number.to_s.rjust(4, '0')}"
+      self.unique_task_id = "#{initials}-#{next_number.to_s.rjust(4, '0')}"
       # 👇 check existence including soft-deleted
-      break unless Task.with_deleted.exists?(defect_unique: defect_unique)
+      break unless Task.with_deleted.exists?(unique_task_id: unique_task_id)
 
       next_number += 1
     end

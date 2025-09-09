@@ -10,7 +10,8 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_09_061438) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_06_063803) do
+  
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -303,7 +304,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_09_061438) do
     t.uuid "banking_type_id"
     t.uuid "creator_id"
     t.uuid "product_id"
-    t.string "summary"
+    t.string "summary", null: false
     t.string "defect_unique"
     t.string "issue_type", default: "Bug"
     t.boolean "draft", default: false, null: false
@@ -829,11 +830,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_09_061438) do
     t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
     t.uuid "deleted_by"
     t.datetime "deleted_on"
-    t.string "unique_task_id"
     t.index ["deleted_on"], name: "index_tasks_on_deleted_on"
     t.index ["product_id"], name: "index_tasks_on_product_id"
     t.index ["tasks_id"], name: "index_tasks_on_tasks_id"
-    t.index ["unique_task_id"], name: "index_tasks_on_unique_task_id", unique: true
     t.index ["user_id"], name: "index_tasks_on_user_id"
   end
 
