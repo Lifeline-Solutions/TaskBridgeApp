@@ -142,6 +142,7 @@ class DefectController < ApplicationController
 
     @submodules = QaModule.joins(:defects)
       .where(defects: { id: filtered_ids })
+      .where.not(parent_id: nil)
       .distinct
       .order(:name)
 
