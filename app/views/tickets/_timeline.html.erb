@@ -1,275 +1,136 @@
-<div class="w-full">
-  <%= render 'tickets/search_q' %>
+<!-- Responsive Timeline Container -->
+<div class="relative w-full mb-6 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+  <!-- Timeline Header -->
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Activity Timeline</h3>
+    <span class="text-sm text-gray-500 dark:text-gray-400"><%= @events.count %> events</span>
+  </div>
 
-  <!-- Mobile Card View (hidden on lg and up) -->
-  <div class="lg:hidden space-y-2">
-    <% @ticket.each do |ticket| %>
-      <% if ticket.present? %>
-        <div class="<%= case ticket.issue
-                       when 'SUPPORT' then 'bg-[#007ACC]'
-                       when 'NEW FEATURE' then 'bg-[#00B894]'
-                       when 'BUG' then 'bg-[#E53935]'
-                       when 'REQUEST' then 'bg-[#6c5CE7]'
-                       when 'INCIDENT' then 'bg-[#F39C12]'
-                       when 'CHANGE REQUEST' then 'bg-[#2ECC71]'
-                       else 'bg-gray-500'
-                       end %> rounded-lg shadow-sm overflow-hidden">
-          <!-- Card Header -->
-          <div class="px-3 py-2 border-b border-white border-opacity-20">
-            <div class="flex items-center justify-between text-white">
-              <div class="flex items-center space-x-2">
-                <span class="font-medium text-xs">
-                  <%= link_to ticket.unique_id, project_ticket_path(ticket.project, ticket), class: "text-white hover:text-gray-200 font-semibold" %>
-                </span>
-                <span class="text-xs opacity-70">•</span>
-                <span class="text-xs opacity-80"><%= ticket.issue %></span>
-              </div>
-              <span class="text-xs opacity-80">
-                <%= ticket.created_at.strftime("%d %b") %>
-              </span>
+  <!-- Mobile: Vertical Timeline, Desktop: Horizontal Timeline -->
+  <div class="lg:hidden">
+    <!-- Mobile Vertical Timeline -->
+    <ol class="relative border-l border-gray-200 dark:border-gray-700 ml-4">
+      <% @events.each_with_index do |event, index| %>
+        <li class="mb-6 ml-6">
+          <span class="absolute flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full -left-4 ring-4 ring-white dark:ring-gray-800 dark:bg-blue-900">
+            <span class="text-xs font-bold text-blue-800 dark:text-blue-300"><%= index + 1 %></span>
+          </span>
+          
+          <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+            <div class="flex flex-col space-y-1">
+              <h4 class="text-sm font-semibold text-gray-900 dark:text-white"><%= event.user&.name || "System" %></h4>
+              <time class="text-xs text-gray-500 dark:text-gray-400"><%= event.created_at.strftime("%b %d, %Y at %H:%M") %></time>
+              <p class="text-sm text-gray-700 dark:text-gray-300 mt-2"><%= event.details %></p>
             </div>
           </div>
-
-          <!-- Card Content -->
-          <div class="p-3 space-y-2">
-            <!-- Summary Section -->
-            <div class="flex items-start space-x-2">
-              <%= render partial: 'tickets/summary', locals: { ticket: ticket } %>
-            </div>
-
-            <!-- Priority and Status Row -->
-            <div class="flex items-center justify-between">
-              <div class="flex-shrink-0">
-                <%= render partial: 'tickets/priority_severity', locals: { ticket: ticket } %>
-              </div>
-              <div class="flex-shrink-0 ml-2">
-                <%= render partial: 'tickets/ticket_status', locals: { ticket: ticket } %>
-              </div>
-            </div>
-
-            <!-- Progress Bar -->
-            <div class="w-full flex justify-center">
-              <%= render partial: 'tickets/progress_bar', locals: { ticket: ticket } %>
-            </div>
-
-            <!-- Assignment Info -->
-            <div class="space-y-1">
-              <div class="flex items-center justify-between text-xs">
-                <span class="text-white opacity-70">Assigned:</span>
-                <div class="text-right">
-                  <% ticket.users.each do |user| %>
-                    <% if user.name.present? %>
-                      <div class="text-white text-xs">
-                        <%= user.name.split(' ').first %>
-                      </div>
-                    <% end %>
-                  <% end %>
-                </div>
-              </div>
-
-              <div class="flex items-center justify-between text-xs">
-                <span class="text-white opacity-70">Reporter:</span>
-                <span class="text-white text-xs">
-                  <%= ticket.user.name.split(' ').first if ticket.user.name.present? %>
-                </span>
-              </div>
-
-              <% if ticket.add_statuses.present? %>
-                <div class="flex items-center justify-between text-xs">
-                  <span class="text-white opacity-70">Updated:</span>
-                  <span class="text-white text-xs">
-                    <%= ticket.add_statuses.first.updated_at.strftime('%d %b') %>
-                  </span>
-                </div>
-              <% end %>
-            </div>
-
-            <!-- Actions -->
-            <div class="flex justify-end pt-1 border-t border-white border-opacity-20">
-              <div data-controller="dropdown" data-dropdown-ticket-id-value="<%= ticket.id %>">
-                <%= render partial: 'tickets/action_dropdown', locals: { ticket: ticket } %>
-              </div>
-            </div>
-          </div>
-        </div>
+        </li>
       <% end %>
-    <% end %>
+    </ol>
   </div>
 
-  <!-- Desktop Table View (hidden on mobile, shown on lg and up) -->
-  <div class="hidden lg:block overflow-x-auto h-full">
-    <table class="min-w-full divide-y" aria-label="Tickets Table">
-      <thead>
-        <%= render partial: "tickets/ticket_table_headers" %>
-      </thead>
-      <tbody class="text-sm">
-        <% @ticket.each do |ticket| %>
-          <% if ticket.present? %>
-            <tr class="<%= case ticket.issue
-                           when 'SUPPORT' then 'bg-[#007ACC]'
-                           when 'NEW FEATURE' then 'bg-[#00B894]'
-                           when 'BUG' then 'bg-[#E53935]'
-                           when 'REQUEST' then 'bg-[#6c5CE7]'
-                           when 'INCIDENT' then 'bg-[#F39C12]'
-                           when 'CHANGE REQUEST' then 'bg-[#2ECC71]'
-                           else ''
-                           end %> hover:opacity-90 transition-opacity">
-              <!-- Date -->
-              <td class="px-2 py-2 whitespace-nowrap text-white">
-                <%= link_to ticket.created_at.strftime("%d %b %Y"), project_ticket_path(ticket.project, ticket), class: "text-white hover:text-gray-200" %>
-              </td>
+  <!-- Desktop: Horizontal Timeline -->
+  <div class="hidden lg:block relative">
+    <!-- Scroll Controls -->
+    <button
+      id="scroll-left"
+      class="absolute left-0 top-1/2 -translate-y-1/2 z-20 p-2 bg-white dark:bg-gray-700 rounded-full shadow-md hover:shadow-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200"
+      style="display: none;"
+      aria-label="Scroll timeline left">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </button>
 
-              <!-- Ticket ID -->
-              <td class="px-4 py-4 whitespace-nowrap font-medium uppercase text-white">
-                <% if ticket.unique_id.present? %>
-                  <%= link_to ticket.unique_id, project_ticket_path(ticket.project, ticket), class: "text-white hover:text-gray-200" %>
-                <% end %>
-              </td>
-
-              <!-- Issue Type -->
-              <td class="px-4 py-4 whitespace-nowrap text-white">
-                <%= link_to ticket.issue, project_ticket_path(ticket.project, ticket), class: "text-white hover:text-gray-200" %>
-              </td>
-
-              <!-- Severity -->
-              <td class="px-4 py-4 whitespace-nowrap">
-                <%= render partial: 'tickets/priority_severity', locals: { ticket: ticket } %>
-              </td>
-
-              <!-- Summary -->
-              <td class="px-4 py-4">
-                <div class="grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-4">
-                  <%= render partial: 'tickets/summary', locals: { ticket: ticket } %>
-                </div>
-              </td>
-
-              <!-- Assigned To -->
-              <td class="px-4 py-4 whitespace-nowrap text-white">
-                <div class="flex flex-col gap-1">
-                  <% ticket.users.each do |user| %>
-                    <% if user.name.present? %>
-                      <div class="text-xs">
-                        <span class="font-medium"><%= user.name %></span>
-                        <span class="font-semibold opacity-80">
-                          <% if user.teams.any? %>
-                            (<%= user.teams.map(&:name).join(', ') %>)
-                          <% else %>
-                            (No Team)
-                          <% end %>
-                        </span>
-                      </div>
-                    <% end %>
-                  <% end %>
-                </div>
-              </td>
-
-              <!-- Status -->
-              <td class="px-4 py-4 whitespace-nowrap">
-                <%= render partial: 'tickets/ticket_status', locals: { ticket: ticket } %>
-              </td>
-
-              <!-- Progress Bar -->
-              <td class="px-4 py-4 whitespace-nowrap">
-                <%= render partial: 'tickets/progress_bar', locals: { ticket: ticket } %>
-              </td>
-
-              <!-- Reported By -->
-              <td class="px-4 py-4 whitespace-nowrap text-white text-xs">
-                <% if ticket.user.name.present? %>
-                  <%= ticket.user.name %>
-                <% end %>
-              </td>
-
-              <!-- Last Updated -->
-              <td class="px-4 py-4 whitespace-nowrap text-sm text-white">
-                <% if ticket.add_statuses.present? %>
-                  <%= ticket.add_statuses.first.updated_at.strftime('%H:%M %d %b %Y') %>
-                <% end %>
-              </td>
-
-              <!-- Actions -->
-              <td class="px-4 py-4 whitespace-nowrap font-medium" data-controller="dropdown" data-dropdown-ticket-id-value="<%= ticket.id %>">
-                <%= render partial: 'tickets/action_dropdown', locals: { ticket: ticket } %>
-              </td>
-
-              <% if current_user.has_role?(:admin) || current_user.has_role?(:agent) || current_user.has_role?('project manager') %>
-                <td class="py-2 px-4 font-bold text-center text-white text-xs">
-                  <% closed_status = ticket.add_statuses.joins(:status).where(statuses: { name: %w[Closed Resolved Declined] }).order(updated_at: :desc).first %>
-                  <% if ticket.created_at %>
-                    <% if closed_status %>
-                      <%= distance_of_time_in_words(ticket.created_at, closed_status.updated_at).gsub('about ', '') %>
-                    <% else %>
-                      <%= distance_of_time_in_words(ticket.created_at, Time.current).gsub('about ', '') %>
-                    <% end %>
-                  <% else %>
-                    N/A
-                  <% end %>
-                </td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-center hide-on-sidebar text-white">
-                  <%= ticket.update_count %>
-                </td>
-                <td class="px-4 py-4 whitespace-nowrap text-sm text-center hide-on-sidebar text-white">
-                  <%= ticket.last_updated_at ? ticket.last_updated_at.strftime("%T") : 'Never' %>
-                </td>
+    <!-- Timeline Container -->
+    <div id="timeline-container" class="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 px-8">
+      <ol class="flex items-start space-x-8 pb-4" style="min-width: max-content;">
+        <% @events.each_with_index do |event, index| %>
+          <li class="flex-shrink-0 relative">
+            <!-- Timeline Node -->
+            <div class="flex flex-col items-center">
+              <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-3 border-4 border-white dark:border-gray-800 shadow-md">
+                <span class="text-sm font-bold text-blue-800 dark:text-blue-300"><%= index + 1 %></span>
+              </div>
+              
+              <!-- Timeline Content -->
+              <div class="w-64 bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600 shadow-sm">
+                <h4 class="font-semibold text-gray-900 dark:text-white text-sm mb-1"><%= event.user&.name || "System" %></h4>
+                <time class="text-xs text-gray-500 dark:text-gray-400 mb-2 block"><%= event.created_at.strftime("%b %d, %Y at %H:%M") %></time>
+                <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed"><%= event.details %></p>
+              </div>
+              
+              <!-- Connecting Line -->
+              <% unless index == @events.count - 1 %>
+                <div class="absolute top-5 left-10 w-8 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
               <% end %>
-            </tr>
-          <% end %>
+            </div>
+          </li>
         <% end %>
-      </tbody>
-    </table>
+      </ol>
+    </div>
+
+    <button
+      id="scroll-right"
+      class="absolute right-0 top-1/2 -translate-y-1/2 z-20 p-2 bg-white dark:bg-gray-700 rounded-full shadow-md hover:shadow-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all duration-200"
+      style="display: none;"
+      aria-label="Scroll timeline right">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+    </button>
   </div>
+
+  <!-- Right Scroll Button -->
+  <button
+    id="scroll-right"
+    class="absolute right-0 z-10 p-2 bg-gray-300 rounded-full shadow hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600"
+    style="top: 50%; transform: translateY(-50%); display: none;"
+    aria-label="Scroll right">
+    &#8594;
+  </button>
 </div>
 
+<style>
+  /* Hide the horizontal scrollbar */
+  #timeline-container {
+    overflow-x: hidden;
+    display: flex;
+    white-space: nowrap;
+  }
+</style>
+
 <script>
-  document.addEventListener("turbo:load", function() {
-    const sidebar = document.getElementById("sidebar");
-    const tableColumns = document.querySelectorAll(".hide-on-sidebar");
+  document.addEventListener('turbo:load', () => {
+    const timelineContainer = document.getElementById('timeline-container');
+    const scrollLeftButton = document.getElementById('scroll-left');
+    const scrollRightButton = document.getElementById('scroll-right');
 
-    function toggleColumns() {
-      const isExpanded = sidebar && sidebar.classList.contains("w-64");
-      tableColumns.forEach(col => {
-        col.style.display = isExpanded ? "none" : "table-cell";
-      });
-    }
+    const updateButtonVisibility = () => {
+      const scrollWidth = timelineContainer.scrollWidth;
+      const clientWidth = timelineContainer.clientWidth;
+      const scrollLeft = timelineContainer.scrollLeft;
 
-    if (sidebar) {
-      toggleColumns();
-      const observer = new MutationObserver(toggleColumns);
-      observer.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
-    }
+      if (scrollWidth > clientWidth) {
+        scrollLeftButton.style.display = scrollLeft > 0 ? 'block' : 'none';
+        scrollRightButton.style.display = scrollLeft < scrollWidth - clientWidth ? 'block' : 'none';
+      } else {
+        scrollLeftButton.style.display = 'none';
+        scrollRightButton.style.display = 'none';
+      }
+    };
 
-    document.querySelectorAll("th[scope='col']").forEach(header => {
-      header.addEventListener("click", function() {
-        const table = this.closest("table");
-        const headerIndex = Array.from(this.parentElement.children).indexOf(this);
-        const tbody = table.querySelector("tbody");
-        const rows = Array.from(tbody.querySelectorAll("tr"));
-        const isAscending = !this.classList.contains("asc");
-        table.querySelectorAll("th[scope='col']").forEach(h => {
-          h.classList.remove("asc", "desc");
-        });
-
-        this.classList.add(isAscending ? "asc" : "desc");
-
-        rows.sort((rowA, rowB) => {
-          const cellA = rowA.children[headerIndex].textContent.trim();
-          const cellB = rowB.children[headerIndex].textContent.trim();
-
-          if (!isNaN(cellA)) {
-            return isAscending ? cellA - cellB : cellB - cellA;
-          }
-
-          const dateA = Date.parse(cellA);
-          const dateB = Date.parse(cellB);
-          if (!isNaN(dateA)) {
-            return isAscending ? dateA - dateB : dateB - dateA;
-          }
-
-          return isAscending ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
-        });
-
-        rows.forEach(row => tbody.appendChild(row));
-      });
+    scrollLeftButton.addEventListener('click', () => {
+      timelineContainer.scrollBy({ left: -200, behavior: 'smooth' });
     });
+
+    scrollRightButton.addEventListener('click', () => {
+      timelineContainer.scrollBy({ left: 200, behavior: 'smooth' });
+    });
+
+    timelineContainer.addEventListener('scroll', updateButtonVisibility);
+    window.addEventListener('resize', updateButtonVisibility);
+
+    // Initial check
+    updateButtonVisibility();
   });
 </script>
