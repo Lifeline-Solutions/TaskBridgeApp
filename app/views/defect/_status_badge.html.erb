@@ -1,0 +1,8 @@
+<span id="defect_status_<%= defect.id %>" class="px-2 py-1 text-xs font-semibold rounded
+  <%= case defect.statuses.first&.name
+       when "Failed QA" then "bg-red-100 text-red-800"
+       when "Closed"    then "bg-green-100 text-green-800"
+       else "bg-gray-100 text-gray-800"
+     end %>">
+  <%= defect.statuses.first&.name || "No Status" %>
+</span>

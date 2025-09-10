@@ -1,0 +1,29 @@
+<%= turbo_frame_tag "modal" do %>
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-2xl relative">
+      <%= link_to "✕", defect_path(defect), data: { turbo_frame: "_top" }, class: "absolute top-3 right-3 text-xl font-bold text-gray-500" %>
+
+      <h2 class="text-lg font-semibold mb-2 dark:text-gray-200">Record QA Failure</h2>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        Kindly fill in this form for future reference. This helps you, other QA engineers, and developers
+        understand why this defect failed QA and what caused it.
+      </p>
+
+      <%= form_with model: [defect, DefectFailureReport.new], 
+                    url: create_failure_report_defect_path(defect),
+                    method: :post, local: false do |f| %>
+        <div class="mb-4">
+          <%= f.label :reason, "Explain the failure", class: "block text-sm font-medium text-gray-700 dark:text-gray-300" %>
+          <%= f.rich_text_area :reason, id: "failure_reason_textarea_#{defect.id}",
+                placeholder: "Provide details on why this defect failed QA...",
+                class: "w-full border rounded-md px-3 py-2 text-sm dark:bg-gray-700 dark:text-white" %>
+        </div>
+
+        <div class="flex justify-end gap-2">
+          <%= f.submit "Submit Report", class: "px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700" %>
+          <%= link_to "Cancel", defect_path(defect), data: { turbo_frame: "_top" }, class: "px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>
