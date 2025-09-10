@@ -292,13 +292,13 @@ class DefectController < ApplicationController
                   else
                     QaModule.all
                   end
-    
+
     @submodules = if @defect.qa_module
-                # Select only id + name and make the result distinct (and ordered)
-                @defect.qa_module.submodules.select(:id, :name).distinct.order(:name)
-              else
-                QaModule.none
-              end
+                    # Select only id + name and make the result distinct (and ordered)
+                    @defect.qa_module.submodules.select(:id, :name).distinct.order(:name)
+                  else
+                    QaModule.none
+                  end
 
     respond_to do |format|
       format.html
