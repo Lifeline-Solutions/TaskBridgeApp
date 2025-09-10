@@ -14,6 +14,7 @@ class Defect < ApplicationRecord
 
   has_many :defect_labels, dependent: :destroy
   has_many :labels, through: :defect_labels
+  has_many :defect_failure_reports, dependent: :destroy
 
   resourcify
   has_many :users, through: :roles, class_name: 'User', source: :users
