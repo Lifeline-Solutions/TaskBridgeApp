@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_10_074611) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_10_080959) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -230,6 +230,26 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_10_074611) do
     t.index ["deleted_on"], name: "index_default_defect_assignees_on_deleted_on"
     t.index ["modified_by_id"], name: "index_default_defect_assignees_on_modified_by_id"
     t.index ["user_id"], name: "index_default_defect_assignees_on_user_id", unique: true
+  end
+
+  create_table "defect_failure_reports", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "defect_id", null: false
+    t.integer "retest_number", null: false
+    t.datetime "captured_at", null: false
+    t.uuid "created_by_id"
+    t.uuid "modified_by_id"
+    t.uuid "deleted_by_id"
+    t.datetime "deleted_on"
+    t.boolean "archive_status", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["archive_status"], name: "index_defect_failure_reports_on_archive_status"
+    t.index ["created_by_id"], name: "index_defect_failure_reports_on_created_by_id"
+    t.index ["defect_id"], name: "index_defect_failure_reports_on_defect_id"
+    t.index ["deleted_by_id"], name: "index_defect_failure_reports_on_deleted_by_id"
+    t.index ["deleted_on"], name: "index_defect_failure_reports_on_deleted_on"
+    t.index ["modified_by_id"], name: "index_defect_failure_reports_on_modified_by_id"
+    t.index ["retest_number"], name: "index_defect_failure_reports_on_retest_number"
   end
 
   create_table "defect_histories", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1007,6 +1027,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_10_074611) do
   add_foreign_key "default_defect_assignees", "users", column: "created_by_id"
   add_foreign_key "default_defect_assignees", "users", column: "deleted_by_id"
   add_foreign_key "default_defect_assignees", "users", column: "modified_by_id"
+  add_foreign_key "defect_failure_reports", "defects"
+  add_foreign_key "defect_failure_reports", "users", column: "created_by_id"
+  add_foreign_key "defect_failure_reports", "users", column: "deleted_by_id"
+  add_foreign_key "defect_failure_reports", "users", column: "modified_by_id"
   add_foreign_key "defect_histories", "defects"
   add_foreign_key "defect_histories", "users"
   add_foreign_key "defect_messages", "defects"
