@@ -19,11 +19,10 @@
 
   <!-- Project overview card -->
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 mb-6">
-    <!-- Mobile-first responsive grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
-      
+    <!-- Responsive flex row: Project details | Tickets overview | Products/Services -->
+    <div class="flex flex-col lg:flex-row gap-6">
       <!-- Project details column -->
-      <div class="lg:col-span-1 xl:col-span-1 space-y-4">
+      <div class="lg:w-1/5 space-y-4 mb-4 lg:mb-0">
         <div class="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
           <div class="flex-shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-blue-600">
@@ -37,7 +36,6 @@
             </p>
           </div>
         </div>
-
         <div class="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
           <div class="flex-shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-green-600">
@@ -52,128 +50,99 @@
           </div>
         </div>
       </div>
-      
-      <!-- Tickets overview grid -->
-      <div class="lg:col-span-2 xl:col-span-4">
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          
-          <!-- All Open Tickets -->
-          <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <div class="flex items-center justify-between">
-              <div class="flex-1">
-                <div class="flex items-center space-x-2 mb-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-blue-600">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 0 1 0 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 0 1 0-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375Z" />
-                  </svg>
-                  <h3 class="text-sm font-medium text-gray-900 dark:text-white">All Open Tickets</h3>
-                </div>
-                <p class="text-2xl font-bold text-blue-600 dark:text-blue-400 mb-3">
-                  <%= @total_tickets_open %>
-                </p>
-                <%= link_to "View All",
-                    project_path(@project, filter: 'Open'),
-                    class: "inline-flex items-center text-xs font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors" %>
-              </div>
-            </div>
-          </div>
 
-          <!-- All Closed Tickets -->
-          <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-            <div class="flex items-center justify-between">
-              <div class="flex-1">
-                <div class="flex items-center space-x-2 mb-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-green-600">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
-                  </svg>
-                  <h3 class="text-sm font-medium text-gray-900 dark:text-white">All Closed Tickets</h3>
-                </div>
-                <p class="text-2xl font-bold text-green-600 dark:text-green-400 mb-3">
-                  <%= @closed_tickets %>
-                </p>
-                <%= link_to "View All",
-                    project_path(@project, filter: 'Closed_for_all'),
-                    class: "inline-flex items-center text-xs font-medium text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 transition-colors" %>
-              </div>
+      <!-- Tickets overview column -->
+      <div class="lg:w-1/4 flex flex-col gap-4">
+        <!-- My Open Tickets -->
+        <div class="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-transparent">
+          <div class="flex-1">
+            <div class="flex items-center space-x-2 mb-1">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-500">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+              </svg>
+              <h3 class="text-sm font-medium text-gray-900 dark:text-white">My Open Tickets</h3>
             </div>
+            <p class="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-1">
+              <%= @assigned_and_tickets %>
+            </p>
           </div>
+          <%= link_to "View",
+              project_path(@project, filter: 'Assigned_opened'),
+              class: "ml-4 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors" %>
+        </div>
 
-          <!-- My Open Tickets -->
-          <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
-            <div class="flex items-center justify-between">
-              <div class="flex-1">
-                <div class="flex items-center space-x-2 mb-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-orange-600">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                  </svg>
-                  <h3 class="text-sm font-medium text-gray-900 dark:text-white">My Open Tickets</h3>
-                </div>
-                <p class="text-2xl font-bold text-orange-600 dark:text-orange-400 mb-3">
-                  <%= @assigned_and_tickets %>
-                </p>
-                <%= link_to "View Mine",
-                    project_path(@project, filter: 'Assigned_opened'),
-                    class: "inline-flex items-center text-xs font-medium text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300 transition-colors" %>
-              </div>
+        <!-- My Assigned & Closed Tickets -->
+        <div class="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-transparent">
+          <div class="flex-1">
+            <div class="flex items-center space-x-2 mb-1">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-500">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+              </svg>
+              <h3 class="text-sm font-medium text-gray-900 dark:text-white">Assigned & Closed</h3>
             </div>
+            <p class="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-1">
+              <%= @closed_assigned_tickets %>
+            </p>
           </div>
+          <%= link_to "View",
+              project_path(@project, filter: 'Assigned_closed'),
+              class: "ml-4 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors" %>
+        </div>
 
-          <!-- My Closed Tickets -->
-          <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
-            <div class="flex items-center justify-between">
-              <div class="flex-1">
-                <div class="flex items-center space-x-2 mb-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-purple-600">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
-                  </svg>
-                  <h3 class="text-sm font-medium text-gray-900 dark:text-white">My Assigned & Closed Tickets</h3>
-                </div>
-                <p class="text-2xl font-bold text-purple-600 dark:text-purple-400 mb-3">
-                  <%= @closed_assigned_tickets %>
-                </p>
-                <%= link_to "View Mine",
-                    project_path(@project, filter: 'Assigned_closed'),
-                    class: "inline-flex items-center text-xs font-medium text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 transition-colors" %>
-              </div>
+        <!-- SLA on Target Response -->
+        <div class="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-transparent">
+          <div class="flex-1">
+            <div class="flex items-center space-x-2 mb-1">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-500">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m6 4a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 class="text-sm font-medium text-gray-900 dark:text-white">SLA on Target Response</h3>
             </div>
+            <p class="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-1">
+              <%= @sla_on_target || 0 %>%
+            </p>
           </div>
+          <%= link_to "View",
+              project_path(@project, filter: 'sla'),
+              class: "ml-4 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors" %>
         </div>
       </div>
-    </div>
 
-    <!-- Products/Groupware Section -->
-    <div class="mt-6 lg:mt-8">
-      <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Products & Services</h3>
-        <% if @project.softwares.any? %>
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-            <% @project.softwares.each do |software| %>
-              <% software.groupwares.each do |groupware| %>
-                <% active_groupware = @project.tickets.where(groupware_id: groupware.id).count %>
-                <% if active_groupware > 0 %>
-                  <div class="flex flex-col items-center p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 hover:shadow-md transition-shadow">
-                    <div class="mb-2">
-                      <%= image_tag(groupware.image.presence || 'default.png', 
-                          class: 'w-8 h-8 sm:w-10 sm:h-10 rounded-md object-cover') %>
+      <!-- Products/Groupware Section -->
+      <div class="lg:flex-1">
+        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 h-full flex flex-col">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Products & Services</h3>
+          <% if @project.softwares.any? %>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+              <% @project.softwares.each do |software| %>
+                <% software.groupwares.each do |groupware| %>
+                  <% active_groupware = @project.tickets.where(groupware_id: groupware.id).count %>
+                  <% if active_groupware > 0 %>
+                    <div class="flex flex-col items-center p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 hover:shadow-md transition-shadow">
+                      <div class="mb-2">
+                        <%= image_tag(groupware.image.presence || 'default.png', 
+                            class: 'w-8 h-8 sm:w-10 sm:h-10 rounded-md object-cover') %>
+                      </div>
+                      <span class="text-xs sm:text-sm font-medium text-gray-900 dark:text-white text-center">
+                        <%= groupware.name %>
+                      </span>
+                      <span class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <%= active_groupware %> ticket<%= 's' if active_groupware != 1 %>
+                      </span>
                     </div>
-                    <span class="text-xs sm:text-sm font-medium text-gray-900 dark:text-white text-center">
-                      <%= groupware.name %>
-                    </span>
-                    <span class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      <%= active_groupware %> ticket<%= 's' if active_groupware != 1 %>
-                    </span>
-                  </div>
+                  <% end %>
                 <% end %>
               <% end %>
-            <% end %>
-          </div>
-        <% else %>
-          <div class="text-center py-8">
-            <svg class="w-12 h-12 mx-auto text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0H4m0 0L4 8h16v5z"></path>
-            </svg>
-            <p class="text-gray-500 dark:text-gray-400">No products or services configured</p>
-          </div>
-        <% end %>
+            </div>
+          <% else %>
+            <div class="text-center py-8">
+              <svg class="w-12 h-12 mx-auto text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0H4m0 0L4 8h16v5z"></path>
+              </svg>
+              <p class="text-gray-500 dark:text-gray-400">No products or services configured</p>
+            </div>
+          <% end %>
+        </div>
       </div>
     </div>
   </div>
