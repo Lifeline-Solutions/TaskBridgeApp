@@ -22,7 +22,7 @@
     </tr>
     </thead>
     <tbody>
-    <% @team.users.each do |user| %>
+    <% @team.users.order(:first_name).each do |user| %>
       <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 h-12 text-center">
         <td class="px-4 py-4 font-medium text-left">
           <p class="text-gray-700 dark:text-gray-300"><%= user.name %></p>

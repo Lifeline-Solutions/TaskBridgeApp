@@ -83,6 +83,8 @@ class TasksController < ApplicationController
       user = User.find(params[:user_id])
       @task.users.clear
       @task.users << user
+      assigned_user = user # Sending to all users added to the product
+      UserMailer.task_assignment_email(user, @task, current_user, assigned_user).deliver_later
       activity('user_activity')
         .caused_by(current_user)
         .performed_on(@task)
@@ -103,12 +105,6 @@ class TasksController < ApplicationController
         .set_source('task', @task.id)
         .set_party('user', assigned_user.id)
         .send(queue: true)
-      # Send email to all users tagged on the product, except the current user
-      # @product.users.each do |product_user|
-      #   next if product_user == current_user
-
-      #   UserMailer.task_assignment_email(product_user, @task, current_user, assigned_user).deliver_later
-      # end
 
       redirect_to product_task_path(@product, @task), notice: "#{assigned_user.name} was successfully assigned."
     end
