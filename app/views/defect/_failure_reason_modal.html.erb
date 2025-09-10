@@ -21,8 +21,11 @@
 
         <div class="flex justify-end gap-2">
           <%= f.submit "Submit Report", class: "px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700" %>
-          <%= link_to "Cancel", defect_path(defect), data: { turbo_frame: "_top" }, class: "px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400" %>
+          <%= link_to "Cancel", defect_path(defect),
+            data: { turbo_frame: "_top", confirm: "Are you sure you want to cancel? The defect status will not be updated unless a failure reason is provided." },
+            class: "px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400" %>
         </div>
+
       <% end %>
     </div>
   </div>
