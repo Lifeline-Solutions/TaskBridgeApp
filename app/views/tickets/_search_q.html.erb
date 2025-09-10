@@ -1,6 +1,6 @@
 <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-6 shadow-sm">
   <!-- Main Search and Filter Form -->
-  <%= form_with url: project_path(@project), method: :get, local: true, class: 'space-y-4' do |f| %>
+  <%= form_with url: project_path(@project), method: :get, local: true, class: 'space-y-4', id: 'ticket-filters-form' do |f| %>
     <!-- Search Input Row -->
     <div class="flex flex-col sm:flex-row gap-3">
       <div class="relative flex-1">
@@ -11,7 +11,7 @@
         </div>
         <%= f.text_field :query, 
             value: params[:query],
-            class: "block w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-colors", 
+            class: "block w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-colors",
             placeholder: "Search by issue or subject..." %>
       </div>
       
@@ -68,7 +68,7 @@
         <div>
           <%= f.label :priority, 'Priority', class: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1' %>
           <%= f.select :priority, 
-              options_for_select([['SEVERITY 1', 'SEVERITY 1'], ['SEVERITY 2', 'SEVERITY 2'], ['SEVERITY 3', 'SEVERITY 3'], ['SEVERITY 4', 'SEVERITY 4']], params[:priority]), 
+              options_for_select([['SEVERITY 1', 'SEVERITY 1'], ['SEVERITY 2', 'SEVERITY 2'], ['SEVERITY 3', 'SEVERITY 3'], ['SEVERITY 4', 'SEVERITY 4']], params[:priority]),
               { include_blank: 'All Priorities' },
               { class: "block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors" } %>
         </div>
@@ -77,7 +77,7 @@
         <div>
           <%= f.label :issue, 'Issue Type', class: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1' %>
           <%= f.select :issue, 
-              options_for_select([['SUPPORT', 'SUPPORT'], ['NEW FEATURE', 'NEW FEATURE'], ['BUG', 'BUG'], ['REQUEST', 'REQUEST'], ['INCIDENT', 'INCIDENT']], params[:issue]), 
+              options_for_select([['SUPPORT', 'SUPPORT'], ['NEW FEATURE', 'NEW FEATURE'], ['BUG', 'BUG'], ['REQUEST', 'REQUEST'], ['INCIDENT', 'INCIDENT']], params[:issue]),
               { include_blank: 'All Types' },
               { class: "block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors" } %>
         </div>
@@ -121,7 +121,7 @@
           <div>
             <%= f.label :user_id, 'Assignee', class: 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1' %>
             <%= f.select :user_id, 
-                options_from_collection_for_select(@project&.users&.with_assigned_role || [], :id, ->(u) { "#{u.first_name} #{u.last_name}" }, params[:user_id]), 
+                options_from_collection_for_select(@project&.users&.with_assigned_role || [], :id, ->(u) { "#{u.first_name} #{u.last_name}" }, params[:user_id]),
                 { include_blank: 'All Assignees' },
                 { class: "block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition-colors" } %>
           </div>
@@ -136,7 +136,7 @@
         </div>
         
         <!-- Quick Filter: Last Month -->
-        <%= link_to project_path(@project, last_month: true), class: "inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg #{'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-900/20' if params[:last_month]} #{'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600' unless params[:last_month]} transition-colors" do %>
+        <%= f.button 'Last Month', type: 'button', onclick: 'document.getElementById("last_month_hidden").value="true"; document.getElementById("ticket-filters-form").submit();', class: "inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg #{'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-900/20' if params[:last_month]} #{'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600' unless params[:last_month]} transition-colors" do %>
           <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
           </svg>
@@ -144,6 +144,9 @@
         <% end %>
       </div>
     </div>
+    
+    <!-- Hidden field for last month filter -->
+    <%= hidden_field_tag :last_month, params[:last_month], id: 'last_month_hidden' %>
   <% end %>
 </div>
 
