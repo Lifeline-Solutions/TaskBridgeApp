@@ -5,22 +5,20 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
-    <%= stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload" %>
-    <%= stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "actiontext", "data-turbo-track": "reload" %>
   <%= javascript_include_tag "application", "data-turbo-track": "reload" %>
   <%= favicon_link_tag asset_path('loading.png') %>
-    <%= stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "application", "mobile_responsive", "data-turbo-track": "reload" %>
+  <%= javascript_include_tag 'controllers/ckeditor_init' %>
   <%= javascript_importmap_tags %>
   <% if defined?(Sentry) && ENV["SENTRY_DSN"].present? %>
     <%= Sentry.get_trace_propagation_meta.html_safe %>
   <% end %>
-  <%# <%= javascript_include_tag "controllers/tribute_controller", defer: true %>
   <%= javascript_include_tag "loading" %>
   <%= javascript_include_tag "chartkick" %>
   <%= javascript_include_tag "Chart.bundle" %>
+
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tributejs/dist/tribute.css"/>
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
   <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
@@ -28,7 +26,8 @@
     rel="stylesheet"
     type="text/css"
     href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
-  />
+    />
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-slate-100">
@@ -55,7 +54,6 @@
     </main>
   <% end %>
 </main>
-
 
 <script>
   document.addEventListener('turbo:load', () => {
@@ -110,5 +108,19 @@
     }
   });
 </script>
+
+<!-- Additional scripts from dev branch (if any) -->
+<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js" crossorigin="anonymous"></script>
+<script>
+  document.addEventListener("turbo:load", function () {
+    document.querySelectorAll('textarea.rich').forEach(function (el) {
+      if (!el.dataset.ckeditorInstantiated) {
+        ClassicEditor.create(el).catch(e => console.error(e));
+        el.dataset.ckeditorInstantiated = true;
+      }
+    });
+  });
+</script>
+
 </body>
 </html>

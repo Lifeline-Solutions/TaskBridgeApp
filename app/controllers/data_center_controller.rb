@@ -810,7 +810,7 @@ class DataCenterController < ApplicationController
   def generate_project_report_csv(tickets)
     CSV.generate(headers: true) do |csv|
       csv << ['Project Name', 'Ticket ID', 'Issue Type', 'Assignee', 'Reporter', 'Severity', 'Status', 'Created At',
-              'Updated At', 'Summary', 'Content']
+              'Updated At', 'Last Status Updated', 'Last Comment Updated', 'Summary', 'Content']
       tickets.each do |ticket|
         csv << [
           ticket.project.title,
@@ -822,6 +822,8 @@ class DataCenterController < ApplicationController
           ticket.statuses.first&.name || 'N/A',
           ticket.created_at.strftime('%d/%b/%Y %I:%M:%S %p'),
           ticket.updated_at.strftime('%d/%b/%Y %I:%M:%S %p'),
+          ticket.add_statuses.order(updated_at: :desc).first&.updated_at&.strftime('%d/%b/%Y %I:%M:%S %p') || 'N/A',
+          ticket.issues.order(updated_at: :desc).first&.updated_at&.strftime('%d/%b/%Y %I:%M:%S %p') || 'N/A',
           ticket.subject,
           ticket.content.to_plain_text.truncate(3000)
         ]

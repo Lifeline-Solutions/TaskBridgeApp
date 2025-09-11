@@ -5,6 +5,7 @@ class Task < ApplicationRecord
   has_one_attached :file
   has_many :messages, dependent: :destroy
   before_create :set_default_state
+  after_create :task_unique_id
   # app/models/task.rb
 
   belongs_to :prerequisite_task, class_name: 'Task', foreign_key: 'tasks_id', optional: true
@@ -50,6 +51,42 @@ class Task < ApplicationRecord
     return if prerequisite_task.statuses.exists?(name: 'Resolved')
 
     errors.add(:base, "Prerequisite task must be resolved before updating this task's status.")
+  end
+
+  def task_unique_id
+    initials =
+      if product&.client&.name.present? && product.groupwares.any?
+        client_initials = product.client.name.split.map { |word| word[0] }.join.upcase
+        groupware_initials = product.groupwares.map { |gw| gw.name.split.map { |w| w[0] }.join.upcase }.join
+        "#{client_initials}#{groupware_initials}"
+      else
+        'DEFAULT'
+      end
+    # 👇 include soft-deleted defects
+    last_task =
+      Task.with_deleted
+        .where(product_id: product_id)
+        .where("unique_task_id ~ '^[^-]+-\\d+$'")
+        .order(Arel.sql("CAST(SPLIT_PART(unique_task_id, '-', 2) AS INTEGER) DESC"))
+        .first ||
+      Task.with_deleted.where(product_id: product_id).order(:created_at).last
+
+    next_number =
+      if last_task&.unique_task_id.present?
+        last_task.unique_task_id.split('-').last.to_i + 1
+      else
+        1
+      end
+
+    loop do
+      self.unique_task_id = "#{initials}-#{next_number.to_s.rjust(4, '0')}"
+      # 👇 check existence including soft-deleted
+      break unless Task.with_deleted.exists?(unique_task_id: unique_task_id)
+
+      next_number += 1
+    end
+
+    save
   end
 
   private

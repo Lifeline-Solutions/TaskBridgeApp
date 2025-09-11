@@ -1,6 +1,9 @@
 <p>Hello <%= @user.first_name %> <%= @user.last_name %>,</p>
 
-<p>The user <%= @assigned_user.first_name %> <%= @assigned_user.last_name %> have been assigned to the Task: <%= @task.name %> of topic: <%= @task.priority %> by <%= @current_user.name %> </p>
+<p>You have been assigned a task with task id: <%= @task.unique_task_id %>
+  <%= @assigned_user.first_name %> <%= @assigned_user.last_name %>
+  have been assigned to the Task: <%= @task.name %> of topic: <%= @task.priority %>
+  by <%= @current_user.name %> </p>
 <p>Click <a href="<%= @url %>">here</a> to view the ticket.</p>
 
 <p>Best regards,</p>

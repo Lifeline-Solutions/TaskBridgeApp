@@ -83,12 +83,16 @@
 
             <!-- Description (CKEditor) -->
             <div>
-              <label for="defect_content" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Description</label>
-              <%= text_area_tag 'defect[content]', @defect.content&.body&.to_s, id: 'defect_content', class: 'min-h-[200px] w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600', data: { required: true } %>
+              <label for="defect_content" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+                Description
+              </label>
+              <%= text_area_tag 'defect[content]',
+                    @defect.content&.body&.to_s,
+                    id: 'defect_content',
+                    class: 'min-h-[200px] w-full border border-gray-300 rounded-md px-3 py-2 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600',
+                    data: { required: true } %>
+
               <p id="defect_content_error" class="mt-1 text-xs text-red-600 hidden">Description is required.</p>
-              <p class="mention-help mt-1">
-                💡 Type <strong>@</strong> to mention users or <strong>#</strong> to reference defects. Use <strong>ESC</strong> to close suggestions.
-              </p>
             </div>
 
             <!-- Priority / Users / Labels -->
@@ -135,23 +139,8 @@
                 <%= f.select :priority, options_for_select(['SEVERITY 1','SEVERITY 2','SEVERITY 3','SEVERITY 4'], @defect.priority), { prompt: 'Select Priority' },
                       class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600', required: true %>
               </div>
-              <div>
-  <label for="defect_label_ids_modal" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
-    Labels
-  </label>
-
-  <select id="defect_label_ids_modal"
-          name="defect[label_ids][]"
-          multiple
-          placeholder="Labels: Type to search or add. Press Enter to create new."
-          class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600">
-    <% Label.where(deleted_on: nil).order(:name).each do |label| %>
-      <option value="<%= label.id %>" <%= @defect.labels.include?(label) ? 'selected' : '' %>>
-        <%= label.name %>
-      </option>
-    <% end %>
-  </select>
-</div>
+              
+              <%= render "defect/form_labels", f: f, defect: @defect %>
 
             </div>
 

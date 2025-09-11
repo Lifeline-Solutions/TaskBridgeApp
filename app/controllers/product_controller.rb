@@ -74,44 +74,21 @@ class ProductController < ApplicationController
   end
 
   def show
-    if current_user.has_role?('project manager') || current_user.has_role?(:admin) || @product.users.include?(current_user) || current_user.has_role?(:hod)
+    if current_user.has_any_role?(:admin, :observer, :hod, 'project manager') or @product.users.include?(current_user)
       @days_remaining = (@product.end_date - Date.today).to_i if @product.end_date.present?
-
-      # Define status groups
-      @open_statuses = ['TO DO', 'In Progress', 'On-Hold', 'Failed-QA', 'QA-testing',
-                        'Await Client Information', 'Reopened',
-                        'Awaiting Build', 'Support Testing', 'Awaiting Client API']
-      @closed_statuses = %w[Blocked Resolved Closed]
-      @awaiting_client_statuses = ['Await Client Information', 'Awaiting Client API']
-
       # Base tasks query with all necessary includes
       @tasks = @product.tasks.includes(:statuses, :users).order(created_at: 'desc')
-
-      # Apply filtering if status param is present
-      if params[:filter].present?
-        case params[:filter]
-        when 'open'
-          @tasks = @tasks.joins(:board).where(boards: { status: @open_statuses })
-        when 'closed'
-          @tasks = @tasks.joins(:board).where(boards: { status: @closed_statuses })
-        when 'awaiting_client'
-          @tasks = @tasks.joins(:board).where(boards: { status: @awaiting_client_statuses })
-        when 'my_open_tasks'
-          @tasks = @tasks.joins(:board, :users)
-            .where(boards: { status: @open_statuses })
-            .where(users: { id: current_user.id })
-        end
-      end
 
       # Apply search query if present
       if params[:query].present?
         search_query = "%#{params[:query].strip}%"
         @tasks = @tasks.left_joins(:users).where(
-          "tasks.name ILIKE ? OR
+          "tasks.unique_task_id ILIKE ? OR
+          tasks.name ILIKE ? OR
           tasks.description ILIKE ? OR
           tasks.priority ILIKE ? OR
           users.first_name ILIKE ?",
-          search_query, search_query, search_query, search_query
+          search_query, search_query, search_query, search_query, search_query
         ).distinct
       end
 

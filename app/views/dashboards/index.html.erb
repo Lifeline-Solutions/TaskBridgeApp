@@ -196,9 +196,12 @@
 
 <%= render partial: 'dashboards/sla_modal' %>
 
+
 <script>
+  // State
   let selectedTeam = null;
 
+  // Dropdown helpers
   function showDropdown() {
     document.getElementById("dropdown").classList.remove("hidden");
   }
@@ -210,13 +213,13 @@
   }
 
   function filterDropdown() {
-    let input = document.getElementById("search").value.toLowerCase();
-    let dropdown = document.getElementById("dropdown");
-    let items = dropdown.getElementsByClassName("dropdown-item");
+    const input = document.getElementById("search").value.toLowerCase();
+    const dropdown = document.getElementById("dropdown");
+    const items = dropdown.getElementsByClassName("dropdown-item");
     dropdown.classList.remove("hidden");
 
     for (let item of items) {
-      let text = item.textContent || item.innerText;
+      const text = item.textContent || item.innerText;
       item.style.display = text.toLowerCase().includes(input) ? "block" : "none";
     }
   }
@@ -224,18 +227,16 @@
   function selectItem(element) {
     const teamName = element.textContent.trim();
     document.getElementById("search").value = teamName;
-    selectedTeam = teamName; // Store the selected team
+    selectedTeam = teamName;
 
-    // Remove 'selected' class from all items
-    document.querySelectorAll(".dropdown-item").forEach(item => {
+    document.querySelectorAll(".dropdown-item").forEach((item) => {
       item.classList.remove("selected");
     });
 
-    // Add 'selected' class to clicked item
     element.classList.add("selected");
     document.getElementById("dropdown").classList.add("hidden");
 
-    fetchStats(teamName); // Call the fetch function
+    fetchStats(teamName);
   }
 
   function refreshStats() {
@@ -246,176 +247,197 @@
     }
   }
 
+  // Main stats fetcher
   function fetchStats(teamName) {
+    fetch(`/dashboards/fetch_stats?team_name=${encodeURIComponent(teamName)}`)
+      .then((response) => response.json())
+      .then((data) => {
+        // Simple counts
+        setTextIfExists("total_tickets_last_30_days", data.total_tickets_last_30_days);
+        setTextIfExists("initial_response_time_breached", data.breached_tickets_last_30_days);
+        setTextIfExists("initial_response_time_not_breached", data.not_breached_tickets_last_30_days);
+        setTextIfExists("target_repair_time_breached", data.response_breached_tickets_last_30_days);
+        setTextIfExists("target_repair_time_not_breached", data.not_response_breached_tickets_last_30_days);
+        setTextIfExists("target_resolution_time_breached", data.resolution_breached_tickets_last_30_days);
+        setTextIfExists("target_resolution_time_not_breached", data.not_resolution_breached_tickets_last_30_days);
+        setTextIfExists("target_repair_time_breached_open", data.response_breached_tickets_open_last_30_days);
+        setTextIfExists("target_repair_time_breached_closed", data.response_breached_tickets_closed_last_30_days);
+        setTextIfExists("target_resolution_time_breached_open", data.resolution_breached_open_last_30_days);
+        setTextIfExists("target_resolution_time_breached_closed", data.resolution_breached_closed_last_30_days);
+        setTextIfExists("no_sla_population", data.no_sla_tickets_last_30_days);
 
-    fetch(`/dashboards/fetch_stats?team_name=${teamName}`)
-      .then(response => response.json())
-      .then(data => {
-        document.getElementById("total_tickets_last_30_days").innerText = data.total_tickets_last_30_days;
-        document.getElementById("initial_response_time_breached").innerText = data.breached_tickets_last_30_days;
-        document.getElementById("initial_response_time_not_breached").innerText = data.not_breached_tickets_last_30_days;
-        document.getElementById("target_repair_time_breached").innerText = data.response_breached_tickets_last_30_days;
-        document.getElementById("target_repair_time_not_breached").innerText = data.not_response_breached_tickets_last_30_days;
-        document.getElementById("target_resolution_time_breached").innerText = data.resolution_breached_tickets_last_30_days;
-        document.getElementById("target_resolution_time_not_breached").innerText = data.not_resolution_breached_tickets_last_30_days;
-        document.getElementById("target_repair_time_breached_open").innerText = data.response_breached_tickets_open_last_30_days;
-        document.getElementById("target_repair_time_breached_closed").innerText = data.response_breached_tickets_closed_last_30_days;
-        document.getElementById("target_resolution_time_breached_open").innerText = data.resolution_breached_open_last_30_days;
-        document.getElementById("target_resolution_time_breached_closed").innerText = data.resolution_breached_closed_last_30_days;
-        document.getElementById("no_sla_population").innerText = data.no_sla_tickets_last_30_days;
-        document.getElementById("tickets_from_inception_count").innerText = data.tickets_from_inception_count;
+        // NOTE: Depending on your stat_card partial, this might target a container.
+        // If this overwrites the whole card, consider targeting a nested element instead.
+        setTextIfExists("tickets_from_inception_count", data.tickets_from_inception_count);
 
+        // Render status-by-status counts with ONLY the numeric counts clickable
         const container = document.getElementById("tickets_from_inception_by_status");
-        container.innerHTML = ""; // Clear existing content
+        if (!container) return;
 
+        container.innerHTML = "";
         const statusData = data.tickets_from_inception_by_status;
 
         if (statusData && Object.keys(statusData).length > 0) {
-          let statuses = Object.keys(statusData);
-          let counts = Object.values(statusData);
+          const statuses = Object.keys(statusData);
+          const counts = Object.values(statusData);
 
-          let html = `
-              <table class="min-w-full border text-center bg-white dark:bg-gray-700">
-                <thead>
-                  <tr>
-                    ${statuses.map(status => `<th class="px-2 py-1 border-b font-bold text-md">${status}</th>`).join('')}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    ${counts.map(count => `<td class="px-2 py-1 border-b font-bold text-xl">${count}</td>`).join('')}
-                  </tr>
-                </tbody>
-              </table>
-            `;
+          // Build a table where only the COUNT is a button
+          const html = `
+          <table class="min-w-full border-separate border-spacing-2 text-center bg-white dark:bg-gray-700 rounded-lg">
+            <thead>
+              <tr>
+                ${statuses
+            .map(
+              (status) => `
+                  <th class="px-2 py-1 border border-gray-300 font-bold text-md rounded-t-lg bg-gray-100 dark:bg-gray-800">
+                    ${escapeHtml(status)}
+                  </th>
+                `
+            )
+            .join("")}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                ${counts
+            .map(
+              (count, idx) => `
+                  <td class="px-2 py-3 border border-blue-400 font-bold text-xl rounded-b-lg">
+                    <button
+                      type="button"
+                      class="status-count inline-flex items-center justify-center w-full cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      data-status="${escapeAttr(statuses[idx])}"
+                      title="Show tickets with status: ${escapeAttr(statuses[idx])}"
+                    >
+                      ${escapeHtml(String(count))}
+                    </button>
+                  </td>
+                `
+            )
+            .join("")}
+              </tr>
+            </tbody>
+          </table>
+        `;
           container.innerHTML = html;
+
+          // Attach click listeners to ONLY the count buttons
+          container.querySelectorAll(".status-count").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const selectedStatus = e.currentTarget.dataset.status;
+              // Only show tickets of the selected status
+              fetchTicketDetails(selectedTeam || teamName, "tickets_from_inception_by_status", selectedStatus);
+            });
+          });
         } else {
           container.innerHTML = `<div class="text-gray-400">No status breakdown available.</div>`;
         }
 
-
-        // Refresh charts
-        document.getElementById("responseTimeChart").innerHTML = "";
-        new Chartkick.PieChart("responseTimeChart", [
+        // Charts
+        safeRenderPie("responseTimeChart", [
           [`Breached (${data.response_breached_tickets_last_30_days})`, data.response_breached_tickets_last_30_days],
           [`Not Breached (${data.not_response_breached_tickets_last_30_days})`, data.not_response_breached_tickets_last_30_days]
         ], { colors: ["#ff0000", "#36a2eb"] });
 
-        // Refresh charts
-        document.getElementById("responseOpenClosedTimeChart").innerHTML = "";
-        new Chartkick.PieChart("responseOpenClosedTimeChart", [
+        safeRenderPie("responseOpenClosedTimeChart", [
           [`Closed (${data.response_breached_tickets_closed_last_30_days})`, data.response_breached_tickets_closed_last_30_days],
           [`Open (${data.response_breached_tickets_open_last_30_days})`, data.response_breached_tickets_open_last_30_days]
         ], { colors: ["#36a2eb", "#ff0000"] });
 
-        document.getElementById("resolutionOpenClosedTimeChart").innerHTML = "";
-        new Chartkick.PieChart("resolutionOpenClosedTimeChart", [
+        safeRenderPie("resolutionOpenClosedTimeChart", [
           [`Closed (${data.resolution_breached_closed_last_30_days})`, data.resolution_breached_closed_last_30_days],
           [`Open (${data.resolution_breached_open_last_30_days})`, data.resolution_breached_open_last_30_days]
         ], { colors: ["#36a2eb", "#ff0000"] });
 
-        document.getElementById("resolutionTimeChart").innerHTML = "";
-        new Chartkick.PieChart("resolutionTimeChart", [
+        safeRenderPie("resolutionTimeChart", [
           [`Breached (${data.resolution_breached_tickets_last_30_days})`, data.resolution_breached_tickets_last_30_days],
           [`Not Breached (${data.not_resolution_breached_tickets_last_30_days})`, data.not_resolution_breached_tickets_last_30_days]
         ], { colors: ["#ff0000", "#36a2eb"] });
 
-        // Generate Assignee Breached Tickets Pie Chart
-        // Generate Assignee Breached Tickets Pie Chart
-        document.getElementById("breachedTicketsAssigneeChart").innerHTML = "";
-        let assigneeData = Object.entries(data.breached_tickets_per_assignee)
-          .map(([name, count]) => {
-            let formattedName = String(name).replace(/[\[\]"]/g, ''); // Remove brackets and quotes
-            return [`${formattedName} (${count})`, count];
-          })
-          .sort((a, b) => b[1] - a[1]); // Sort by count in descending order
-
-        new Chartkick.PieChart("breachedTicketsAssigneeChart", assigneeData, {
-          legend: "right" // Move the legend to the right side
-        });
-
-        document.getElementById("breachedResolvedTicketsAssigneeChart").innerHTML = "";
-        if (data.breached_tickets_resolved_per_assignee) {
-          let assigneeData = Object.entries(data.breached_tickets_resolved_per_assignee)
+        // Breached per assignee
+        if (document.getElementById("breachedTicketsAssigneeChart")) {
+          const assigneeData = Object.entries(data.breached_tickets_per_assignee || {})
             .map(([name, count]) => {
-              let formattedName = String(name).replace(/[\[\]"]/g, '');
+              const formattedName = String(name).replace(/[\[\]"]/g, "");
               return [`${formattedName} (${count})`, count];
             })
-            .sort((a, b) => b[1] - a[1]); // Sort by count in descending order
+            .sort((a, b) => b[1] - a[1]);
 
-          new Chartkick.PieChart("breachedResolvedTicketsAssigneeChart", assigneeData, {
-            legend: "right"
-          });
+          new Chartkick.PieChart("breachedTicketsAssigneeChart", assigneeData, { legend: "right" });
         }
 
-        document.getElementById("resolutionTimeChartAssignee").innerHTML = "";
-        if (data.breached_resolution_tickets_per_project) {
-          let assigneeResolutionData = Object.entries(data.breached_resolution_tickets_per_project)
+        // Breached resolved per assignee
+        if (document.getElementById("breachedResolvedTicketsAssigneeChart") && data.breached_tickets_resolved_per_assignee) {
+          const assigneeResolvedData = Object.entries(data.breached_tickets_resolved_per_assignee)
             .map(([name, count]) => {
-              let formattedName = String(name).replace(/[\[\]"]/g, '');
-              return [`${formattedName} (${count} ticket(s))`, count];
+              const formattedName = String(name).replace(/[\[\]"]/g, "");
+              return [`${formattedName} (${count})`, count];
             })
-            .sort((a, b) => b[1] - a[1]); // Sort by count in descending order
+            .sort((a, b) => b[1] - a[1]);
 
-          new Chartkick.PieChart("resolutionTimeChartAssignee", assigneeResolutionData, {
-            legend: "right"
-          });
+          new Chartkick.PieChart("breachedResolvedTicketsAssigneeChart", assigneeResolvedData, { legend: "right" });
         }
 
-        document.getElementById("resolutionResolvedTimeChartAssignee").innerHTML = "";
-        if (data.breached_resolution_resolved_tickets_per_project) {
-          let assigneeResolvedData = Object.entries(data.breached_resolution_resolved_tickets_per_project)
+        // Resolution breached per project
+        if (document.getElementById("resolutionTimeChartAssignee") && data.breached_resolution_tickets_per_project) {
+          const resData = Object.entries(data.breached_resolution_tickets_per_project)
             .map(([name, count]) => {
-              let formattedName = String(name).replace(/[\[\]"]/g, '');
+              const formattedName = String(name).replace(/[\[\]"]/g, "");
               return [`${formattedName} (${count} ticket(s))`, count];
             })
-            .sort((a, b) => b[1] - a[1]); // Sort by count in descending order
+            .sort((a, b) => b[1] - a[1]);
 
-          new Chartkick.PieChart("resolutionResolvedTimeChartAssignee", assigneeResolvedData, {
-            legend: "right"
-          });
+          new Chartkick.PieChart("resolutionTimeChartAssignee", resData, { legend: "right" });
+        }
+
+        // Resolution resolved per project
+        if (document.getElementById("resolutionResolvedTimeChartAssignee") && data.breached_resolution_resolved_tickets_per_project) {
+          const resResolvedData = Object.entries(data.breached_resolution_resolved_tickets_per_project)
+            .map(([name, count]) => {
+              const formattedName = String(name).replace(/[\[\]"]/g, "");
+              return [`${formattedName} (${count} ticket(s))`, count];
+            })
+            .sort((a, b) => b[1] - a[1]);
+
+          new Chartkick.PieChart("resolutionResolvedTimeChartAssignee", resResolvedData, { legend: "right" });
         }
       })
-      .catch(error => console.error("Error fetching stats:", error));
+      .catch((error) => console.error("Error fetching stats:", error));
   }
 
-  document.addEventListener("click", function(event) {
-    let searchInput = document.getElementById("search");
-    let dropdown = document.getElementById("dropdown");
-    if (!searchInput.contains(event.target) && !dropdown.contains(event.target)) {
-      dropdown.classList.add("hidden");
-    }
-  });
-
-  function openModal() {
-    document.getElementById("ticketModal").classList.remove("hidden");
-  }
-
-  function closeModal() {
-    document.getElementById("ticketModal").classList.add("hidden");
-  }
-
-  function fetchTicketDetails(teamName, type) {
-    if (!selectedTeam) {
+  // Ticket details fetcher
+  function fetchTicketDetails(teamName, type, statusFilter = null) {
+    const team = teamName || selectedTeam;
+    if (!team) {
       alert("Please select a team first.");
       return;
     }
 
-    fetch(`/dashboards/tickets?team_name=${teamName}&type=${type}`)
-      .then(response => response.json())
-      .then(data => {
-        const ticketDetailsContainer = document.getElementById("ticketDetails");
-        ticketDetailsContainer.innerHTML = "";
+    let url = `/dashboards/tickets?team_name=${encodeURIComponent(team)}&type=${encodeURIComponent(type)}`;
+    if (type === "tickets_from_inception_by_status" && statusFilter) {
+      url += `&status=${encodeURIComponent(statusFilter)}`;
+    }
 
-        if (data.length > 0) {
+    fetch(url)
+      .then((response) => response.json())
+      .then((data) => {
+        const container = document.getElementById("ticketDetails");
+        if (!container) return;
+
+        container.innerHTML = "";
+
+        if (Array.isArray(data) && data.length > 0) {
           let count = 0;
-          data.forEach(ticket => {
+          data.forEach((ticket) => {
             count++;
-            const ticketElement = document.createElement("tr");
-            ticketElement.classList.add("mb-4", "p-4", "rounded-lg", "bg-white", "border-b", "dark:bg-gray-800", "dark:border-gray-700", "hover:bg-gray-50", "dark:hover:bg-gray-600");
-            const ticketURL = `/project/${ticket.project_id}/tickets/${ticket.id}`;
-            let priorityClass = "";
+            const tr = document.createElement("tr");
+            tr.className = "mb-4 p-4 rounded-lg bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600";
 
+            const ticketURL = `/project/${ticket.project_id}/tickets/${ticket.id}`;
+
+            let priorityClass = "bg-blue-500";
             switch (ticket.priority) {
               case "SEVERITY 1":
                 priorityClass = "bg-red-900";
@@ -426,10 +448,9 @@
               case "SEVERITY 3":
                 priorityClass = "bg-yellow-500";
                 break;
-              default:
-                priorityClass = "bg-blue-500";
             }
 
+            let statusClass = "bg-blue-500 text-white";
             switch (ticket.status_name) {
               case "Resolved":
                 statusClass = "bg-green-500 border-green-600 text-white";
@@ -473,50 +494,122 @@
               case "Declined":
                 statusClass = "bg-gray-800 border-gray-900 text-white";
                 break;
-              default:
-                statusClass = "bg-blue-500 text-white";
             }
 
-            ticketElement.innerHTML = `
-              <td class="p-2">${count}</td>
-              <td class="p-2 text-gray-500">
-                ${new Date(ticket.created_at).toLocaleString()}
-              </td>
-              <td class="p-2">${ticket.unique_id}</td>
-              <td class="p-2">${ticket.issue}</td>
-              <td class="p-2">
-                <p class="${priorityClass} p-1 text-center text-white font-bold rounded">
-                  ${ticket.priority}
-                </p>
-              </td>
-              <td class="p-2">${ticket.subject}</td>
-              <td class="p-2">${ticket.user_name}</td>
-              <td class="p-2">
-                <p class="${statusClass} text-center font-semibold rounded p-1 border-r-2 border-b-4">
-                  ${ticket.status_name}
-                </p>
-              </td>
-              <td class="p-2">
-                <a href="${ticketURL}" class="text-blue-500 hover:underline">View Ticket</a>
-              </td>
-            `;
-            ticketDetailsContainer.appendChild(ticketElement);
+            tr.innerHTML = `
+            <td class="p-2">${count}</td>
+            <td class="p-2 text-gray-500">
+              ${new Date(ticket.created_at).toLocaleString()}
+            </td>
+            <td class="p-2">${escapeHtml(ticket.unique_id)}</td>
+            <td class="p-2">${escapeHtml(ticket.issue)}</td>
+            <td class="p-2">
+              <p class="${priorityClass} p-1 text-center text-white font-bold rounded">
+                ${escapeHtml(ticket.priority)}
+              </p>
+            </td>
+            <td class="p-2">${escapeHtml(ticket.subject)}</td>
+            <td class="p-2">${escapeHtml(ticket.user_name)}</td>
+            <td class="p-2">
+              <p class="${statusClass} text-center font-semibold rounded p-1 border-r-2 border-b-4">
+                ${escapeHtml(ticket.status_name)}
+              </p>
+            </td>
+            <td class="p-2">
+              <a href="${ticketURL}" class="text-blue-500 hover:underline">View Ticket</a>
+            </td>
+          `;
+            container.appendChild(tr);
           });
         } else {
-          ticketDetailsContainer.innerHTML = "<p>No tickets found.</p>";
+          container.innerHTML = "<tr><td class='p-2' colspan='9'>No tickets found.</td></tr>";
         }
 
         openModal();
       })
-      .catch(error => console.error("Error fetching ticket details:", error));
+      .catch((error) => console.error("Error fetching ticket details:", error));
   }
 
-  document.querySelectorAll(".stat-card-link").forEach(link => {
-    link.addEventListener("click", function(event) {
-      event.preventDefault();
-      const teamName = selectedTeam;
-      const type = this.dataset.type;
-      fetchTicketDetails(teamName, type);
+  // Modal helpers
+  function openModal() {
+    const modal = document.getElementById("ticketModal");
+    if (modal) modal.classList.remove("hidden");
+  }
+
+  function closeModal() {
+    const modal = document.getElementById("ticketModal");
+    if (modal) modal.classList.add("hidden");
+  }
+
+  // Utilities
+  function setTextIfExists(id, value) {
+    const el = document.getElementById(id);
+    if (el != null) el.innerText = value != null ? value : "";
+  }
+
+  function safeRenderPie(containerId, series, options = {}) {
+    const el = document.getElementById(containerId);
+    if (!el || typeof Chartkick === "undefined" || !Chartkick.PieChart) return;
+    el.innerHTML = "";
+    new Chartkick.PieChart(containerId, series, options);
+  }
+
+  function escapeHtml(str) {
+    if (str == null) return "";
+    return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function escapeAttr(str) {
+    // Attributes are a subset of HTML text, reuse escapeHtml
+    return escapeHtml(str);
+  }
+
+  // Global click to close dropdown if outside
+  document.addEventListener("click", function (event) {
+    const searchInput = document.getElementById("search");
+    const dropdown = document.getElementById("dropdown");
+    if (!searchInput || !dropdown) return;
+
+    if (!searchInput.contains(event.target) && !dropdown.contains(event.target)) {
+      dropdown.classList.add("hidden");
+    }
+  });
+
+  // Ensure ONLY the counts are clickable within the "Total Open Tickets from Inceptions" stat card
+  document.addEventListener("DOMContentLoaded", () => {
+    // Prevent the whole stat card from being clickable for the inception card
+    document.querySelectorAll(".stat-card-link").forEach((link) => {
+      const type = link.dataset.type;
+      if (type === "tickets_from_inception_count") {
+        // Remove inline onclick if present
+        try {
+          link.onclick = null;
+        } catch (e) {}
+        // Prevent default link behavior
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          // Do not fetch anything here; counts inside the table handle their own clicks.
+        });
+        // Optional: visually indicate non-clickable area
+        // link.classList.add("cursor-default");
+      } else {
+        // For other cards, keep existing behavior: click opens their details
+        link.addEventListener("click", function (event) {
+          event.preventDefault();
+          const teamName = selectedTeam;
+          const type = this.dataset.type;
+          if (!teamName) {
+            alert("Please select a team first.");
+            return;
+          }
+          fetchTicketDetails(teamName, type);
+        });
+      }
     });
   });
 </script>

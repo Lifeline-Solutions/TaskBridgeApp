@@ -1,0 +1,32 @@
+<div class="flex items-start space-x-3 w-full" id="<%= dom_id(report) %>">
+  <!-- Icon for failure report -->
+  <span class="flex items-center justify-center w-8 h-8 bg-red-100 rounded-full dark:bg-red-900">
+    <svg class="w-4 h-4 text-red-800 dark:text-red-300" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+      <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 5h2v6H9V5zm0 8h2v2H9v-2z"/>
+    </svg>
+  </span>
+
+  <!-- Failure Report Card -->
+  <div class="flex-1 p-4 rounded-lg border shadow-sm bg-red-50 border-red-200 dark:bg-red-900/30 dark:border-red-700">
+    <div class="flex items-center justify-between mb-2">
+      <span class="font-medium text-red-800 dark:text-red-300">
+        QA Failure Report (Retest #<%= report.retest_number %>)
+      </span>
+      <span class="text-xs text-gray-500 dark:text-gray-400">
+        <%= report.captured_at.strftime("%b %d, %Y %I:%M %p") %>
+      </span>
+    </div>
+
+    <!-- Add the user who recorded -->
+    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+      Reported by: 
+      <span class="font-medium">
+        <%= report.creator&.name || "Unknown User" %>
+      </span>
+    </p>
+
+    <div class="prose dark:prose-invert max-w-none text-gray-800 dark:text-gray-100">
+      <%= report.reason&.body&.to_s&.html_safe %>
+    </div>
+  </div>
+</div>

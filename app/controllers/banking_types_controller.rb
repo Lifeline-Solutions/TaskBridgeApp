@@ -61,19 +61,19 @@ class BankingTypesController < ApplicationController
   # DELETE /banking_types/1
   def destroy
     if audit_soft_delete(@banking_type)
-      # soft-deleted
+      notice_message = 'Banking type was successfully deleted.'
     else
       @banking_type.destroy
+      notice_message = 'Banking type was successfully destroyed.'
     end
+
     activity('user_activity')
       .caused_by(current_user)
       .performed_on(@banking_type)
       .event('banking_type.destroy')
       .log('BankingType removed')
-    respond_to do |format|
-      format.html { redirect_to banking_types_url, notice: 'Banking type was successfully deleted.' }
-      format.json { head :no_content }
-    end
+
+    redirect_to banking_types_path, notice: notice_message
   end
 
   private

@@ -6,10 +6,7 @@ class DefectMessagesController < ApplicationController
   before_action :authorize_message_owner, only: %i[edit update destroy]
 
   def index
-    @defect_messages = @defect.defect_messages
-      .includes(:user, rich_text_content: :embeds)
-      .where(archive_status: false, deleted_on: nil)
-      .order(created_at: :desc)
+    @timeline_items = @defect.timeline_items
 
     # Full-text search in ActionText body
     if params[:query].present?

@@ -8,7 +8,6 @@ import 'trix';
 import '@rails/actiontext';
 
 /* import './controllers/ckeditor_init' */
-import './controllers/label_tomselect_init' 
 
 //= require rails-ujs
 //= require turbolinks
@@ -17,7 +16,3 @@ import './controllers/label_tomselect_init'
 //= require 'chart.js'
 // import "./channels"
 //= require 'trix_custom_formatting_controller.js'
-
-
-import "trix"
-import "@rails/actiontext"

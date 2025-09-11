@@ -1,7 +1,13 @@
 <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg border" style="cursor: pointer; ">
   <div class="flex justify-between mb-2 bg-gray-200 dark:bg-gray-700 p-4 rounded-t-lg">
     <div class="flex items-center gap-4">
-      <h3 class="text-lg font-semibold"><%= @product.client.name %></h3>
+      <h3 class="text-lg font-semibold">
+        <% if task.unique_task_id.present? %>
+          <%= task.unique_task_id %>
+        <% else %>
+          No ID
+        <% end %>
+      </h3>
     </div>
     <div>
       <%= render partial: "tasks/action_dropdown", locals: { product: @product, task: task } %>

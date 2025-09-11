@@ -17,4 +17,21 @@
       <p class="text-red-500 text-sm">No agents assigned</p>
     <% end %>
   </div>
+
+  <!-- Reporter -->
+  <div class="flex items-center gap-2">
+    <span class="text-gray-600 w-24">Reporter</span>
+    <% if @defect.creator.present? %>
+      <div class="flex items-center gap-2">
+        <!-- Avatar circle with initials -->
+        <div class="w-6 h-6 flex items-center justify-center rounded-full bg-green-700 text-white text-xs font-semibold">
+          <%= @defect.creator.name.split.map { |n| n[0] }.join.upcase %>
+        </div>
+        <!-- Full name -->
+        <span class="text-gray-800"><%= @defect.creator.name %></span>
+      </div>
+    <% else %>
+      <p class="text-red-500 text-sm">No reporter set</p>
+    <% end %>
+  </div>
 </div>
