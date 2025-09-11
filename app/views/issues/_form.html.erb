@@ -86,14 +86,14 @@
         <% end %>
 
         <!-- Form Actions -->
-        <div class="flex justify-end gap-3 pt-2">
+        <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-2">
           <button type="button"
-                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
+                  class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600 order-2 sm:order-1"
                   data-action="click->messages#toggleForm">
             Cancel
           </button>
           <%= f.submit "Post Message",
-                       class: "px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500" %>
+                       class: "w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 order-1 sm:order-2" %>
         </div>
       </div>
     <% end %>
@@ -181,14 +181,14 @@
         <% end %>
 
         <!-- Form Actions -->
-        <div class="flex justify-end gap-3 pt-2">
+        <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-2">
           <button type="button"
-                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
+                  class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600 order-2 sm:order-1"
                   data-action="click->messages#toggleForm">
             Cancel
           </button>
           <%= f.submit "Post Message",
-                       class: "px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500" %>
+                       class: "w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 order-1 sm:order-2" %>
         </div>
       </div>
     <% end %>
