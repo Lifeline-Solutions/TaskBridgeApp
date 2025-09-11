@@ -27,6 +27,36 @@ class Defect < ApplicationRecord
   has_and_belongs_to_many :statuses, join_table: :defect_statuses, dependent: :destroy
   has_many :defect_histories
 
+  # Struct we use to normalize timeline entries
+  TimelineItem = Struct.new(:type, :record, :timestamp)
+
+  # Returns an array of TimelineItem ordered by timestamp (oldest first by default)
+  # `order: :asc` or `order: :desc`
+  def timeline_items(order: :asc)
+    # load messages and failure reports (don't strip columns with select!)
+    messages = defect_messages
+               .includes(:user)           # eager load the user for rendering
+               .where(archive_status: false, deleted_on: nil)
+
+    failure_reports = defect_failure_reports
+                      .where(archive_status: false, deleted_on: nil)
+
+    items = []
+    messages.each do |m|
+      items << TimelineItem.new('message', m, m.created_at)
+    end
+
+    failure_reports.each do |r|
+      # prefer captured_at for the failure report timestamp; fallback to created_at if needed
+      ts = r.captured_at || r.created_at
+      items << TimelineItem.new('failure_report', r, ts)
+    end
+
+    items.sort_by!(&:timestamp)
+    items.reverse! if order == :desc
+    items
+  end
+
   def assigned_to?(user)
     users.include?(user)
   end
