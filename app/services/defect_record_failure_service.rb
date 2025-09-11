@@ -22,7 +22,7 @@ class DefectRecordFailureService
         defect: @defect,
         retest_number: @defect.retest_count,
         captured_at: Time.current,
-        created_by_id: @actor&.id
+        creator: @actor
       )
 
       # store HTML into ActionText rich text
