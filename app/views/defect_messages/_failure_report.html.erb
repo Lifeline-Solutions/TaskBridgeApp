@@ -13,13 +13,16 @@
         QA Failure Report (Retest #<%= report.retest_number %>)
       </span>
       <span class="text-xs text-gray-500 dark:text-gray-400">
-        <%= report.captured_at.strftime("%I:%M %p") %>
+        <%= report.captured_at.strftime("%b %d, %Y %I:%M %p") %>
       </span>
     </div>
 
     <!-- Add the user who recorded -->
     <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
-      Reported by: <span class="font-medium"><%= report.creator&.name || "Unknown User" %></span>
+      Reported by: 
+      <span class="font-medium">
+        <%= report.creator&.name || "Unknown User" %>
+      </span>
     </p>
 
     <div class="prose dark:prose-invert max-w-none text-gray-800 dark:text-gray-100">
