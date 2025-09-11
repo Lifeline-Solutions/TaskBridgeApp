@@ -26,6 +26,13 @@
           <span class="px-2 py-1 text-xs font-medium rounded <%= priority_badge_class(@defect.priority) %>">
             <%= @defect.priority %>
           </span>
+
+          <% if @defect.retest_count.to_i > 1 %>
+            /
+            <span class="px-2 py-1 text-xs font-medium rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100">
+              Retries: <%= @defect.retest_count %>
+            </span>
+          <% end %>
         </p>
 
         <% if @defect.draft? %>
