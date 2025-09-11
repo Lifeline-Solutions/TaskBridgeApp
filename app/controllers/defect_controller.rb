@@ -408,21 +408,39 @@ class DefectController < ApplicationController
   end
 
   def drafts
-    # @defects = current_user.defects.drafts
     @defects = Defect.drafts.includes(:users, :qa_module, :submodule).order(updated_at: :desc)
 
     # Pagination
     @per_page = 20
     @page = (params[:page] || 1).to_i
-    @total_pages = (@defects.count / @per_page.to_f).ceil
-    @start_count = ((@page - 1) * @per_page) + 1
-    @end_count = [@page * @per_page, @defects.count].min
     @total_count = @defects.count
+    @total_pages = (@total_count / @per_page.to_f).ceil
+    @start_count = ((@page - 1) * @per_page) + 1
+    @end_count = [@page * @per_page, @total_count].min
     @defects = @defects.offset((@page - 1) * @per_page).limit(@per_page)
 
-    # Collect distinct statuses for dropdown (only from the currently matching defects)
+    # Collect distinct statuses for dropdown (only from the current page set)
     @statuses = Status.joins(:defects)
       .where(defects: { id: @defects.pluck(:id) })
+      .distinct
+      .order(:name)
+
+    # Add the option lists for consistency with index_show
+    filtered_ids = @defects.pluck(:id)
+
+    @qa_modules = QaModule.joins(:defects)
+      .where(defects: { id: filtered_ids })
+      .distinct
+      .order(:name)
+
+    @submodules = QaModule.joins(:defects)
+      .where(defects: { id: filtered_ids })
+      .where.not(parent_id: nil)
+      .distinct
+      .order(:name)
+
+    @banking_types = BankingType.joins(:defects)
+      .where(defects: { id: filtered_ids })
       .distinct
       .order(:name)
 
