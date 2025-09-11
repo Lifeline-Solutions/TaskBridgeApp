@@ -428,19 +428,14 @@ class DefectController < ApplicationController
     # Add the option lists for consistency with index_show
     filtered_ids = @defects.pluck(:id)
 
-    @qa_modules = QaModule.joins(:defects)
-      .where(defects: { id: filtered_ids })
-      .distinct
-      .order(:name)
+    @qa_modules = QaModule.where(id: Defect.where(id: filtered_ids).select(:qa_module_id)).distinct.order(:name)
 
-    @submodules = QaModule.joins(:defects)
-      .where(defects: { id: filtered_ids })
+    @submodules = QaModule.where(id: Defect.where(id: filtered_ids).select(:submodule_id))
       .where.not(parent_id: nil)
       .distinct
       .order(:name)
 
-    @banking_types = BankingType.joins(:defects)
-      .where(defects: { id: filtered_ids })
+    @banking_types = BankingType.where(id: Defect.where(id: filtered_ids).select(:banking_type_id))
       .distinct
       .order(:name)
 

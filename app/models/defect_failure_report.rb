@@ -8,4 +8,6 @@ class DefectFailureReport < ApplicationRecord
   # Validations
   validates :retest_number, presence: true
   validates :captured_at, presence: true
+
+  scope :visible, -> { where(archive_status: false, deleted_on: nil) }
 end
