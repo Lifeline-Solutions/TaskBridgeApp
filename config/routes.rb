@@ -110,6 +110,7 @@ Rails.application.routes.draw do
   end
 
   resources :defect do
+    resources :defect_failure_reports, only: [:index, :show], controller: 'defect_failure_reports'
     resources :defect_messages, only: [:new, :create, :edit, :update, :destroy]
     post 'attachments', to: 'defect#add_attachments', as: 'attachments'
     delete 'attachments/:attachment_id', to: 'defect#remove_attachment', as: 'attachment'
@@ -130,6 +131,7 @@ Rails.application.routes.draw do
       post :add_defect
       delete :remove_defect
       post :defect_status
+      post :create_failure_report
       patch 'update_priority'
       patch 'update_label'
     end

@@ -8,6 +8,7 @@
       <th scope="col" class="px-6 py-3">Priority</th>
       <th scope="col" class="px-6 py-3">Assignee(s)</th>
       <th scope="col" class="px-6 py-3">Created At</th>
+      <th scope="col" class="px-6 py-3">Retest Count</th>
       <th scope="col" class="px-6 py-3">Project</th>
       <th scope="col" class="px-6 py-3">Actions</th>
     </tr>
@@ -49,6 +50,12 @@
             <%= defect.created_at.strftime('%d-%m-%Y') %>
           </div>
         </td>
+        <td class="px-6 py-4">
+          <span class="px-2 py-1 text-xs font-medium rounded">
+            <%= defect.retest_count %>
+          </span>
+        </td>
+
         <td class="px-6 py-4">
           <%= link_to(
                 "#{defect.product.client.name} #{defect.product.groupwares.first&.name}".truncate(30),

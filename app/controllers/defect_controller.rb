@@ -1,6 +1,6 @@
 class DefectController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_defect, only: %i[show edit update update_priority destroy add_defect add_attachments remove_attachment update_label modal_show add_label remove_label]
+  before_action :set_defect, only: %i[show edit update update_priority destroy add_defect add_attachments remove_attachment update_label modal_show add_label remove_label defect_status create_failure_report]
 
   def index
     # Load defects with needed associations
@@ -171,6 +171,8 @@ class DefectController < ApplicationController
     @defect = Defect.find(params[:id])
     # Defects History
     @defects_history = DefectHistory.where(defect_id: @defect.id).order(created_at: :desc)
+
+    @timeline_items = @defect.timeline_items(order: :asc)
 
     # Attachment paginations
     @attachments_per_page = 6
@@ -406,21 +408,34 @@ class DefectController < ApplicationController
   end
 
   def drafts
-    # @defects = current_user.defects.drafts
     @defects = Defect.drafts.includes(:users, :qa_module, :submodule).order(updated_at: :desc)
 
     # Pagination
     @per_page = 20
     @page = (params[:page] || 1).to_i
-    @total_pages = (@defects.count / @per_page.to_f).ceil
-    @start_count = ((@page - 1) * @per_page) + 1
-    @end_count = [@page * @per_page, @defects.count].min
     @total_count = @defects.count
+    @total_pages = (@total_count / @per_page.to_f).ceil
+    @start_count = ((@page - 1) * @per_page) + 1
+    @end_count = [@page * @per_page, @total_count].min
     @defects = @defects.offset((@page - 1) * @per_page).limit(@per_page)
 
-    # Collect distinct statuses for dropdown (only from the currently matching defects)
+    # Collect distinct statuses for dropdown (only from the current page set)
     @statuses = Status.joins(:defects)
       .where(defects: { id: @defects.pluck(:id) })
+      .distinct
+      .order(:name)
+
+    # Add the option lists for consistency with index_show
+    filtered_ids = @defects.pluck(:id)
+
+    @qa_modules = QaModule.where(id: Defect.where(id: filtered_ids).select(:qa_module_id)).distinct.order(:name)
+
+    @submodules = QaModule.where(id: Defect.where(id: filtered_ids).select(:submodule_id))
+      .where.not(parent_id: nil)
+      .distinct
+      .order(:name)
+
+    @banking_types = BankingType.where(id: Defect.where(id: filtered_ids).select(:banking_type_id))
       .distinct
       .order(:name)
 
@@ -437,15 +452,80 @@ class DefectController < ApplicationController
   end
 
   def defect_status
-    @defect = Defect.find(params[:id])
     status = Status.find(params[:status_id])
-    @defect.statuses.clear
-    @defect.statuses << status
-    redirect_to defect_path(@defect), notice: 'Product status was successfully updated.'
+
+    if status.name.strip.downcase == "failed qa"
+      # DO NOT persist the status yet; we need a reason
+      respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.replace(
+            "modal",
+            partial: "defect/failure_reason_modal",
+            locals: { defect: @defect }
+          )
+        end
+        format.html { redirect_to defect_path(@defect), alert: "Failed QA requires a reason." }
+      end
+      return
+    end
+
+    # Non-Failed QA: commit the status change now
+    @defect.transaction do
+      @defect.statuses.clear
+      @defect.statuses << status
+    end
+
     log_event(
       @defect, current_user, 'Status Changed',
-      status.present? ? "Defect Status was changed to #{status.name} by #{current_user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was Updated but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
+      "Defect Status was changed to #{status.name} by #{current_user.name} at #{Time.now.strftime('%H:%M of %d-%m-%Y')}"
     )
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: [
+          turbo_stream.replace("modal", partial: "defect/modal_empty"),
+          turbo_stream.replace("defect_status_#{@defect.id}", partial: "defect/status_badge", locals: { defect: @defect })
+        ]
+      end
+      format.html { redirect_to defect_path(@defect), notice: "Defect status was successfully updated." }
+    end
+  end
+
+  # POST /defect/:id/create_failure_report
+  def create_failure_report
+    authorize_view_failure_reports!
+
+    reason_html = params.dig(:defect_failure_report, :reason)
+
+    begin
+      report = DefectRecordFailureService.new(defect: @defect, actor: current_user, reason_html: reason_html).call
+
+      respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: [
+            turbo_stream.replace("modal", partial: "defect/modal_empty"),
+            turbo_stream.replace("defect_status_#{@defect.id}", partial: "defect/status_badge", locals: { defect: @defect }),
+          ]
+        end
+
+        format.html { redirect_to defect_path(@defect), notice: "Failure reason recorded successfully." }
+      end
+    rescue ActiveRecord::RecordInvalid => e
+      @failure_report = e.record
+      respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.replace(
+            "modal",
+            partial: "defect/failure_reason_modal",
+            locals: { defect: @defect, failure_report: @failure_report }
+          ), status: :unprocessable_entity
+        end
+        format.html do
+          flash.now[:alert] = "Could not save failure reason: #{@failure_report.errors.full_messages.join(', ')}"
+          render :show, status: :unprocessable_entity
+        end
+      end
+    end
   end
 
   def remove_defect
@@ -557,6 +637,12 @@ class DefectController < ApplicationController
 
   private
 
+  def authorize_view_failure_reports!
+    unless current_user.has_role?(:qa) || current_user.has_role?(:hod) || current_user.has_role?(:admin)
+      redirect_to defect_path(@defect), notice: "You are not authorized to view failure reports."
+    end
+  end
+
   def set_form_data
     @qa_modules = QaModule.where(parent_id: nil)
     @banking_types = BankingType.all
@@ -606,6 +692,7 @@ class DefectController < ApplicationController
       :draft,
       :product_id,
       :issue_type,
+      :retest_count,
       :defect_unique,
       user_ids: [],
       label_ids: [],

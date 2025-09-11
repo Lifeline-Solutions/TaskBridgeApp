@@ -1,26 +1,17 @@
-<%# Fetch all statuses you want in the dropdown %>
 <%
   status_options = Status.where(name: [
-    'TO DO',
-    'In Progress',
-    'On-Hold',
-    'Awaiting Client Info',
-    'Awaiting Build',
-    'QA Testing',
-    'Closed',
-    'Failed QA',
-    'Blocked',
-    'Reopened'
+    'TO DO','In Progress','On-Hold','Awaiting Client Info',
+    'Awaiting Build','QA Testing','Closed','Failed QA','Blocked','Reopened'
   ]).pluck(:name, :id)
 %>
 
 <% unless @defect.statuses.first&.name == 'End Of Production' %>
-  <%= form_with url: defect_status_defect_path(@defect), local: true, method: :post do %>
+  <%= form_with url: defect_status_defect_path(@defect), method: :post, local: false, data: { controller: "status-selector" } do %>
     <div class="relative flex flex-col gap-2 mt-2">
       <%= select_tag :status_id,
-                     options_for_select(status_options, @defect.statuses.first&.id),
-                     onchange: "this.form.submit()",
-                     class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500" %>
+            options_for_select(status_options, @defect.statuses.first&.id),
+            data: { action: "change->status-selector#change", status_selector_target: "select" },
+            class: "border border-gray-300 rounded-lg p-2.5 dark:bg-gray-700 dark:border-gray-600" %>
     </div>
   <% end %>
 <% end %>
