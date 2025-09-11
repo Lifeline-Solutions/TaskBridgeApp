@@ -1,52 +1,58 @@
-<div class="grid grid-cols-2 ">
-  <div class="col-span-1 flex">
-    <div class="flex flex-wrap gap-1">
-      <button onclick="history.back()" class="bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 h-12 items-center rounded font-bold rounded-md text-slate-100">
-        &#8656; Back
+<!-- Mobile-first responsive topbar -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6">
+  <!-- Left section: Back button and project info -->
+  <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+    <div class="flex-shrink-0">
+      <button onclick="history.back()" class="bg-[#3F8CFF] hover:bg-[#3A81EB] px-3 py-2 h-10 sm:h-12 flex items-center justify-center rounded font-bold text-slate-100 text-sm sm:text-base">
+        <span class="hidden sm:inline">&#8656; Back</span>
+        <span class="sm:hidden">&#8656;</span>
       </button>
     </div>
-    <div class="flex items-center gap-3 sm:gap-4">
+    
+    <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
       <div class="flex-shrink-0">
         <% if @project.image.present? %>
-          <%= image_tag(@project.image, class: 'w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full object-cover') %>
+          <%= image_tag(@project.image, class: 'w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full object-cover') %>
         <% else %>
-          <%= image_tag 'default.png', class: 'w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full object-cover' %>
+          <%= image_tag 'default.png', class: 'w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full object-cover' %>
         <% end %>
       </div>
 
-      <div class="flex flex-col">
-        <h1 class="text-lg sm:text-xl md:text-2xl font-semibold">
-          <%= @project.title %> /
-          <span class="font-medium text-md">
-          <%= @ticket.issue %>
-        </span>
+      <div class="flex flex-col min-w-0 flex-1">
+        <h1 class="text-sm sm:text-lg md:text-xl lg:text-2xl font-semibold truncate">
+          <span class="hidden sm:inline"><%= @project.title %> /</span>
+          <span class="font-medium text-xs sm:text-md">
+            <%= @ticket.issue %>
+          </span>
         </h1>
-        <p class="text-xs sm:text-sm md:text-base">
-          <span class="font-medium">
+        <p class="text-xs sm:text-sm md:text-base flex flex-wrap gap-1">
+          <span class="font-medium truncate">
             <%= @ticket.user.name %>
           </span>
-          /
+          <span class="hidden sm:inline">/</span>
           <span class="font-medium uppercase">
             <%= @ticket.unique_id %>
           </span>
-          /
+          <span class="hidden sm:inline">/</span>
           <span class="font-medium">
             <%= render partial: 'tickets/priority_severity', locals: { ticket: @ticket } %>
           </span>
-
         </p>
       </div>
     </div>
   </div>
-  <!-- Search on the right -->
-  <div class="grid col-span-1 justify-end">
-    <div class="flex flex-col md:flex-row items-start md:items-center w-full">
-      <%= form_with url: project_ticket_path(@project, @ticket), method: :get, class: 'flex gap-2' do |f| %>
-        <%= f.text_field :query, placeholder: "Search ", class: "border bg-white dark:bg-gray-800  border-[#3F8CFF] p-1 hover:border-[#3A81EB] border-2 rounded-lg" %>
-        <%= f.submit "Search", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100 mr-2'  %>
+  
+  <!-- Right section: Search forms -->
+  <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto lg:flex-shrink-0">
+    <div class="flex gap-2 w-full sm:w-auto">
+      <%= form_with url: project_ticket_path(@project, @ticket), method: :get, class: 'flex gap-2 flex-1 sm:flex-initial' do |f| %>
+        <%= f.text_field :query, placeholder: "Search", class: "border bg-white dark:bg-gray-800 border-[#3F8CFF] p-2 hover:border-[#3A81EB] border-2 rounded-lg flex-1 sm:w-32 md:w-40 text-sm" %>
+        <%= f.submit "Search", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] px-3 py-2 rounded font-bold text-slate-100 text-sm whitespace-nowrap' %>
       <% end %>
-      <%= form_with url: project_ticket_path(@project, @ticket), method: :get, class: 'flex' do |f| %>
-        <%= f.submit "Clear", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100'  %>
+    </div>
+    <div class="flex sm:flex-initial">
+      <%= form_with url: project_ticket_path(@project, @ticket), method: :get, class: 'flex w-full sm:w-auto' do |f| %>
+        <%= f.submit "Clear", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] px-3 py-2 rounded font-bold text-slate-100 text-sm w-full sm:w-auto' %>
       <% end %>
     </div>
   </div>
