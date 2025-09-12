@@ -1,80 +1,70 @@
-<div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-  <!-- Left side - Category and Sort by dropdowns -->
-  <div class="flex items-center space-x-4">
-    <!-- Projects search form -->
-    <div class="relative group flex flex-col md:flex-row items-start md:items-center w-full">
-        <%= form_with url: product_index_path, 
-                        method: :get, 
-                        class: 'flex gap-2 w-full',
-                        data: { controller: 'search-form', 
-                                action: 'submit->search-form#submit' } do |f| %>
-            
-            <!-- Hidden fields to preserve other params -->
-            <%= hidden_field_tag :sort_by, params[:sort_by] if params[:sort_by].present? %>
-            <%= hidden_field_tag :status, params[:status] if params[:status].present? %>
-            
-            <!-- Search input with clear button -->
-            <div class="relative flex-grow">
-            <%= f.text_field :query, 
-                    value: params[:query],
-                    placeholder: "Search by content...", 
-                    class: "w-full border border-gray-300 px-4 py-2 rounded-md font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white",
-                    data: { 'search-form-target': 'input' } %>
-            
-            
-            </div>
-            
-            <%= f.submit "Search", class: 'bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md font-bold text-white' %>
-        <% end %>
-        
-        <% if params[:query].present? || params[:status].present? || params[:sort_by].present? %>
-            <%= link_to 'Clear all', product_index_path, 
-      class: 'whitespace-nowrap ml-2 bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-md font-medium text-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white' %>
-        <% end %>
+<div class="flex flex-col md:flex-row md:items-center p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+  <!-- Controls: search, category, sort -->
+  <div class="flex flex-wrap w-full gap-2 md:gap-4 items-stretch">
+    <!-- Search form: always takes full width on mobile, grows on desktop -->
+    <div class="flex-[2_1_200px] min-w-[0] w-full md:w-auto">
+      <%= form_with url: product_index_path, 
+                    method: :get, 
+                    class: 'flex flex-col sm:flex-row gap-2 w-full min-w-0',
+                    data: { controller: 'search-form', 
+                            action: 'submit->search-form#submit' } do |f| %>
+        <!-- Hidden fields to preserve other params -->
+        <%= hidden_field_tag :sort_by, params[:sort_by] if params[:sort_by].present? %>
+        <%= hidden_field_tag :status, params[:status] if params[:status].present? %>
+        <!-- Search input -->
+        <div class="flex-grow min-w-[180px] md:min-w-[260px]">
+          <%= f.text_field :query, 
+              value: params[:query],
+              placeholder: "Search by content...", 
+              class: "w-full border border-gray-300 px-4 py-2 rounded-md font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white",
+              data: { 'search-form-target': 'input' } %>
+        </div>
+        <%= f.submit "Search", class: 'bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md font-bold text-white w-full sm:w-auto' %>
+      <% end %>
+      <% if params[:query].present? || params[:status].present? || params[:sort_by].present? %>
+        <%= link_to 'Clear all', product_index_path, 
+          class: 'whitespace-nowrap bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-md font-medium text-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white w-full sm:w-auto mt-2 sm:mt-0' %>
+      <% end %>
     </div>
     
-    <!-- Category Dropdown -->
-    <div class="relative group" data-controller="product-topbar-dropdown">
-        <%= form_with url: product_index_path, method: :get, local: true do |f| %>
-            <div 
-            class="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md transition-colors"
-            >
-            <%= f.label :status, "Category", class: "text-sm" %>
-            <%= select_tag :status,
-                options_for_select(['All', *@used_statuses.sort], selected: params[:status]),
-                onchange: 'this.form.submit()',
-                class: "px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300 text-sm"
-            %>
-            </div>
-        <% end %>
-
-        <div 
-            class="hidden absolute left-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-600"
-            data-product-topbar-dropdown-target="menu"
-            data-transition-enter="transition ease-out duration-100"
-            data-transition-enter-from="transform opacity-0 scale-95"
-            data-transition-enter-to="transform opacity-100 scale-100"
-            data-transition-leave="transition ease-in duration-75"
-            data-transition-leave-from="transform opacity-100 scale-100"
-            data-transition-leave-to="transform opacity-0 scale-95"
+    <!-- Category Dropdown: min width, grows but never shrinks below min, wraps cleanly -->
+    <div class="flex-[1_1_150px] min-w-[140px] w-full sm:w-auto" data-controller="product-topbar-dropdown">
+      <%= form_with url: product_index_path, method: :get, local: true do |f| %>
+        <div class="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md transition-colors w-full">
+          <%= f.label :status, "Category", class: "text-sm" %>
+          <%= select_tag :status,
+              options_for_select(['All', *@used_statuses.sort], selected: params[:status]),
+              onchange: 'this.form.submit()',
+              class: "px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300 text-sm w-full min-w-[100px]"
+          %>
+        </div>
+      <% end %>
+      <div 
+        class="hidden absolute left-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-600"
+        data-product-topbar-dropdown-target="menu"
+        data-transition-enter="transition ease-out duration-100"
+        data-transition-enter-from="transform opacity-0 scale-95"
+        data-transition-enter-to="transform opacity-100 scale-100"
+        data-transition-leave="transition ease-in duration-75"
+        data-transition-leave-from="transform opacity-100 scale-100"
+        data-transition-leave-to="transform opacity-0 scale-95"
+      >
+        <% ['All', *@used_statuses.sort].each do |category| %>
+        <button 
+          class="block w-full text-left px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+          data-action="click->product-topbar-dropdown#select"
+          data-category="<%= category %>"
         >
-            <% ['All', *@used_statuses.sort].each do |category| %>
-            <button 
-                class="block w-full text-left px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                data-action="click->product-topbar-dropdown#select"
-                data-category="<%= category %>"
-            >
-                <%= category %>
-            </button>
-            <% end %>
-        </div>
-        </div>
+          <%= category %>
+        </button>
+        <% end %>
+      </div>
+    </div>
 
-
-    <!-- Sort by Dropdown -->
-    <div class="relative group" data-controller="product-topbar-dropdown">
+    <!-- Sort by Dropdown: minimum width, wraps down early -->
+    <div class="flex-[1_1_120px] min-w-[110px] w-full sm:w-auto" data-controller="product-topbar-dropdown">
       <button 
-        class="flex items-center space-x-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-3 py-2 rounded-md transition-colors"
+        class="flex items-center space-x-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 px-3 py-2 rounded-md transition-colors w-full"
         data-action="click->product-topbar-dropdown#toggle"
       >
         <span class="whitespace-nowrap">Sort by</span>
@@ -83,7 +73,6 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
         </svg>
       </button>
-      
       <div 
         class="hidden absolute left-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-600"
         data-product-topbar-dropdown-target="menu"
@@ -92,27 +81,23 @@
         <% ['Upcoming', 'Recent'].each do |sort_option| %>
         <% sort_key = sort_option.downcase %>
         <button 
-            class="block w-full text-left px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors <%= 'bg-gray-100 dark:bg-gray-600' if current_sort == sort_key %>"
-            data-action="click->product-topbar-dropdown#select"
-            data-category="<%= sort_option %>"
+          class="block w-full text-left px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors <%= 'bg-gray-100 dark:bg-gray-600' if current_sort == sort_key %>"
+          data-action="click->product-topbar-dropdown#select"
+          data-category="<%= sort_option %>"
         >
-            <%= sort_option %>
+          <%= sort_option %>
         </button>
         <% end %>
       </div>
     </div>
   </div>
 
-  <!-- Right side - Add New Project button -->
-  <div class="flex items-center space-x-4">
-    <!-- Add Task button -->
+  <!-- Right side - Add New Project button, always on its own line on mobile, right on desktop -->
+  <div class="flex w-full md:w-auto md:ml-auto justify-end md:justify-end mt-2 md:mt-0">
     <% if can? :create, Product %>
-  <button class="flex items-center space-x-1 bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100">
-    <%= link_to new_product_path, class: 'no-underline text-slate-100' do %>
-      十 Add New Project
+      <%= link_to new_product_path, class: 'flex items-center space-x-1 bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 font-bold rounded-lg text-slate-100 no-underline', style: "text-decoration: none;" do %>
+        十 Add New Project
+      <% end %>
     <% end %>
-  </button>
-<% end %>
-
   </div>
 </div>
