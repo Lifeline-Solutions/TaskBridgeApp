@@ -26,6 +26,9 @@ class TicketsController < ApplicationController
     # Get all events for this ticket
     @events = @ticket.events.order(created_at: :desc)
 
+    # Load the feedbacks given for a given ticket
+    @feedbacks = @ticket.ticket_feedbacks.order(created_at: :desc)
+
     # Combine issues and comments, sort by creation date (descending), and paginate
     ticket_items = (@ticket.issues + @ticket.comments).sort_by(&:created_at).reverse
     @page = (params[:ticket_items_page] || 1).to_i
@@ -392,19 +395,14 @@ class TicketsController < ApplicationController
   # Change the status of a ticket
   def add_status
     status = Status.find(params[:status_id])
+    return redirect_to project_ticket_path(@project, @ticket), alert: 'Invalid status ID' if status.nil?
 
-    if status.nil?
-      respond_to do |format|
-        format.html { redirect_to project_ticket_path(@project, @ticket), alert: 'Invalid status ID' }
-      end
-      return
+    @ticket.transaction do
+      @ticket.statuses.clear
+      @ticket.statuses << status
     end
 
-    # Clear all statuses and set the new one
-    @ticket.statuses.clear
-    @ticket.statuses << status
-
-    # Update SLA deadlines for certain statuses
+    # SLA updates...
     if status.name == 'Client Confirmation Pending'
       sla_ticket = SlaTicket.find_or_initialize_by(ticket_id: @ticket.id)
       sla_ticket.update(sla_target_response_deadline: @ticket.sla_target_response_deadline)
@@ -412,34 +410,13 @@ class TicketsController < ApplicationController
 
     if status.name == 'Resolved'
       sla_ticket = SlaTicket.find_by(ticket_id: @ticket.id)
-      if sla_ticket
-        assigned_user = @ticket.users.first
-        sla_ticket.update(sla_resolution_deadline: @ticket.sla_resolution_deadline, user_id: assigned_user.id)
-      else
-        Rails.logger.warn("SlaTicket not found for ticket_id: #{@ticket.id}")
-      end
+      sla_ticket&.update(
+        sla_resolution_deadline: @ticket.sla_resolution_deadline,
+        user_id: @ticket.users.first&.id
+      )
     end
 
-    # Send status update emails ONLY to current assignee and project owner
-    assignee = @ticket.users.first || @project.user
-    owner = @project.user
-
-    [assignee, owner].compact.uniq.each do |recipient|
-      Messaging::EmailSender
-        .send_email(
-          "Status update for Ticket ID #{@ticket.unique_id}.",
-          to: [recipient.email],
-          actor: current_user,
-          priority: :normal,
-          type: (status.name == 'Reopened' ? 'ticket_status_update_reopened' : 'ticket_status_update')
-        )
-        .use_template(view: 'user_mailer/status_update_email', assigns: { user: recipient, ticket: @ticket, current_user:, project: @project })
-        .set_source('ticket', @ticket.id)
-        .set_party('user', recipient.id)
-        .send(queue: true)
-    end
-
-    # Log the status change event
+    # Emails + logs...
     log_event(@ticket, current_user, 'status_change', "Status was changed to #{status.name}")
     activity('user_activity')
       .caused_by(current_user)
@@ -448,11 +425,24 @@ class TicketsController < ApplicationController
       .with_properties(status_id: status.id, status_name: status.name)
       .log("Changed status to #{status.name}")
 
-    # Redirect to comment form for certain statuses, else back to ticket
-    if status.name.in?(%w[Resolved Closed Declined Reopened])
-      redirect_to new_project_ticket_comment_path(@project, @ticket)
+    # On Closed → show modal
+    if status.name == 'Closed'
+      respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.replace(
+            "modal",
+            partial: "tickets/feedback_modal",
+            locals: { project: @project, ticket: @ticket }
+          )
+        end
+        format.html { redirect_to project_ticket_path(@project, @ticket), notice: 'Ticket closed — please provide feedback.' }
+      end
     else
-      redirect_to project_ticket_path(@project, @ticket), notice: 'Status was successfully assigned.'
+      # Always reload page after status change
+      respond_to do |format|
+        format.turbo_stream { redirect_to project_ticket_path(@project, @ticket) }
+        format.html { redirect_to project_ticket_path(@project, @ticket), notice: 'Status was successfully assigned.' }
+      end
     end
   end
 

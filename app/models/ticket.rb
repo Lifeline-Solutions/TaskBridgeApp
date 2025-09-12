@@ -36,6 +36,8 @@ class Ticket < ApplicationRecord
   has_many :sla_tickets, dependent: :destroy
   has_one :sla_ticket, dependent: :destroy
 
+  has_many :ticket_feedbacks, dependent: :destroy
+
   after_create :set_initial_response_time, :set_target_repair_deadline, :set_resolution_deadline, :ticket_unique_id
   attr_accessor :skip_sla_callbacks, :skip_history_logging
 
