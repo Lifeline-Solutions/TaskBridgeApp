@@ -129,7 +129,7 @@
           </button>
           <!-- Keyboard Shortcut -->
           <div class="absolute right-4 top-3 text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded border pointer-events-none">
-            ⌘K
+            ⌘F
           </div>
         </div>
       <% end %>
@@ -336,8 +336,8 @@
 
     // Global keyboard shortcuts
     document.addEventListener("keydown", function(e) {
-      // Ctrl+K or Cmd+K to focus search
-      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+      // Ctrl+F or Cmd+F to focus search
+      if ((e.ctrlKey || e.metaKey) && e.key === "f") {
         e.preventDefault();
         const activeSearchInput = window.innerWidth >= 1024 ? searchInput : mobileSearchInput;
         if (activeSearchInput) {
