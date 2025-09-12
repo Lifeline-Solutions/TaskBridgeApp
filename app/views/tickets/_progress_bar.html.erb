@@ -8,7 +8,7 @@
 <% color = if ticket.progress_percentage.nil?
              '#9CA3AF' # gray-400
            elsif ticket.progress_percentage < 30
-             '#830303ff' # red-600
+             '#830303ff'
            elsif ticket.progress_percentage < 60
              '#d7eb25ff' # yellow-400
            else
