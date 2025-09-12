@@ -2,8 +2,8 @@
   <!-- Mobile overlay backdrop -->
   <div id="sidebar-backdrop" class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden hidden"></div>
   
-  <div id="sidebar-wrapper" class="fixed top-0 h-full left-0 z-40 overflow-hidden transition-all duration-300 shadow-lg bg-white dark:bg-gray-100 w-64 lg:z-40">
-    <div class="flex p-2">
+  <div id="sidebar-wrapper" class="fixed top-0 h-full left-0 z-40 flex flex-col transition-all duration-300 shadow-lg bg-white dark:bg-gray-100 w-64 lg:z-40">
+    <div class="flex p-2 shrink-0">
       <button id="toggleSidebar" class="flex items-center justify-center p-2 text-sm text-gray-700 rounded-lg hover:bg-gray-100 focus:ring-2 focus:ring-gray-200 dark:text-gray-600 dark:hover:bg-gray-200 dark:focus:ring-gray-300 transition-colors">
         <span class="sr-only">Toggle Sidebar</span>
         <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
@@ -13,7 +13,7 @@
     </div>
 
     <!-- Sidebar content - will be toggled between collapsed and expanded -->
-    <aside id="sidebar" class="h-full overflow-y-auto pb-20 transition-all duration-300 bg-white dark:bg-gray-100 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+    <aside id="sidebar" class="flex-1 overflow-y-auto pb-20 transition-all duration-300 bg-white dark:bg-gray-100 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
       <%= link_to (current_user.has_role?(:ceo) ? cease_fire_report_path : root_path) do %>
         <div class="items-center flex justify-center px-4 py-2 logo-container">
           <%= image_tag 'logo1.png', id: 'logo-top', class: 'h-8 w-28 sm:h-10 mb-4' %>
