@@ -428,24 +428,17 @@ class TicketsController < ApplicationController
     # On Closed → show modal
     if status.name == 'Closed'
       respond_to do |format|
-        format.turbo_stream do
-          render turbo_stream: turbo_stream.replace(
-            "modal",
-            partial: "tickets/feedback_modal",
-            locals: { project: @project, ticket: @ticket }
-          )
-        end
-        format.html { redirect_to project_ticket_path(@project, @ticket), notice: 'Ticket closed — please provide feedback.' }
+        format.turbo_stream { redirect_to project_ticket_path(@project, @ticket) }
+        format.html { redirect_to project_ticket_path(@project, @ticket), notice: 'Ticket was successfully closed.' }
       end
     else
-      # Always reload page after status change
       respond_to do |format|
         format.turbo_stream { redirect_to project_ticket_path(@project, @ticket) }
         format.html { redirect_to project_ticket_path(@project, @ticket), notice: 'Status was successfully assigned.' }
       end
     end
   end
-
+  
   # Update the due date of a ticket
   def update_due_date
     @ticket = Ticket.find(params[:id])
