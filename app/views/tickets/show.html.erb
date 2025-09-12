@@ -74,6 +74,10 @@
       </div>
       <!-- SLA -->
       <%= render 'sla' %>
+
+      <!-- Client feedbacks -->
+      <%= render partial: "ticket_feedbacks/list", locals: { feedbacks: @feedbacks } %>
+
     </div>
   </div>
 
