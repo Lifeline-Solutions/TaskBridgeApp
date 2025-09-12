@@ -1,0 +1,69 @@
+<%= turbo_frame_tag "modal" do %>
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-2xl relative">
+      <%= link_to "✕", project_ticket_path(project, ticket), data: { turbo_frame: "_top", turbo_confirm: "Canceling will leave the ticket closed without feedback. Continue?" }, class: "absolute top-3 right-3 text-xl font-bold text-gray-500" %>
+
+      <h2 class="text-lg font-semibold mb-2 dark:text-gray-200">Record Your Feedback</h2>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        Kindly fill in this form — this helps the support team improve the experience.
+      </p>
+
+      <%= form_with model: [project, ticket, TicketFeedback.new],
+              url: create_feedback_project_ticket_path(project, ticket),
+              method: :post,
+              local: false,
+              data: { turbo: true },
+              html: { onsubmit: "handleFeedbackSubmit(event)" } do |f| %>
+
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Rating</label>
+          <div class="flex items-center mt-2 space-x-2" data-controller="star-rating" data-star-rating-target="container">
+            <% 5.downto(1) do |i| %> 
+              <label class="cursor-pointer">
+                <input type="radio" name="ticket_feedback[rating]" value="<%= i %>" class="hidden star-radio" />
+                <svg class="w-8 h-8 inline-block star" data-value="<%= i %>" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" >
+                  <path d="M9.049 2.927a1 1 0 011.902 0L12.9 6.44l3.7.537a1 1 0 01.556 1.706l-2.676 2.607.632 3.686a1 1 0 01-1.45 1.054L10 15.934l-3.662 1.994a1 1 0 01-1.45-1.054l.632-3.686L2.84 8.684a1 1 0 01.556-1.706l3.7-.537 1.25-3.513z" />
+                </svg>
+              </label>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <%= f.label :comment, "Optional comment", class: "block text-sm font-medium text-gray-700 dark:text-gray-300" %>
+          <%= f.rich_text_area :comment, placeholder: "Tell us what happened (optional)", class: "w-full border rounded-md px-3 py-2 text-sm dark:bg-gray-700 dark:text-white" %>
+        </div>
+
+        <div class="flex justify-end gap-2">
+          <%= f.submit "Submit Feedback", class: "px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700" %>
+          <%= link_to "Cancel", project_ticket_path(project, ticket), data: { turbo_frame: "_top", turbo_confirm: "Canceling will leave the ticket closed without feedback. Continue?" }, class: "px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<script>
+  function handleFeedbackSubmit(event) {
+    event.preventDefault(); // stop default turbo handling
+
+    const form = event.target;
+
+    fetch(form.action, {
+      method: form.method,
+      body: new FormData(form),
+      headers: {
+        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content
+      }
+    }).then(response => {
+      if (response.ok) {
+        // Force a full reload to ticket show
+        window.location.href = form.action.replace(/\/.*/, "");
+      } else {
+        alert("Could not save feedback. Please try again.");
+      }
+    }).catch(() => {
+      alert("Network error. Please try again.");
+    });
+  }
+</script>
