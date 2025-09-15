@@ -438,7 +438,7 @@ class TicketsController < ApplicationController
       end
     end
   end
-  
+
   # Update the due date of a ticket
   def update_due_date
     @ticket = Ticket.find(params[:id])
