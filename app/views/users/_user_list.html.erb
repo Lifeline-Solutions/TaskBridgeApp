@@ -71,11 +71,10 @@
             <%= link_to 'Edit Roles', edit_user_path(user), class: "bg-[#3F8CFF] hover:bg-[#3A81EB] text-slate-100 p-2 self-center text-center content-center rounded-lg uppercase font-bold text-sm flex flex-row" %>
           <% end %>
         </td>
-        <%#= link_to destroy_user_session_path, method: :delete, data: { 'turbo_method': :delete, 'turbo-confirm': 'Are you sure?' } do  %>
 
       <td class="px-6 py-4">
           <% if (can?(:manage, user) || (can?(:read, user) && !user.has_role?(:admin))) && user != current_user %>
-            <%= button_to 'Reset Password', reset_user_password_user_path(user), method: :patch, class: "bg-[#3F8CFF] hover:bg-[#3A81EB] text-slate-100 p-2 rounded-lg uppercase font-bold text-sm", method: :patch, data: { 'turbo_method': :patch, 'turbo-confirm': 'Are you sure?' } %>
+            <%= button_to 'Reset Password', reset_user_password_user_path(user), class: "bg-[#3F8CFF] hover:bg-[#3A81EB] text-slate-100 p-2 rounded-lg uppercase font-bold text-sm", method: :patch, data: { 'turbo_method': :patch, 'turbo-confirm': 'Are you sure?' } %>
           <% end %>
         </td>
       </tr>
