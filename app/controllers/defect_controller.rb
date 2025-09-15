@@ -179,12 +179,14 @@ class DefectController < ApplicationController
     # Attachment paginations
     @attachments_per_page = 6
     @attachments_page = (params[:attachments_page] || 1).to_i
-    @attachments_total = @defect.attachments.count
+    all_attachments = @defect.all_attachments
+    @attachments_total = all_attachments.size
     @attachments_total_pages = (@attachments_total / @attachments_per_page.to_f).ceil
 
-    @attachments = @defect.attachments
-      .offset((@attachments_page - 1) * @attachments_per_page)
-      .limit(@attachments_per_page)
+    @attachments = all_attachments.slice(
+      (@attachments_page - 1) * @attachments_per_page,
+      @attachments_per_page
+    ) || []
   end
 
   def modal_show
