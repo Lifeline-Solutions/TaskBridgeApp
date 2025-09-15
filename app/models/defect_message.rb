@@ -4,6 +4,6 @@ class DefectMessage < ApplicationRecord
   has_rich_text :content
 
   def record_type
-    "message"
+    'message'
   end
 end

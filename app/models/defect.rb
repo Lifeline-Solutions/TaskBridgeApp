@@ -35,11 +35,11 @@ class Defect < ApplicationRecord
   def timeline_items(order: :asc)
     # load messages and failure reports (don't strip columns with select!)
     messages = defect_messages
-               .includes(:user)           # eager load the user for rendering
-               .where(archive_status: false, deleted_on: nil)
+      .includes(:user) # eager load the user for rendering
+      .where(archive_status: false, deleted_on: nil)
 
     failure_reports = defect_failure_reports
-                      .where(archive_status: false, deleted_on: nil)
+      .where(archive_status: false, deleted_on: nil)
 
     items = []
     messages.each do |m|
