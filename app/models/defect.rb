@@ -58,7 +58,7 @@ class Defect < ApplicationRecord
 
   def all_attachments
     # Attachments directly uploaded to this defect
-    defect_attachments = self.attachments.attachments
+    defect_attachments = attachments.attachments
 
     # Attachments embedded in comments/messages for this defect
     comment_attachments = defect_messages.flat_map do |msg|
