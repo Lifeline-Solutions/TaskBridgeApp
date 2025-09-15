@@ -23,16 +23,38 @@
     <!-- Submodules Panel -->
     <turbo-frame id="submodules_frame">
       <% if @qa_module.present? %>
-        <div class="p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
-          <h2 class="text-lg font-semibold mb-2">Submodules for <%= @qa_module.name %></h2>
+        <div class="mt-6">
+          <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">
+            Submodules for <%= @qa_module.name %>
+          </h2>
+
           <% if @child_modules.any? %>
-            <ol class="list-decimal list-inside space-y-1">
-              <% @child_modules.each do |child| %>
-                <li><%= child.name %></li>
+            <ol class="list-decimal pl-5 space-y-2">
+              <% @child_modules.each do |sub| %>
+                <li><%= sub.name %></li>
               <% end %>
             </ol>
+
+            <!-- Pagination Controls -->
+            <div class="flex gap-10 mt-5">
+              <div class="pagination">
+                <% if @page > 1 %>
+                  <%= link_to 'Previous',
+                              qa_modules_path(module_id: @qa_module.id, page: @page - 1, per_page: @per_page),
+                              class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold text-slate-100' %>
+                <% end %>
+
+                <span>Page <%= @page %> of <%= @total_pages %></span>
+
+                <% if @page < @total_pages %>
+                  <%= link_to 'Next',
+                              qa_modules_path(module_id: @qa_module.id, page: @page + 1, per_page: @per_page),
+                              class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold text-slate-100' %>
+                <% end %>
+              </div>
+            </div>
           <% else %>
-            <p class="text-gray-500">No submodules found.</p>
+            <p class="text-gray-600 dark:text-gray-300">No submodules found.</p>
           <% end %>
         </div>
       <% end %>

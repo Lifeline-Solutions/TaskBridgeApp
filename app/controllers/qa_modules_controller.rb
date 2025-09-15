@@ -9,10 +9,25 @@ class QaModulesController < ApplicationController
 
     if params[:module_id].present?
       @qa_module = QaModule.find(params[:module_id])
-      @child_modules = QaModule.where(parent_id: @qa_module.id).order(:name)
+
+      # Base query for submodules
+      submodules = QaModule.where(parent_id: @qa_module.id).order(:name)
+
+      # Pagination setup
+      @per_page = (params[:per_page] || 5).to_i
+      @page = (params[:page] || 1).to_i
+      @total_count = submodules.count
+      @total_pages = (@total_count / @per_page.to_f).ceil
+      @start_count = ((@page - 1) * @per_page) + 1
+      @end_count = [@page * @per_page, @total_count].min
+
+      # Apply pagination
+      @child_modules = submodules.offset((@page - 1) * @per_page).limit(@per_page)
     else
       @qa_module = nil
       @child_modules = []
+      @page = 1
+      @total_pages = 1
     end
   end
 
