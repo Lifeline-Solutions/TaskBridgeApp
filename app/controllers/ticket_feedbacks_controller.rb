@@ -25,12 +25,12 @@ class TicketFeedbacksController < ApplicationController
         .log("Client feedback recorded for Ticket ##{@ticket.id}")
 
       respond_to do |format|
-        format.html { redirect_to project_ticket_path(@project, @ticket), notice: "Thank you — your feedback was recorded." }
+        format.html { redirect_to project_ticket_path(@project, @ticket), notice: 'Thank you — your feedback was recorded.' }
         format.turbo_stream do
           render turbo_stream: [
-            turbo_stream.replace("modal", partial: "tickets/modal_empty"),
-            turbo_stream.replace("ticket_feedback_count_#{@ticket.id}", partial: "tickets/partials/feedback_count", locals: { ticket: @ticket }),
-            turbo_stream.append("ticket_feedbacks_list_#{@ticket.id}", partial: "tickets/partials/feedback_row", locals: { feedback: feedback })
+            turbo_stream.replace('modal', partial: 'tickets/modal_empty'),
+            turbo_stream.replace("ticket_feedback_count_#{@ticket.id}", partial: 'tickets/partials/feedback_count', locals: { ticket: @ticket }),
+            turbo_stream.append("ticket_feedbacks_list_#{@ticket.id}", partial: 'tickets/partials/feedback_row', locals: { feedback: feedback })
           ]
         end
       end
@@ -43,15 +43,15 @@ class TicketFeedbacksController < ApplicationController
         end
         format.turbo_stream do
           render turbo_stream: turbo_stream.replace(
-            "modal",
-            partial: "tickets/feedback_modal",
+            'modal',
+            partial: 'tickets/feedback_modal',
             locals: { ticket: @ticket, feedback: @feedback }
           ), status: :unprocessable_entity
         end
       end
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error("TicketFeedbacks#create: #{e.message}")
-      redirect_to project_ticket_path(@project, @ticket), alert: "Could not save feedback."
+      redirect_to project_ticket_path(@project, @ticket), alert: 'Could not save feedback.'
     end
   end
 
@@ -67,6 +67,6 @@ class TicketFeedbacksController < ApplicationController
     return if @ticket.user_id == current_user.id
 
     redirect_to project_ticket_path(@project, @ticket),
-                alert: "Only the ticket reporter can submit feedback."
+                alert: 'Only the ticket reporter can submit feedback.'
   end
 end

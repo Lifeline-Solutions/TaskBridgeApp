@@ -14,7 +14,8 @@ class TicketRecordFeedbackService
   # Creates the feedback record and increments ticket.feedback_count in a transaction.
   # Returns created TicketFeedback record.
   def call
-    raise ArgumentError, "Invalid rating" unless (1..5).include?(@rating)
+    raise ArgumentError, 'Invalid rating' unless (1..5).include?(@rating)
+
     @ticket.transaction do
       @ticket.lock!
       # increment feedback_count (safe if previously nil)
@@ -29,7 +30,7 @@ class TicketRecordFeedbackService
       )
 
       # write ActionText content
-      fb.comment = @comment_html.presence || "<p>No comment provided</p>"
+      fb.comment = @comment_html.presence || '<p>No comment provided</p>'
       fb.save!
 
       # create timeline entry (use your existing DefectHistory/TicketHistory pattern)
@@ -37,10 +38,10 @@ class TicketRecordFeedbackService
         TicketHistory.create!(
           ticket: @ticket,
           user: @actor,
-          history_type: "Client Feedback",
+          history_type: 'Client Feedback',
           history: "Feedback recorded (rating=#{@rating})"
         )
-      rescue => e
+      rescue StandardError => e
         Rails.logger.error("TicketRecordFeedbackService: failed to create TicketHistory: #{e.message}")
       end
 
