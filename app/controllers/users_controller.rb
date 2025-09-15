@@ -130,6 +130,14 @@ class UsersController < ApplicationController
     @current_page = page
   end
 
+  def reset_user_password
+    @user = User.find(params[:id])
+    @user.password = nil # Set a random temporary password
+    @user.reset_password_token = nil
+    @user.save
+  end
+
+
   private
 
   def set_user
