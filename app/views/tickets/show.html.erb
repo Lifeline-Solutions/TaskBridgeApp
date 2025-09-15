@@ -85,7 +85,7 @@
     </div>
   </div>
 
-  <% if current_user.has_role?(:client) && @ticket.statuses.first&.name == 'Closed' && @ticket.feedbacks.blank? %>
+  <% if @ticket.user == current_user && @ticket.statuses.first&.name == 'Closed' && @ticket.feedbacks.blank? %>
     <%= render "tickets/feedback_modal", project: @project, ticket: @ticket %>
     <script>
       document.addEventListener("DOMContentLoaded", function() {

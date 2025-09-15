@@ -64,9 +64,9 @@ class TicketFeedbacksController < ApplicationController
 
   def authorize_client!
     # Allow any user with the client role to submit feedback
-    return if current_user.has_role?(:client)
+    return if @ticket.user_id == current_user.id
 
     redirect_to project_ticket_path(@project, @ticket),
-                alert: "Only clients can submit feedback."
+                alert: "Only the ticket reporter can submit feedback."
   end
 end
