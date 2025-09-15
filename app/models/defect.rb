@@ -56,6 +56,18 @@ class Defect < ApplicationRecord
     items
   end
 
+  def all_attachments
+    # Attachments directly uploaded to this defect
+    defect_attachments = attachments.attachments
+
+    # Attachments embedded in comments/messages for this defect
+    comment_attachments = defect_messages.flat_map do |msg|
+      msg.content&.body&.attachments || []
+    end
+
+    (defect_attachments + comment_attachments).uniq
+  end
+
   def assigned_to?(user)
     users.include?(user)
   end
