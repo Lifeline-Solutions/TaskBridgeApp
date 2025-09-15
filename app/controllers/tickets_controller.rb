@@ -57,7 +57,7 @@ class TicketsController < ApplicationController
     @tickets_count = if confirmation_pending_status
                        @project.tickets
                          .joins(:statuses)
-                         .where(statuses: { id: confirmation_pending_status.id }, user_id: current_user.id)
+                         .where(statuses: { id: confirmation_pending_status.id })
                          .count
                      else
                        0

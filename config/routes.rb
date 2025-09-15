@@ -16,6 +16,7 @@ Rails.application.routes.draw do
     end
     member do
       patch :status
+      patch :reset_user_password
     end
   end
 
