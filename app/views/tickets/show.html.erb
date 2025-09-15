@@ -74,13 +74,27 @@
       </div>
       <!-- SLA -->
       <%= render 'sla' %>
+
+      <!-- Client feedbacks -->
+      <div class="mt-2">
+        <div class="bg-gray-50 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Client Feedback</h3>
+        </div>
+        <%= render partial: "ticket_feedbacks/list", locals: { feedbacks: @feedbacks } %>
+      </div>
     </div>
   </div>
 
-  <% @ticket.statuses.each do |status| %>
-    <% if current_user.has_role?(:client) &&  status.name == 'Closed' %>
-      <%= render 'tickets/ratings' %>
-    <% end %>
+  <% if @ticket.user == current_user && @ticket.statuses.first&.name == 'Closed' && @ticket.feedbacks.blank? %>
+    <%= render "tickets/feedback_modal", project: @project, ticket: @ticket %>
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        const modal = document.getElementById("feedback-modal");
+        if (modal) {
+          modal.classList.remove("hidden");
+        }
+      });
+    </script>
   <% end %>
   <% if current_user.has_role?(:agent) || current_user.has_role?(:admin) || current_user.has_role?('project manager') || current_user.has_role?(:observer) || current_user.has_role?(:client)%>
     <div class="w-full">

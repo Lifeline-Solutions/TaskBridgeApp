@@ -1,0 +1,7 @@
+<span id="ticket_feedback_count_<%= ticket.id %>" class="text-sm">
+  <% if ticket.feedback_count.to_i > 0 %>
+    <span class="font-semibold"><%= ticket.feedback_count %></span> feedback<%= 's' if ticket.feedback_count.to_i != 1 %>
+  <% else %>
+    No feedback yet
+  <% end %>
+</span>

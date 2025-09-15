@@ -1,0 +1,28 @@
+<%= turbo_frame_tag dom_id(feedback) do %>
+  <div class="flex items-start space-x-3 py-2" id="<%= dom_id(feedback) %>">
+    <div class="w-8 h-8 flex items-center justify-center bg-green-100 rounded-full">
+      <svg class="w-4 h-4 text-green-700" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM9 5h2v6H9V5zm0 8h2v2H9v-2z"/>
+      </svg>
+    </div>
+    <div class="flex-1">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="font-medium"><%= feedback.creator&.first_name || feedback.creator&.name || "Client" %></span>
+          <span class="text-xs text-gray-500 ml-2"><%= feedback.captured_at.strftime("%b %d, %Y %I:%M %p") %></span>
+        </div>
+        <div class="text-sm">
+          <% feedback.rating.times do %>
+            <svg class="w-4 h-4 inline-block text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927a1 1 0 011.902 0L12.9 6.44l3.7.537a1 1 0 01.556 1.706l-2.676 2.607.632 3.686a1 1 0 01-1.45 1.054L10 15.934l-3.662 1.994a1 1 0 01-1.45-1.054l.632-3.686L2.84 8.684a1 1 0 01.556-1.706l3.7-.537 1.25-3.513z"/>
+            </svg>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="prose dark:prose-invert max-w-none mt-2">
+        <%= feedback.comment&.body&.to_s&.html_safe %>
+      </div>
+    </div>
+  </div>
+<% end %>
