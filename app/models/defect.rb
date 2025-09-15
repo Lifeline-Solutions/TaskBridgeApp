@@ -41,9 +41,8 @@ class Defect < ApplicationRecord
     failure_reports = defect_failure_reports
       .where(archive_status: false, deleted_on: nil)
 
-    items = []
-    messages.each do |m|
-      items << TimelineItem.new('message', m, m.created_at)
+    items = messages.map do |m|
+      TimelineItem.new('message', m, m.created_at)
     end
 
     failure_reports.each do |r|
