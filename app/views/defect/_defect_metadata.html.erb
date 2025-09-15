@@ -21,6 +21,11 @@
         <%= @defect.banking_type&.name || 'Not specified' %>
       </span>
     </div>
+    <div class="mb-2.5 font-bold capitalize">Retest Count:
+      <span class="font-light">
+        <%= @defect.retest_count || '0' %>
+      </span>
+    </div>
   </div>
 </div>
 
