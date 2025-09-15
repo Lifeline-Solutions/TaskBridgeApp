@@ -8,6 +8,38 @@
     All Modules
   </h1>
 
+  <!-- Module Selector -->
+  <div class="mb-6 flex space-x-6">
+    <div>
+      <%= form_with url: qa_modules_path, method: :get, local: false do |f| %>
+        <%= f.label :module_id, "Select Module", class: "block text-sm font-medium text-gray-700 dark:text-gray-300" %>
+        <%= f.collection_select :module_id, @qa_modules, :id, :name,
+              { include_blank: "Choose a module" },
+              { class: "mt-1 block w-64 rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm",
+                onchange: "this.form.requestSubmit()" } %>
+      <% end %>
+    </div>
+
+    <!-- Submodules Panel -->
+    <turbo-frame id="submodules_frame">
+      <% if @qa_module.present? %>
+        <div class="p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
+          <h2 class="text-lg font-semibold mb-2">Submodules for <%= @qa_module.name %></h2>
+          <% if @child_modules.any? %>
+            <ol class="list-decimal list-inside space-y-1">
+              <% @child_modules.each do |child| %>
+                <li><%= child.name %></li>
+              <% end %>
+            </ol>
+          <% else %>
+            <p class="text-gray-500">No submodules found.</p>
+          <% end %>
+        </div>
+      <% end %>
+    </turbo-frame>
+  </div>
+
+  <!-- Existing Table -->
   <% if @qa_modules.any? %>
     <div class="overflow-x-auto shadow rounded-lg border border-gray-200 dark:border-gray-700">
       <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -33,14 +65,9 @@
                 <%= link_to "Edit", edit_qa_module_path(mod),
                             class: "text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-300 mr-3" %>
                 <%= link_to "Delete", qa_module_path(mod),
-              method: :delete,
-              data: { 
-                turbo_method: :delete,
-                turbo_confirm: "Are you sure you want to archive this module?",
-                controller: "tooltip",
-                action: "click->tooltip#hide"
-              },
-              class: "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300" %>
+                    method: :delete,
+                    data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to archive this module?" },
+                    class: "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300" %>
               </td>
             </tr>
           <% end %>
