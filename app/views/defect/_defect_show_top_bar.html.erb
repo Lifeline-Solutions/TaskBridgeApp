@@ -6,19 +6,8 @@
       </button>
     </div>
     <div class="flex items-center gap-3 sm:gap-4">
-      <div class="flex-shrink-0">
-          <%= image_tag 'default.png', class: 'w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full object-cover' %>
-      </div>
-
       <div class="flex flex-col">
-        <h1 class="font-semibold">
-          <%= @defect.summary.truncate(50) %>
-        </h1>
-        <p class="text-xs sm:text-sm md:text-base">
-          <span class="font-medium">
-            <%= User.find_by(id: @defect.creator_id)&.first_name || 'Unknown' %>
-          </span>
-          /
+        <p class="text-xs sm:text-sm md:text-base pl-4">
           <span class="font-medium uppercase">
             Bug ID: <%= @defect.defect_unique %>
           </span>
