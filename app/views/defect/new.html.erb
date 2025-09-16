@@ -199,10 +199,19 @@
 
             <!-- Attachments -->
             <div>
-              <label for="defect_attachments极 class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Attachments *</label>
+              <label for="defect_attachments" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+                Attachments *
+              </label>
+
               <%= f.file_field :attachments, multiple: true, direct_upload: true, name: 'defect[attachments][]',
-                    class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600' %>
+                    id: "defect_attachments",
+                    class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
+                            focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600' %>
+
               <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">You can upload one or multiple files.</p>
+
+              <!-- Previews will go here -->
+              <div id="attachment-previews" class="mt-3 flex flex-wrap gap-3"></div>
             </div>
 
             <!-- Creator / Issue Type -->
@@ -239,6 +248,57 @@
 <% end %>
 
 <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const fileInput = document.getElementById("defect_attachments");
+    const previewContainer = document.getElementById("attachment-previews");
+
+    if (!fileInput || !previewContainer) return;
+
+    fileInput.addEventListener("change", () => {
+      previewContainer.innerHTML = ""; // clear previews
+      const files = Array.from(fileInput.files);
+
+      files.forEach((file, index) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "relative border rounded-md p-2 w-32 h-32 flex flex-col items-center justify-center text-center bg-gray-50 dark:bg-gray-800";
+
+        // Preview (image or generic file)
+        if (file.type.startsWith("image/")) {
+          const img = document.createElement("img");
+          img.src = URL.createObjectURL(file);
+          img.className = "object-cover w-full h-full rounded-md";
+          wrapper.appendChild(img);
+        } else {
+          const icon = document.createElement("div");
+          icon.textContent = file.name;
+          icon.className = "text-xs text-gray-700 dark:text-gray-300 break-words";
+          wrapper.appendChild(icon);
+        }
+
+        // Remove button
+        const removeBtn = document.createElement("button");
+        removeBtn.innerHTML = "✕";
+        removeBtn.type = "button";
+        removeBtn.className = "absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs";
+        removeBtn.addEventListener("click", () => {
+          files.splice(index, 1);
+          updateFileInput(files);
+        });
+
+        wrapper.appendChild(removeBtn);
+        previewContainer.appendChild(wrapper);
+      });
+    });
+
+    // helper to update input.files after removal
+    function updateFileInput(files) {
+      const dataTransfer = new DataTransfer();
+      files.forEach(f => dataTransfer.items.add(f));
+      fileInput.files = dataTransfer.files;
+      fileInput.dispatchEvent(new Event("change")); // refresh previews
+    }
+  });
+
   // Store the data in global variables so they're accessible
   window.bankingTypesData = <%= raw (@banking_types || []).map { |bt| { id: bt.id, name: bt.name } }.to_json %>;
   window.assigneeUsersData = <%= raw @users.map { |u| { id: u.id, name: u.name } }.to_json %>;
