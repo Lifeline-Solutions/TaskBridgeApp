@@ -1,14 +1,26 @@
 class ReportsController < ApplicationController
   before_action :authenticate_user!
-  def index
-    # This should show a pie chart of defects per status for all defects
-    #  @defects = Defect.published
-    #       .includes(:users, :qa_module, :submodule, :banking_type, :statuses, product: %i[client groupwares])
-    #
+  # ruby
 
-    # app/controllers/reports_controller.rb
-    @defects_per_creator = Defect.published
-      .joins(:creator, :statuses, :product)
+  def index
+    @products = Product.includes(:client, :groupwares, :statuses)
+      .select do |product|
+      product.statuses.any? do |status|
+        ['Pre Quality Assurance', 'End Of Quality Assurance'].include?(status.name)
+      end
+    end
+    @product_options = @products.map do |product|
+      client_name = product.client&.name || 'No Client Assigned'
+      groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
+      ["#{client_name} - #{groupware_names}", product.id]
+    end
+
+    product_id = params[:product_id]
+    defects_scope = Defect.published
+    defects_scope = defects_scope.where(product_id: product_id) if product_id.present?
+
+    @defects_per_creator = defects_scope
+      .joins(:creator)
       .group('users.id', 'users.first_name', 'users.last_name')
       .count
   end
