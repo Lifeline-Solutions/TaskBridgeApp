@@ -5,10 +5,10 @@ class ReportsController < ApplicationController
   def index
     @products = Product.includes(:client, :groupwares, :statuses)
       .select do |product|
-      product.statuses.any? do |status|
-        ['Pre Quality Assurance', 'End Of Quality Assurance'].include?(status.name)
-      end
+      product.statuses.any? { |status| ['Pre Quality Assurance', 'End Of Quality Assurance'].include?(status.name) } &&
+        Defect.published.where(product_id: product.id).exists?
     end
+
     @product_options = @products.map do |product|
       client_name = product.client&.name || 'No Client Assigned'
       groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
@@ -24,7 +24,6 @@ class ReportsController < ApplicationController
       .group('users.id', 'users.first_name', 'users.last_name')
       .count
 
-    # Add this block for defects per status
     @defects_per_status = defects_scope
       .joins(:statuses)
       .group('statuses.id', 'statuses.name')
