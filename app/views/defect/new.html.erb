@@ -263,27 +263,49 @@
 
       files.forEach((file, index) => {
         const wrapper = document.createElement("div");
-        wrapper.className = "relative border rounded-md p-2 w-32 h-32 flex flex-col items-center justify-center text-center bg-gray-50 dark:bg-gray-800";
+        wrapper.className =
+          "relative border rounded-md p-2 w-32 h-32 flex flex-col items-center justify-center text-center bg-gray-50 dark:bg-gray-800 cursor-pointer";
 
-        // Preview (image or generic file)
+        // Preview (image, video, or generic file)
         if (file.type.startsWith("image/")) {
           const img = document.createElement("img");
           img.src = URL.createObjectURL(file);
           img.className = "object-cover w-full h-full rounded-md";
           wrapper.appendChild(img);
+
+          wrapper.addEventListener("click", () =>
+            openPreviewPopup("image", img.src, file.name)
+          );
+        } else if (file.type.startsWith("video/")) {
+          const videoIcon = document.createElement("div");
+          videoIcon.textContent = "🎬 " + file.name;
+          videoIcon.className =
+            "text-xs text-gray-700 dark:text-gray-300 break-words p-1";
+          wrapper.appendChild(videoIcon);
+
+          wrapper.addEventListener("click", () =>
+            openPreviewPopup("video", URL.createObjectURL(file), file.name)
+          );
         } else {
           const icon = document.createElement("div");
           icon.textContent = file.name;
-          icon.className = "text-xs text-gray-700 dark:text-gray-300 break-words";
+          icon.className =
+            "text-xs text-gray-700 dark:text-gray-300 break-words p-1";
           wrapper.appendChild(icon);
+
+          wrapper.addEventListener("click", () =>
+            openPreviewPopup("file", null, file.name)
+          );
         }
 
         // Remove button
         const removeBtn = document.createElement("button");
         removeBtn.innerHTML = "✕";
         removeBtn.type = "button";
-        removeBtn.className = "absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs";
-        removeBtn.addEventListener("click", () => {
+        removeBtn.className =
+          "absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs";
+        removeBtn.addEventListener("click", (e) => {
+          e.stopPropagation(); // prevent triggering preview
           files.splice(index, 1);
           updateFileInput(files);
         });
@@ -296,9 +318,59 @@
     // helper to update input.files after removal
     function updateFileInput(files) {
       const dataTransfer = new DataTransfer();
-      files.forEach(f => dataTransfer.items.add(f));
+      files.forEach((f) => dataTransfer.items.add(f));
       fileInput.files = dataTransfer.files;
       fileInput.dispatchEvent(new Event("change")); // refresh previews
+    }
+
+    // --- Modal Preview ---
+    function openPreviewPopup(type, src, name) {
+      // Create overlay
+      const overlay = document.createElement("div");
+      overlay.className =
+        "fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50";
+
+      // Close on background click
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) overlay.remove();
+      });
+
+      // Modal content
+      const modal = document.createElement("div");
+      modal.className =
+        "relative bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg max-w-4xl max-h-[90vh] flex flex-col items-center";
+
+      if (type === "image") {
+        const img = document.createElement("img");
+        img.src = src;
+        img.alt = name;
+        img.className = "max-w-full max-h-[80vh] rounded-md";
+        modal.appendChild(img);
+      } else if (type === "video") {
+        const video = document.createElement("video");
+        video.src = src;
+        video.controls = true;
+        video.autoplay = false;
+        video.className = "max-w-full max-h-[80vh] rounded-md";
+        modal.appendChild(video);
+      } else {
+        const fileText = document.createElement("p");
+        fileText.textContent = `Preview not available for "${name}".`;
+        fileText.className = "text-gray-700 dark:text-gray-300";
+        modal.appendChild(fileText);
+      }
+
+      // Close button
+      const closeBtn = document.createElement("button");
+      closeBtn.innerHTML = "✕";
+      closeBtn.type = "button";
+      closeBtn.className =
+        "absolute top-2 right-2 bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-lg";
+      closeBtn.addEventListener("click", () => overlay.remove());
+
+      modal.appendChild(closeBtn);
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
     }
   });
 
