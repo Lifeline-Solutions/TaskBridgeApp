@@ -22,59 +22,124 @@
       </div>
     </div>
 
-    <div class="w-full col-span-1 h-full p-2">
-      <div class="mb-4 font-bold capitalize">
-        <% if @ticket.ticket_image.present? %>
-          <p> Click to Enlarge</p>
-          <%= image_tag @ticket.ticket_image, class: 'zoomable-image w-48 object-cover' %>
-        <% elsif @project.image.present? %>
-          <%= image_tag @project.image, class: 'w-16' %>
-        <% else %>
-          <%= image_tag 'default.png', class: 'w-16' %>
-        <% end %>
-      </div>
-      <div id="imageModal" class="modal" data-controller="image-modal" data-image-modal-target="modal">
-        <span class="close" data-action="click->image-modal#closeModal" data-image-modal-target="closeButton">&times;</span>
-        <img class="modal-content" id="fullImage" data-image-modal-target="modalImage" alt='show image'>
-      </div>
+        <!-- Mobile Sidebar Trigger Button (Bottom Right) -->
+        <div class="block md:hidden fixed bottom-4 right-4 z-40">
+          <button id="openSidebarBtn" class="bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg">Show Details</button>
+        </div>
 
+        <!-- Sidebar Panel (Mobile Only) -->
+        <div id="mobileSidebar" class="fixed top-0 right-0 h-full w-4/5 bg-white shadow-lg z-50 overflow-y-auto transition-transform transform translate-x-full md:hidden" style="max-width: 350px;">
+          <div class="flex justify-between items-center p-4 border-b">
+            <h2 class="font-bold text-lg">Ticket Details</h2>
+            <button id="closeSidebarBtn" class="text-2xl font-bold">&times;</button>
+          </div>
+          <div class="p-4">
+            <div class="mb-4 font-bold capitalize">
+              <% if @ticket.ticket_image.present? %>
+                <p> Click to Enlarge</p>
+                <%= image_tag @ticket.ticket_image, class: 'zoomable-image w-48 object-cover' %>
+              <% elsif @project.image.present? %>
+                <%= image_tag @project.image, class: 'w-16' %>
+              <% else %>
+                <%= image_tag 'default.png', class: 'w-16' %>
+              <% end %>
+            </div>
+            <div id="imageModal" class="modal" data-controller="image-modal" data-image-modal-target="modal">
+              <span class="close" data-action="click->image-modal#closeModal" data-image-modal-target="closeButton">&times;</span>
+              <img class="modal-content" id="fullImage" data-image-modal-target="modalImage" alt='show image'>
+            </div>
 
-      <div class="mb-2.5 font-bold capitalize flex">Status:
-        <span class="font-medium ml-1">
-          <%= render partial: 'tickets/ticket_status', locals: { ticket: @ticket } %>
-        </span>
-      </div>
-      <div class="mb-2.5 font-bold capitalize flex">
-        <% unless (@ticket.statuses.first&.name == 'Closed') && !current_user.has_role?(:admin) %>
-          <%= render 'tickets/ticket_action' %>
-        <% end %>
-      </div>
+            <div class="mb-2.5 font-bold capitalize flex">Status:
+              <span class="font-medium ml-1">
+                <%= render partial: 'tickets/ticket_status', locals: { ticket: @ticket } %>
+              </span>
+            </div>
+            <div class="mb-2.5 font-bold capitalize flex">
+              <% unless (@ticket.statuses.first&.name == 'Closed') && !current_user.has_role?(:admin) %>
+                <%= render 'tickets/ticket_action' %>
+              <% end %>
+            </div>
 
-      <div class="mb-2.5 font-bold capitalize flex">
-        <span class="font-medium ml-1">
-          <%= render 'tickets/ticket_software' %>
-        </span>
-      </div>
+            <div class="mb-2.5 font-bold capitalize flex">
+              <span class="font-medium ml-1">
+                <%= render 'tickets/ticket_software' %>
+              </span>
+            </div>
 
-      <%= render 'tickets/assign_people_tickets' %>
+            <%= render 'tickets/assign_people_tickets' %>
 
-      <% if @ticket.attachments.any? %>
-    <h3 class="text-lg font-bold mt-4">Attachments:</h3>
-    <% @ticket.attachments.each do |attachment| %>
-      <div class="mb-2">
-        <%= link_to attachment.filename.to_s, rails_blob_path(attachment, disposition: "inline"), target: "_blank", class: "text-blue-500 underline" %>
-        <%= link_to "Download", rails_blob_path(attachment, disposition: "attachment"), class: "ml-2 text-green-500 underline" %>
-      </div>
-    <% end %>
-  <% else %>
-    <p class="text-gray-500 italic">No attachments available.</p>
-  <% end %>
-      <div class="mb-2.5">
-      <%= render 'ticket_show_due_severity_issue' %>
-      </div>
-      <!-- SLA -->
-      <%= render 'sla' %>
-    </div>
+            <% if @ticket.attachments.any? %>
+              <h3 class="text-lg font-bold mt-4">Attachments:</h3>
+              <% @ticket.attachments.each do |attachment| %>
+                <div class="mb-2">
+                  <%= link_to attachment.filename.to_s, rails_blob_path(attachment, disposition: "inline"), target: "_blank", class: "text-blue-500 underline" %>
+                  <%= link_to "Download", rails_blob_path(attachment, disposition: "attachment"), class: "ml-2 text-green-500 underline" %>
+                </div>
+              <% end %>
+            <% else %>
+              <p class="text-gray-500 italic">No attachments available.</p>
+            <% end %>
+            <div class="mb-2.5">
+              <%= render 'ticket_show_due_severity_issue' %>
+            </div>
+            <!-- SLA -->
+            <%= render 'sla' %>
+          </div>
+        </div>
+
+        <!-- Desktop Details (unchanged) -->
+        <div class="hidden md:block w-full col-span-1 h-full p-2">
+          <div class="mb-4 font-bold capitalize">
+            <% if @ticket.ticket_image.present? %>
+              <p> Click to Enlarge</p>
+              <%= image_tag @ticket.ticket_image, class: 'zoomable-image w-48 object-cover' %>
+            <% elsif @project.image.present? %>
+              <%= image_tag @project.image, class: 'w-16' %>
+            <% else %>
+              <%= image_tag 'default.png', class: 'w-16' %>
+            <% end %>
+          </div>
+          <div id="imageModal" class="modal" data-controller="image-modal" data-image-modal-target="modal">
+            <span class="close" data-action="click->image-modal#closeModal" data-image-modal-target="closeButton">&times;</span>
+            <img class="modal-content" id="fullImage" data-image-modal-target="modalImage" alt='show image'>
+          </div>
+
+          <div class="mb-2.5 font-bold capitalize flex">Status:
+            <span class="font-medium ml-1">
+              <%= render partial: 'tickets/ticket_status', locals: { ticket: @ticket } %>
+            </span>
+          </div>
+          <div class="mb-2.5 font-bold capitalize flex">
+            <% unless (@ticket.statuses.first&.name == 'Closed') && !current_user.has_role?(:admin) %>
+              <%= render 'tickets/ticket_action' %>
+            <% end %>
+          </div>
+
+          <div class="mb-2.5 font-bold capitalize flex">
+            <span class="font-medium ml-1">
+              <%= render 'tickets/ticket_software' %>
+            </span>
+          </div>
+
+          <%= render 'tickets/assign_people_tickets' %>
+
+          <% if @ticket.attachments.any? %>
+            <h3 class="text-lg font-bold mt-4">Attachments:</h3>
+            <% @ticket.attachments.each do |attachment| %>
+              <div class="mb-2">
+                <%= link_to attachment.filename.to_s, rails_blob_path(attachment, disposition: "inline"), target: "_blank", class: "text-blue-500 underline" %>
+                <%= link_to "Download", rails_blob_path(attachment, disposition: "attachment"), class: "ml-2 text-green-500 underline" %>
+              </div>
+            <% end %>
+          <% else %>
+            <p class="text-gray-500 italic">No attachments available.</p>
+          <% end %>
+          <div class="mb-2.5">
+            <%= render 'ticket_show_due_severity_issue' %>
+          </div>
+          <!-- SLA -->
+          <%= render 'sla' %>
+        </div>
   </div>
 
   <% @ticket.statuses.each do |status| %>
@@ -123,6 +188,18 @@
         font-weight: bold;
         cursor: pointer;
     }
+
+    /* Sidebar styles */
+    #mobileSidebar {
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      transition: transform 0.3s ease-in-out;
+    }
+    #mobileSidebar.open {
+      transform: translateX(0);
+    }
+    #mobileSidebar {
+      transform: translateX(100%);
+    }
 </style>
 
 <script>
@@ -153,6 +230,28 @@
         modal.style.display = 'none';
       }
     }
+
+    // Sidebar logic for mobile
+    const openSidebarBtn = document.getElementById('openSidebarBtn');
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+    const mobileSidebar = document.getElementById('mobileSidebar');
+
+    if (openSidebarBtn && mobileSidebar) {
+      openSidebarBtn.addEventListener('click', function() {
+        mobileSidebar.classList.add('open');
+      });
+    }
+    if (closeSidebarBtn && mobileSidebar) {
+      closeSidebarBtn.addEventListener('click', function() {
+        mobileSidebar.classList.remove('open');
+      });
+    }
+    // Optional: close sidebar when clicking outside
+    document.addEventListener('click', function(event) {
+      if (mobileSidebar.classList.contains('open') && !mobileSidebar.contains(event.target) && event.target !== openSidebarBtn) {
+        mobileSidebar.classList.remove('open');
+      }
+    });
   });
 
   function openCity(evt, cityName) {
