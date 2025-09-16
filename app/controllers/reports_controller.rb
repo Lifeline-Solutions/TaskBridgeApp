@@ -8,7 +8,7 @@ class ReportsController < ApplicationController
 
     # app/controllers/reports_controller.rb
     @defects_per_creator = Defect.published
-      .joins(:creator)
+      .joins(:creator, :statuses, :product)
       .group('users.id', 'users.first_name', 'users.last_name')
       .count
   end
