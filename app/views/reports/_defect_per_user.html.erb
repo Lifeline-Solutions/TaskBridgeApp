@@ -1,0 +1,26 @@
+<div class="container flex flex-row gap-2 p-2 justify-between">
+  <div class="grid grid-cols-4 gap-2 justify-around">
+    <div class="col-span-3">
+      <%= pie_chart @defects_per_creator.map { |(id, first_name, last_name), count| ["#{first_name} #{last_name}", count] }.to_h,
+                    height: "400px",
+                    legend: true,
+                    library: { title: { text: "Defects per User" } } %>
+
+
+    </div>
+    <div class="col-span-1">
+      <h2>Reporter</h2>
+      <hr class="my-2 w-1/3">
+      <% @defects_per_creator.each do |(id, first_name, last_name), count| %>
+        <div class="flex justify-between w-full mb-1 gap-2">
+          <span class="font-bold"><%= "#{first_name} #{last_name}" %></span>
+          <span><%= count %></span>
+        </div>
+      <% end %>
+
+      <hr class="my-2 w-1/3">
+    </div>
+  </div>
+</div>
+
+
