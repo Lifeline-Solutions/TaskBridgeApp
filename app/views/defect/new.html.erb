@@ -148,9 +148,6 @@
                         class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
                               focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
 
-                  <p class="mb-2 text-xs text-gray-500 dark:text-gray-400 italic">
-                    You can remove this and type to search for another user if needed.
-                  </p>
                   <!-- Hidden field for selected user ID (set to default assignee) -->
                   <%= hidden_field_tag 'defect[user_ids][]',
                         default_assignee.user.id,
@@ -173,6 +170,9 @@
                 <ul id="assignee-results"
                     class="absolute mt-1 border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-sm hidden z-10 w-full max-h-60 overflow-y-auto">
                 </ul>
+                <p class="mb-2 text-xs text-gray-500 dark:text-gray-400 italic">
+                  You can remove this and type to search for another user if needed.
+                </p>
               </div>
               <div>
                 <label for="defect_priority" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Priority *</label>
@@ -643,7 +643,7 @@
   }
 
   // Initialize when DOM is loaded
-  document.addEventListener('DOMContentLoaded', initializeAll);
+  document.addEventListener('turbo:load', initializeAll);
 
   // Also initialize when Turbo loads the content
   document.addEventListener('turbo:load', initializeAll);
