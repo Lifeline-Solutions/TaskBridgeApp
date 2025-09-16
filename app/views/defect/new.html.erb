@@ -96,7 +96,7 @@
 
             <!-- Summary -->
             <div>
-              <label for="defect_summary" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Summary</label>
+              <label for="defect_summary" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Summary *</label>
               <%= f.text_field :summary, placeholder: 'Enter concise summary', required: true,
                     class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 placeholder-gray-400' %>
             </div>
@@ -104,7 +104,7 @@
             <!-- Description (CKEditor) -->
             <div>
               <label for="defect_content" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
-                Description
+                Description *
               </label>
               <%= text_area_tag 'defect[content]',
                     @defect.content&.body&.to_s,
@@ -120,7 +120,7 @@
               <div class="relative">
                 <label for="assignee-search"
                       class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
-                  Assignee
+                  Assignee *
                 </label>
 
                 <!-- Info note about default assignee -->
@@ -155,7 +155,7 @@
               </div>
 
               <div>
-                <label for="defect_priority" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Priority</label>
+                <label for="defect_priority" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Priority *</label>
                 <%= f.select :priority, options_for_select(['SEVERITY 1','SEVERITY 2','SEVERITY 3','SEVERITY 4'], @defect.priority), { prompt: 'Select Priority' },
                       class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600', required: true %>
               </div>
@@ -182,7 +182,7 @@
 
             <!-- Attachments -->
             <div>
-              <label for="defect_attachments极 class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Attachments</label>
+              <label for="defect_attachments极 class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Attachments *</label>
               <%= f.file_field :attachments, multiple: true, direct_upload: true, name: 'defect[attachments][]',
                     class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600' %>
               <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">You can upload one or multiple files.</p>
