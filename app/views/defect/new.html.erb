@@ -35,19 +35,33 @@
       <div data-controller="project-modules"
        data-project-modules-modules-url-value="<%= modules_by_product_defect_index_path %>"
        class="space-y-3">
-        <div>
-          <label for="product_id"
+        <div class="relative w-full">
+          <label for="project-search"
             class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
-              Project *
+            Project *
           </label>
 
-          <%= f.select :product_id,
-            options_for_select(@products_and_clients_defects),
-            { prompt: 'Select Project' },
-            class: 'w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600',
-            required: true,
+          <!-- Search input -->
+          <input type="text"
+                id="project-search"
+                placeholder="Type to search projects..."
+                value="<%= @product&.client&.name %> - <%= @product&.groupwares&.map(&:name)&.join(', ') %>"
+                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
+                        focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                required
+          />
+
+          <!-- Hidden field for selected product_id -->
+          <%= f.hidden_field :product_id,
+            id: "project-id-field",
             data: { action: 'change->project-modules#loadModules', "project-modules-target": 'projectSelect' } %>
+
+          <!-- Results dropdown -->
+          <ul id="project-results"
+              class="absolute mt-1 border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-sm hidden z-10 w-full max-h-60 overflow-y-auto">
+          </ul>
         </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
           <div class="relative w-full">
             <label for="banking-type-search"
@@ -227,8 +241,58 @@
   // Store the data in global variables so they're accessible
   window.bankingTypesData = <%= raw (@banking_types || []).map { |bt| { id: bt.id, name: bt.name } }.to_json %>;
   window.assigneeUsersData = <%= raw @users.map { |u| { id: u.id, name: u.name } }.to_json %>;
+  window.projectsData = <%= raw @products_and_clients_defects.map { |name, id|
+    { name: name, id: id }
+  }.to_json %>;
 
   function initSearchableDropdowns() {
+    // ===== Projects ====
+    const projectInput = document.getElementById("project-search");
+    const projectResults = document.getElementById("project-results");
+    const projectHidden = document.getElementById("project-id-field");
+
+    if (projectInput && projectResults && window.projectsData) {
+      projectInput.addEventListener("input", function() {
+        const query = this.value.toLowerCase();
+        projectResults.innerHTML = "";
+
+        if (query.length === 0) {
+          projectResults.classList.add("hidden");
+          return;
+        }
+
+        const matches = window.projectsData.filter(p =>
+          p.name.toLowerCase().includes(query)
+        );
+
+        if (matches.length > 0) {
+          projectResults.classList.remove("hidden");
+          matches.forEach(p => {
+            const li = document.createElement("li");
+            li.textContent = p.name;
+            li.className = "px-3 py-2 hover:bg-blue-500 hover:text-white cursor-pointer";
+            li.addEventListener("click", function() {
+              projectInput.value = p.name;
+              if (projectHidden) projectHidden.value = p.id;
+              projectResults.classList.add("hidden");
+
+              // Trigger Stimulus action (project-modules#loadModules)
+              projectHidden.dispatchEvent(new Event("change"));
+            });
+            projectResults.appendChild(li);
+          });
+        } else {
+          projectResults.classList.add("hidden");
+        }
+      });
+
+      // Hide results when clicking outside
+      document.addEventListener("click", function(e) {
+        if (projectResults && !projectResults.contains(e.target) && e.target !== projectInput) {
+          projectResults.classList.add("hidden");
+        }
+      });
+    }
     // ===== Banking Type Search =====
     const bankingTypeInput = document.getElementById("banking-type-search");
     const bankingTypeResults = document.getElementById("banking-type-results");
