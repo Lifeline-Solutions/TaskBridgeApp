@@ -48,8 +48,8 @@
             required: true,
             data: { action: 'change->project-modules#loadModules', "project-modules-target": 'projectSelect' } %>
         </div>
-        <div class="flex flex-col sm:flex-row gap-2">
-          <div class="relative">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+          <div class="relative w-full">
             <label for="banking-type-search"
               class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
                 Label *
@@ -71,24 +71,26 @@
             </ul>
           </div>
 
-          <div>
+          <div class="w-full">
             <label for="qa_module_id"
               class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
                 Module *
             </label>
             <%= f.collection_select :qa_module_id, [], :id, :name,
               { prompt: 'Select Module' },
-              class: 'flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 disabled:opacity-60', required: true,
+              class: 'w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 disabled:opacity-60',
+              required: true,
               data: { "project-modules-target": 'moduleSelect', action: 'change->project-modules#loadSubmodules' } %>
           </div>
-          <div>
+
+          <div class="w-full">
             <label for="qa_submodule_id"
               class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
                 Sub Module
             </label>
             <%= f.collection_select :qa_submodule_id, [], :id, :name,
               { prompt: 'Select Sub-Module' },
-              class: 'flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600',
+              class: 'w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600',
               data: { "project-modules-target": 'submoduleSelect' } %>
           </div>
         </div>
