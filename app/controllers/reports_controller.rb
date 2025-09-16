@@ -23,5 +23,11 @@ class ReportsController < ApplicationController
       .joins(:creator)
       .group('users.id', 'users.first_name', 'users.last_name')
       .count
+
+    # Add this block for defects per status
+    @defects_per_status = defects_scope
+      .joins(:statuses)
+      .group('statuses.id', 'statuses.name')
+      .count
   end
 end
