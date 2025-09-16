@@ -148,6 +148,9 @@
                         class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
                               focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
 
+                  <p class="mb-2 text-xs text-gray-500 dark:text-gray-400 italic">
+                    You can remove this and type to search for another user if needed.
+                  </p>
                   <!-- Hidden field for selected user ID (set to default assignee) -->
                   <%= hidden_field_tag 'defect[user_ids][]',
                         default_assignee.user.id,
@@ -244,11 +247,11 @@
       <% end %>
     </div>
   </div>
-
 <% end %>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
+  // Load or preview selected items in the defect new
+  document.addEventListener("turbo:load", () => {
     const fileInput = document.getElementById("defect_attachments");
     const previewContainer = document.getElementById("attachment-previews");
 
