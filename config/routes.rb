@@ -213,4 +213,6 @@ Rails.application.routes.draw do
   resources :qa_modules do
     get :submodules, on: :member
   end
+
+  resources :reports
 end
