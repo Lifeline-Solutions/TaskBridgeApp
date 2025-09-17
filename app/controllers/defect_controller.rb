@@ -345,6 +345,8 @@ class DefectController < ApplicationController
         .log("Updated Defect ##{@defect.id}")
 
       redirect_to @defect, notice: 'Defect was successfully updated.'
+      UserMailer.edit_defect_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
+
     else
       render :edit, status: :unprocessable_entity
     end

@@ -220,4 +220,11 @@ class UserMailer < ApplicationMailer
     @url = defect_url(@defect)
     mail(to: assigned_emails + [creator.email], subject: 'New Defect')
   end
+
+  def edit_defect_email(defect, assigned_emails, creator)
+    @defect = defect
+    @creator = creator
+    @url = defect_url(@defect)
+    mail(to: assigned_emails + [creator.email], subject: 'Edit Defect')
+  end
 end
