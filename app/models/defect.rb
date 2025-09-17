@@ -35,15 +35,14 @@ class Defect < ApplicationRecord
   def timeline_items(order: :asc)
     # load messages and failure reports (don't strip columns with select!)
     messages = defect_messages
-               .includes(:user)           # eager load the user for rendering
-               .where(archive_status: false, deleted_on: nil)
+      .includes(:user) # eager load the user for rendering
+      .where(archive_status: false, deleted_on: nil)
 
     failure_reports = defect_failure_reports
-                      .where(archive_status: false, deleted_on: nil)
+      .where(archive_status: false, deleted_on: nil)
 
-    items = []
-    messages.each do |m|
-      items << TimelineItem.new('message', m, m.created_at)
+    items = messages.map do |m|
+      TimelineItem.new('message', m, m.created_at)
     end
 
     failure_reports.each do |r|
@@ -55,6 +54,18 @@ class Defect < ApplicationRecord
     items.sort_by!(&:timestamp)
     items.reverse! if order == :desc
     items
+  end
+
+  def all_attachments
+    # Attachments directly uploaded to this defect
+    defect_attachments = attachments.attachments
+
+    # Attachments embedded in comments/messages for this defect
+    comment_attachments = defect_messages.flat_map do |msg|
+      msg.content&.body&.attachments || []
+    end
+
+    (defect_attachments + comment_attachments).uniq
   end
 
   def assigned_to?(user)

@@ -130,6 +130,22 @@ class UsersController < ApplicationController
     @current_page = page
   end
 
+  def reset_user_password
+    unless current_user.has_role?(:admin)
+      redirect_to users_path, alert: 'You are not authorized to reset passwords.'
+      return
+    end
+
+    @user = User.find(params[:id])
+    respond_to do |format|
+      if @user.update(confirmation_token: nil, reset_password_token: nil, password: SecureRandom.hex(8))
+        format.html { redirect_to users_path, notice: 'Password reset successfully' }
+      else
+        format.html { redirect_to users_path, notice: 'Password reset failed' }
+      end
+    end
+  end
+
   private
 
   def set_user

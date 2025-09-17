@@ -4,14 +4,13 @@
       <div class="text-sm font-semibold uppercase tracking-wider">Assigned Users</div>
       <% unless (@ticket.statuses.first&.name == 'Closed' or @ticket.statuses.first&.name == 'Resolved') && !current_user.has_role?(:admin) %>
         <button
-            data-action="click->status-modal#openModal"
-            class="ml-2 px-2 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:focus:ring-blue-400 transition"
-            aria-label="Assign users"
-          >
-            Select
-          </button>
+          data-action="click->status-modal#openModal"
+          class="ml-2 px-2 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:focus:ring-blue-400 transition"
+          aria-label="Assign users"
+        >
+          Select
+        </button>
       <% end %>
-
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
@@ -19,8 +18,7 @@
         <% @ticket.users.each do |user| %>
           <span class="text-base font-medium">
             <%= user.name %>
-            <% unless user == @ticket.users.last %>,
-          <% end %>
+            <% unless user == @ticket.users.last %>,<% end %>
           </span>
         <% end %>
       <% else %>
@@ -31,7 +29,7 @@
     </div>
 
     <!-- Assign Users Modal -->
-    <div class="hidden fixed inset-0 bg-gray-500 bg-opacity-50 overflow-y-auto h-full w-full z-50" 
+    <div class="hidden fixed inset-0 bg-gray-500 bg-opacity-50 overflow-y-auto h-full w-full z-50"
          data-status-modal-target="modal">
       <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
         <div class="flex justify-between items-center mb-4">
@@ -51,8 +49,19 @@
             <%= label_tag :user_id, "Select User", class: "block text-sm font-medium mb-1" %>
             <% available_users = User.with_assigned_role.where.not(id: @ticket.users.pluck(:id)).where(id: @project.users.pluck(:id)).order(:first_name).distinct %>
             <% if available_users.any? %>
-              <%= select_tag :user_id, options_from_collection_for_select(available_users, :id, :name || :email),
-                  class: "mt-1 block w-full pl-3 pr-10 py-2 text-base dark:bg-gray-700 border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" %>
+              <div class="relative space-y-2">
+                <input type="text" id="searchTicketAssignUser" class="mt-1 block w-full pl-3 pr-10 py-2 text-base dark:bg-gray-700 border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" placeholder="Search User..." onkeyup="filterTicketAssignUserDropdown()">
+
+                <div id="ticketAssignUserDropdown" class="hidden absolute w-full bg-white dark:bg-gray-700 border rounded mt-1 shadow-md max-h-40 overflow-y-auto z-10">
+                  <% available_users.each do |user| %>
+                    <div class="dropdown-item px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer" data-user-id="<%= user.id %>" onclick="selectTicketAssignUser(this)">
+                      <%= user.name %>
+                    </div>
+                  <% end %>
+                </div>
+
+                <input type="hidden" id="selectedTicketAssignUserId" name="user_id" required>
+              </div>
             <% else %>
               <p class="text-sm">No available users to assign.</p>
             <% end %>
@@ -75,3 +84,50 @@
     </div>
   </div>
 <% end %>
+
+<script>
+  function filterTicketAssignUserDropdown() {
+    let input = document.getElementById("searchTicketAssignUser").value.toLowerCase();
+    let dropdown = document.getElementById("ticketAssignUserDropdown");
+    let items = dropdown.getElementsByClassName("dropdown-item");
+
+    dropdown.classList.remove("hidden");
+
+    let hasMatch = false;
+    for (let item of items) {
+      let text = item.textContent.toLowerCase();
+      if (text.includes(input)) {
+        item.style.display = "block";
+        hasMatch = true;
+      } else {
+        item.style.display = "none";
+      }
+    }
+
+    if (!hasMatch) {
+      dropdown.classList.add("hidden");
+    }
+  }
+
+  function selectTicketAssignUser(element) {
+    let userName = element.textContent.trim();
+    let userId = element.getAttribute("data-user-id");
+
+    let inputField = document.getElementById("searchTicketAssignUser");
+    inputField.value = userName;
+    inputField.style.paddingRight = "12px";
+    inputField.style.overflow = "visible";
+
+    document.getElementById("selectedTicketAssignUserId").value = userId;
+    document.getElementById("ticketAssignUserDropdown").classList.add("hidden");
+  }
+
+  document.addEventListener("click", function(event) {
+    let dropdown = document.getElementById("ticketAssignUserDropdown");
+    let searchInput = document.getElementById("searchTicketAssignUser");
+
+    if (!searchInput.contains(event.target) && !dropdown.contains(event.target)) {
+      dropdown.classList.add("hidden");
+    }
+  });
+</script>
