@@ -2,7 +2,7 @@
 <div id="attachments" class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
   <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Attachments</h2>
 
-  <% if @defect.attachments.attached? %>
+  <% if @attachments.present? %>
     <div class="overflow-x-auto">
       <table class="min-w-full text-sm text-left text-gray-600 dark:text-gray-300 border-separate border-spacing-y-2">
         <thead>

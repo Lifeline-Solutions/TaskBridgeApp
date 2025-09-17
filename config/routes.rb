@@ -16,6 +16,7 @@ Rails.application.routes.draw do
     end
     member do
       patch :status
+      patch :reset_user_password
     end
   end
 
@@ -82,6 +83,7 @@ Rails.application.routes.draw do
         post :assign_tag
         delete :unassign_tag
         post :add_status
+        post :create_feedback, to: 'ticket_feedbacks#create'
         patch :update_due_date
         patch :update_priority
         patch :update_issue_type
@@ -211,4 +213,6 @@ Rails.application.routes.draw do
   resources :qa_modules do
     get :submodules, on: :member
   end
+
+  resources :reports
 end

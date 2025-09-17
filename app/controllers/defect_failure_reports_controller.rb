@@ -29,8 +29,8 @@ class DefectFailureReportsController < ApplicationController
   end
 
   def authorize_view!
-    unless current_user.has_role?(:qa) || current_user.has_role?(:hod) || current_user.has_role?(:admin)
-      render plain: "Not authorized", status: :forbidden
-    end
+    return if current_user.has_role?(:qa) || current_user.has_role?(:hod) || current_user.has_role?(:admin)
+
+    render plain: 'Not authorized', status: :forbidden
   end
 end

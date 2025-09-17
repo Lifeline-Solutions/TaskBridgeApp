@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_10_080959) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_11_134356) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -882,6 +882,21 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_10_080959) do
     t.index ["user_id", "team_id"], name: "index_teams_users_on_user_id_and_team_id"
   end
 
+  create_table "ticket_feedbacks", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "ticket_id", null: false
+    t.integer "rating", null: false
+    t.uuid "creator_id", null: false
+    t.datetime "captured_at", null: false
+    t.uuid "modified_by_id"
+    t.uuid "deleted_by_id"
+    t.datetime "deleted_on"
+    t.boolean "archive_status", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["creator_id"], name: "index_ticket_feedbacks_on_creator_id"
+    t.index ["ticket_id"], name: "index_ticket_feedbacks_on_ticket_id"
+  end
+
   create_table "tickets", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "issue"
     t.string "priority"
@@ -905,7 +920,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_10_080959) do
     t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
     t.uuid "deleted_by"
     t.datetime "deleted_on"
+    t.integer "feedback_count", default: 0, null: false
     t.index ["deleted_on"], name: "index_tickets_on_deleted_on"
+    t.index ["feedback_count"], name: "index_tickets_on_feedback_count"
     t.index ["groupware_id"], name: "index_tickets_on_groupware_id"
     t.index ["project_id"], name: "index_tickets_on_project_id"
     t.index ["software_id"], name: "index_tickets_on_software_id"

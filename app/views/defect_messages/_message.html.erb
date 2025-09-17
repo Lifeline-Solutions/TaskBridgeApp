@@ -7,11 +7,11 @@
   </span>
  
   <!-- Message Card -->
-  <div class="flex-1 p-4 rounded-lg border shadow-sm 
-              <%= message.user == current_user ? 
-                  'bg-blue-50 border-blue-200 dark:bg-blue-900/30 dark:border-blue-700' : 
+  <div class="flex-1 p-4 rounded-lg border shadow-sm
+              <%= message.user == current_user ?
+                  'bg-blue-50 border-blue-200 dark:bg-blue-900/30 dark:border-blue-700' :
                   'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700' %>">
-    
+
     <!-- Message Header -->
     <div class="flex items-center justify-between mb-2">
       <div class="flex items-center gap-3">
@@ -22,7 +22,7 @@
           <%= message.created_at.strftime("%b %d, %Y %I:%M %p") %>
         </span>
       </div>
-      
+
       <!-- Message Actions: Only show to owner -->
       <% if message.user == current_user %>
         <div class="flex gap-2">
@@ -33,7 +33,7 @@
           <% end %>
           <%= link_to 'Delete',
               defect_defect_message_path(message.defect, message),
-              data: { 
+              data: {
                 turbo_method: :delete,
                 turbo_confirm: 'Are you sure?',
                 turbo_frame: "_top"
@@ -49,42 +49,214 @@
       <%= render "defect_messages/content_defect_message", message: message %>
     </div>
 
-    <!-- Attachments Preview -->
+    <!-- Attachments Preview (images clickable to open inline modal) -->
     <% if message.content.embeds.any? %>
       <div class="mt-4 space-y-4">
         <% message.content.embeds.each do |file| %>
-          <div class="p-2 border rounded-lg bg-gray-50 dark:bg-gray-700">
+          <div class="p-3 border rounded-lg bg-gray-50 dark:bg-gray-700">
             <% if file.image? %>
-              <%= image_tag file, class: "rounded max-h-64" %>
-            <% elsif file.video? %>
-              <video controls class="rounded max-h-64 w-full">
-                <source src="<%= url_for(file) %>" type="<%= file.content_type %>">
-                Your browser does not support the video tag.
-              </video>
-            <% else %>
-              <%= link_to file.filename.to_s, url_for(file), class: "text-blue-600 dark:text-blue-400 underline", target: "_blank" %>
-            <% end %>
+              <!-- Clickable image: data attributes used by the preview script -->
+              <div class="flex items-start justify-between gap-4">
+                <div>
+                  <%= image_tag file,
+                      class: "rounded max-h-64 w-auto cursor-pointer hover:opacity-90 transition",
+                      data: {
+                        attachment_preview: true,
+                        url: url_for(file),
+                        type: file.content_type
+                      },
+                      alt: file.filename.to_s %>
+                </div>
 
-            <!-- Metadata -->
-            <div class="mt-2 text-sm text-gray-600 dark:text-gray-300">
-              <p><strong>Title:</strong> <%= file.filename.to_s %></p>
-              <p><strong>Size:</strong> <%= number_to_human_size(file.byte_size) %></p>
-              <p><strong>Uploaded at:</strong> <%= file.created_at.strftime("%b %d, %Y %I:%M %p") if file.created_at %></p>
-              <p>
-                <%= link_to "Download", rails_blob_path(file, disposition: "attachment"), 
-                      class: "inline-block mt-1 px-2 py-1 bg-blue-100 text-blue-800 rounded hover:bg-blue-200 dark:bg-blue-800 dark:text-blue-100" %>
-              </p>
-            </div>
+                <!-- Meta + actions on the right (download) -->
+                <div class="ml-4 flex-shrink-0 flex flex-col items-end space-y-2">
+                  <span class="text-sm text-gray-600 dark:text-gray-300"><%= file.filename.to_s %></span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400"><%= number_to_human_size(file.byte_size) %></span>
+
+                  <%= link_to rails_blob_path(file, disposition: "attachment"),
+                              download: file.filename.to_s,
+                              rel: "noopener noreferrer",
+                              class: "inline-flex items-center px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-sm rounded hover:bg-gray-200 dark:hover:bg-gray-700",
+                              title: "Download #{file.filename.to_s}" do %>
+                    <!-- download SVG -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l4-4m-4 4-4-4M21 12v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6" />
+                    </svg>
+                    Download
+                  <% end %>
+                </div>
+              </div>
+
+            <% elsif file.video? %>
+              <div class="flex flex-col space-y-3">
+                <video controls class="rounded max-h-64 w-full">
+                  <source src="<%= url_for(file) %>" type="<%= file.content_type %>">
+                  Your browser does not support the video tag.
+                </video>
+
+                <div class="flex justify-between items-center">
+                  <div class="text-sm text-gray-700 dark:text-gray-300"><%= file.filename.to_s %></div>
+                  <div>
+                    <%= link_to rails_blob_path(file, disposition: "attachment"),
+                                download: file.filename.to_s,
+                                rel: "noopener noreferrer",
+                                class: "inline-flex items-center px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-sm rounded hover:bg-gray-200 dark:hover:bg-gray-700",
+                                title: "Download #{file.filename.to_s}" do %>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l4-4m-4 4-4-4M21 12v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6" />
+                      </svg>
+                      Download
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+
+            <% else %>
+              <!-- Non-image/video files (link + download) -->
+              <div class="flex items-center justify-between">
+                <div>
+                  <%= link_to file.filename.to_s, url_for(file), class: "text-blue-600 dark:text-blue-400 underline", target: "_blank", rel: "noreferrer" %>
+                  <div class="text-xs text-gray-500 dark:text-gray-400"><%= number_to_human_size(file.byte_size) %></div>
+                </div>
+
+                <div>
+                  <%= link_to rails_blob_path(file, disposition: "attachment"),
+                              download: file.filename.to_s,
+                              rel: "noopener noreferrer",
+                              class: "inline-flex items-center px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-sm rounded hover:bg-gray-200 dark:hover:bg-gray-700",
+                              title: "Download #{file.filename.to_s}" do %>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l4-4m-4 4-4-4M21 12v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6" />
+                    </svg>
+                    Download
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
           </div>
         <% end %>
       </div>
     <% end %>
+
   </div>
 </div>
 
 <%= turbo_frame_tag dom_id(message, :edit) %>
 
 <script>
+  // ---- Preview modal helper (creates a single modal on first use) ----
+  (function() {
+    // Create preview modal once
+    function ensurePreviewModal() {
+      if (document.getElementById('attachmentPreviewModal')) return;
+
+      const modal = document.createElement('div');
+      modal.id = 'attachmentPreviewModal';
+      modal.className = 'hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4';
+      modal.innerHTML = `
+        <div class="relative max-w-[90vw] max-h-[90vh] w-full">
+          <button id="attachmentPreviewClose" class="absolute top-2 right-2 z-50 text-white text-2xl leading-none rounded-md bg-black bg-opacity-30 px-2 py-1 hover:bg-opacity-50">×</button>
+          <div id="attachmentPreviewContent" class="w-full h-full flex items-center justify-center overflow-auto rounded-lg"></div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      // close handlers
+      document.getElementById('attachmentPreviewClose').addEventListener('click', closePreview);
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) closePreview();
+      });
+    }
+
+    function closePreview() {
+      const modal = document.getElementById('attachmentPreviewModal');
+      if (!modal) return;
+      const content = document.getElementById('attachmentPreviewContent');
+      if (content) content.innerHTML = '';
+      modal.classList.add('hidden');
+    }
+
+    function safePreviewElement(url, type) {
+      const container = document.createElement('div');
+      container.className = 'flex items-center justify-center w-full h-full';
+
+      if (type && type.startsWith('image/')) {
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = '';
+        img.className = 'max-h-[85vh] max-w-[85vw] rounded shadow-lg';
+        container.appendChild(img);
+      } else if (type && type.startsWith('video/')) {
+        const video = document.createElement('video');
+        video.controls = true;
+        video.className = 'max-h-[85vh] max-w-[85vw] rounded shadow-lg';
+        const source = document.createElement('source');
+        source.src = url;
+        source.type = type;
+        video.appendChild(source);
+        container.appendChild(video);
+      } else if (type && type.startsWith('audio/')) {
+        const audio = document.createElement('audio');
+        audio.controls = true;
+        audio.className = 'w-full';
+        const source = document.createElement('source');
+        source.src = url;
+        source.type = type;
+        audio.appendChild(source);
+        container.appendChild(audio);
+      } else if (type === 'application/pdf') {
+        const iframe = document.createElement('iframe');
+        iframe.src = url;
+        iframe.className = 'w-[90vw] h-[90vh] rounded bg-white';
+        iframe.setAttribute('sandbox','allow-same-origin allow-scripts allow-popups');
+        container.appendChild(iframe);
+      } else {
+        // Fallback box with download link
+        const box = document.createElement('div');
+        box.className = 'p-6 bg-white rounded shadow text-center';
+        box.innerHTML = `
+          <p class="mb-4">Preview not available for this file type.</p>
+          <a href="${url}" target="_blank" rel="noreferrer" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Open / Download</a>
+        `;
+        container.appendChild(box);
+      }
+
+      return container;
+    }
+
+    function openPreview(url, type) {
+      ensurePreviewModal();
+      const modal = document.getElementById('attachmentPreviewModal');
+      const content = document.getElementById('attachmentPreviewContent');
+      if (!modal || !content) return;
+      content.innerHTML = '';
+      const el = safePreviewElement(url, type || '');
+      content.appendChild(el);
+      modal.classList.remove('hidden');
+    }
+
+    // Delegate click events to any element that has data-attachment-preview="true"
+    document.addEventListener('click', function(e) {
+      const target = e.target.closest('[data-attachment-preview="true"]');
+      if (!target) return;
+      e.preventDefault();
+
+      // URL priority: data-url, src, href
+      const url = target.dataset.url || target.src || target.href;
+      const type = target.dataset.type || target.getAttribute('data-type') || '';
+
+      if (!url) return;
+      openPreview(url, type);
+    });
+
+    // Expose for debug if needed (not necessary)
+    window._defectMessagePreview = { openPreview, closePreview };
+
+  })();
+</script>
+
+<script>
+  // keep your existing turbo submit-end reload behaviour intact
   document.addEventListener("turbo:submit-end", function(e) {
     if (e.detail.success) {
       window.location.reload();

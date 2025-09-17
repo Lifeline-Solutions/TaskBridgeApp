@@ -19,7 +19,7 @@
       <!-- Your defect row rendering here, unchanged -->
       <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 h-12 text-left">
         <td class="px-6 py-4">
-          <%= defect.defect_unique %>
+          <%= link_to defect.defect_unique, defect_path(defect.id), class: "text-blue-600 hover:underline" %>
         </td>
         <td class="px-6 py-4">
           <% if defect.summary.present? %>

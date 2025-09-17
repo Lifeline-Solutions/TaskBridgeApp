@@ -1,6 +1,8 @@
 class DefectController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_defect, only: %i[show edit update update_priority destroy add_defect add_attachments remove_attachment update_label modal_show add_label remove_label defect_status create_failure_report]
+  before_action :set_defect,
+                only: %i[show edit update update_priority destroy add_defect add_attachments remove_attachment update_label modal_show add_label remove_label defect_status
+                         create_failure_report]
 
   def index
     # Load defects with needed associations
@@ -177,12 +179,14 @@ class DefectController < ApplicationController
     # Attachment paginations
     @attachments_per_page = 6
     @attachments_page = (params[:attachments_page] || 1).to_i
-    @attachments_total = @defect.attachments.count
+    all_attachments = @defect.all_attachments
+    @attachments_total = all_attachments.size
     @attachments_total_pages = (@attachments_total / @attachments_per_page.to_f).ceil
 
-    @attachments = @defect.attachments
-      .offset((@attachments_page - 1) * @attachments_per_page)
-      .limit(@attachments_per_page)
+    @attachments = all_attachments.slice(
+      (@attachments_page - 1) * @attachments_per_page,
+      @attachments_per_page
+    ) || []
   end
 
   def modal_show
@@ -454,17 +458,17 @@ class DefectController < ApplicationController
   def defect_status
     status = Status.find(params[:status_id])
 
-    if status.name.strip.downcase == "failed qa"
+    if status.name.strip.downcase == 'failed qa'
       # DO NOT persist the status yet; we need a reason
       respond_to do |format|
         format.turbo_stream do
           render turbo_stream: turbo_stream.replace(
-            "modal",
-            partial: "defect/failure_reason_modal",
+            'modal',
+            partial: 'defect/failure_reason_modal',
             locals: { defect: @defect }
           )
         end
-        format.html { redirect_to defect_path(@defect), alert: "Failed QA requires a reason." }
+        format.html { redirect_to defect_path(@defect), alert: 'Failed QA requires a reason.' }
       end
       return
     end
@@ -483,11 +487,11 @@ class DefectController < ApplicationController
     respond_to do |format|
       format.turbo_stream do
         render turbo_stream: [
-          turbo_stream.replace("modal", partial: "defect/modal_empty"),
-          turbo_stream.replace("defect_status_#{@defect.id}", partial: "defect/status_badge", locals: { defect: @defect })
+          turbo_stream.replace('modal', partial: 'defect/modal_empty'),
+          turbo_stream.replace("defect_status_#{@defect.id}", partial: 'defect/status_badge', locals: { defect: @defect })
         ]
       end
-      format.html { redirect_to defect_path(@defect), notice: "Defect status was successfully updated." }
+      format.html { redirect_to defect_path(@defect), notice: 'Defect status was successfully updated.' }
     end
   end
 
@@ -498,25 +502,25 @@ class DefectController < ApplicationController
     reason_html = params.dig(:defect_failure_report, :reason)
 
     begin
-      report = DefectRecordFailureService.new(defect: @defect, actor: current_user, reason_html: reason_html).call
+      DefectRecordFailureService.new(defect: @defect, actor: current_user, reason_html: reason_html).call
 
       respond_to do |format|
         format.turbo_stream do
           render turbo_stream: [
-            turbo_stream.replace("modal", partial: "defect/modal_empty"),
-            turbo_stream.replace("defect_status_#{@defect.id}", partial: "defect/status_badge", locals: { defect: @defect }),
+            turbo_stream.replace('modal', partial: 'defect/modal_empty'),
+            turbo_stream.replace("defect_status_#{@defect.id}", partial: 'defect/status_badge', locals: { defect: @defect })
           ]
         end
 
-        format.html { redirect_to defect_path(@defect), notice: "Failure reason recorded successfully." }
+        format.html { redirect_to defect_path(@defect), notice: 'Failure reason recorded successfully.' }
       end
     rescue ActiveRecord::RecordInvalid => e
       @failure_report = e.record
       respond_to do |format|
         format.turbo_stream do
           render turbo_stream: turbo_stream.replace(
-            "modal",
-            partial: "defect/failure_reason_modal",
+            'modal',
+            partial: 'defect/failure_reason_modal',
             locals: { defect: @defect, failure_report: @failure_report }
           ), status: :unprocessable_entity
         end
@@ -638,9 +642,9 @@ class DefectController < ApplicationController
   private
 
   def authorize_view_failure_reports!
-    unless current_user.has_role?(:qa) || current_user.has_role?(:hod) || current_user.has_role?(:admin)
-      redirect_to defect_path(@defect), notice: "You are not authorized to view failure reports."
-    end
+    return if current_user.has_role?(:qa) || current_user.has_role?(:hod) || current_user.has_role?(:admin)
+
+    redirect_to defect_path(@defect), notice: 'You are not authorized to view failure reports.'
   end
 
   def set_form_data

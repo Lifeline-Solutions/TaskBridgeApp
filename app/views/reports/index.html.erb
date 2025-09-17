@@ -1,0 +1,13 @@
+<!-- erb -->
+<div class="container justify-between p-4">
+    <%= form_with url: reports_path, method: :get, local: true do %>
+      <label for="product_id" class="font-semibold">Select Product:</label>
+      <%= select_tag :product_id,
+                     options_for_select(@product_options, params[:product_id]),
+                     class: "border rounded p-2 ml-2 bg-white dark:bg-gray-800 min-w-48" %>
+      <%= submit_tag "Search", class: "ml-2 px-4 py-2 bg-blue-500 text-white rounded" %>
+    <% end %>
+</div>
+<% if params[:product_id].present? %>
+  <%= render partial: "defect_per_user", locals: { defects_per_creator: @defects_per_creator } %>
+<% end %>

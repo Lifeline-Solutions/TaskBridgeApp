@@ -9,7 +9,7 @@ class DefectRecordFailureService
     @defect.transaction do
       @defect.lock!
 
-      failed_status = Status.where("lower(name) = ?", "failed qa").first || Status.find_by(name: "Failed QA")
+      failed_status = Status.where('lower(name) = ?', 'failed qa').first || Status.find_by(name: 'Failed QA')
       if failed_status
         @defect.statuses.clear
         @defect.statuses << failed_status
@@ -26,7 +26,7 @@ class DefectRecordFailureService
       )
 
       # store HTML into ActionText rich text
-      report.reason = @reason_html.presence || "<p>No QA comment provided</p>"
+      report.reason = @reason_html.presence || '<p>No QA comment provided</p>'
       report.save!
 
       create_history_and_activity(report)
@@ -49,7 +49,7 @@ class DefectRecordFailureService
     activity('user_activity').caused_by(@actor).performed_on(@defect)
       .event('defect.retest_recorded').with_properties(retest_number: report.retest_number)
       .log("Defect ##{@defect.id} marked QA Failed — retest ##{report.retest_number}")
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error("DefectRecordFailureService: logging failure: #{e.message}")
   end
 end
