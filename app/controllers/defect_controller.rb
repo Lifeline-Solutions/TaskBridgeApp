@@ -249,6 +249,9 @@ class DefectController < ApplicationController
         )
 
         redirect_to @defect, notice: 'Defect was successfully created.'
+        # Send An email to the creator and the assignee
+        # app/controllers/defects_controller.rb
+        UserMailer.new_defect_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
       end
     else
       set_form_data
