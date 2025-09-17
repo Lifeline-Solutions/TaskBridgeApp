@@ -1,18 +1,43 @@
-<div id="labels_section">
-  <!-- Show existing labels -->
-  <div class="flex flex-wrap gap-2">
-    <% defect.labels.each do |label| %>
-      <span class="px-2 py-1 bg-gray-200 text-gray-800 rounded-md text-xs font-medium flex items-center gap-1">
-        <%= label.name %>
-        <%= button_to "✕",
-            remove_label_defect_path(@defect, label_id: label.id),
-            method: :delete,
-            data: { turbo_confirm: "Remove this label?" },
-            class: "ml-1 text-red-500 hover:text-red-700 text-xs font-bold inline bg-transparent border-0 cursor-pointer" %>
-      </span>
-    <% end %>
-    <% if defect.labels.empty? %>
-      <span class="text-gray-500 text-sm italic">No labels yet</span>
-    <% end %>
+<%= turbo_frame_tag "labels_section" do %>
+  <div class="flex flex-col gap-2">
+    <!-- Labels display row -->
+    <div class="flex items-center flex-wrap gap-2" data-action="click->label-editor#openInput" role="button" aria-label="Open label editor">
+      <% if defect.labels.any? %>
+        <% defect.labels.each do |label| %>
+          <span class="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-md text-xs font-medium flex items-center gap-2">
+            <span class="truncate"><%= label.name %></span>
+            <%# Remove button (submit to remove_label action) %>
+            <%= button_to remove_label_defect_path(defect, label_id: label.id),
+                          method: :delete,
+                          form: { data: { turbo_frame: "labels_section" } },
+                          class: "ml-2 text-red-500 hover:text-red-700 text-xs font-bold bg-transparent border-0 p-0" do %>
+              ✕
+            <% end %>
+          </span>
+        <% end %>
+      <% else %>
+        <span class="text-gray-500 text-sm italic">No labels yet</span>
+      <% end %>
+    </div>
+
+    <!-- Hidden input form (shown by Stimulus) -->
+    <div data-label-editor-target="inputContainer" class="mt-2 hidden">
+      <%= form_with url: add_label_defect_path(defect), method: :patch, data: { turbo_frame: "labels_section" }, html: { class: "flex items-center gap-2" } do |f| %>
+        <div class="relative flex-1">
+          <%= f.text_field :label_name,
+                placeholder: "Enter or select a label and press Enter",
+                list: "available_labels",
+                autocomplete: "off",
+                data: { action: "keydown->label-editor#keydown", label_editor_target: "input" },
+                class: "block w-full min-w-[180px] rounded-lg border border-gray-300 px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" %>
+
+          <datalist id="available_labels">
+            <% Label.order(:name).each do |lbl| %>
+              <option value="<%= lbl.name %>"></option>
+            <% end %>
+          </datalist>
+        </div>
+      <% end %>
+    </div>
   </div>
-</div>
+<% end %>

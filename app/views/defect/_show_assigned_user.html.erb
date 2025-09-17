@@ -1,37 +1,69 @@
-<div class="flex flex-col gap-2">
-  <!-- Assignee -->
-  <div class="flex items-center gap-2">
-    <span class="text-gray-600 w-24">Assignee</span>
-    <% if @defect.users.any? %>
-      <% @defect.users.each do |user| %>
+<%= turbo_frame_tag "assignee_section" do %>
+  <div data-controller="assignee-editor" class="flex flex-col gap-2" data-action="click->assignee-editor#openInput">
+    <!-- Assignee row -->
+    <div class="flex items-center gap-2 cursor-pointer" data-action="click->assignee-editor#openInput">
+      <span class="text-gray-600 w-24">Assignee</span>
+      <% if defect.users.any? %>
+        <% defect.users.each do |user| %>
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-900 text-white text-xs font-semibold">
+              <%= user.name.split.map { |n| n[0] }.join.upcase %>
+            </div>
+            <span class="text-gray-800"><%= user.name %></span>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="text-red-500 text-sm">No agents assigned</p>
+      <% end %>
+    </div>
+
+    <!-- Reporter -->
+    <div class="flex items-center gap-2 cursor-pointer" data-action="click->assignee-editor#openInput">
+      <span class="text-gray-600 w-24">Reporter</span>
+      <% if @defect.creator.present? %>
         <div class="flex items-center gap-2">
           <!-- Avatar circle with initials -->
-          <div class="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-900 text-white text-xs font-semibold">
-            <%= user.name.split.map { |n| n[0] }.join.upcase %>
+          <div class="w-6 h-6 flex items-center justify-center rounded-full bg-green-700 text-white text-xs font-semibold">
+            <%= @defect.creator.name.split.map { |n| n[0] }.join.upcase %>
           </div>
           <!-- Full name -->
-          <span class="text-gray-800"><%= user.name %></span>
+          <span class="text-gray-800"><%= @defect.creator.name %></span>
         </div>
+      <% else %>
+        <p class="text-red-500 text-sm">No reporter set</p>
       <% end %>
-    <% else %>
-      <p class="text-red-500 text-sm">No agents assigned</p>
-    <% end %>
-  </div>
+    </div>
 
-  <!-- Reporter -->
-  <div class="flex items-center gap-2">
-    <span class="text-gray-600 w-24">Reporter</span>
-    <% if @defect.creator.present? %>
-      <div class="flex items-center gap-2">
-        <!-- Avatar circle with initials -->
-        <div class="w-6 h-6 flex items-center justify-center rounded-full bg-green-700 text-white text-xs font-semibold">
-          <%= @defect.creator.name.split.map { |n| n[0] }.join.upcase %>
+    <!-- Hidden input search -->
+    <div data-assignee-editor-target="inputContainer" class="mt-2 hidden relative">
+      <%= form_with url: add_defect_defect_path(defect),
+                    method: :post,
+                    data: { turbo_frame: "assignee_section" },
+                    html: { id: "assigneeForm" } do |f| %>
+
+        <input type="text"
+               id="searchAssignee"
+               placeholder="Search user..."
+               autocomplete="off"
+               class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+               data-action="keyup->assignee-editor#filter keydown->assignee-editor#keydown"
+               data-assignee-editor-target="input">
+
+        <!-- Dropdown -->
+        <div id="assigneeDropdown"
+             class="absolute mt-1 w-80 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg hidden z-10"
+             data-assignee-editor-target="dropdown">
+          <% defect.craftsilicon_users.where.not(id: defect.users.pluck(:id)).distinct.each do |user| %>
+            <div class="dropdown-item px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-500 cursor-pointer"
+                 data-user-id="<%= user.id %>"
+                 data-action="click->assignee-editor#select">
+              <%= user.name %>
+            </div>
+          <% end %>
         </div>
-        <!-- Full name -->
-        <span class="text-gray-800"><%= @defect.creator.name %></span>
-      </div>
-    <% else %>
-      <p class="text-red-500 text-sm">No reporter set</p>
-    <% end %>
+
+        <%= hidden_field_tag :user_id, "", id: "selectedAssigneeId", data: { assignee_editor_target: "hiddenField" } %>
+      <% end %>
+    </div>
   </div>
-</div>
+<% end %>
