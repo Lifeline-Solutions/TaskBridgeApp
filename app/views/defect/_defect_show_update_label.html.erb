@@ -1,33 +1,10 @@
-<% if current_user.has_role?(:admin) || 
-      current_user.has_role?(:'project manager') || 
-      current_user.has_role?(:observer) || 
+<% if current_user.has_role?(:admin) ||
+      current_user.has_role?(:'project manager') ||
+      current_user.has_role?(:observer) ||
       current_user.has_role?(:qa) %>
-  <div class="mt-4">
-    <!-- Show existing labels -->
+
+  <div class="mt-4" data-controller="label-editor">
+    <div class="text-sm font-semibold uppercase tracking-wider mb-1">Labels *</div>
     <%= render partial: "defect/labels", locals: { defect: @defect } %>
-
-    <!-- Add new label form -->
-    <div class="text-sm font-semibold uppercase tracking-wider mb-1 mt-3">Add Label</div>
-    <%= form_with url: add_label_defect_path(@defect), 
-                  method: :patch, 
-                  remote: true,
-                  html: { class: "flex items-center gap-2" } do |f| %>
-
-      <div class="relative flex-1">
-        <%= f.text_field :label_name,
-              placeholder: "Enter or select a label...",
-              list: "available_labels",
-              class: "block min-w-[220px] max-w-[280px] border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500",
-              required: true,
-              autocomplete: "off" %>
-
-        <!-- Datalist with existing labels -->
-        <datalist id="available_labels">
-          <% Label.order(:name).each do |label| %>
-            <option value="<%= label.name %>"></option>
-          <% end %>
-        </datalist>
-      </div>
-    <% end %>
   </div>
 <% end %>
