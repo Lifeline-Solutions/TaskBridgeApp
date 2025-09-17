@@ -1,0 +1,25 @@
+<p>Hello,</p>
+
+<p>
+  A new defect (<b>ID: <%= @defect.defect_unique %></b>) has been created.
+</p>
+
+<p>
+  <b>Assigned to:</b>
+  <%= @defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', ') %>
+</p>
+
+<p>
+  <b>Created by:</b>
+  <%= @creator.first_name %> <%= @creator.last_name %>
+</p>
+
+<p>
+  <% if @url.present? %>
+    Click <%= link_to 'here', @url, target: '_blank', rel: 'noopener noreferrer nofollow' %> to view the defect.
+  <% else %>
+    Click here to view the defect (link unavailable).
+  <% end %>
+</p>
+
+<p>Best regards,<br>Your Team</p>
