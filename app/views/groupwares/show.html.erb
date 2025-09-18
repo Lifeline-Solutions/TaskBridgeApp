@@ -10,20 +10,38 @@
   </div>
 <% end %>
 
-<div class="flex gap-2">
-Sub Product: <%= @groupware.name %>
-
-
-
-  <% if current_user.has_role? :admin  %>
-    <div class="flex gap-1">
-      <%= button_to 'Back', software_path(@software.id), method: :get, class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100'  %>
-
-      <%= button_to 'Add Module +', new_software_groupware_script_path(@software, @groupware), method: :get, class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100'  %>
+<div class="flex flex-col gap-4 mb-6 bg-white rounded-lg shadow-lg p-4 border border-gray-200">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+    <div class="flex items-center gap-2">
+      <div class="bg-[#1a237e] rounded-full h-8 w-8 flex items-center justify-center text-white font-bold text-lg">
+        <%= @groupware.name[0].upcase %>
+      </div>
+      <span class="font-semibold text-lg sm:text-xl text-[#1a237e]">
+        <%= @groupware.name %>
+      </span>
+      <span class="ml-2 px-2 py-1 bg-[#e3f2fd] text-[#1976d2] rounded text-xs font-medium">
+        Sub Product
+      </span>
     </div>
-  <% end %>
+    <% if current_user.has_role? :admin %>
+      <div class="flex gap-2 mt-3 sm:mt-0">
+        <%= button_to 'Back', software_path(@software.id), method: :get, class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] px-4 py-2 rounded font-bold text-white transition-colors duration-200 shadow-sm text-sm' %>
+        <%= button_to 'Add Module +', new_software_groupware_script_path(@software, @groupware), method: :get, class: 'bg-[#4caf50] hover:bg-[#388e3c] px-4 py-2 rounded font-bold text-white transition-colors duration-200 shadow-sm text-sm' %>
+      </div>
+    <% end %>
+  </div>
 </div>
 
-<!-- add scripts -->
-
-<%= render 'scripts/script' %>
+<div class="w-full">
+  <div class="bg-gray-50 rounded-lg shadow p-0 border border-gray-200">
+    <div class="border-b border-gray-200 px-4 py-2 flex items-center justify-between bg-white">
+      <span class="font-semibold text-gray-700 text-base">Modules</span>
+      <% if current_user.has_role? :admin %>
+        <%= button_to 'Add Module', new_software_groupware_script_path(@software, @groupware), method: :get, class: 'bg-[#4caf50] hover:bg-[#388e3c] px-3 py-1 rounded font-bold text-white transition-colors duration-200 shadow-sm text-xs' %>
+      <% end %>
+    </div>
+    <div class="p-4">
+      <%= render 'scripts/script' %>
+    </div>
+  </div>
+</div>
