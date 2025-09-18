@@ -307,6 +307,8 @@ class DefectController < ApplicationController
                     QaModule.none
                   end
 
+    UserMailer.edit_defect_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
+
     respond_to do |format|
       format.html
       format.turbo_stream { render layout: false }
