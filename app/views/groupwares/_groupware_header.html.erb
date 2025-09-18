@@ -1,26 +1,21 @@
-<div class="grid grid-cols-2 mb-4">
-  <div class="grid col-span-1">
-
+<div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4 items-center">
+  <!-- Left: Back & Add Product -->
+  <div class="flex flex-row md:flex-row gap-2 items-center">
     <% if can? :create, @software %>
       <% if current_user.has_role? :admin  %>
-        <div class="flex gap-1">
-        <%= button_to 'Back', software_index_path, method: :get, class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100'  %>
-
-        <%= button_to 'Add Product +', new_software_groupware_path(@software), method: :get, class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100'  %>
-        </div>
+        <%= button_to 'Back', software_index_path, method: :get, class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] px-3 py-2 rounded font-bold rounded-lg text-slate-100 text-sm md:text-base shadow-sm transition-all duration-150'  %>
+        <%= button_to 'Add Product +', new_software_groupware_path(@software), method: :get, class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] px-3 py-2 rounded font-bold rounded-lg text-slate-100 text-sm md:text-base shadow-sm transition-all duration-150'  %>
       <% end %>
     <% end %>
   </div>
-  <!-- Search on the right -->
-  <div class="grid col-span-1 justify-end">
-    <div class="flex flex-col md:flex-row items-start md:items-center w-full gap-1">
-      <%= form_with url: software_path, method: :get, class: 'flex gap-1' do |f| %>
-        <%= f.text_field :query, placeholder: "Search ", class: " border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg w-full" %>
-        <%= f.submit "Search", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100'  %>
-      <% end %>
-      <%= form_with url: software_path, method: :get, class: 'flex' do |f| %>
-        <%= f.submit "Clear", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100'  %>
-      <% end %>
-    </div>
+  <!-- Right: Search & Clear -->
+  <div class="flex flex-col md:flex-row justify-end items-stretch md:items-center gap-2 w-full">
+    <%= form_with url: software_path, method: :get, class: 'flex flex-row gap-2 w-full' do |f| %>
+      <%= f.text_field :query, placeholder: "Search", class: "border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg w-full px-2 py-1 text-sm md:text-base focus:ring-2 focus:ring-[#3F8CFF] transition-all duration-150" %>
+      <%= f.submit "Search", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] px-3 py-2 rounded font-bold rounded-lg text-slate-100 text-sm md:text-base shadow-sm transition-all duration-150'  %>
+    <% end %>
+    <%= form_with url: software_path, method: :get, class: 'flex' do |f| %>
+      <%= f.submit "Clear", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] px-3 py-2 rounded font-bold rounded-lg text-slate-100 text-sm md:text-base shadow-sm transition-all duration-150'  %>
+    <% end %>
   </div>
 </div>
