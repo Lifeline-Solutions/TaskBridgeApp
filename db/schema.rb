@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_11_134356) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_18_123314) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -144,6 +144,14 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_11_134356) do
     t.index ["deleted_on"], name: "index_banking_types_on_deleted_on"
     t.index ["modified_by_id"], name: "index_banking_types_on_modified_by_id"
     t.index ["name"], name: "index_banking_types_on_name", unique: true
+  end
+
+  create_table "banking_types_products", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "product_id", null: false
+    t.uuid "banking_type_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id", "banking_type_id"], name: "index_banking_types_products_on_product_and_banking_type", unique: true
   end
 
   create_table "boards", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1032,6 +1040,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_11_134356) do
   add_foreign_key "banking_types", "users", column: "created_by_id"
   add_foreign_key "banking_types", "users", column: "deleted_by_id"
   add_foreign_key "banking_types", "users", column: "modified_by_id"
+  add_foreign_key "banking_types_products", "banking_types"
+  add_foreign_key "banking_types_products", "products"
   add_foreign_key "boards", "products"
   add_foreign_key "boards", "users"
   add_foreign_key "clients", "users"
