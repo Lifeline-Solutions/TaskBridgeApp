@@ -89,7 +89,7 @@
 <div class="relative w-full">
   <% if @product.added_to?(current_user) || current_user.has_role?(:admin) || current_user.has_role?(:observer) || current_user.has_role?(:hod) %>
     <div class="min-h-[60vh] p-1 sm:p-2 overflow-x-auto">
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 sm:gap-4 min-w-full">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 min-w-full">
 
         <% ordered_statuses = ['Reopened', 'TO DO', 'In Progress', 'On-Hold', 'Await Client Information',
                                'Failed-QA', 'QA-testing', 'Awaiting Build', 'Awaiting Client API',
@@ -131,7 +131,6 @@
               </div>
               <button class="text-lg sm:text-2xl px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-800 transition">+</button>
             </div>
-
             <!-- Board Cards -->
             <div class="grid gap-2 p-1 sm:p-2">
               <% tasks.each do |task| %>
@@ -156,7 +155,6 @@
                 <p class="text-xs border rounded-full px-2 py-1"><%= uncategorized_tasks.count %></p>
               </div>
             </div>
-
             <div class="grid gap-2 p-1 sm:p-2">
               <% uncategorized_tasks.each do |task| %>
                 <%= render partial: 'tasks/card', locals: { task: task } %>
