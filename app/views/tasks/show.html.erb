@@ -1,22 +1,22 @@
-<%= render partial: 'tasks/top_task_bar' %>
-<div class="flex flex-col sm:flex-row w-full mx-auto overflow-hidden bg-white rounded-lg shadow-lg dark:bg-gray-800 p-2 overflow-y-auto">
+<div class="p-2 grid grid-cols-1 sm:grid-cols-5 gap-4">
+  <div class="sm:col-span-4 p-2">
+    <% if @task.name.present? %>
+      <h4 class="text-lg font-semibold mb-2 break-words"><%= @task.name %></h4>
+    <% end %>
+    <%= render 'tasks/content_for_task' %>
+  </div>
 
-  <div class="p-2 grid grid-cols-1 sm:grid-cols-5 gap-4">
-    <div class="sm:col-span-4 p-2">
-      <% if @task.name.present? %>
-        <h4 class="text-lg font-semibold mb-2 break-words"><%= @task.name %></h4>
-      <% end %>
-      <%= render 'tasks/content_for_task' %>
-    </div>
-
-    <!-- Sidebar Details (hidden on mobile, shown as sidebar when toggled) -->
-    <div id="detailsSidebar" class="fixed top-0 right-0 h-full w-80 bg-white dark:bg-gray-800 shadow-lg z-50 transform translate-x-full transition-transform duration-300 sm:static sm:translate-x-0 sm:col-span-1 space-y-4 p-2">
-      <!-- Cancel/Close Icon (mobile only) -->
-      <button onclick="toggleSidebar()" aria-label="Close sidebar" class="absolute top-2 right-2 sm:hidden text-gray-500 hover:text-gray-800 text-xl">
+  <!-- Sidebar Details -->
+  <div id="detailsSidebar"
+    class="sm:col-span-1 space-y-4 p-2
+           fixed top-0 right-0 h-full w-80 bg-white dark:bg-gray-800 shadow-lg z-50 transform translate-x-full transition-transform duration-300
+           sm:static sm:h-auto sm:w-auto sm:bg-transparent sm:shadow-none sm:translate-x-0 sm:z-auto">
+    <!-- Cancel/Close Icon (mobile only) -->
+    <button onclick="toggleSidebar()" aria-label="Close sidebar" class="absolute top-2 right-2 sm:hidden text-gray-500 hover:text-gray-800 text-xl">
       &times;
-      </button>
-      <!-- Image/File Section -->
-      <div class="space-y-2 mt-8 sm:mt-0">
+    </button>
+    <!-- Image/File Section -->
+    <div class="space-y-2 mt-8 sm:mt-0">
       <% if @task.image.present? %>
         <p class="font-bold capitalize text-xs sm:text-base">Click to Enlarge</p>
         <%= image_tag @task.image, class: 'zoomable-image w-full sm:w-48 object-cover rounded-md' %>
@@ -30,81 +30,89 @@
         <%= link_to "Download #{@task.file.filename}", url_for(@task.file), target: "_blank", class: "text-blue-600 hover:underline block mt-2 text-xs sm:text-base" %>
       <% else %>
         <p class="text-xs sm:text-sm">
-        This task does not have an uploaded file. If you need to add a file, kindly 
-        <%= link_to "edit", edit_product_task_path(@product, @task), method: :get, class: 'underline text-[#3F8CFF]' %> 
-        the task to include it.
+          This task does not have an uploaded file. If you need to add a file, kindly 
+          <%= link_to "edit", edit_product_task_path(@product, @task), method: :get, class: 'underline text-[#3F8CFF]' %> 
+          the task to include it.
         </p>
       <% end %>
-      </div>
+    </div>
 
-      <!-- Status Section -->
-      <div class="space-y-2">
+    <!-- Status Section -->
+    <div class="space-y-2">
       <div class="font-bold capitalize text-xs sm:text-base">
         Status:
         <span class="font-medium ml-1">
-        <%= render partial: 'tasks/task_status', locals: { task: @task } %>
+          <%= render partial: 'tasks/task_status', locals: { task: @task } %>
         </span>
       </div>
       <div>
         <%= render 'tasks/add_state' %>
       </div>
-      </div>
+    </div>
 
-      <!-- Assigned Users Section -->
-      <div class="space-y-2">
+    <!-- Assigned Users Section -->
+    <div class="space-y-2">
       <div class="font-bold capitalize text-xs sm:text-base">Assigned To:</div>
       <div class="flex flex-wrap items-center gap-2">
         <% @task.users.each do |user| %>
-        <div class="flex items-center mb-2">
-          <% if user.profile_picture.attached? %>
-          <%= image_tag user.profile_picture, class: 'object-cover h-8 w-8 sm:h-10 sm:w-10 rounded-full' %>
-          <% elsif user.name_initials.present? %>
-          <p class="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-gray-300 text-gray-800 capitalize text-xs sm:text-base">
-            <%= user.name_initials %>
-          </p>
-          <% else %>
-          <%= image_tag 'default.png', class: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover' %>
-          <% end %>
-          <span class="ml-2 text-xs sm:text-base"><%= user.name if user.name.present? %></span>
-        </div>
+          <div class="flex items-center mb-2">
+            <% if user.profile_picture.attached? %>
+              <%= image_tag user.profile_picture, class: 'object-cover h-8 w-8 sm:h-10 sm:w-10 rounded-full' %>
+            <% elsif user.name_initials.present? %>
+              <p class="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-full bg-gray-300 text-gray-800 capitalize text-xs sm:text-base">
+                <%= user.name_initials %>
+              </p>
+            <% else %>
+              <%= image_tag 'default.png', class: 'w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover' %>
+            <% end %>
+            <span class="ml-2 text-xs sm:text-base"><%= user.name if user.name.present? %></span>
+          </div>
         <% end %>
       </div>
-      </div>
+    </div>
 
-      <!-- Assign User Form -->
-      <div class="space-y-2">
+    <!-- Assign User Form -->
+    <div class="space-y-2">
       <%= render 'tasks/assign_user' %>
-      </div>
-      <!-- Close button for mobile sidebar -->
-      <button onclick="toggleSidebar()" class="block sm:hidden mt-4 px-4 py-2 bg-gray-200 rounded text-gray-800 w-full">Close</button>
     </div>
-    </div>
-    </div>
+    <!-- Close button for mobile sidebar -->
+    <button onclick="toggleSidebar()" class="block sm:hidden mt-4 px-4 py-2 bg-gray-200 rounded text-gray-800 w-full">Close</button>
+  </div>
+</div>
 
-    <!-- Show Details Button (mobile only) -->
-    <button id="showDetailsBtn" onclick="toggleSidebar()" class="fixed bottom-4 right-4 sm:hidden px-4 py-2 bg-blue-600 text-white rounded shadow-lg z-40">
-    Show Details
-    </button>
+<!-- Show Details Button (mobile only) -->
+<button id="showDetailsBtn" onclick="toggleSidebar()" class="fixed bottom-4 right-4 sm:hidden px-4 py-2 bg-blue-600 text-white rounded shadow-lg z-40">
+  Show Details
+</button>
 
-    <!-- Overlay for cancelling out sidebar (mobile only) -->
-    <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-30 z-40 hidden sm:hidden"></div>
+<!-- Overlay for cancelling out sidebar (mobile only) -->
+<div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-30 z-40 hidden sm:hidden"></div>
 
-    <script>
-    function toggleSidebar() {
-      let sidebar = document.getElementById('detailsSidebar');
-      let overlay = document.getElementById('sidebarOverlay');
-      let showDetailsBtn = document.getElementById('showDetailsBtn');
-      let isOpen = !sidebar.classList.contains('translate-x-full');
+<script>
+  function toggleSidebar() {
+    const sidebar = document.getElementById('detailsSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (window.innerWidth < 640) { // mobile only
+      const isOpen = sidebar.classList.contains('translate-x-0');
       if (isOpen) {
-      sidebar.classList.add('translate-x-full');
-      overlay.classList.add('hidden');
-      showDetailsBtn.classList.remove('z-50');
-      showDetailsBtn.classList.add('z-40');
+        sidebar.classList.remove('translate-x-0');
+        sidebar.classList.add('translate-x-full');
+        overlay.classList.add('hidden');
       } else {
-      sidebar.classList.remove('translate-x-full');
-      overlay.classList.remove('hidden');
-      showDetailsBtn.classList.remove('z-40');
-      showDetailsBtn.classList.add('z-50');
+        sidebar.classList.remove('translate-x-full');
+        sidebar.classList.add('translate-x-0');
+        overlay.classList.remove('hidden');
       }
     }
-    </script>
+  }
+  // Ensure sidebar is closed on resize to desktop
+  window.addEventListener('resize', function() {
+    const sidebar = document.getElementById('detailsSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (window.innerWidth >= 640) {
+      sidebar.classList.remove('translate-x-0');
+      sidebar.classList.remove('translate-x-full');
+      overlay.classList.add('hidden');
+    }
+  });
+</script>
