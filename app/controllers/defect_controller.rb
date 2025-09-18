@@ -55,7 +55,7 @@ class DefectController < ApplicationController
   def index_show
     # Base scope
     @defects = Defect.published
-      .includes(:users, :qa_module, :submodule, :banking_type, :statuses, product: %i[client groupwares])
+      .includes(:users, :qa_module, :banking_type, :statuses, product: %i[client groupwares])
 
     # Client filter (exact, case-insensitive)
     if params[:client_name].present?
@@ -79,7 +79,7 @@ class DefectController < ApplicationController
 
     # NEW: Module/Submodule/BankingType filters (by id)
     @defects = @defects.where(qa_module_id: params[:qa_module_id]) if params[:qa_module_id].present?
-    @defects = @defects.where(submodule_id: params[:submodule_id]) if params[:submodule_id].present?
+    @defects = @defects.where(qa_module_id: params[:submodule_id]) if params[:submodule_id].present?
     @defects = @defects.where(banking_type_id: params[:banking_type_id]) if params[:banking_type_id].present?
     @statuses = Status.joins(:defects).where(defects: { id: @defects.ids }).distinct.order(:name)
 
@@ -105,7 +105,7 @@ class DefectController < ApplicationController
     # Full-text search across related tables (now includes qa_modules, submodules, banking_types)
     if params[:query].present?
       q = "%#{params[:query].to_s.strip}%"
-      @defects = @defects.left_joins(:users, :qa_module, :submodule, :banking_type, product: %i[client groupwares]).where(
+      @defects = @defects.left_joins(:users, :qa_module, :banking_type, product: %i[client groupwares]).where(
         "defects.summary ILIKE :q
          OR defects.defect_unique ILIKE :q
          OR defects.priority ILIKE :q
@@ -114,9 +114,7 @@ class DefectController < ApplicationController
          OR clients.name ILIKE :q
          OR groupwares.name ILIKE :q
          OR qa_modules.name ILIKE :q
-         OR submodules.name ILIKE :q
-         OR banking_types.name ILIKE :q
-         OR to_char(defects.created_at, 'YYYY-MM-DD HH24:MI') ILIKE :q",
+         OR banking_types.name ILIKE :q",
         q: q
       )
     end

@@ -1,6 +1,6 @@
+# app/controllers/reports_controller.rb
 class ReportsController < ApplicationController
   before_action :authenticate_user!
-  # ruby
 
   def index
     @products = Product.includes(:client, :groupwares, :statuses)
@@ -28,5 +28,8 @@ class ReportsController < ApplicationController
       .joins(:statuses)
       .group('statuses.id', 'statuses.name')
       .count
+
+    # Count retests per defect and sum for total
+    @defects_per_retest = defects_scope.where('retest_count > 0').sum(:retest_count)
   end
 end
