@@ -55,7 +55,7 @@ class DefectController < ApplicationController
   def index_show
     # Base scope
     @defects = Defect.published
-      .includes(:users, :qa_module, :banking_type, :statuses, product: %i[client groupwares])
+      .includes(:users, :qa_module, :labels, :banking_type, :statuses, product: %i[client groupwares])
 
     # Client filter (exact, case-insensitive)
     if params[:client_name].present?
@@ -69,6 +69,12 @@ class DefectController < ApplicationController
       downcased = selected_statuses.map { |s| s.to_s.downcase }
       @defects = @defects.joins(:statuses)
         .where('LOWER(statuses.name) IN (?)', downcased)
+    end
+
+    # Labels filter (multiple check_boxes -> labels_ids[])
+    selected_labels = Array(params[:label_ids]).reject(&:blank?)
+    if selected_labels.any?
+      @defects = @defects.joins(:labels).where(labels: { id: selected_labels })
     end
 
     # Priority filter (exact, case-insensitive)
@@ -147,6 +153,11 @@ class DefectController < ApplicationController
       .order(:name)
 
     @banking_types = BankingType.joins(:defects)
+      .where(defects: { id: filtered_ids })
+      .distinct
+      .order(:name)
+
+    @labels = Label.joins(:defects)
       .where(defects: { id: filtered_ids })
       .distinct
       .order(:name)
