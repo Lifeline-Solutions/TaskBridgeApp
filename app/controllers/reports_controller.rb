@@ -39,7 +39,8 @@ class ReportsController < ApplicationController
     defects = Defect.published
     defects = defects.where(product_id: product_id) if product_id.present?
 
-    client_name = params[:client_id].present? ? Client.find(params[:client_id]).name : 'all_clients'
+    product = Product.find_by(id: product_id) if product_id.present?
+    client_name = product&.client&.name || 'all_clients'
     filename = "defect_reports_#{client_name}_#{Time.zone.now.strftime('%Y%m%d_%H%M%S')}.csv"
     csv_data = generate_defect_csv(defects)
 
