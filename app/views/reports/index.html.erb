@@ -8,10 +8,10 @@
                    class: "border rounded p-2 ml-2 bg-white dark:bg-gray-800 min-w-48" %>
     <%= submit_tag "Search", class: "ml-2 px-4 py-2 bg-blue-500 text-white rounded" %>
   <% end %>
-
-  <% if params[:product_id].present? %>
-    <%= link_to "Download CSV", export_csv_reports_path(product_id: params[:product_id], format: :csv), class: "ml-2 px-4 py-2 bg-green-500 text-white rounded" %>  <% end %>
 </div>
 <% if params[:product_id].present? %>
+  <div class="container justify-between p-4 gap-2">
+  <%= link_to "Download CSV", export_csv_reports_path(product_id: params[:product_id], format: :csv), class: "ml-2 px-4 py-2 bg-green-500 text-white rounded" %>
   <%= render partial: "defect_per_user", locals: { defects_per_creator: @defects_per_creator } %>
+  </div>
 <% end %>
