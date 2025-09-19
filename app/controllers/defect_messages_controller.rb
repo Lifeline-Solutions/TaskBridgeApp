@@ -40,9 +40,9 @@ class DefectMessagesController < ApplicationController
     @defect_message.user = current_user
 
     if @defect_message.save
-      # Process mentions asynchronously - pass the ActionText content directly
+      # Process mentions asynchronously - convert ActionText to HTML string for job serialization
       ProcessMentionsJob.perform_later(
-        @defect_message.content,
+        @defect_message.content.body.to_html,
         @defect.id,
         current_user.id,
         'message'
@@ -65,9 +65,9 @@ class DefectMessagesController < ApplicationController
   def update
     audit_on_update(@defect_message)
     if @defect_message.update(defect_message_params)
-      # Process mentions asynchronously for updated message - pass the ActionText content directly
+      # Process mentions asynchronously for updated message - convert ActionText to HTML string for job serialization
       ProcessMentionsJob.perform_later(
-        @defect_message.content,
+        @defect_message.content.body.to_html,
         @defect.id,
         current_user.id,
         'message'
