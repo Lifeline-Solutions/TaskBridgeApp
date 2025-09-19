@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_18_124616) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_19_080626) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -28,6 +28,18 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_18_124616) do
     t.datetime "deleted_on"
     t.index ["deleted_on"], name: "index_action_text_rich_texts_on_deleted_on"
     t.index ["record_type", "record_id", "name"], name: "index_action_text_rich_texts_uniqueness", unique: true
+  end
+
+  create_table "action_text_tables", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.jsonb "content", default: [["", ""], ["", ""]], null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "action_text_tables_table", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.jsonb "content", default: [["", ""], ["", ""]], null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "active_storage_attachments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -146,14 +158,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_18_124616) do
     t.index ["modified_by_id"], name: "index_banking_types_on_modified_by_id"
     t.index ["name"], name: "index_banking_types_on_name", unique: true
     t.index ["product_id"], name: "index_banking_types_on_product_id"
-  end
-
-  create_table "banking_types_products", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "product_id", null: false
-    t.uuid "banking_type_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["product_id", "banking_type_id"], name: "index_banking_types_products_on_product_and_banking_type", unique: true
   end
 
   create_table "boards", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -287,6 +291,23 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_18_124616) do
     t.index ["label_id"], name: "index_defect_labels_on_label_id"
   end
 
+  create_table "defect_links", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "source_defect_id", null: false
+    t.uuid "target_defect_id", null: false
+    t.string "link_type", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.index ["deleted_on"], name: "index_defect_links_on_deleted_on"
+    t.index ["link_type"], name: "index_defect_links_on_link_type"
+    t.index ["source_defect_id", "target_defect_id"], name: "index_defect_links_on_source_defect_id_and_target_defect_id", unique: true
+    t.index ["source_defect_id"], name: "index_defect_links_on_source_defect_id"
+    t.index ["target_defect_id"], name: "index_defect_links_on_target_defect_id"
+  end
+
   create_table "defect_messages", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "user_id", null: false
     t.uuid "defect_id", null: false
@@ -297,6 +318,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_18_124616) do
     t.uuid "deleted_by_id"
     t.datetime "deleted_on"
     t.boolean "archive_status", default: false, null: false
+    t.text "content"
     t.index ["archive_status"], name: "index_defect_messages_on_archive_status"
     t.index ["created_by_id"], name: "index_defect_messages_on_created_by_id"
     t.index ["defect_id"], name: "index_defect_messages_on_defect_id"
@@ -336,8 +358,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_18_124616) do
     t.string "summary", null: false
     t.string "defect_unique"
     t.string "issue_type", default: "Bug"
+    t.text "labels", default: [], array: true
     t.boolean "draft", default: false, null: false
     t.integer "retest_count", default: 0, null: false
+    t.boolean "linkage_blocked", default: false, null: false
     t.index ["banking_type_id"], name: "index_defects_on_banking_type_id"
     t.index ["creator_id"], name: "index_defects_on_creator_id"
     t.index ["defect_unique"], name: "index_defects_on_defect_unique", unique: true
@@ -593,6 +617,21 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_18_124616) do
     t.index ["script_id"], name: "index_products_on_script_id"
     t.index ["software_id"], name: "index_products_on_software_id"
     t.index ["user_id"], name: "index_products_on_user_id"
+  end
+
+  create_table "products_qa_modules", id: false, force: :cascade do |t|
+    t.uuid "product_id", null: false
+    t.uuid "qa_module_id", null: false
+    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da"
+    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da"
+    t.uuid "deleted_by"
+    t.datetime "deleted_on"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["deleted_on"], name: "index_products_qa_modules_on_deleted_on"
+    t.index ["product_id", "qa_module_id"], name: "index_products_qa_modules_on_product_id_and_qa_module_id", unique: true
+    t.index ["product_id"], name: "index_products_qa_modules_on_product_id"
+    t.index ["qa_module_id"], name: "index_products_qa_modules_on_qa_module_id"
   end
 
   create_table "products_scripts", id: false, force: :cascade do |t|
@@ -1043,8 +1082,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_18_124616) do
   add_foreign_key "banking_types", "users", column: "created_by_id"
   add_foreign_key "banking_types", "users", column: "deleted_by_id"
   add_foreign_key "banking_types", "users", column: "modified_by_id"
-  add_foreign_key "banking_types_products", "banking_types"
-  add_foreign_key "banking_types_products", "products"
   add_foreign_key "boards", "products"
   add_foreign_key "boards", "users"
   add_foreign_key "clients", "users"
@@ -1063,6 +1100,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_18_124616) do
   add_foreign_key "defect_failure_reports", "users", column: "modified_by_id"
   add_foreign_key "defect_histories", "defects"
   add_foreign_key "defect_histories", "users"
+  add_foreign_key "defect_links", "defects", column: "source_defect_id"
+  add_foreign_key "defect_links", "defects", column: "target_defect_id"
   add_foreign_key "defect_messages", "defects"
   add_foreign_key "defect_messages", "users"
   add_foreign_key "defect_messages", "users", column: "created_by_id"
