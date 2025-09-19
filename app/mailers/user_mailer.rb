@@ -227,4 +227,17 @@ class UserMailer < ApplicationMailer
     @url = defect_url(@defect)
     mail(to: assigned_emails + [creator.email], subject: 'Edit Defect')
   end
+
+  def defect_mention_notification(user, defect, current_user, content, context_type = 'message')
+    @user = user
+    @defect = defect
+    @current_user = current_user
+    @content = content
+    @context_type = context_type
+    @url = defect_url(@defect)
+    @context_text = context_type == 'message' ? 'comment' : 'defect'
+
+    subject = "You were mentioned in a #{@context_text} on defect #{@defect.defect_unique}"
+    mail(to: @user.email, subject: subject)
+  end
 end
