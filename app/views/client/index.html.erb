@@ -12,16 +12,16 @@
 
 <%= render 'client/top_bar_clients' %>
 <%= render 'client/client' %>
-<div class="flex gap-10 mt-5">
-  <!-- Pagination Controls -->
-  <div class="pagination">
-    <% if @page > 1 %>
-      <%= link_to 'Previous', client_index_path(@client, page: @page - 1), class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
 
+<div class="flex flex-col md:flex-row md:gap-10 gap-4 mt-5 items-center justify-between w-full">
+  <!-- Pagination Controls -->
+  <div class="pagination flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+    <% if @page > 1 %>
+      <%= link_to 'Previous', client_index_path(@client, page: @page - 1), class: 'mb-2 sm:mb-0 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold text-slate-100 w-full sm:w-auto text-center transition-colors duration-200' %>
     <% end %>
-    <span>Page <%= @page %> of <%= @total_pages %></span>
+    <span class="text-base font-medium text-gray-700 px-2 py-1">Page <%= @page %> of <%= @total_pages %></span>
     <% if @page < @total_pages %>
-      <%= link_to 'Next', client_index_path(@client, page: @page + 1), class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
+      <%= link_to 'Next', client_index_path(@client, page: @page + 1), class: 'h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold text-slate-100 w-full sm:w-auto text-center transition-colors duration-200' %>
     <% end %>
   </div>
 </div>
