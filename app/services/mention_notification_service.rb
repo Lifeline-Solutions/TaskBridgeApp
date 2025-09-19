@@ -98,7 +98,16 @@ class MentionNotificationService
   end
 
   def build_email_body(user)
-    defect_url = Rails.application.routes.url_helpers.defect_url(@defect, host: ENV.fetch('APP_HOST', 'localhost:3000'))
+    host =
+      if Rails.env.production?
+        ENV.fetch('APP_HOST_PROD', 'taskbridge.craftsilicon.com')
+      elsif Rails.env.staging?
+        ENV.fetch('APP_HOST_STAGING', '172.16.2.15')
+      else
+        ENV.fetch('APP_HOST', 'localhost:3000')
+      end
+
+    defect_url = Rails.application.routes.url_helpers.defect_url(@defect, host: host)
 
     context_text = @context_type == 'message' ? 'comment' : 'defect description'
 
