@@ -60,17 +60,19 @@
           Select defect that blocks this issue (<%= defect.defect_unique %>):
         </label>
         <div class="relative"
-             data-controller="mention-system"
-             data-mention-system-defect-id-value="<%= defect.id %>">
+         data-controller="mention-system"
+         data-mention-system-defect-id-value="<%= defect.id %>"
+         data-mention-system-disable-at-value="true">
           <input type="text" 
-                 id="defectSearchInput"
-                 data-mention-system-target="input"
-                 data-defect-linking-target="searchInput"
-                 placeholder="Type # to search defects..." 
-                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                 autocomplete="off">
+         id="defectSearchInput"
+         data-mention-system-target="input"
+         data-defect-linking-target="searchInput"
+         placeholder="Type # to search defects..." 
+         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+         autocomplete="off"
+         onkeydown="if(event.key === '@'){ event.preventDefault(); return false; }">
           <div data-mention-system-target="dropdown" 
-               class="mention-dropdown absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden"></div>
+           class="mention-dropdown absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden"></div>
         </div>
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
           ⚡ Type <strong>#</strong> to search defects. <strong>Clicking a defect will automatically link it!</strong>
