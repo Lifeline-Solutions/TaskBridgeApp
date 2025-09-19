@@ -1,0 +1,35 @@
+<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+  <h2 style="color: #2563eb;">You've been mentioned!</h2>
+
+  <p>Hi <%= @user.first_name %>,</p>
+
+  <p><strong><%= @current_user.first_name %> <%= @current_user.last_name %></strong> mentioned you in a <%= @context_text %> on defect:</p>
+
+  <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px; margin: 16px 0;">
+    <h3 style="margin-top: 0; color: #1f2937;"><%= @defect.defect_unique %>: <%= @defect.summary %></h3>
+    <p><strong>Priority:</strong> <%= @defect.priority %></p>
+    <p><strong>Product:</strong> <%= @defect.product&.document_name || 'Unknown Product' %></p>
+    
+    <% if @content.present? %>
+      <% content_text = strip_tags(@content.to_s).gsub(/@[^\s]+/, '').gsub(/#[^\s]+/, '').strip %>
+      <% if content_text.present? %>
+        <% preview = content_text.length > 200 ? "#{content_text[0..197]}..." : content_text %>
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;">
+          <p style="font-style: italic; margin: 0;"><%= preview %></p>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+
+  <div style="margin: 24px 0;">
+    <%= link_to "View Defect", @url, 
+        style: "background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;" %>
+  </div>
+
+  <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+
+  <p style="font-size: 12px; color: #6b7280;">
+    This notification was sent because you were mentioned in TaskBridge.
+    <br>Reply directly to this email or click the link above to respond.
+  </p>
+</div>

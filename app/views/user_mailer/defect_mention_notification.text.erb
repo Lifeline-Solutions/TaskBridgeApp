@@ -1,0 +1,25 @@
+You've been mentioned!
+
+Hi <%= @user.first_name %>,
+
+<%= @current_user.first_name %> <%= @current_user.last_name %> mentioned you in a <%= @context_text %> on defect:
+
+<%= @defect.defect_unique %>: <%= @defect.summary %>
+Priority: <%= @defect.priority %>
+Product: <%= @defect.product&.document_name || 'Unknown Product' %>
+
+<% if @content.present? %>
+<% content_text = strip_tags(@content.to_s).gsub(/@[^\s]+/, '').gsub(/#[^\s]+/, '').strip %>
+<% if content_text.present? %>
+<% preview = content_text.length > 200 ? "#{content_text[0..197]}..." : content_text %>
+
+Content preview:
+<%= preview %>
+<% end %>
+<% end %>
+
+View Defect: <%= @url %>
+
+--
+This notification was sent because you were mentioned in TaskBridge.
+Reply directly to this email or visit the link above to respond.
