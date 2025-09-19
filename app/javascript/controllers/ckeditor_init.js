@@ -10,7 +10,7 @@
       'heading', '|',
       'bold', 'italic', 'underline', 'strikethrough', 'link',
       'fontColor', 'fontBackgroundColor',
-      'bulletedList', 'numberedList',
+      'bulletedList', 'numberedList', // ✅ lists (numbered + bullet)
       'outdent', 'indent', '|',
       'insertTable', 'blockQuote', 'code',
       'undo', 'redo', 'removeFormat'
@@ -98,12 +98,10 @@
     if (!el) return;
     // If already initialized, nothing to do
     if (isInitialized(el)) {
-      // console.log(`[CK] already initialized: ${id}`);
       return;
     }
     // If in the middle of initializing, bail out (prevents race)
     if (isInitializing(el)) {
-      // console.log(`[CK] already initializing: ${id}`);
       return;
     }
 
@@ -143,9 +141,6 @@
             form._ckeditorSubmitAttached = true;
           }
         }
-
-        // optional debug:
-        // console.log(`[CK] created editor for #${id}`, editor);
       })
       .catch(err => {
         // creation failed - clean flags so retry can happen
@@ -162,15 +157,12 @@
   }
 
   // Destroy editors before Turbo caches the page / frame.
-  // Turbo caches the DOM and will later restore it; CKEditor instances must be destroyed.
   document.addEventListener('turbo:before-cache', () => {
     editorIds.forEach(id => {
       const el = document.getElementById(id);
       if (el) {
-        // destroy synchronously (async returns promise but we can't block)
         const editor = el._ckeditorInstance;
         if (editor) {
-          // call destroy but don't await here; we still clean dataset / registry
           editor.destroy().catch(() => {});
           delete el._ckeditorInstance;
         }
@@ -181,8 +173,7 @@
     });
   });
 
-  // Hook into common events (DOMContentLoaded for full page load,
-  // turbo:load for initial visits or navigation, turbo:frame-load for frames)
+  // Hook into common events
   ['DOMContentLoaded', 'turbo:load', 'turbo:frame-load'].forEach(evt =>
     document.addEventListener(evt, initializeAllEditors)
   );
