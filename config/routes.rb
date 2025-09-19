@@ -214,5 +214,9 @@ Rails.application.routes.draw do
     get :submodules, on: :member
   end
 
-  resources :reports
+  resources :reports, only: [:index] do
+    collection do
+      get :export_csv
+    end
+  end
 end
