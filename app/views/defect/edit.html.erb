@@ -182,10 +182,10 @@
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Upload additional files (Max size: 25MB each)</p>
             </div>
 
-            <!-- Creator / Issue Type -->
+            <!-- Reported By / Issue Type -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Creator</label>
+                <label class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Reported By</label>
                 <%= text_field_tag :creator_name, @defect.creator&.name, disabled: true,
                       class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-not-allowed' %>
               </div>
