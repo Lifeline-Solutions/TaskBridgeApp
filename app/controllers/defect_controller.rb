@@ -172,7 +172,7 @@ class DefectController < ApplicationController
     # Defects History
     @defects_history = DefectHistory.where(defect_id: @defect.id).order(created_at: :desc)
 
-    @timeline_items = @defect.timeline_items(order: :asc)
+    @timeline_items = @defect.timeline_items(order: :desc)
 
     # Attachment paginations
     @attachments_per_page = 6
