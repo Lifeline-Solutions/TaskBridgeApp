@@ -73,9 +73,7 @@ class DefectController < ApplicationController
 
     # Labels filter (multiple check_boxes -> labels_ids[])
     selected_labels = Array(params[:label_ids]).reject(&:blank?)
-    if selected_labels.any?
-      @defects = @defects.joins(:labels).where(labels: { id: selected_labels })
-    end
+    @defects = @defects.joins(:labels).where(labels: { id: selected_labels }) if selected_labels.any?
 
     # Priority filter (exact, case-insensitive)
     @defects = @defects.where('LOWER(defects.priority) = ?', params[:priority].to_s.downcase) if params[:priority].present?
