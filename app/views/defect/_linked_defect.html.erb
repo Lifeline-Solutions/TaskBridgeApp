@@ -1,0 +1,36 @@
+<div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded border mb-1" 
+     data-defect-id="<%= defect.id %>">
+  <div class="flex-1">
+    <div class="flex items-center space-x-2">
+      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                   <%= link_type == 'blocked_by' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' %>">
+        <% if link_type == 'blocked_by' %>
+          ⏸️ BLOCKED BY
+        <% else %>
+          🚫 BLOCKS
+        <% end %>
+      </span>
+      <a href="<%= defect_path(defect) %>" 
+         class="text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+         target="_blank">
+        <%= defect.defect_unique %>
+      </a>
+    </div>
+    <div class="text-xs text-gray-600 dark:text-gray-400 mt-1 truncate">
+      <%= defect.summary %>
+    </div>
+  </div>
+  
+  <button type="button" 
+          class="ml-2 inline-flex items-center p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+          data-action="click->defect-linking#unlinkDefect"
+          data-target-defect-id="<%= defect.id %>"
+          data-defect-unique="<%= defect.defect_unique %>"
+          title="Unlink">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+    </svg>
+  </button>
+</div>
+
+

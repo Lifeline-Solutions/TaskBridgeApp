@@ -2,7 +2,7 @@ class DefectController < ApplicationController
   before_action :authenticate_user!
   before_action :set_defect,
                 only: %i[show edit update update_priority destroy add_defect add_attachments remove_attachment update_label modal_show add_label remove_label defect_status
-                         create_failure_report]
+                         create_failure_report search_for_linking link_defect unlink_defect]
 
   def index
     # Load defects with needed associations
@@ -470,6 +470,24 @@ class DefectController < ApplicationController
   end
 
   def defect_status
+    # Check if defect is blocked by another defect
+    if @defect.blocked?
+      respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.replace(
+            'modal',
+            partial: 'defect/blocked_status_modal',
+            locals: { defect: @defect }
+          )
+        end
+        format.html do
+          redirect_to defect_path(@defect), alert: "Cannot change status: This defect is blocked by #{@defect.blocking_defect_names}. Please unlink blocking defects first."
+        end
+        format.json { render json: { success: false, message: "Cannot change status: This defect is blocked by #{@defect.blocking_defect_names}" } }
+      end
+      return
+    end
+
     status = Status.find(params[:status_id])
 
     if status.name.strip.downcase == 'failed qa'
@@ -651,6 +669,71 @@ class DefectController < ApplicationController
         format.html { render :show, alert: 'Failed to update label.' }
       end
     end
+  end
+
+  # Defect linking actions
+  def search_for_linking
+    return unless params[:query].present?
+
+    # Search for defects excluding the current one
+    @defects = Defect.published
+      .where.not(id: params[:id])
+      .where('defect_unique ILIKE ? OR summary ILIKE ?',
+             "%#{params[:query]}%", "%#{params[:query]}%")
+      .includes(:product, :creator)
+      .limit(20)
+
+    render json: @defects.map { |defect|
+      {
+        id: defect.id,
+        defect_unique: defect.defect_unique,
+        summary: defect.summary,
+        product_name: defect.product&.name,
+        creator_name: defect.creator&.full_name || defect.creator&.email
+      }
+    }
+  end
+
+  def link_defect
+    target_defect = Defect.find(params[:target_defect_id])
+
+    if @defect.link_as_blocked_by(target_defect)
+      render json: {
+        success: true,
+        message: "Successfully linked #{@defect.defect_unique} as blocked by #{target_defect.defect_unique}",
+        target_defect: {
+          id: target_defect.id,
+          defect_unique: target_defect.defect_unique,
+          title: target_defect.title,
+          status: target_defect.statuses.first&.name
+        }
+      }
+    else
+      render json: {
+        success: false,
+        message: 'Failed to link defects. They may already be linked or there was an error.'
+      }
+    end
+  rescue ActiveRecord::RecordNotFound
+    render json: { success: false, message: 'Defect not found.' }
+  end
+
+  def unlink_defect
+    target_defect = Defect.find(params[:target_defect_id])
+
+    if @defect.unlink_from(target_defect)
+      render json: {
+        success: true,
+        message: "Successfully unlinked #{@defect.defect_unique} from #{target_defect.defect_unique}"
+      }
+    else
+      render json: {
+        success: false,
+        message: 'Failed to unlink defects.'
+      }
+    end
+  rescue ActiveRecord::RecordNotFound
+    render json: { success: false, message: 'Defect not found.' }
   end
 
   private

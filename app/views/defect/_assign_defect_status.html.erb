@@ -6,12 +6,26 @@
 %>
 
 <% unless @defect.statuses.first&.name == 'End Of Production' %>
-  <%= form_with url: defect_status_defect_path(@defect), method: :post, local: false, data: { controller: "status-selector" } do %>
+  <% if @defect.blocked? %>
     <div class="relative flex flex-col gap-2 mt-2">
       <%= select_tag :status_id,
             options_for_select(status_options, @defect.statuses.first&.id),
-            data: { action: "change->status-selector#change", status_selector_target: "select" },
-            class: "border border-gray-300 rounded-lg p-2.5 dark:bg-gray-700 dark:border-gray-600" %>
+            disabled: true,
+            class: "border border-gray-300 rounded-lg p-2.5 dark:bg-gray-700 dark:border-gray-600 bg-gray-100 cursor-not-allowed opacity-60" %>
+      <p class="text-sm text-orange-600 dark:text-orange-400">
+        <span class="font-medium">🚫 Status locked:</span> 
+        This defect is blocked by <%= @defect.blocking_defect_names %>. 
+        <span class="italic">Unlink blocking defects to enable status updates.</span>
+      </p>
     </div>
+  <% else %>
+    <%= form_with url: defect_status_defect_path(@defect), method: :post, local: false, data: { controller: "status-selector" } do %>
+      <div class="relative flex flex-col gap-2 mt-2">
+        <%= select_tag :status_id,
+              options_for_select(status_options, @defect.statuses.first&.id),
+              data: { action: "change->status-selector#change", status_selector_target: "select" },
+              class: "border border-gray-300 rounded-lg p-2.5 dark:bg-gray-700 dark:border-gray-600" %>
+      </div>
+    <% end %>
   <% end %>
 <% end %>

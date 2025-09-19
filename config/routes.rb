@@ -136,6 +136,9 @@ Rails.application.routes.draw do
       post :create_failure_report
       patch 'update_priority'
       patch 'update_label'
+      get :search_for_linking
+      post :link_defect
+      delete :unlink_defect
     end
     resources :bugs do
       member do
