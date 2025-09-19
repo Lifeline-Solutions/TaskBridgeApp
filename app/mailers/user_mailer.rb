@@ -217,14 +217,14 @@ class UserMailer < ApplicationMailer
   def new_defect_email(defect, assigned_emails, creator)
     @defect = defect
     @creator = creator
-    @url = defect_url(@defect)
+    @url = defect_url(@defect, Rails.application.config.action_mailer.default_url_options)
     mail(to: assigned_emails + [creator.email], subject: 'New Defect')
   end
 
   def edit_defect_email(defect, assigned_emails, creator)
     @defect = defect
     @creator = creator
-    @url = defect_url(@defect)
+    @url = defect_url(@defect, Rails.application.config.action_mailer.default_url_options)
     mail(to: assigned_emails + [creator.email], subject: 'Edit Defect')
   end
 
@@ -234,7 +234,9 @@ class UserMailer < ApplicationMailer
     @current_user = current_user
     @content = content
     @context_type = context_type
-    @url = defect_url(@defect)
+
+    # Ensure URL helpers use the correct host from mailer config
+    @url = defect_url(@defect, Rails.application.config.action_mailer.default_url_options)
     @context_text = context_type == 'message' ? 'comment' : 'defect'
 
     subject = "You were mentioned in a #{@context_text} on defect #{@defect.defect_unique}"
