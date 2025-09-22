@@ -82,12 +82,15 @@ export default class extends Controller {
       const data = await response.json()
       if (data.success) {
         this.handleLinkSuccess(defectUnique)
+        window.location.reload()
       } else {
         this.handleLinkSuccess(defectUnique)
+        window.location.reload()
         // this.handleLinkError(data.message || 'Failed to link defects')
       }
     } catch (error) {
       this.handleLinkSuccess(defectUnique)
+      window.location.reload()
       // this.handleLinkError(`Network error: ${error.message}`)
     }
   }

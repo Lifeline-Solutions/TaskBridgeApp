@@ -426,11 +426,9 @@
         renderProjects(matches);
       });
 
-      // Show all projects on focus if input is empty
+      // Show all projects on focus
       projectInput.addEventListener("focus", function () {
-        if (this.value.trim().length === 0) {
-          renderProjects(window.projectsData);
-        }
+        renderProjects(window.projectsData);
       });
 
       // Hide results when clicking outside
@@ -447,26 +445,16 @@
     const bankingTypeHidden = document.getElementById("banking-type-id-field");
 
     if (bankingTypeInput && bankingTypeResults && window.bankingTypesData) {
-      bankingTypeInput.addEventListener("input", function() {
-        const query = this.value.toLowerCase();
+      function renderBankingTypes(list) {
         bankingTypeResults.innerHTML = "";
 
-        if (query.length === 0) {
-          bankingTypeResults.classList.add("hidden");
-          return;
-        }
-
-        const matches = window.bankingTypesData.filter(bt =>
-          bt.name.toLowerCase().includes(query)
-        );
-
-        if (matches.length > 0) {
+        if (list.length > 0) {
           bankingTypeResults.classList.remove("hidden");
-          matches.forEach(bt => {
+          list.forEach(bt => {
             const li = document.createElement("li");
             li.textContent = bt.name;
             li.className = "px-3 py-2 hover:bg-blue-500 hover:text-white cursor-pointer";
-            li.addEventListener("click", function() {
+            li.addEventListener("click", function () {
               bankingTypeInput.value = bt.name;
               if (bankingTypeHidden) bankingTypeHidden.value = bt.id;
               bankingTypeResults.classList.add("hidden");
@@ -476,11 +464,35 @@
         } else {
           bankingTypeResults.classList.add("hidden");
         }
+      }
+
+      // Filtered search on input
+      bankingTypeInput.addEventListener("input", function () {
+        const query = this.value.toLowerCase();
+
+        if (query.length === 0) {
+          bankingTypeResults.classList.add("hidden");
+          return;
+        }
+
+        const matches = window.bankingTypesData.filter(bt =>
+          bt.name.toLowerCase().includes(query)
+        );
+        renderBankingTypes(matches);
+      });
+
+      // Show all BankingTypes on focus
+      bankingTypeInput.addEventListener("focus", function () {
+        renderBankingTypes(window.bankingTypesData);
       });
 
       // Hide results when clicking outside
-      document.addEventListener("click", function(e) {
-        if (bankingTypeResults && !bankingTypeResults.contains(e.target) && e.target !== bankingTypeInput) {
+      document.addEventListener("click", function (e) {
+        if (
+          bankingTypeResults &&
+          !bankingTypeResults.contains(e.target) &&
+          e.target !== bankingTypeInput
+        ) {
           bankingTypeResults.classList.add("hidden");
         }
       });
@@ -492,9 +504,30 @@
     const assigneeHidden = document.getElementById("assignee-id-field");
 
     if (assigneeInput && assigneeResults && window.assigneeUsersData) {
-      assigneeInput.addEventListener("input", function() {
-        const query = this.value.toLowerCase();
+      function renderAssignees(list) {
         assigneeResults.innerHTML = "";
+
+        if (list.length > 0) {
+          assigneeResults.classList.remove("hidden");
+          list.forEach(user => {
+            const li = document.createElement("li");
+            li.textContent = user.name;
+            li.className = "px-3 py-2 hover:bg-blue-500 hover:text-white cursor-pointer";
+            li.addEventListener("click", function () {
+              assigneeInput.value = user.name;
+              if (assigneeHidden) assigneeHidden.value = user.id;
+              assigneeResults.classList.add("hidden");
+            });
+            assigneeResults.appendChild(li);
+          });
+        } else {
+          assigneeResults.classList.add("hidden");
+        }
+      }
+
+      // Filter search on input
+      assigneeInput.addEventListener("input", function () {
+        const query = this.value.toLowerCase();
 
         // Reset hidden field whenever user types
         if (assigneeHidden) assigneeHidden.value = "";
@@ -508,27 +541,21 @@
           user.name.toLowerCase().includes(query)
         );
 
-        if (matches.length > 0) {
-          assigneeResults.classList.remove("hidden");
-          matches.forEach(user => {
-            const li = document.createElement("li");
-            li.textContent = user.name;
-            li.className = "px-3 py-2 hover:bg-blue-500 hover:text-white cursor-pointer";
-            li.addEventListener("click", function() {
-              assigneeInput.value = user.name;
-              if (assigneeHidden) assigneeHidden.value = user.id;
-              assigneeResults.classList.add("hidden");
-            });
-            assigneeResults.appendChild(li);
-          });
-        } else {
-          assigneeResults.classList.add("hidden");
-        }
+        renderAssignees(matches);
+      });
+
+      // Show all assignees on focus
+      assigneeInput.addEventListener("focus", function () {
+        renderAssignees(window.assigneeUsersData);
       });
 
       // Hide results when clicking outside
-      document.addEventListener("click", function(e) {
-        if (assigneeResults && !assigneeResults.contains(e.target) && e.target !== assigneeInput) {
+      document.addEventListener("click", function (e) {
+        if (
+          assigneeResults &&
+          !assigneeResults.contains(e.target) &&
+          e.target !== assigneeInput
+        ) {
           assigneeResults.classList.add("hidden");
         }
       });
