@@ -40,6 +40,17 @@ class Project < ApplicationRecord
   end
   # To have pick a list of users who have role agent only on a dropdown list at the view to assign a project
 
+  def average_servicedesk_rating
+    feedbacks = TicketFeedback.joins(:ticket).where(tickets: { project_id: id })
+    return nil if feedbacks.empty?
+
+    feedbacks.average(:rating).to_f.round(1)
+  end
+
+  def has_ratings?
+    TicketFeedback.joins(:ticket).where(tickets: { project_id: id }).exists?
+  end
+
   private
 
   def content_length_within_limit
