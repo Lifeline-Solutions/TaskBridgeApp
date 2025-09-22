@@ -1,6 +1,14 @@
 # app/mailers/user_mailer.rb
 class UserMailer < ApplicationMailer
-  default from: 'cspm@craftsilicon.com'
+  default from: (
+    if Rails.env.staging?
+      'taskbridgestaging@craftsilicon.com'
+    elsif Rails.env.production?
+      'cspm@craftsilicon.com'
+    else
+      'cspm@craftsilicon.com'
+    end
+  )
   # From Project Controller
   def assignment_email(user, project, current_user, assigned_user)
     @user = user
