@@ -323,8 +323,6 @@ class DefectController < ApplicationController
                     QaModule.none
                   end
 
-    UserMailer.edit_defect_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
-
     respond_to do |format|
       format.html
       format.turbo_stream { render layout: false }
@@ -375,6 +373,7 @@ class DefectController < ApplicationController
         .performed_on(@defect)
         .event('defect.soft_delete')
         .log("Soft-deleted Defect ##{@defect.id}")
+      UserMailer.defect_deleted_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
       redirect_to defect_url, notice: 'Defect was successfully deleted.'
     else
       @defect.destroy
