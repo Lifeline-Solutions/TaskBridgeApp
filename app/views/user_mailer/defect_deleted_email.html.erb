@@ -1,4 +1,4 @@
-<p>Hello,</p>
+<p>Hello</p>
 
 <p>
   Defect with (<b>ID: <%= @defect.defect_unique %></b>) has been deleted.
@@ -11,5 +11,5 @@
 
 
 <p>Best regards,<br>Your Team<br>
-<%= @user&.first_name %> <%= @user&.last_name %>
+<%= @current_user&.first_name %> <%= @current_user&.last_name %>
 </p>

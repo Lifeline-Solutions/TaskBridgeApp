@@ -402,6 +402,9 @@ class DefectController < ApplicationController
         .log("Assigned #{user.name} to Defect ##{@defect.id}")
       redirect_to defect_path(@defect), notice: "#{user.name}  was successfully assigned."
 
+      # Add an email to shot defect change
+      UserMailer.add_user_defect_email(@defect, user.email, current_user).deliver_later
+
       log_event(
         @defect, current_user, 'Assigned to',
         user.present? ? "Defect was assigned to #{user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was Updated but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"

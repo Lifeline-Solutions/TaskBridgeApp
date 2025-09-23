@@ -251,11 +251,17 @@ class UserMailer < ApplicationMailer
     mail(to: @user.email, subject: subject)
   end
 
-  def defect_deleted_email(defect, assigned_emails,  user)
+  def defect_deleted_email(defect, assigned_emails, current_user)
     @defect = defect
+    @current_user = current_user
+    mail(to: assigned_emails, subject: "Defect with Defect ID #{@defect.defect_unique} deleted")
+  end
 
+  def add_user_defect_email(defect, user, current_user)
+    @defect = defect
+    @user = user
+    @current_user = current_user
     @url = defect_url(@defect, Rails.application.config.action_mailer.default_url_options)
-    mail(to: assigned_emails, subject: 'Defect Deleted')
-
+    mail(to: @user.email, subject: "Defect with Defect ID #{@defect.defect_unique} Assigned")
   end
 end
