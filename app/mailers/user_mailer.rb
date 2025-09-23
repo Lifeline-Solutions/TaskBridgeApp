@@ -262,6 +262,6 @@ class UserMailer < ApplicationMailer
     @user = user
     @current_user = current_user
     @url = defect_url(@defect, Rails.application.config.action_mailer.default_url_options)
-    mail(to: @user.email, subject: "Defect with Defect ID #{@defect.defect_unique} Assigned")
+    mail(to: @user.respond_to?(:email) ? @user.email : @user, subject: "Defect with Defect ID #{@defect.defect_unique} Assigned")
   end
 end
