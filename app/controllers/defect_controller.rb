@@ -771,11 +771,33 @@ class DefectController < ApplicationController
       ["#{client_name} - #{groupware_names}", product.id]
     end
 
-    # Get all available statuses for the workflow
-    @statuses = Status.where(name: [
-                               'TO DO', 'In Progress', 'On-Hold', 'Awaiting Client Info', 'Awaiting Build',
-                               'QA Testing', 'Closed', 'Failed QA', 'Blocked', 'Reopened'
-                             ])
+    # Pick the exact display order you want here (first one will be treated as default)
+    ordered_names = [
+      "TO DO",
+      "Awaiting Build",
+      "Awaiting Client API",
+      "Awaiting Client Information",
+      "Blocked",
+      "Failed QA",
+      "In Progress",
+      "On-Hold",
+      "QA Testing",
+      "Reopened",
+      "Support Testing",
+      "Closed"
+    ]
+
+    # Fetch and reorder to match the desired order
+    found_statuses = Status.where(name: ordered_names)
+    lookup = found_statuses.index_by(&:name)
+    @statuses = ordered_names.map { |n| lookup[n] }.compact
+
+
+    # # Get all available statuses for the workflow
+    # @statuses = Status.where(name: [
+    #                            'TO DO', 'In Progress', 'On-Hold', 'Awaiting Client Info', 'Awaiting Build',
+    #                            'QA Testing', 'Closed', 'Failed QA', 'Blocked', 'Reopened'
+    #                          ])
   end
 
   def set_defect

@@ -190,13 +190,17 @@
                 class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
                   Status *
               </label>
-              <%= select_tag "defect[status_ids][]",
-                 options_from_collection_for_select(@statuses, :id, :name,
-                   @defect.statuses.first&.id || Status.find_by(name: "To Do")&.id),
-                     class: "border border-gray-300 rounded-lg
-                       focus:ring-primary-600 focus:border-primary-600 p-2.5
-                       dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400
-                       dark:极:ring-blue-500 dark:focus:border-blue-500" %>
+              <%= select_tag "defect[status_id]",
+                options_from_collection_for_select(
+                  @statuses, :id, :name,
+                  (@defect.statuses.first&.id || @statuses.first&.id)
+                ),
+                id: "defect_status_id",
+                class: "block w-full px-3 py-2 border border-gray-300 rounded-lg
+                        focus:ring-primary-600 focus:border-primary-600 p-2.5
+                        dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400
+                        text-transform: uppercase" %>
+
 
             </div>
 
