@@ -4,18 +4,26 @@
       <%= pie_chart @defects_per_creator.map { |(id, first_name, last_name), count| ["#{first_name} #{last_name}", count] }.to_h,
                     height: "400px",
                     legend: true,
+                    donut: true,
                     library: { title: { text: "" } } %>
     </div>
     <div class="col-span-1">
       <h2>Reporter</h2>
       <hr class="my-2">
+      <% total_tickets = @defects_per_creator.values.sum %>
       <% @defects_per_creator.each do |(id, first_name, last_name), count| %>
-        <div class="flex justify-between w-full mb-1 gap-2">
-          <span class="font-medium"><%= "#{first_name} #{last_name}" %></span>
+        <% percent = total_tickets > 0 ? ((count.to_f / total_tickets) * 100).round(1) : 0 %>
+        <div class="flex justify-between w-full mb-1 gap-3">
+          <span class="font-normal"><%= "#{first_name} #{last_name}" %></span>
           <span><%= count %></span>
+          <span class="font-normal">(<%= percent %>%)</span>
         </div>
       <% end %>
       <hr class="my-2">
+      <div class="flex justify-between w-full mb-1 gap-2">
+        <span class="font-bold">Total Tickets</span>
+        <span class="font-bold"><%= total_tickets %></span>
+      </div>
     </div>
   </div>
 
@@ -24,21 +32,25 @@
       <%= pie_chart @defects_per_status.map { |(id, name), count| [name, count] }.to_h,
                     height: "400px",
                     legend: true,
+                    donut: true,
                     library: { title: { text: "Defects per Status" } } %>
     </div>
     <div class="col-span-1">
       <h2>Status</h2>
       <hr class="my-2">
+      <% total_status_tickets = @defects_per_status.values.sum %>
       <% @defects_per_status.each do |(id, name), count| %>
-        <div class="flex justify-between w-full mb-1 gap-2">
-          <span class="font-bold"><%= name %></span>
+        <% percent = total_status_tickets > 0 ? ((count.to_f / total_status_tickets) * 100).round(1) : 0 %>
+        <div class="flex justify-between w-full mb-1 gap-3">
+          <span class="font-normal"><%= name %></span>
           <span><%= count %></span>
+          <span class="font-normal">(<%= percent %>%)</span>
         </div>
       <% end %>
       <hr class="my-2">
       <div class="flex justify-between w-full mb-1 gap-2">
-      <span class="font-bold">Retest</span>
-        <span><%= @defects_per_retest %></span>
+        <span class="font-bold">Total Tickets</span>
+        <span class="font-bold"><%= total_status_tickets %></span>
       </div>
     </div>
   </div>
