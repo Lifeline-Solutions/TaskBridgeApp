@@ -4,11 +4,11 @@ class QaModulesController < ApplicationController
   before_action :set_products_and_clients_defects, only: %i[new create edit update]
 
   def index
-    if params[:product_id].present?
-      @qa_modules = QaModule.where(product_id: params[:product_id], parent_id: nil).order(:name)
-    else
-      @qa_modules = QaModule.where(parent_id: nil).order(:name)
-    end
+    @qa_modules = if params[:product_id].present?
+                    QaModule.where(product_id: params[:product_id], parent_id: nil).order(:name)
+                  else
+                    QaModule.where(parent_id: nil).order(:name)
+                  end
 
     # fall back
     @qa_modules ||= QaModule.none

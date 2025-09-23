@@ -207,6 +207,10 @@ class DefectController < ApplicationController
     @defect.user_ids = [default_assignee.user_id] if default_assignee&.user_id.present?
 
     set_form_data
+
+    return unless @defect.product_id.present?
+
+    @users = Product.find(@defect.product_id).users
   end
 
   def create
@@ -285,11 +289,8 @@ class DefectController < ApplicationController
     @products = Product.with_quality_assurance_status
 
     @users = @defect.craftsilicon_users.where.not(id: @defect.users.pluck(:id))
-    if @defect.product.present?
-      @users = @users.where(id: @defect.product.users.pluck(:id))
-    end
+    @users = @users.where(id: @defect.product.users.pluck(:id)) if @defect.product.present?
     @users = @users.distinct.order(:first_name, :last_name)
-
 
     @statuses = Status.where(name: [
                                'To Do', 'In Progress', 'On hold', 'Awaiting client info',

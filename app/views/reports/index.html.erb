@@ -10,8 +10,22 @@
   <% end %>
 </div>
 <% if params[:product_id].present? %>
+  <% selected_product_name = nil %>
+  <% if @product_options.present? && params[:product_id].present? %>
+    <% if @product_options.first.is_a?(Array) %>
+      <% selected_product_name = @product_options.find { |opt| opt[1].to_s == params[:product_id].to_s }&.first %>
+    <% else %>
+      <% selected_product = @product_options.find { |prod| prod.id.to_s == params[:product_id].to_s } %>
+      <% selected_product_name = selected_product&.name %>
+    <% end %>
+  <% end %>
   <div class="container justify-between p-4 gap-2">
-  <%= link_to "Download CSV", export_csv_reports_path(product_id: params[:product_id], format: :csv), class: "ml-2 px-4 py-2 bg-green-500 text-white rounded" %>
-  <%= render partial: "defect_per_user", locals: { defects_per_creator: @defects_per_creator } %>
+    <!-- Display name of the product and client when selected -->
+    <div class="flex flex-row gap-6 justify-center">
+
+      <h1 class="font-semibold capitalize"><%= selected_product_name || 'Selected Product' %></h1>
+      <%= link_to "Download CSV", export_csv_reports_path(product_id: params[:product_id], format: :csv), class: "px-4 py-2 bg-green-500 text-white rounded" %>
+    </div>
+    <%= render partial: "defect_per_user", locals: { defects_per_creator: @defects_per_creator } %>
   </div>
 <% end %>
