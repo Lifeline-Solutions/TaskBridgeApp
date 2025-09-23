@@ -4,8 +4,14 @@ class QaModulesController < ApplicationController
   before_action :set_products_and_clients_defects, only: %i[new create edit update]
 
   def index
-    # Only parent (top-level) modules for the dropdown
-    @qa_modules = QaModule.where(parent_id: nil).order(:name)
+    if params[:product_id].present?
+      @qa_modules = QaModule.where(product_id: params[:product_id], parent_id: nil).order(:name)
+    else
+      @qa_modules = QaModule.where(parent_id: nil).order(:name)
+    end
+
+    # fall back
+    @qa_modules ||= QaModule.none
 
     if params[:module_id].present?
       @qa_module = QaModule.find(params[:module_id])
