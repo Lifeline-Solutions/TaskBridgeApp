@@ -283,7 +283,13 @@ class DefectController < ApplicationController
     @defect = Defect.find(params[:id])
     @banking_types = BankingType.all
     @products = Product.with_quality_assurance_status
-    @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
+
+    @users = @defect.craftsilicon_users.where.not(id: @defect.users.pluck(:id))
+    if @defect.product.present?
+      @users = @users.where(id: @defect.product.users.pluck(:id))
+    end
+    @users = @users.distinct.order(:first_name, :last_name)
+
 
     @statuses = Status.where(name: [
                                'To Do', 'In Progress', 'On hold', 'Awaiting client info',
