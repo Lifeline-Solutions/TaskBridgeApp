@@ -36,9 +36,6 @@
   <div class="bg-gray-50 rounded-lg shadow p-0 border border-gray-200">
     <div class="border-b border-gray-200 px-4 py-2 flex items-center justify-between bg-white">
       <span class="font-semibold text-gray-700 text-base">Modules</span>
-      <% if current_user.has_role? :admin %>
-        <%= button_to 'Add Module', new_software_groupware_script_path(@software, @groupware), method: :get, class: 'bg-[#4caf50] hover:bg-[#388e3c] px-3 py-1 rounded font-bold text-white transition-colors duration-200 shadow-sm text-xs' %>
-      <% end %>
     </div>
     <div class="p-4">
       <%= render 'scripts/script' %>
