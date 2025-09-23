@@ -5,11 +5,11 @@ class BankingTypesController < ApplicationController
 
   # GET /banking_types
   def index
-    if params[:product_id].present?
-      @banking_types = BankingType.where(product_id: params[:product_id]).order(:name)
-    else
-      @banking_types = BankingType.all.order(:name)
-    end
+    @banking_types = if params[:product_id].present?
+                       BankingType.where(product_id: params[:product_id]).order(:name)
+                     else
+                       BankingType.all.order(:name)
+                     end
   end
 
   # GET /banking_types/1

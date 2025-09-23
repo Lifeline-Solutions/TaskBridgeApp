@@ -323,8 +323,6 @@ class DefectController < ApplicationController
                     QaModule.none
                   end
 
-    UserMailer.edit_defect_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
-
     respond_to do |format|
       format.html
       format.turbo_stream { render layout: false }
@@ -375,6 +373,7 @@ class DefectController < ApplicationController
         .performed_on(@defect)
         .event('defect.soft_delete')
         .log("Soft-deleted Defect ##{@defect.id}")
+      UserMailer.defect_deleted_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
       redirect_to defect_url, notice: 'Defect was successfully deleted.'
     else
       @defect.destroy
@@ -402,6 +401,9 @@ class DefectController < ApplicationController
         .with_properties(user_id: user.id)
         .log("Assigned #{user.name} to Defect ##{@defect.id}")
       redirect_to defect_path(@defect), notice: "#{user.name}  was successfully assigned."
+
+      # Add an email to shot defect change
+      UserMailer.add_user_defect_email(@defect, user.email, current_user).deliver_later
 
       log_event(
         @defect, current_user, 'Assigned to',
@@ -741,6 +743,43 @@ class DefectController < ApplicationController
     end
   rescue ActiveRecord::RecordNotFound
     render json: { success: false, message: 'Defect not found.' }
+  end
+
+  def defects_download
+    require 'csv'
+    defects = Defect.all
+    defects = defects.where(product_id: params[:product_id]) if params[:product_id].present?
+    defects = defects.where(banking_type_id: params[:banking_type_id]) if params[:banking_type_id].present?
+    defects = defects.where('created_at >= ?', params[:start_date]) if params[:start_date].present?
+    defects = defects.where('created_at <= ?', params[:end_date]) if params[:end_date].present?
+    defects = defects.joins(:statuses).where(statuses: { name: params[:status] }) if params[:status].present?
+
+    csv_data = CSV.generate(headers: true) do |csv|
+      csv << [
+        'Defect ID', 'Status', 'Summary', 'Priority', 'Module', 'Sub Module',
+        'Banking Types', 'Labels', 'Assignee', 'Reporter', 'Project',
+        'Created At'
+      ]
+      defects.find_each do |defect|
+        client_and_groupware = [defect.product.client&.name, defect.product.groupwares.first&.name].compact.join(' - ')
+        csv << [
+          defect.defect_unique,
+          defect.statuses.map(&:name).join(', '),
+          defect.summary,
+          defect.priority,
+          defect.qa_module&.name,
+          defect.submodule&.name,
+          defect.banking_type&.name,
+          defect.labels.map(&:name).join(', '),
+          defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', '),
+          defect.creator&.name,
+          client_and_groupware,
+          defect.created_at.strftime('%Y-%m-%d %H:%M')
+        ]
+      end
+    end
+
+    send_data csv_data, filename: "defects_#{Time.zone.now.strftime('%Y%m%d_%H%M%S')}.csv", type: 'text/csv'
   end
 
   private

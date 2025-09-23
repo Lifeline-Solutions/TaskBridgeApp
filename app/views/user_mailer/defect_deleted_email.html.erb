@@ -1,0 +1,15 @@
+<p>Hello</p>
+
+<p>
+  Defect with (<b>ID: <%= @defect.defect_unique %></b>) has been deleted.
+</p>
+
+<p>
+  <b>Assigned to:</b>
+  <%= @defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', ') %>
+</p>
+
+
+<p>Best regards,<br>Your Team<br>
+<%= @current_user&.first_name %> <%= @current_user&.last_name %>
+</p>

@@ -194,6 +194,16 @@
             <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
           </svg>
         <% end %>
+        <!-- Download CSV Link -->
+        <%= link_to "Download CSV", defects_download_defect_index_path(
+            format: :csv,
+            product_id: params[:product_id],
+            banking_type_id: params[:banking_type_id],
+            start_date: params[:start_date],
+            end_date: params[:end_date],
+            status: params[:status],
+          ), class: "text-sm font-medium flex items-center border border-gray-300 rounded px-3 py-2 bg-blue-600 text-slate-100 hover:border-slate-100 hover:text-white focus:bg-blue-600 focus:border-blue-600 focus:text-white transition" %>
+
       </div>
 
     </div>
