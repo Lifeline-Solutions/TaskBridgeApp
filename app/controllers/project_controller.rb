@@ -75,8 +75,14 @@ class ProjectController < ApplicationController
       if params[:query].present?
         query = "%#{params[:query]}%"
         @ticket = @ticket.where(
-          'action_text_rich_texts.body ILIKE :q OR issue ILIKE :q OR priority ILIKE :q OR statuses.name ILIKE :q OR unique_id ILIKE :q
-        OR users.first_name ILIKE :q OR users.last_name ILIKE :q OR tickets.created_at::text ILIKE :q',
+          'action_text_rich_texts.body ILIKE :q
+           OR issue ILIKE :q
+           OR priority ILIKE :q
+           OR statuses.name ILIKE :q
+           OR unique_id ILIKE :q
+           OR users.first_name ILIKE :q
+           OR users.last_name ILIKE :q
+           OR tickets.created_at::text ILIKE :q',
           q: query
         )
       end
