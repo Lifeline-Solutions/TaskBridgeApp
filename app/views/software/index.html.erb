@@ -15,16 +15,29 @@
   <%= render 'software/software' %>
   <div class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-10 mt-5 justify-center">
     <!-- Pagination Controls -->
-    <div class="pagination flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+    <div class="pagination flex flex-col sm:flex-row items-center gap-2 sm:gap-4 w-full sm:w-auto">
       <% if @page > 1 %>
-        <%= link_to 'Previous', software_index_path(@client, page: @page - 1), class: 'mb-2 sm:mb-0 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] px-4 py-2 rounded font-bold text-slate-100 transition-colors duration-200 w-full sm:w-auto text-center' %>
+        <%= link_to 'Previous', software_index_path(@client, page: @page - 1), class: 'h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] px-4 py-2 rounded font-bold text-slate-100 transition-colors duration-200 w-full sm:w-auto text-center shadow-sm focus:outline-none focus:ring-2 focus:ring-[#3F8CFF]' %>
       <% end %>
-      <span class="text-sm sm:text-base font-medium text-gray-700 px-2 py-1 rounded bg-gray-100">
+      <span class="text-sm sm:text-base font-medium text-gray-700 px-2 py-1 rounded bg-gray-100 w-full sm:w-auto text-center">
         Page <%= @page %> of <%= @total_pages %>
       </span>
       <% if @page < @total_pages %>
-        <%= link_to 'Next', software_index_path(@client, page: @page + 1), class: 'mb-2 sm:mb-0 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] px-4 py-2 rounded font-bold text-slate-100 transition-colors duration-200 w-full sm:w-auto text-center' %>
+        <%= link_to 'Next', software_index_path(@client, page: @page + 1), class: 'h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] px-4 py-2 rounded font-bold text-slate-100 transition-colors duration-200 w-full sm:w-auto text-center shadow-sm focus:outline-none focus:ring-2 focus:ring-[#3F8CFF]' %>
       <% end %>
     </div>
   </div>
 </div>
+
+<style>
+  @media (max-width: 640px) {
+    .pagination {
+      flex-direction: column !important;
+      width: 100% !important;
+    }
+    .pagination a, .pagination span {
+      width: 100% !important;
+      margin-bottom: 0.5rem;
+    }
+  }
+</style>
