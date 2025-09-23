@@ -745,6 +745,36 @@ class DefectController < ApplicationController
     render json: { success: false, message: 'Defect not found.' }
   end
 
+  def defects_download
+    require 'csv'
+    defects = Defect.all
+    defects = defects.where(product_id: params[:product_id]) if params[:product_id].present?
+    defects = defects.where(banking_type_id: params[:banking_type_id]) if params[:banking_type_id].present?
+    defects = defects.where('created_at >= ?', params[:start_date]) if params[:start_date].present?
+    defects = defects.where('created_at <= ?', params[:end_date]) if params[:end_date].present?
+    defects = defects.joins(:statuses).where(statuses: { name: params[:status] }) if params[:status].present?
+
+    csv_data = CSV.generate(headers: true) do |csv|
+      csv << [
+        'Defect ID', 'Summary', 'Product', 'Banking Type', 'Priority', 'Status', 'Assignees', 'Created At'
+      ]
+      defects.find_each do |defect|
+        csv << [
+          defect.defect_unique,
+          defect.summary,
+          defect.product&.name,
+          defect.banking_type&.name,
+          defect.priority,
+          defect.statuses.map(&:name).join(', '),
+          defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', '),
+          defect.created_at.strftime('%Y-%m-%d %H:%M')
+        ]
+      end
+    end
+
+    send_data csv_data, filename: "defects_#{Time.zone.now.strftime('%Y%m%d_%H%M%S')}.csv", type: 'text/csv'
+  end
+
   private
 
   def authorize_view_failure_reports!

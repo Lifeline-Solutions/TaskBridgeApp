@@ -125,6 +125,7 @@ Rails.application.routes.draw do
       get 'modules_by_product'
       get 'get_submodules'  # For loading submodules dynamically
       get :index_show
+      get :defects_download
     end
     member do
       patch :add_label
