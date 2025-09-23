@@ -53,12 +53,16 @@
         <div id="assigneeDropdown"
              class="absolute mt-1 w-80 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg hidden z-10"
              data-assignee-editor-target="dropdown">
-          <% defect.craftsilicon_users.where.not(id: defect.users.pluck(:id)).distinct.each do |user| %>
-            <div class="dropdown-item px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-500 cursor-pointer"
-                 data-user-id="<%= user.id %>"
-                 data-action="click->assignee-editor#select">
-              <%= user.name %>
-            </div>
+          <% if defect.product.present? %>
+            <% defect.craftsilicon_users.where.not(id: defect.users.pluck(:id)).where(id: defect.product.users.pluck(:id)).distinct.each do |user| %>
+              <div class="dropdown-item px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-500 cursor-pointer"
+                   data-user-id="<%= user.id %>"
+                   data-action="click->assignee-editor#select">
+                <%= user.name %>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="px-4 py-2 text-red-500">No product context available.</div>
           <% end %>
         </div>
 

@@ -1,7 +1,8 @@
 <%
   status_options = Status.where(name: [
     'TO DO','In Progress','On-Hold','Awaiting Client Info',
-    'Awaiting Build','QA Testing','Closed','Failed QA','Blocked','Reopened'
+    'Awaiting Build','QA Testing','Closed','Failed QA',
+    'Blocked','Reopened', 'Support Testing'
   ]).pluck(:name, :id)
 %>
 
