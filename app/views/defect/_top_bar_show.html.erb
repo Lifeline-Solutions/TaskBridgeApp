@@ -12,7 +12,13 @@
         params: { product_id: @defects.first.product_id },
         class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded-md font-bold rounded-lg text-slate-100',
         id: 'button' %>
-      <%= button_to 'Banking Types ', banking_types_path, method: :get, class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded-md font-bold rounded-lg text-slate-100', id: 'button' %>
+
+      <%= button_to 'Banking Types',
+        banking_types_path(product_id: @defects.first.product_id),
+        method: :get,
+        params: { product_id: @defects.first.product_id },
+        class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded-md font-bold rounded-lg text-slate-100',
+        id: 'button' %>
 
       <%= render 'default_defect_assignees/button' %>
     </div>
