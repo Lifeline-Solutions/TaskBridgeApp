@@ -1,42 +1,45 @@
-
-<div class="relative overflow-x-auto shadow-md sm:rounded-lg w-[100%] ">
-  <table class="w-full text-sm text-left rtl:text-right">
-    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-    <tr>
-      <th scope="col" class="px-6 py-3">
-        Name of the Status
-      </th>
-      <% if can? :edit, @status %>
-        <th scope="col" class="px-6 py-3">
-          EDIT
-        </th>
-      <% end %>
-      <% if can? :edit, @status %>
-        <th scope="col" class="px-6 py-3">
-          DELETE
-        </th>
-      <% end %>
-    </tr>
-    </thead>
-    <tbody>
-    <% @status.each do |status| %>
-      <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 h-[12px]">
-        <th scope="row" class="px-6 py-4 font-medium  whitespace-nowrap ">
-          <%= status.name   %>
-        </th>
-
-        <% if can? :edit, status %>
-          <td class="px-4 py-4">
-            <%= link_to 'EDIT', edit_status_path(status), class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100'  %>
-          </td>
+<div class="overflow-x-auto rounded w-full bg-white dark:bg-gray-900 shadow border border-gray-200 dark:border-gray-800">
+  <table class="min-w-full text-sm divide-y divide-gray-200 dark:divide-gray-700">
+    <thead class="bg-gray-50 dark:bg-gray-800">
+      <tr>
+        <th class="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-gray-700 dark:text-gray-200">Status Name</th>
+        <% if can? :edit, @status %>
+          <th class="px-2 sm:px-4 py-2 sm:py-3 text-center font-semibold text-gray-700 dark:text-gray-200">Edit</th>
         <% end %>
-        <td class="px-4 py-4">
-          <% if can? :delete, status %>
-            <%= button_to 'DELETE', status, method: :delete, data: { 'turbo_method': :delete, 'turbo-confirm': 'Are you sure?' }, class: "border border-b-4 border-r-2 border-red-900 p-2 rounded-lg uppercase text-red-900 font-bold"  %>
-          <% end %>
-        </td>
+        <% if can? :delete, @status %>
+          <th class="px-2 sm:px-4 py-2 sm:py-3 text-center font-semibold text-gray-700 dark:text-gray-200">Delete</th>
+        <% end %>
       </tr>
-    <% end %>
+    </thead>
+    <tbody class="bg-white dark:bg-gray-900">
+      <% @status.each do |status| %>
+        <tr class="border-b dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors">
+          <td class="px-2 sm:px-4 py-2 sm:py-3 flex items-center gap-2">
+            <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+            <span class="font-medium text-gray-800 dark:text-gray-100 text-sm sm:text-base"><%= status.name %></span>
+          </td>
+          <% if can? :edit, status %>
+            <td class="px-2 sm:px-4 py-2 sm:py-3 text-center">
+              <%= link_to edit_status_path(status), class: 'inline-flex items-center px-2 sm:px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors shadow-sm text-xs sm:text-sm' do %>
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.536-6.536a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13z"/>
+                </svg>
+                <span class="hidden sm:inline">Edit</span>
+              <% end %>
+            </td>
+          <% end %>
+          <% if can? :delete, status %>
+            <td class="px-2 sm:px-4 py-2 sm:py-3 text-center">
+              <%= button_to status_path(status), method: :delete, data: { turbo_confirm: 'Are you sure?' }, class: 'inline-flex items-center px-2 sm:px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded transition-colors shadow-sm text-xs sm:text-sm' do %>
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+                <span class="hidden sm:inline">Delete</span>
+              <% end %>
+            </td>
+          <% end %>
+        </tr>
+      <% end %>
     </tbody>
   </table>
 </div>
