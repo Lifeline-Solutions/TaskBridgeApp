@@ -756,17 +756,24 @@ class DefectController < ApplicationController
 
     csv_data = CSV.generate(headers: true) do |csv|
       csv << [
-        'Defect ID', 'Summary', 'Product', 'Banking Type', 'Priority', 'Status', 'Assignees', 'Created At'
+        'Defect ID', 'Status', 'Summary', 'Priority', 'Module', 'Sub Module',
+        'Banking Types', 'Labels', 'Assignee', 'Reporter', 'Project',
+        'Created At'
       ]
       defects.find_each do |defect|
+        client_and_groupware = [defect.product.client&.name, defect.product.groupwares.first&.name].compact.join(' - ')
         csv << [
           defect.defect_unique,
-          defect.summary,
-          defect.product&.name,
-          defect.banking_type&.name,
-          defect.priority,
           defect.statuses.map(&:name).join(', '),
+          defect.summary,
+          defect.priority,
+          defect.qa_module&.name,
+          defect.submodule&.name,
+          defect.banking_type&.name,
+          defect.labels.map(&:name).join(', '),
           defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', '),
+          defect.creator&.name,
+          client_and_groupware,
           defect.created_at.strftime('%Y-%m-%d %H:%M')
         ]
       end
