@@ -1,27 +1,35 @@
 <% provide(:title, "Statuses") %>
 
 <% if flash[:notice] %>
-  <div class="bg-[#1a237e] border border-[#4caf50] text-white px-4 py-3 rounded mb-4 shadow-md">
-    <p><%= flash[:notice] %></p>
+  <div class="bg-[#1a237e] border-l-4 border-[#4caf50] text-white px-6 py-4 rounded-lg mb-6 shadow-lg flex items-center gap-3">
+    <svg class="w-6 h-6 text-[#4caf50]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+    <span><%= flash[:notice] %></span>
   </div>
 <% elsif flash[:alert] %>
-  <div class="bg-red-600 border border-red-400 text-white px-4 py-3 rounded mb-4 shadow-md">
-    <p><%= flash[:alert] %></p>
+  <div class="bg-red-600 border-l-4 border-red-400 text-white px-6 py-4 rounded-lg mb-6 shadow-lg flex items-center gap-3">
+    <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+    <span><%= flash[:alert] %></span>
   </div>
 <% end %>
 
-<%= render 'status/top_status' %>
-<%= render 'status/status_list' %>
-<!-- Pagination -->
-<div class="flex gap-10 mt-5">
-  <!-- Pagination Controls -->
-  <div class="pagination">
+<div class="space-y-6">
+  <%= render 'status/top_status' %>
+  <%= render 'status/status_list' %>
+</div>
+
+<!-- Simple Pagination -->
+<div class="flex justify-center mt-8">
+  <nav class="flex items-center gap-2">
     <% if @page > 1 %>
-      <%= link_to 'Previous', status_index_path(page: @page - 1), class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
+      <%= link_to '< Prev', status_index_path(page: @page - 1), class: 'px-3 py-1 rounded bg-[#3F8CFF] text-white hover:bg-[#3A81EB] transition' %>
+    <% else %>
+      <span class="px-3 py-1 rounded bg-gray-200 text-gray-400 cursor-not-allowed">← Prev</span>
     <% end %>
-    <span>Page <%= @page %> of <%= @total_pages %></span>
+    <span class="px-3 py-1 text-[#1a237e] font-medium">Page <%= @page %> of <%= @total_pages %></span>
     <% if @page < @total_pages %>
-      <%= link_to 'Next', status_index_path(page: @page + 1), class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
+      <%= link_to 'Next >', status_index_path(page: @page + 1), class: 'px-3 py-1 rounded bg-[#3F8CFF] text-white hover:bg-[#3A81EB] transition' %>
+    <% else %>
+      <span class="px-3 py-1 rounded bg-gray-200 text-gray-400 cursor-not-allowed">Next →</span>
     <% end %>
-  </div>
+  </nav>
 </div>
