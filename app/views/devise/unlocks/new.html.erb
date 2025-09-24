@@ -1,33 +1,29 @@
 <% provide(:title, "Resend Unlock Instructions") %>
-
-<%= form_for(resource, as: resource_name, url: unlock_path(resource_name), html: { method: :post },data: {turbo: false}) do |f| %>
-  <section class="mx-auto pr-64 ">
-    <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0 w-[600px]">
-      <div class="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white">
-
-        <%= image_tag 'logo.png', class: 'w-72 hidden dark:block' %>
-        <%= image_tag 'logo-white-bg.png', class: 'w-72 block dark:hidden' %>
-      </div>
-      <div class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
-        <div class="p-6 space-y-4 md:space-y-6 sm:p-8">
-          <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-            Resend unlock instructions
-          </h1>
-          <p class="text-sm font-light">
-            <%= render "devise/shared/error_messages", resource: resource %>
-          </p>
-          <div class="field">
-            <%= f.label :email, :Email, class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white"  %><br />
-            <%= f.email_field :email, autofocus: true, autocomplete: "email", class: " h-12 border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg w-full dark:text-black", placeholder: 'ab@craftsilicon.com', required: true %>
-          </div>
-          <div class="actions">
-            <%= f.submit "Resend unlock instructions", class: 'capitalize mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100 w-full' %>
-          </div>
-          <p class="mt-4 text-sm font-light text-gray-900 dark:text-white">
-            <%= render "devise/shared/links" %>
-          </p>
+<div class="min-h-screen w-full flex flex-col md:flex-row bg-gray-50 dark:bg-gray-900">
+  <!-- Left side image/logo (always visible, on top for mobile, left for desktop) -->
+  <!-- Left side image/logo (top for mobile, left for desktop) -->
+  <div class="w-full md:w-1/2 flex flex-col md:justify-center items-center bg-gray-100 dark:bg-gray-900 min-h-[200px] md:min-h-screen py-8 md:py-0 order-1 md:order-none">
+    <div class="flex flex-col items-center w-full px-4">
+      <%= image_tag 'logo.png', class: 'w-24 h-24 md:w-32 md:h-32 object-contain mb-4 hidden dark:block mx-auto transition-all duration-300' %>
+      <%= image_tag 'logo-white-bg.png', class: 'w-24 h-24 md:w-32 md:h-32 object-contain mb-4 block dark:hidden mx-auto transition-all duration-300' %>
+      <p class="text-base md:text-lg text-gray-600 dark:text-gray-300 text-center">Unlock your account</p>
+    </div>
+  </div>
+  <!-- Right side form -->
+  <div class="w-full md:w-1/2 flex items-center justify-center bg-white dark:bg-gray-800 min-h-[400px] md:min-h-screen py-8 md:py-0 order-2 md:order-none">
+    <%= form_for(resource, as: resource_name, url: unlock_path(resource_name), html: { method: :post, class: 'w-full' }, data: {turbo: false}) do |f| %>
+      <div class="w-full max-w-sm sm:max-w-md mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sm:p-8">
+        <h1 class="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">Resend unlock instructions</h1>
+        <%= render "devise/shared/error_messages", resource: resource %>
+        <div class="mb-4">
+          <label for="email" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">Email</label>
+          <%= f.email_field :email, autofocus: true, autocomplete: "email", class: "h-12 border border-gray-300 focus:border-blue-500 rounded-lg w-full px-3 dark:text-black", placeholder: 'ab@craftsilicon.com', required: true %>
+        </div>
+        <%= f.submit "Resend unlock instructions", class: 'capitalize h-12 bg-blue-600 hover:bg-blue-700 transition-colors p-3 rounded-lg font-bold text-white w-full mb-4' %>
+        <div class="text-center text-sm text-gray-600 dark:text-gray-300">
+          <%= render "devise/shared/links" %>
         </div>
       </div>
-    </div>
-  </section>
-<% end %>
+    <% end %>
+  </div>
+</div>
