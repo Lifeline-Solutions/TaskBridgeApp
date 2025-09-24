@@ -8,12 +8,13 @@
     <%= f.label :description, 'Description', class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white" %>
     <%= f.text_area :description, class: "border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full", placeholder: 'Enter team description' %>
   </div>
+
   <div class="mb-2">
     <%= f.label :user_ids, 'Pick Agents and Project Managers', class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white" %>
   </div>
   <div class="relative w-full mb-4">
     <!-- Searchable Input -->
-    <input type="text" id="searchUser" class="border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full"
+    <input type="text" id="searchUser" class="border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full px-3 py-2 transition-all duration-200 focus:ring-2 focus:ring-blue-400"
            placeholder="Search User..." onclick="showDropdown()"  onkeyup="filterUserDropdown()" autocomplete="off">
 
     <!-- Selected Items Container -->
@@ -30,29 +31,59 @@
     <div id="hiddenUserInputs"></div>
 
     <!-- Dropdown List -->
-    <div id="userDropdown" class="absolute w-full bg-white dark:bg-gray-700 border rounded-lg mt-1 shadow-lg max-h-40 overflow-y-auto hidden z-10">
-      <div class="flex justify-start px-4 py-2">
+    <div id="userDropdown" class="absolute w-full bg-white dark:bg-gray-700 border rounded-lg mt-1 shadow-lg max-h-40 overflow-y-auto hidden z-20 transition-all duration-200">
+      <div class="flex justify-between items-center px-4 py-2 border-b dark:border-gray-600">
+        <span class="text-sm text-gray-500 dark:text-gray-300">Select User</span>
         <button type="button" onclick="hideDropdown()" class="text-gray-500 hover:text-gray-700 text-left">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-5">
             <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-1.72 6.97a.75.75 0 1 0-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06L12 13.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L13.06 12l1.72-1.72a.75.75 0 1 0-1.06-1.06L12 10.94l-1.72-1.72Z" clip-rule="evenodd" />
           </svg>
         </button>
       </div>
       <% users = User.with_assigned_role.distinct - @team.users %>
       <% users.each do |user| %>
-        <div class="dropdown-item px-4 py-2 hover:bg-gray-100 hover:dark:bg-gray-500 cursor-pointer" data-user-id="<%= user.id %>" onclick="selectUser(this)">
+        <div class="dropdown-item px-4 py-2 hover:bg-blue-100 hover:dark:bg-blue-900 cursor-pointer transition-colors duration-150" data-user-id="<%= user.id %>" onclick="selectUser(this)">
           <%= user.name %>
         </div>
       <% end %>
     </div>
   </div>
+
   <div class="mb-5">
-    <%= f.submit 'Update Team', class: "h-12 border border-black dark:border-white border-b-4 border-r-2 p-3 rounded font-semibold" %>
+    <%= f.submit 'Update Team', class: "h-12 border border-black dark:border-white border-b-4 border-r-2 p-3 rounded font-semibold w-full sm:w-auto transition-all duration-200 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-700" %>
   </div>
 <% end %>
 
+<style>
+  @media (max-width: 640px) {
+    #userDropdown {
+      max-height: 200px;
+      font-size: 0.95rem;
+    }
+    #selectedUsers > div {
+      font-size: 0.95rem;
+      padding: 0.25rem 0.5rem;
+    }
+    .mb-5, .mb-4, .mb-2 {
+      margin-bottom: 1rem !important;
+    }
+    .h-12 {
+      height: 2.5rem !important;
+    }
+  }
+  @media (max-width: 400px) {
+    #userDropdown {
+      font-size: 0.9rem;
+    }
+    #searchUser {
+      font-size: 0.95rem;
+      padding: 0.5rem 0.75rem;
+    }
+  }
+</style>
+
 <script>
-  let selectedUsers = <%= @team.users.map { |user| { id: user.id, name: user.name } }.to_json.html_safe %>;
+  let selectedUsers = <%= @team.users.map { |user| { id: user.id.to_s, name: user.name } }.to_json.html_safe %>;
 
   function showDropdown() {
     document.getElementById("userDropdown").classList.remove("hidden");
@@ -88,7 +119,7 @@
       // Add a new hidden input for each selected user
       let input = document.createElement("input");
       input.type = "hidden";
-      input.name = "team[user_ids][]"; // Ensure it's an array
+      input.name = "team[user_ids][]";
       input.value = userId;
       input.classList.add(`user-input-${userId}`);
       document.getElementById("hiddenUserInputs").appendChild(input);
@@ -97,7 +128,6 @@
       element.remove();
     }
 
-    // Hide Dropdown
     hideDropdown();
   }
 
@@ -113,12 +143,21 @@
 
     // Add the user back to the dropdown
     let userDropdown = document.getElementById("userDropdown");
-    let userName = element.parentElement.textContent.trim().slice(0, -1); // Remove the × character
+    let userName = element.parentElement.textContent.trim().slice(0, -1);
     let dropdownItem = document.createElement("div");
-    dropdownItem.className = "dropdown-item px-4 py-2 hover:bg-gray-100 cursor-pointer";
+    dropdownItem.className = "dropdown-item px-4 py-2 hover:bg-blue-100 hover:dark:bg-blue-900 cursor-pointer transition-colors duration-150";
     dropdownItem.setAttribute("data-user-id", userId);
     dropdownItem.setAttribute("onclick", "selectUser(this)");
     dropdownItem.textContent = userName;
     userDropdown.appendChild(dropdownItem);
   }
+
+  // Hide dropdown on outside click (mobile-friendly)
+  document.addEventListener('click', function(event) {
+    const dropdown = document.getElementById('userDropdown');
+    const search = document.getElementById('searchUser');
+    if (!dropdown.contains(event.target) && event.target !== search) {
+      hideDropdown();
+    }
+  });
 </script>

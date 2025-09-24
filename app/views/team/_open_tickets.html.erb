@@ -1,168 +1,122 @@
-<div class="overflow-x-auto shadow-md sm:rounded-lg w-full p-1">
-  <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-    <tr>
-      <th scope="col" class="px-2">
-        Client Name
-      </th>
-      <th scope="col" class="px-2 py-3">
-        <div class="flex items-center">
-          Ticket ID
-          <a href="#">
-            <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
-            </svg>
-          </a>
-        </div>
-      </th>
-      <th scope="col" class="px-2 py-3">
-        <div class="flex items-center">
-          Issue
-          <a href="#">
-            <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
-            </svg>
-          </a>
-        </div>
-      </th>
-      <th scope="col" class="px-2 py-3">
-        <div class="flex items-center">
-          Priority
-          <a href="#">
-            <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
-            </svg>
-          </a>
-        </div>
-      </th>
-      <th scope="col" class="px-2 py-3">
-        <div class="flex items-center">
-          Summary
-          <a href="#">
-            <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
-            </svg>
-          </a>
-        </div>
-      </th>
-      <th scope="col" class="px-2 py-3">
-        <div class="flex items-center">
-          Status
-          <a href="#">
-            <svg class="w-3 h-3 ms-1.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
-            </svg>
-          </a>
-        </div>
-      </th>
-      <th scope="col" class="px-2 ">
-        VIEW
-      </th>
-    </tr>
+<div class="overflow-x-auto shadow-lg rounded-lg w-full p-2 sm:p-4 bg-white dark:bg-gray-900">
+  <table class="min-w-full text-sm text-left text-gray-700 dark:text-gray-300">
+    <thead class="text-xs uppercase bg-gray-100 dark:bg-gray-800">
+      <tr>
+        <th class="px-2 sm:px-3 py-2 font-semibold whitespace-nowrap">Client Name</th>
+        <th class="px-2 sm:px-3 py-2 font-semibold whitespace-nowrap">
+          <div class="flex items-center gap-1">
+            Ticket ID
+            <a href="#" class="hover:text-blue-500">
+              <svg class="w-3 h-3" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
+              </svg>
+            </a>
+          </div>
+        </th>
+        <th class="px-2 sm:px-3 py-2 font-semibold whitespace-nowrap">
+          <div class="flex items-center gap-1">
+            Issue
+            <a href="#" class="hover:text-blue-500">
+              <svg class="w-3 h-3" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
+              </svg>
+            </a>
+          </div>
+        </th>
+        <th class="px-2 sm:px-3 py-2 font-semibold whitespace-nowrap">
+          <div class="flex items-center gap-1">
+            Priority
+            <a href="#" class="hover:text-blue-500">
+              <svg class="w-3 h-3" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
+              </svg>
+            </a>
+          </div>
+        </th>
+        <th class="px-2 sm:px-3 py-2 font-semibold whitespace-nowrap">
+          <div class="flex items-center gap-1">
+            Summary
+            <a href="#" class="hover:text-blue-500">
+              <svg class="w-3 h-3" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
+              </svg>
+            </a>
+          </div>
+        </th>
+        <th class="px-2 sm:px-3 py-2 font-semibold whitespace-nowrap">
+          <div class="flex items-center gap-1">
+            Status
+            <a href="#" class="hover:text-blue-500">
+              <svg class="w-3 h-3" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8.574 11.024h6.852a2.075 2.075 0 0 0 1.847-1.086 1.9 1.9 0 0 0-.11-1.986L13.736 2.9a2.122 2.122 0 0 0-3.472 0L6.837 7.952a1.9 1.9 0 0 0-.11 1.986 2.074 2.074 0 0 0 1.847 1.086Zm6.852 1.952H8.574a2.072 2.072 0 0 0-1.847 1.087 1.9 1.9 0 0 0 .11 1.985l3.426 5.05a2.123 2.123 0 0 0 3.472 0l3.427-5.05a1.9 1.9 0 0 0 .11-1.985 2.074 2.074 0 0 0-1.846-1.087Z"/>
+              </svg>
+            </a>
+          </div>
+        </th>
+        <th class="px-2 sm:px-3 py-2 font-semibold text-center whitespace-nowrap">View</th>
+      </tr>
     </thead>
     <tbody>
-
-
-    <% @open_tickets.each do |ticket| %>
-      <% if ticket.present? %>
-        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 ">
-          <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white capitalize">
-            <%= link_to ticket.project.title, project_ticket_path(ticket.project, ticket)   %>
-          </th>
-          <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
-            <% if ticket.unique_id.present? %>
-              <%= link_to ticket.unique_id, project_ticket_path(ticket.project, ticket)  %>
-            <% end %>
-          </th>
-          <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-            <%= link_to ticket.issue, project_ticket_path(ticket.project, ticket)   %>
-          </th>
-          <td class="px-2 py-2 ">
-            <% if ticket.priority == 'SEVERITY 1' %>
-              <p class='bg-red-900 p-1 text-center text-white font-bold rounded'><%= ticket.priority %></p>
-            <% elsif ticket.priority == 'SEVERITY 2' %>
-              <p class='bg-red-600 p-1 text-center text-white font-bold rounded'><%= ticket.priority %></p>
-            <% elsif ticket.priority == 'SEVERITY 3' %>
-              <p class='bg-yellow-500 p-1 text-center text-white font-bold rounded'><%= ticket.priority %></p>
-            <% else %>
-              <p class='bg-blue-500 p-1 text-center text-white font-bold rounded'><%= ticket.priority %></p>
-            <% end %>
-          </td>
-
-          <td class="px-2 py-2 truncate w-64 ">
-            <% if ticket.subject.present? %>
-              <%= ticket.subject.truncate(50) %>
-            <% end %>
-          </td>
-          <td class="px-2 py-2 ">
-            <% ticket.statuses.each do |status| %>
-              <% case status.name %>
-            <% when 'Resolved' %>
-                <p class='bg-green-500 text-center text-slate-100 font-semibold rounded p-1 border-r-2 border-b-4 border-green-600'>
-                  <%= status.name %>
-                </p>
-              <% when 'Closed' %>
-                <p class='bg-gray-800 text-center text-slate-100 font-semibold rounded p-1 border-r-2 border-b-4 border-gray-900'>
-                  <%= status.name %>
-                </p>
-              <% when 'Reopened' %>
-                <p class="bg-red-900 text-center text-slate-100 font-semibold rounded p-1 border-r-2 border-b-4 border-red-800">
-                  <%= status.name %>
-                </p>
-              <% when 'New' %>
-                <p class="bg-red-500 text-center text-slate-100 font-semibold rounded p-1 border-r-2 border-b-4 border-red-600">
-                  <%= status.name %>
-                </p>
-              <% when 'Under Development' %>
-                <p class='bg-blue-300 text-center text-slate-100 font-semibold rounded p-1 border-r-2 border-b-4 border-blue-400'>
-                  <%= status.name %>
-                </p>
-              <% when 'Work in Progress' %>
-                <p class='bg-gray-500 text-center text-slate-100 font-semibold rounded p-1 border-r-2 border-b-4 border-gray-600'>
-                  <%= status.name %>
-                </p>
-              <% when 'QA Testing' %>
-                <p class='bg-pink-500 text-center text-slate-100 font-semibold rounded p-1 border-r-2 border-b-4 border-pink-600'>
-                  <%= status.name %>
-                </p>
-              <% when 'Awaiting Build' %>
-                <p class='text-center text-gray-900 dark:text-slate-100 font-semibold rounded p-1 border-black dark:border-slate-100 border border-b-4 border-r-2'>
-                  <%= status.name %>
-                </p>
-              <% when 'Client Confirmation Pending' %>
-                <p class='bg-purple-500 text-center text-slate-100 font-semibold rounded p-1 border-r-2 border-b-4 border-purple-600'>
-                  <%= status.name %>
-                </p>
-              <% when 'On-Hold' %>
-                <p class='bg-yellow-300 text-center text-black font-semibold rounded p-1 border-r-2 border-b-4 border-yellow-400'>
-                  <%= status.name %>
-                </p>
-              <% when 'Assigned' %>
-                <p class='bg-blue-800 text-center text-slate-100 font-semibold rounded p-1 border-r-2 border-b-4 border-blue-900'>
-                  <%= status.name %>
-                </p>
-              <% when 'Approved' %>
-                <p class='bg-green-800 text-center text-slate-100 font-bold rounded p-1 border-r-2 border-b-4 border-green-900'>
-                  <%= status.name %>
-                </p>
-              <% when 'Pending' %>
-                <p class='bg-gradient-to-r from-green-800 to-black text-center text-slate-100 font-bold rounded p-1 border-r-2 border-b-4 border-green-900'>
-                  <%= status.name %>
-                </p>
-              <% when 'Declined' %>
-                <p class='bg-gray-800 text-center text-slate-100 font-semibold rounded p-1 border-r-2 border-b-4 border-gray-900'>
-                  <%= status.name %>
-                </p>
+      <% @open_tickets.each do |ticket| %>
+        <% if ticket.present? %>
+          <tr class="bg-white dark:bg-gray-800 border-b hover:bg-blue-50 dark:hover:bg-gray-700 transition-colors">
+            <td class="px-2 sm:px-3 py-2 font-medium capitalize max-w-[120px] sm:max-w-none truncate">
+              <%= link_to ticket.project.title, project_ticket_path(ticket.project, ticket), class: "hover:underline text-blue-700 dark:text-blue-400" %>
+            </td>
+            <td class="px-2 sm:px-3 py-2 font-mono uppercase max-w-[80px] sm:max-w-none truncate">
+              <% if ticket.unique_id.present? %>
+                <%= link_to ticket.unique_id, project_ticket_path(ticket.project, ticket), class: "hover:underline" %>
               <% end %>
-            <% end %>
-          </td>
-          <td class="px-2 py-2">
-            <%= link_to 'VIEW', project_ticket_path(ticket.project, ticket), class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-md text-slate-100' %>
-          </td>
-        </tr>
+            </td>
+            <td class="px-2 sm:px-3 py-2 max-w-[100px] sm:max-w-none truncate">
+              <%= link_to ticket.issue, project_ticket_path(ticket.project, ticket), class: "hover:underline" %>
+            </td>
+            <td class="px-2 sm:px-3 py-2">
+              <% case ticket.priority %>
+                <% when 'SEVERITY 1' %>
+                  <span class="inline-block bg-red-700 text-white font-bold px-2 py-1 rounded shadow text-xs sm:text-sm">SEV 1</span>
+                <% when 'SEVERITY 2' %>
+                  <span class="inline-block bg-orange-600 text-white font-bold px-2 py-1 rounded shadow text-xs sm:text-sm">SEV 2</span>
+                <% when 'SEVERITY 3' %>
+                  <span class="inline-block bg-yellow-500 text-white font-bold px-2 py-1 rounded shadow text-xs sm:text-sm">SEV 3</span>
+                <% else %>
+                  <span class="inline-block bg-blue-500 text-white font-bold px-2 py-1 rounded shadow text-xs sm:text-sm"><%= ticket.priority %></span>
+              <% end %>
+            </td>
+            <td class="px-2 sm:px-3 py-2 truncate max-w-[120px] sm:max-w-xs" title="<%= ticket.subject %>">
+              <% if ticket.subject.present? %>
+                <%= ticket.subject.truncate(30) %>
+              <% end %>
+            </td>
+            <td class="px-2 sm:px-3 py-2">
+              <% ticket.statuses.each do |status| %>
+                <% badge_classes = case status.name
+                  when 'Resolved' then 'bg-green-500 border-green-600'
+                  when 'Closed', 'Declined' then 'bg-gray-800 border-gray-900'
+                  when 'Reopened' then 'bg-red-900 border-red-800'
+                  when 'New' then 'bg-red-500 border-red-600'
+                  when 'Under Development' then 'bg-blue-300 border-blue-400'
+                  when 'Work in Progress' then 'bg-gray-500 border-gray-600'
+                  when 'QA Testing' then 'bg-pink-500 border-pink-600'
+                  when 'Awaiting Build' then 'bg-white dark:bg-gray-900 border-black dark:border-slate-100 text-gray-900 dark:text-slate-100'
+                  when 'Client Confirmation Pending' then 'bg-purple-500 border-purple-600'
+                  when 'On-Hold' then 'bg-yellow-300 border-yellow-400 text-black'
+                  when 'Assigned' then 'bg-blue-800 border-blue-900'
+                  when 'Approved' then 'bg-green-800 border-green-900'
+                  when 'Pending' then 'bg-gradient-to-r from-green-800 to-black border-green-900'
+                  else 'bg-gray-400 border-gray-500'
+                end %>
+                <span class="inline-block text-xs font-semibold rounded px-2 py-1 border-b-4 border-r-2 mb-1 <%= badge_classes %>">
+                  <%= status.name %>
+                </span>
+              <% end %>
+            </td>
+            <td class="px-2 sm:px-3 py-2 text-center">
+              <%= link_to 'View', project_ticket_path(ticket.project, ticket), class: 'bg-blue-600 hover:bg-blue-700 px-2 sm:px-3 py-1 rounded font-bold text-white shadow transition-colors text-xs sm:text-sm' %>
+            </td>
+          </tr>
+        <% end %>
       <% end %>
-    <% end %>
     </tbody>
   </table>
-</div>
 </div>

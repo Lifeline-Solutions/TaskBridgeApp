@@ -1,25 +1,31 @@
-<div class="grid grid-cols-2 mb-4">
-  <div class="grid col-span-1">
-    <div class="flex gap-1">
-      <%= button_to root_path, method: :get, class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100', id: 'button'  do %>
-        &#8656; Back
-      <% end %>
-      <% if current_user.has_role?(:admin) %>
-        <%= button_to 'Add New User +', new_user_invitation_path , method: :get, class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100', id: 'button'   %>
-        <%= button_to 'Add Location +', new_location_path , method: :get, class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100', id: 'button'   %>
-      <% end %>
-    </div>
+<div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-4">
+  <!-- Left: Back and Admin Actions -->
+  <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+    <%= button_to root_path, method: :get, class: 'flex items-center gap-1 bg-[#0052CC] hover:bg-[#0747A6] px-3 py-2 rounded-md font-semibold text-white shadow-sm transition w-full justify-center sm:w-auto', id: 'button' do %>
+      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+      </svg>
+      Back
+    <% end %>
+    <% if current_user.has_role?(:admin) %>
+      <%= button_to 'Add New User', new_user_invitation_path, method: :get, class: 'flex items-center gap-1 bg-[#0052CC] hover:bg-[#0747A6] px-4 py-2 rounded-md font-semibold text-white shadow-sm transition', id: 'button' %>
+      <%= button_to 'Add Location', new_location_path, method: :get, class: 'flex items-center gap-1 bg-[#0052CC] hover:bg-[#0747A6] px-4 py-2 rounded-md font-semibold text-white shadow-sm transition', id: 'button' %>
+    <% end %>
   </div>
-  <!-- Search on the right -->
-  <div class="grid col-span-1 justify-end">
-    <div class="flex flex-col md:flex-row items-start md:items-center w-full">
-      <%= form_with url: users_path(@users), method: :get, class: 'flex gap-1' do |f| %>
-        <%= f.text_field :query, placeholder: "Search ", class: "border border-gray-300 px-5 pr-10 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100" %>
-        <%= f.submit "Search", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100 mr-1', id: 'button'   %>
-      <% end %>
-      <%= form_with url: users_path(@users), method: :get, class: 'flex' do |f| %>
-        <%= f.submit "Clear", class: ' bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100', id: 'button'   %>
-      <% end %>
-    </div>
+  <!-- Right: Search and Clear -->
+  <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+    <%= form_with url: users_path(@users), method: :get, class: 'flex flex-1 gap-1' do |f| %>
+      <div class="relative flex-1">
+        <%= f.text_field :query, placeholder: "Search users...", class: "w-full border border-gray-300 pl-10 pr-4 py-2 rounded-md font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0052CC] bg-white text-gray-900 shadow-sm transition" %>
+        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+      </div>
+      <%= f.submit "Search", class: 'bg-[#0052CC] hover:bg-[#0747A6] px-4 py-2 rounded-md font-semibold text-white shadow-sm transition', id: 'button' %>
+    <% end %>
+    <%= form_with url: users_path(@users), method: :get, class: 'flex' do |f| %>
+      <%= f.submit "Clear", class: 'bg-white border border-gray-300 hover:bg-gray-100 px-4 py-2 rounded-md font-semibold text-[#0052CC] shadow-sm transition', id: 'button' %>
+    <% end %>
   </div>
 </div>

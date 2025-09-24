@@ -1,52 +1,69 @@
-<div class="relative overflow-x-auto shadow-md sm:rounded-lg w-[100%] ">
-  <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-    <tr>
-      <th scope="col" class="px-2 py-2">
-        Name of the Software Product
-      <th scope="col" class="px-2 py-2">
-        Description
-      </th>
-      <th scope="col" class="px-2 py-2">
-        Project Manager
-      </th>
-      <th scope="col" class="px-2 py-2">
-        VIEW
-      </th>
-      <th scope="col" class="px-2 py-2">
-        EDIT
-      </th>
-    </tr>
-    </thead>
-    <tbody>
-    <% @groupware.each do |group| %>
-      <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 gap-2">
-
-        <th scope="row" class="px-2 py-2 font-medium  whitespace-nowrap ">
-          <%= group.name   %>
+<!-- Desktop Table View (hidden on mobile, shown on md and up) -->
+<div class="hidden md:block overflow-x-auto w-full">
+  <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
+    <thead class="bg-gradient-to-r from-blue-50 via-blue-100 to-blue-50 dark:from-gray-700 dark:via-gray-800 dark:to-gray-700">
+      <tr>
+        <th scope="col" class="px-5 py-4 text-xs font-bold text-blue-800 dark:text-blue-200 uppercase tracking-wider">
+          Software Product
         </th>
-        <th scope="row" class="px-2 py-2 font-medium  whitespace-nowrap  capitalize">
-          <%= group.description %>
+        <th scope="col" class="px-5 py-4 text-xs font-bold text-blue-800 dark:text-blue-200 uppercase tracking-wider">
+          Description
         </th>
-        <th scope="row" class="px-2 py-2 font-medium  whitespace-nowrap  capitalize">
-          <%= group.user.present? ? group.user.name : 'No User Assigned' %>
+        <th scope="col" class="px-5 py-4 text-xs font-bold text-blue-800 dark:text-blue-200 uppercase tracking-wider">
+          Project Manager
         </th>
-        <th scope="row" class="px-2 py-2 font-medium  whitespace-nowrap  capitalize">
-          <%= link_to 'VIEW', [group.software, group], class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
+        <th scope="col" class="px-5 py-4 text-xs font-bold text-blue-800 dark:text-blue-200 uppercase tracking-wider text-center">
+          Actions
         </th>
-        <th scope="row" class="px-2 py-2 font-medium  whitespace-nowrap  capitalize">
-          <%= link_to 'Edit', edit_software_groupware_path(group.software, group), class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
-        </th>
-        <td class="px-2 py-2">
-          <% if can? :destroy, group %>
-            <%= button_to 'DELETE', [group.software, group], method: :delete, data: { 'turbo_method': :delete, 'turbo-confirm': 'Are you sure?' }, class: ' bg-[#F65160] hover:bg-[#F65160] p-2 rounded-md font-bold rounded-lg text-slate-100'  %>
-          <% end %>
-        </td>
-
       </tr>
-
-    <% end %>
+    </thead>
+    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+      <% @groupware.each do |group| %>
+        <tr class="hover:bg-blue-100 dark:hover:bg-gray-700 transition-colors">
+          <td class="px-5 py-4 whitespace-nowrap font-semibold text-gray-900 dark:text-gray-100">
+            <%= group.name %>
+          </td>
+          <td class="px-5 py-4 whitespace-normal text-gray-700 dark:text-gray-300">
+            <%= group.description %>
+          </td>
+          <td class="px-5 py-4 whitespace-nowrap text-gray-700 dark:text-gray-300 capitalize">
+            <%= group.user.present? ? group.user.name : 'No User Assigned' %>
+          </td>
+          <td class="px-5 py-4 whitespace-nowrap text-center">
+            <div class="flex justify-center gap-2">
+              <%= link_to 'View', [group.software, group], class: 'inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-xs md:text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400' %>
+              <%= link_to 'Edit', edit_software_groupware_path(group.software, group), class: 'inline-block bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-xs md:text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-400' %>
+              <% if can? :destroy, group %>
+                <%= button_to 'Delete', [group.software, group], method: :delete, data: { 'turbo_method': :delete, 'turbo-confirm': 'Are you sure?' }, class: 'inline-block bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-xs md:text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-red-400' %>
+              <% end %>
+            </div>
+          </td>
+        </tr>
+      <% end %>
     </tbody>
   </table>
 </div>
 
+<!-- Mobile Card View (shown on mobile, hidden on md and up) -->
+<div class="md:hidden space-y-4 mt-4">
+  <% @groupware.each do |group| %>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 flex flex-col gap-2 border border-blue-100 dark:border-gray-700">
+      <div class="font-bold text-blue-700 dark:text-blue-400 text-lg flex items-center gap-2">
+        <span class="inline-block w-2 h-2 bg-blue-400 rounded-full"></span>
+        <%= group.name %>
+      </div>
+      <div class="text-gray-700 dark:text-gray-300 text-sm"><%= group.description %></div>
+      <div class="text-gray-500 dark:text-gray-400 text-xs mb-2">
+        <span class="font-semibold">Project Manager:</span>
+        <span class="capitalize"><%= group.user.present? ? group.user.name : 'No User Assigned' %></span>
+      </div>
+      <div class="flex gap-2 mt-2">
+        <%= link_to 'View', [group.software, group], class: 'bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-lg text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400' %>
+        <%= link_to 'Edit', edit_software_groupware_path(group.software, group), class: 'bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 rounded-lg text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-green-400' %>
+        <% if can? :destroy, group %>
+          <%= button_to 'Delete', [group.software, group], method: :delete, data: { 'turbo_method': :delete, 'turbo-confirm': 'Are you sure?' }, class: 'bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-3 rounded-lg text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-red-400' %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

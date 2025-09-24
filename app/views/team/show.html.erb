@@ -11,36 +11,81 @@
 <% end %>
 
 <div class="overflow-x-auto shadow-md sm:rounded-lg">
-  <table class="w-full text-sm text-left rtl:text-right text-gray-900 dark:text-gray-400">
+  <table class="min-w-full text-sm text-left text-gray-900 dark:text-gray-400">
     <thead class="text-xs uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400">
-    <tr>
-      <th scope="col" class="px-4 py-2">Name of Person</th>
-      <th scope="col" class="px-4 px-2">Tickets Open</th>
-      <th scope="col" class="px-4 px-2">Tickets Closed Today</th>
-      <th scope="col" class="px-4 px-2">Projects Assigned</th>
-      <th scope="col" class="px-4 px-2">View</th>
-    </tr>
+      <tr>
+        <th scope="col" class="px-4 py-2">Name of Person</th>
+        <th scope="col" class="px-4 py-2">Tickets Open</th>
+        <th scope="col" class="px-4 py-2">Tickets Closed Today</th>
+        <th scope="col" class="px-4 py-2">Projects Assigned</th>
+        <th scope="col" class="px-4 py-2">View</th>
+      </tr>
     </thead>
     <tbody>
-    <% @team.users.order(:first_name).each do |user| %>
-      <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 h-12 text-center">
-        <td class="px-4 py-4 font-medium text-left">
-          <p class="text-gray-700 dark:text-gray-300"><%= user.name %></p>
-        </td>
-        <td class="px-4 py-4 text-left">
-          <%= @assigned_today_counts[user.id] %>
-        </td>
-        <td class="px-4 py-4 text-left">
-          <%= @closed_today_counts[user.id] %>
-        </td>
-        <td class="px-4 py-4 text-left">
-          <%= user.projects.count %>
-        </td>
-        <td class="px-4 py-4 text-left">
-          <%= link_to 'View', show_team_member_team_path(@team, user_id: user.id), class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
-        </td>
-      </tr>
-    <% end %>
+      <% @team.users.order(:first_name).each do |user| %>
+        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 h-12 text-center">
+          <td class="px-4 py-4 font-medium text-left whitespace-nowrap">
+            <p class="text-gray-700 dark:text-gray-300"><%= user.name %></p>
+          </td>
+          <td class="px-4 py-4 text-left whitespace-nowrap">
+            <%= @assigned_today_counts[user.id] %>
+          </td>
+          <td class="px-4 py-4 text-left whitespace-nowrap">
+            <%= @closed_today_counts[user.id] %>
+          </td>
+          <td class="px-4 py-4 text-left whitespace-nowrap">
+            <%= user.projects.count %>
+          </td>
+          <td class="px-4 py-4 text-left whitespace-nowrap">
+            <%= link_to 'View', show_team_member_team_path(@team, user_id: user.id), class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100 w-full block text-center' %>
+          </td>
+        </tr>
+      <% end %>
     </tbody>
   </table>
 </div>
+
+<style>
+@media (max-width: 640px) {
+  table thead {
+    display: none;
+  }
+  table, table tbody, table tr, table td {
+    display: block;
+    width: 100%;
+  }
+  table tr {
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #e5e7eb;
+  }
+  table td {
+    text-align: right;
+    padding-left: 50%;
+    position: relative;
+    min-height: 40px;
+  }
+  table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 1rem;
+    top: 0;
+    width: 45%;
+    white-space: nowrap;
+    text-align: left;
+    font-weight: bold;
+    color: #374151;
+  }
+}
+</style>
+
+<script>
+  // Add data-label attributes for responsive table
+  document.addEventListener("DOMContentLoaded", function() {
+    const headers = Array.from(document.querySelectorAll("table thead th")).map(th => th.textContent.trim());
+    document.querySelectorAll("table tbody tr").forEach(row => {
+      row.querySelectorAll("td").forEach((td, i) => {
+        td.setAttribute("data-label", headers[i]);
+      });
+    });
+  });
+</script>

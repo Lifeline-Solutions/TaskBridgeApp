@@ -1,28 +1,36 @@
 <% provide(:title, "CS Product details for: #{@software.name}") %>
 
 <% if flash[:notice] %>
-  <div class="bg-[#1a237e] border border-[#4caf50] text-white px-4 py-3 rounded mb-4 shadow-md">
+  <div class="bg-blue-700 border-l-4 border-green-400 text-white px-4 py-3 rounded mb-4 shadow-lg flex items-center gap-2">
+    <svg class="w-5 h-5 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
     <p><%= flash[:notice] %></p>
   </div>
 <% elsif flash[:alert] %>
-  <div class="bg-red-600 border border-red-400 text-white px-4 py-3 rounded mb-4 shadow-md">
+  <div class="bg-red-600 border-l-4 border-red-400 text-white px-4 py-3 rounded mb-4 shadow-lg flex items-center gap-2">
+    <svg class="w-5 h-5 text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
     <p><%= flash[:alert] %></p>
   </div>
 <% end %>
 
 <%= render 'groupwares/groupware_header' %>
-<%= @software.name %>
-<!-- Display groupware name -->
-<%= render 'groupwares/groupware' %>
-<div class="flex gap-10 mt-5">
-  <!-- Pagination Controls -->
-  <div class="pagination">
-    <% if @page > 1 %>
-      <%= link_to 'Previous', software_path(@software, page: @page - 1), class: 'mb-4 h-12 w-24 border border-b-4 border-r-2 border-black dark:border-slate-100 p-2 rounded font-semibold' %>
-    <% end %>
-    <span>Page <%= @page %> of <%= @total_pages %></span>
-    <% if @page < @total_pages %>
-      <%= link_to 'Next',software_path(@software, page: @page + 1), class: 'mb-4 h-12 w-24 border border-b-4 border-r-2 p-2 border-black dark:border-slate-100 rounded font-semibold' %>
-    <% end %>
+<div class="container mx-auto px-4 max-w-3xl">
+  <h1 class="text-3xl sm:text-4xl font-extrabold mt-8 mb-6 break-words text-center text-blue-900 dark:text-blue-200 drop-shadow-lg">
+    <%= @software.name %>
+  </h1>
+  <%= render 'groupwares/groupware' %>
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-10">
+    <!-- Pagination Controls -->
+    <div class="pagination flex flex-row items-center justify-center gap-6 w-full">
+      <% if @page > 1 %>
+        <%= link_to '← Previous', software_path(@software, page: @page - 1), class: 'h-10 w-28 border border-blue-700 bg-blue-50 dark:bg-slate-800 text-blue-900 dark:text-blue-200 font-semibold rounded-lg shadow transition hover:bg-blue-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500' %>
+      <% end %>
+      <span class="text-lg font-semibold text-gray-700 dark:text-gray-200 px-4 py-2 rounded bg-gray-100 dark:bg-slate-700 shadow">
+        Page <%= @page %> of <%= @total_pages %>
+      </span>
+      <% if @page < @total_pages %>
+        <%= link_to 'Next →', software_path(@software, page: @page + 1), class: 'h-10 w-28 border border-blue-700 bg-blue-50 dark:bg-slate-800 text-blue-900 dark:text-blue-200 font-semibold rounded-lg shadow transition hover:bg-blue-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500' %>
+      <% end %>
+    </div>
   </div>
 </div>
