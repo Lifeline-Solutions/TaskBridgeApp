@@ -41,15 +41,16 @@ Rails.application.routes.draw do
   get 'daily_report', to: 'data_center#daily_report', as: 'daily_report'
   get 'send_team_ticket_emails', to: 'data_center#send_team_ticket_emails', as: 'send_team_ticket_emails'
   get 'breach_report', to: 'data_center#breach_report', as: 'breach_report'
-  get 'user_report', to: 'data_center#user_report', as: 'user_report'
   get 'project_report', to: 'data_center#project_report', as: 'project_report'
   get 'daily_summary_report', to: 'data_center#daily_summary_report', as: 'daily_summary_report'
   get 'orm_report', to: 'data_center#orm_report', as: 'orm_report'
   get 'orm_team_report', to: 'data_center#orm_team_report', as: 'orm_team_report'
   get 'sod_report', to: 'data_center#sod_report', as: 'sod_report'
   get 'assigned_tickets', to: 'data_center#assigned_tickets', as: 'assigned_tickets'
-  get 'user_report_view', to: 'data_center#user_report_view', as: 'user_report_view'
   get 'cbk_groupware_report', to: 'data_center#cbk_groupware_report', as: 'cbk_groupware_report'
+  get 'profiles_show', to: 'profiles#profiles_show', as: 'profiles_show'
+  get 'profiles_show_user', to: 'profiles#profiles_show_user', as: 'profiles_show_user'
+
 
   get 'dashboard', to: 'dashboards#index'
   get 'dashboards/fetch_stats', to: 'dashboards#fetch_stats'
