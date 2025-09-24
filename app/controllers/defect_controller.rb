@@ -748,12 +748,50 @@ class DefectController < ApplicationController
   def defects_download
     require 'csv'
     defects = Defect.all
-    defects = defects.where(product_id: params[:product_id]) if params[:product_id].present?
+
+    # Search query (client or groupware)
+    if params[:query].present?
+      q = "%#{params[:query]}%"
+      defects = defects.left_joins(product: %i[client groupwares])
+        .where('clients.name ILIKE :q OR groupwares.name ILIKE :q', q: q)
+    end
+
     defects = defects.where(banking_type_id: params[:banking_type_id]) if params[:banking_type_id].present?
     defects = defects.where('created_at >= ?', params[:start_date]) if params[:start_date].present?
     defects = defects.where('created_at <= ?', params[:end_date]) if params[:end_date].present?
-    defects = defects.joins(:statuses).where(statuses: { name: params[:status] }) if params[:status].present?
 
+    # Status filter (multi-select)
+    if params[:status].present?
+      statuses = Array(params[:status])
+      defects = defects.joins(:statuses).where(statuses: { name: statuses })
+    end
+
+    # Priority filter
+    defects = defects.where(priority: params[:priority]) if params[:priority].present?
+
+    # Assignee filter
+    defects = defects.joins(:users).where(users: { id: params[:user_id] }) if params[:user_id].present?
+
+    # Module filter
+    defects = defects.where(qa_module_id: params[:qa_module_id]) if params[:qa_module_id].present?
+
+    # Submodule filter
+    defects = defects.where(submodule_id: params[:submodule_id]) if params[:submodule_id].present?
+
+    # Labels filter (multi-select)
+    if params[:label_ids].present?
+      label_ids = Array(params[:label_ids]).reject(&:blank?)
+      defects = defects.joins(:labels).where(labels: { id: label_ids }).distinct if label_ids.any?
+    end
+
+    # Order (sort by created_at)
+    defects = if params[:order].present? && %w[asc desc].include?(params[:order])
+                defects.order(created_at: params[:order])
+              else
+                defects.order(created_at: :desc)
+              end
+
+    # Generate CSV
     csv_data = CSV.generate(headers: true) do |csv|
       csv << [
         'Defect ID', 'Status', 'Summary', 'Priority', 'Module', 'Sub Module',
@@ -812,25 +850,24 @@ class DefectController < ApplicationController
 
     # Pick the exact display order you want here (first one will be treated as default)
     ordered_names = [
-      "TO DO",
-      "Awaiting Build",
-      "Awaiting Client API",
-      "Awaiting Client Information",
-      "Blocked",
-      "Failed QA",
-      "In Progress",
-      "On-Hold",
-      "QA Testing",
-      "Reopened",
-      "Support Testing",
-      "Closed"
+      'TO DO',
+      'Awaiting Build',
+      'Awaiting Client API',
+      'Awaiting Client Information',
+      'Blocked',
+      'Failed QA',
+      'In Progress',
+      'On-Hold',
+      'QA Testing',
+      'Reopened',
+      'Support Testing',
+      'Closed'
     ]
 
     # Fetch and reorder to match the desired order
     found_statuses = Status.where(name: ordered_names)
     lookup = found_statuses.index_by(&:name)
     @statuses = ordered_names.map { |n| lookup[n] }.compact
-
 
     # # Get all available statuses for the workflow
     # @statuses = Status.where(name: [
