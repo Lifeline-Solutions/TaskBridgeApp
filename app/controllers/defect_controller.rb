@@ -177,6 +177,20 @@ class DefectController < ApplicationController
     end
 
     @defect = Defect.find(params[:id])
+
+    qa_user_ids = User.joins(:roles)
+                    .where(roles: { name: 'qa' })
+                    .pluck(:id)
+
+    product_user_ids = @defect.craftsilicon_users
+                              .where.not(id: @defect.users.pluck(:id))
+                              .where(id: @defect.product.users.pluck(:id))
+                              .pluck(:id)
+
+    @available_users = User.where(id: qa_user_ids + product_user_ids)
+                          .distinct
+                          .order(:first_name, :last_name)
+
     # Defects History
     @defects_history = DefectHistory.where(defect_id: @defect.id).order(created_at: :desc)
 
