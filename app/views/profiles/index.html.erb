@@ -98,8 +98,13 @@
           <td class="border border-black dark:border-slate-100 px-4 py-2"><%= tickets.count %></td>
           <td class="border border-black dark:border-slate-100 px-4 py-2">
             <%= link_to "View Tickets",
-                        profiles_path(user_id: params[:user_id], client_name: client_name, start_date: params[:start_date], end_date: params[:end_date]),
-                        class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
+              profile_path(
+                tickets.first.user_id, # Pass the required :id (user_id)
+                client_name: client_name,
+                start_date: params[:start_date],
+                end_date: params[:end_date]
+              ),
+              class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
           </td>
         </tr>
       <% end %>
