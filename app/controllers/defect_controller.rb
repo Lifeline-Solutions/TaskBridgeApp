@@ -216,14 +216,27 @@ class DefectController < ApplicationController
   def new
     @defect = Defect.new
 
+    # Handle default assignee
     default_assignee = DefaultDefectAssignee.where(archive_status: false).order(created_at: :desc).first
     @defect.user_ids = [default_assignee.user_id] if default_assignee&.user_id.present?
 
     set_form_data
 
-    return unless @defect.product_id.present?
+    # Collect QA users
+    qa_user_ids = User.joins(:roles)
+                      .where(roles: { name: 'qa' })
+                      .pluck(:id)
 
-    @users = Product.find(@defect.product_id).users
+    # Collect product users (based on selected @product from set_form_data)
+    product_user_ids = @product.present? ? @product.users.pluck(:id) : []
+
+    # Combine QA + Product users
+    @available_users = User.where(id: qa_user_ids + product_user_ids)
+                          .distinct
+                          .order(:first_name, :last_name)
+
+    # For JS (assignee search dropdown)
+    @assignee_users_data = @available_users.map { |u| { id: u.id, name: u.name } }
   end
 
   def create
