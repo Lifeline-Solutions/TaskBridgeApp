@@ -3,7 +3,7 @@ require 'axlsx'
 class ProfilesController < ApplicationController
   before_action :authenticate_user!
 
-  def index
+  def profiles_show
     authorize! :generate, :report
 
     # Always initialize instance variables
@@ -112,7 +112,7 @@ class ProfilesController < ApplicationController
 
   helper_method :parse_assignment_details, :assigned_at_for, :resolved_at_for, :resolution_duration_for
 
-  def show
+  def profiles_show_user
     if params[:user_id] && params[:client_name]
       @user = User.find(params[:user_id])
       start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : nil

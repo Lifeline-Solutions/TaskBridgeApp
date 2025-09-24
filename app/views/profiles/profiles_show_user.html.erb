@@ -5,7 +5,7 @@
 <% end %>
 
 <div class="flex justify-center search-bar mb-4">
-  <%= form_with url: user_report_view_path, method: :get, local: true do |form| %>
+  <%= form_with url: profiles_show_user_path, method: :get, local: true do |form| %>
     <%= form.hidden_field :user_id, value: params[:user_id] %>
     <%= form.hidden_field :client_name, value: params[:client_name] %>
     <%= form.hidden_field :start_date, value: params[:start_date] %>

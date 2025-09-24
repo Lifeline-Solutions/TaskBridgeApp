@@ -48,6 +48,9 @@ Rails.application.routes.draw do
   get 'sod_report', to: 'data_center#sod_report', as: 'sod_report'
   get 'assigned_tickets', to: 'data_center#assigned_tickets', as: 'assigned_tickets'
   get 'cbk_groupware_report', to: 'data_center#cbk_groupware_report', as: 'cbk_groupware_report'
+  get 'profiles_show', to: 'profiles#profiles_show', as: 'profiles_show'
+  get 'profiles_show_user', to: 'profiles#profiles_show_user', as: 'profiles_show_user'
+
 
   get 'dashboard', to: 'dashboards#index'
   get 'dashboards/fetch_stats', to: 'dashboards#fetch_stats'
@@ -221,5 +224,4 @@ Rails.application.routes.draw do
       get :export_csv
     end
   end
-  resources :profiles, only: [:index, :show]
 end

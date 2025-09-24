@@ -237,7 +237,7 @@
               <% end %>
 
               <% if current_user.has_role? :admin or current_user.has_role? :observer or current_user.has_role?('project manager') %>
-                <%= link_to profiles_path do %>
+                <%= link_to profiles_show_path do %>
                   <li>
                     <div class="flex items-center p-2 rounded-lg hover:bg-transparent dark:hover:bg-gray-700 group">
                       <svg class="w-4 h-5 text-[#fff] transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">

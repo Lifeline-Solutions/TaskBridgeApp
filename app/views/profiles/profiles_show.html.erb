@@ -2,7 +2,7 @@
 
 <h1 class="flex justify-center text-2xl font-bold mb-4">User Report</h1>
 <div class="p-2 w-full">
-  <%= form_with url: profiles_path, method: :get, local: true do |f| %>
+  <%= form_with url: profiles_show_path, method: :get, local: true do |f| %>
     <div class="flex justify-center gap-2">
       <div class="flex flex-col gap-2">
         <%= f.label :user_id, "Taskbridge Users", class: "capitalize text-sm font-bold w-full align-middle pt-3" %>
@@ -80,7 +80,7 @@
   <div class="mx-auto mb-4 px-4 sm:px-6 lg:px-8 py-8">
     <div class="flex justify-end">
       <%= link_to "Download CSV",
-                  profiles_path(format: :csv, start_date: params[:start_date], end_date: params[:end_date], user_id: params[:user_id]),
+                  profiles_show_user_path(format: :csv, start_date: params[:start_date], end_date: params[:end_date], user_id: params[:user_id]),
                   class: "mb-4 mt-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100" %>
     </div>
     <table id="user_report" class="table-auto w-full">
@@ -97,14 +97,8 @@
           <td class="border border-black dark:border-slate-100 px-4 py-2"><%= client_name %></td>
           <td class="border border-black dark:border-slate-100 px-4 py-2"><%= tickets.count %></td>
           <td class="border border-black dark:border-slate-100 px-4 py-2">
-            <%= link_to "View Tickets",
-              profile_path(
-                tickets.first.user_id, # Pass the required :id (user_id)
-                client_name: client_name,
-                start_date: params[:start_date],
-                end_date: params[:end_date]
-              ),
-              class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
+            <%= link_to "View Tickets", profiles_show_user_path(user_id: params[:user_id], client_name: client_name, start_date: params[:start_date], end_date: params[:end_date]),
+                class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
           </td>
         </tr>
       <% end %>
