@@ -140,27 +140,23 @@
                 </label>
 
                 <% if (default_assignee = DefaultDefectAssignee.instance)&.user.present? %>
-                  <!-- Search input prefilled with default assignee -->
                   <input type="text"
                         id="assignee-search"
                         placeholder="Type to search users..."
-                        value="<%= "#{default_assignee.user.first_name} #{default_assignee.user.last_name}" %>"
+                        value="<%= default_assignee.user.name %>"
                         class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
-                              focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+                                focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
 
-                  <!-- Hidden field for selected user ID (set to default assignee) -->
                   <%= hidden_field_tag 'defect[user_ids][]',
                         default_assignee.user.id,
                         id: "assignee-id-field" %>
                 <% else %>
-                  <!-- Search input empty if no default -->
                   <input type="text"
                         id="assignee-search"
                         placeholder="Type to search users..."
                         class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
-                              focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+                                focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
 
-                  <!-- Hidden field for selected user ID (blank initially) -->
                   <%= hidden_field_tag 'defect[user_ids][]',
                         @defect.user_ids.first,
                         id: "assignee-id-field" %>
@@ -170,6 +166,7 @@
                 <ul id="assignee-results"
                     class="absolute mt-1 border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-sm hidden z-10 w-full max-h-60 overflow-y-auto">
                 </ul>
+
                 <p class="mb-2 text-xs text-gray-500 dark:text-gray-400 italic">
                   You can remove this and type to search for another user if needed.
                 </p>
@@ -380,7 +377,8 @@
 
   // Store the data in global variables so they're accessible
   window.bankingTypesData = <%= raw (@banking_types || []).map { |bt| { id: bt.id, name: bt.name } }.to_json %>;
-  window.assigneeUsersData = <%= raw @users.map { |u| { id: u.id, name: u.name } }.to_json %>;
+  // window.assigneeUsersData = <%= raw @users.map { |u| { id: u.id, name: u.name } }.to_json %>;
+  window.assigneeUsersData = <%= raw @assignee_users_data.to_json %>;
   window.projectsData = <%= raw @products_and_clients_defects.map { |name, id|
     { name: name, id: id }
   }.to_json %>;
@@ -529,11 +527,8 @@
         }
       }
 
-      // Filter search on input
       assigneeInput.addEventListener("input", function () {
         const query = this.value.toLowerCase();
-
-        // Reset hidden field whenever user types
         if (assigneeHidden) assigneeHidden.value = "";
 
         if (query.length === 0) {
@@ -548,12 +543,10 @@
         renderAssignees(matches);
       });
 
-      // Show all assignees on focus
       assigneeInput.addEventListener("focus", function () {
         renderAssignees(window.assigneeUsersData);
       });
 
-      // Hide results when clicking outside
       document.addEventListener("click", function (e) {
         if (
           assigneeResults &&
