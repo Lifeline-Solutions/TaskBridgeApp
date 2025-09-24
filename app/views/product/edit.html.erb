@@ -20,11 +20,8 @@
                             class: "w-full mb-4 p-2 border rounded" %>
   </div>
 
-
-
-  <!-- Assignee -->
-
-  <div class="grid grid-cols-2 gap-2">
+  <!-- Assignee/Image -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
     <div class="relative z-0 w-full mb-6 group">
       <!-- Image -->
       <%= f.label :image, 'Product Image', class: "block font-medium mb-1" %>
@@ -39,7 +36,8 @@
                    class: "w-full mb-4 p-2 border rounded" %>
     </div>
   </div>
-  <div class="grid grid-cols-2 gap-2">
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
     <!-- Description -->
     <div class="relative z-0 w-full mb-6 group">
       <!-- Software Categories -->
@@ -69,7 +67,7 @@
   <!-- Milestones -->
   <div id="milestones-container">
     <% @product.milestones.each_with_index do |milestone, index| %>
-      <div class="milestone-field grid grid-cols-5 gap-4 mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg" id="milestone-<%= index %>">
+      <div class="milestone-field grid grid-cols-1 sm:grid-cols-5 gap-4 mb-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg" id="milestone-<%= index %>">
         
         <!-- Status -->
         <div>
@@ -120,10 +118,9 @@
   </div>
 
   <!-- Add Milestone Button -->
-  <button type="button" id="add-milestone-button" class="mt-4 p-2 bg-blue-500 text-white rounded">
+  <button type="button" id="add-milestone-button" class="mt-4 p-2 bg-blue-500 text-white rounded w-full sm:w-auto">
     Add Milestone
   </button>
-
 
   <!-- Documents -->
   <h3 class="mt-6 mb-2 font-semibold">Attached Documents</h3>
@@ -146,10 +143,10 @@
       </div>
     <% end %>
   </div>
-  <button type="button" id="add-document-button" class="p-2 bg-blue-500 text-white rounded mb-4">Add Document</button>
+  <button type="button" id="add-document-button" class="p-2 bg-blue-500 text-white rounded mb-4 w-full sm:w-auto">Add Document</button>
 
   <!-- Start/End Dates -->
-  <div class="grid grid-cols-2 gap-4">
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
     <div>
       <%= f.label :start_date, 'Start Date*', class: "block font-medium mb-1" %>
       <%= f.date_field :start_date, required: true, class: "w-full p-2 border rounded mb-4" %>
@@ -160,7 +157,6 @@
     </div>
   </div>
 
-
   <!-- Content -->
   <%= f.label :content, 'Subject*', class: "block font-medium mb-1" %>
   <div data-controller="text-limit" data-text-limit-limit-value="3000">
@@ -168,10 +164,8 @@
     <%= f.rich_text_area :content, id: "content", data: { text_limit_target: "content" }, class: 'min-h-[300px]' %>
   </div>
 
-
-
   <!-- Submit -->
-  <%= f.submit "Update Product", class: "bg-green-600 text-white p-3 rounded font-semibold" %>
+  <%= f.submit "Update Product", class: "bg-green-600 text-white p-3 rounded font-semibold w-full sm:w-auto" %>
 <% end %>
 <script>
   // Add Milestone Button
@@ -181,7 +175,7 @@
     const budget = document.getElementById('product_budget').value || 0;
 
     const newField = document.createElement('div');
-    newField.classList.add('milestone-field', 'grid', 'grid-cols-4', 'gap-4', 'mb-4', 'p-4', 'bg-gray-100', 'dark:bg-gray-800', 'rounded-lg');
+    newField.classList.add('milestone-field', 'grid', 'grid-cols-1', 'sm:grid-cols-4', 'gap-4', 'mb-4', 'p-4', 'bg-gray-100', 'dark:bg-gray-800', 'rounded-lg');
     newField.id = `milestone-${timestamp}`;
 
     newField.innerHTML = `
@@ -232,7 +226,6 @@
     amountField.value = amount;
   }
 
-
   document.getElementById('add-document-button').addEventListener('click', function () {
     const container = document.getElementById('documents-container');
     const index = Date.now(); // unique index
@@ -263,3 +256,15 @@
     }
   });
 </script>
+<style>
+/* Responsive overflow for milestones & documents on small screens */
+@media (max-width: 640px) {
+  #milestones-container, #documents-container {
+    overflow-x: auto;
+    padding-bottom: 1rem;
+  }
+  .milestone-field, .document-field {
+    min-width: 280px;
+  }
+}
+</style>

@@ -1,8 +1,8 @@
-<div class="flex justify-end pr-8 p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+<div class="flex justify-center sm:justify-end px-2 sm:pr-8 py-2 sm:p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
   <!-- Right side - Add New Project button -->
-  <div>
-    <%= link_to new_product_path, class: 'no-underline' do %>
-      <button class="flex items-center space-x-1 bg-[#3F8CFF] hover:bg-[#3A81EB] px-4 py-2 rounded-lg font-bold text-slate-100">
+  <div class="w-full sm:w-auto">
+    <%= link_to new_product_path, class: 'no-underline block w-full sm:w-auto' do %>
+      <button class="flex w-full sm:w-auto justify-center items-center space-x-1 bg-[#3F8CFF] hover:bg-[#3A81EB] px-3 sm:px-4 py-1 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-slate-100">
         十 Create New Project
       </button>
     <% end %>
