@@ -6,8 +6,19 @@
       <% end %>
 
       <%= button_to '+ Create Defects ', new_defect_path, method: :get, class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded-md font-bold rounded-lg text-slate-100', id: 'button' %>
-      <%= button_to 'Modules ', qa_modules_path, method: :get, class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded-md font-bold rounded-lg text-slate-100', id: 'button' %>
-      <%= button_to 'Banking Types ', banking_types_path, method: :get, class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded-md font-bold rounded-lg text-slate-100', id: 'button' %>
+      <%= button_to 'Modules',
+        qa_modules_path(product_id: @defects.first.product_id),
+        method: :get,
+        params: { product_id: @defects.first.product_id },
+        class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded-md font-bold rounded-lg text-slate-100',
+        id: 'button' %>
+
+      <%= button_to 'Banking Types',
+        banking_types_path(product_id: @defects.first.product_id),
+        method: :get,
+        params: { product_id: @defects.first.product_id },
+        class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded-md font-bold rounded-lg text-slate-100',
+        id: 'button' %>
 
       <%= render 'default_defect_assignees/button' %>
     </div>
@@ -137,6 +148,37 @@
                                class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
               </div>
 
+              <!-- Labels filter -->
+              <div class="mb-4">
+                <label for="label-search" class="block text-sm font-medium text-gray-700">Labels</label>
+
+                <div id="label-select" class="relative border border-gray-300 rounded-md shadow-sm bg-white">
+                  <!-- Search input -->
+                  <input type="text"
+                        id="label-search"
+                        class="w-full px-3 py-2 focus:outline-none"
+                        placeholder="Type to search labels...">
+
+                  <!-- Dropdown list -->
+                  <div id="label-dropdown"
+                      class="absolute z-10 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-40 overflow-y-auto hidden">
+                    <% @labels.each do |label| %>
+                      <div class="dropdown-item px-3 py-2 cursor-pointer hover:bg-gray-100"
+                          data-id="<%= label.id %>"
+                          data-name="<%= label.name %>">
+                        <%= label.name %>
+                      </div>
+                    <% end %>
+                  </div>
+
+                  <!-- Selected labels (tags) -->
+                  <div id="selected-labels" class="flex flex-wrap gap-2 p-2"></div>
+
+                  <!-- Hidden inputs -->
+                  <div id="hidden-labels"></div>
+                </div>
+              </div>
+
               <div class="pt-2 flex justify-between">
                 <%= submit_tag 'Apply', class: 'px-3 py-1 text-sm bg-blue-600 rounded-r-lg border border-blue-600 hover:bg-blue-700 focus:outline-none' %>
                 <%= link_to 'Reset', index_show_defect_index_path, class: 'px-3 py-1 text-sm bg-red-600 rounded-r-lg border border-red-600 hover:bg-red-700 focus:outline-none' %>
@@ -152,6 +194,23 @@
             <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
           </svg>
         <% end %>
+        <!-- Download CSV Link -->
+        <%= link_to "Download CSV", defects_download_defect_index_path(
+              format: :csv,
+              user_id: params[:user_id],
+              query: params[:query],
+              banking_type_id: params[:banking_type_id],
+              start_date: params[:start_date],
+              end_date: params[:end_date],
+              status: params[:status],
+              priority: params[:priority],
+              qa_module_id: params[:qa_module_id],
+              submodule_id: params[:submodule_id],
+              label_ids: params[:label_ids],
+              order: params[:order]
+            ),
+                    class: "text-sm font-medium flex items-center border border-gray-300 rounded px-3 py-2 bg-blue-600 text-slate-100 hover:border-slate-100 hover:text-white focus:bg-blue-600 focus:border-blue-600 focus:text-white transition" %>
+
       </div>
 
     </div>
@@ -188,5 +247,66 @@
         e.stopPropagation();
       });
     }
+  });
+
+  document.addEventListener("turbo:load", () => {
+    const searchInput   = document.getElementById("label-search");
+    const dropdown      = document.getElementById("label-dropdown");
+    const selectedBox   = document.getElementById("selected-labels");
+    const hiddenInputs  = document.getElementById("hidden-labels");
+
+    // Filter dropdown items as user types
+    searchInput.addEventListener("input", () => {
+      const query = searchInput.value.toLowerCase();
+      dropdown.querySelectorAll(".dropdown-item").forEach(item => {
+        item.classList.toggle("hidden", !item.dataset.name.toLowerCase().includes(query));
+      });
+      dropdown.classList.remove("hidden");
+    });
+
+    // Handle selecting a label
+    dropdown.addEventListener("click", e => {
+      if (!e.target.classList.contains("dropdown-item")) return;
+
+      const id   = e.target.dataset.id;
+      const name = e.target.dataset.name;
+
+      // Prevent duplicates
+      if (document.getElementById(`label-tag-${id}`)) return;
+
+      // Create tag
+      const tag = document.createElement("span");
+      tag.id = `label-tag-${id}`;
+      tag.className = "bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-xs flex items-center gap-1";
+      tag.innerHTML = `${name} <button type="button" data-id="${id}" class="remove-tag text-red-500">×</button>`;
+      selectedBox.appendChild(tag);
+
+      // Hidden input
+      const hidden = document.createElement("input");
+      hidden.type = "hidden";
+      hidden.name = "label_ids[]";
+      hidden.value = id;
+      hidden.id = `label-hidden-${id}`;
+      hiddenInputs.appendChild(hidden);
+
+      // Reset input & hide dropdown
+      searchInput.value = "";
+      dropdown.classList.add("hidden");
+    });
+
+    // Remove tag
+    selectedBox.addEventListener("click", e => {
+      if (!e.target.classList.contains("remove-tag")) return;
+      const id = e.target.dataset.id;
+      document.getElementById(`label-tag-${id}`).remove();
+      document.getElementById(`label-hidden-${id}`).remove();
+    });
+
+    // Hide dropdown when clicking outside
+    document.addEventListener("click", e => {
+      if (!document.getElementById("label-select").contains(e.target)) {
+        dropdown.classList.add("hidden");
+      }
+    });
   });
 </script>

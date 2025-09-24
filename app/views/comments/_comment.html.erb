@@ -2,9 +2,7 @@
   <% if current_user.has_role?(:agent) || current_user.has_role?(:admin) || current_user.has_role?('project manager') ||
        (current_user.has_role?('client') && (@ticket.statuses.pluck('statuses.name').first == 'Reopened' ||
        @ticket.statuses.pluck('statuses.name').first == 'Closed')) %>
-    <%# <%= button_to 'New Message +', new_project_ticket_comment_path(@project, @ticket), method: :get, data: {
-      turbo_frame: 'modal' }, class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold text-slate-100' %>
-  <% end %>
+      <% end %>
 
   <% if @comment.present? %>
     <div id="alert-additional-content-1" class="p-4" role="alert">
@@ -29,15 +27,17 @@
                   <% end %>
                 <% end %>
 
-                <% if can? :delete, comment %>
-                  <%= button_to project_ticket_comment_path(@project, @ticket, comment), method: :delete, data: { confirm: 'Are you sure?' },
+                <%# if can? :delete, comment %>
+                  <%#= button_to project_ticket_comment_path(@project, @ticket, comment), method: :delete, data: { confirm: 'Are you sure?' },
                     class: 'text-white bg-red-800 hover:bg-red-900 focus:ring-4 focus:outline-none focus:ring-red-200 font-medium rounded-lg text-xs px-3 py-1.5 me-2 inline-flex items-center dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800' do %>
+                    <!--
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="me-2 h-3 w-3">
                       <path fill-rule="evenodd" d="M3.75 6a.75.75 0 0 1 .75-.75h15a.75.75 0 0 1 0 1.5h-15a.75.75 0 0 1-.75-.75ZM12 18a.75.75 0 0 1-.75-.75V8.25a.75.75 0 0 1 1.5 0V17.25a.75.75 0 0 1-.75.75Z" clip-rule="evenodd"/>
                     </svg>
                     Delete
-                  <% end %>
-                <% end %>
+                    -->
+                  <%# end %>
+                <%# end %>
               </h3>
               <time class="block mb-2 text-sm font-normal leading-none text-gray-400 dark:text-gray-500">
                 Posted on <%= comment.created_at.strftime("%I:%M %p at %d %B %Y") %>

@@ -2,7 +2,7 @@ class CommentsController < ApplicationController
   before_action :authenticate_user!
   before_action :set_project
   before_action :set_ticket
-  before_action :set_comment, only: %i[destroy edit update]
+  before_action :set_comment, only: %i[edit update]
 
   def new
     @comment = @ticket.comments.new
@@ -51,26 +51,26 @@ class CommentsController < ApplicationController
     end
   end
 
-  def destroy
-    @comment = @ticket.comments.find(params[:id])
-    if audit_soft_delete(@comment)
-      activity('user_activity')
-        .caused_by(current_user)
-        .performed_on(@comment)
-        .event('comment.soft_delete')
-        .with_properties(ticket_id: @ticket.id)
-        .log("Soft-deleted Comment ##{@comment.id}")
-    else
-      @comment.destroy
-      activity('user_activity')
-        .caused_by(current_user)
-        .performed_on(@comment)
-        .event('comment.destroy')
-        .with_properties(ticket_id: @ticket.id)
-        .log("Destroyed Comment ##{@comment.id}")
-    end
-    redirect_to project_ticket_path(@project, @ticket)
-  end
+  # def destroy
+  #  @comment = @ticket.comments.find(params[:id])
+  #   if audit_soft_delete(@comment)
+  #     activity('user_activity')
+  #      .caused_by(current_user)
+  #      .performed_on(@comment)
+  #      .event('comment.soft_delete')
+  #      .with_properties(ticket_id: @ticket.id)
+  #      .log("Soft-deleted Comment ##{@comment.id}")
+  #   else
+  #     @comment.destroy
+  #      activity('user_activity')
+  #      .caused_by(current_user)
+  #      .performed_on(@comment)
+  #      .event('comment.destroy')
+  #      .with_properties(ticket_id: @ticket.id)
+  #      .log("Destroyed Comment ##{@comment.id}")
+  #   end
+  #    redirect_to project_ticket_path(@project, @ticket)
+  #  end
 
   def edit; end
 

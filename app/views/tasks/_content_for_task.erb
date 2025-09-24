@@ -1,3 +1,4 @@
+
 <% if @task.description.present? %>
   <span class="break-words overflow-hidden">
     <%= sanitize raw (@task.description.to_trix_html.gsub(/\[.*?\]/, '').strip) %>

@@ -125,6 +125,7 @@ Rails.application.routes.draw do
       get 'modules_by_product'
       get 'get_submodules'  # For loading submodules dynamically
       get :index_show
+      get :defects_download
     end
     member do
       patch :add_label
@@ -136,6 +137,9 @@ Rails.application.routes.draw do
       post :create_failure_report
       patch 'update_priority'
       patch 'update_label'
+      get :search_for_linking
+      post :link_defect
+      delete :unlink_defect
     end
     resources :bugs do
       member do
@@ -214,5 +218,9 @@ Rails.application.routes.draw do
     get :submodules, on: :member
   end
 
-  resources :reports
+  resources :reports, only: [:index] do
+    collection do
+      get :export_csv
+    end
+  end
 end

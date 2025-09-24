@@ -66,7 +66,7 @@
           <div class="relative w-full">
             <label for="banking-type-search"
               class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
-                Label *
+                Banking Type *
             </label>
             <!-- Search input -->
             <input type="text"
@@ -190,13 +190,17 @@
                 class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
                   Status *
               </label>
-              <%= select_tag "defect[status_ids][]",
-                 options_from_collection_for_select(@statuses, :id, :name,
-                   @defect.statuses.first&.id || Status.find_by(name: "To Do")&.id),
-                     class: "border border-gray-300 rounded-lg
-                       focus:ring-primary-600 focus:border-primary-600 p-2.5
-                       dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400
-                       dark:极:ring-blue-500 dark:focus:border-blue-500" %>
+              <%= select_tag "defect[status_id]",
+                options_from_collection_for_select(
+                  @statuses, :id, :name,
+                  (@defect.statuses.first&.id || @statuses.first&.id)
+                ),
+                id: "defect_status_id",
+                class: "block w-full px-3 py-2 border border-gray-300 rounded-lg
+                        focus:ring-primary-600 focus:border-primary-600 p-2.5
+                        dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400
+                        text-transform: uppercase" %>
+
 
             </div>
 
@@ -217,10 +221,10 @@
               <div id="attachment-previews" class="mt-3 flex flex-wrap gap-3"></div>
             </div>
 
-            <!-- Creator / Issue Type -->
+            <!-- Reported By / Issue Type -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Creator</label>
+                <label class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Reported By</label>
                 <%= text_field_tag :creator_name, Current.user&.name, disabled: true,
                       class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-not-allowed' %>
               </div>
@@ -387,11 +391,34 @@
     const projectResults = document.getElementById("project-results");
     const projectHidden = document.getElementById("project-id-field");
 
-    if (projectInput && projectResults && window.projectsData) {
-      projectInput.addEventListener("input", function() {
-        const query = this.value.toLowerCase();
-        projectResults.innerHTML = "";
+    function renderProjects(projects) {
+      projectResults.innerHTML = "";
 
+      if (projects.length > 0) {
+        projectResults.classList.remove("hidden");
+        projects.forEach(p => {
+          const li = document.createElement("li");
+          li.textContent = p.name;
+          li.className = "px-3 py-2 hover:bg-blue-500 hover:text-white cursor-pointer";
+          li.addEventListener("click", function () {
+            projectInput.value = p.name;
+            if (projectHidden) projectHidden.value = p.id;
+            projectResults.classList.add("hidden");
+
+            // Trigger Stimulus action (project-modules#loadModules)
+            projectHidden.dispatchEvent(new Event("change"));
+          });
+          projectResults.appendChild(li);
+        });
+      } else {
+        projectResults.classList.add("hidden");
+      }
+    }
+
+    if (projectInput && projectResults && window.projectsData) {
+      // Search as you type
+      projectInput.addEventListener("input", function () {
+        const query = this.value.toLowerCase();
         if (query.length === 0) {
           projectResults.classList.add("hidden");
           return;
@@ -400,61 +427,38 @@
         const matches = window.projectsData.filter(p =>
           p.name.toLowerCase().includes(query)
         );
+        renderProjects(matches);
+      });
 
-        if (matches.length > 0) {
-          projectResults.classList.remove("hidden");
-          matches.forEach(p => {
-            const li = document.createElement("li");
-            li.textContent = p.name;
-            li.className = "px-3 py-2 hover:bg-blue-500 hover:text-white cursor-pointer";
-            li.addEventListener("click", function() {
-              projectInput.value = p.name;
-              if (projectHidden) projectHidden.value = p.id;
-              projectResults.classList.add("hidden");
-
-              // Trigger Stimulus action (project-modules#loadModules)
-              projectHidden.dispatchEvent(new Event("change"));
-            });
-            projectResults.appendChild(li);
-          });
-        } else {
-          projectResults.classList.add("hidden");
-        }
+      // Show all projects on focus
+      projectInput.addEventListener("focus", function () {
+        renderProjects(window.projectsData);
       });
 
       // Hide results when clicking outside
-      document.addEventListener("click", function(e) {
+      document.addEventListener("click", function (e) {
         if (projectResults && !projectResults.contains(e.target) && e.target !== projectInput) {
           projectResults.classList.add("hidden");
         }
       });
     }
+      
     // ===== Banking Type Search =====
     const bankingTypeInput = document.getElementById("banking-type-search");
     const bankingTypeResults = document.getElementById("banking-type-results");
     const bankingTypeHidden = document.getElementById("banking-type-id-field");
 
     if (bankingTypeInput && bankingTypeResults && window.bankingTypesData) {
-      bankingTypeInput.addEventListener("input", function() {
-        const query = this.value.toLowerCase();
+      function renderBankingTypes(list) {
         bankingTypeResults.innerHTML = "";
 
-        if (query.length === 0) {
-          bankingTypeResults.classList.add("hidden");
-          return;
-        }
-
-        const matches = window.bankingTypesData.filter(bt =>
-          bt.name.toLowerCase().includes(query)
-        );
-
-        if (matches.length > 0) {
+        if (list.length > 0) {
           bankingTypeResults.classList.remove("hidden");
-          matches.forEach(bt => {
+          list.forEach(bt => {
             const li = document.createElement("li");
             li.textContent = bt.name;
             li.className = "px-3 py-2 hover:bg-blue-500 hover:text-white cursor-pointer";
-            li.addEventListener("click", function() {
+            li.addEventListener("click", function () {
               bankingTypeInput.value = bt.name;
               if (bankingTypeHidden) bankingTypeHidden.value = bt.id;
               bankingTypeResults.classList.add("hidden");
@@ -464,11 +468,35 @@
         } else {
           bankingTypeResults.classList.add("hidden");
         }
+      }
+
+      // Filtered search on input
+      bankingTypeInput.addEventListener("input", function () {
+        const query = this.value.toLowerCase();
+
+        if (query.length === 0) {
+          bankingTypeResults.classList.add("hidden");
+          return;
+        }
+
+        const matches = window.bankingTypesData.filter(bt =>
+          bt.name.toLowerCase().includes(query)
+        );
+        renderBankingTypes(matches);
+      });
+
+      // Show all BankingTypes on focus
+      bankingTypeInput.addEventListener("focus", function () {
+        renderBankingTypes(window.bankingTypesData);
       });
 
       // Hide results when clicking outside
-      document.addEventListener("click", function(e) {
-        if (bankingTypeResults && !bankingTypeResults.contains(e.target) && e.target !== bankingTypeInput) {
+      document.addEventListener("click", function (e) {
+        if (
+          bankingTypeResults &&
+          !bankingTypeResults.contains(e.target) &&
+          e.target !== bankingTypeInput
+        ) {
           bankingTypeResults.classList.add("hidden");
         }
       });
@@ -480,9 +508,30 @@
     const assigneeHidden = document.getElementById("assignee-id-field");
 
     if (assigneeInput && assigneeResults && window.assigneeUsersData) {
-      assigneeInput.addEventListener("input", function() {
-        const query = this.value.toLowerCase();
+      function renderAssignees(list) {
         assigneeResults.innerHTML = "";
+
+        if (list.length > 0) {
+          assigneeResults.classList.remove("hidden");
+          list.forEach(user => {
+            const li = document.createElement("li");
+            li.textContent = user.name;
+            li.className = "px-3 py-2 hover:bg-blue-500 hover:text-white cursor-pointer";
+            li.addEventListener("click", function () {
+              assigneeInput.value = user.name;
+              if (assigneeHidden) assigneeHidden.value = user.id;
+              assigneeResults.classList.add("hidden");
+            });
+            assigneeResults.appendChild(li);
+          });
+        } else {
+          assigneeResults.classList.add("hidden");
+        }
+      }
+
+      // Filter search on input
+      assigneeInput.addEventListener("input", function () {
+        const query = this.value.toLowerCase();
 
         // Reset hidden field whenever user types
         if (assigneeHidden) assigneeHidden.value = "";
@@ -496,27 +545,21 @@
           user.name.toLowerCase().includes(query)
         );
 
-        if (matches.length > 0) {
-          assigneeResults.classList.remove("hidden");
-          matches.forEach(user => {
-            const li = document.createElement("li");
-            li.textContent = user.name;
-            li.className = "px-3 py-2 hover:bg-blue-500 hover:text-white cursor-pointer";
-            li.addEventListener("click", function() {
-              assigneeInput.value = user.name;
-              if (assigneeHidden) assigneeHidden.value = user.id;
-              assigneeResults.classList.add("hidden");
-            });
-            assigneeResults.appendChild(li);
-          });
-        } else {
-          assigneeResults.classList.add("hidden");
-        }
+        renderAssignees(matches);
+      });
+
+      // Show all assignees on focus
+      assigneeInput.addEventListener("focus", function () {
+        renderAssignees(window.assigneeUsersData);
       });
 
       // Hide results when clicking outside
-      document.addEventListener("click", function(e) {
-        if (assigneeResults && !assigneeResults.contains(e.target) && e.target !== assigneeInput) {
+      document.addEventListener("click", function (e) {
+        if (
+          assigneeResults &&
+          !assigneeResults.contains(e.target) &&
+          e.target !== assigneeInput
+        ) {
           assigneeResults.classList.add("hidden");
         }
       });

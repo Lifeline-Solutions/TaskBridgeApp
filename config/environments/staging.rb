@@ -1,84 +1,99 @@
 require "active_support/core_ext/integer/time"
-require_relative "production"
 
 Rails.application.configure do
-  # prod-like behavior
-  config.enable_reloading = false
-  config.eager_load = true
-  config.cache_classes = true
-  config.consider_all_requests_local = false
-  config.action_controller.perform_caching = true
+  # Settings specified here will take precedence over those in config/application.rb.
 
-  # assets & static
-  config.assets.compile = false
-  config.assets.digest = true
-  # config.public_file_server.enabled = true  # uncomment if Rails must serve /public
+  # In the development environment your application's code is reloaded any time
+  # it changes. This slows down response time but is perfect for development
+  # since you don't have to restart the web server when you make code changes.
+  config.enable_reloading = true
 
-  # storage
-  config.active_storage.service = :staging
+  # Do not eager load code on boot.
+  config.eager_load = false
 
-  # logging
-  config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "debug")
-  config.log_tags = [:request_id]
-  config.logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new($stdout))
+  # Show full error reports.
+  config.consider_all_requests_local = true
 
-  # jobs
-  config.active_job.queue_adapter = :sidekiq
-  config.active_job.queue_name_prefix = "cspm_staging"
+  # Enable server timing
+  config.server_timing = true
 
-  # mailer
+  # Enable/disable caching. By default caching is disabled.
+  # Run rails dev:cache to toggle caching.
+  if Rails.root.join("tmp/caching-dev.txt").exist?
+    config.action_controller.perform_caching = true
+    config.action_controller.enable_fragment_cache_logging = true
+
+    config.cache_store = :memory_store
+    config.public_file_server.headers = {
+      "Cache-Control" => "public, max-age=#{2.days.to_i}"
+    }
+  else
+    config.action_controller.perform_caching = false
+
+    config.cache_store = :null_store
+  end
+
+  # Store uploaded files on the local file system (see config/storage.yml for options).
+  config.active_storage.service = :local
+
+  # Don't care if the mailer can't send.
+  config.action_mailer.raise_delivery_errors = false
+
   config.action_mailer.perform_caching = false
+
+  # Print deprecation notices to the Rails logger.
+  config.active_support.deprecation = :log
+
+  # Raise exceptions for disallowed deprecations.
+  config.active_support.disallowed_deprecation = :raise
+
+  # Tell Active Support which deprecation messages to disallow.
+  config.active_support.disallowed_deprecation_warnings = []
+
+  # Raise an error on page load if there are pending migrations.
+  config.active_record.migration_error = :page_load
+
+  # Highlight code that triggered database queries in logs.
+  config.active_record.verbose_query_logs = true
+
+  # Highlight code that enqueued background job in logs.
+  config.active_job.verbose_enqueue_logs = true
+
+  config.active_job.queue_adapter = :sidekiq
+
+
+  # Suppress logger output for asset requests.
+  config.assets.quiet = true
+
+
+
+  # Raises error for missing translations.
+  # config.i18n.raise_on_missing_translations = true
+
+  # Annotate rendered view with file names.
+  # config.action_view.annotate_rendered_view_with_filenames = true
+
+  # Uncomment if you wish to allow Action Cable access from any origin.
+  # config.action_cable.disable_request_forgery_protection = true
+
+  # Raise error when a before_action's only/except options reference missing actions
+
+  config.action_mailer.default_url_options = { host: 'http://172.16.2.15', protocol: 'http' }
+  config.action_controller.raise_on_missing_callback_actions = true
+  config.active_storage.variant_processor = :mini_magick
   config.action_mailer.raise_delivery_errors = true
-  config.action_mailer.perform_deliveries = true
-  config.action_mailer.default_url_options = {
-    host: ENV.fetch("APP_HOST", "172.16.2.15"), # host ONLY
-    protocol: "http"
-  }
+  config.action_mailer.perform_caching = false
   config.action_mailer.delivery_method = :smtp
-
-  # Choose ONE of the two blocks below:
-
-  # --- If using implicit TLS on 465 ---
   config.action_mailer.smtp_settings = {
-    address:              ENV.fetch("SMTP_ADDRESS", "secure.emailsrvr.com"),
-    port:                 ENV.fetch("SMTP_PORT", "465").to_i,
-    domain:               ENV.fetch("SMTP_DOMAIN", "craftsilicon.com"),
-    # user_name:            ENV.fetch("SMTP_USERNAME"),
-    # password:             ENV.fetch("SMTP_PASSWORD"),
-    authentication:       :plain,
-    ssl:                  true,
-    enable_starttls_auto: false,
-    openssl_verify_mode:  ENV.fetch("SMTP_OPENSSL_VERIFY_MODE", "none"),
-    open_timeout:         30,
-    read_timeout:         30
+    address: 'secure.emailsrvr.com',
+    port: 465, # Use 587 for STARTTLS or 465 for SSL/TLS
+    domain: 'http://172.16.2.15', # Replace with your domain
+    user_name: 'taskbridgestaging@craftsilicon.com', # Replace with your email
+    password: 'Taskbridge***', # Replace with your email password
+    authentication: 'plain', # Can also be 'plain' or 'cram_md5'
+    ssl: true, # Use SSL encryption
+    tls: true, # Enforce TLS
+    enable_starttls_auto: true, # Automatically start TLS if available
+    openssl_verify_mode: 'none' # To avoid certificate verification issues (use cautiously)
   }
-
-  # --- If using STARTTLS on 587 (use this instead, and remove the block above) ---
-  # config.action_mailer.smtp_settings = {
-  #   address:              ENV.fetch("SMTP_ADDRESS", "secure.emailsrvr.com"),
-  #   port:                 ENV.fetch("SMTP_PORT", "587").to_i,
-  #   domain:               ENV.fetch("SMTP_DOMAIN", "craftsilicon.com"),
-  #   user_name:            ENV.fetch("SMTP_USERNAME"),
-  #   password:             ENV.fetch("SMTP_PASSWORD"),
-  #   authentication:       :plain,
-  #   enable_starttls_auto: true,
-  #   open_timeout:         30,
-  #   read_timeout:         30
-  # }
-
-  # security / SSL
-  config.force_ssl = false
-  # config.assume_ssl = true # if behind SSL-terminating proxy but you access via http internally
-
-  # allowed hosts (NO scheme)
-  config.hosts << ENV.fetch("APP_HOST", "172.16.2.15")
-  config.ssl_options = { redirect: false, hsts: false }
-  config.middleware.delete ActionDispatch::SSL rescue nil
-  # config.hosts << /.*\.craftsilicon\.com/
-
-  # i18n / deprecations / schema dumps
-  config.i18n.fallbacks = true
-  config.active_support.report_deprecations = false
-  config.active_record.dump_schema_after_migration = false
-end 
-
+end

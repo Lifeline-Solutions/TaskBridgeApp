@@ -2,7 +2,7 @@
   <!-- Mobile card view for small screens -->
   <div class="block sm:hidden">
     <% @project.each do |project| %>
-      <% if project.assigned_to?(current_user) || current_user.has_role?(:admin) or current_user.has_role?(:observer) or current_user.has_role?(:agent) %>
+      <% if project.assigned_to?(current_user) || current_user.has_role?(:admin) || current_user.has_role?(:observer) || current_user.has_role?(:agent) %>
         <div class="border-b border-gray-200 dark:border-gray-700 p-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer" onclick="window.location='<%= project_path(project.id) %>'">
           <!-- Mobile card header -->
           <div class="flex items-start space-x-3 mb-3">
@@ -87,7 +87,7 @@
       </thead>
       <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
         <% @project.each do |project| %>
-          <% if project.assigned_to?(current_user) || current_user.has_role?(:admin) or current_user.has_role?(:observer) or current_user.has_role?(:agent) %>
+          <% if project.assigned_to?(current_user) || current_user.has_role?(:admin) || current_user.has_role?(:observer) || current_user.has_role?(:agent) %>
             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer" onclick="window.location='<%= project_path(project.id) %>'">
               <td class="px-3 sm:px-6 py-4">
                 <div class="flex-shrink-0">
@@ -160,99 +160,3 @@
     </div>
   <% end %>
 </div>
-
-<script>
-  document.addEventListener('turbo:load', function() {
-    const button = document.getElementById('button');
-    button.addEventListener('click', function() {
-      button.style.backgroundColor = '#1F6DE0';
-    });
-  });
-</script>
-
-<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-
-<% if params[:query].present? && @tickets.any? %>
-    <% @tickets.each do |ticket| %>
-      <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 ">
-
-        <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-          <%= link_to ticket.created_at.strftime("%d %b %Y"), project_ticket_path(ticket.project, ticket)   %>
-        </th>
-        <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
-          <% if ticket.unique_id.present? %>
-            <%= link_to ticket.unique_id, project_ticket_path(ticket.project, ticket)  %>
-          <% end %>
-        </th>
-        <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-          <%= link_to ticket.issue, project_ticket_path(ticket.project, ticket)   %>
-        </th>
-        <td class="px-2 py-2">
-            <%= render partial: "tickets/priority_severity", locals: { ticket: ticket } %>
-        </td>
-
-        <td class="px-2 py-2 truncate w-64 ">
-          <% if ticket.subject.present? %>
-            <%= ticket.subject.truncate(50) %>
-          <% end %>
-        </td>
-        <td class="px-2 py-2 font-bold">
-          <% ticket.users.each do |user| %>
-            <% if user.name.present? %>
-              <%= user.name %>
-            <% end %>
-          <% end %>
-        </td>
-        <td class="px-2 py-2">
-            <%= render partial: "tickets/ticket_status", locals: { ticket: ticket } %>
-        </td>
-        <!-- Progress Bar -->
-        <td class="pl-2 pr-5 py-2">
-          <div class="relative w-full">
-            <!-- Progress Percentage Tooltip -->
-            <div class="absolute top-[-1.5rem] left-0 translate-x-0 text-sm font-bold"
-                 style="left: calc(<%= ticket.progress_percentage || 0 %>% - 1rem); color: <%= if ticket.progress_percentage.nil?
-                                                                                      '#9CA3AF' # gray-400
-                                                                                    elsif ticket.progress_percentage < 30
-                                                                                      '#DC2626' # red-600
-                                                                                    elsif ticket.progress_percentage < 60
-                                                                                      '#2563EB' # blue-600
-                                                                                    else
-                                                                                      ticket.progress_percentage >= 100 ? '#000000' : '#16A34A' # black or green-600
-                                                                                    end %>;"
-                 class="<%= 'mr-3' if ticket.progress_percentage == 100 %>">
-              <%= ticket.progress_percentage || 0 %>%
-            </div>
-            <!-- Progress Bar Background -->
-            <div class="bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-              <!-- Dynamic Progress Bar -->
-              <div class="<%= if ticket.progress_percentage.nil?
-                                'bg-gray-400'
-                              elsif ticket.progress_percentage < 30
-                                'bg-red-600'
-                              elsif ticket.progress_percentage < 60
-                                'bg-blue-600'
-                              else
-                                ticket.progress_percentage >= 100 ? 'bg-black ' : 'bg-green-600'
-                              end %> h-2.5 rounded-full"
-                   style="width: <%= ticket.progress_percentage || 0 %>%">
-              </div>
-            </div>
-          </div>
-        </td>
-
-        <td class="px-4 py-4 whitespace-nowrap font-medium" data-controller="dropdown" data-dropdown-ticket-id-value="<%= ticket.id %>">
-          <%= render partial: 'tickets/action_dropdown', locals: { ticket: ticket } %>
-        </td>
-        <% if current_user.has_role? :admin or current_user.has_role? :agent  or current_user.has_role?('project manager')%>
-          <td class="px-2 py-2 text-center hide-on-sidebar">
-            <%= ticket.update_count %>
-          </td>
-          <td class="px-2 py-2 text-center hide-on-sidebar">
-            <%= ticket.last_updated_at ? ticket.last_updated_at.strftime("%T") : 'Never' %>
-          </td>
-        <% end %>
-      </tr>
-  <% end %>
-    </table>
-<% end %>

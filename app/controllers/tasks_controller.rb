@@ -40,7 +40,7 @@ class TasksController < ApplicationController
         end
 
         current_user.add_role :creator, @task
-        format.html { redirect_to product_path(@product), notice: 'Task was successfully created.' }
+        format.html { redirect_to product_task_path(@product, @task), notice: 'Task was successfully created.' }
       else
         SafeNotifier.email(StandardError.new('Task creation failed'), context: { errors: @task.errors.full_messages, product_id: @product.id, params: params.to_unsafe_h })
         Rails.logger.error("Task creation failed: #{@task.errors.full_messages.join(', ')}")
@@ -61,7 +61,7 @@ class TasksController < ApplicationController
   def update
     audit_on_update(@task)
     if @task.update(task_params)
-      redirect_to product_path(@product), notice: 'Task was successfully updated.'
+      redirect_to product_task_path(@product, @task), notice: 'Task was successfully updated.'
     else
       render :edit
     end
@@ -171,6 +171,6 @@ class TasksController < ApplicationController
   end
 
   def task_params
-    params.require(:task).permit(:name, :start_date, :end_date, :image, :file, :user_id, :priority, :tasks_id, :unique_task_id)
+    params.require(:task).permit(:name, :description, :start_date, :end_date, :image, :file, :user_id, :priority, :tasks_id, :unique_task_id)
   end
 end
