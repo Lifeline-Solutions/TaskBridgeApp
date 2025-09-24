@@ -223,4 +223,5 @@ Rails.application.routes.draw do
       get :export_csv
     end
   end
+  resources :profiles, only: [:index]
 end

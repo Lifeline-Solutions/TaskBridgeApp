@@ -76,7 +76,7 @@ class UserMailer < ApplicationMailer
     @current_user = current_user
     @assigned_user = assigned_user
     @url = product_url(@product)
-    mail(to: @user.email, subject: 'Product Assignment')
+    mail(to: @user.email, subject: 'Project Assignment')
   end
 
   # From Task Controller

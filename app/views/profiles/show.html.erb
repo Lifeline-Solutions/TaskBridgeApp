@@ -1,0 +1,181 @@
+<% if @user %>
+  <h1 class="flex justify-center text-2xl font-bold mb-4">Assigned Tickets for <%= @user.name %> - <%= params[:client_name] %></h1>
+<% else %>
+  <h1 class="flex justify-center text-2xl font-bold mb-4">Assigned Tickets - <%= params[:client_name] %></h1>
+<% end %>
+
+<div class="flex justify-center search-bar mb-4">
+  <%= form_with url: user_report_view_path, method: :get, local: true do |form| %>
+    <%= form.hidden_field :user_id, value: params[:user_id] %>
+    <%= form.hidden_field :client_name, value: params[:client_name] %>
+    <%= form.hidden_field :start_date, value: params[:start_date] %>
+    <%= form.hidden_field :end_date, value: params[:end_date] %>
+
+    <div class="flex items-center space-x-4">
+      <div>
+        <%= form.label :status, 'Filter by Status:', class: 'block text-sm font-medium text-gray-700' %>
+        <%= form.select :status, options_for_select(%w[Open Closed], params[:status]), { include_blank: 'All' }, class: "border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full" %>
+      </div>
+      <div class="mt-6">
+        <%= form.submit 'Search', class: 'px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600' %>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<div class="mx-auto mb-4 px-4 sm:px-6 lg:px-8 py-8">
+  <table class="border-collapse border border-gray-300 w-full mb-4">
+    <thead>
+    <tr>
+      <th scope="col" class="border border-gray-300 px-4 py-2">Date of Creation</th>
+      <th scope="col" class="border border-gray-300 px-4 py-2">Ticket ID</th>
+      <th scope="col" class="border border-gray-300 px-4 py-2">Project Title</th>
+      <th scope="col" class="border border-gray-300 px-4 py-2">Issue</th>
+      <th scope="col" class="border border-gray-300 px-4 py-2">Priority</th>
+      <th scope="col" class="border border-gray-300 px-4 py-2">Summary</th>
+      <th scope="col" class="border border-gray-300 px-4 py-2">Assigned To</th>
+      <th scope="col" class="border border-gray-300 px-4 py-2">STATUS</th>
+      <th scope="col" class="border border-gray-300 px-4 py-2">PROGRESS BAR</th>
+      <th scope="col" class="border border-gray-300 px-4 py-2">Reported By</th>
+      <th scope="col" class="border border-gray-300 px-4 py-2">VIEW</th>
+    </tr>
+    </thead>
+    <tbody>
+    <% @tickets.each do |ticket| %>
+      <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+        <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+          <%= link_to ticket.created_at.strftime("%d %b %Y"), project_ticket_path(ticket.project, ticket) %>
+        </th>
+        <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
+          <%= link_to ticket.unique_id, project_ticket_path(ticket.project, ticket) if ticket.unique_id.present? %>
+        </th>
+        <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white capitalize">
+          <%= link_to ticket.project.title, project_ticket_path(ticket.project, ticket) %>
+        </th>
+        <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+          <%= link_to ticket.issue, project_ticket_path(ticket.project, ticket) %>
+        </th>
+        <td class="px-2 py-2">
+          <% if ticket.priority == 'SEVERITY 1' %>
+            <p class='bg-red-900 p-1 text-center text-white font-bold rounded'><%= ticket.priority %></p>
+          <% elsif ticket.priority == 'SEVERITY 2' %>
+            <p class='bg-red-600 p-1 text-center text-white font-bold rounded'><%= ticket.priority %></p>
+          <% elsif ticket.priority == 'SEVERITY 3' %>
+            <p class='bg-yellow-500 p-1 text-center text-white font-bold rounded'><%= ticket.priority %></p>
+          <% else %>
+            <p class='bg-blue-500 p-1 text-center text-white font-bold rounded'><%= ticket.priority %></p>
+          <% end %>
+        </td>
+        <td class="px-2 py-2 truncate w-64">
+          <%= ticket.subject.truncate(50) if ticket.subject.present? %>
+        </td>
+        <td class="px-2 py-2 font-bold">
+          <%= @user.name if @user %>
+        </td>
+        <td class="px-2 py-2">
+          <% ticket.statuses.each do |status| %>
+            <% case status.name %>
+          <% when 'Resolved' %>
+              <p class='bg-green-500 text-center text-slate-100 font-semibold rounded p-1 border-r-2 border-b-4 border-green-600'>
+                <%= status.name %>
+              </p>
+            <% when 'Closed' %>
+              <p class='bg-gray-800 text-center text-slate-100 font-semibold rounded p-1 border-r-2 border-b-4 border-gray-900'>
+                <%= status.name %>
+              </p>
+            <% when 'Reopened' %>
+              <p class="bg-red-900 text-center text-slate-100 font-semibold rounded p-1 border-r-2 border-b-4 border-red-800">
+                <%= status.name %>
+              </p>
+            <% when 'New' %>
+              <p class="bg-red-500 text-center text-slate-100 font-semibold rounded p-1 border-r-2 border-b-4 border-red-600">
+                <%= status.name %>
+              </p>
+            <% when 'Under Development' %>
+              <p class='bg-blue-300 text-center text-slate-100 font-semibold rounded p-1 border-r-2 border-b-4 border-blue-400'>
+                <%= status.name %>
+              </p>
+            <% when 'Work in Progress' %>
+              <p class='bg-gray-500 text-center text-slate-100 font-semibold rounded p-1 border-r-2 border-b-4 border-gray-600'>
+                <%= status.name %>
+              </p>
+            <% when 'QA Testing' %>
+              <p class='bg-pink-500 text-center text-slate-100 font-semibold rounded p-1 border-r-2 border-b-4 border-pink-600'>
+                <%= status.name %>
+              </p>
+            <% when 'Awaiting Build' %>
+              <p class='text-center text-gray-900 dark:text-slate-100 font-semibold rounded p-1 border-black dark:border-slate-100 border border-b-4 border-r-2'>
+                <%= status.name %>
+              </p>
+            <% when 'Client Confirmation Pending' %>
+              <p class='bg-purple-500 text-center text-slate-100 font-semibold rounded p-1 border-r-2 border-b-4 border-purple-600'>
+                <%= status.name %>
+              </p>
+            <% when 'On-Hold' %>
+              <p class='bg-yellow-300 text-center text-black font-semibold rounded p-1 border-r-2 border-b-4 border-yellow-400'>
+                <%= status.name %>
+              </p>
+            <% when 'Assigned' %>
+              <p class='bg-blue-800 text-center text-slate-100 font-semibold rounded p-1 border-r-2 border-b-4 border-blue-900'>
+                <%= status.name %>
+              </p>
+            <% when 'Approved' %>
+              <p class='bg-green-800 text-center text-slate-100 font-bold rounded p-1 border-r-2 border-b-4 border-green-900'>
+                <%= status.name %>
+              </p>
+            <% when 'Pending' %>
+              <p class='bg-gradient-to-r from-green-800 to-black text-center text-slate-100 font-bold rounded p-1 border-r-2 border-b-4 border-green-900'>
+                <%= status.name %>
+              </p>
+            <% when 'Declined' %>
+              <p class='bg-gray-800 text-center text-slate-100 font-semibold rounded p-1 border-r-2 border-b-4 border-gray-900'>
+                <%= status.name %>
+              </p>
+            <% end %>
+          <% end %>
+        </td>
+        <!-- Progress Bar -->
+        <td class="pl-2 pr-5 py-2">
+          <div class="relative w-full">
+            <!-- Progress Percentage Tooltip -->
+            <div class="absolute top-[-1.5rem] left-0 translate-x-0 text-sm font-bold"
+                 style="left: calc(<%= ticket.progress_percentage || 0 %>% - 1rem); color: <%= if ticket.progress_percentage.nil?
+                                                                                      '#9CA3AF' # gray-400
+                                                                                    elsif ticket.progress_percentage < 30
+                                                                                      '#DC2626' # red-600
+                                                                                    elsif ticket.progress_percentage < 60
+                                                                                      '#2563EB' # blue-600
+                                                                                    else
+                                                                                      ticket.progress_percentage >= 100 ? '#000000' : '#16A34A' # black or green-600
+                                                                                    end %>;"
+                 class="<%= 'mr-3' if ticket.progress_percentage == 100 %>">
+              <%= ticket.progress_percentage || 0 %>%
+            </div>
+            <!-- Progress Bar Background -->
+            <div class="bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+              <!-- Dynamic Progress Bar -->
+              <div class="<%= if ticket.progress_percentage.nil?
+                                'bg-gray-400'
+                              elsif ticket.progress_percentage < 30
+                                'bg-red-600'
+                              elsif ticket.progress_percentage < 60
+                                'bg-blue-600'
+                              else
+                                ticket.progress_percentage >= 100 ? 'bg-black ' : 'bg-green-600'
+                              end %> h-2.5 rounded-full"
+                   style="width: <%= ticket.progress_percentage || 0 %>%">
+              </div>
+            </div>
+          </div>
+        </td>
+        <td class="px-2 py-2 capitalize">
+          <%= ticket.user.name if ticket.user.name.present? %>
+        </td>
+        <td class="px-2 py-2">
+          <%= link_to 'VIEW', project_ticket_path(ticket.project, ticket), target: "_blank", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-md text-slate-100' %>
+        </td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+</div>
