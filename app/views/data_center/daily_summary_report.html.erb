@@ -1,15 +1,15 @@
 <% provide(:title, "Daily Ticket Summary") %>
 
-<h1 class="text-2xl font-bold text-center mb-4">📅 Daily Ticket Summary</h1>
+<h1 class="text-2xl sm:text-3xl font-bold text-center mb-4">📅 Daily Ticket Summary</h1>
 
 <div class="p-2 w-full">
   <%= form_with url: daily_summary_report_path, method: :get, local: true do %>
-    <div class="flex flex-wrap justify-center gap-2">
-      <div class="flex flex-col gap-2">
+    <div class="flex flex-col sm:flex-row flex-wrap justify-center gap-2 sm:gap-4">
+      <div class="flex flex-col gap-2 w-full sm:w-1/4">
         <%= label_tag :team_id, 'Select Team', class: "capitalize text-sm font-bold w-full align-middle pt-2" %>
         <div class="relative w-full">
           <input type="text" id="searchTeam" class="border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full" placeholder="Search Team..." onclick="showDropdown()" onkeyup="filterTeamDropdown()">
-          <div id="teamDropdown" class="absolute border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full hidden">
+          <div id="teamDropdown" class="absolute z-10 border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full hidden max-h-48 overflow-y-auto">
             <% Team.all.each do |team| %>
               <div class="dropdown-item px-4 py-2 bg-white hover:bg-gray-100 dark:bg-gray-500 dark:hover:bg-gray-700 cursor-pointer capitalize" data-team-id="<%= team.id %>" onclick="selectTeam(this)">
                 <%= team.name %>
@@ -19,15 +19,15 @@
           <input type="hidden" id="selectedTeamId" name="team_id" required>
         </div>
       </div>
-      <div class="flex flex-col gap-2">
+      <div class="flex flex-col gap-2 w-full sm:w-1/4">
         <%= label_tag :start_date, 'Start Date', class: "capitalize text-sm font-bold w-full align-middle pt-2" %>
         <%= date_field_tag :start_date, params[:start_date], class: "border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full" %>
       </div>
-      <div class="flex flex-col gap-2">
+      <div class="flex flex-col gap-2 w-full sm:w-1/4">
         <%= label_tag :end_date, 'End Date', class: "capitalize text-sm font-bold w-full align-middle pt-2" %>
         <%= date_field_tag :end_date, params[:end_date], class: "border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full" %>
       </div>
-      <div class="flex flex-col gap-2 pt-9">
+      <div class="flex flex-col gap-2 pt-4 sm:pt-9 w-full sm:w-auto">
         <%= submit_tag 'Get Summary', class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold text-slate-100 w-full sm:w-auto' %>
       </div>
     </div>
@@ -36,34 +36,36 @@
 
 <% if @daily_summary.present? %>
   <div class="mt-6">
-    <h2 class="text-xl font-bold text-center mb-4">Summary for <%= @team.name %></h2>
+    <h2 class="text-xl sm:text-2xl font-bold text-center mb-4">Summary for <%= @team.name %></h2>
     <% grouped = @daily_summary.group_by { |entry| entry.date.strftime('%B %Y') } %>
     <% grouped.each do |month, entries| %>
-      <h3 class="text-lg font-semibold text-left mt-6 mb-2"><%= month %></h3>
-      <table class="table-auto w-full border-collapse border border-gray-300 mb-4">
-        <thead>
-        <tr>
-          <th class="border border-gray-300 px-4 py-2">Date</th>
-          <th class="border border-gray-300 px-4 py-2">Added Today</th>
-          <th class="border border-gray-300 px-4 py-2">Open Tickets</th>
-          <th class="border border-gray-300 px-4 py-2">With Client</th>
-          <th class="border border-gray-300 px-4 py-2">Resolved</th>
-          <th class="border border-gray-300 px-4 py-2">Closed</th>
-        </tr>
-        </thead>
-        <tbody>
-        <% entries.each do |entry| %>
+      <h3 class="text-lg sm:text-xl font-semibold text-left mt-6 mb-2"><%= month %></h3>
+      <div class="overflow-x-auto">
+        <table class="table-auto w-full border-collapse border border-gray-300 mb-4 text-xs sm:text-sm">
+          <thead>
           <tr>
-            <td class="border border-gray-300 px-4 py-2"><%= entry.date.strftime('%A, %d-%m-%Y') %></td>
-            <td class="border border-gray-300 px-4 py-2"><%= entry.new_additions %></td>
-            <td class="border border-gray-300 px-4 py-2"><%= entry.open_tickets %></td>
-            <td class="border border-gray-300 px-4 py-2"><%= entry.with_client %></td>
-            <td class="border border-gray-300 px-4 py-2"><%= entry.resolved %></td>
-            <td class="border border-gray-300 px-4 py-2"><%= entry.closed %></td>
+            <th class="border border-gray-300 px-2 sm:px-4 py-2">Date</th>
+            <th class="border border-gray-300 px-2 sm:px-4 py-2">Added Today</th>
+            <th class="border border-gray-300 px-2 sm:px-4 py-2">Open Tickets</th>
+            <th class="border border-gray-300 px-2 sm:px-4 py-2">With Client</th>
+            <th class="border border-gray-300 px-2 sm:px-4 py-2">Resolved</th>
+            <th class="border border-gray-300 px-2 sm:px-4 py-2">Closed</th>
           </tr>
-        <% end %>
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+          <% entries.each do |entry| %>
+            <tr>
+              <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= entry.date.strftime('%A, %d-%m-%Y') %></td>
+              <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= entry.new_additions %></td>
+              <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= entry.open_tickets %></td>
+              <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= entry.with_client %></td>
+              <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= entry.resolved %></td>
+              <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= entry.closed %></td>
+            </tr>
+          <% end %>
+          </tbody>
+        </table>
+      </div>
     <% end %>
   </div>
 <% end %>
