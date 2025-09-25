@@ -868,11 +868,7 @@ class DefectController < ApplicationController
 
   def set_form_data
     # selected product if provided in params (used to scope modules/banking types)
-    if params[:product_id].present?
-      @selected_product = Product.find_by(id: params[:product_id])
-    else
-      @selected_product = nil
-    end
+    @selected_product = (Product.find_by(id: params[:product_id]) if params[:product_id].present?)
 
     # QA modules (parent modules) - scoped to selected product if present
     @qa_modules = if @selected_product
@@ -883,10 +879,10 @@ class DefectController < ApplicationController
 
     # banking types scoped to selected product (so UI can show only product banking types)
     @banking_types = if @selected_product
-                      BankingType.where(product_id: @selected_product.id).order(:name)
-                    else
-                      []
-                    end
+                       BankingType.where(product_id: @selected_product.id).order(:name)
+                     else
+                       []
+                     end
 
     # If a module was selected (e.g. via params), preload its submodules for the view
     if params[:qa_module_id].present?
