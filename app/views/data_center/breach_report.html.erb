@@ -1,16 +1,16 @@
 <% provide(:title, "Breach Report") %>
 
-<h1 class="flex justify-center text-xl font-bold mb-4">Breach Report</h1>
+<h1 class="flex justify-center text-xl md:text-2xl font-bold mb-4">Breach Report</h1>
 
 <div class="p-2 w-full mx-auto">
   <%= form_with url: breach_report_path, method: :get, local: true do |f| %>
-    <div class="grid grid-cols-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 justify-center gap-2">
-      <div class="col-span-1 flex flex-col ">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2">
+      <div class="col-span-1 flex flex-col">
         <%= f.label :status, "Status", class: "capitalize text-xs font-bold" %>
         <%= f.select :status,
                      options_from_collection_for_select(Status.where(name: ['New', 'Closed', 'Resolved', 'Reopened', 'Under Development', 'Work in Progress', 'QA Testing', 'Awaiting Build', 'Client Confirmation Pending', 'On-Hold', 'Assigned', 'Declined']), :name, :name, params[:status]),
                      { include_blank: 'All Statuses' },
-                     class: "h-10 border border-gray-300 rounded-lg dark:text-black px-2 text-sm" %>
+                     class: "h-10 border border-gray-300 rounded-lg dark:text-black px-2 text-sm w-full" %>
       </div>
 
       <div class="col-span-1 flex flex-col">
@@ -18,7 +18,7 @@
         <%= f.select :priority,
                      options_for_select(['SEVERITY 1', 'SEVERITY 2', 'SEVERITY 3', 'SEVERITY 4'], params[:priority]),
                      { include_blank: 'All Severities' },
-                     class: "h-10 border border-gray-300 rounded-lg dark:text-black px-2 text-sm" %>
+                     class: "h-10 border border-gray-300 rounded-lg dark:text-black px-2 text-sm w-full" %>
       </div>
       <div class="col-span-1 flex flex-col">
         <%= f.label :client_id, "Client", class: "capitalize text-xs font-bold" %>
@@ -28,7 +28,7 @@
           <input type="text" id="searchClient" class="h-10 border border-gray-300 rounded-lg dark:text-black px-2 text-sm w-full" placeholder="Search Client..." onclick="showDropdown()" onkeyup="filterClientDropdown()">
 
           <!-- Dropdown List -->
-          <div id="clientDropdown" class="absolute w-full bg-white border rounded-lg mt-1 shadow-lg max-h-40 overflow-y-auto hidden">
+          <div id="clientDropdown" class="absolute w-full bg-white border rounded-lg mt-1 shadow-lg max-h-40 overflow-y-auto hidden z-10">
             <% clients = if current_user.has_role?(:admin) || current_user.has_role?(:observer)
                           Client.all
                         else
@@ -52,30 +52,30 @@
   <% end %>
 </div>
 
-<div class="mx-auto mb-4 px-4 gap-2">
+<div class="mx-auto mb-4 px-2 sm:px-4 gap-2">
   <div class="flex justify-end">
     <%= link_to "Download CSV",
                 breach_report_path(format: :csv, start_date: params[:start_date], end_date: params[:end_date], client_id: params[:client_id], status: params[:status], priority: params[:priority]),
-                class: "mb-4 mt-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100" %>
+                class: "mb-4 mt-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100 text-xs sm:text-sm" %>
   </div>
 
-  <!-- Scrollable table for smaller screens -->
+  <!-- Responsive table container -->
   <div class="overflow-x-auto">
-    <table id="breach_report" class="table-auto w-full">
+    <table id="breach_report" class="min-w-full table-auto text-xs sm:text-sm">
       <thead>
         <tr>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">Created</th>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">Ticket ID</th>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">Support Desk</th>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">Severity</th>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">Summary</th>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">Issue Type</th>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">Status</th>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">Assigned To</th>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">Reporter</th>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">SLA Status</th>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">Target Response Deadline</th>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">Resolution Deadline</th>
+          <th class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4">Created</th>
+          <th class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4">Ticket ID</th>
+          <th class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4">Support Desk</th>
+          <th class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4">Severity</th>
+          <th class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4">Summary</th>
+          <th class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4">Issue Type</th>
+          <th class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4">Status</th>
+          <th class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4">Assigned To</th>
+          <th class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4">Reporter</th>
+          <th class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4">SLA Status</th>
+          <th class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4">Target Response Deadline</th>
+          <th class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4">Resolution Deadline</th>
         </tr>
       </thead>
       <tbody>
@@ -107,18 +107,18 @@
                          ''
                        end %>
         <tr class="<%= row_class %>">
-            <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.created_at.strftime('%d/%b/%Y %H:%M:%S %p') %></td>
-            <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.unique_id %></td>
-            <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.project.title %></td>
-            <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.priority %></td>
-            <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.subject %></td>
-            <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.issue %></td>
-            <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.statuses.first&.name || "N/A" %></td>
-            <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.users.map(&:name).select(&:present?).join(', ') %></td>
-            <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.user.name %></td>
-            <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.sla_ticket&.sla_status || "N/A" %></td>
-            <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.sla_ticket&.sla_target_response_deadline.presence || 'not breached' %></td>
-            <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.sla_ticket&.sla_resolution_deadline.presence || 'not breached' %></td>
+            <td class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4"><%= ticket.created_at.strftime('%d/%b/%Y %H:%M:%S %p') %></td>
+            <td class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4"><%= ticket.unique_id %></td>
+            <td class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4"><%= ticket.project.title %></td>
+            <td class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4"><%= ticket.priority %></td>
+            <td class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4"><%= ticket.subject %></td>
+            <td class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4"><%= ticket.issue %></td>
+            <td class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4"><%= ticket.statuses.first&.name || "N/A" %></td>
+            <td class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4"><%= ticket.users.map(&:name).select(&:present?).join(', ') %></td>
+            <td class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4"><%= ticket.user.name %></td>
+            <td class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4"><%= ticket.sla_ticket&.sla_status || "N/A" %></td>
+            <td class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4"><%= ticket.sla_ticket&.sla_target_response_deadline.presence || 'not breached' %></td>
+            <td class="border border-black dark:border-slate-100 px-2 py-2 sm:px-4"><%= ticket.sla_ticket&.sla_resolution_deadline.presence || 'not breached' %></td>
           </tr>
         <% end %>
       </tbody>
