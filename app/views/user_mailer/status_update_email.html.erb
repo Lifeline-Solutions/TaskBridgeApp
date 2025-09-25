@@ -17,7 +17,7 @@
 
 <p><strong>Ticket Details:</strong></p>
 <ul>
-  <li><strong>Service Desk Name:</strong> <span class="capitalize"><%= @project.title %></span></li>
+  <li><strong>Service Desk Name:</strong> <span class="capitalize"><%= @ticket.project.title %></span></li>
   <li><strong>Ticket ID:</strong> <%= @ticket.unique_id %></li>
   <li><strong>Subject:</strong> <%= @ticket.subject %></li>
   <li><strong>Ticket Type:</strong> <%= @ticket.issue %></li>
