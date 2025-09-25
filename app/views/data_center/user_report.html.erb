@@ -3,12 +3,12 @@
 <h1 class="flex justify-center text-2xl font-bold mb-4">User Report</h1>
 <div class="p-2 w-full">
   <%= form_with url: user_report_path, method: :get, local: true do |f| %>
-    <div class="flex justify-center gap-2">
-      <div class="flex flex-col gap-2">
+    <div class="flex flex-col md:flex-row md:justify-center md:gap-2 gap-4">
+      <div class="flex flex-col gap-2 w-full md:w-auto">
         <%= f.label :user_id, "Taskbridge Users", class: "capitalize text-sm font-bold w-full align-middle pt-3" %>
         <div class="relative w-full">
           <input type="text" id="searchUser" class="border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full" autocomplete="off" onclick="showDropdown()" placeholder="Search User..." onkeyup="filterUserDropdown()">
-          <div id="userDropdown" class="absolute border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none bg-white dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full hidden">
+          <div id="userDropdown" class="absolute border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none bg-white dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full hidden z-10">
             <% users = User.with_role(:agent).or(User.with_role(:project_manager)).or(User.with_role(:admin)) %>
             <% users.each do |user| %>
               <div class="dropdown-item px-4 py-2 hover:bg-gray-100 hover:dark:bg-gray-900 cursor-pointer capitalize" data-user-id="<%= user.id %>" onclick="selectUser(this)">
@@ -19,35 +19,35 @@
           <input type="hidden" id="selectedUserId" name="user_id" required>
         </div>
       </div>
-      <div class="flex flex-col gap-2">
+      <div class="flex flex-col gap-2 w-full md:w-auto">
         <%= f.label :start_date, "Start Date", class: "capitalize text-sm font-bold w-full align-middle pt-3" %>
         <%= f.date_field :start_date, class: "border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full" %>
       </div>
-      <div class="flex flex-col gap-2">
+      <div class="flex flex-col gap-2 w-full md:w-auto">
         <%= f.label :end_date, "End Date", class: "capitalize text-sm font-bold w-full align-middle pt-3" %>
         <%= f.date_field :end_date, class: "border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full" %>
       </div>
-      <div class="gap-2 pt-10">
-        <%= f.submit "Generate Report", class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
+      <div class="gap-2 pt-4 md:pt-10 w-full md:w-auto flex items-end">
+        <%= f.submit "Generate Report", class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100 w-full md:w-auto' %>
       </div>
     </div>
   <% end %>
 </div>
 
 <% if @users&.any? %>
-  <div class="flex justify-between gap-2">
-    <div class="mb-4 px-4 sm:px-6 lg:px-8 py-8 w-full">
+  <div class="flex flex-col lg:flex-row justify-between gap-2">
+    <div class="mb-4 px-2 sm:px-4 lg:px-8 py-4 w-full">
       <h2 class="text-xl font-bold mb-4 text-center">
         Assignment Report for <%= @users.first.name || "#{@users.first.first_name} #{@users.first.last_name}" %>
         <% if params[:start_date].present? || params[:end_date].present? %>
           from <%= params[:start_date] %> to <%= params[:end_date] %>
         <% end %>
       </h2>
-      <div class="grid grid-cols-5">
-        <div class="mb-4 px-4 sm:px-6 lg:px-8 py-8 col-span-4">
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        <div class="mb-4 px-2 sm:px-4 lg:px-8 py-4 col-span-1 lg:col-span-4">
           <h2 class="text-xl font-bold mb-4 text-center">Ticket Status Summary</h2>
-          <div class="grid grid-cols-4">
-            <div class="col-span-3">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="col-span-1 md:col-span-3">
               <%= column_chart @status_counts, height: "300px", library: {
                 title: { text: "Ticket Status Distribution" },
                 plotOptions: {
@@ -57,7 +57,7 @@
                 }
               } %>
             </div>
-            <div class="col-span-1 ml-4">
+            <div class="col-span-1 ml-0 md:ml-4">
               <ul>
                 <% @status_counts.each do |status, count| %>
                   <li><%= status %>: <%= count %></li>
@@ -77,29 +77,29 @@
     </div>
   </div>
 
-  <div class="mx-auto mb-4 px-4 sm:px-6 lg:px-8 py-8">
+  <div class="mx-auto mb-4 px-2 sm:px-4 lg:px-8 py-4 overflow-x-auto">
     <div class="flex justify-end">
       <%= link_to "Download CSV",
                   user_report_path(format: :csv, start_date: params[:start_date], end_date: params[:end_date], user_id: params[:user_id]),
                   class: "mb-4 mt-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100" %>
     </div>
-    <table id="user_report" class="table-auto w-full">
+    <table id="user_report" class="table-auto w-full min-w-[600px]">
       <thead>
       <tr>
-        <th class="border border-black dark:border-slate-100 px-4 py-2">Client Name</th>
-        <th class="border border-black dark:border-slate-100 px-4 py-2">Number of Tickets</th>
-        <th class="border border-black dark:border-slate-100 px-4 py-2">View Tickets</th>
+        <th class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base">Client Name</th>
+        <th class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base">Number of Tickets</th>
+        <th class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base">View Tickets</th>
       </tr>
       </thead>
       <tbody>
       <% @tickets_by_client.each do |client_name, tickets| %>
         <tr>
-          <td class="border border-black dark:border-slate-100 px-4 py-2"><%= client_name %></td>
-          <td class="border border-black dark:border-slate-100 px-4 py-2"><%= tickets.count %></td>
-          <td class="border border-black dark:border-slate-100 px-4 py-2">
+          <td class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base"><%= client_name %></td>
+          <td class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base"><%= tickets.count %></td>
+          <td class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base">
             <%= link_to "View Tickets",
                         user_report_view_path(user_id: params[:user_id], client_name: client_name, start_date: params[:start_date], end_date: params[:end_date]),
-                        class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
+                        class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100 text-xs md:text-base' %>
           </td>
         </tr>
       <% end %>
@@ -108,18 +108,18 @@
   </div>
 
   <!-- Assignment Events Section -->
-  <div class="mx-auto mb-8 px-4 sm:px-6 lg:px-8">
+  <div class="mx-auto mb-8 px-2 sm:px-4 lg:px-8 overflow-x-auto">
     <h3 class="text-lg font-bold mb-3">Assignment Events</h3>
     <% if @events.present? %>
-      <table class="table-auto w-full">
+      <table class="table-auto w-full min-w-[800px]">
         <thead>
         <tr>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">Ticket Unique ID (Assign Count)</th>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">Assigned To / SLA Status / Deadline</th>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">View Ticket</th>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">Assigned At</th>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">Resolved At</th>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">Time to Resolved / Open Since</th>
+          <th class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base">Ticket Unique ID (Assign Count)</th>
+          <th class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base">Assigned To / SLA Status / Deadline</th>
+          <th class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base">View Ticket</th>
+          <th class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base">Assigned At</th>
+          <th class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base">Resolved At</th>
+          <th class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base">Time to Resolved / Open Since</th>
         </tr>
         </thead>
         <tbody>
@@ -132,26 +132,26 @@
           <% resolved_at = resolved_at_for(ticket) %>
           <% duration = resolution_duration_for(ticket) %>
           <tr>
-            <td class="border border-black dark:border-slate-100 px-4 py-2"><%= "#{unique_id} (#{events.size})" %></td>
-            <td class="border border-black dark:border-slate-100 px-4 py-2">
+            <td class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base"><%= "#{unique_id} (#{events.size})" %></td>
+            <td class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base">
               <div>
                 <div><strong>Assigned To:</strong> <%= info[:assigned_to] || "Unknown" %></div>
                 <div><strong>SLA Status:</strong> <%= info[:sla_status] || "N/A" %></div>
                 <div><strong>Target Response Deadline:</strong> <%= info[:target_deadline] || "N/A" %></div>
               </div>
             </td>
-            <td class="border border-black dark:border-slate-100 px-4 py-2">
+            <td class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base">
               <% if ticket %>
-                <%= link_to 'VIEW', polymorphic_path([ticket.project, ticket]), class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
+                <%= link_to 'VIEW', polymorphic_path([ticket.project, ticket]), class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100 text-xs md:text-base' %>
               <% end %>
             </td>
-            <td class="border border-black dark:border-slate-100 px-4 py-2">
+            <td class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base">
               <%= assigned_at ? assigned_at.strftime('%d-%m-%Y %H:%M') : "-" %>
             </td>
-            <td class="border border-black dark:border-slate-100 px-4 py-2">
+            <td class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base">
               <%= resolved_at ? resolved_at.strftime('%d-%m-%Y %H:%M') : "-" %>
             </td>
-            <td class="border border-black dark:border-slate-100 px-4 py-2">
+            <td class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base">
               <% if duration %>
                 <%= "#{duration[:human]} (from #{(assigned_at || ticket.created_at).strftime('%d-%m-%Y %H:%M')})" %>
               <% else %>
@@ -165,7 +165,7 @@
         <!-- Average row in the table footer -->
         <tfoot>
         <tr>
-          <td colspan="6" class="border border-black dark:border-slate-100 px-4 py-2 font-semibold bg-gray-50 dark:bg-gray-800">
+          <td colspan="6" class="border border-black dark:border-slate-100 px-2 py-2 font-semibold bg-gray-50 dark:bg-gray-800 text-xs md:text-base">
             <% if @avg_assignment_to_resolved_seconds %>
               Average time from assignment to resolution across
               <%= pluralize(@avg_assignment_to_resolved_count, 'ticket') %>:
@@ -183,38 +183,38 @@
   </div>
 
   <!-- Comments (Issues) Section -->
-  <div class="mx-auto mb-8 px-4 sm:px-6 lg:px-8">
+  <div class="mx-auto mb-8 px-2 sm:px-4 lg:px-8 overflow-x-auto">
     <h3 class="text-lg font-bold mb-3">All Comments</h3>
     <% if @issues.present? %>
       <% grouped_issues = @issues.group_by { |issue| issue.ticket&.unique_id } %>
 
-      <table class="table-auto w-full">
+      <table class="table-auto w-full min-w-[600px]">
         <thead>
         <tr>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">Ticket ID</th>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">Issues</th>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">View</th>
-          <th class="border border-black dark:border-slate-100 px-4 py-2">Created At</th>
+          <th class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base">Ticket ID</th>
+          <th class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base">Issues</th>
+          <th class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base">View</th>
+          <th class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base">Created At</th>
         </tr>
         </thead>
         <tbody>
         <% grouped_issues.each do |unique_id, issues| %>
           <% ticket = issues.first.ticket %>
           <tr>
-            <td class="border border-black dark:border-slate-100 px-4 py-2"><%= "#{unique_id} (#{issues.size})" %></td>
-            <td class="border border-black dark:border-slate-100 px-4 py-2">
+            <td class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base"><%= "#{unique_id} (#{issues.size})" %></td>
+            <td class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base">
               <% issues.each do |issue| %>
                 <div class="mb-1">
                   <%= (issue.try(:content)&.to_plain_text&.truncate(80)) || issue.try(:name) || issue.try(:title) || "Issue ##{issue.id}" %>
                 </div>
               <% end %>
             </td>
-            <td class="border border-black dark:border-slate-100 px-4 py-2">
+            <td class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base">
               <% if ticket %>
-                <%= link_to 'VIEW', polymorphic_path([ticket.project, ticket]), class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
+                <%= link_to 'VIEW', polymorphic_path([ticket.project, ticket]), class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100 text-xs md:text-base' %>
               <% end %>
             </td>
-            <td class="border border-black dark:border-slate-100 px-4 py-2">
+            <td class="border border-black dark:border-slate-100 px-2 py-2 text-xs md:text-base">
               <%= issues.first.try(:created_at)&.strftime('%d-%m-%Y') %>
             </td>
           </tr>
