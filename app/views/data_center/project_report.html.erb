@@ -1,14 +1,17 @@
 <% provide(:title, "Workload Report") %>
 
-<h1 class="flex justify-center text-2xl font-bold mb-4">Workload Report<span>(Blank Start and End Date show you for the last 6 month)</span></h1>
+<h1 class="flex flex-col sm:flex-row justify-center items-center text-xl sm:text-2xl font-bold mb-4 text-center gap-2">
+  Workload Report
+  <span class="text-sm font-normal text-gray-500">(Blank Start and End Date show you for the last 6 month)</span>
+</h1>
 <div class="p-2 w-full">
   <%= form_with url: project_report_path, method: :get, local: true do %>
-    <div class="flex flex-wrap justify-center gap-2">
-      <div class="flex flex-col gap-2">
+    <div class="flex flex-col sm:flex-row flex-wrap justify-center gap-4 sm:gap-2 w-full">
+      <div class="flex flex-col gap-2 w-full sm:w-64">
         <%= label_tag :team_id, 'Select Team', class: "capitalize text-sm font-bold w-full align-middle pt-2" %>
         <div class="relative w-full">
-          <input type="text" id="searchTeam" class="border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full" placeholder="Search Team..." onclick="showDropdown()" onkeyup="filterTeamDropdown()">
-          <div id="teamDropdown" class="absolute border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full hidden">
+          <input type="text" id="searchTeam" class="border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full py-2 px-3" placeholder="Search Team..." onclick="showDropdown()" onkeyup="filterTeamDropdown()">
+          <div id="teamDropdown" class="absolute z-10 border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full hidden max-h-60 overflow-y-auto bg-white dark:bg-gray-700 shadow-lg">
             <% teams = Team.all %>
             <% teams.each do |team| %>
               <div class="dropdown-item px-4 py-2 bg-white hover:bg-gray-100 dark:bg-gray-500 dark:hover:bg-gray-700 cursor-pointer capitalize" data-team-id="<%= team.id %>" onclick="selectTeam(this)">
@@ -19,147 +22,153 @@
           <input type="hidden" id="selectedTeamId" name="team_id" required>
         </div>
       </div>
-      <div class="flex flex-col gap-2 ">
+      <div class="flex flex-col gap-2 w-full sm:w-48">
         <%= label_tag :start_date, 'Start Date', class: "capitalize text-sm font-bold w-full align-middle pt-2" %>
-        <%= date_field_tag :start_date, params[:start_date], class: "border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full" %>
+        <%= date_field_tag :start_date, params[:start_date], class: "border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full py-2 px-3" %>
       </div>
-      <div class="flex flex-col gap-2 ">
+      <div class="flex flex-col gap-2 w-full sm:w-48">
         <%= label_tag :end_date, 'End Date', class: "capitalize text-sm font-bold w-full align-middle pt-2" %>
-        <%= date_field_tag :end_date, params[:end_date], class: "border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full" %>
+        <%= date_field_tag :end_date, params[:end_date], class: "border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full py-2 px-3" %>
       </div>
-      <div class="flex flex-col gap-2 pt-9">
+      <div class="flex flex-col gap-2 pt-4 sm:pt-9 w-full sm:w-auto">
         <%= submit_tag 'Show Report', class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100 w-full sm:w-auto' %>
       </div>
     </div>
   <% end %>
 </div>
 
-<div class="mx-auto mb-4 px-4 sm:px-6 lg:px-8 py-8">
+<div class="mx-auto mb-4 px-2 sm:px-6 lg:px-8 py-4 sm:py-8">
   <% if @team %>
-    <div class="flex justify-center gap-2">
-      <h2 class="p-2 font-bold">
+    <div class="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 mb-4">
+      <h2 class="p-2 font-bold text-center">
         Team Report for
         <span class="capitalize"><%= @team.name %></span>
         <%= (params[:start_date].presence && Date.parse(params[:start_date]).strftime("%d-%m-%Y")) || 6.months.ago.to_date.strftime("%d %b %Y") %>
         to
         <%= (params[:end_date].presence && Date.parse(params[:end_date]).strftime("%d-%m-%Y")) || Date.today.strftime("%d %b %Y") %> at <%= Time.now.strftime("%I:%M %p") %>
       </h2>
-      <%= link_to 'Download Open Tickets',
-                  project_report_path(format: :csv, team_id: @team.id, start_date: params[:start_date], end_date: params[:end_date]),
-                  class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100 w-full sm:w-auto' %>
-
-      <%= link_to 'Download All Tickets',
-                  project_report_path(format: :csv, team_id: @team.id, start_date: params[:start_date], end_date: params[:end_date], all_tickets: true),
-                  class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100 w-full sm:w-auto' %>
+      <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+        <%= link_to 'Download Open Tickets',
+                    project_report_path(format: :csv, team_id: @team.id, start_date: params[:start_date], end_date: params[:end_date]),
+                    class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100 w-full sm:w-auto text-center' %>
+        <%= link_to 'Download All Tickets',
+                    project_report_path(format: :csv, team_id: @team.id, start_date: params[:start_date], end_date: params[:end_date], all_tickets: true),
+                    class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100 w-full sm:w-auto text-center' %>
+      </div>
     </div>
-    <div class="flex justify-center w-full my-6 gap-10">
-      <div class="flex justify-center gap-10">
-        <div>
-        <%= pie_chart @tickets_chart_data, height: "400px", library: { title: { text: "Tickets by User" } } %>
+    <div class="flex flex-col lg:flex-row justify-center w-full my-6 gap-6 lg:gap-10">
+      <div class="flex flex-col md:flex-row justify-center gap-6 lg:gap-10 w-full">
+        <div class="w-full md:w-1/2">
+          <%= pie_chart @tickets_chart_data, height: "300px", library: { title: { text: "Tickets by User" } } %>
         </div>
-        <div>
-          <h3 class="text-lg font-bold mb-2">Top 5 Users by Tickets</h3>
-          <ul>
+        <div class="w-full md:w-1/2">
+          <h3 class="text-lg font-bold mb-2 text-center md:text-left">Top 5 Users by Tickets</h3>
+          <ul class="text-sm">
             <% @tickets_chart_data.sort_by { |_, count| -count }.first(5).each do |user, count| %>
               <li class="mb-1 capitalize"><%= user %>: <%= count %></li>
             <% end %>
           </ul>
         </div>
       </div>
-      <div class="flex justify-center gap-10">
-        <div>
-          <%= pie_chart @tickets_per_project, height: "400px", library: { title: { text: "Tickets per Project" } } %>
+      <div class="flex flex-col md:flex-row justify-center gap-6 lg:gap-10 w-full mt-6 lg:mt-0">
+        <div class="w-full md:w-1/2">
+          <%= pie_chart @tickets_per_project, height: "300px", library: { title: { text: "Tickets per Project" } } %>
         </div>
-        <div>
-          <h3 class="text-lg font-bold mb-2">Project Ticket Counts</h3>
-          <ul>
+        <div class="w-full md:w-1/2">
+          <h3 class="text-lg font-bold mb-2 text-center md:text-left">Project Ticket Counts</h3>
+          <ul class="text-sm">
             <% @tickets_per_project.sort_by { |_, count| -count }.each do |project, count| %>
-              <li class="mb-1 capitalize"><%= project %>: <%= count %> <%= link_to "View", project_path(Project.find_by(title: project)), class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded" %>
+              <li class="mb-1 capitalize flex items-center justify-between">
+                <span><%= project %>: <%= count %></span>
+                <%= link_to "View", project_path(Project.find_by(title: project)), class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded ml-2 text-xs" %>
+              </li>
             <% end %>
           </ul>
         </div>
       </div>
     </div>
 
-    <table class="table-auto w-full border-collapse border border-gray-300">
-      <thead>
-      <tr>
-        <th class="border border-gray-300 px-4 py-2">User Name</th>
-        <th class="border border-gray-300 px-4 py-2">Total Assigned Tickets</th>
-        <th class="border border-gray-300 px-4 py-2">Total Open Tickets</th>
-        <th class="border border-gray-300 px-4 py-2">Assigned</th>
-        <th class="border border-gray-300 px-4 py-2">Work in Progress</th>
-        <th class="border border-gray-300 px-4 py-2">QA Testing</th>
-        <th class="border border-gray-300 px-4 py-2">On Hold</th>
-        <th class="border border-gray-300 px-4 py-2">Under Development</th>
-        <th class="border border-gray-300 px-4 py-2">Client Confirmation Pending</th>
-        <th class="border border-gray-300 px-4 py-2">Awaiting Build</th>
-        <th class="border border-gray-300 px-4 py-2">Reopened</th>
-
-        <th class="border border-gray-300 px-4 py-2">Initial Response Breaches</th>
-        <th class="border border-gray-300 px-4 py-2">Target Response Breaches</th>
-        <th class="border border-gray-300 px-4 py-2">Target Resolution Breaches</th>
-        <th class="border border-gray-300 px-4 py-2">View</th>
-      </tr>
-      </thead>
-      <tbody>
-      <% # Totals row %>
-      <% total_assigned = @team_members.sum { |user| (@organized_tickets[user.id] || {})['Assigned'].to_i } %>
-      <% total_wip = @team_members.sum { |user| (@organized_tickets[user.id] || {})['Work in Progress'].to_i } %>
-      <% total_qa = @team_members.sum { |user| (@organized_tickets[user.id] || {})['QA Testing'].to_i } %>
-      <% total_oh = @team_members.sum { |user| (@organized_tickets[user.id] || {})['On-Hold'].to_i } %>
-      <% total_ud = @team_members.sum { |user| (@organized_tickets[user.id] || {})['Under Development'].to_i } %>
-      <% total_ccp = @team_members.sum { |user| (@organized_tickets[user.id] || {})['Client Confirmation Pending'].to_i } %>
-      <% total_ab = @team_members.sum { |user| (@organized_tickets[user.id] || {})['Awaiting Build'].to_i } %>
-      <% total_re = @team_members.sum { |user| (@organized_tickets[user.id] || {})['Reopened'].to_i } %>
-      <% total_total = @team_members.sum { |user| (@organized_tickets[user.id] || {})[:total].to_i } %>
-      <% total_open = @team_members.sum { |user| (@tickets_chart_data[user.name] || 0).to_i } %>
-      <% total_sla_status = @team_members.sum { |user| (@sla_status[user.id] || 0).to_i } %>
-      <% total_sla_trd = @team_members.sum { |user| (@sla_target_response_deadline[user.id] || 0).to_i } %>
-      <% total_sla_rd = @team_members.sum { |user| (@sla_resolution_deadline[user.id] || 0).to_i } %>
-
-      <tr class="font-bold">
-        <td class="border border-gray-300 px-4 py-2">Total</td>
-        <td class="border border-gray-300 px-4 py-2"><%= total_total %></td>
-        <td class="border border-gray-300 px-4 py-2"><%= total_open %></td>
-        <td class="border border-gray-300 px-4 py-2"><%= total_assigned %></td>
-        <td class="border border-gray-300 px-4 py-2"><%= total_wip %></td>
-        <td class="border border-gray-300 px-4 py-2"><%= total_qa %></td>
-        <td class="border border-gray-300 px-4 py-2"><%= total_oh %></td>
-        <td class="border border-gray-300 px-4 py-2"><%= total_ud %></td>
-        <td class="border border-gray-300 px-4 py-2"><%= total_ccp %></td>
-        <td class="border border-gray-300 px-4 py-2"><%= total_ab %></td>
-        <td class="border border-gray-300 px-4 py-2"><%= total_re %></td>
-        <td class="border border-gray-300 px-4 py-2"><%= total_sla_status %></td>
-        <td class="border border-gray-300 px-4 py-2"><%= total_sla_trd %></td>
-        <td class="border border-gray-300 px-4 py-2"><%= total_sla_rd %></td>
-        <td class="border border-gray-300 px-4 py-2"></td>
-      </tr>
-
-      <% sorted_team_members = @team_members.sort_by { |user| -(@tickets_chart_data[user.name] || 0) } %>
-      <% sorted_team_members.each do |user| %>
-        <% ticket_data = @organized_tickets[user.id] || {} %>
+    <div class="overflow-x-auto">
+      <table class="table-auto w-full border-collapse border border-gray-300 text-xs sm:text-sm">
+        <thead>
         <tr>
-          <td class="border border-gray-300 px-4 py-2"><%= user.name %></td>
-          <td class="border border-gray-300 px-4 py-2"><%= ticket_data[:total] || 0 %></td>
-          <td class="border border-gray-300 px-4 py-2"><%= @tickets_chart_data[user.name] || 0 %></td>
-          <td class="border border-gray-300 px-4 py-2"><%= ticket_data['Assigned'] || 0 %></td>
-          <td class="border border-gray-300 px-4 py-2"><%= ticket_data['Work in Progress'] || 0 %></td>
-          <td class="border border-gray-300 px-4 py-2"><%= ticket_data['QA Testing'] || 0 %></td>
-          <td class="border border-gray-300 px-4 py-2"><%= ticket_data['On-Hold'] || 0 %></td>
-          <td class="border border-gray-300 px-4 py-2"><%= ticket_data['Under Development'] || 0 %></td>
-          <td class="border border-gray-300 px-4 py-2"><%= ticket_data['Client Confirmation Pending'] || 0 %></td>
-          <td class="border border-gray-300 px-4 py-2"><%= ticket_data['Awaiting Build'] || 0 %></td>
-          <td class="border border-gray-300 px-4 py-2"><%= ticket_data['Reopened'] || 0 %></td>
-          <td class="border border-gray-300 px-4 py-2"><%= @sla_status[user.id] || 0 %></td>
-          <td class="border border-gray-300 px-4 py-2"><%= @sla_target_response_deadline[user.id] || 0 %></td>
-          <td class="border border-gray-300 px-4 py-2"><%= @sla_resolution_deadline[user.id] || 0 %></td>
-          <td class="border border-gray-300 px-4 py-2 font-bold">
-            <%= link_to "View", assigned_tickets_path(team_id: @team.id, user_id: user.id, start_date: params[:start_date], end_date: params[:end_date]), class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>          </td>
+          <th class="border border-gray-300 px-2 sm:px-4 py-2">User Name</th>
+          <th class="border border-gray-300 px-2 sm:px-4 py-2">Total Assigned Tickets</th>
+          <th class="border border-gray-300 px-2 sm:px-4 py-2">Total Open Tickets</th>
+          <th class="border border-gray-300 px-2 sm:px-4 py-2">Assigned</th>
+          <th class="border border-gray-300 px-2 sm:px-4 py-2">Work in Progress</th>
+          <th class="border border-gray-300 px-2 sm:px-4 py-2">QA Testing</th>
+          <th class="border border-gray-300 px-2 sm:px-4 py-2">On Hold</th>
+          <th class="border border-gray-300 px-2 sm:px-4 py-2">Under Development</th>
+          <th class="border border-gray-300 px-2 sm:px-4 py-2">Client Confirmation Pending</th>
+          <th class="border border-gray-300 px-2 sm:px-4 py-2">Awaiting Build</th>
+          <th class="border border-gray-300 px-2 sm:px-4 py-2">Reopened</th>
+          <th class="border border-gray-300 px-2 sm:px-4 py-2">Initial Response Breaches</th>
+          <th class="border border-gray-300 px-2 sm:px-4 py-2">Target Response Breaches</th>
+          <th class="border border-gray-300 px-2 sm:px-4 py-2">Target Resolution Breaches</th>
+          <th class="border border-gray-300 px-2 sm:px-4 py-2">View</th>
         </tr>
-      <% end %>
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+        <% # Totals row %>
+        <% total_assigned = @team_members.sum { |user| (@organized_tickets[user.id] || {})['Assigned'].to_i } %>
+        <% total_wip = @team_members.sum { |user| (@organized_tickets[user.id] || {})['Work in Progress'].to_i } %>
+        <% total_qa = @team_members.sum { |user| (@organized_tickets[user.id] || {})['QA Testing'].to_i } %>
+        <% total_oh = @team_members.sum { |user| (@organized_tickets[user.id] || {})['On-Hold'].to_i } %>
+        <% total_ud = @team_members.sum { |user| (@organized_tickets[user.id] || {})['Under Development'].to_i } %>
+        <% total_ccp = @team_members.sum { |user| (@organized_tickets[user.id] || {})['Client Confirmation Pending'].to_i } %>
+        <% total_ab = @team_members.sum { |user| (@organized_tickets[user.id] || {})['Awaiting Build'].to_i } %>
+        <% total_re = @team_members.sum { |user| (@organized_tickets[user.id] || {})['Reopened'].to_i } %>
+        <% total_total = @team_members.sum { |user| (@organized_tickets[user.id] || {})[:total].to_i } %>
+        <% total_open = @team_members.sum { |user| (@tickets_chart_data[user.name] || 0).to_i } %>
+        <% total_sla_status = @team_members.sum { |user| (@sla_status[user.id] || 0).to_i } %>
+        <% total_sla_trd = @team_members.sum { |user| (@sla_target_response_deadline[user.id] || 0).to_i } %>
+        <% total_sla_rd = @team_members.sum { |user| (@sla_resolution_deadline[user.id] || 0).to_i } %>
+
+        <tr class="font-bold bg-gray-100">
+          <td class="border border-gray-300 px-2 sm:px-4 py-2">Total</td>
+          <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= total_total %></td>
+          <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= total_open %></td>
+          <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= total_assigned %></td>
+          <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= total_wip %></td>
+          <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= total_qa %></td>
+          <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= total_oh %></td>
+          <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= total_ud %></td>
+          <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= total_ccp %></td>
+          <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= total_ab %></td>
+          <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= total_re %></td>
+          <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= total_sla_status %></td>
+          <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= total_sla_trd %></td>
+          <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= total_sla_rd %></td>
+          <td class="border border-gray-300 px-2 sm:px-4 py-2"></td>
+        </tr>
+
+        <% sorted_team_members = @team_members.sort_by { |user| -(@tickets_chart_data[user.name] || 0) } %>
+        <% sorted_team_members.each do |user| %>
+          <% ticket_data = @organized_tickets[user.id] || {} %>
+          <tr class="hover:bg-gray-50">
+            <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= user.name %></td>
+            <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= ticket_data[:total] || 0 %></td>
+            <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= @tickets_chart_data[user.name] || 0 %></td>
+            <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= ticket_data['Assigned'] || 0 %></td>
+            <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= ticket_data['Work in Progress'] || 0 %></td>
+            <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= ticket_data['QA Testing'] || 0 %></td>
+            <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= ticket_data['On-Hold'] || 0 %></td>
+            <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= ticket_data['Under Development'] || 0 %></td>
+            <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= ticket_data['Client Confirmation Pending'] || 0 %></td>
+            <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= ticket_data['Awaiting Build'] || 0 %></td>
+            <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= ticket_data['Reopened'] || 0 %></td>
+            <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= @sla_status[user.id] || 0 %></td>
+            <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= @sla_target_response_deadline[user.id] || 0 %></td>
+            <td class="border border-gray-300 px-2 sm:px-4 py-2"><%= @sla_resolution_deadline[user.id] || 0 %></td>
+            <td class="border border-gray-300 px-2 sm:px-4 py-2 font-bold">
+              <%= link_to "View", assigned_tickets_path(team_id: @team.id, user_id: user.id, start_date: params[:start_date], end_date: params[:end_date]), class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100 text-xs sm:text-sm w-full block text-center' %>
+            </td>
+          </tr>
+        <% end %>
+        </tbody>
+      </table>
+    </div>
   <% end %>
 </div>
 
@@ -197,8 +206,8 @@
 
     let inputField = document.getElementById("searchTeam");
     inputField.value = teamName;
-    inputField.style.paddingRight = "12px"; // Prevents text from being cut off
-    inputField.style.overflow = "visible"; // Ensures full visibility
+    inputField.style.paddingRight = "12px";
+    inputField.style.overflow = "visible";
 
     document.getElementById("selectedTeamId").value = teamId;
     document.getElementById("teamDropdown").classList.add("hidden");
