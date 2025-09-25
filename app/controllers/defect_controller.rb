@@ -868,7 +868,15 @@ class DefectController < ApplicationController
 
   def set_form_data
     @qa_modules = QaModule.where(parent_id: nil)
-    @banking_types = BankingType.all
+
+    if params[:product_id].present?
+      # Get the selected product
+      @selected_product = Product.find_by(id: params[:product_id])
+      @banking_types = BankingType.where(product_id: params[:product_id]).order(:name)
+    else
+      @selected_product = nil
+      @banking_types = []
+    end
     @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
     @submodules = []
     # Fallback: If no QA product found, just pick first product
