@@ -258,22 +258,33 @@
 
     if (!fileInput || !previewContainer) return;
 
-    fileInput.addEventListener("change", () => {
-      previewContainer.innerHTML = ""; // clear previews
-      const files = Array.from(fileInput.files);
+    // keep a persistent list of files across changes
+    let allFiles = [];
 
-      files.forEach((file, index) => {
+    fileInput.addEventListener("change", () => {
+      // append new files to the existing list
+      const newFiles = Array.from(fileInput.files);
+      allFiles = allFiles.concat(newFiles);
+
+      // update the <input> with the merged list
+      updateFileInput(allFiles);
+
+      // rebuild the preview area
+      renderPreviews();
+    });
+
+    function renderPreviews() {
+      previewContainer.innerHTML = "";
+      allFiles.forEach((file, index) => {
         const wrapper = document.createElement("div");
         wrapper.className =
           "relative border rounded-md p-2 w-32 h-32 flex flex-col items-center justify-center text-center bg-gray-50 dark:bg-gray-800 cursor-pointer";
 
-        // Preview (image, video, or generic file)
         if (file.type.startsWith("image/")) {
           const img = document.createElement("img");
           img.src = URL.createObjectURL(file);
           img.className = "object-cover w-full h-full rounded-md";
           wrapper.appendChild(img);
-
           wrapper.addEventListener("click", () =>
             openPreviewPopup("image", img.src, file.name)
           );
@@ -283,7 +294,6 @@
           videoIcon.className =
             "text-xs text-gray-700 dark:text-gray-300 break-words p-1";
           wrapper.appendChild(videoIcon);
-
           wrapper.addEventListener("click", () =>
             openPreviewPopup("video", URL.createObjectURL(file), file.name)
           );
@@ -293,35 +303,32 @@
           icon.className =
             "text-xs text-gray-700 dark:text-gray-300 break-words p-1";
           wrapper.appendChild(icon);
-
           wrapper.addEventListener("click", () =>
             openPreviewPopup("file", null, file.name)
           );
         }
 
-        // Remove button
         const removeBtn = document.createElement("button");
         removeBtn.innerHTML = "✕";
         removeBtn.type = "button";
         removeBtn.className =
           "absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs";
         removeBtn.addEventListener("click", (e) => {
-          e.stopPropagation(); // prevent triggering preview
-          files.splice(index, 1);
-          updateFileInput(files);
+          e.stopPropagation();
+          allFiles.splice(index, 1);
+          updateFileInput(allFiles);
+          renderPreviews();
         });
 
         wrapper.appendChild(removeBtn);
         previewContainer.appendChild(wrapper);
       });
-    });
+    }
 
-    // helper to update input.files after removal
     function updateFileInput(files) {
       const dataTransfer = new DataTransfer();
       files.forEach((f) => dataTransfer.items.add(f));
       fileInput.files = dataTransfer.files;
-      fileInput.dispatchEvent(new Event("change")); // refresh previews
     }
 
     // --- Modal Preview ---
