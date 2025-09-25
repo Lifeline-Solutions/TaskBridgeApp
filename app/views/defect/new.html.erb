@@ -35,7 +35,7 @@
             </div>
           <% end %>
 
-      <!-- Project / Module / Submodule (single controller scope) -->
+      <!-- Project -->
       <div data-controller="project-modules"
        data-project-modules-modules-url-value="<%= modules_by_product_defect_index_path %>"
        class="space-y-3">
@@ -66,7 +66,113 @@
           </ul>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+        <!-- Issue Type -->
+        <div class=" w-full">
+          <div>
+            <label class="block mb-1 text-xs font-medium text-gray-700 dark:text极-gray-300 tracking-wide uppercase">Issue Type</label>
+            <%= f.text_field :issue_type, value: 'Bug', disabled: true,
+                class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-not-allowed' %>
+          </div>
+
+          <!-- Status -->
+          <div class="relative flex flex-col gap-2 mt-2">
+              <label for="defect_status_id"
+                class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+                  Status *
+              </label>
+              <%= select_tag "defect[status_id]",
+                options_from_collection_for_select(
+                  @statuses, :id, :name,
+                  (@defect.statuses.first&.id || @statuses.first&.id)
+                ),
+                id: "defect_status_id",
+                class: "block w-full px-3 py-2 border border-gray-300 rounded-lg
+                        focus:ring-primary-600 focus:border-primary-600 p-2.5
+                        dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400
+                        text-transform: uppercase" %>
+
+
+          </div>
+
+          <!-- Summary -->
+          <div>
+            <label for="defect_summary" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Summary *</label>
+            <%= f.text_field :summary, placeholder: 'Enter concise summary', required: true,
+                class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 placeholder-gray-400' %>
+          </div>
+
+          <!-- Description (CKEditor) -->
+          <div>
+            <label for="defect_content" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+              Description *
+            </label>
+            <%= text_area_tag 'defect[content]',
+                @defect.content&.body&.to_s,
+                id: 'defect_content',
+                class: 'min-h-[200px] w-full border border-gray-300 rounded-md px-3 py-2 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600',
+                data: { required: true } %>
+
+            <p id="defect_content_error" class="mt-1 text-xs text-red-600 hidden">Description is required.</p>
+          </div>
+
+          <!-- Reported By -->
+          <div>
+            <label class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Reported By</label>
+            <%= text_field_tag :creator_name, Current.user&.name, disabled: true,
+                class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-not-allowed' %>
+          </div>
+
+          <!-- Priority -->
+          <div>
+            <label for="defect_priority" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Priority *</label>
+            <%= f.select :priority, options_for_select(['SEVERITY 1','SEVERITY 2','SEVERITY 3','SEVERITY 4'], @defect.priority), { prompt: 'Select Priority' },
+                class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600', required: true %>
+          </div>
+
+          <!-- Labels -->
+          <%= render "defect/form_labels", f: f, defect: @defect %>
+
+          <!-- Assignee -->
+          <div class="relative">
+                <label for="assignee-search"
+                      class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+                  Assignee *
+                </label>
+
+                <% if (default_assignee = DefaultDefectAssignee.instance)&.user.present? %>
+                  <input type="text"
+                        id="assignee-search"
+                        placeholder="Type to search users..."
+                        value="<%= default_assignee.user.name %>"
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
+                                focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+
+                  <%= hidden_field_tag 'defect[user_ids][]',
+                        default_assignee.user.id,
+                        id: "assignee-id-field" %>
+                <% else %>
+                  <input type="text"
+                        id="assignee-search"
+                        placeholder="Type to search users..."
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
+                                focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+
+                  <%= hidden_field_tag 'defect[user_ids][]',
+                        @defect.user_ids.first,
+                        id: "assignee-id-field" %>
+                <% end %>
+
+                <!-- Results dropdown -->
+                <ul id="assignee-results"
+                    class="absolute mt-1 border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-sm hidden z-10 w-full max-h-60 overflow-y-auto">
+                </ul>
+
+                <p class="mb-2 text-xs text-gray-500 dark:text-gray-400 italic">
+                  You can remove this and type to search for another user if needed.
+                </p>
+              </div>
+
+              <!-- Banking Type -->
           <div class="relative w-full">
             <label for="banking-type-search"
               class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
@@ -123,97 +229,6 @@
         </div>
         </div>
 
-            <!-- Summary -->
-            <div>
-              <label for="defect_summary" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Summary *</label>
-              <%= f.text_field :summary, placeholder: 'Enter concise summary', required: true,
-                    class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 placeholder-gray-400' %>
-            </div>
-
-            <!-- Description (CKEditor) -->
-            <div>
-              <label for="defect_content" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
-                Description *
-              </label>
-              <%= text_area_tag 'defect[content]',
-                    @defect.content&.body&.to_s,
-                    id: 'defect_content',
-                    class: 'min-h-[200px] w-full border border-gray-300 rounded-md px-3 py-2 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600',
-                    data: { required: true } %>
-
-              <p id="defect_content_error" class="mt-1 text-xs text-red-600 hidden">Description is required.</p>
-            </div>
-
-            <!-- Priority / Users / Labels -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div class="relative">
-                <label for="assignee-search"
-                      class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
-                  Assignee *
-                </label>
-
-                <% if (default_assignee = DefaultDefectAssignee.instance)&.user.present? %>
-                  <input type="text"
-                        id="assignee-search"
-                        placeholder="Type to search users..."
-                        value="<%= default_assignee.user.name %>"
-                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
-                                focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
-
-                  <%= hidden_field_tag 'defect[user_ids][]',
-                        default_assignee.user.id,
-                        id: "assignee-id-field" %>
-                <% else %>
-                  <input type="text"
-                        id="assignee-search"
-                        placeholder="Type to search users..."
-                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
-                                focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
-
-                  <%= hidden_field_tag 'defect[user_ids][]',
-                        @defect.user_ids.first,
-                        id: "assignee-id-field" %>
-                <% end %>
-
-                <!-- Results dropdown -->
-                <ul id="assignee-results"
-                    class="absolute mt-1 border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-sm hidden z-10 w-full max-h-60 overflow-y-auto">
-                </ul>
-
-                <p class="mb-2 text-xs text-gray-500 dark:text-gray-400 italic">
-                  You can remove this and type to search for another user if needed.
-                </p>
-              </div>
-              <div>
-                <label for="defect_priority" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Priority *</label>
-                <%= f.select :priority, options_for_select(['SEVERITY 1','SEVERITY 2','SEVERITY 3','SEVERITY 4'], @defect.priority), { prompt: 'Select Priority' },
-                      class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600', required: true %>
-              </div>
-              
-              <%= render "defect/form_labels", f: f, defect: @defect %>
-
-            </div>
-
-            
-            <div class="relative flex flex-col gap-2 mt-2">
-              <label for="defect_status_id"
-                class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
-                  Status *
-              </label>
-              <%= select_tag "defect[status_id]",
-                options_from_collection_for_select(
-                  @statuses, :id, :name,
-                  (@defect.statuses.first&.id || @statuses.first&.id)
-                ),
-                id: "defect_status_id",
-                class: "block w-full px-3 py-2 border border-gray-300 rounded-lg
-                        focus:ring-primary-600 focus:border-primary-600 p-2.5
-                        dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400
-                        text-transform: uppercase" %>
-
-
-            </div>
-
             <!-- Attachments -->
             <div>
               <label for="defect_attachments" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
@@ -230,23 +245,8 @@
               <!-- Previews will go here -->
               <div id="attachment-previews" class="mt-3 flex flex-wrap gap-3"></div>
             </div>
-
-            <!-- Reported By / Issue Type -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Reported By</label>
-                <%= text_field_tag :creator_name, Current.user&.name, disabled: true,
-                      class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-not-allowed' %>
-              </div>
-              <div>
-                <label class="block mb-1 text-xs font-medium text-gray-700 dark:text极-gray-300 tracking-wide uppercase">Issue Type</label>
-                <%= f.text_field :issue_type, value: 'Bug', disabled: true,
-                      class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-not-allowed' %>
-              </div>
-            </div>
         </div>
         <!-- Footer (fixed) -->
-        <!-- Footer -->
         <div class="flex items-center justify-between pt-4 border-t">
           <%= f.submit "Create",
           data: { disable_with: "Creating..." },
