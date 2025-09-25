@@ -867,51 +867,58 @@ class DefectController < ApplicationController
   end
 
   def set_form_data
-    @qa_modules = QaModule.where(parent_id: nil)
-    @banking_types = BankingType.all
-    @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
-    @submodules = []
-    # Fallback: If no QA product found, just pick first product
-    @product ||= Product.includes(:client, :groupwares).first
+    # selected product if provided in params (used to scope modules/banking types)
+    @selected_product = (Product.find_by(id: params[:product_id]) if params[:product_id].present?)
 
-    # Dropdown options for product selection
-    @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
-      .select do |product|
-      product.statuses.any? do |status|
-        ['Pre Quality Assurance', 'End Of Quality Assurance'].include?(status.name)
-      end
-    end.map do |product|
-      client_name = product.client&.name || 'No Client'
-      groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
-      ["#{client_name} - #{groupware_names}", product.id]
+    # QA modules (parent modules) - scoped to selected product if present
+    @qa_modules = if @selected_product
+                    QaModule.where(product_id: @selected_product.id, parent_id: nil).order(:name)
+                  else
+                    QaModule.where(parent_id: nil).order(:name)
+                  end
+
+    # banking types scoped to selected product (so UI can show only product banking types)
+    @banking_types = if @selected_product
+                       BankingType.where(product_id: @selected_product.id).order(:name)
+                     else
+                       []
+                     end
+
+    # If a module was selected (e.g. via params), preload its submodules for the view
+    if params[:qa_module_id].present?
+      @selected_module_id = params[:qa_module_id]
+      parent_module = QaModule.find_by(id: params[:qa_module_id])
+      @submodules = parent_module ? parent_module.submodules.order(:name) : []
+    else
+      @selected_module_id = nil
+      @submodules = []
     end
 
-    # Pick the exact display order you want here (first one will be treated as default)
-    ordered_names = [
-      'TO DO',
-      'Awaiting Build',
-      'Awaiting Client API',
-      'Awaiting Client Information',
-      'Blocked',
-      'Failed QA',
-      'In Progress',
-      'On-Hold',
-      'QA Testing',
-      'Reopened',
-      'Support Testing',
-      'Closed'
-    ]
+    # also keep the currently selected submodule if any
+    @selected_submodule_id = params[:submodule_id].presence
 
-    # Fetch and reorder to match the desired order
+    # other existing dropdown data (unchanged)
+    @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
+    @product ||= Product.includes(:client, :groupwares).first
+
+    @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
+      .select do |product|
+        product.statuses.any? { |status| ['Pre Quality Assurance', 'End Of Quality Assurance'].include?(status.name) }
+      end.map do |product|
+        client_name = product.client&.name || 'No Client'
+        groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
+        ["#{client_name} - #{groupware_names}", product.id]
+      end
+
+    # statuses ordering as you had it
+    ordered_names = [
+      'TO DO', 'Awaiting Build', 'Awaiting Client API', 'Awaiting Client Information',
+      'Blocked', 'Failed QA', 'In Progress', 'On-Hold', 'QA Testing', 'Reopened',
+      'Support Testing', 'Closed'
+    ]
     found_statuses = Status.where(name: ordered_names)
     lookup = found_statuses.index_by(&:name)
     @statuses = ordered_names.map { |n| lookup[n] }.compact
-
-    # # Get all available statuses for the workflow
-    # @statuses = Status.where(name: [
-    #                            'TO DO', 'In Progress', 'On-Hold', 'Awaiting Client Info', 'Awaiting Build',
-    #                            'QA Testing', 'Closed', 'Failed QA', 'Blocked', 'Reopened'
-    #                          ])
   end
 
   def set_defect
