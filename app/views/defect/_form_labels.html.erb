@@ -1,4 +1,4 @@
-<div id="labels_section" data-controller="labels">
+<div class="w-full" id="labels_section" data-controller="labels">
   <!-- Chips -->
   <div data-labels-target="chips" class="flex flex-wrap gap-2 mb-2">
     <% defect.labels.each do |label| %>
@@ -29,7 +29,7 @@
     <input type="text"
            placeholder="Enter or select a label..."
            list="available_labels"
-           class="block min-w-[220px] max-w-[280px] border border-gray-300 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600"
+           class="block min-w-[220px] w-full border border-gray-300 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600"
            data-labels-target="input"
            data-action="keydown.enter->labels#add blur->labels#add" />
 
