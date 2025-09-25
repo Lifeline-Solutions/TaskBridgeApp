@@ -179,17 +179,17 @@ class DefectController < ApplicationController
     @defect = Defect.find(params[:id])
 
     qa_user_ids = User.joins(:roles)
-                    .where(roles: { name: 'qa' })
-                    .pluck(:id)
+      .where(roles: { name: 'qa' })
+      .pluck(:id)
 
     product_user_ids = @defect.craftsilicon_users
-                              .where.not(id: @defect.users.pluck(:id))
-                              .where(id: @defect.product.users.pluck(:id))
-                              .pluck(:id)
+      .where.not(id: @defect.users.pluck(:id))
+      .where(id: @defect.product.users.pluck(:id))
+      .pluck(:id)
 
     @available_users = User.where(id: qa_user_ids + product_user_ids)
-                          .distinct
-                          .order(:first_name, :last_name)
+      .distinct
+      .order(:first_name, :last_name)
 
     # Defects History
     @defects_history = DefectHistory.where(defect_id: @defect.id).order(created_at: :desc)
@@ -224,16 +224,16 @@ class DefectController < ApplicationController
 
     # Collect QA users
     qa_user_ids = User.joins(:roles)
-                      .where(roles: { name: 'qa' })
-                      .pluck(:id)
+      .where(roles: { name: 'qa' })
+      .pluck(:id)
 
     # Collect product users (based on selected @product from set_form_data)
     product_user_ids = @product.present? ? @product.users.pluck(:id) : []
 
     # Combine QA + Product users
     @available_users = User.where(id: qa_user_ids + product_user_ids)
-                          .distinct
-                          .order(:first_name, :last_name)
+      .distinct
+      .order(:first_name, :last_name)
 
     # For JS (assignee search dropdown)
     @assignee_users_data = @available_users.map { |u| { id: u.id, name: u.name } }
@@ -316,19 +316,19 @@ class DefectController < ApplicationController
 
     # QA users (get their IDs)
     qa_user_ids = User.joins(:roles)
-                      .where(roles: { name: 'qa' })
-                      .pluck(:id)
+      .where(roles: { name: 'qa' })
+      .pluck(:id)
 
     # Product users (get their IDs)
     product_user_ids = @defect.craftsilicon_users
-                              .where.not(id: @defect.users.pluck(:id))
+      .where.not(id: @defect.users.pluck(:id))
     product_user_ids = product_user_ids.where(id: @defect.product.users.pluck(:id)) if @defect.product.present?
     product_user_ids = product_user_ids.pluck(:id)
 
     # Combine and query
     @users = User.where(id: qa_user_ids + product_user_ids)
-                .distinct
-                .order(:first_name, :last_name)
+      .distinct
+      .order(:first_name, :last_name)
 
     @statuses = Status.where(name: [
                                'To Do', 'In Progress', 'On hold', 'Awaiting client info',
