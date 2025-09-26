@@ -98,7 +98,7 @@
           <td class="border border-black dark:border-slate-100 px-4 py-2"><%= tickets.count %></td>
           <td class="border border-black dark:border-slate-100 px-4 py-2">
             <%= link_to "View Tickets", profiles_show_user_path(user_id: params[:user_id], client_name: client_name, start_date: params[:start_date], end_date: params[:end_date]),
-                class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
+                        class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
           </td>
         </tr>
       <% end %>
@@ -118,6 +118,7 @@
           <th class="border border-black dark:border-slate-100 px-4 py-2">View Ticket</th>
           <th class="border border-black dark:border-slate-100 px-4 py-2">Assigned At</th>
           <th class="border border-black dark:border-slate-100 px-4 py-2">Resolved At</th>
+          <th class="border border-black dark:border-slate-100 px-4 py-2">Total time user held the ticket</th>
           <th class="border border-black dark:border-slate-100 px-4 py-2">Time to Resolved / Open Since</th>
         </tr>
         </thead>
@@ -141,7 +142,7 @@
             </td>
             <td class="border border-black dark:border-slate-100 px-4 py-2">
               <% if ticket %>
-                <%= link_to 'VIEW', polymorphic_path([ticket.project, ticket]), class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
+                <%= link_to 'VIEW', polymorphic_path([ticket.project, ticket]), target: "_blank", rel: "noopener noreferrer", class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
               <% end %>
             </td>
             <td class="border border-black dark:border-slate-100 px-4 py-2">
@@ -149,6 +150,26 @@
             </td>
             <td class="border border-black dark:border-slate-100 px-4 py-2">
               <%= resolved_at ? resolved_at.strftime('%d-%m-%Y %H:%M') : "-" %>
+            </td>
+            <td class="border border-black dark:border-slate-100 px-4 py-2">
+              <% hold_periods = @total_hold_times[ticket.id] || [] %>
+              <% if hold_periods.any? %>
+                <ul>
+                  <% hold_periods.each_with_index do |period, idx| %>
+                    <li>
+                      <%= "Period #{idx + 1}: #{distance_of_time_in_words(Time.at(0), Time.at(period), include_seconds: true)}" %>
+                    </li>
+                  <% end %>
+                </ul>
+                <% total_seconds = @total_hold_times_sum[ticket.id].to_i %>
+                <% if total_seconds > 0 %>
+                  <div class="mt-1 font-semibold">
+                    <%= "Total: #{distance_of_time_in_words(Time.at(0), Time.at(total_seconds), include_seconds: true)}" %>
+                  </div>
+                <% end %>
+              <% else %>
+                <span>-</span>
+              <% end %>
             </td>
             <td class="border border-black dark:border-slate-100 px-4 py-2">
               <% if duration %>
@@ -160,8 +181,6 @@
           </tr>
         <% end %>
         </tbody>
-
-        <!-- Average row in the table footer -->
         <tfoot>
         <tr>
           <td colspan="6" class="border border-black dark:border-slate-100 px-4 py-2 font-semibold bg-gray-50 dark:bg-gray-800">
@@ -210,11 +229,11 @@
             </td>
             <td class="border border-black dark:border-slate-100 px-4 py-2">
               <% if ticket %>
-                <%= link_to 'VIEW', polymorphic_path([ticket.project, ticket]), class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
+                <%= link_to 'VIEW', polymorphic_path([ticket.project, ticket]), target: "_blank", rel: "noopener noreferrer", class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
               <% end %>
             </td>
             <td class="border border-black dark:border-slate-100 px-4 py-2">
-              <%= issues.first.try(:created_at)&.strftime('%d-%m-%Y') %>
+              <%= issues.map(&:created_at).compact.max&.strftime('%d-%m-%Y %H:%M') %>
             </td>
           </tr>
         <% end %>

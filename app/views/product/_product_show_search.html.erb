@@ -27,4 +27,8 @@
     <%= link_to "Clear Filters", product_path(@product), 
           class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] text-white dark:text-slate-100 px-4 py-2 rounded-lg font-medium text-sm transition-colors whitespace-nowrap' %>
   </div>
+  <div class="ml-4">
+    <%= link_to "Download CSV", download_tasks_csv_product_path(@product),
+                class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] text-white dark:text-slate-100 px-4 py-2 rounded-md font-medium text-sm transition-colors whitespace-nowrap' %>
+  </div>
 </div>

@@ -6,7 +6,6 @@ class ProfilesController < ApplicationController
   def profiles_show
     authorize! :generate, :report
 
-    # Always initialize instance variables
     @users = []
     @tickets = Ticket.none
     @events = []
@@ -15,8 +14,8 @@ class ProfilesController < ApplicationController
     @tickets_by_client = {}
     @assigned_at_by_ticket_id = {}
     @all_ticket_events_by_ticket = {}
+    @total_hold_times = {}
 
-    # If no filters, render the form normally
     return respond_to(&:html) unless params[:user_id].present? || params[:start_date].present? || params[:end_date].present?
 
     @users = User.where(id: params[:user_id])
@@ -27,14 +26,12 @@ class ProfilesController < ApplicationController
     from_time = start_date&.beginning_of_day
     to_time = end_date&.end_of_day
 
-    # Identify assignment events via details text (no events.name column available)
     assignment_events_scope = Event.where('events.details ILIKE ?', '%was assigned to the ticket%')
 
     if @selected_user.present?
       display_name = [@selected_user.first_name, @selected_user.last_name].compact.join(' ').strip
       if display_name.present?
         escaped = ActiveRecord::Base.sanitize_sql_like(display_name)
-        # Support the known formatting issue: missing space before "was"
         assignment_events_scope = assignment_events_scope.where(
           'events.details ILIKE ? OR events.details ILIKE ?',
           "%#{escaped} was assigned to the ticket%",
@@ -49,18 +46,12 @@ class ProfilesController < ApplicationController
       assignment_events_scope = assignment_events_scope.where(created_at: from_time..to_time)
     end
 
-    # Ticket IDs assigned to the selected user within the range
     ticket_ids = assignment_events_scope.where.not(ticket_id: nil).distinct.pluck(:ticket_id)
-
-    # Preload for display
     @assignment_events = assignment_events_scope.includes(:ticket)
-
-    # Map the earliest assignment time per ticket for the selected user
     @assigned_at_by_ticket_id = @assignment_events
       .group_by(&:ticket_id)
       .transform_values { |evs| evs.min_by(&:created_at)&.created_at }
 
-    # Preload all events for those tickets (used for resolved detection)
     @all_ticket_events_by_ticket = Event
       .where(ticket_id: ticket_ids)
       .select(:ticket_id, :details, :created_at)
@@ -70,7 +61,6 @@ class ProfilesController < ApplicationController
       .includes({ project: :client }, :events, :issues, :statuses, :sla_tickets)
       .distinct
 
-    # Status counts with your original logic
     filtered_tickets = @tickets
     @status_counts = filtered_tickets
       .group_by { |ticket| ticket.statuses.first&.name || 'N/A' }
@@ -79,15 +69,12 @@ class ProfilesController < ApplicationController
     @tickets_by_client = filtered_tickets
       .group_by { |ticket| ticket.project&.client&.name || 'Unknown Client' }
 
-    # Only assignment events for the events table
     @events = @assignment_events.to_a
 
-    # Issues related to the matched tickets (optionally filter by date range)
     @issues = Issue.where(ticket_id: ticket_ids)
     @issues = @issues.where(created_at: from_time..to_time) if from_time || to_time
     @issues = @issues.includes(:ticket).to_a
 
-    # Average time from assignment to resolution across resolved tickets
     durations = []
     @tickets.each do |t|
       a = assigned_at_for(t)
@@ -102,6 +89,41 @@ class ProfilesController < ApplicationController
     else
       @avg_assignment_to_resolved_seconds = nil
       @avg_assignment_to_resolved_human = nil
+    end
+
+    # Calculate total hold times
+    @total_hold_times = {}
+    @total_hold_times_sum = {}
+    @tickets.each do |ticket|
+      hold_periods = []
+      events = Event.where(ticket_id: ticket.id).order(:created_at).to_a
+      assignments = events.select { |e| e.details&.include?('was assigned to the ticket') }
+      handovers = events.select { |e| e.details&.include?('was handed over') }
+
+      # Determine the display name for the selected user (to match event text)
+      selected_name = ([@selected_user.first_name, @selected_user.last_name].compact.join(' ').strip if @selected_user.present?)
+
+      # Only consider assignments where the selected user was assigned
+      if selected_name.present?
+        assignments_for_user = assignments.select do |e|
+          parse_assignment_details(e.details)[:assigned_to].to_s == selected_name
+        end
+        # Handovers explicitly involving the selected user (fallback to substring match)
+        handovers_for_user = handovers.select { |h| h.details.to_s.include?(selected_name) }
+
+        assignments_for_user.each do |assign_event|
+          assigned_at = assign_event.created_at
+          # Earliest of the next assignment (anyone) or next handover involving selected user
+          next_assignment = assignments.find { |a| a.created_at > assign_event.created_at }
+          next_handover = handovers_for_user.find { |h| h.created_at > assign_event.created_at }
+          candidate_end_times = [next_assignment&.created_at, next_handover&.created_at].compact
+          end_time = candidate_end_times.min || Time.current
+          hold_periods << (end_time - assigned_at)
+        end
+      end
+
+      @total_hold_times[ticket.id] = hold_periods
+      @total_hold_times_sum[ticket.id] = hold_periods.sum
     end
 
     respond_to do |format|

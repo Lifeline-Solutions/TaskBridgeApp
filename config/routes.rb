@@ -101,6 +101,7 @@ Rails.application.routes.draw do
       delete :remove_user
       post :product_status
       patch :toggle_paid
+      get :download_tasks_csv
     end
     resources :tasks do
       member do
