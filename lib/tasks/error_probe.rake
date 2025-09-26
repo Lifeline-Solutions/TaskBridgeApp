@@ -3,8 +3,7 @@ namespace :error do
   task probe: :environment do
     raise 'ProbeError: simulated exception for error pipeline test'
   rescue StandardError => e
-    SafeNotifier.email(e, context: { rake: 'error:probe', env: Rails.env })
     ErrorLogger.log(e, context: { rake: 'error:probe', env: Rails.env })
-    puts 'Probe invoked. Check your inbox and log/production_errors.log.'
+    puts 'Probe invoked. Check log/production_errors.log.'
   end
 end

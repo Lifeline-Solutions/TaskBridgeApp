@@ -200,7 +200,6 @@ class ProductController < ApplicationController
     if @product.update(product_params)
       redirect_to product_path(@product), notice: 'Product was successfully updated.'
     else
-      SafeNotifier.email(StandardError.new('Product update failed'), context: { errors: @product.errors.full_messages, params: params.to_unsafe_h })
       render :edit, status: :unprocessable_entity
     end
   end

@@ -2,30 +2,54 @@
 
 <div class="container justify-between p-4">
   <%= form_with url: reports_path, method: :get, local: true do %>
-    <label for="product_id" class="font-semibold">Select Product:</label>
-    <%= select_tag :product_id,
-                   options_for_select(@product_options, params[:product_id]),
-                   class: "border rounded p-2 ml-2 bg-white dark:bg-gray-800 min-w-48" %>
-    <%= submit_tag "Search", class: "ml-2 px-4 py-2 bg-blue-500 text-white rounded" %>
+    <div class="flex flex-wrap gap-3 items-center">
+      <div>
+        <label for="product_id" class="font-semibold">Select Product:</label>
+        <%= select_tag :product_id,
+                       options_for_select(@product_options, params[:product_id]),
+                       class: "border rounded p-2 ml-2 bg-white dark:bg-gray-800 min-w-48" %>
+      </div>
+
+      <div>
+        <label class="font-semibold">Date Range:</label>
+        <%= date_field_tag :start_date, params[:start_date], class: "border rounded p-2 ml-2 bg-white dark:bg-gray-800" %>
+        <span class="mx-1">to</span>
+        <%= date_field_tag :end_date, params[:end_date], class: "border rounded p-2 bg-white dark:bg-gray-800" %>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="font-semibold">Metrics:</span>
+        <% metrics = {
+          'severity' => 'Based on Severity',
+          'reporter' => 'Based on Reporter',
+          'status'   => 'Based on Status',
+          'assignee' => 'Based on Assignee',
+          'ageing'   => 'Based on Ageing',
+          'modules'  => 'Based on Modules',
+          'submodules' => 'Based on Sub Modules'
+        } %>
+        <% metrics.each do |key, label| %>
+          <label class="inline-flex items-center gap-1">
+            <%= check_box_tag 'metrics[]', key, @selected_metrics.include?(key) %>
+            <span><%= label %></span>
+          </label>
+        <% end %>
+      </div>
+
+      <%= submit_tag "Apply", class: "ml-2 px-4 py-2 bg-blue-500 text-white rounded" %>
+    </div>
   <% end %>
 </div>
-<% if params[:product_id].present? %>
-  <% selected_product_name = nil %>
-  <% if @product_options.present? && params[:product_id].present? %>
-    <% if @product_options.first.is_a?(Array) %>
-      <% selected_product_name = @product_options.find { |opt| opt[1].to_s == params[:product_id].to_s }&.first %>
-    <% else %>
-      <% selected_product = @product_options.find { |prod| prod.id.to_s == params[:product_id].to_s } %>
-      <% selected_product_name = selected_product&.name %>
-    <% end %>
-  <% end %>
-  <div class="container justify-between p-4 gap-2">
-    <!-- Display name of the product and client when selected -->
-    <div class="flex flex-row gap-6 justify-center">
 
-      <h1 class="font-semibold capitalize"><%= selected_product_name || 'Selected Product' %></h1>
-      <%= link_to "Download CSV", export_csv_reports_path(product_id: params[:product_id], format: :csv), class: "px-4 py-2 bg-green-500 text-white rounded" %>
-    </div>
-    <%= render partial: "defect_per_user", locals: { defects_per_creator: @defects_per_creator } %>
-  </div>
+<% if params[:product_id].present? %>
+  <%= render partial: "defect_per_user", locals: {
+    defects_per_creator: @defects_per_creator,
+    defects_per_status: @defects_per_status,
+    defects_per_severity: @defects_per_severity,
+    defects_per_assignee: @defects_per_assignee,
+    defects_per_module: @defects_per_module,
+    defects_per_submodule: @defects_per_submodule,
+    defects_age_buckets: @defects_age_buckets,
+    selected_metrics: @selected_metrics
+  } %>
 <% end %>
