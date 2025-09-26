@@ -26,8 +26,8 @@ class ReportsController < ApplicationController
 
     defects_scope = Defect.published
     defects_scope = defects_scope.where(product_id: product_id) if product_id.present?
-    defects_scope = defects_scope.where('created_at >= ?', start_date.beginning_of_day) if start_date
-    defects_scope = defects_scope.where('created_at <= ?', end_date.end_of_day) if end_date
+    defects_scope = defects_scope.where('defects.created_at >= ?', start_date.beginning_of_day) if start_date
+    defects_scope = defects_scope.where('defects.created_at <= ?', end_date.end_of_day) if end_date
 
     # Reporter
     @defects_per_creator = if @selected_metrics.include?('reporter')
@@ -96,12 +96,12 @@ class ReportsController < ApplicationController
     @defects_age_buckets = if @selected_metrics.include?('ageing')
                              defects_scope
                                .group(<<~SQL.squish)
-                                 CASE
-                                   WHEN created_at >= NOW() - INTERVAL '7 days' THEN '0-7 days'
-                                   WHEN created_at >= NOW() - INTERVAL '14 days' THEN '8-14 days'
-                                   WHEN created_at >= NOW() - INTERVAL '30 days' THEN '15-30 days'
-                                   ELSE '31+ days'
-                                 END
+                                                      CASE
+                                 WHEN defects.created_at >= NOW() - INTERVAL '7 days' THEN '0-7 days'
+                                 WHEN defects.created_at >= NOW() - INTERVAL '14 days' THEN '8-14 days'
+                                 WHEN defects.created_at >= NOW() - INTERVAL '30 days' THEN '15-30 days'
+                                                        ELSE '31+ days'
+                                                      END
                                SQL
                                .count
                            else
