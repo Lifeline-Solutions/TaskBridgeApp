@@ -1,76 +1,74 @@
-
-  <div class="mx-auto">
-    <h2>Update Profile</h2>
-    <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put }, data: {turbo: true}) do |f| %>
-      <%= render "devise/shared/error_messages", resource: resource %>
-      <div class="mb-5">
-        <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-          First Name
-        </label>
-        <% if current_user.has_role?(:admin) %>
-          <%= f.text_field :first_name, autofocus: true, autocomplete: 'name', class: "h-12 border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg w-full dark:bg-gray-700", placeholder: 'Jay', required: true %>
-        <% else %>
-          <%= f.text_field :first_name, autofocus: true, autocomplete: 'name', class: "h-12 border border-[#B2B8C2] hover:border-[#3A81EB] border-2 rounded-lg w-full dark:bg-gray-700", placeholder: 'Jay', readonly: true %>
-        <% end %>
-      </div>
-      <div class="mb-5">
-        <label for="last name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-          Last Name
-        </label>
-        <% if current_user.has_role?(:admin) %>
-          <%= f.text_field :last_name, autofocus: true, autocomplete: 'name', class: "h-12 border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg w-full dark:bg-gray-700", placeholder: 'Strong', required: true %>
-        <% else %>
-          <%= f.text_field :last_name, autofocus: true, autocomplete: 'name', class: "h-12 border border-[#B2B8C2] hover:border-[#3A81EB] border-2 rounded-lg w-full dark:bg-gray-700", placeholder: 'Strong', readonly: true %>
-        <% end %>
-      </div>
-      <div class="mb-5">
-        <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-          Your email
-        </label>
-        <% if current_user.has_role?(:admin) %>
-          <%= f.email_field :email, autofocus: true, autocomplete: 'email', class: "h-12 border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg w-full dark:bg-gray-700", placeholder: 'name@craftsilicon.com', required: true %>
-        <% else %>
-          <%= f.email_field :email, autofocus: true, autocomplete: 'email', class: "h-12 border border-[#B2B8C2] hover:border-[#3A81EB] border-2 rounded-lg w-full dark:bg-gray-700", placeholder: 'name@craftsilicon.com', readonly: true %>
-        <% end %>
-      </div>
-      <div class="mb-5">
-        <label for="profile_picture" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-          Profile Picture
-        </label>
-        <%= f.file_field :profile_picture, class: " p-2 border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg w-full"  %>
-      </div>
-      <% if devise_mapping.confirmable? && resource.pending_reconfirmation? %>
-        <div>Currently waiting confirmation for: <%= resource.unconfirmed_email %>
-        </div>
-      <% end %>
-      <div class="grid-cols-3 grid gap-2">
-        <div class="field">
-          <%= f.label :password %>
-          <i class="block mb-2 text-xs font-medium text-gray-900 dark:text-white ">
-            (leave blank if you don't want to change it)
-          </i><br />
-          <%= f.password_field :password, autocomplete: "new-password", class: " p-2 border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg w-full dark:bg-gray-700" %>
-          <% if @minimum_password_length %>
-            <br />
-            <em>
-              <%= @minimum_password_length %> characters minimum</em>
+<% provide(:title, "Edit Profile") %>
+<div class="min-h-screen w-full flex flex-col md:flex-row bg-gray-50 dark:bg-gray-900">
+  <!-- Left side image/logo (always visible, on top for mobile, left for desktop) -->
+  <div class="flex w-full md:w-1/2 items-center justify-center bg-gray-100 dark:bg-gray-900 p-8 md:min-h-screen order-2 md:order-1">
+    <div class="flex flex-col items-center w-full">
+      <%= image_tag 'logo.png', class: 'w-24 h-24 md:w-32 md:h-32 object-contain mb-4 hidden dark:block mx-auto transition-all duration-300' %>
+      <%= image_tag 'logo-white-bg.png', class: 'w-24 h-24 md:w-32 md:h-32 object-contain mb-4 block dark:hidden mx-auto transition-all duration-300' %>
+      <p class="text-base md:text-lg text-gray-600 dark:text-gray-300 text-center">Edit your profile</p>
+    </div>
+  </div>
+  <!-- Right side form -->
+  <div class="w-full md:w-1/2 flex items-center justify-center bg-white dark:bg-gray-800 min-h-screen order-1 md:order-2">
+    <div class="w-full max-w-md md:max-w-lg mx-auto px-4 py-8 md:py-12 rounded-xl shadow-lg bg-white dark:bg-gray-800 transition-all duration-300">
+      <h2 class="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">Update Profile</h2>
+      <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put, class: 'w-full space-y-4' }, data: {turbo: true}) do |f| %>
+        <%= render "devise/shared/error_messages", resource: resource %>
+        <div>
+          <label for="first_name" class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-200">First Name</label>
+          <% if current_user.has_role?(:admin) %>
+            <%= f.text_field :first_name, autofocus: true, autocomplete: 'name', class: "h-12 border border-gray-300 focus:border-blue-500 rounded-lg w-full px-3 dark:bg-gray-700", placeholder: 'Jay', required: true %>
+          <% else %>
+            <%= f.text_field :first_name, autofocus: true, autocomplete: 'name', class: "h-12 border border-gray-300 focus:border-blue-500 rounded-lg w-full px-3 dark:bg-gray-700", placeholder: 'Jay', readonly: true %>
           <% end %>
         </div>
-        <div class="field">
-          <%= f.label :password_confirmation %>
-          <i class="block mb-2 text-xs font-medium text-gray-900 dark:text-white">
-            (Confirm your password)
-          </i><br />
-          <%= f.password_field :password_confirmation, autocomplete: "new-password", class: " p-2 border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg w-full dark:bg-gray-700" %>
+        <div>
+          <label for="last_name" class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-200">Last Name</label>
+          <% if current_user.has_role?(:admin) %>
+            <%= f.text_field :last_name, autofocus: true, autocomplete: 'name', class: "h-12 border border-gray-300 focus:border-blue-500 rounded-lg w-full px-3 dark:bg-gray-700", placeholder: 'Strong', required: true %>
+          <% else %>
+            <%= f.text_field :last_name, autofocus: true, autocomplete: 'name', class: "h-12 border border-gray-300 focus:border-blue-500 rounded-lg w-full px-3 dark:bg-gray-700", placeholder: 'Strong', readonly: true %>
+          <% end %>
         </div>
-        <div class="field">
-          <%= f.label :current_password %> <i class="block mb-2 text-xs font-medium text-gray-900 dark:text-white">(we need your current password to confirm your changes)</i><br />
-          <%= f.password_field :current_password, autocomplete: "current-password", class: " p-2 border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg w-full dark:bg-gray-700" %>
+        <div>
+          <label for="email" class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-200">Your email</label>
+          <% if current_user.has_role?(:admin) %>
+            <%= f.email_field :email, autofocus: true, autocomplete: 'email', class: "h-12 border border-gray-300 focus:border-blue-500 rounded-lg w-full px-3 dark:bg-gray-700", placeholder: 'name@craftsilicon.com', required: true %>
+          <% else %>
+            <%= f.email_field :email, autofocus: true, autocomplete: 'email', class: "h-12 border border-gray-300 focus:border-blue-500 rounded-lg w-full px-3 dark:bg-gray-700", placeholder: 'name@craftsilicon.com', readonly: true %>
+          <% end %>
         </div>
-      </div>
-      <div class="actions mt-2">
-        <%= f.submit "Update",   class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100 w-1/5'  %>
-      </div>
-    <% end %>
+        <div>
+          <label for="profile_picture" class="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-200">Profile Picture</label>
+          <%= f.file_field :profile_picture, class: "p-2 border border-gray-300 focus:border-blue-500 rounded-lg w-full bg-white dark:bg-gray-700"  %>
+        </div>
+        <% if devise_mapping.confirmable? && resource.pending_reconfirmation? %>
+          <div class="text-sm text-yellow-700 dark:text-yellow-300">Currently waiting confirmation for: <%= resource.unconfirmed_email %></div>
+        <% end %>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div>
+            <%= f.label :password, class: "block mb-1 text-xs font-medium text-gray-700 dark:text-gray-200" %>
+            <span class="block mb-1 text-xs text-gray-500">(leave blank if you don't want to change it)</span>
+            <%= f.password_field :password, autocomplete: "new-password", class: "h-12 border border-gray-300 focus:border-blue-500 rounded-lg w-full px-3 dark:bg-gray-700" %>
+            <% if @minimum_password_length %>
+              <span class="block mt-1 text-xs text-gray-500"><%= @minimum_password_length %> characters minimum</span>
+            <% end %>
+          </div>
+          <div>
+            <%= f.label :password_confirmation, class: "block mb-1 text-xs font-medium text-gray-700 dark:text-gray-200" %>
+            <span class="block mb-1 text-xs text-gray-500">(Confirm your password)</span>
+            <%= f.password_field :password_confirmation, autocomplete: "new-password", class: "h-12 border border-gray-300 focus:border-blue-500 rounded-lg w-full px-3 dark:bg-gray-700" %>
+          </div>
+          <div>
+            <%= f.label :current_password, class: "block mb-1 text-xs font-medium text-gray-700 dark:text-gray-200" %>
+            <span class="block mb-1 text-xs text-gray-500">(we need your current password to confirm your changes)</span>
+            <%= f.password_field :current_password, autocomplete: "current-password", class: "h-12 border border-gray-300 focus:border-blue-500 rounded-lg w-full px-3 dark:bg-gray-700" %>
+          </div>
+        </div>
+        <div class="actions mt-4">
+          <%= f.submit "Update", class: 'h-12 bg-blue-600 hover:bg-blue-700 transition-colors p-3 rounded-lg font-bold text-white w-full shadow-md'  %>
+        </div>
+      <% end %>
+    </div>
   </div>
-
+</div>

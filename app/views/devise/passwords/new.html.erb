@@ -1,32 +1,28 @@
-<% provide(:title, "Forgot Passowrd") %>
-
-<%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :post }, data: {turbo: false}) do |f| %>
-  <section class="mx-auto pr-64 ">
-      <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0 w-[600px]">
-        <div class="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white">
-          <%= image_tag 'logo.png', class: 'w-72 hidden dark:block' %>
-          <%= image_tag 'logo-white-bg.png', class: 'w-72 block dark:hidden' %>
+<% provide(:title, "Forgot Password") %>
+<div class="min-h-screen w-full flex flex-col md:flex-row bg-gray-50 dark:bg-gray-900">
+  <!-- Left side image/logo (always visible, on top for mobile, left for desktop) -->
+  <div class="hidden md:flex w-full md:w-1/2 items-center justify-center bg-gray-100 dark:bg-gray-900 min-h-screen">
+    <div class="flex flex-col items-center w-full">
+      <%= image_tag 'logo.png', class: 'w-32 h-32 object-contain mb-4 hidden dark:block mx-auto' %>
+      <%= image_tag 'logo-white-bg.png', class: 'w-32 h-32 object-contain mb-4 block dark:hidden mx-auto' %>
+      <p class="text-lg text-gray-600 dark:text-gray-300 text-center">Reset your password</p>
+    </div>
+  </div>
+  <!-- Right side form -->
+  <div class="w-full md:w-1/2 flex items-center justify-center bg-white dark:bg-gray-800 min-h-screen">
+    <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :post, class: 'w-full' }, data: {turbo: false}) do |f| %>
+      <div class="w-full max-w-md mx-auto">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">Forgot Password</h1>
+        <%= render "devise/shared/error_messages", resource: resource %>
+        <div class="mb-4">
+          <label for="email" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-200">Email</label>
+          <%= f.email_field :email, autofocus: true, autocomplete: "email", class: "h-12 border border-gray-300 focus:border-blue-500 rounded-lg w-full px-3 dark:text-black", placeholder: 'ab@craftsilicon.com', required: true %>
         </div>
-        <div class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
-          <div class="p-6 space-y-4 md:space-y-6 sm:p-8">
-            <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-             Forgot Password
-            </h1>
-            <%= render "devise/shared/error_messages", resource: resource %>
-            <div class="space-y-4 md:space-y-6">
-              <div class="field">
-                <%= f.label :email, :email, class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white"  %><br />
-                <%= f.email_field :email, autofocus: true, autocomplete: "email", class: " h-12 border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg w-full dark:text-black", placeholder: 'ab@craftsilicon.com', required: true %>
-              </div>
-              <div class="actions">
-                <%= f.submit "Send me reset password instructions", class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100 w-full mt-3' %>
-              </div>
-            </div>
-            <p class="text-sm font-light">
-              <%= render "devise/shared/links" %>
-            </p>
-          </div>
+        <%= f.submit "Send me reset password instructions", class: 'h-12 bg-blue-600 hover:bg-blue-700 transition-colors p-3 rounded-lg font-bold text-white w-full mb-4' %>
+        <div class="text-center text-sm text-gray-600 dark:text-gray-300">
+          <%= render "devise/shared/links" %>
         </div>
       </div>
-  </section>
-<% end %>
+    <% end %>
+  </div>
+</div>
