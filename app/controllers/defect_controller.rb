@@ -215,13 +215,66 @@ class DefectController < ApplicationController
     render partial: 'defect/defect_show_modal', layout: false
   end
 
+  # def new
+  #   @defect = Defect.new
+
+  #   # Handle default assignee
+  #   default_assignee = DefaultDefectAssignee.where(archive_status: false).order(created_at: :desc).first
+  #   @defect.user_ids = [default_assignee.user_id] if default_assignee&.user_id.present?
+
+  #   # Preselect product only if product_id is passed
+  #   if params[:product_id].present?
+  #     @defect.product_id = params[:product_id]
+  #     @selected_product = Product.find_by(id: params[:product_id])
+
+  #     # Collect product users (based on selected @product from set_form_data)
+  #     product_user_ids = params[:product_id].present? ? @product.users.pluck(:id) : []
+
+  #     # Combine QA + Product users
+  #     @available_users = User.where(id: qa_user_ids + product_user_ids)
+  #                         .distinct
+  #                         .order(:first_name, :last_name)
+  #   else
+  #     @selected_product = nil
+  #   end
+
+  #   set_form_data
+
+  #   # Collect QA users
+  #   qa_user_ids = User.joins(:roles)
+  #                     .where(roles: { name: 'qa' })
+  #                     .pluck(:id)
+
+  #   # Collect product users (based on selected @product from set_form_data)
+  #   product_user_ids = @product.present? ? @product.users.pluck(:id) : []
+
+  #   # Combine QA + Product users
+  #   @available_users = User.where(id: qa_user_ids + product_user_ids)
+  #                         .distinct
+  #                         .order(:first_name, :last_name)
+
+  #   # For JS (assignee search dropdown)
+  #   @assignee_users_data = @available_users.map { |u| { id: u.id, name: u.name } }
+  # end
+
   def new
     @defect = Defect.new
 
     # Handle default assignee
-    default_assignee = DefaultDefectAssignee.where(archive_status: false).order(created_at: :desc).first
+    default_assignee = DefaultDefectAssignee.where(archive_status: false)
+      .order(created_at: :desc)
+      .first
     @defect.user_ids = [default_assignee.user_id] if default_assignee&.user_id.present?
 
+    # Preselect product if product_id is passed
+    if params[:product_id].present?
+      @defect.product_id = params[:product_id]
+      @selected_product = Product.find_by(id: params[:product_id])
+    else
+      @selected_product = nil
+    end
+
+    # Always run form setup after product selection
     set_form_data
 
     # Collect QA users
@@ -229,8 +282,9 @@ class DefectController < ApplicationController
       .where(roles: { name: 'qa' })
       .pluck(:id)
 
-    # Collect product users (based on selected @product from set_form_data)
-    product_user_ids = @product.present? ? @product.users.pluck(:id) : []
+    # Collect product users (from selected product OR @product set by set_form_data)
+    product = @selected_product || @product
+    product_user_ids = product.present? ? product.users.pluck(:id) : []
 
     # Combine QA + Product users
     @available_users = User.where(id: qa_user_ids + product_user_ids)

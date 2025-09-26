@@ -6,9 +6,10 @@
       </button>
     <% end %>
   </div>
-  <!-- Right side - Add New Module button -->
+
+  <!-- Add New Module button -->
   <div>
-    <%= link_to new_qa_module_path, class: 'no-underline' do %>
+    <%= link_to new_qa_module_path(product_id: params[:product_id]), class: 'no-underline' do %>
       <button class="flex items-center space-x-1 bg-[#3F8CFF] hover:bg-[#3A81EB] px-4 py-2 rounded-lg font-bold text-slate-100">
         十 Create New Module
       </button>

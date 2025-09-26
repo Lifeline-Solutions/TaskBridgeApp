@@ -57,7 +57,7 @@
           />
 
           <!-- Hidden product_id field -->
-          <%= hidden_field_tag :product_id, params[:product_id], id: "project-id-field" %>
+          <%= hidden_field_tag :product_id, (@selected_product&.id || ''), id: "project-id-field" %>
 
           <!-- Results dropdown -->
           <ul id="project-results"
@@ -408,6 +408,16 @@
     const projectInput = document.getElementById("project-search");
     const projectResults = document.getElementById("project-results");
     const projectHidden = document.getElementById("project-id-field");
+
+    // --- Preselect from server-side values ---
+    const preselectedId = projectHidden ? projectHidden.value : null;
+    if (preselectedId) {
+      const match = window.projectsData.find(p => String(p.id) === String(preselectedId));
+      if (match && projectInput) {
+        projectInput.value = match.name;
+        projectHidden.value = match.id;
+      }
+    }
 
     function renderProjects(projects) {
       projectResults.innerHTML = "";
