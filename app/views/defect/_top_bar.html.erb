@@ -5,7 +5,19 @@
         &#8656; Back
       <% end %>
 
-      <%= button_to '+ Create Defect ', new_defect_path, method: :get, class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded-md font-bold rounded-lg text-slate-100', id: 'button' %>
+      <% if @product.present? %>
+        <%= button_to '+ Create Defect',
+              new_defect_path(product_id: @product.id),
+              method: :get,
+              class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded-md font-bold rounded-lg text-slate-100',
+              id: 'button' %>
+      <% else %>
+        <%= button_to '+ Create Defect',
+              new_defect_path,
+              method: :get,
+              class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded-md font-bold rounded-lg text-slate-100',
+              id: 'button' %>
+      <% end %>
 
       <!-- ✅ Draft Defects button -->
       <%= button_to 'Draft Defects', drafts_defect_index_path, method: :get,

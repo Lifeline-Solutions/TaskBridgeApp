@@ -216,30 +216,38 @@ class DefectController < ApplicationController
   end
 
   def new
-    @defect = Defect.new
+  @defect = Defect.new
 
-    # Handle default assignee
-    default_assignee = DefaultDefectAssignee.where(archive_status: false).order(created_at: :desc).first
-    @defect.user_ids = [default_assignee.user_id] if default_assignee&.user_id.present?
+  # Handle default assignee
+  default_assignee = DefaultDefectAssignee.where(archive_status: false).order(created_at: :desc).first
+  @defect.user_ids = [default_assignee.user_id] if default_assignee&.user_id.present?
 
-    set_form_data
-
-    # Collect QA users
-    qa_user_ids = User.joins(:roles)
-      .where(roles: { name: 'qa' })
-      .pluck(:id)
-
-    # Collect product users (based on selected @product from set_form_data)
-    product_user_ids = @product.present? ? @product.users.pluck(:id) : []
-
-    # Combine QA + Product users
-    @available_users = User.where(id: qa_user_ids + product_user_ids)
-      .distinct
-      .order(:first_name, :last_name)
-
-    # For JS (assignee search dropdown)
-    @assignee_users_data = @available_users.map { |u| { id: u.id, name: u.name } }
+  # Preselect product only if product_id is passed
+  if params[:product_id].present?
+    @defect.product_id = params[:product_id]
+    @selected_product = Product.find_by(id: params[:product_id])
+  else
+    @selected_product = nil
   end
+
+  set_form_data
+
+  # Collect QA users
+  qa_user_ids = User.joins(:roles)
+                    .where(roles: { name: 'qa' })
+                    .pluck(:id)
+
+  # Collect product users (based on selected @product from set_form_data)
+  product_user_ids = @product.present? ? @product.users.pluck(:id) : []
+
+  # Combine QA + Product users
+  @available_users = User.where(id: qa_user_ids + product_user_ids)
+                         .distinct
+                         .order(:first_name, :last_name)
+
+  # For JS (assignee search dropdown)
+  @assignee_users_data = @available_users.map { |u| { id: u.id, name: u.name } }
+end
 
   def create
     @defect = Defect.new(defect_params)
