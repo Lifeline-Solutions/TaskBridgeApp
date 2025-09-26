@@ -93,7 +93,7 @@ class ProfilesController < ApplicationController
 
     # Calculate total hold times
     @total_hold_times = {}
-    @total_hold_times_sum = {}
+    @ticket_hold_time_total_seconds = {}
     @tickets.each do |ticket|
       hold_periods = []
       events = Event.where(ticket_id: ticket.id).order(:created_at).to_a
@@ -123,7 +123,7 @@ class ProfilesController < ApplicationController
       end
 
       @total_hold_times[ticket.id] = hold_periods
-      @total_hold_times_sum[ticket.id] = hold_periods.sum
+      @ticket_hold_time_total_seconds[ticket.id] = hold_periods.sum
     end
 
     respond_to do |format|
