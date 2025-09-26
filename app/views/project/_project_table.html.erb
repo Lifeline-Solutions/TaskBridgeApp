@@ -6,6 +6,7 @@
       <th scope="col" class="px-4 py-2">Name of Project</th>
       <th scope="col" class="px-4 px-2">Project Description</th>
       <th scope="col" class="px-4 px-2">Total Tickets</th>
+      <th scope="col" class="px-4 px-2">Average Rating</th>
       <th scope="col" class="px-4 px-2">Assignee</th>
       <th scope="col" class="px-4 px-2">Client</th>
       <th scope="col" class="px-4 px-2">Product Category</th>
@@ -35,6 +36,9 @@
             </td>
             <td class="px-4 py-4 text-center">
               <%= project.tickets.count %>
+            </td>
+            <td class="px-4 py-4 text-center">
+              <%= project.has_ratings? ? project.average_servicedesk_rating.to_i : "No ratings yet"  %>
             </td>
             <td class="px-4 py-4 text-left">
               <%= project.user.name %>

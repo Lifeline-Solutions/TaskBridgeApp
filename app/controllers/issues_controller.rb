@@ -3,7 +3,7 @@ class IssuesController < ApplicationController
 
   before_action :set_project
   before_action :set_ticket
-  before_action :set_issue, only: %i[show destroy edit update]
+  before_action :set_issue, only: %i[show edit update]
   load_and_authorize_resource
 
   def index
@@ -144,25 +144,25 @@ class IssuesController < ApplicationController
     end
   end
 
-  def destroy
-    if audit_soft_delete(@issue)
-      # soft-deleted
-    else
-      @issue.destroy
-    end
-    activity('user_activity')
-      .caused_by(current_user)
-      .performed_on(@issue)
-      .event('issue.destroy')
-      .with_properties(project_id: @project.id, ticket_id: @ticket.id)
-      .log('Issue removed')
-    respond_to do |format|
-      format.turbo_stream do
-        render turbo_stream: turbo_stream.remove(dom_id(@issue))
-      end
-      format.html { redirect_to project_ticket_path(@project, @ticket) }
-    end
-  end
+  # def destroy
+  #  if audit_soft_delete(@issue)
+  #    # soft-deleted
+  #  else
+  #    @issue.destroy
+  #  end
+  #  activity('user_activity')
+  #    .caused_by(current_user)
+  #    .performed_on(@issue)
+  #    .event('issue.destroy')
+  #    .with_properties(project_id: @project.id, ticket_id: @ticket.id)
+  #    .log('Issue removed')
+  #  respond_to do |format|
+  #    format.turbo_stream do
+  #      render turbo_stream: turbo_stream.remove(dom_id(@issue))
+  #    end
+  #    format.html { redirect_to project_ticket_path(@project, @ticket) }
+  #  end
+  # end
 
   private
 

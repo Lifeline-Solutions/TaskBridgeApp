@@ -16,6 +16,32 @@ class Defect < ApplicationRecord
   has_many :labels, through: :defect_labels
   has_many :defect_failure_reports, dependent: :destroy
 
+  # Defect linking associations
+  has_many :source_links, class_name: 'DefectLink', foreign_key: 'source_defect_id', dependent: :destroy
+  has_many :target_links, class_name: 'DefectLink', foreign_key: 'target_defect_id', dependent: :destroy
+
+  # Get defects that this defect is blocked by (this defect is source, blocked_by type)
+  def blocking_defects
+    Defect.joins('INNER JOIN defect_links ON defects.id = defect_links.target_defect_id')
+      .where('defect_links.source_defect_id = ? AND defect_links.link_type = ? AND defect_links.deleted_on IS NULL', id, DefectLink::BLOCKED_BY)
+  end
+
+  # Get defects that this defect blocks (this defect is source, blocks type)
+  def blocked_defects
+    Defect.joins('INNER JOIN defect_links ON defects.id = defect_links.target_defect_id')
+      .where('defect_links.source_defect_id = ? AND defect_links.link_type = ? AND defect_links.deleted_on IS NULL', id, DefectLink::BLOCKS)
+  end
+
+  # Check if this defect is blocked by another defect
+  def blocked?
+    blocking_defects.exists?
+  end
+
+  # Get the defects that are blocking this defect (for display purposes)
+  def blocking_defect_names
+    blocking_defects.pluck(:defect_unique).join(', ')
+  end
+
   resourcify
   has_many :users, through: :roles, class_name: 'User', source: :users
   has_many :creators, -> { where(roles: { name: :admin }) }, class_name: 'User', through: :roles, source: :users
@@ -91,6 +117,63 @@ class Defect < ApplicationRecord
   validates :creator_id, presence: true
   # Add validation to ensure module belongs to selected project
   validate :qa_module_belongs_to_product
+
+  # Methods for linking defects
+  def link_as_blocked_by(blocking_defect)
+    return false if id == blocking_defect.id
+
+    ActiveRecord::Base.transaction do
+      # When defect A is blocked by defect B, create both relationships (like JIRA):
+      # 1. Create a "blocked_by" link from A to B (A is blocked by B)
+      DefectLink.find_or_create_by!(
+        source_defect: self,
+        target_defect: blocking_defect,
+        link_type: DefectLink::BLOCKED_BY
+      )
+
+      # 2. Create a "blocks" link from B to A (B blocks A)
+      DefectLink.find_or_create_by!(
+        source_defect: blocking_defect,
+        target_defect: self,
+        link_type: DefectLink::BLOCKS
+      )
+    end
+    true
+  rescue ActiveRecord::RecordInvalid
+    false
+  end
+
+  def unlink_from(other_defect)
+    return false if id == other_defect.id
+
+    ActiveRecord::Base.transaction do
+      # Remove all links between these two defects (use delete_all for permanent removal)
+      DefectLink.where(
+        '(source_defect_id = ? AND target_defect_id = ?) OR (source_defect_id = ? AND target_defect_id = ?)',
+        id, other_defect.id, other_defect.id, id
+      ).delete_all
+    end
+    true
+  end
+
+  def linked_defects
+    # Get all defects that are linked to this one (both blocking and blocked by)
+    blocked_ids = blocked_defects.pluck(:id)
+    blocking_ids = blocking_defects.pluck(:id)
+    all_linked_ids = (blocked_ids + blocking_ids).uniq
+
+    return Defect.none if all_linked_ids.empty?
+
+    Defect.where(id: all_linked_ids).includes(:product)
+  end
+
+  def blocks?(other_defect)
+    blocked_defects.exists?(id: other_defect.id)
+  end
+
+  def blocked_by?(other_defect)
+    blocking_defects.exists?(id: other_defect.id)
+  end
 
   private
 

@@ -39,6 +39,40 @@
           <p class="text-sm font-semibold"><%= @project.start_date.strftime("%d %b %Y") %></p>
         </div>
       </div>
+
+      <div class="grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-4">
+        <div class="flex-shrink-0">
+          <!-- Star icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="size-6 text-yellow-500">
+            <path d="M12 .587l3.668 7.425L24 9.75l-6 5.85 1.417 8.267L12 19.5l-7.417 4.367L6 15.6 0 9.75l8.332-1.738z"/>
+          </svg>
+        </div>
+        <div class="flex flex-col">
+          <h2 class="text-md font-light">Overall Rating</h2>
+          <% if @project.has_ratings? %>
+            <p class="text-sm font-semibold flex items-center space-x-2">
+              <span><%= @project.average_servicedesk_rating.to_i %> / 5</span>
+              <span class="flex">
+                <% 5.times do |i| %>
+                  <% if i < @project.average_servicedesk_rating.round %>
+                    <!-- filled star -->
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="size-4 text-yellow-500">
+                      <path d="M12 .587l3.668 7.425L24 9.75l-6 5.85 1.417 8.267L12 19.5l-7.417 4.367L6 15.6 0 9.75l8.332-1.738z"/>
+                    </svg>
+                  <% else %>
+                    <!-- empty star -->
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="size-4 text-gray-300">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 17.25l-6.172 3.243 1.179-6.873L2.014 8.757l6.9-1.003L12 1.5l3.086 6.254 6.9 1.003-4.993 4.863 1.179 6.873L12 17.25z" />
+                    </svg>
+                  <% end %>
+                <% end %>
+              </span>
+            </p>
+          <% else %>
+            <p class="text-sm font-semibold text-gray-500">No ratings yet</p>
+          <% end %>
+        </div>
+      </div>
     </div>
     
     <!-- Second Column -->

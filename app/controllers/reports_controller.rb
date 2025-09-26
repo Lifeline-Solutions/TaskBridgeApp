@@ -1,8 +1,10 @@
+require 'csv'
+require 'axlsx'
 class ReportsController < ApplicationController
   before_action :authenticate_user!
-  # ruby
 
   def index
+    authorize! :generate, :report
     @products = Product.includes(:client, :groupwares, :statuses)
       .select do |product|
       product.statuses.any? { |status| ['Pre Quality Assurance', 'End Of Quality Assurance'].include?(status.name) } &&

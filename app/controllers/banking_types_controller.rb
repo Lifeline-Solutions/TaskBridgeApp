@@ -1,10 +1,15 @@
 class BankingTypesController < ApplicationController
   before_action :authenticate_user!
   before_action :set_banking_type, only: %i[show edit update destroy]
+  before_action :set_products_and_clients_defects, only: %i[new create edit update]
 
   # GET /banking_types
   def index
-    @banking_types = BankingType.all.order(:name)
+    @banking_types = if params[:product_id].present?
+                       BankingType.where(product_id: params[:product_id]).order(:name)
+                     else
+                       BankingType.all.order(:name)
+                     end
   end
 
   # GET /banking_types/1
@@ -13,6 +18,13 @@ class BankingTypesController < ApplicationController
   # GET /banking_types/new
   def new
     @banking_type = BankingType.new
+
+    if params[:product_id].present?
+      # Pre-select the product on the new form
+      @banking_type.product_id = params[:product_id]
+    else
+      @banking_type = []
+    end
   end
 
   # GET /banking_types/1/edit
@@ -78,6 +90,17 @@ class BankingTypesController < ApplicationController
 
   private
 
+  def set_products_and_clients_defects
+    @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
+      .select do |product|
+        product.statuses.any? { |status| ['Pre Quality Assurance', 'End Of Quality Assurance'].include?(status.name) }
+      end.map do |product|
+        client_name = product.client&.name || 'No Client'
+        groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
+        ["#{client_name} - #{groupware_names}", product.id]
+      end
+  end
+
   # Use callbacks to share common setup or constraints between actions.
   def set_banking_type
     @banking_type = BankingType.find(params[:id])
@@ -85,6 +108,6 @@ class BankingTypesController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def banking_type_params
-    params.require(:banking_type).permit(:name)
+    params.require(:banking_type).permit(:name, :product_id)
   end
 end

@@ -1,6 +1,14 @@
 # app/mailers/user_mailer.rb
 class UserMailer < ApplicationMailer
-  default from: 'cspm@craftsilicon.com'
+  default from: (
+    if Rails.env.staging?
+      'taskbridgestaging@craftsilicon.com'
+    elsif Rails.env.production?
+      'cspm@craftsilicon.com'
+    else
+      'cspm@craftsilicon.com'
+    end
+  )
   # From Project Controller
   def assignment_email(user, project, current_user, assigned_user)
     @user = user
@@ -57,7 +65,7 @@ class UserMailer < ApplicationMailer
     @current_user = current_user
     @project = project
     @url = project_ticket_url(@ticket.project, @ticket)
-    mail(to: @user.email, subject: "Status update for Ticket ID #{@ticket.unique_id}.")
+    mail(to: [@user.email, @ticket.user&.email].uniq.compact, subject: "Ticket assigned with Ticket ID #{@ticket.unique_id}.")
   end
 
   # From Product Controller
@@ -68,7 +76,7 @@ class UserMailer < ApplicationMailer
     @current_user = current_user
     @assigned_user = assigned_user
     @url = product_url(@product)
-    mail(to: @user.email, subject: 'Product Assignment')
+    mail(to: @user.email, subject: 'Project Assignment')
   end
 
   # From Task Controller
@@ -217,14 +225,43 @@ class UserMailer < ApplicationMailer
   def new_defect_email(defect, assigned_emails, creator)
     @defect = defect
     @creator = creator
-    @url = defect_url(@defect)
+    @url = defect_url(@defect, Rails.application.config.action_mailer.default_url_options)
     mail(to: assigned_emails + [creator.email], subject: 'New Defect')
   end
 
   def edit_defect_email(defect, assigned_emails, creator)
     @defect = defect
     @creator = creator
-    @url = defect_url(@defect)
+    @url = defect_url(@defect, Rails.application.config.action_mailer.default_url_options)
     mail(to: assigned_emails + [creator.email], subject: 'Edit Defect')
+  end
+
+  def defect_mention_notification(user, defect, current_user, content, context_type = 'message')
+    @user = user
+    @defect = defect
+    @current_user = current_user
+    @content = content
+    @context_type = context_type
+
+    # Ensure URL helpers use the correct host from mailer config
+    @url = defect_url(@defect, Rails.application.config.action_mailer.default_url_options)
+    @context_text = context_type == 'message' ? 'comment' : 'defect'
+
+    subject = "You were mentioned in a #{@context_text} on defect #{@defect.defect_unique}"
+    mail(to: @user.email, subject: subject)
+  end
+
+  def defect_deleted_email(defect, assigned_emails, current_user)
+    @defect = defect
+    @current_user = current_user
+    mail(to: assigned_emails, subject: "Defect with Defect ID #{@defect.defect_unique} deleted")
+  end
+
+  def add_user_defect_email(defect, user, current_user)
+    @defect = defect
+    @user = user
+    @current_user = current_user
+    @url = defect_url(@defect, Rails.application.config.action_mailer.default_url_options)
+    mail(to: @user.respond_to?(:email) ? @user.email : @user, subject: "Defect with Defect ID #{@defect.defect_unique} Assigned")
   end
 end

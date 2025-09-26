@@ -4,7 +4,7 @@ class TicketsController < ApplicationController
   # Set the current project for all actions
   before_action :set_project
   # Set the ticket for specific actions
-  before_action :set_ticket, only: %i[show destroy edit assign_tag unassign_tag add_status modal_show]
+  before_action :set_ticket, only: %i[show edit assign_tag unassign_tag add_status modal_show]
   # Load and authorize resources using CanCanCan
   load_and_authorize_resource
   def show
@@ -211,18 +211,18 @@ class TicketsController < ApplicationController
   end
 
   # Delete a ticket
-  def destroy
-    authorize! :destroy, @ticket
-    log_event(@ticket, current_user, 'destroy', 'Ticket was destroyed.')
-    activity('user_activity')
-      .caused_by(current_user)
-      .performed_on(@ticket)
-      .event('ticket.destroy')
-      .with_properties(project_id: @project.id)
-      .log('Ticket destroyed')
-    @ticket.destroy unless audit_soft_delete(@ticket)
-    redirect_to project_path(@project)
-  end
+  # def destroy
+  #  authorize! :destroy, @ticket
+  #  log_event(@ticket, current_user, 'destroy', 'Ticket was destroyed.')
+  #  activity('user_activity')
+  #    .caused_by(current_user)
+  #    .performed_on(@ticket)
+  #    .event('ticket.destroy')
+  #     .with_properties(project_id: @project.id)
+  #    .log('Ticket destroyed')
+  #  @ticket.destroy unless audit_soft_delete(@ticket)
+  #  redirect_to project_path(@project)
+  # end
 
   # Render edit form (logic handled in view)
   def edit; end
@@ -414,6 +414,19 @@ class TicketsController < ApplicationController
         sla_resolution_deadline: @ticket.sla_resolution_deadline,
         user_id: @ticket.users.first&.id
       )
+    end
+
+    # Send status update emails
+    if status.name != 'Reopened'
+      @ticket.users.each do |ticket_user|
+        UserMailer.status_update_email(ticket_user, @ticket, current_user, @project).deliver_later
+      end
+    end
+
+    if status.name == 'Reopened'
+      @project.users.each do |project_user|
+        UserMailer.status_update_email(project_user, @ticket, current_user, @project).deliver_later
+      end
     end
 
     # Emails + logs...

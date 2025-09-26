@@ -14,7 +14,7 @@
         <!-- Dropdown -->
         <div id="craftDropdown" 
              class="absolute w-full border border-gray-300 rounded-md font-medium placeholder-current bg-white dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 hidden z-10">
-          <% @defect.craftsilicon_users.where.not(id: @defect.users.pluck(:id)).distinct.each do |user| %>
+          <% @defect.craftsilicon_users.where.not(id: @defect.users.pluck(:id)).where(id: @product.users.pluck(:id)).order(:first_name).distinct.each do |user| %>
             <div class="dropdown-item px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-500 cursor-pointer" 
                  data-user-id="<%= user.id %>" 
                  onclick="selectCraftUser(this)">

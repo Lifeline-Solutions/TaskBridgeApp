@@ -1,0 +1,75 @@
+<div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50" 
+     data-controller="modal" 
+     data-action="click->modal#closeOnBackdrop keydown@window->modal#closeOnEscape">
+  
+  <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4" 
+       data-modal-target="content">
+    
+    <!-- Header -->
+    <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+      <div class="flex items-center space-x-3">
+        <div class="flex-shrink-0 w-10 h-10 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center">
+          <span class="text-orange-600 dark:text-orange-400 text-xl">🚫</span>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Status Update Blocked</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Cannot change defect status</p>
+        </div>
+      </div>
+      <button type="button" 
+              class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" 
+              data-action="click->modal#close">
+        <span class="sr-only">Close</span>
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="p-6">
+      <div class="mb-4">
+        <div class="flex items-start space-x-3">
+          <div class="flex-shrink-0">
+            <div class="w-8 h-8 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center">
+              <svg class="w-4 h-4 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="flex-1">
+            <h4 class="text-base font-medium text-gray-900 dark:text-white mb-2">
+              This defect is blocked
+            </h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">
+              Defect <strong><%= defect.defect_unique %></strong> is currently blocked by:
+            </p>
+            <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-md p-3 mb-3">
+              <p class="text-sm font-medium text-orange-800 dark:text-orange-200">
+                <%= defect.blocking_defect_names %>
+              </p>
+            </div>
+            <p class="text-sm text-gray-600 dark:text-gray-300">
+              To enable status updates, you need to unlink the blocking defects first. 
+              You can do this from the <strong>Linked Defects</strong> section below.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="flex items-center justify-end px-6 py-3 bg-gray-50 dark:bg-gray-700 rounded-b-lg space-x-3">
+      <button type="button" 
+              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md hover:bg-gray-50 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" 
+              data-action="click->modal#close">
+        Close
+      </button>
+      <button type="button" 
+              class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              onclick="document.getElementById('linked-defects-container')?.scrollIntoView({behavior: 'smooth'}); this.closest('[data-controller*=modal]')?.stimulusController?.close()">
+        View Linked Defects
+      </button>
+    </div>
+  </div>
+</div>

@@ -135,14 +135,14 @@ class UsersController < ApplicationController
       redirect_to users_path, alert: 'You are not authorized to reset passwords.'
       return
     end
-
     @user = User.find(params[:id])
-    respond_to do |format|
-      if @user.update(confirmation_token: nil, reset_password_token: nil, password: SecureRandom.hex(8))
-        format.html { redirect_to users_path, notice: 'Password reset successfully' }
-      else
-        format.html { redirect_to users_path, notice: 'Password reset failed' }
-      end
+    @user.unconfirmed_email = nil
+    @user.confirmation_token = nil
+    if @user.save
+      @user.send_confirmation_instructions
+      redirect_to users_path, notice: "#{@user.first_name} #{@user.last_name} password reset and confirmation email sent."
+    else
+      redirect_to users_path, alert: 'Password reset failed.'
     end
   end
 

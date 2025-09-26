@@ -2,7 +2,7 @@ class DefectController < ApplicationController
   before_action :authenticate_user!
   before_action :set_defect,
                 only: %i[show edit update update_priority destroy add_defect add_attachments remove_attachment update_label modal_show add_label remove_label defect_status
-                         create_failure_report]
+                         create_failure_report search_for_linking link_defect unlink_defect]
 
   def index
     # Load defects with needed associations
@@ -51,11 +51,10 @@ class DefectController < ApplicationController
       .order(:name)
   end
 
-  #     @statuses = Status.joins(:defects).where(defects: { id: @defects.ids }).distinct.order(:name)
   def index_show
     # Base scope
     @defects = Defect.published
-      .includes(:users, :qa_module, :submodule, :banking_type, :statuses, product: %i[client groupwares])
+      .includes(:users, :qa_module, :labels, :banking_type, :statuses, product: %i[client groupwares])
 
     # Client filter (exact, case-insensitive)
     if params[:client_name].present?
@@ -71,6 +70,10 @@ class DefectController < ApplicationController
         .where('LOWER(statuses.name) IN (?)', downcased)
     end
 
+    # Labels filter (multiple check_boxes -> labels_ids[])
+    selected_labels = Array(params[:label_ids]).reject(&:blank?)
+    @defects = @defects.joins(:labels).where(labels: { id: selected_labels }) if selected_labels.any?
+
     # Priority filter (exact, case-insensitive)
     @defects = @defects.where('LOWER(defects.priority) = ?', params[:priority].to_s.downcase) if params[:priority].present?
 
@@ -79,7 +82,7 @@ class DefectController < ApplicationController
 
     # NEW: Module/Submodule/BankingType filters (by id)
     @defects = @defects.where(qa_module_id: params[:qa_module_id]) if params[:qa_module_id].present?
-    @defects = @defects.where(submodule_id: params[:submodule_id]) if params[:submodule_id].present?
+    @defects = @defects.where(qa_module_id: params[:submodule_id]) if params[:submodule_id].present?
     @defects = @defects.where(banking_type_id: params[:banking_type_id]) if params[:banking_type_id].present?
     @statuses = Status.joins(:defects).where(defects: { id: @defects.ids }).distinct.order(:name)
 
@@ -105,7 +108,7 @@ class DefectController < ApplicationController
     # Full-text search across related tables (now includes qa_modules, submodules, banking_types)
     if params[:query].present?
       q = "%#{params[:query].to_s.strip}%"
-      @defects = @defects.left_joins(:users, :qa_module, :submodule, :banking_type, product: %i[client groupwares]).where(
+      @defects = @defects.left_joins(:users, :qa_module, :banking_type, product: %i[client groupwares]).where(
         "defects.summary ILIKE :q
          OR defects.defect_unique ILIKE :q
          OR defects.priority ILIKE :q
@@ -114,9 +117,7 @@ class DefectController < ApplicationController
          OR clients.name ILIKE :q
          OR groupwares.name ILIKE :q
          OR qa_modules.name ILIKE :q
-         OR submodules.name ILIKE :q
-         OR banking_types.name ILIKE :q
-         OR to_char(defects.created_at, 'YYYY-MM-DD HH24:MI') ILIKE :q",
+         OR banking_types.name ILIKE :q",
         q: q
       )
     end
@@ -128,6 +129,8 @@ class DefectController < ApplicationController
 
     # Ensure uniqueness after joins (affects count and pagination)
     @defects = @defects.distinct
+
+    @product = Product.find(params[:product_id]) if params[:product_id].present?
 
     # Build option lists for dropdowns from the CURRENT filtered (but unpaginated) result set
     filtered_ids = @defects.except(:select, :order, :limit, :offset).select(:id)
@@ -153,6 +156,11 @@ class DefectController < ApplicationController
       .distinct
       .order(:name)
 
+    @labels = Label.joins(:defects)
+      .where(defects: { id: filtered_ids })
+      .distinct
+      .order(:name)
+
     # Pagination
     @per_page = 20
     @page = (params[:page] || 1).to_i
@@ -171,15 +179,29 @@ class DefectController < ApplicationController
     end
 
     @defect = Defect.find(params[:id])
+
+    qa_user_ids = User.joins(:roles)
+      .where(roles: { name: 'qa' })
+      .pluck(:id)
+
+    product_user_ids = @defect.craftsilicon_users
+      .where.not(id: @defect.users.pluck(:id))
+      .where(id: @defect.product.users.pluck(:id))
+      .pluck(:id)
+
+    @available_users = User.where(id: qa_user_ids + product_user_ids)
+      .distinct
+      .order(:first_name, :last_name)
+
     # Defects History
     @defects_history = DefectHistory.where(defect_id: @defect.id).order(created_at: :desc)
 
-    @timeline_items = @defect.timeline_items(order: :asc)
+    @timeline_items = @defect.timeline_items(order: :desc)
 
     # Attachment paginations
     @attachments_per_page = 6
     @attachments_page = (params[:attachments_page] || 1).to_i
-    all_attachments = @defect.all_attachments
+    all_attachments = @defect.all_attachments.sort_by(&:created_at).reverse
     @attachments_total = all_attachments.size
     @attachments_total_pages = (@attachments_total / @attachments_per_page.to_f).ceil
 
@@ -193,18 +215,96 @@ class DefectController < ApplicationController
     render partial: 'defect/defect_show_modal', layout: false
   end
 
+  # def new
+  #   @defect = Defect.new
+
+  #   # Handle default assignee
+  #   default_assignee = DefaultDefectAssignee.where(archive_status: false).order(created_at: :desc).first
+  #   @defect.user_ids = [default_assignee.user_id] if default_assignee&.user_id.present?
+
+  #   # Preselect product only if product_id is passed
+  #   if params[:product_id].present?
+  #     @defect.product_id = params[:product_id]
+  #     @selected_product = Product.find_by(id: params[:product_id])
+
+  #     # Collect product users (based on selected @product from set_form_data)
+  #     product_user_ids = params[:product_id].present? ? @product.users.pluck(:id) : []
+
+  #     # Combine QA + Product users
+  #     @available_users = User.where(id: qa_user_ids + product_user_ids)
+  #                         .distinct
+  #                         .order(:first_name, :last_name)
+  #   else
+  #     @selected_product = nil
+  #   end
+
+  #   set_form_data
+
+  #   # Collect QA users
+  #   qa_user_ids = User.joins(:roles)
+  #                     .where(roles: { name: 'qa' })
+  #                     .pluck(:id)
+
+  #   # Collect product users (based on selected @product from set_form_data)
+  #   product_user_ids = @product.present? ? @product.users.pluck(:id) : []
+
+  #   # Combine QA + Product users
+  #   @available_users = User.where(id: qa_user_ids + product_user_ids)
+  #                         .distinct
+  #                         .order(:first_name, :last_name)
+
+  #   # For JS (assignee search dropdown)
+  #   @assignee_users_data = @available_users.map { |u| { id: u.id, name: u.name } }
+  # end
+
   def new
     @defect = Defect.new
 
-    default_assignee = DefaultDefectAssignee.where(archive_status: false).order(created_at: :desc).first
+    # Handle default assignee
+    default_assignee = DefaultDefectAssignee.where(archive_status: false)
+      .order(created_at: :desc)
+      .first
     @defect.user_ids = [default_assignee.user_id] if default_assignee&.user_id.present?
 
+    # Preselect product if product_id is passed
+    if params[:product_id].present?
+      @defect.product_id = params[:product_id]
+      @selected_product = Product.find_by(id: params[:product_id])
+    else
+      @selected_product = nil
+    end
+
+    # Always run form setup after product selection
     set_form_data
+
+    # Collect QA users
+    qa_user_ids = User.joins(:roles)
+      .where(roles: { name: 'qa' })
+      .pluck(:id)
+
+    # Collect product users (from selected product OR @product set by set_form_data)
+    product = @selected_product || @product
+    product_user_ids = product.present? ? product.users.pluck(:id) : []
+
+    # Combine QA + Product users
+    @available_users = User.where(id: qa_user_ids + product_user_ids)
+      .distinct
+      .order(:first_name, :last_name)
+
+    # For JS (assignee search dropdown)
+    @assignee_users_data = @available_users.map { |u| { id: u.id, name: u.name } }
   end
 
   def create
     @defect = Defect.new(defect_params)
     @defect.creator = current_user
+
+    # Some forms submit product_id, qa_module_id and submodule_id at the top-level
+    # instead of nested under defect[]. Ensure we copy them onto the model so
+    # presence validations (Product, QA module) succeed.
+    @defect.product_id ||= params[:product_id] if params[:product_id].present?
+    @defect.qa_module_id ||= params[:qa_module_id] if params[:qa_module_id].present?
+    @defect.submodule_id ||= params[:submodule_id] if params[:submodule_id].present?
 
     # Clean user_ids coming from hidden field (will be [""] if none selected)
     selected_user_ids = Array(params[:defect][:user_ids]).reject(&:blank?)
@@ -276,7 +376,22 @@ class DefectController < ApplicationController
     @defect = Defect.find(params[:id])
     @banking_types = BankingType.all
     @products = Product.with_quality_assurance_status
-    @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
+
+    # QA users (get their IDs)
+    qa_user_ids = User.joins(:roles)
+      .where(roles: { name: 'qa' })
+      .pluck(:id)
+
+    # Product users (get their IDs)
+    product_user_ids = @defect.craftsilicon_users
+      .where.not(id: @defect.users.pluck(:id))
+    product_user_ids = product_user_ids.where(id: @defect.product.users.pluck(:id)) if @defect.product.present?
+    product_user_ids = product_user_ids.pluck(:id)
+
+    # Combine and query
+    @users = User.where(id: qa_user_ids + product_user_ids)
+      .distinct
+      .order(:first_name, :last_name)
 
     @statuses = Status.where(name: [
                                'To Do', 'In Progress', 'On hold', 'Awaiting client info',
@@ -359,6 +474,7 @@ class DefectController < ApplicationController
         .performed_on(@defect)
         .event('defect.soft_delete')
         .log("Soft-deleted Defect ##{@defect.id}")
+      UserMailer.defect_deleted_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
       redirect_to defect_url, notice: 'Defect was successfully deleted.'
     else
       @defect.destroy
@@ -386,6 +502,9 @@ class DefectController < ApplicationController
         .with_properties(user_id: user.id)
         .log("Assigned #{user.name} to Defect ##{@defect.id}")
       redirect_to defect_path(@defect), notice: "#{user.name}  was successfully assigned."
+
+      # Add an email to shot defect change
+      UserMailer.add_user_defect_email(@defect, user.email, current_user).deliver_later
 
       log_event(
         @defect, current_user, 'Assigned to',
@@ -418,6 +537,8 @@ class DefectController < ApplicationController
 
   def drafts
     @defects = Defect.drafts.includes(:users, :qa_module, :submodule).order(updated_at: :desc)
+
+    @labels = Label.all.order(:name)
 
     # Pagination
     @per_page = 20
@@ -461,6 +582,24 @@ class DefectController < ApplicationController
   end
 
   def defect_status
+    # Check if defect is blocked by another defect
+    if @defect.blocked?
+      respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.replace(
+            'modal',
+            partial: 'defect/blocked_status_modal',
+            locals: { defect: @defect }
+          )
+        end
+        format.html do
+          redirect_to defect_path(@defect), alert: "Cannot change status: This defect is blocked by #{@defect.blocking_defect_names}. Please unlink blocking defects first."
+        end
+        format.json { render json: { success: false, message: "Cannot change status: This defect is blocked by #{@defect.blocking_defect_names}" } }
+      end
+      return
+    end
+
     status = Status.find(params[:status_id])
 
     if status.name.strip.downcase == 'failed qa'
@@ -644,6 +783,146 @@ class DefectController < ApplicationController
     end
   end
 
+  # Defect linking actions
+  def search_for_linking
+    return unless params[:query].present?
+
+    # Search for defects excluding the current one
+    @defects = Defect.published
+      .where.not(id: params[:id])
+      .where('defect_unique ILIKE ? OR summary ILIKE ?',
+             "%#{params[:query]}%", "%#{params[:query]}%")
+      .includes(:product, :creator)
+      .limit(20)
+
+    render json: @defects.map { |defect|
+      {
+        id: defect.id,
+        defect_unique: defect.defect_unique,
+        summary: defect.summary,
+        product_name: defect.product&.name,
+        creator_name: defect.creator&.full_name || defect.creator&.email
+      }
+    }
+  end
+
+  def link_defect
+    target_defect = Defect.find(params[:target_defect_id])
+
+    if @defect.link_as_blocked_by(target_defect)
+      render json: {
+        success: true,
+        message: "Successfully linked #{@defect.defect_unique} as blocked by #{target_defect.defect_unique}",
+        target_defect: {
+          id: target_defect.id,
+          defect_unique: target_defect.defect_unique,
+          title: target_defect.title,
+          status: target_defect.statuses.first&.name
+        }
+      }
+    else
+      render json: {
+        success: false,
+        message: 'Failed to link defects. They may already be linked or there was an error.'
+      }
+    end
+  rescue ActiveRecord::RecordNotFound
+    render json: { success: false, message: 'Defect not found.' }
+  end
+
+  def unlink_defect
+    target_defect = Defect.find(params[:target_defect_id])
+
+    if @defect.unlink_from(target_defect)
+      render json: {
+        success: true,
+        message: "Successfully unlinked #{@defect.defect_unique} from #{target_defect.defect_unique}"
+      }
+    else
+      render json: {
+        success: false,
+        message: 'Failed to unlink defects.'
+      }
+    end
+  rescue ActiveRecord::RecordNotFound
+    render json: { success: false, message: 'Defect not found.' }
+  end
+
+  def defects_download
+    require 'csv'
+    defects = Defect.all
+
+    # Search query (client or groupware)
+    if params[:query].present?
+      q = "%#{params[:query]}%"
+      defects = defects.left_joins(product: %i[client groupwares])
+        .where('clients.name ILIKE :q OR groupwares.name ILIKE :q', q: q)
+    end
+
+    defects = defects.where(banking_type_id: params[:banking_type_id]) if params[:banking_type_id].present?
+    defects = defects.where('created_at >= ?', params[:start_date]) if params[:start_date].present?
+    defects = defects.where('created_at <= ?', params[:end_date]) if params[:end_date].present?
+
+    # Status filter (multi-select)
+    if params[:status].present?
+      statuses = Array(params[:status])
+      defects = defects.joins(:statuses).where(statuses: { name: statuses })
+    end
+
+    # Priority filter
+    defects = defects.where(priority: params[:priority]) if params[:priority].present?
+
+    # Assignee filter
+    defects = defects.joins(:users).where(users: { id: params[:user_id] }) if params[:user_id].present?
+
+    # Module filter
+    defects = defects.where(qa_module_id: params[:qa_module_id]) if params[:qa_module_id].present?
+
+    # Submodule filter
+    defects = defects.where(submodule_id: params[:submodule_id]) if params[:submodule_id].present?
+
+    # Labels filter (multi-select)
+    if params[:label_ids].present?
+      label_ids = Array(params[:label_ids]).reject(&:blank?)
+      defects = defects.joins(:labels).where(labels: { id: label_ids }).distinct if label_ids.any?
+    end
+
+    # Order (sort by created_at)
+    defects = if params[:order].present? && %w[asc desc].include?(params[:order])
+                defects.order(created_at: params[:order])
+              else
+                defects.order(created_at: :desc)
+              end
+
+    # Generate CSV
+    csv_data = CSV.generate(headers: true) do |csv|
+      csv << [
+        'Defect ID', 'Status', 'Summary', 'Priority', 'Module', 'Sub Module',
+        'Banking Types', 'Labels', 'Assignee', 'Reporter', 'Project',
+        'Created At'
+      ]
+      defects.find_each do |defect|
+        client_and_groupware = [defect.product.client&.name, defect.product.groupwares.first&.name].compact.join(' - ')
+        csv << [
+          defect.defect_unique,
+          defect.statuses.map(&:name).join(', '),
+          defect.summary,
+          defect.priority,
+          defect.qa_module&.name,
+          defect.submodule&.name,
+          defect.banking_type&.name,
+          defect.labels.map(&:name).join(', '),
+          defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', '),
+          defect.creator&.name,
+          client_and_groupware,
+          defect.created_at.strftime('%Y-%m-%d %H:%M')
+        ]
+      end
+    end
+
+    send_data csv_data, filename: "defects_#{Time.zone.now.strftime('%Y%m%d_%H%M%S')}.csv", type: 'text/csv'
+  end
+
   private
 
   def authorize_view_failure_reports!
@@ -653,30 +932,58 @@ class DefectController < ApplicationController
   end
 
   def set_form_data
-    @qa_modules = QaModule.where(parent_id: nil)
-    @banking_types = BankingType.all
-    @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
-    @submodules = []
-    # Fallback: If no QA product found, just pick first product
-    @product ||= Product.includes(:client, :groupwares).first
+    # selected product if provided in params (used to scope modules/banking types)
+    @selected_product = (Product.find_by(id: params[:product_id]) if params[:product_id].present?)
 
-    # Dropdown options for product selection
-    @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
-      .select do |product|
-      product.statuses.any? do |status|
-        ['Pre Quality Assurance', 'End Of Quality Assurance'].include?(status.name)
-      end
-    end.map do |product|
-      client_name = product.client&.name || 'No Client'
-      groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
-      ["#{client_name} - #{groupware_names}", product.id]
+    # QA modules (parent modules) - scoped to selected product if present
+    @qa_modules = if @selected_product
+                    QaModule.where(product_id: @selected_product.id, parent_id: nil).order(:name)
+                  else
+                    QaModule.where(parent_id: nil).order(:name)
+                  end
+
+    # banking types scoped to selected product (so UI can show only product banking types)
+    @banking_types = if @selected_product
+                       BankingType.where(product_id: @selected_product.id).order(:name)
+                     else
+                       []
+                     end
+
+    # If a module was selected (e.g. via params), preload its submodules for the view
+    if params[:qa_module_id].present?
+      @selected_module_id = params[:qa_module_id]
+      parent_module = QaModule.find_by(id: params[:qa_module_id])
+      @submodules = parent_module ? parent_module.submodules.order(:name) : []
+    else
+      @selected_module_id = nil
+      @submodules = []
     end
 
-    # Get all available statuses for the workflow
-    @statuses = Status.where(name: [
-                               'TO DO', 'In Progress', 'On-Hold', 'Awaiting Client Info', 'Awaiting Build',
-                               'QA Testing', 'Closed', 'Failed QA', 'Blocked', 'Reopened'
-                             ])
+    # also keep the currently selected submodule if any
+    @selected_submodule_id = params[:submodule_id].presence
+
+    # other existing dropdown data (unchanged)
+    @users = User.with_agent_project_manager_role.order(:first_name, :last_name)
+    @product ||= Product.includes(:client, :groupwares).first
+
+    @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
+      .select do |product|
+        product.statuses.any? { |status| ['Pre Quality Assurance', 'End Of Quality Assurance'].include?(status.name) }
+      end.map do |product|
+        client_name = product.client&.name || 'No Client'
+        groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
+        ["#{client_name} - #{groupware_names}", product.id]
+      end
+
+    # statuses ordering as you had it
+    ordered_names = [
+      'TO DO', 'Awaiting Build', 'Awaiting Client API', 'Awaiting Client Information',
+      'Blocked', 'Failed QA', 'In Progress', 'On-Hold', 'QA Testing', 'Reopened',
+      'Support Testing', 'Closed'
+    ]
+    found_statuses = Status.where(name: ordered_names)
+    lookup = found_statuses.index_by(&:name)
+    @statuses = ordered_names.map { |n| lookup[n] }.compact
   end
 
   def set_defect
@@ -686,10 +993,24 @@ class DefectController < ApplicationController
 
   def defect_params
     # Handle the qa_submodule_id to submodule_id mapping
-    params[:defect][:submodule_id] = params[:defect].delete(:qa_submodule_id) if params[:defect] && params[:defect][:qa_submodule_id].present?
+    if params[:defect]
+      params[:defect][:submodule_id] = params[:defect].delete(:qa_submodule_id) if params[:defect][:qa_submodule_id].present?
 
-    # Convert user_ids from string to array if needed
-    params[:defect][:user_ids] = [params[:defect][:user_ids]].reject(&:blank?) if params[:defect] && params[:defect][:user_ids].is_a?(String)
+      # Normalize user_ids: could be a string, array or single value
+      if params[:defect][:user_ids].is_a?(String)
+        params[:defect][:user_ids] = [params[:defect][:user_ids]].reject(&:blank?)
+      elsif params[:defect][:user_ids].is_a?(Array)
+        params[:defect][:user_ids] = params[:defect][:user_ids].reject(&:blank?)
+      end
+
+      # Normalize incoming single status_id into status_ids array
+      if params[:defect][:status_id].present?
+        # If status_ids already present, merge; otherwise set
+        existing = Array(params[:defect][:status_ids]).reject(&:blank?)
+        params[:defect][:status_ids] = (existing + [params[:defect][:status_id]]).uniq
+        params[:defect].delete(:status_id)
+      end
+    end
 
     params.require(:defect).permit(
       :summary,

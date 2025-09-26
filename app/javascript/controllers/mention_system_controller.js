@@ -37,6 +37,10 @@ export default class extends Controller {
       if (this.hasEditorTarget) {
         this.editorTarget.addEventListener('keyup', this.debouncedMentionCheck.bind(this))
         this.editorTarget.addEventListener('keydown', this.handleKeyDown.bind(this))
+      } else if (this.hasInputTarget) {
+        // Handle regular input elements (like the defect search input)
+        this.inputTarget.addEventListener('keyup', this.debouncedMentionCheck.bind(this))
+        this.inputTarget.addEventListener('keydown', this.handleKeyDown.bind(this))
       }
     }
   }
@@ -83,7 +87,11 @@ export default class extends Controller {
 
   checkForMentions() {
     if (!this.trixEditor) {
-      this.checkForMentionsInRegularEditor()
+      if (this.hasInputTarget) {
+        this.checkForMentionsInInput()
+      } else {
+        this.checkForMentionsInRegularEditor()
+      }
       return
     }
     
@@ -144,6 +152,37 @@ export default class extends Controller {
       startPosition: lastTriggerIndex,
       query: afterTrigger,
       trigger: trigger
+    }
+  }
+
+  checkForMentionsInInput() {
+    if (!this.hasInputTarget) return
+    
+    const input = this.inputTarget
+    const text = input.value
+    const cursorPos = input.selectionStart
+
+    // Check for @ mention (users)
+    const atMatch = this.findMentionTriggerInText(text, cursorPos, '@')
+    if (atMatch) {
+      this.currentMentionType = 'user'
+      this.currentQuery = atMatch.query
+      this.fetchUsers(atMatch.query).then(users => this.showMentionDropdown(users))
+      return
+    }
+
+    // Check for # defect reference
+    const hashMatch = this.findMentionTriggerInText(text, cursorPos, '#')
+    if (hashMatch) {
+      this.currentMentionType = 'defect'
+      this.currentQuery = hashMatch.query
+      this.fetchDefects(hashMatch.query).then(defects => this.showMentionDropdown(defects))
+      return
+    }
+
+    // Close dropdown if no mention found
+    if (this.isOpen) {
+      this.closeMentionDropdown()
     }
   }
 
@@ -239,6 +278,7 @@ export default class extends Controller {
 
   async fetchDefects(query = '') {
     try {
+      // Always use the mention defects endpoint for consistent behavior
       const url = new URL('/mention/defects', window.location.origin)
       url.searchParams.append('query', query)
       url.searchParams.append('current_defect_id', this.defectIdValue)
@@ -271,6 +311,7 @@ export default class extends Controller {
     this.renderDropdown(items)
     this.positionDropdown()
     this.isOpen = true
+    this.dropdownTarget.classList.remove('hidden')
     this.dropdownTarget.style.display = 'block'
   }
 
@@ -322,10 +363,20 @@ export default class extends Controller {
   }
 
   positionDropdown() {
-    if (!this.trixEditor) return
+    let targetElement = null
+    
+    if (this.trixEditor) {
+      targetElement = this.trixEditor
+    } else if (this.hasInputTarget) {
+      targetElement = this.inputTarget
+    } else if (this.hasEditorTarget) {
+      targetElement = this.editorTarget
+    }
+    
+    if (!targetElement) return
 
     // Get the current selection position to place dropdown
-    const rect = this.trixEditor.getBoundingClientRect()
+    const rect = targetElement.getBoundingClientRect()
     const editorRect = this.element.getBoundingClientRect()
 
     this.dropdownTarget.style.position = 'absolute'
@@ -357,6 +408,23 @@ export default class extends Controller {
     const name = item.dataset.name
     const summary = item.dataset.summary
     const type = item.dataset.type
+
+    // Check if this is being used in a linking context (has special target)
+    if (this.hasInputTarget && this.inputTarget.id === 'defectSearchInput') {
+      // Emit custom event for linking modal
+      const customEvent = new CustomEvent('mention:selected', {
+        detail: { 
+          id: id, 
+          defect_unique: name, 
+          summary: summary,
+          type: type 
+        },
+        bubbles: true
+      });
+      this.inputTarget.dispatchEvent(customEvent);
+      this.closeMentionDropdown();
+      return;
+    }
 
     this.insertMention(id, name, type, summary)
     this.closeMentionDropdown()
@@ -413,6 +481,7 @@ export default class extends Controller {
     this.currentQuery = ""
     this.mentionStartPosition = null
     this.selectedIndex = 0
+    this.dropdownTarget.classList.add('hidden')
     this.dropdownTarget.style.display = 'none'
     this.dropdownTarget.innerHTML = ''
   }
