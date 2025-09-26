@@ -262,8 +262,8 @@ class DefectController < ApplicationController
 
     # Handle default assignee
     default_assignee = DefaultDefectAssignee.where(archive_status: false)
-                                            .order(created_at: :desc)
-                                            .first
+      .order(created_at: :desc)
+      .first
     @defect.user_ids = [default_assignee.user_id] if default_assignee&.user_id.present?
 
     # Preselect product if product_id is passed
@@ -279,8 +279,8 @@ class DefectController < ApplicationController
 
     # Collect QA users
     qa_user_ids = User.joins(:roles)
-                      .where(roles: { name: "qa" })
-                      .pluck(:id)
+      .where(roles: { name: 'qa' })
+      .pluck(:id)
 
     # Collect product users (from selected product OR @product set by set_form_data)
     product = @selected_product || @product
@@ -288,8 +288,8 @@ class DefectController < ApplicationController
 
     # Combine QA + Product users
     @available_users = User.where(id: qa_user_ids + product_user_ids)
-                          .distinct
-                          .order(:first_name, :last_name)
+      .distinct
+      .order(:first_name, :last_name)
 
     # For JS (assignee search dropdown)
     @assignee_users_data = @available_users.map { |u| { id: u.id, name: u.name } }
