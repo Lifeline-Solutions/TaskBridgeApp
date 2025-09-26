@@ -119,8 +119,8 @@ class ProfilesController < ApplicationController
           next_handover = handovers_for_user.find { |h| h.created_at > assign_event.created_at }
           terminal_time = terminal_state_time_for(ticket)
           candidate_end_times = [next_assignment&.created_at, next_handover&.created_at, terminal_time]
-                                  .compact
-                                  .select { |t| t > assigned_at }
+            .compact
+            .select { |t| t > assigned_at }
           end_time = candidate_end_times.min || Time.current
           hold_periods << (end_time - assigned_at)
         end
@@ -144,7 +144,7 @@ class ProfilesController < ApplicationController
     return '0 seconds' if seconds <= 0
 
     parts = ActiveSupport::Duration.build(seconds).parts # e.g., {years:, months:, days:, hours:, minutes:, seconds:}
-    order = [:years, :months, :days, :hours, :minutes, :seconds]
+    order = %i[years months days hours minutes seconds]
 
     order.map do |key|
       value = parts[key].to_i
@@ -282,15 +282,9 @@ class ProfilesController < ApplicationController
 
     events.each do |e|
       d = e.details.to_s.downcase
-      if d.include?('resolved') && (d.include?('status') || d.include?('status changed') || d.include?('changed status') || d.include?('to resolved'))
-        times << e.created_at
-      end
-      if d.include?('closed') && (d.include?('status') || d.include?('status changed') || d.include?('changed status') || d.include?('to closed'))
-        times << e.created_at
-      end
-      if d.include?('declined') && (d.include?('status') || d.include?('status changed') || d.include?('changed status') || d.include?('to declined'))
-        times << e.created_at
-      end
+      times << e.created_at if d.include?('resolved') && (d.include?('status') || d.include?('status changed') || d.include?('changed status') || d.include?('to resolved'))
+      times << e.created_at if d.include?('closed') && (d.include?('status') || d.include?('status changed') || d.include?('changed status') || d.include?('to closed'))
+      times << e.created_at if d.include?('declined') && (d.include?('status') || d.include?('status changed') || d.include?('changed status') || d.include?('to declined'))
     end
 
     times.compact.min
