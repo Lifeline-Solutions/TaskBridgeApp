@@ -20,9 +20,8 @@ if defined?(Sidekiq)
           failed_at: Time.now.iso8601
         }
 
-        # Log and notify via our persisted email pipeline
+        # Log only; email suppressed unless explicit system-break occurs elsewhere
         ErrorLogger.log(ex, context: context) if defined?(ErrorLogger)
-        SafeNotifier.email(ex, context: context)
       rescue => inner
         Rails.logger.error("Sidekiq error handler failed: #{inner.class}: #{inner.message}")
       end

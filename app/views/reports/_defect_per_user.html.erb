@@ -1,47 +1,154 @@
-<div class="container flex flex-row gap-2 p-2 justify-between">
-  <div class="grid grid-cols-4 gap-2 justify-around">
-    <div class="col-span-3">
-      <%= pie_chart @defects_per_creator.map { |(id, first_name, last_name), count| ["#{first_name} #{last_name}", count] }.to_h,
-                    height: "400px",
-                    legend: true,
-                    library: { title: { text: "" } } %>
-
-
+<div class="container flex flex-col gap-6 p-2">
+  <% if selected_metrics.include?('reporter') %>
+    <div class="grid grid-cols-4 gap-2 justify-around">
+      <div class="col-span-3">
+        <%= pie_chart defects_per_creator.map { |(id, first_name, last_name), count| ["#{first_name} #{last_name}", count] }.to_h,
+                      height: "360px",
+                      legend: true,
+                      library: { title: { text: "Defects by Reporter" } } %>
+      </div>
+      <div class="col-span-1">
+        <h2>Reporter</h2>
+        <hr class="my-2">
+        <% defects_per_creator.each do |(id, first_name, last_name), count| %>
+          <div class="flex justify-between w-full mb-1 gap-2">
+            <span class="font-medium"><%= "#{first_name} #{last_name}" %></span>
+            <span><%= count %></span>
+          </div>
+        <% end %>
+        <hr class="my-2">
+      </div>
     </div>
-    <div class="col-span-1">
-      <h2>Reporter</h2>
-      <hr class="my-2">
-      <% @defects_per_creator.each do |(id, first_name, last_name), count| %>
-        <div class="flex justify-between w-full mb-1 gap-2">
-          <span class="font-medium"><%= "#{first_name} #{last_name}" %></span>
-          <span><%= count %></span>
-        </div>
-      <% end %>
+  <% end %>
 
-      <hr class="my-2">
+  <% if selected_metrics.include?('status') %>
+    <div class="grid grid-cols-4 gap-2 justify-around">
+      <div class="col-span-3">
+        <%= pie_chart defects_per_status.map { |(id, name), count| [name, count] }.to_h,
+                      height: "360px",
+                      legend: true,
+                      library: { title: { text: "Defects by Status" } } %>
+      </div>
+      <div class="col-span-1">
+        <h2>Status</h2>
+        <hr class="my-2">
+        <% defects_per_status.each do |(id, name), count| %>
+          <div class="flex justify-between w-full mb-1 gap-2">
+            <span class="font-bold"><%= name %></span>
+            <span><%= count %></span>
+          </div>
+        <% end %>
+        <hr class="my-2">
+      </div>
     </div>
-  </div>
+  <% end %>
 
+  <% if selected_metrics.include?('severity') %>
+    <div class="grid grid-cols-4 gap-2 justify-around">
+      <div class="col-span-3">
+        <%= pie_chart defects_per_severity,
+                      height: "360px",
+                      legend: true,
+                      library: { title: { text: "Defects by Severity" } } %>
+      </div>
+      <div class="col-span-1">
+        <h2>Severity</h2>
+        <hr class="my-2">
+        <% defects_per_severity.each do |name, count| %>
+          <div class="flex justify-between w-full mb-1 gap-2">
+            <span class="font-bold"><%= name %></span>
+            <span><%= count %></span>
+          </div>
+        <% end %>
+        <hr class="my-2">
+      </div>
+    </div>
+  <% end %>
 
-  <div class="grid grid-cols-4 gap-2 justify-around">
-    <div class="col-span-3">
-      <%= pie_chart @defects_per_status.map { |(id, name), count| [name, count] }.to_h,
-                    height: "400px",
-                    legend: true,
-                    library: { title: { text: "Defects per Status" } } %>
+  <% if selected_metrics.include?('assignee') %>
+    <div class="grid grid-cols-4 gap-2 justify-around">
+      <div class="col-span-3">
+        <%= pie_chart defects_per_assignee.map { |(id, first_name, last_name), count| ["#{first_name} #{last_name}", count] }.to_h,
+                      height: "360px",
+                      legend: true,
+                      library: { title: { text: "Defects by Assignee" } } %>
+      </div>
+      <div class="col-span-1">
+        <h2>Assignee</h2>
+        <hr class="my-2">
+        <% defects_per_assignee.each do |(id, first_name, last_name), count| %>
+          <div class="flex justify-between w-full mb-1 gap-2">
+            <span class="font-medium"><%= "#{first_name} #{last_name}" %></span>
+            <span><%= count %></span>
+          </div>
+        <% end %>
+        <hr class="my-2">
+      </div>
     </div>
-    <div class="col-span-1">
-      <h2>Status</h2>
-      <hr class="my-2">
-      <% @defects_per_status.each do |(id, name), count| %>
-        <div class="flex justify-between w-full mb-1 gap-2">
-          <span class="font-bold"><%= name %></span>
-          <span><%= count %></span>
-        </div>
-      <% end %>
-      <hr class="my-2">
+  <% end %>
+
+  <% if selected_metrics.include?('modules') %>
+    <div class="grid grid-cols-4 gap-2 justify-around">
+      <div class="col-span-3">
+        <%= pie_chart defects_per_module.map { |(id, name), count| [name, count] }.to_h,
+                      height: "360px",
+                      legend: true,
+                      library: { title: { text: "Defects by Module" } } %>
+      </div>
+      <div class="col-span-1">
+        <h2>Module</h2>
+        <hr class="my-2">
+        <% defects_per_module.each do |(id, name), count| %>
+          <div class="flex justify-between w-full mb-1 gap-2">
+            <span class="font-bold"><%= name %></span>
+            <span><%= count %></span>
+          </div>
+        <% end %>
+        <hr class="my-2">
+      </div>
     </div>
-  </div>
+  <% end %>
+
+  <% if selected_metrics.include?('submodules') %>
+    <div class="grid grid-cols-4 gap-2 justify-around">
+      <div class="col-span-3">
+        <%= pie_chart defects_per_submodule.map { |(id, name), count| [name, count] }.to_h,
+                      height: "360px",
+                      legend: true,
+                      library: { title: { text: "Defects by Sub Module" } } %>
+      </div>
+      <div class="col-span-1">
+        <h2>Sub Module</h2>
+        <hr class="my-2">
+        <% defects_per_submodule.each do |(id, name), count| %>
+          <div class="flex justify-between w-full mb-1 gap-2">
+            <span class="font-bold"><%= name %></span>
+            <span><%= count %></span>
+          </div>
+        <% end %>
+        <hr class="my-2">
+      </div>
+    </div>
+  <% end %>
+
+  <% if selected_metrics.include?('ageing') %>
+    <div class="grid grid-cols-4 gap-2 justify-around">
+      <div class="col-span-3">
+        <%= column_chart defects_age_buckets,
+                         height: "360px",
+                         library: { title: { text: "Defects Ageing" }, legend: { position: 'bottom' } } %>
+      </div>
+      <div class="col-span-1">
+        <h2>Ageing</h2>
+        <hr class="my-2">
+        <% defects_age_buckets.each do |bucket, count| %>
+          <div class="flex justify-between w-full mb-1 gap-2">
+            <span class="font-bold"><%= bucket %></span>
+            <span><%= count %></span>
+          </div>
+        <% end %>
+        <hr class="my-2">
+      </div>
+    </div>
+  <% end %>
 </div>
-
-

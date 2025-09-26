@@ -3,7 +3,13 @@ module SafeNotifier
   module_function
 
   def email(exception, context: nil)
-    Rails.logger.info("SafeNotifier: preparing error email for #{exception.class} - #{exception.message}")
+    # Only send emails when explicitly flagged as a complete system break
+    unless system_break?(context)
+      Rails.logger.info("SafeNotifier: email suppressed (non system-break) for #{exception.class}")
+      return
+    end
+
+    Rails.logger.info("SafeNotifier: preparing system-break email for #{exception.class} - #{exception.message}")
     recipients = env_recipients
     payload = ErrorPayload.build(exception, context: context)
     payload[:to] = recipients if recipients.any?
@@ -15,7 +21,7 @@ module SafeNotifier
     end
 
     queue_flag = async_delivery?
-    subject = "[Error] #{payload[:exception_class]}: #{payload[:message].to_s.truncate(80)}"
+    subject = "[SYSTEM BREAK] #{payload[:exception_class]}: #{payload[:message].to_s.truncate(80)}"
     bt = Array(payload[:backtrace]).join("\n")
     body_html = "<h4>#{ERB::Util.html_escape(payload[:message])}</h4><pre>#{ERB::Util.html_escape(bt)}</pre>"
     Messaging::EmailSender
@@ -29,9 +35,9 @@ module SafeNotifier
       )
       .set_source('system_activity', nil)
       .send(queue: queue_flag)
-    Rails.logger.info("SafeNotifier: enqueued/sent error email for #{exception.class}")
+    Rails.logger.info("SafeNotifier: enqueued/sent system-break email for #{exception.class}")
   rescue StandardError => e
-    Rails.logger.warn("ErrorNotifierMailer delivery failed (#{e.class}): #{e.message}.")
+    Rails.logger.warn("SafeNotifier email delivery failed (#{e.class}): #{e.message}.")
     Rails.logger.error('SafeNotifier fallback suppressed; emails now persisted via Emails table')
   end
 
@@ -71,6 +77,14 @@ module SafeNotifier
     end != :written
   rescue StandardError => _e
     false
+  end
+
+  def system_break?(context)
+    ctx = context || {}
+    return true if ctx.is_a?(Hash) && (ctx[:system_break] == true || ctx['system_break'] == true)
+
+    # Optional global mode: only send in explicit break-only configuration
+    (Rails.env.production? || Rails.env.staging?) && ENV.fetch('ERROR_NOTIFY_MODE', 'disabled') == 'break_only'
   end
 
   def fingerprint(payload)
