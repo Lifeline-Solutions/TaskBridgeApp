@@ -130,6 +130,8 @@ class DefectController < ApplicationController
     # Ensure uniqueness after joins (affects count and pagination)
     @defects = @defects.distinct
 
+    @product = Product.find(params[:product_id]) if params[:product_id].present?
+
     # Build option lists for dropdowns from the CURRENT filtered (but unpaginated) result set
     filtered_ids = @defects.except(:select, :order, :limit, :offset).select(:id)
     @statuses = Status.joins(:defects)
@@ -242,6 +244,13 @@ class DefectController < ApplicationController
   def create
     @defect = Defect.new(defect_params)
     @defect.creator = current_user
+
+    # Some forms submit product_id, qa_module_id and submodule_id at the top-level
+    # instead of nested under defect[]. Ensure we copy them onto the model so
+    # presence validations (Product, QA module) succeed.
+    @defect.product_id ||= params[:product_id] if params[:product_id].present?
+    @defect.qa_module_id ||= params[:qa_module_id] if params[:qa_module_id].present?
+    @defect.submodule_id ||= params[:submodule_id] if params[:submodule_id].present?
 
     # Clean user_ids coming from hidden field (will be [""] if none selected)
     selected_user_ids = Array(params[:defect][:user_ids]).reject(&:blank?)
@@ -928,10 +937,24 @@ class DefectController < ApplicationController
 
   def defect_params
     # Handle the qa_submodule_id to submodule_id mapping
-    params[:defect][:submodule_id] = params[:defect].delete(:qa_submodule_id) if params[:defect] && params[:defect][:qa_submodule_id].present?
+    if params[:defect]
+      params[:defect][:submodule_id] = params[:defect].delete(:qa_submodule_id) if params[:defect][:qa_submodule_id].present?
 
-    # Convert user_ids from string to array if needed
-    params[:defect][:user_ids] = [params[:defect][:user_ids]].reject(&:blank?) if params[:defect] && params[:defect][:user_ids].is_a?(String)
+      # Normalize user_ids: could be a string, array or single value
+      if params[:defect][:user_ids].is_a?(String)
+        params[:defect][:user_ids] = [params[:defect][:user_ids]].reject(&:blank?)
+      elsif params[:defect][:user_ids].is_a?(Array)
+        params[:defect][:user_ids] = params[:defect][:user_ids].reject(&:blank?)
+      end
+
+      # Normalize incoming single status_id into status_ids array
+      if params[:defect][:status_id].present?
+        # If status_ids already present, merge; otherwise set
+        existing = Array(params[:defect][:status_ids]).reject(&:blank?)
+        params[:defect][:status_ids] = (existing + [params[:defect][:status_id]]).uniq
+        params[:defect].delete(:status_id)
+      end
+    end
 
     params.require(:defect).permit(
       :summary,
