@@ -538,6 +538,8 @@ class DefectController < ApplicationController
   def drafts
     @defects = Defect.drafts.includes(:users, :qa_module, :submodule).order(updated_at: :desc)
 
+    @labels = Label.all.order(:name)
+
     # Pagination
     @per_page = 20
     @page = (params[:page] || 1).to_i
