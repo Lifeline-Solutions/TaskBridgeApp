@@ -1,36 +1,35 @@
 <% provide(:title, "ORM Team Report") %>
 
-<h1 class="flex justify-center text-2xl font-bold mb-4">ORM Teams Report</h1>
+<h1 class="flex justify-center text-xl sm:text-2xl font-bold mb-4">ORM Teams Report</h1>
 <div class="p-2 w-full">
   <%= form_with url: orm_team_report_path, method: :get, local: true do |f| %>
-    <div class="flex flex-wrap justify-center gap-2">
-      <div class="flex flex-col gap-2">
+    <div class="flex flex-col sm:flex-row flex-wrap justify-center gap-2">
+      <div class="flex flex-col gap-2 w-full sm:w-1/3">
         <%= f.label :days, "Closed & Resolved for the last (days)", class: "capitalize text-sm font-bold w-full align-middle p-2" %>
-        <%= f.number_field :days, value: params[:days] || 0, min: 0, class: "border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-200  dark:hover:dark:bg-gray-600 w-full p-2" %>
+        <%= f.number_field :days, value: params[:days] || 0, min: 0, class: "border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 w-full p-2" %>
       </div>
-      <div class="flex flex-col gap-2">
+      <div class="flex flex-col gap-2 w-full sm:w-1/3">
         <%= f.label :team_id, "Team", class: "capitalize text-sm font-bold w-full align-middle p-2" %>
         <div class="relative w-full">
           <!-- Searchable Input -->
-          <input type="text" id="searchTeam" autocomplete="new-password" class="border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-200  dark:hover:dark:bg-gray-600 w-full p-2" placeholder="Search Team..." onkeyup="filterTeamDropdown()" onfocus="showDropdown()">
+          <input type="text" id="searchTeam" autocomplete="new-password" class="border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg bg-white dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 w-full p-2" placeholder="Search Team..." onkeyup="filterTeamDropdown()" onfocus="showDropdown()">
           <!-- Dropdown List -->
-          <div id="teamDropdown" class="absolute w-full bg-white border rounded-lg mt-1 shadow-lg max-h-40 overflow-y-auto hidden">
-            <div class="dropdown-item px-4 py-2 bg-white dark:bg-gray-500 hover:bg-gray-200  dark:hover:dark:bg-gray-700 cursor-pointer font-bold" data-team-id="" onclick="selectTeam(this)">
+          <div id="teamDropdown" class="absolute w-full bg-white border rounded-lg mt-1 shadow-lg max-h-40 overflow-y-auto hidden z-10">
+            <div class="dropdown-item px-4 py-2 bg-white dark:bg-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer font-bold" data-team-id="" onclick="selectTeam(this)">
               All Teams
             </div>
             <% teams = Team.all %>
             <% teams.each do |team| %>
-              <div class="dropdown-item px-4 py-2 bg-white dark:bg-gray-500 hover:bg-gray-200  dark:hover:dark:bg-gray-700 cursor-pointer" data-team-id="<%= team.id %>" onclick="selectTeam(this)">
+              <div class="dropdown-item px-4 py-2 bg-white dark:bg-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer" data-team-id="<%= team.id %>" onclick="selectTeam(this)">
                 <%= team.name %>
               </div>
             <% end %>
           </div>
-
           <!-- Hidden Input to store selected team ID -->
           <input type="hidden" id="selectedTeamId" name="team_id">
         </div>
       </div>
-      <div class="flex flex-col gap-2 w-full sm:w-1/6 md:w-1/6 pt-10">
+      <div class="flex flex-col gap-2 w-full sm:w-1/3 pt-4 sm:pt-10">
         <%= f.submit "Generate Report", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100 w-full sm:w-auto', data: { onclick: "initializeTeamDropdown()" } %>
       </div>
     </div>
@@ -38,115 +37,118 @@
 </div>
 
 <% if @tickets.present? %>
-  <div class="mx-auto mb-4 px-4 sm:px-6 lg:px-8 py-8">
-    <div class="flex justify-end gap-2">
+  <div class="mx-auto mb-4 px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
+    <div class="flex flex-col sm:flex-row justify-end gap-2 mb-2">
       <%= link_to "Download CSV",
                   orm_team_report_path(format: :csv, start_date: params[:start_date], end_date: params[:end_date], team_id: params[:team_id], status: params[:status], days: params[:days]),
-                  class: "bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100" %>
+                  class: "bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100 w-full sm:w-auto" %>
       <%= form_with url: orm_team_report_path, method: :get, local: true do |f| %>
-        <%= f.submit "Clear", class: 'bg-gray-500 hover:bg-gray-700 p-2 rounded font-bold rounded-lg text-slate-100' %>
+        <%= f.submit "Clear", class: 'bg-gray-500 hover:bg-gray-700 p-2 rounded font-bold rounded-lg text-slate-100 w-full sm:w-auto' %>
       <% end %>
     </div>
-    <div class="p-2 w-full col-span-1">
-
-    </div>
-    <table id="orm_report" class="table-auto w-full mb-4">
-      <thead>
-      <tr>
-        <th class="border border-black dark:border-gray-100 px-4 py-2">Project Name</th>
-        <th class="border border-black dark:border-gray-100 px-4 py-2">Total Number of Tickets</th>
-        <th class="border border-black dark:border-gray-100 px-4 py-2">Status</th>
-      </tr>
-      </thead>
-      <tbody>
-      <% @ticket_counts.each do |project_id, total_count| %>
-        <% project = Project.find(project_id) %>
+    <div class="p-2 w-full col-span-1"></div>
+    <div class="overflow-x-auto">
+      <table id="orm_report" class="table-auto w-full mb-4 text-xs sm:text-sm">
+        <thead>
         <tr>
-          <td class="capitalize border border-black px-4  dark:border-gray-100 py-2"><%= project.title %></td>
-          <td class="border border-black dark:border-gray-100 px-4 py-2 text-center"><%= total_count %></td>
-          <td class="border border-black dark:border-gray-100 text-center p-0">
-            <table class="table-auto w-full mb-0">
-              <thead>
-              <tr>
-                <% @project_status_counts.select { |k, _| k.first == project_id }.each do |(proj_id, status), count| %>
-                  <th class="border-r border-black dark:border-gray-100 text-center"><%= status %></th>
-                <% end %>
-              </tr>
-              </thead>
-              <tbody>
-              <tr>
-                <% @project_status_counts.select { |k, _| k.first == project_id }.each do |(proj_id, status), count| %>
-                  <td class="border-r border-t border-black dark:border-gray-100 text-center"><%= count %></td>
-                <% end %>
-              </tr>
-              </tbody>
-            </table>
-          </td>
+          <th class="border border-black dark:border-gray-100 px-2 sm:px-4 py-2">Project Name</th>
+          <th class="border border-black dark:border-gray-100 px-2 sm:px-4 py-2">Total Number of Tickets</th>
+          <th class="border border-black dark:border-gray-100 px-2 sm:px-4 py-2">Status</th>
         </tr>
-      <% end %>
-      </tbody>
-    </table>
-
-    <table id="orm_report" class="table-auto w-full">
-      <thead>
-      <tr>
-        <th class="border border-black dark:border-gray-100 px-4 py-2">Ticket ID</th>
-        <th class="border border-black dark:border-gray-100 px-4 py-2">Issue Type</th>
-        <th class="border border-black dark:border-gray-100 px-4 py-2">Assignee</th>
-        <th class="border border-black dark:border-gray-100 px-4 py-2">Reporter</th>
-        <th class="border border-black dark:border-gray-100 px-4 py-2">Priority</th>
-        <th class="border border-black dark:border-gray-100 px-4 py-2">Status</th>
-        <th class="border border-black dark:border-gray-100 px-4 py-2">Created at</th>
-        <th class="border border-black dark:border-gray-100 px-4 py-2">updated at</th>
-        <th class="border border-black dark:border-gray-100 px-4 py-2">Summary</th>
-        <th class="border border-black dark:border-gray-100 px-4 py-2">Last Comment Updated At</th>
-        <th class="border border-black dark:border-gray-100 px-4 py-2">Due Date</th>
-      </tr>
-      </thead>
-      <tbody>
-      <% @tickets.each do |ticket| %>
-        <% row_class = case ticket.statuses.first&.name
-                       when 'New'
-                         'bg-red-500'
-                       when 'Closed', 'Resolved'
-                         'bg-emerald-100 text-black'
-                       when 'Reopened'
-                         'bg-red-900 text-slate-100'
-                       when 'Under Development'
-                         'bg-blue-300'
-                       when 'Work in Progress'
-                         'bg-[#CCCCCC] text-black'
-                       when 'QA Testing'
-                         'bg-pink-500'
-                       when 'Awaiting Build'
-                         'bg-gray-800 text-slate-100'
-                       when 'Client Confirmation Pending'
-                         'bg-yellow-100 text-black'
-                       when 'On-Hold'
-                         'bg-red-600 text-slate-100'
-                       when 'Assigned'
-                         'bg-blue-800 text-slate-100'
-                       when 'Declined'
-                         'bg-gray-800 text-slate-100'
-                       else
-                         ''
-                       end %>
-        <tr class="<%= row_class %>">
-          <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.unique_id %></td>
-          <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.issue %></td>
-          <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.users.map(&:name).select(&:present?).join(', ') %></td>
-          <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.user.name %></td>
-          <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.priority %></td>
-          <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.statuses.first&.name || 'N/A' %></td>
-          <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.created_at.strftime('%d/%b/%Y %I:%M:%S %p') %></td>
-          <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.add_statuses.order(updated_at: :desc).first&.updated_at&.strftime('%d/%b/%Y %I:%M:%S %p') || 'N/A' %></td>
-          <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.subject %></td>
-          <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.issues.order(updated_at: :desc).first&.updated_at&.strftime('%d/%b/%Y %I:%M:%S %p') || 'N/A' %></td>
-          <td class="border border-black dark:border-slate-100 px-4 py-2"><%= ticket.due_date&.strftime("%d/%b/%Y") || 'N/A' %></td>
+        </thead>
+        <tbody>
+        <% @ticket_counts.each do |project_id, total_count| %>
+          <% project = Project.find(project_id) %>
+          <tr>
+            <td class="capitalize border border-black px-2 sm:px-4 dark:border-gray-100 py-2"><%= project.title %></td>
+            <td class="border border-black dark:border-gray-100 px-2 sm:px-4 py-2 text-center"><%= total_count %></td>
+            <td class="border border-black dark:border-gray-100 text-center p-0">
+              <div class="overflow-x-auto">
+                <table class="table-auto w-full mb-0 text-xs sm:text-sm">
+                  <thead>
+                  <tr>
+                    <% @project_status_counts.select { |k, _| k.first == project_id }.each do |(proj_id, status), count| %>
+                      <th class="border-r border-black dark:border-gray-100 text-center px-2 sm:px-4"><%= status %></th>
+                    <% end %>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr>
+                    <% @project_status_counts.select { |k, _| k.first == project_id }.each do |(proj_id, status), count| %>
+                      <td class="border-r border-t border-black dark:border-gray-100 text-center px-2 sm:px-4"><%= count %></td>
+                    <% end %>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+        </tbody>
+      </table>
+    </div>
+    <div class="overflow-x-auto">
+      <table id="orm_report" class="table-auto w-full text-xs sm:text-sm">
+        <thead>
+        <tr>
+          <th class="border border-black dark:border-gray-100 px-2 sm:px-4 py-2">Ticket ID</th>
+          <th class="border border-black dark:border-gray-100 px-2 sm:px-4 py-2">Issue Type</th>
+          <th class="border border-black dark:border-gray-100 px-2 sm:px-4 py-2">Assignee</th>
+          <th class="border border-black dark:border-gray-100 px-2 sm:px-4 py-2">Reporter</th>
+          <th class="border border-black dark:border-gray-100 px-2 sm:px-4 py-2">Priority</th>
+          <th class="border border-black dark:border-gray-100 px-2 sm:px-4 py-2">Status</th>
+          <th class="border border-black dark:border-gray-100 px-2 sm:px-4 py-2">Created at</th>
+          <th class="border border-black dark:border-gray-100 px-2 sm:px-4 py-2">updated at</th>
+          <th class="border border-black dark:border-gray-100 px-2 sm:px-4 py-2">Summary</th>
+          <th class="border border-black dark:border-gray-100 px-2 sm:px-4 py-2">Last Comment Updated At</th>
+          <th class="border border-black dark:border-gray-100 px-2 sm:px-4 py-2">Due Date</th>
         </tr>
-      <% end %>
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+        <% @tickets.each do |ticket| %>
+          <% row_class = case ticket.statuses.first&.name
+                         when 'New'
+                           'bg-red-500'
+                         when 'Closed', 'Resolved'
+                           'bg-emerald-100 text-black'
+                         when 'Reopened'
+                           'bg-red-900 text-slate-100'
+                         when 'Under Development'
+                           'bg-blue-300'
+                         when 'Work in Progress'
+                           'bg-[#CCCCCC] text-black'
+                         when 'QA Testing'
+                           'bg-pink-500'
+                         when 'Awaiting Build'
+                           'bg-gray-800 text-slate-100'
+                         when 'Client Confirmation Pending'
+                           'bg-yellow-100 text-black'
+                         when 'On-Hold'
+                           'bg-red-600 text-slate-100'
+                         when 'Assigned'
+                           'bg-blue-800 text-slate-100'
+                         when 'Declined'
+                           'bg-gray-800 text-slate-100'
+                         else
+                           ''
+                         end %>
+          <tr class="<%= row_class %>">
+            <td class="border border-black dark:border-slate-100 px-2 sm:px-4 py-2"><%= ticket.unique_id %></td>
+            <td class="border border-black dark:border-slate-100 px-2 sm:px-4 py-2"><%= ticket.issue %></td>
+            <td class="border border-black dark:border-slate-100 px-2 sm:px-4 py-2"><%= ticket.users.map(&:name).select(&:present?).join(', ') %></td>
+            <td class="border border-black dark:border-slate-100 px-2 sm:px-4 py-2"><%= ticket.user.name %></td>
+            <td class="border border-black dark:border-slate-100 px-2 sm:px-4 py-2"><%= ticket.priority %></td>
+            <td class="border border-black dark:border-slate-100 px-2 sm:px-4 py-2"><%= ticket.statuses.first&.name || 'N/A' %></td>
+            <td class="border border-black dark:border-slate-100 px-2 sm:px-4 py-2"><%= ticket.created_at.strftime('%d/%b/%Y %I:%M:%S %p') %></td>
+            <td class="border border-black dark:border-slate-100 px-2 sm:px-4 py-2"><%= ticket.add_statuses.order(updated_at: :desc).first&.updated_at&.strftime('%d/%b/%Y %I:%M:%S %p') || 'N/A' %></td>
+            <td class="border border-black dark:border-slate-100 px-2 sm:px-4 py-2"><%= ticket.subject %></td>
+            <td class="border border-black dark:border-slate-100 px-2 sm:px-4 py-2"><%= ticket.issues.order(updated_at: :desc).first&.updated_at&.strftime('%d/%b/%Y %I:%M:%S %p') || 'N/A' %></td>
+            <td class="border border-black dark:border-slate-100 px-2 sm:px-4 py-2"><%= ticket.due_date&.strftime("%d/%b/%Y") || 'N/A' %></td>
+          </tr>
+        <% end %>
+        </tbody>
+      </table>
+    </div>
   </div>
 <% end %>
 
