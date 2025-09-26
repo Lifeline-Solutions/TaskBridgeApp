@@ -113,10 +113,14 @@ class ProfilesController < ApplicationController
 
         assignments_for_user.each do |assign_event|
           assigned_at = assign_event.created_at
-          # Earliest of the next assignment (anyone) or next handover involving selected user
+          # Earliest of the next assignment (anyone), next handover involving selected user,
+          # or when the ticket entered a terminal state (Resolved/Closed/Declined)
           next_assignment = assignments.find { |a| a.created_at > assign_event.created_at }
           next_handover = handovers_for_user.find { |h| h.created_at > assign_event.created_at }
-          candidate_end_times = [next_assignment&.created_at, next_handover&.created_at].compact
+          terminal_time = terminal_state_time_for(ticket)
+          candidate_end_times = [next_assignment&.created_at, next_handover&.created_at, terminal_time]
+                                  .compact
+                                  .select { |t| t > assigned_at }
           end_time = candidate_end_times.min || Time.current
           hold_periods << (end_time - assigned_at)
         end
@@ -132,7 +136,21 @@ class ProfilesController < ApplicationController
     end
   end
 
-  helper_method :parse_assignment_details, :assigned_at_for, :resolved_at_for, :resolution_duration_for
+  helper_method :parse_assignment_details, :assigned_at_for, :resolved_at_for, :resolution_duration_for, :format_full_duration
+
+  # Formats total seconds as a human string with years, months, days, hours, minutes, and seconds
+  def format_full_duration(total_seconds)
+    seconds = total_seconds.to_i
+    return '0 seconds' if seconds <= 0
+
+    parts = ActiveSupport::Duration.build(seconds).parts # e.g., {years:, months:, days:, hours:, minutes:, seconds:}
+    order = [:years, :months, :days, :hours, :minutes, :seconds]
+
+    order.map do |key|
+      value = parts[key].to_i
+      value.positive? ? "#{value} #{key.to_s.singularize}#{'s' if value != 1}" : nil
+    end.compact.join(' ')
+  end
 
   def profiles_show_user
     if params[:user_id] && params[:client_name]
@@ -246,5 +264,35 @@ class ProfilesController < ApplicationController
         end
       end
     end
+  end
+
+  # Returns the earliest timestamp when the ticket enters a terminal state
+  # Terminal states considered: Resolved, Closed, Declined
+  def terminal_state_time_for(ticket)
+    return nil unless ticket
+
+    # Prefer any explicit resolved/closed timestamps on the ticket first
+    times = []
+    times << ticket.resolved_at if ticket.respond_to?(:resolved_at) && ticket.resolved_at.present?
+    times << ticket.closed_at if ticket.respond_to?(:closed_at) && ticket.closed_at.present?
+
+    # Also look into events for resolved/closed/declined
+    events = @all_ticket_events_by_ticket&.[](ticket.id) || []
+    events.sort_by!(&:created_at)
+
+    events.each do |e|
+      d = e.details.to_s.downcase
+      if d.include?('resolved') && (d.include?('status') || d.include?('status changed') || d.include?('changed status') || d.include?('to resolved'))
+        times << e.created_at
+      end
+      if d.include?('closed') && (d.include?('status') || d.include?('status changed') || d.include?('changed status') || d.include?('to closed'))
+        times << e.created_at
+      end
+      if d.include?('declined') && (d.include?('status') || d.include?('status changed') || d.include?('changed status') || d.include?('to declined'))
+        times << e.created_at
+      end
+    end
+
+    times.compact.min
   end
 end

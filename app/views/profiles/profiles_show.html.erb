@@ -163,8 +163,11 @@
                 </ul>
                 <% total_seconds = @ticket_hold_time_total_seconds[ticket.id].to_i %>
                 <% if total_seconds > 0 %>
+                  <div class="mt-1 text-sm">
+                    <%= "Total Periods: #{hold_periods.size}" %>
+                  </div>
                   <div class="mt-1 font-semibold">
-                    <%= "Total: #{distance_of_time_in_words(Time.at(0), Time.at(total_seconds), include_seconds: true)}" %>
+                    <%= "Total: #{format_full_duration(total_seconds)}" %>
                   </div>
                 <% end %>
               <% else %>
