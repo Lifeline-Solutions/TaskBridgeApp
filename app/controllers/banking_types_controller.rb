@@ -22,8 +22,6 @@ class BankingTypesController < ApplicationController
     if params[:product_id].present?
       # Pre-select the product on the new form
       @banking_type.product_id = params[:product_id]
-    else
-      @banking_type = []
     end
   end
 
