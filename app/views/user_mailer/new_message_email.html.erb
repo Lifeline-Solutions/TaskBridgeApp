@@ -4,10 +4,10 @@
   <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
 </head>
 <body>
-<h1>Hello, <%= @message_user.first_name %></h1>
+<h1>Hello, <%= @message_user.first_name %> <%= @message_user.last_name %> </h1>
 
 <ul>
-  <li><strong>Messgae:</strong> <%= @message.content.to_plain_text.truncate(3000) %></li>
+  <li><strong>Message:</strong> <%= @message.content.to_plain_text.truncate(3000) %></li>
 </ul>
 
 <p>Click <a href="<%= @url %>">here</a> to view the comment.</p>
