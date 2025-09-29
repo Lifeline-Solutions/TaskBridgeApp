@@ -86,10 +86,10 @@ class UserMailer < ApplicationMailer
     @current_user = current_user
     @assigned_user = assigned_user
     @url = product_task_url(@task.product, @task)
-    mail(to: @user.email, subject: 'You have been assigned to a new task') do |format|
-      format.html { render 'task_assignment_email' }
-      format.text { render plain: "You have been assigned to task ##{@task.unique_task_id} - #{@task.name}. View: #{@url}" }
-    end
+    mail(to: @user.email, subject: 'You have been assigned to a new task')
+  end
+
+  def add_state_email(user, task, current_user)
     @user = user
     @task = task
     @current_user = current_user

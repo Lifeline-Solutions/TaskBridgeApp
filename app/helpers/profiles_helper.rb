@@ -16,7 +16,7 @@ module ProfilesHelper
 
     units.each do |name, secs|
       count = remaining / secs
-      if count > 0
+      if count.positive?
         parts << "#{count} #{name}#{'s' if count > 1}"
         remaining -= count * secs
       end
