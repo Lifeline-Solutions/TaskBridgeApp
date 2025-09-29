@@ -10,12 +10,16 @@
       <div class="flex flex-row gap-4">
         <h1 class="text-lg sm:text-xl md:text-2xl font-semibold">
           <%= link_to @product.client.name, product_path(@product.id) %> / <span class="text-md font-light"> <%= render partial: 'tasks/priority', locals: { task: @task } %> </span>
-          <span class="text-sm"> from <%= @task.start_date.strftime('%d-%m-%Y') %> to <%= @task.start_date.strftime('%d-%m-%Y') %> </span> /
+          <span class="text-sm"> from <%= @task.start_date.strftime('%d %b %Y') %> to <%= @task.end_date.strftime('%d %b %Y') %> </span> /
           <% if @task.prerequisite_task.present? %>
             <span class="text-sm">Prerequisite Task:
               <%= link_to @task.prerequisite_task.name, product_task_path(@product, @task.prerequisite_task) %>
             </span>
           <% end %>
+          <span class="text-sm">
+            <%= @task.unique_task_id %>
+          </span>
+
         </h1>
         <p class="text-xs sm:text-sm md:text-base">
           <span class="font-medium">
