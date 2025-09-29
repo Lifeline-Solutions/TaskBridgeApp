@@ -309,7 +309,8 @@
                 </li>
               <% end %>
 
-              <% if current_user.has_role? :admin or current_user.has_role? :observer or current_user.has_role?('project manager') %>
+              <% if current_user.has_role?(:admin) || current_user.has_role?(:observer) || current_user.has_role?("project manager") %>
+                <!-- User Report Link (tickets/mobile-resp branch) -->
                 <%= link_to user_report_path do %>
                   <li class="group/item hover:bg-blue-50 dark:hover:bg-blue-100 rounded-lg <%= 'bg-blue-50 dark:bg-blue-100' if request.path == user_report_path %>">
                     <div class="flex items-center p-3">
@@ -321,10 +322,25 @@
                       <svg class="w-5 h-5 text-blue-700 transition duration-75 dark:text-blue-800 <%= 'block' if request.path == user_report_path %> <%= 'hidden' unless request.path == user_report_path %> group-hover/item:block" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M4.5 6.375a4.125 4.125 0 1 1 8.25 0 4.125 4.125 0 0 1-8.25 0ZM14.25 8.625a3.375 3.375 0 1 1 6.75 0 3.375 3.375 0 0 1-6.75 0ZM1.5 19.125a7.125 7.125 0 0 1 14.25 0v.003l-.001.119a.75.75 0 0 1-.363.63 13.067 13.067 0 0 1-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 0 1-.364-.63l-.001-.122ZM17.25 19.128l-.001.144a2.25 2.25 0 0 1-.233.96 10.088 10.088 0 0 0 5.06-1.01.75.75 0 0 0 .42-.643 4.875 4.875 0 0 0-6.957-4.611 8.586 8.586 0 0 1 1.71 5.157v.003Z" />
                       </svg>
-                      <span class="flex-1 ms-3 whitespace-nowrap group-hover/item:text-blue-700 dark:group-hover/item:text-blue-800 <%= 'text-blue-700 dark:text-blue-800 font-medium' if request.path == user_report_path %>">User Report</span>
+                      <span class="flex-1 ms-3 whitespace-nowrap group-hover/item:text-blue-700 dark:group-hover/item:text-blue-800 <%= 'text-blue-700 dark:text-blue-800 font-medium' if request.path == user_report_path %>">
+                        User Report
+                      </span>
                     </div>
                   </li>
                 <% end %>
+
+                <!-- User Profile Report Link (dev branch) -->
+                <%= link_to profiles_show_path do %>
+                  <li>
+                    <div class="flex items-center p-2 rounded-lg hover:bg-transparent dark:hover:bg-gray-700 group">
+                      <svg class="w-4 h-5 text-[#fff] transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M6 6h12v12H6V6zm1 1v10h10V7H7zm3 3h4v4h-4v-4z" />
+                      </svg>
+                      <span class="flex-1 hover:text-[#3F8CFF] ms-3 whitespace-nowrap">User Profile Report</span>
+                    </div>
+                  </li>
+                <% end %>
+              <% end %>
                 
                 <%= link_to project_report_path do %>
                   <li class="group/item hover:bg-blue-50 dark:hover:bg-blue-100 rounded-lg <%= 'bg-blue-50 dark:bg-blue-100' if request.path == project_report_path %>">

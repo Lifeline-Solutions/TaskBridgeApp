@@ -98,6 +98,39 @@ class ProductController < ApplicationController
     end
   end
 
+  def download_tasks_csv
+    @product = Product.find(params[:id])
+    tasks = @product.tasks.includes(:statuses, :users).order(created_at: 'desc')
+
+    if params[:query].present?
+      search_query = "%#{params[:query].strip}%"
+      tasks = tasks.left_joins(:users).where(
+        "tasks.unique_task_id ILIKE ? OR
+          tasks.name ILIKE ? OR
+          tasks.description ILIKE ? OR
+          tasks.priority ILIKE ? OR
+          users.first_name ILIKE ?",
+        search_query, search_query, search_query, search_query, search_query
+      ).distinct
+    end
+
+    require 'csv'
+    csv_data = CSV.generate(headers: true) do |csv|
+      csv << ['Task ID', 'Name', 'Priority', 'Status', 'Assigned Users', 'Created At']
+      tasks.find_each do |task|
+        csv << [
+          task.unique_task_id,
+          task.name,
+          task.priority,
+          task.statuses.first&.name,
+          task.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', '),
+          task.created_at.strftime('%Y-%m-%d %H:%M')
+        ]
+      end
+    end
+    send_data csv_data, filename: "tasks_#{@product.client.name.parameterize}_#{Time.zone.now.strftime('%Y%m%d_%H%M%S')}.csv", type: 'text/csv'
+  end
+
   def manage_users
     respond_to do |format|
       format.html
@@ -167,7 +200,6 @@ class ProductController < ApplicationController
     if @product.update(product_params)
       redirect_to product_path(@product), notice: 'Product was successfully updated.'
     else
-      SafeNotifier.email(StandardError.new('Product update failed'), context: { errors: @product.errors.full_messages, params: params.to_unsafe_h })
       render :edit, status: :unprocessable_entity
     end
   end

@@ -18,6 +18,11 @@ class BankingTypesController < ApplicationController
   # GET /banking_types/new
   def new
     @banking_type = BankingType.new
+
+    return unless params[:product_id].present?
+
+    # Pre-select the product on the new form
+    @banking_type.product_id = params[:product_id]
   end
 
   # GET /banking_types/1/edit

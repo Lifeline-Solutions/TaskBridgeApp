@@ -65,7 +65,7 @@ class UserMailer < ApplicationMailer
     @current_user = current_user
     @project = project
     @url = project_ticket_url(@ticket.project, @ticket)
-    mail(to: @user.email, subject: "Status update for Ticket ID #{@ticket.unique_id}.")
+    mail(to: [@user.email, @ticket.user&.email].uniq.compact, subject: "Ticket assigned with Ticket ID #{@ticket.unique_id}.")
   end
 
   # From Product Controller
@@ -76,7 +76,7 @@ class UserMailer < ApplicationMailer
     @current_user = current_user
     @assigned_user = assigned_user
     @url = product_url(@product)
-    mail(to: @user.email, subject: 'Product Assignment')
+    mail(to: @user.email, subject: 'Project Assignment')
   end
 
   # From Task Controller
@@ -86,7 +86,10 @@ class UserMailer < ApplicationMailer
     @current_user = current_user
     @assigned_user = assigned_user
     @url = product_task_url(@task.product, @task)
-    mail(to: @user.email, subject: 'You have been assigned to a new task')
+    mail(to: @user.email, subject: 'You have been assigned to a new task') do |format|
+      format.html { render 'task_assignment_email' }
+      format.text { render plain: "You have been assigned to task ##{@task.unique_task_id} - #{@task.name}. View: #{@url}" }
+    end
   end
 
   def add_state_email(user, task, current_user)

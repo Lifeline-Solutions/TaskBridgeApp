@@ -1,7 +1,7 @@
 import { Controller } from '@hotwired/stimulus';
 
 export default class extends Controller {
-  static targets = ['modalContainer'];
+  static targets = ['modalContainer', 'dialog'];
 
   connect() {
     document.body.classList.add('overflow-hidden');
@@ -47,9 +47,12 @@ export default class extends Controller {
   }
 
   closeOnBackdrop(event) {
-    if (event.target === this.element) {
-      this.close();
+    // If the click was inside the dialog, do nothing
+    if (this.dialogTarget.contains(event.target)) {
+      return
     }
+    // Otherwise, close modal (go back or remove frame)
+    history.back()
   }
 
   closeWithKey(event) {

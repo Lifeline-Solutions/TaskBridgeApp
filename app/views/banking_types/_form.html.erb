@@ -24,7 +24,7 @@
 
   <div>
     <%= form.select :product_id, 
-      options_for_select(@products_and_clients_defects), 
+      options_for_select(@products_and_clients_defects, @banking_type.product_id), 
       { prompt: "Select Project *" },
       { class: "w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600", required: true } %>
   </div>
@@ -36,6 +36,6 @@
 
   <div class="flex items-center">
     <%= form.submit class: "px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer" %>
-    <%= link_to 'Cancel', banking_types_path, class: "ml-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600" %>
+    <%= link_to 'Cancel', banking_types_path(product_id: params[:product_id]), class: "ml-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600" %>
   </div>
 <% end %>

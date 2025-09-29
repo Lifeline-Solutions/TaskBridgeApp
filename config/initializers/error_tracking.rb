@@ -13,9 +13,6 @@ Rails.application.config.after_initialize do
     }
 
     ErrorLogger.log(exception, context: context)
-    # Email in production/staging, and also in development so /crash tests notify
-    if Rails.env.production? || Rails.env.staging? || Rails.env.development?
-      SafeNotifier.email(exception, context: context)
-    end
+    # Do not email here; SafeNotifier now only sends on explicit system break
   end
 end

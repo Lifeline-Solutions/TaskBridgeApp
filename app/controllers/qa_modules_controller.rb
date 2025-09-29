@@ -44,7 +44,17 @@ class QaModulesController < ApplicationController
 
   def new
     @qa_module = QaModule.new
-    @parents = QaModule.where(parent_id: nil) # Only top-level modules
+    @products_and_clients_defects = set_products_and_clients_defects
+
+    if params[:product_id].present?
+      # Pre-select the product on the new form
+      @qa_module.product_id = params[:product_id]
+
+      # Parent modules for that product only
+      @parents = QaModule.where(product_id: params[:product_id], parent_id: nil).order(:name)
+    else
+      @parents = []
+    end
   end
 
   def create
@@ -116,10 +126,11 @@ class QaModulesController < ApplicationController
   private
 
   def set_products_and_clients_defects
-    @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
+    Product.includes(:client, :groupwares, :statuses)
       .select do |product|
-        product.statuses.any? { |status| ['Pre Quality Assurance', 'End Of Quality Assurance'].include?(status.name) }
-      end.map do |product|
+        product.statuses.any? { |s| ['Pre Quality Assurance', 'End Of Quality Assurance'].include?(s.name) }
+      end
+      .map do |product|
         client_name = product.client&.name || 'No Client'
         groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
         ["#{client_name} - #{groupware_names}", product.id]

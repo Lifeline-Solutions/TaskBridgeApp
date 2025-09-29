@@ -3,7 +3,11 @@
 <%= turbo_frame_tag "modal", data: { controller: "modal" } do %>
   <div class="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-hidden bg-black/40 backdrop-blur-sm" data-action="click->modal#closeOnBackdrop">
     <!-- Dialog (90vh cap, internal scroll only in body) -->
-    <div class="w-full max-w-[80%] h-[95%] bg-white dark:bg-gray-800 rounded-lg shadow-xl flex flex-col overflow-hidden p-4" role="dialog" aria-modal="true" aria-labelledby="new-defect-title">
+    <div data-modal-target="dialog"
+         class="w-full max-w-[80%] h-[95%] bg-white dark:bg-gray-800 rounded-lg shadow-xl flex flex-col overflow-hidden p-4"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="new-defect-title">
       <!-- Header -->
       <div class="shrink-0 px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-start">
         <h2 id="new-defect-title" class="text-xl font-semibold text-gray-800 dark:text-white">New Defect</h2>
@@ -31,7 +35,7 @@
             </div>
           <% end %>
 
-      <!-- Project / Module / Submodule (single controller scope) -->
+      <!-- Project -->
       <div data-controller="project-modules"
        data-project-modules-modules-url-value="<%= modules_by_product_defect_index_path %>"
        class="space-y-3">
@@ -41,28 +45,134 @@
             Project *
           </label>
 
-          <!-- Search input -->
+          <!-- Project Search -->
           <input type="text"
                 id="project-search"
                 placeholder="Type to search projects..."
-                value="<%= @product&.client&.name %> - <%= @product&.groupwares&.map(&:name)&.join(', ') %>"
-                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
-                        focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                value="<%= @selected_product.present? ? @selected_product.client.name + ' - ' + @selected_product.groupwares.map(&:name).join(', ') : '' %>"
+                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm
+                        focus:outline-none focus:ring-2 focus:ring-blue-500
+                        dark:bg-gray-700 dark:text-white dark:border-gray-600"
                 required
           />
 
-          <!-- Hidden field for selected product_id -->
-          <%= f.hidden_field :product_id,
-            id: "project-id-field",
-            data: { action: 'change->project-modules#loadModules', "project-modules-target": 'projectSelect' } %>
+          <!-- Hidden product_id field -->
+          <%= hidden_field_tag :product_id, (@selected_product&.id || ''), id: "project-id-field" %>
 
           <!-- Results dropdown -->
           <ul id="project-results"
-              class="absolute mt-1 border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-sm hidden z-10 w-full max-h-60 overflow-y-auto">
+              class="absolute mt-1 border border-gray-300 rounded-md bg-white dark:bg-gray-700
+                    text-sm hidden z-10 w-full max-h-60 overflow-y-auto">
           </ul>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+        <!-- Issue Type -->
+        <div class=" w-full">
+          <div>
+            <label class="block mb-1 text-xs font-medium text-gray-700 dark:text极-gray-300 tracking-wide uppercase">Issue Type</label>
+            <%= f.text_field :issue_type, value: 'Bug', disabled: true,
+                class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-not-allowed' %>
+          </div>
+
+          <!-- Status -->
+          <div class="relative flex flex-col gap-2 mt-2">
+              <label for="defect_status_id"
+                class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+                  Status *
+              </label>
+              <%= select_tag "defect[status_id]",
+                options_from_collection_for_select(
+                  @statuses, :id, :name,
+                  (@defect.statuses.first&.id || @statuses.first&.id)
+                ),
+                id: "defect_status_id",
+                class: "block w-full px-3 py-2 border border-gray-300 rounded-lg
+                        focus:ring-primary-600 focus:border-primary-600 p-2.5
+                        dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400
+                        text-transform: uppercase" %>
+
+
+          </div>
+
+          <!-- Summary -->
+          <div>
+            <label for="defect_summary" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Summary *</label>
+            <%= f.text_field :summary, placeholder: 'Enter concise summary', required: true,
+                class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 placeholder-gray-400' %>
+          </div>
+
+          <!-- Description (CKEditor) -->
+          <div>
+            <label for="defect_content" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+              Description *
+            </label>
+            <%= text_area_tag 'defect[content]',
+                @defect.content&.body&.to_s,
+                id: 'defect_content',
+                class: 'min-h-[200px] w-full border border-gray-300 rounded-md px-3 py-2 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600',
+                data: { required: true } %>
+
+            <p id="defect_content_error" class="mt-1 text-xs text-red-600 hidden">Description is required.</p>
+          </div>
+
+          <!-- Reported By -->
+          <div>
+            <label class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Reported By</label>
+            <%= text_field_tag :creator_name, Current.user&.name, disabled: true,
+                class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-not-allowed' %>
+          </div>
+
+          <!-- Priority -->
+          <div>
+            <label for="defect_priority" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Priority *</label>
+            <%= f.select :priority, options_for_select(['SEVERITY 1','SEVERITY 2','SEVERITY 3','SEVERITY 4'], @defect.priority), { prompt: 'Select Priority' },
+                class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600', required: true %>
+          </div>
+
+          <!-- Labels -->
+          <%= render "defect/form_labels", f: f, defect: @defect %>
+
+          <!-- Assignee -->
+          <div class="relative">
+                <label for="assignee-search"
+                      class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+                  Assignee *
+                </label>
+
+                <% if (default_assignee = DefaultDefectAssignee.instance)&.user.present? %>
+                  <input type="text"
+                        id="assignee-search"
+                        placeholder="Type to search users..."
+                        value="<%= default_assignee.user.name %>"
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
+                                focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+
+                  <%= hidden_field_tag 'defect[user_ids][]',
+                        default_assignee.user.id,
+                        id: "assignee-id-field" %>
+                <% else %>
+                  <input type="text"
+                        id="assignee-search"
+                        placeholder="Type to search users..."
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
+                                focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+
+                  <%= hidden_field_tag 'defect[user_ids][]',
+                        @defect.user_ids.first,
+                        id: "assignee-id-field" %>
+                <% end %>
+
+                <!-- Results dropdown -->
+                <ul id="assignee-results"
+                    class="absolute mt-1 border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-sm hidden z-10 w-full max-h-60 overflow-y-auto">
+                </ul>
+
+                <p class="mb-2 text-xs text-gray-500 dark:text-gray-400 italic">
+                  You can remove this and type to search for another user if needed.
+                </p>
+              </div>
+
+              <!-- Banking Type -->
           <div class="relative w-full">
             <label for="banking-type-search"
               class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
@@ -85,124 +195,39 @@
             </ul>
           </div>
 
+          <!-- QA Module Filter (parent modules) -->
           <div class="w-full">
-            <label for="qa_module_id"
-              class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
-                Module *
+            <label for="qa_module_id" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+              Module *
             </label>
-            <%= f.collection_select :qa_module_id, [], :id, :name,
-              { prompt: 'Select Module' },
-              class: 'w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 disabled:opacity-60',
-              required: true,
-              data: { "project-modules-target": 'moduleSelect', action: 'change->project-modules#loadSubmodules' } %>
+
+            <%= select_tag :qa_module_id,
+                  options_from_collection_for_select(@qa_modules, :id, :name, params[:qa_module_id] || @selected_module_id),
+                  include_blank: 'Select Module',
+                  id: 'qa_module_id',
+                  data: {
+                    'project-modules-target' => 'moduleSelect',
+                    'selected-module-id' => (params[:qa_module_id] || @selected_module_id)
+                  },
+                  class: 'w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 disabled:opacity-60',
+                  required: true %>
           </div>
 
+                    <!-- Submodule Filter -->
           <div class="w-full">
-            <label for="qa_submodule_id"
-              class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
-                Sub Module
+            <label for="submodule_id" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+              Sub Module
             </label>
-            <%= f.collection_select :qa_submodule_id, [], :id, :name,
-              { prompt: 'Select Sub-Module' },
-              class: 'w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600',
-              data: { "project-modules-target": 'submoduleSelect' } %>
+
+            <%= select_tag :submodule_id,
+                  options_from_collection_for_select(@submodules, :id, :name, params[:submodule_id] || @selected_submodule_id),
+                  include_blank: 'Select Sub-Module',
+                  id: 'submodule_id',
+                  data: { 'project-modules-target' => 'submoduleSelect', 'selected-submodule-id' => (params[:submodule_id] || @selected_submodule_id) },
+                  class: 'w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600' %>
           </div>
         </div>
         </div>
-
-            <!-- Summary -->
-            <div>
-              <label for="defect_summary" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Summary *</label>
-              <%= f.text_field :summary, placeholder: 'Enter concise summary', required: true,
-                    class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 placeholder-gray-400' %>
-            </div>
-
-            <!-- Description (CKEditor) -->
-            <div>
-              <label for="defect_content" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
-                Description *
-              </label>
-              <%= text_area_tag 'defect[content]',
-                    @defect.content&.body&.to_s,
-                    id: 'defect_content',
-                    class: 'min-h-[200px] w-full border border-gray-300 rounded-md px-3 py-2 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600',
-                    data: { required: true } %>
-
-              <p id="defect_content_error" class="mt-1 text-xs text-red-600 hidden">Description is required.</p>
-            </div>
-
-            <!-- Priority / Users / Labels -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div class="relative">
-                <label for="assignee-search"
-                      class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
-                  Assignee *
-                </label>
-
-                <% if (default_assignee = DefaultDefectAssignee.instance)&.user.present? %>
-                  <!-- Search input prefilled with default assignee -->
-                  <input type="text"
-                        id="assignee-search"
-                        placeholder="Type to search users..."
-                        value="<%= "#{default_assignee.user.first_name} #{default_assignee.user.last_name}" %>"
-                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
-                              focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
-
-                  <!-- Hidden field for selected user ID (set to default assignee) -->
-                  <%= hidden_field_tag 'defect[user_ids][]',
-                        default_assignee.user.id,
-                        id: "assignee-id-field" %>
-                <% else %>
-                  <!-- Search input empty if no default -->
-                  <input type="text"
-                        id="assignee-search"
-                        placeholder="Type to search users..."
-                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
-                              focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
-
-                  <!-- Hidden field for selected user ID (blank initially) -->
-                  <%= hidden_field_tag 'defect[user_ids][]',
-                        @defect.user_ids.first,
-                        id: "assignee-id-field" %>
-                <% end %>
-
-                <!-- Results dropdown -->
-                <ul id="assignee-results"
-                    class="absolute mt-1 border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-sm hidden z-10 w-full max-h-60 overflow-y-auto">
-                </ul>
-                <p class="mb-2 text-xs text-gray-500 dark:text-gray-400 italic">
-                  You can remove this and type to search for another user if needed.
-                </p>
-              </div>
-              <div>
-                <label for="defect_priority" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Priority *</label>
-                <%= f.select :priority, options_for_select(['SEVERITY 1','SEVERITY 2','SEVERITY 3','SEVERITY 4'], @defect.priority), { prompt: 'Select Priority' },
-                      class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600', required: true %>
-              </div>
-              
-              <%= render "defect/form_labels", f: f, defect: @defect %>
-
-            </div>
-
-            
-            <div class="relative flex flex-col gap-2 mt-2">
-              <label for="defect_status_id"
-                class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
-                  Status *
-              </label>
-              <%= select_tag "defect[status_id]",
-                options_from_collection_for_select(
-                  @statuses, :id, :name,
-                  (@defect.statuses.first&.id || @statuses.first&.id)
-                ),
-                id: "defect_status_id",
-                class: "block w-full px-3 py-2 border border-gray-300 rounded-lg
-                        focus:ring-primary-600 focus:border-primary-600 p-2.5
-                        dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400
-                        text-transform: uppercase" %>
-
-
-            </div>
 
             <!-- Attachments -->
             <div>
@@ -220,23 +245,8 @@
               <!-- Previews will go here -->
               <div id="attachment-previews" class="mt-3 flex flex-wrap gap-3"></div>
             </div>
-
-            <!-- Reported By / Issue Type -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Reported By</label>
-                <%= text_field_tag :creator_name, Current.user&.name, disabled: true,
-                      class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-not-allowed' %>
-              </div>
-              <div>
-                <label class="block mb-1 text-xs font-medium text-gray-700 dark:text极-gray-300 tracking-wide uppercase">Issue Type</label>
-                <%= f.text_field :issue_type, value: 'Bug', disabled: true,
-                      class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-not-allowed' %>
-              </div>
-            </div>
         </div>
         <!-- Footer (fixed) -->
-        <!-- Footer -->
         <div class="flex items-center justify-between pt-4 border-t">
           <%= f.submit "Create",
           data: { disable_with: "Creating..." },
@@ -261,22 +271,33 @@
 
     if (!fileInput || !previewContainer) return;
 
-    fileInput.addEventListener("change", () => {
-      previewContainer.innerHTML = ""; // clear previews
-      const files = Array.from(fileInput.files);
+    // keep a persistent list of files across changes
+    let allFiles = [];
 
-      files.forEach((file, index) => {
+    fileInput.addEventListener("change", () => {
+      // append new files to the existing list
+      const newFiles = Array.from(fileInput.files);
+      allFiles = allFiles.concat(newFiles);
+
+      // update the <input> with the merged list
+      updateFileInput(allFiles);
+
+      // rebuild the preview area
+      renderPreviews();
+    });
+
+    function renderPreviews() {
+      previewContainer.innerHTML = "";
+      allFiles.forEach((file, index) => {
         const wrapper = document.createElement("div");
         wrapper.className =
           "relative border rounded-md p-2 w-32 h-32 flex flex-col items-center justify-center text-center bg-gray-50 dark:bg-gray-800 cursor-pointer";
 
-        // Preview (image, video, or generic file)
         if (file.type.startsWith("image/")) {
           const img = document.createElement("img");
           img.src = URL.createObjectURL(file);
           img.className = "object-cover w-full h-full rounded-md";
           wrapper.appendChild(img);
-
           wrapper.addEventListener("click", () =>
             openPreviewPopup("image", img.src, file.name)
           );
@@ -286,7 +307,6 @@
           videoIcon.className =
             "text-xs text-gray-700 dark:text-gray-300 break-words p-1";
           wrapper.appendChild(videoIcon);
-
           wrapper.addEventListener("click", () =>
             openPreviewPopup("video", URL.createObjectURL(file), file.name)
           );
@@ -296,35 +316,32 @@
           icon.className =
             "text-xs text-gray-700 dark:text-gray-300 break-words p-1";
           wrapper.appendChild(icon);
-
           wrapper.addEventListener("click", () =>
             openPreviewPopup("file", null, file.name)
           );
         }
 
-        // Remove button
         const removeBtn = document.createElement("button");
         removeBtn.innerHTML = "✕";
         removeBtn.type = "button";
         removeBtn.className =
           "absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs";
         removeBtn.addEventListener("click", (e) => {
-          e.stopPropagation(); // prevent triggering preview
-          files.splice(index, 1);
-          updateFileInput(files);
+          e.stopPropagation();
+          allFiles.splice(index, 1);
+          updateFileInput(allFiles);
+          renderPreviews();
         });
 
         wrapper.appendChild(removeBtn);
         previewContainer.appendChild(wrapper);
       });
-    });
+    }
 
-    // helper to update input.files after removal
     function updateFileInput(files) {
       const dataTransfer = new DataTransfer();
       files.forEach((f) => dataTransfer.items.add(f));
       fileInput.files = dataTransfer.files;
-      fileInput.dispatchEvent(new Event("change")); // refresh previews
     }
 
     // --- Modal Preview ---
@@ -380,7 +397,8 @@
 
   // Store the data in global variables so they're accessible
   window.bankingTypesData = <%= raw (@banking_types || []).map { |bt| { id: bt.id, name: bt.name } }.to_json %>;
-  window.assigneeUsersData = <%= raw @users.map { |u| { id: u.id, name: u.name } }.to_json %>;
+  // window.assigneeUsersData = <%= raw @users.map { |u| { id: u.id, name: u.name } }.to_json %>;
+  window.assigneeUsersData = <%= raw @assignee_users_data.to_json %>;
   window.projectsData = <%= raw @products_and_clients_defects.map { |name, id|
     { name: name, id: id }
   }.to_json %>;
@@ -390,6 +408,16 @@
     const projectInput = document.getElementById("project-search");
     const projectResults = document.getElementById("project-results");
     const projectHidden = document.getElementById("project-id-field");
+
+    // --- Preselect from server-side values ---
+    const preselectedId = projectHidden ? projectHidden.value : null;
+    if (preselectedId) {
+      const match = window.projectsData.find(p => String(p.id) === String(preselectedId));
+      if (match && projectInput) {
+        projectInput.value = match.name;
+        projectHidden.value = match.id;
+      }
+    }
 
     function renderProjects(projects) {
       projectResults.innerHTML = "";
@@ -406,7 +434,8 @@
             projectResults.classList.add("hidden");
 
             // Trigger Stimulus action (project-modules#loadModules)
-            projectHidden.dispatchEvent(new Event("change"));
+            // projectHidden.dispatchEvent(new Event("change"));
+            window.location.href = `/defect/new?product_id=${encodeURIComponent(p.id)}`;
           });
           projectResults.appendChild(li);
         });
@@ -529,11 +558,8 @@
         }
       }
 
-      // Filter search on input
       assigneeInput.addEventListener("input", function () {
         const query = this.value.toLowerCase();
-
-        // Reset hidden field whenever user types
         if (assigneeHidden) assigneeHidden.value = "";
 
         if (query.length === 0) {
@@ -548,12 +574,10 @@
         renderAssignees(matches);
       });
 
-      // Show all assignees on focus
       assigneeInput.addEventListener("focus", function () {
         renderAssignees(window.assigneeUsersData);
       });
 
-      // Hide results when clicking outside
       document.addEventListener("click", function (e) {
         if (
           assigneeResults &&
