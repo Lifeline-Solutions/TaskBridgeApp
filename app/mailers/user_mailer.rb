@@ -46,6 +46,16 @@ class UserMailer < ApplicationMailer
     mail(to: @assigned_user.email, subject: "A ticket with Ticket ID #{@ticket.unique_id} has been edited.")
   end
 
+  def new_message_email(message_user, message, current_user)
+    @message_user = message_user
+    @message = message
+    @current_user = current_user
+    @task = @message.task
+    @product = @task.product
+    @url = product_task_url(@product, @task)
+    mail(to: @message_user.email, subject: 'New Message on Task')
+  end
+
   # From Ticket Controller create
   def ticket_assignment_email(user, project, ticket, current_user, assigned_user)
     @user = user
@@ -85,11 +95,9 @@ class UserMailer < ApplicationMailer
     @task = task
     @current_user = current_user
     @assigned_user = assigned_user
-    @url = product_task_url(@task.product, @task)
-    mail(to: @user.email, subject: 'You have been assigned to a new task') do |format|
-      format.html { render 'task_assignment_email' }
-      format.text { render plain: "You have been assigned to task ##{@task.unique_task_id} - #{@task.name}. View: #{@url}" }
-    end
+    @product = @task.product
+    @url = product_task_url(@product, @task)
+    mail(to: @user.email, subject: 'You have been assigned to a new task')
   end
 
   def add_state_email(user, task, current_user)
@@ -108,15 +116,6 @@ class UserMailer < ApplicationMailer
     @ticket = ticket
     @url = project_ticket_url(@comment.ticket.project, @comment.ticket)
     mail(to: @user.email, subject: "Root Cause Analysis for Ticket ID #{@comment.ticket.unique_id}.")
-  end
-
-  def bug_mailer_email(user, bug, current_user, assigned_user)
-    @user = user
-    @bug = bug
-    @current_user = current_user
-    @assigned_user = assigned_user
-    @url = product_bug_url(@bug.product, @bug)
-    mail(to: @user.email, subject: 'Bug Assignment')
   end
 
   def issue_created_email(user, issue, project, ticket, current_user)
@@ -206,14 +205,6 @@ class UserMailer < ApplicationMailer
       format.html { render 'finance_sales_email' }
       format.text { render plain: subject_text }
     end
-  end
-
-  def new_message_email(message_user, message, current_user)
-    @message_user = message_user
-    @message = message
-    @current_user = current_user
-    @url = product_tasks_path(@product, @tasks)
-    mail(to: @user.email, subject: 'New Message on Task')
   end
 
   def milestone_payment_toggled(product, milestone, current_user, assigned_user)
