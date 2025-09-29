@@ -1,9 +1,20 @@
-
-  <%= form_with(model: [@product, @task], method: :patch) do |f| %>
+<%= form_with(model: [@product, @task], method: :patch) do |f| %>
     <div class="gap-2 m-2">
       <%= link_to product_path(@product.id), method: :get, class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' do %>
         &#8656; Back
       <% end %>
+
+      <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+        <div class="relative z-0 w-full mb-6 group">
+          <%= f.label :prerequisite, ('Prerequisite Task'), class: "capitalize block mb-2 text-sm font-medium text-gray-900 dark:text-white" %>
+          <%= f.collection_select :tasks_id, @prerequisite_tasks, :id, :name,
+                                  { prompt: "No Prerequisite Task", include_blank: true },
+                                  class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+          %>
+
+
+        </div>
+      </div>
       <div class="grid grid-cols-2 gap-2 mt-4">
         <div class="relative z-0 w-full mb-6 group">
           <%= f.label :name, :name, class: "capitalize block mb-1 text-sm font-medium" %><br />
