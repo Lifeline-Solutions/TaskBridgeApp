@@ -40,7 +40,7 @@ class BankingTypesController < ApplicationController
           .performed_on(@banking_type)
           .event('banking_type.create')
           .log('BankingType created')
-        format.html { redirect_to banking_types_path, notice: 'Banking type was successfully created.' }
+        format.html { redirect_to banking_types_path(product_id: @banking_type.product_id), notice: 'Banking type was successfully created.' }
         format.json { render :show, status: :created, location: @banking_type }
       else
         format.html { render :new, status: :unprocessable_entity }

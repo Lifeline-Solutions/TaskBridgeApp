@@ -215,48 +215,6 @@ class DefectController < ApplicationController
     render partial: 'defect/defect_show_modal', layout: false
   end
 
-  # def new
-  #   @defect = Defect.new
-
-  #   # Handle default assignee
-  #   default_assignee = DefaultDefectAssignee.where(archive_status: false).order(created_at: :desc).first
-  #   @defect.user_ids = [default_assignee.user_id] if default_assignee&.user_id.present?
-
-  #   # Preselect product only if product_id is passed
-  #   if params[:product_id].present?
-  #     @defect.product_id = params[:product_id]
-  #     @selected_product = Product.find_by(id: params[:product_id])
-
-  #     # Collect product users (based on selected @product from set_form_data)
-  #     product_user_ids = params[:product_id].present? ? @product.users.pluck(:id) : []
-
-  #     # Combine QA + Product users
-  #     @available_users = User.where(id: qa_user_ids + product_user_ids)
-  #                         .distinct
-  #                         .order(:first_name, :last_name)
-  #   else
-  #     @selected_product = nil
-  #   end
-
-  #   set_form_data
-
-  #   # Collect QA users
-  #   qa_user_ids = User.joins(:roles)
-  #                     .where(roles: { name: 'qa' })
-  #                     .pluck(:id)
-
-  #   # Collect product users (based on selected @product from set_form_data)
-  #   product_user_ids = @product.present? ? @product.users.pluck(:id) : []
-
-  #   # Combine QA + Product users
-  #   @available_users = User.where(id: qa_user_ids + product_user_ids)
-  #                         .distinct
-  #                         .order(:first_name, :last_name)
-
-  #   # For JS (assignee search dropdown)
-  #   @assignee_users_data = @available_users.map { |u| { id: u.id, name: u.name } }
-  # end
-
   def new
     @defect = Defect.new
 
@@ -513,28 +471,6 @@ class DefectController < ApplicationController
     end
   end
 
-  def add_label
-    label_name = params[:label_name].strip
-    label = Label.find_or_create_by(name: label_name.downcase)
-
-    @defect.labels << label unless @defect.labels.include?(label)
-
-    respond_to do |format|
-      format.turbo_stream
-      format.html { redirect_to @defect, notice: 'Label added successfully.' }
-    end
-  end
-
-  def remove_label
-    label = @defect.labels.find(params[:label_id])
-    @defect.labels.destroy(label)
-
-    respond_to do |format|
-      format.turbo_stream
-      format.html { redirect_to @defect, notice: 'Label removed successfully.' }
-    end
-  end
-
   def drafts
     @defects = Defect.drafts.includes(:users, :qa_module, :submodule).order(updated_at: :desc)
 
@@ -695,35 +631,6 @@ class DefectController < ApplicationController
     render json: @submodules
   end
 
-  def add_attachments
-    # Handle the file upload
-    if params[:attachments].present?
-      # params[:attachments] will be an array when using 'attachments[]' field name
-      attachments = Array(params[:attachments]).reject(&:blank?)
-
-      if attachments.any?
-        attachments.each do |attachment|
-          @defect.attachments.attach(attachment)
-        end
-        redirect_to defect_path(@defect), notice: "#{attachments.size} file(s) were successfully uploaded."
-      else
-        redirect_to defect_path(@defect), alert: 'No valid files selected.'
-      end
-    else
-      redirect_to defect_path(@defect), alert: 'Please select at least one file to upload.'
-    end
-  rescue ActiveRecord::RecordNotFound
-    redirect_to defects_path, alert: 'Defect not found.'
-  end
-
-  def remove_attachment
-    attachment = @defect.attachments.find(params[:attachment_id])
-    attachment.purge
-    redirect_to defect_path(@defect), notice: 'File was successfully removed.'
-  rescue ActiveRecord::RecordNotFound
-    redirect_to defects_path, alert: 'File or defect not found.'
-  end
-
   def update_priority
     if @defect.update(priority: params[:defect][:priority])
       activity('user_activity')
@@ -804,30 +711,6 @@ class DefectController < ApplicationController
         creator_name: defect.creator&.full_name || defect.creator&.email
       }
     }
-  end
-
-  def link_defect
-    target_defect = Defect.find(params[:target_defect_id])
-
-    if @defect.link_as_blocked_by(target_defect)
-      render json: {
-        success: true,
-        message: "Successfully linked #{@defect.defect_unique} as blocked by #{target_defect.defect_unique}",
-        target_defect: {
-          id: target_defect.id,
-          defect_unique: target_defect.defect_unique,
-          title: target_defect.title,
-          status: target_defect.statuses.first&.name
-        }
-      }
-    else
-      render json: {
-        success: false,
-        message: 'Failed to link defects. They may already be linked or there was an error.'
-      }
-    end
-  rescue ActiveRecord::RecordNotFound
-    render json: { success: false, message: 'Defect not found.' }
   end
 
   def unlink_defect
@@ -921,6 +804,91 @@ class DefectController < ApplicationController
     end
 
     send_data csv_data, filename: "defects_#{Time.zone.now.strftime('%Y%m%d_%H%M%S')}.csv", type: 'text/csv'
+  end
+
+  def link_defect
+    target_defect = Defect.find(params[:target_defect_id])
+
+    if @defect.link_as_blocked_by(target_defect)
+      log_event(@defect, current_user, 'link_defect', "Linked as blocked by #{target_defect.defect_unique}")
+
+      render json: {
+        success: true,
+        message: "Successfully linked #{@defect.defect_unique} as blocked by #{target_defect.defect_unique}",
+        target_defect: {
+          id: target_defect.id,
+          defect_unique: target_defect.defect_unique,
+          title: target_defect.title,
+          status: target_defect.statuses.first&.name
+        }
+      }
+    else
+      render json: {
+        success: false,
+        message: 'Failed to link defects. They may already be linked or there was an error.'
+      }
+    end
+  rescue ActiveRecord::RecordNotFound
+    render json: { success: false, message: 'Defect not found.' }
+  end
+
+  def add_attachments
+    if params[:attachments].present?
+      attachments = Array(params[:attachments]).reject(&:blank?)
+
+      if attachments.any?
+        attachments.each do |attachment|
+          @defect.attachments.attach(attachment)
+          log_event(@defect, current_user, 'add_attachment', "Added attachment #{attachment.original_filename}")
+        end
+        redirect_to defect_path(@defect), notice: "#{attachments.size} file(s) were successfully uploaded."
+      else
+        redirect_to defect_path(@defect), alert: 'No valid files selected.'
+      end
+    else
+      redirect_to defect_path(@defect), alert: 'Please select at least one file to upload.'
+    end
+  rescue ActiveRecord::RecordNotFound
+    redirect_to defects_path, alert: 'Defect not found.'
+  end
+
+  def remove_attachment
+    attachment = @defect.attachments.find(params[:attachment_id])
+    filename = attachment.blob.filename.to_s
+    attachment.purge
+
+    log_event(@defect, current_user, 'remove_attachment', "Removed attachment #{filename}")
+
+    redirect_to defect_path(@defect), notice: 'File was successfully removed.'
+  rescue ActiveRecord::RecordNotFound
+    redirect_to defects_path, alert: 'File or defect not found.'
+  end
+
+  def add_label
+    label_name = params[:label_name].strip
+    label = Label.find_or_create_by(name: label_name.downcase)
+
+    unless @defect.labels.include?(label)
+      @defect.labels << label
+      log_event(@defect, current_user, 'add_label', "Added label #{label.name}")
+    end
+
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to @defect, notice: 'Label added successfully.' }
+    end
+  end
+
+  def remove_label
+    label = @defect.labels.find(params[:label_id])
+    @defect.labels.destroy(label)
+
+    log_event(@defect, current_user, 'remove_label', "Removed label #{label.name}")
+
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to @defect, notice: 'Label removed successfully.' }
+    end
   end
 
   private
