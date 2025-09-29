@@ -12,6 +12,7 @@
   <div class="mb-6 flex space-x-6">
     <div>
       <%= form_with url: qa_modules_path, method: :get, local: false do |f| %>
+        <%= f.hidden_field :product_id, value: params[:product_id] %>
         <%= f.label :module_id, "Select Module", class: "block text-sm font-medium text-gray-700 dark:text-gray-300" %>
         <%= f.collection_select :module_id, @qa_modules, :id, :name,
               { include_blank: "Choose a module" },
@@ -40,7 +41,7 @@
               <div class="pagination">
                 <% if @page > 1 %>
                   <%= link_to 'Previous',
-                              qa_modules_path(module_id: @qa_module.id, page: @page - 1, per_page: @per_page),
+                              qa_modules_path(product_id: params[:product_id], module_id: @qa_module.id, page: @page - 1, per_page: @per_page),
                               class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold text-slate-100' %>
                 <% end %>
 
@@ -48,7 +49,7 @@
 
                 <% if @page < @total_pages %>
                   <%= link_to 'Next',
-                              qa_modules_path(module_id: @qa_module.id, page: @page + 1, per_page: @per_page),
+                              qa_modules_path(product_id: params[:product_id], module_id: @qa_module.id, page: @page + 1, per_page: @per_page),
                               class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold text-slate-100' %>
                 <% end %>
               </div>
