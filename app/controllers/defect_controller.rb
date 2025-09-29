@@ -810,7 +810,7 @@ class DefectController < ApplicationController
     target_defect = Defect.find(params[:target_defect_id])
 
     if @defect.link_as_blocked_by(target_defect)
-      log_event(@defect, current_user, "link_defect", "Linked as blocked by #{target_defect.defect_unique}")
+      log_event(@defect, current_user, 'link_defect', "Linked as blocked by #{target_defect.defect_unique}")
 
       render json: {
         success: true,
@@ -839,7 +839,7 @@ class DefectController < ApplicationController
       if attachments.any?
         attachments.each do |attachment|
           @defect.attachments.attach(attachment)
-          log_event(@defect, current_user, "add_attachment", "Added attachment #{attachment.original_filename}")
+          log_event(@defect, current_user, 'add_attachment', "Added attachment #{attachment.original_filename}")
         end
         redirect_to defect_path(@defect), notice: "#{attachments.size} file(s) were successfully uploaded."
       else
@@ -857,7 +857,7 @@ class DefectController < ApplicationController
     filename = attachment.blob.filename.to_s
     attachment.purge
 
-    log_event(@defect, current_user, "remove_attachment", "Removed attachment #{filename}")
+    log_event(@defect, current_user, 'remove_attachment', "Removed attachment #{filename}")
 
     redirect_to defect_path(@defect), notice: 'File was successfully removed.'
   rescue ActiveRecord::RecordNotFound
@@ -870,7 +870,7 @@ class DefectController < ApplicationController
 
     unless @defect.labels.include?(label)
       @defect.labels << label
-      log_event(@defect, current_user, "add_label", "Added label #{label.name}")
+      log_event(@defect, current_user, 'add_label', "Added label #{label.name}")
     end
 
     respond_to do |format|
@@ -883,7 +883,7 @@ class DefectController < ApplicationController
     label = @defect.labels.find(params[:label_id])
     @defect.labels.destroy(label)
 
-    log_event(@defect, current_user, "remove_label", "Removed label #{label.name}")
+    log_event(@defect, current_user, 'remove_label', "Removed label #{label.name}")
 
     respond_to do |format|
       format.turbo_stream
