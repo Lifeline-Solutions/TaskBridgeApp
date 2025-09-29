@@ -42,6 +42,10 @@
           { class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white" } %>
   </div>
 
+  <div>
+    <%= f.hidden_field :product_id, value: params[:product_id] %>
+  </div>
+
   <!-- Actions -->
   <div class="flex items-center justify-end space-x-3 mt-6">
     <%= link_to "Cancel", qa_modules_path(product_id: params[:product_id]), class: "px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded text-sm" %>

@@ -73,7 +73,7 @@ class QaModulesController < ApplicationController
 
     if @qa_module.save
       respond_to do |format|
-        format.html { redirect_to qa_modules_path, notice: 'Module created successfully.' }
+        format.html { redirect_to qa_modules_path(product_id: @qa_module.product_id), notice: 'Module created successfully.' }
         format.turbo_stream
       end
     else
