@@ -90,9 +90,6 @@ class UserMailer < ApplicationMailer
       format.html { render 'task_assignment_email' }
       format.text { render plain: "You have been assigned to task ##{@task.unique_task_id} - #{@task.name}. View: #{@url}" }
     end
-  end
-
-  def add_state_email(user, task, current_user)
     @user = user
     @task = task
     @current_user = current_user
