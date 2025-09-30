@@ -1,11 +1,15 @@
 <% provide(:title, "Edit CS Product") %>
 
 <div class="max-w-xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 mt-8">
-  <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white flex items-center">
-    <svg class="w-7 h-7 mr-2 text-[#0052CC]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+  <h2 class="flex justify-center text-2xl font-bold mb-6 text-gray-800 dark:text-white flex items-center">
     Edit CS Product
   </h2>
-  <%= link_to 'Back', software_index_path, class: "inline-block mb-6 text-[#0052CC] hover:text-[#0065FF] font-semibold" %>
+  <div class="mb-6 flex items-center">
+    <%= link_to software_index_path, class: 'flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 font-semibold transition-all duration-150' do %>
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      Back
+    <% end %>
+  </div>
   <%= form_with model: @software, url: software_path(@software), method: :patch, html: { class: "space-y-6" } do |f| %>
     <div class="flex flex-col">
       <%= f.label :name, "Name", class: "block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2" %>
