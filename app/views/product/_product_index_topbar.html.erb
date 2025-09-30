@@ -61,31 +61,28 @@
         </div>
       </div>
 
-      <!-- Sort by Dropdown -->
-      <div class="filter-dropdown" data-controller="product-topbar-dropdown">
-        <button class="dropdown-trigger" data-action="click->product-topbar-dropdown#toggle">
-          <span>Sort by</span>
-          <span class="selected-option" data-product-topbar-dropdown-target="display">
-            <%= params[:sort_by] == 'recent' ? 'Recent' : 'Upcoming' %>
-          </span>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-        
-        <div class="dropdown-menu" data-product-topbar-dropdown-target="menu">
-          <% current_sort = params[:sort_by].to_s %>
-          <% ['Upcoming', 'Recent'].each do |sort_option| %>
-            <% sort_key = sort_option.downcase %>
-            <button 
-              class="dropdown-item <%= 'active' if current_sort == sort_key %>" 
-              data-action="click->product-topbar-dropdown#select"
-              data-category="<%= sort_option %>"
-            >
-              <%= sort_option %>
-            </button>
+      <!-- Sort by Dropdown (fixed) -->
+      <div class="filter-dropdown">
+        <form action="<%= product_index_path %>" method="get">
+          <%# Preserve other params %>
+          <% if params[:status].present? %>
+            <input type="hidden" name="status" value="<%= params[:status] %>">
           <% end %>
-        </div>
+          <% if params[:query].present? %>
+            <input type="hidden" name="query" value="<%= params[:query] %>">
+          <% end %>
+          <div class="dropdown-label">
+            <select 
+              id="sort_by" 
+              name="sort_by" 
+              onchange="this.form.submit()" 
+              class="dropdown-select"
+            >
+              <option value="upcoming" <%= 'selected' if params[:sort_by] == 'upcoming' %>>Sort by: Upcoming</option>
+              <option value="recent" <%= 'selected' if params[:sort_by] == 'recent' %>>Sort by: Recent</option>
+            </select>
+          </div>
+        </form>
       </div>
     </div>
 
