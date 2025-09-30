@@ -1,0 +1,88 @@
+<table class="min-w-full bg-white dark:bg-gray-800">
+  <thead>
+  <tr>
+    <th class="py-2 px-4 border-b">ID</th>
+    <th class="py-2 px-4 border-b">Date</th>
+    <th class="py-2 px-4 border-b">SERVICE DESK NAME</th>
+    <th class="py-2 px-4 border-b">ISSUE</th>
+    <th class="py-2 px-4 border-b">PRIORITY</th>
+    <th class="py-2 px-4 border-b">SUMMARY</th>
+    <th class="py-2 px-4 border-b">ASSIGNEE</th>
+    <th class="py-2 px-4 border-b">STATUS</th>
+    <th class="py-2 px-4 border-b">PROGRESS</th>
+    <th class="py-2 px-4 border-b">VIEW</th>
+  </tr>
+  </thead>
+  <tbody>
+  <% @tickets.each do |ticket| %>
+    <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+      <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
+        <%= link_to ticket.unique_id, project_ticket_path(ticket.project, ticket) if ticket.unique_id.present? %>
+      </th>
+      <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+        <%= link_to ticket.created_at.strftime("%d %b %Y"), project_ticket_path(ticket.project, ticket) %>
+      </th>
+      <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+        <%= link_to ticket.project.title, project_ticket_path(ticket.project, ticket) %>
+      </th>
+      <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+        <%= link_to ticket.issue, project_ticket_path(ticket.project, ticket) %>
+      </th>
+      <!-- Priority -->
+      <td class="px-2 py-2">
+        <div class="relative w-full flex justify-center">
+          <%= render partial: "tickets/priority_severity", locals: { ticket: ticket } %>
+        </div>
+      </td>
+      <td class="px-4 py-4 grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-4">
+        <%= render partial: 'tickets/summary', locals: { ticket: ticket } %>
+      </td>
+      <td class="px-4 py-4 whitespace-nowrap">
+        <div class="flex flex-col gap-2">
+          <% ticket.users.each do |user| %>
+            <% if user.name.present? %>
+              <span class="font-medium"><%= user.name %></span>
+              <span class="font-semibold">
+                <% if user.teams.any? %>
+                  (<%= user.teams.map(&:name).join(', ') %>)
+                <% else %>
+                  (No Team Assigned)
+                <% end %>
+              </span>
+            <% end %>
+          <% end %>
+        </div>
+      </td>
+      <!-- Ticket Status -->
+      <td class="px-2 py-2">
+        <div class="relative w-full flex justify-center">
+          <%= render partial: "tickets/ticket_status", locals: { ticket: ticket } %>
+        </div>
+      </td>
+      <!-- Progress Bar -->
+      <td class="pl-2 pr-2 py-2">
+        <div class="relative w-full flex justify-center">
+          <%= render partial: "tickets/progress_bar", locals: { ticket: ticket } %>
+        </div>
+      </td>
+      <td class="px-4 py-4 whitespace-nowrap font-medium" data-controller="dropdown" data-dropdown-ticket-id-value="<%= ticket.id %>">
+        <%= render partial: 'tickets/action_dropdown', locals: { ticket: ticket } %>
+      </td>
+    </tr>
+  <% end %>
+  </tbody>
+</table>
+
+<!-- Pagination Links -->
+<div class="mt-4">
+  <% if @page > 1 %>
+    <%= link_to 'Previous', all_tickets_and_no_team_member_project_tickets_path(@project, page: @page - 1),
+                class: 'bg-blue-600 hover:bg-blue-500 px-4 rounded text-white text-sm font-semibold transition-all p-2 uppercase'
+    %>
+  <% end %>
+  <% if @page < @total_pages %>
+    <%= link_to 'Next', all_tickets_and_no_team_member_project_tickets_path(@project, page: @page + 1),
+                class: 'bg-blue-600 hover:bg-blue-500 px-4 rounded text-white text-sm font-semibold transition-all p-2 uppercase'
+    %>
+  <% end %>
+</div>
