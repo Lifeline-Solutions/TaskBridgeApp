@@ -6,7 +6,7 @@ class Task < ApplicationRecord
   has_many :messages, dependent: :destroy
   before_create :set_default_state
   after_create :task_unique_id
-  # app/models/task.rb
+  after_update :task_unique_id, if: :unique_task_id_missing?
 
   belongs_to :prerequisite_task, class_name: 'Task', foreign_key: 'tasks_id', optional: true
   resourcify
@@ -31,16 +31,20 @@ class Task < ApplicationRecord
     statuses << status if status
   end
 
-  def self.prerequisite_tasks(product_id)
+  def self.prerequisite_tasks(product_id, exclude_task_id = nil)
     resolved_status = Status.find_by(name: 'Resolved')
-    if resolved_status
-      joins(:statuses)
-        .where(product_id: product_id)
-        .where.not(statuses: { id: resolved_status.id })
-        .distinct
-    else
-      where(product_id: product_id)
-    end
+    tasks = if resolved_status
+              joins(:statuses)
+                .where(product_id: product_id)
+                .where.not(statuses: { id: resolved_status.id })
+                .distinct
+            else
+              where(product_id: product_id)
+            end
+
+    # Exclude the current task to prevent self-reference
+    tasks = tasks.where.not(id: exclude_task_id) if exclude_task_id.present?
+    tasks
   end
 
   # if task has a prerequisite task, the prerequisite task should have status resolved
@@ -48,12 +52,25 @@ class Task < ApplicationRecord
   def prerequisite_task_must_be_resolved
     return unless prerequisite_task.present?
 
+    # Allow updates that are just setting unique_task_id or timestamps
+    return if changes.blank? # No changes means we're probably in a callback
+
+    # Skip validation for non-critical updates
+    critical_attributes = %w[name description start_date end_date priority]
+    critical_changes = changes.keys & critical_attributes
+
+    # If we're only updating non-critical attributes, allow it
+    return if critical_changes.empty?
+
+    # Only validate when there are actual critical changes AND prerequisite isn't resolved
     return if prerequisite_task.statuses.exists?(name: 'Resolved')
 
-    errors.add(:base, "Prerequisite task must be resolved before updating this task's status.")
+    errors.add(:base, "Prerequisite task '#{prerequisite_task.unique_task_id || prerequisite_task.id}' must be resolved before updating this task.")
   end
 
   def task_unique_id
+    return if unique_task_id.present? # Don't regenerate if already exists
+
     initials =
       if product&.client&.name.present? && product.groupwares.any?
         client_initials = product.client.name.split.map { |word| word[0] }.join.upcase
@@ -62,6 +79,7 @@ class Task < ApplicationRecord
       else
         'DEFAULT'
       end
+
     # 👇 include soft-deleted defects
     last_task =
       Task.with_deleted
@@ -86,10 +104,19 @@ class Task < ApplicationRecord
       next_number += 1
     end
 
-    save
+    # Use update_column to avoid triggering callbacks again
+    if persisted?
+      update_column(:unique_task_id, unique_task_id)
+    else
+      save
+    end
   end
 
   private
+
+  def unique_task_id_missing?
+    unique_task_id.blank?
+  end
 
   def end_date_after_start_date
     return unless end_date.present? && start_date.present? && end_date < start_date

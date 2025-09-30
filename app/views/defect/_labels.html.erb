@@ -1,16 +1,24 @@
-<%= turbo_frame_tag "labels_section" do %>
+<%= turbo_frame_tag "labels_section", data: { controller: "label-editor" } do %>
   <div class="flex flex-col gap-2">
     <!-- Labels display row -->
-    <div class="flex items-center flex-wrap gap-2" data-action="click->label-editor#openInput" role="button" aria-label="Open label editor">
+    <!-- clicking anywhere in here opens the input -->
+    <div class="flex items-center flex-wrap gap-2"
+         data-action="click->label-editor#openInput"
+         role="button"
+         aria-label="Open label editor"
+         tabindex="0">
       <% if defect.labels.any? %>
         <% defect.labels.each do |label| %>
           <span class="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-md text-xs font-medium flex items-center gap-2">
             <span class="truncate"><%= label.name %></span>
-            <%# Remove button (submit to remove_label action) %>
+
+            <!-- Remove button is hidden by default (will be revealed by Stimulus when editor opens) -->
             <%= button_to remove_label_defect_path(defect, label_id: label.id),
                           method: :delete,
                           form: { data: { turbo_frame: "labels_section" } },
-                          class: "ml-2 text-red-500 hover:text-red-700 text-xs font-bold bg-transparent border-0 p-0" do %>
+                          data: { action: "click->label-editor#confirmRemove" },
+                          class: "ml-2 text-red-500 hover:text-red-700 text-xs font-bold bg-transparent border-0 p-0 label-remove hidden",
+                          aria: { label: "Remove label #{label.name}" } do %>
               ✕
             <% end %>
           </span>
@@ -37,6 +45,14 @@
             <% end %>
           </datalist>
         </div>
+
+        <!-- Close/cancel button - only visible when the inputContainer is shown -->
+        <button type="button"
+                data-action="click->label-editor#cancel"
+                class="ml-2 px-2 py-1 rounded-md bg-gray-200 hover:bg-gray-300 text-sm text-gray-700 dark:bg-gray-600 dark:text-white"
+                aria-label="Close label editor">
+          ✕
+        </button>
       <% end %>
     </div>
   </div>
