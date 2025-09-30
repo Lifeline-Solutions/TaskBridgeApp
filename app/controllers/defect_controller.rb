@@ -806,6 +806,76 @@ class DefectController < ApplicationController
     send_data csv_data, filename: "defects_#{Time.zone.now.strftime('%Y%m%d_%H%M%S')}.csv", type: 'text/csv'
   end
 
+  def defects_download_excel
+    # --- always start with the project scope ---
+    defects = if params[:product_id].present?
+                Defect.where(product_id: params[:product_id])
+              else
+                Defect.all
+              end
+
+    # --- filters (reuse your existing logic) ---
+    if params[:query].present?
+      q = "%#{params[:query]}%"
+      defects = defects.left_joins(product: %i[client groupwares])
+                      .where('clients.name ILIKE :q OR groupwares.name ILIKE :q OR defects.summary ILIKE :q', q: q)
+    end
+
+    defects = defects.where(banking_type_id: params[:banking_type_id]) if params[:banking_type_id].present?
+    defects = defects.where('created_at >= ?', params[:start_date]) if params[:start_date].present?
+    defects = defects.where('created_at <= ?', params[:end_date]) if params[:end_date].present?
+    defects = defects.joins(:statuses).where(statuses: { name: Array(params[:status]) }) if params[:status].present?
+    defects = defects.where(priority: params[:priority]) if params[:priority].present?
+    defects = defects.joins(:users).where(users: { id: params[:user_id] }) if params[:user_id].present?
+    defects = defects.where(qa_module_id: params[:qa_module_id]) if params[:qa_module_id].present?
+    defects = defects.where(submodule_id: params[:submodule_id]) if params[:submodule_id].present?
+
+    if params[:label_ids].present?
+      label_ids = Array(params[:label_ids]).reject(&:blank?)
+      defects = defects.joins(:labels).where(labels: { id: label_ids }).distinct if label_ids.any?
+    end
+
+    defects = if params[:order].present? && %w[asc desc].include?(params[:order])
+                defects.order(created_at: params[:order])
+              else
+                defects.order(created_at: :desc)
+              end
+
+    # --- generate Excel using caxlsx ---
+    package = Axlsx::Package.new
+    workbook = package.workbook
+
+    workbook.add_worksheet(name: "Defects") do |sheet|
+      sheet.add_row [
+        'Defect ID', 'Status', 'Summary', 'Priority', 'Module', 'Sub Module',
+        'Banking Types', 'Labels', 'Assignee', 'Reporter', 'Project', 'Created At'
+      ]
+
+      defects.find_each do |defect|
+        client_and_groupware = [defect.product.client&.name, defect.product.groupwares.first&.name].compact.join(' - ')
+
+        sheet.add_row [
+          defect.defect_unique,
+          defect.statuses.map(&:name).join(', '),
+          defect.summary,
+          defect.priority,
+          defect.qa_module&.name,
+          defect.submodule&.name,
+          defect.banking_type&.name,
+          defect.labels.map(&:name).join(', '),
+          defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', '),
+          defect.creator&.name,
+          client_and_groupware,
+          defect.created_at.strftime('%Y-%m-%d %H:%M')
+        ]
+      end
+    end
+
+    send_data package.to_stream.read,
+              filename: "defects_#{Time.zone.now.strftime('%Y%m%d_%H%M%S')}.xlsx",
+              type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  end
+
   def link_defect
     target_defect = Defect.find(params[:target_defect_id])
 
