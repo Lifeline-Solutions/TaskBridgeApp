@@ -1,6 +1,6 @@
 class ProductController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_product, only: %i[show edit update destroy manage_users]
+  before_action :set_product, only: %i[show edit update destroy manage_users download_tasks_csv]
   load_and_authorize_resource
 
   def index
@@ -99,7 +99,6 @@ class ProductController < ApplicationController
   end
 
   def download_tasks_csv
-    @product = Product.find(params[:id])
     tasks = @product.tasks.includes(:statuses, :users).order(created_at: 'desc')
 
     if params[:query].present?
