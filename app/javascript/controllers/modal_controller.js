@@ -58,6 +58,21 @@ export default class extends Controller {
     window.location.href = url
   }
 
+  closeEditDefectOnBackdrop(event) {
+    if (this.dialogTarget.contains(event.target)) {
+      return
+    }
+
+    // Use product_id from the frame data
+    const productId = this.element.dataset.productId
+    if (productId) {
+      window.location.href = `/defect/index_show?product_id=${productId}`
+    } else {
+      // fallback if no product_id
+      window.location.href = "/defect"
+    }
+  }
+
   closeWithKey(event) {
     if (event.key === 'Escape') {
       event.preventDefault();
