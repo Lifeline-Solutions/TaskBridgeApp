@@ -128,6 +128,7 @@ Rails.application.routes.draw do
       get 'get_submodules'  # For loading submodules dynamically
       get :index_show
       get :defects_download
+      get :defects_download_excel
     end
     member do
       patch :add_label
