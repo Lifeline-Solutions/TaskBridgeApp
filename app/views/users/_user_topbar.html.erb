@@ -1,31 +1,38 @@
-<div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-4">
+<div class="bg-white shadow rounded-lg px-4 py-3 mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
   <!-- Left: Back and Admin Actions -->
-  <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-    <%= button_to root_path, method: :get, class: 'flex items-center gap-1 bg-[#0052CC] hover:bg-[#0747A6] px-3 py-2 rounded-md font-semibold text-white shadow-sm transition w-full justify-center sm:w-auto', id: 'button' do %>
+  <div class="flex flex-row gap-2 w-full md:w-auto">
+    <%= link_to root_path, class: 'flex items-center gap-1 bg-[#0052CC] hover:bg-[#0747A6] px-3 py-2 rounded font-semibold text-white shadow-sm transition-colors duration-150 w-full md:w-auto', title: "Back to Home" do %>
       <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
       </svg>
-      Back
+      <span>Back</span>
     <% end %>
     <% if current_user.has_role?(:admin) %>
-      <%= button_to 'Add New User', new_user_invitation_path, method: :get, class: 'flex items-center gap-1 bg-[#0052CC] hover:bg-[#0747A6] px-4 py-2 rounded-md font-semibold text-white shadow-sm transition', id: 'button' %>
-      <%= button_to 'Add Location', new_location_path, method: :get, class: 'flex items-center gap-1 bg-[#0052CC] hover:bg-[#0747A6] px-4 py-2 rounded-md font-semibold text-white shadow-sm transition', id: 'button' %>
+      <%= link_to new_user_invitation_path, class: 'flex items-center gap-1 bg-[#0052CC] hover:bg-[#0747A6] px-3 py-2 rounded font-semibold text-white shadow-sm transition-colors duration-150 w-full md:w-auto', title: "Add New User" do %>
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        <span>Add New User</span>
+      <% end %>
+      <%= link_to new_location_path, class: 'flex items-center gap-1 bg-[#0052CC] hover:bg-[#0747A6] px-3 py-2 rounded font-semibold text-white shadow-sm transition-colors duration-150 w-full md:w-auto', title: "Add Location" do %>
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        <span>Add Location</span>
+      <% end %>
     <% end %>
   </div>
+
   <!-- Right: Search and Clear -->
-  <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
-    <%= form_with url: users_path(@users), method: :get, class: 'flex flex-1 gap-1' do |f| %>
-      <div class="relative flex-1">
-        <%= f.text_field :query, placeholder: "Search users...", class: "w-full border border-gray-300 pl-10 pr-4 py-2 rounded-md font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0052CC] bg-white text-gray-900 shadow-sm transition" %>
-        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
+  <div class="w-full md:w-auto">
+    <%= form_with url: users_path(@users), method: :get, class: 'flex flex-col gap-2 md:flex-row md:items-end md:gap-2 w-full' do |f| %>
+      <div class="flex flex-col w-full">
+        <%= f.text_field :query, placeholder: "Search users...", class: "w-full px-3 py-2 border border-[#0052CC] rounded-md focus:ring-2 focus:ring-[#2684FF] focus:border-[#2684FF] transition" %>
       </div>
-      <%= f.submit "Search", class: 'bg-[#0052CC] hover:bg-[#0747A6] px-4 py-2 rounded-md font-semibold text-white shadow-sm transition', id: 'button' %>
-    <% end %>
-    <%= form_with url: users_path(@users), method: :get, class: 'flex' do |f| %>
-      <%= f.submit "Clear", class: 'bg-white border border-gray-300 hover:bg-gray-100 px-4 py-2 rounded-md font-semibold text-[#0052CC] shadow-sm transition', id: 'button' %>
+      <div class="flex gap-2 w-full md:w-auto">
+        <%= f.submit "Search", class: 'w-full md:w-auto bg-[#0052CC] hover:bg-[#0747A6] px-3 py-2 rounded font-semibold text-white shadow-sm transition-colors duration-150' %>
+        <%= button_to "Clear", users_path(@users), method: :get, class: 'w-full md:w-auto bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded font-semibold text-[#0052CC] shadow-sm transition-colors duration-150', form_class: 'inline' %>
+      </div>
     <% end %>
   </div>
 </div>
