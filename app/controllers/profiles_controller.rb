@@ -3,6 +3,92 @@ require 'axlsx'
 class ProfilesController < ApplicationController
   before_action :authenticate_user!
 
+  def project_report
+    authorize! :generate, :report
+
+    if params[:team_id].present?
+      @team = Team.find(params[:team_id])
+      @team_members = @team.users
+      user_ids = @team_members.pluck(:id)
+
+      # Handle custom date range or default to last 6 months
+      if params[:start_date].present? && params[:end_date].present?
+        start_date = Date.parse(params[:start_date])
+        end_date = Date.parse(params[:end_date])
+      else
+        start_date = 6.months.ago.to_date
+        end_date = Date.today
+      end
+
+      @tickets = Ticket.joins(:statuses, :project, :taggings)
+        .where('tickets.created_at >= ? AND tickets.created_at <= ?', start_date.beginning_of_day, end_date.end_of_day)
+        .where(taggings: { user_id: user_ids })
+
+      @tickets_by_user = @tickets.joins(:statuses)
+        .group('taggings.user_id', 'statuses.name')
+        .count
+
+      @sla_status = Ticket.joins(:statuses, :project, :taggings, :sla_tickets)
+        .where(sla_tickets: { sla_status: ['Breached'] })
+        .where('tickets.created_at >= ? AND tickets.created_at <= ?', start_date.beginning_of_day, end_date.end_of_day)
+        .group('taggings.user_id')
+        .count
+
+      @sla_target_response_deadline = Ticket.joins(:statuses, :project, :taggings, :sla_tickets)
+        .where(sla_tickets: { sla_target_response_deadline: ['Breached'] })
+        .where('tickets.created_at >= ? AND tickets.created_at <= ?', start_date.beginning_of_day, end_date.end_of_day)
+        .group('taggings.user_id')
+        .count
+
+      @sla_resolution_deadline = Ticket.joins(:statuses, :project, :taggings, :sla_tickets)
+        .where(sla_tickets: { sla_resolution_deadline: ['Breached'] })
+        .where('tickets.created_at >= ? AND tickets.created_at <= ?', start_date.beginning_of_day, end_date.end_of_day)
+        .group('taggings.user_id')
+        .count
+
+      @organized_tickets = @tickets_by_user.each_with_object({}) do |((user_id, status), count), hash|
+        hash[user_id] ||= { total: 0 }
+        hash[user_id][:total] += count
+        hash[user_id][status] = count
+      end
+
+      excluded_statuses = %w[Closed Resolved Declined]
+      filtered_chart_data = @organized_tickets.transform_values do |data|
+        filtered = data.reject { |k, _| excluded_statuses.include?(k) || k == :total }
+        filtered.values.sum
+      end
+      @tickets_chart_data = filtered_chart_data.transform_keys { |id| User.find(id).name }
+      @tickets_per_project = @tickets
+        .joins(:statuses)
+        .where.not(statuses: { name: excluded_statuses })
+        .group('projects.title')
+        .count
+
+      respond_to do |format|
+        format.html
+        team_name = @team.name
+        csv_tickets = if params[:all_tickets]
+                        @tickets
+                      else
+                        @tickets.where.not(statuses: { name: %w[Closed Resolved Declined] })
+                      end
+        format.csv do
+          start_str = (params[:start_date].presence && Date.parse(params[:start_date]).strftime('%d-%m-%Y')) || 6.months.ago.to_date.strftime('%d-%m-%Y')
+          end_str = (params[:end_date].presence && Date.parse(params[:end_date]).strftime('%d-%m-%Y')) || Date.today.strftime('%d-%m-%Y')
+          time_str = Time.now.strftime('%I-%M_%p')
+          filename = "Team Report for #{team_name}_#{start_str}_to_#{end_str}_at_#{time_str}.csv"
+          send_data generate_project_report_csv(csv_tickets), filename: filename
+        end
+      end
+    else
+      @team = nil
+      @team_members = []
+      @tickets_by_user = {}
+      flash[:alert] = 'Please provide a valid team and date range.'
+      render :project_report
+    end
+  end
+
   def profiles_show
     authorize! :generate, :report
 
@@ -179,6 +265,30 @@ class ProfilesController < ApplicationController
   end
 
   private
+
+  def generate_project_report_csv(tickets)
+    CSV.generate(headers: true) do |csv|
+      csv << ['Project Name', 'Ticket ID', 'Issue Type', 'Assignee', 'Reporter', 'Severity', 'Status', 'Created At',
+              'Updated At', 'Last Status Updated', 'Last Comment Updated', 'Summary', 'Content']
+      tickets.each do |ticket|
+        csv << [
+          ticket.project.title,
+          ticket.unique_id.gsub('–', '-'),
+          ticket.issue,
+          ticket.users.map(&:name).select(&:present?).join(', '),
+          ticket.user.name,
+          ticket.priority,
+          ticket.statuses.first&.name || 'N/A',
+          ticket.created_at.strftime('%d/%b/%Y %I:%M:%S %p'),
+          ticket.updated_at.strftime('%d/%b/%Y %I:%M:%S %p'),
+          ticket.add_statuses.order(updated_at: :desc).first&.updated_at&.strftime('%d/%b/%Y %I:%M:%S %p') || 'N/A',
+          ticket.issues.order(updated_at: :desc).first&.updated_at&.strftime('%d/%b/%Y %I:%M:%S %p') || 'N/A',
+          ticket.subject,
+          ticket.content.to_plain_text.truncate(3000)
+        ]
+      end
+    end
+  end
 
   # Parse "Assigned To", "SLA Status", "Target Response Deadline" from details text
   # Example: "#{user.first_name} #{user.last_name}was assigned to the ticket, with Status:  #{sla_ticket.sla_status} and Target Response Deadline #{sla_target_response_deadline}"

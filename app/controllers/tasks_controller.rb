@@ -56,7 +56,7 @@ class TasksController < ApplicationController
   end
 
   def edit
-    @prerequisite_tasks = Task.prerequisite_tasks(@product.id, @task.id)
+    @prerequisite_tasks = Task.prerequisite_tasks(@product.id)
   end
 
   def update
@@ -64,8 +64,8 @@ class TasksController < ApplicationController
     if @task.update(task_params)
       redirect_to product_task_path(@product, @task), notice: 'Task was successfully updated.'
     else
-      @prerequisite_tasks = Task.prerequisite_tasks(@product.id, @task.id)
-      render :edit
+      @prerequisite_tasks = Task.prerequisite_tasks(@product.id)
+      render :edit, notice: 'Task updated was not successful.'
     end
   end
 
