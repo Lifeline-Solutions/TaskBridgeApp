@@ -842,9 +842,7 @@ class DefectController < ApplicationController
     end
 
     # Product filter
-    if params[:product_id].present?
-      defects = defects.where(product_id: params[:product_id])
-    end
+    defects = defects.where(product_id: params[:product_id]) if params[:product_id].present?
 
     # Status filter (multiple checkboxes -> status[])
     selected_statuses = Array(params[:status]).reject(&:blank?)
