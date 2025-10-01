@@ -1,0 +1,63 @@
+<% provide(:title, "Team Ticket Report") %>
+
+<h1 class="text-2xl font-bold mb-4 text-center">Team Ticket Report</h1>
+<%= form_with url: team_profiles_path, method: :get, local: true do %>
+  <div class="flex flex-wrap justify-center gap-2 mb-4">
+    <div>
+      <%= label_tag :team_id, 'Select Team', class: 'font-bold' %>
+      <%= select_tag :team_id, options_from_collection_for_select(@teams, :id, :name, params[:team_id]), prompt: 'Choose a team', class: 'border rounded' %>
+    </div>
+    <div>
+      <%= label_tag :start_date, 'Start Date', class: 'font-bold' %>
+      <%= date_field_tag :start_date, params[:start_date], class: 'border rounded' %>
+    </div>
+    <div>
+      <%= label_tag :end_date, 'End Date', class: 'font-bold' %>
+      <%= date_field_tag :end_date, params[:end_date], class: 'border rounded' %>
+    </div>
+    <div class="pt-6">
+      <%= submit_tag 'Show Report', class: 'bg-blue-600 text-white px-4 py-2 rounded' %>
+    </div>
+  </div>
+<% end %>
+
+<% if @team && @tickets.present? %>
+  <div class="mb-4">
+    <h2 class="font-bold">Team: <%= @team.name %></h2>
+    <p>Total Tickets: <%= @tickets.size %></p>
+    <p>Breached Tickets: <%= @breached_ticket_ids.size %></p>
+    <p>Breach Percentage: <%= @breach_percentage %>%</p>
+    <%= link_to 'Download CSV', team_profiles_path(format: :csv, team_id: @team.id, start_date: params[:start_date], end_date: params[:end_date]), class: 'bg-blue-500 text-white px-3 py-1 rounded ml-2' %>
+  </div>
+  <table class="table-auto w-full border-collapse border border-gray-300">
+    <thead>
+      <tr>
+        <th class="border px-2 py-1">Ticket ID</th>
+        <th class="border px-2 py-1">Project</th>
+        <th class="border px-2 py-1">Subject</th>
+        <th class="border px-2 py-1">Total Assignments</th>
+        <th class="border px-2 py-1">Unique Assigned</th>
+        <th class="border px-2 py-1">Breached</th>
+        <th class="border px-2 py-1">Created At</th>
+        <th class="border px-2 py-1">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @tickets.each do |ticket| %>
+        <tr>
+          <td class="border px-2 py-1"><%= ticket.unique_id %></td>
+          <td class="border px-2 py-1"><%= ticket.project&.title %></td>
+          <td class="border px-2 py-1"><%= ticket.subject %></td>
+          <td class="border px-2 py-1"><%= @ticket_assignment_counts[ticket.id] || 0 %></td>
+          <td class="border px-2 py-1"><%= @ticket_unique_assigned_user[ticket.id] || 0 %></td>
+
+          <td class="border px-2 py-1"><%= @ticket_breached[ticket.id] ? 'Yes' : 'No' %></td>
+          <td class="border px-2 py-1"><%= ticket.created_at.strftime('%d/%b/%Y %I:%M:%S %p') %></td>
+          <td class="border px-2 py-1"><%= ticket.statuses.first&.name || 'N/A' %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% elsif @team %>
+  <p class="text-center text-red-600">No tickets found for this team and date range.</p>
+<% end %>

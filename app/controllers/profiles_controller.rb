@@ -222,6 +222,77 @@ class ProfilesController < ApplicationController
     end
   end
 
+  def team_profiles
+    authorize! :generate, :report
+
+    @teams = Team.all
+    @team = params[:team_id].present? ? Team.find_by(id: params[:team_id]) : nil
+    @team_members = @team ? @team.users : []
+    user_ids = @team_members.pluck(:id)
+
+    @tickets = Ticket.none
+    @assignment_events = []
+    @breached_ticket_ids = Set.new
+    @ticket_assignment_counts = {}
+    @ticket_unique_tagged_users = {}
+    @ticket_breached = {}
+    @breach_percentage = 0.0
+
+    return respond_to(&:html) unless @team && (params[:start_date].present? || params[:end_date].present?)
+
+    start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : nil
+    end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
+    from_time = start_date&.beginning_of_day
+    to_time = end_date&.end_of_day
+
+    # Get all tickets for the team (any ticket where a team member is tagged)
+    ticket_scope = Ticket.joins(:taggings).where(taggings: { user_id: user_ids })
+    ticket_scope = ticket_scope.where('tickets.created_at >= ?', from_time) if from_time
+    ticket_scope = ticket_scope.where('tickets.created_at <= ?', to_time) if to_time
+    @tickets = ticket_scope.distinct.includes(:statuses, :project, :taggings, :sla_tickets)
+
+    ticket_ids = @tickets.pluck(:id)
+
+    # Count unique tagged users for each ticket
+    @ticket_unique_tagged_users = {}
+    Tagging.where(ticket_id: ticket_ids).group(:ticket_id).pluck(:ticket_id, Arel.sql('COUNT(DISTINCT user_id)')).each do |ticket_id, count|
+      @ticket_unique_tagged_users[ticket_id] = count
+    end
+
+    # Assignment events for all team members and these tickets
+    assignment_events = Event.where('details ILIKE ?', '%was assigned to the ticket%')
+      .where(user_id: user_ids, ticket_id: ticket_ids)
+    assignment_events = assignment_events.where('created_at >= ?', from_time) if from_time
+    assignment_events = assignment_events.where('created_at <= ?', to_time) if to_time
+    @assignment_events = assignment_events.includes(:ticket)
+
+    # For each ticket, count total assignments and unique users assigned
+    @ticket_assignment_counts = Hash.new(0)
+    @ticket_unique_assigned_user = Hash.new { |h, k| h[k] = Set.new }
+    @assignment_events.each do |ev|
+      @ticket_assignment_counts[ev.ticket_id] += 1
+      @ticket_unique_assigned_user[ev.ticket_id] << ev.user_id
+    end
+    # Convert sets to counts for display
+    @ticket_unique_assigned_user = @ticket_unique_assigned_user.transform_values(&:size)
+
+    # Breached tickets
+    @breached_ticket_ids = Ticket.joins(:sla_tickets)
+      .where(id: ticket_ids, sla_tickets: { sla_resolution_deadline: ['Breached'] })
+      .pluck(:id).to_set
+    @ticket_breached = ticket_ids.index_with { |tid| @breached_ticket_ids.include?(tid) }
+
+    # Breach percentage
+    total_tickets = ticket_ids.size
+    breached_count = @breached_ticket_ids.size
+    @breach_percentage = total_tickets.positive? ? ((breached_count.to_f / total_tickets) * 100).round(2) : 0.0
+
+    respond_to do |format|
+      format.html # team_profiles.html.erb
+      format.csv { send_data generate_team_csv(@tickets), filename: "Team_Report_#{@team.name}_#{Date.today}.csv" }
+    end
+  end
+
   helper_method :parse_assignment_details, :assigned_at_for, :resolved_at_for, :resolution_duration_for, :format_full_duration
 
   # Formats total seconds as a human string with years, months, days, hours, minutes, and seconds

@@ -50,6 +50,7 @@ Rails.application.routes.draw do
   get 'project_report', to: 'profiles#project_report', as: 'project_report'
   get 'profiles_show', to: 'profiles#profiles_show', as: 'profiles_show'
   get 'profiles_show_user', to: 'profiles#profiles_show_user', as: 'profiles_show_user'
+  get 'team_profiles', to: 'profiles#team_profiles', as: 'team_profiles'
 
 
   get 'dashboard', to: 'dashboards#index'
