@@ -826,7 +826,7 @@ class DefectController < ApplicationController
       end
     end
 
-    send_data csv_data, filename: "defects_#{Time.zone.now.strftime('%Y%m%d_%H%M%S')}.csv", type: 'text/csv'
+    send_data csv_data, filename: "defects_#{Time.zone.now.strftime('%Y-%m-%d %H:%M')}.csv", type: 'text/csv'
   end
 
   def defects_download_excel
