@@ -334,20 +334,6 @@ class TicketsController < ApplicationController
       # Log SLA details
       Rails.logger.info("SlaTicket details: #{sla_ticket.attributes}, SLA Status: #{sla_ticket.sla_status}")
 
-      # Send assignment email
-      Messaging::EmailSender
-        .send_email(
-          "Ticket assigned with Ticket ID #{@ticket.unique_id}.",
-          body: "<p>Ticket ##{@ticket.unique_id} has been assigned to you.</p><p><a href='#{project_ticket_url(@ticket.project, @ticket)}'>Open Ticket</a></p>",
-          to: [user.email],
-          actor: current_user,
-          priority: :normal,
-          type: 'ticket_assign'
-        )
-        .set_source('ticket', @ticket.id)
-        .set_party('user', user.id)
-        .send(queue: true)
-
       # Also notify the project owner if different from assignee
       owner = @project.user
       if owner.present? && owner != user && owner.email.present?
