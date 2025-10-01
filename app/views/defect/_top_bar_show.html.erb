@@ -218,17 +218,19 @@
         <!-- Download CSV Link -->
         <%= link_to "Download CSV", defects_download_defect_index_path(
               format: :csv,
-              user_id: params[:user_id],
+              product_id: params[:product_id],
+              client_name: params[:client_name],
               query: params[:query],
-              banking_type_id: params[:banking_type_id],
+              order: params[:order],
               start_date: params[:start_date],
               end_date: params[:end_date],
-              status: params[:status],
               priority: params[:priority],
+              user_id: params[:user_id],
               qa_module_id: params[:qa_module_id],
               submodule_id: params[:submodule_id],
-              label_ids: params[:label_ids],
-              order: params[:order]
+              banking_type_id: params[:banking_type_id],
+              status: params[:status],
+              label_ids: params[:label_ids]
             ), class: "text-sm font-medium flex items-center border border-gray-300 rounded px-3 py-2 bg-blue-600 text-slate-100 hover:border-slate-100 hover:text-white focus:bg-blue-600 focus:border-blue-600 focus:text-white transition" %>
         
         <%= link_to "Download Excel",
