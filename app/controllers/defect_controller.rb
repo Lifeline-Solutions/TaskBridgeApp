@@ -73,10 +73,16 @@ class DefectController < ApplicationController
     @defects = Defect.published
       .includes(:users, :qa_module, :labels, :banking_type, :statuses, product: %i[client groupwares])
 
-    # Client filter (exact, case-insensitive)
-    if params[:client_name].present?
+    # Client filter (exact, case-insensitive, and scoped by product_id)
+    if params[:client_name].present? && params[:product_id].present?
       @defects = @defects.joins(product: :client)
         .where('LOWER(clients.name) = ?', params[:client_name].to_s.downcase.strip)
+        .where(products: { id: params[:product_id] })
+    elsif params[:client_name].present?
+      @defects = @defects.joins(product: :client)
+        .where('LOWER(clients.name) = ?', params[:client_name].to_s.downcase.strip)
+    elsif params[:product_id].present?
+      @defects = @defects.where(product_id: params[:product_id])
     end
 
     # Status filter (multiple checkboxes -> status[])
