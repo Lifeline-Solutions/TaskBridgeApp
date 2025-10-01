@@ -12,7 +12,7 @@ class DefectController < ApplicationController
       .includes(:client, :groupwares, :statuses)
       .joins(:statuses)
       .where(statuses: { name: qa_status_names })
-      .where("products.deleted_on IS NULL")
+      .where('products.deleted_on IS NULL')
       .distinct
       .order('products.document_name ASC')
 
@@ -26,7 +26,7 @@ class DefectController < ApplicationController
 
     # Get defects for these QA products (for counting and display)
     qa_product_ids = @qa_products.map(&:id)
-    
+
     if qa_product_ids.any?
       # Base defects query for QA products
       raw_defects = Defect.published
@@ -44,7 +44,7 @@ class DefectController < ApplicationController
 
       # Defect counts for each product
       @qa_product_defect_counts = raw_defects.group(:product_id).count
-      
+
       # For status dropdown - collect statuses from the defects we're showing
       @statuses = Status.joins(:defects)
         .where(defects: { id: raw_defects.pluck(:id) })
@@ -837,8 +837,8 @@ class DefectController < ApplicationController
     if params[:query].present?
       q = "%#{params[:query]}%"
       defects = defects.left_joins(product: %i[client groupwares])
-                      .where("defects.product_id = :pid AND (clients.name ILIKE :q OR groupwares.name ILIKE :q OR defects.summary ILIKE :q)",
-                              pid: params[:product_id], q: q)
+        .where('defects.product_id = :pid AND (clients.name ILIKE :q OR groupwares.name ILIKE :q OR defects.summary ILIKE :q)',
+               pid: params[:product_id], q: q)
     end
 
     defects = defects.where(banking_type_id: params[:banking_type_id]) if params[:banking_type_id].present?
