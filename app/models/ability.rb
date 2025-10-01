@@ -56,9 +56,9 @@ class Ability
       can %i[edit update], Ticket, user_id: user.id
       can :manage, Issue, user_id: user.id
       can :update_due_date, Ticket
-      cannot %i[create delete edit download_tasks_csv], Product
+      cannot %i[create delete edit], Product
       cannot %i[create delete edit], Board
-      can :read, Product
+      can %i[read download_tasks_csv], Product
       can :read, Board
       can :read, Task
       can :manage, Message
@@ -81,7 +81,8 @@ class Ability
       can %i[profiles_show profiles_show_user], :profiles
 
     elsif user.has_role? :qa
-      can %i[create edit update destroy], DefectMessage, user_id: user.id
+      can :manage, DefectMessage, user_id: user.id
+      can %i[manage defects_download defects_download_excel], Defect
 
     else
       can :read, Project
