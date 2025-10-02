@@ -52,15 +52,21 @@ class ProfilesController < ApplicationController
         hash[user_id][status] = count
       end
 
-      excluded_statuses = %w[Closed Resolved Declined]
+      # excluded_statuses = %w[Closed Resolved Declined]
+      # filtered_chart_data = @organized_tickets.transform_values do |data|
+      #  filtered = data.reject { |k, _| excluded_statuses.include?(k) || k == :total }
+      #   filtered.values.sum
+      # end
+
       filtered_chart_data = @organized_tickets.transform_values do |data|
-        filtered = data.reject { |k, _| excluded_statuses.include?(k) || k == :total }
+        filtered = data.except(:total)
         filtered.values.sum
       end
+
       @tickets_chart_data = filtered_chart_data.transform_keys { |id| User.find(id).name }
       @tickets_per_project = @tickets
         .joins(:statuses)
-        .where.not(statuses: { name: excluded_statuses })
+        # .where.not(statuses: { name: excluded_statuses })
         .group('projects.title')
         .count
 
