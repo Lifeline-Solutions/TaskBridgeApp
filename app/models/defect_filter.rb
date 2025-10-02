@@ -3,14 +3,14 @@ class DefectFilter < ApplicationRecord
   belongs_to :product, optional: true
 
   # Audit associations
-  belongs_to :created_by,  class_name: 'User', foreign_key: 'created_by_id', optional: true
+  belongs_to :created_by, class_name: 'User', foreign_key: 'created_by_id', optional: true
   belongs_to :modified_by, class_name: 'User', foreign_key: 'modified_by_id', optional: true
-  belongs_to :deleted_by,  class_name: 'User', foreign_key: 'deleted_by_id', optional: true
+  belongs_to :deleted_by, class_name: 'User', foreign_key: 'deleted_by_id', optional: true
 
   scope :active, -> { where(deleted_on: nil, archive_status: false) }
 
   validates :name, presence: true, length: { maximum: 200 }
-  validate  :filters_must_be_hash
+  validate :filters_must_be_hash
 
   # Whitelist of allowed keys that may be saved/applied (update when you add new filter inputs)
   ALLOWED_FILTER_KEYS = %w[
@@ -30,8 +30,8 @@ class DefectFilter < ApplicationRecord
   private
 
   def filters_must_be_hash
-    unless filters.is_a?(Hash)
-      errors.add(:filters, 'must be a JSON object/hash')
-    end
+    return if filters.is_a?(Hash)
+
+    errors.add(:filters, 'must be a JSON object/hash')
   end
 end

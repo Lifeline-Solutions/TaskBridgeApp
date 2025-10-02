@@ -78,6 +78,7 @@ class DefectFiltersController < ApplicationController
     # Normalize multi-value keys
     %w[label_ids status].each do |k|
       next unless raw_hash.key?(k)
+
       raw[k] = Array(raw_hash[k]).reject(&:blank?)
     end
     raw
