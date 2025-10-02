@@ -73,6 +73,18 @@ class DefectController < ApplicationController
     @defects = Defect.published
       .includes(:users, :qa_module, :labels, :banking_type, :statuses, product: %i[client groupwares])
 
+    # Apply saved filter shortcut
+    if params[:filter_id].present?
+      filter = current_user.defect_filters.active.find_by(id: params[:filter_id])
+      if filter
+        merged = filter.sanitized_filters_string_keys || {}
+        # Prefer saved product_id if not provided in URL
+        merged['product_id'] = filter.product_id if filter.product_id.present? && !merged.key?('product_id')
+        merged.except!('page')
+        redirect_to index_show_defect_index_path(merged) and return
+      end
+    end
+
     # Client filter (exact, case-insensitive, and scoped by product_id)
     if params[:client_name].present? && params[:product_id].present?
       @defects = @defects.joins(product: :client)

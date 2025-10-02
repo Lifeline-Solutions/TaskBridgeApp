@@ -1,0 +1,52 @@
+<% if current_user %>
+  <div class="inline-block ml-2">
+    <%= form_with url: index_show_defect_index_path, method: :get, local: true, class: 'inline' do %>
+      <%= hidden_field_tag :product_id, params[:product_id] if params[:product_id].present? %>
+      <%= select_tag :filter_id,
+            options_from_collection_for_select(current_user.defect_filters.active.order(:name), :id, :name, params[:filter_id]),
+            include_blank: 'Saved filters',
+            onchange: 'this.form.submit();',
+            class: 'text-sm p-1 border rounded' %>
+    <% end %>
+
+    <% current_query = request.query_parameters.except('page', 'commit', 'filter_id') %>
+    <% if current_query.present? %>
+      <button type="button" id="openSaveFilterModal" class="ml-2 text-sm bg-green-600 text-white px-3 py-1 rounded">Save filter</button>
+    <% end %>
+
+    <%= link_to 'Manage filters', defect_filters_path, class: 'ml-2 text-sm text-gray-600 hover:underline' %>
+
+    <div id="saveFilterModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div class="bg-white rounded-lg p-4 w-80">
+        <h3 class="font-bold mb-2">Save current filter</h3>
+        <%= form_with url: defect_filters_path, method: :post, local: true do |f| %>
+          <div class="mb-2">
+            <%= label_tag 'defect_filter[name]', 'Filter name', class: 'block text-sm' %>
+            <%= text_field_tag 'defect_filter[name]', '', class: 'w-full border p-1' %>
+          </div>
+
+          <%= hidden_field_tag 'defect_filter[filters]', request.query_parameters.to_json %>
+          <%= hidden_field_tag 'defect_filter[product_id]', params[:product_id] if params[:product_id].present? %>
+
+          <div class="flex justify-end gap-2 mt-3">
+            <button type="button" id="cancelSaveFilter" class="px-3 py-1 border rounded">Cancel</button>
+            <%= submit_tag 'Save', class: 'px-3 py-1 bg-blue-600 text-white rounded' %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        var openBtn = document.getElementById('openSaveFilterModal');
+        var modal = document.getElementById('saveFilterModal');
+        var cancel = document.getElementById('cancelSaveFilter');
+
+        if (openBtn) openBtn.addEventListener('click', function () { modal.classList.remove('hidden'); });
+        if (cancel) cancel.addEventListener('click', function () { modal.classList.add('hidden'); });
+
+        if (modal) modal.addEventListener('click', function (e) { if (e.target === modal) modal.classList.add('hidden'); });
+      });
+    </script>
+  </div>
+<% end %>
