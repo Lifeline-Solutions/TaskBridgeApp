@@ -1,40 +1,40 @@
 <div class="overflow-x-auto w-full">
-  <div class="bg-[#F4F5F7] p-4 rounded-lg shadow-md">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-[#F4F5F7]">
+  <div class="bg-[#F4F5F7] dark:bg-gray-900 p-4 rounded-lg shadow-md">
+    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+      <thead class="bg-[#F4F5F7] dark:bg-gray-900">
         <tr>
-          <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-[#42526E] uppercase tracking-wider">
+          <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-[#42526E] dark:text-white uppercase tracking-wider">
             Name of the Module
           </th>
-          <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-[#42526E] uppercase tracking-wider">
+          <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-[#42526E] dark:text-white uppercase tracking-wider">
             Description
           </th>
-          <th scope="col" class="px-4 py-3 text-center text-xs font-bold text-[#42526E] uppercase tracking-wider">
+          <th scope="col" class="px-4 py-3 text-center text-xs font-bold text-[#42526E] dark:text-white uppercase tracking-wider">
             View
           </th>
-          <th scope="col" class="px-4 py-3 text-center text-xs font-bold text-[#42526E] uppercase tracking-wider">
+          <th scope="col" class="px-4 py-3 text-center text-xs font-bold text-[#42526E] dark:text-white uppercase tracking-wider">
             Edit
           </th>
-          <th scope="col" class="px-4 py-3 text-center text-xs font-bold text-[#42526E] uppercase tracking-wider">
+          <th scope="col" class="px-4 py-3 text-center text-xs font-bold text-[#42526E] dark:text-white uppercase tracking-wider">
             Delete
           </th>
         </tr>
       </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
+      <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
         <% @scripts.each do |script| %>
-          <tr class="hover:bg-[#DEEBFF] transition">
-            <td class="px-4 py-3 whitespace-nowrap font-semibold text-[#172B4D]">
+          <tr class="hover:bg-[#DEEBFF] dark:hover:bg-gray-800 transition">
+            <td class="px-4 py-3 whitespace-nowrap font-semibold text-[#172B4D] dark:text-white">
               <%= script.name %>
             </td>
-            <td class="px-4 py-3 whitespace-nowrap text-[#5E6C84]">
+            <td class="px-4 py-3 whitespace-nowrap text-[#5E6C84] dark:text-white">
               <%= script.description %>
             </td>
-            <td class="px-4 py-3 text-center">
+            <td class="px-4 py-3 text-center dark:text-white">
               <!-- Removed link here -->
             </td>
-            <td class="px-4 py-3 text-center">
+            <td class="px-4 py-3 text-center dark:text-white">
             </td>
-            <td class="px-4 py-3 text-center">
+            <td class="px-4 py-3 text-center dark:text-white">
               
             </td>
           </tr>
