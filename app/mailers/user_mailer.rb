@@ -75,7 +75,7 @@ class UserMailer < ApplicationMailer
     @current_user = current_user
     @project = project
     @url = project_ticket_url(@ticket.project, @ticket)
-    mail(to: [@user.email, @ticket.user&.email].uniq.compact, subject: "Ticket assigned with Ticket ID #{@ticket.unique_id}.")
+    mail(to: @user.email, subject: "Ticket assigned with Ticket ID #{@ticket.unique_id}.")
   end
 
   # From Product Controller
