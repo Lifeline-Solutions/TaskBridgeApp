@@ -1,20 +1,20 @@
 <div class="w-full mb-6">
-  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white shadow rounded-lg px-4 py-3 border border-gray-200">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-gray-900 shadow rounded-lg px-4 py-3 border border-gray-200 dark:border-gray-800">
     <!-- Left: Back & Add Software Buttons -->
     <div class="flex gap-2 items-center">
       <% if can? :create, @software %>
         <% if current_user.has_role? :admin  %>
-          <%= link_to root_path, class: 'flex items-center gap-2 bg-transparent hover:bg-gray-100 px-3 py-1.5 rounded text-[#0052CC] font-medium transition text-sm border border-[#0052CC] shadow-sm' do %>
+          <%= link_to root_path, class: 'flex items-center gap-2 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 px-3 py-1.5 rounded text-[#0052CC] dark:text-white font-medium transition text-sm border border-[#0052CC] dark:border-white shadow-sm' do %>
             <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
-            Back
+            <span class="dark:text-white">Back</span>
           <% end %>
-          <%= link_to new_software_path, class: 'flex items-center gap-2 bg-[#36B37E] hover:bg-[#00875A] px-3 py-1.5 rounded text-white font-medium shadow-sm transition text-sm' do %>
+          <%= link_to new_software_path, class: 'flex items-center gap-2 bg-[#36B37E] hover:bg-[#00875A] px-3 py-1.5 rounded text-white dark:text-white font-medium shadow-sm transition text-sm' do %>
             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
             </svg>
-            Add Software
+            <span class="dark:text-white">Add Software</span>
           <% end %>
         <% end %>
       <% end %>
@@ -23,17 +23,17 @@
     <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto items-center">
       <%= form_with url: software_index_path, method: :get, class: 'flex gap-2 w-full md:w-auto items-center' do |f| %>
         <div class="relative w-full md:w-56">
-          <%= f.text_field :query, placeholder: "Search software...", class: "border border-gray-300 rounded pl-9 pr-3 py-1.5 w-full text-sm focus:outline-none focus:ring-2 focus:ring-[#0052CC] transition" %>
-          <span class="absolute left-3 top-2 text-[#0052CC]">
+          <%= f.text_field :query, placeholder: "Search software...", class: "border border-gray-300 dark:border-gray-800 rounded pl-9 pr-3 py-1.5 w-full text-sm focus:outline-none focus:ring-2 focus:ring-[#0052CC] transition dark:bg-gray-900 dark:text-white" %>
+          <span class="absolute left-3 top-2 text-[#0052CC] dark:text-white">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
             </svg>
           </span>
         </div>
-        <%= f.submit "Search", class: 'px-3 py-1.5 bg-[#0052CC] hover:bg-[#0747A6] rounded text-white font-medium shadow-sm transition text-sm'  %>
+  <%= f.submit "Search", class: 'px-3 py-1.5 bg-[#0052CC] hover:bg-[#0747A6] rounded text-white dark:text-white font-medium shadow-sm transition text-sm'  %>
       <% end %>
       <%= form_with url: software_index_path, method: :get, class: 'flex w-full md:w-auto items-center' do |f| %>
-        <%= f.submit "Clear", class: 'px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded text-[#0052CC] font-medium shadow-sm transition text-sm w-full md:w-auto border border-gray-300'  %>
+  <%= f.submit "Clear", class: 'px-3 py-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-[#0052CC] dark:text-white font-medium shadow-sm transition text-sm w-full md:w-auto border border-gray-300 dark:border-gray-800'  %>
       <% end %>
     </div>
   </div>
