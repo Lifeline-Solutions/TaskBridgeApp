@@ -2,9 +2,9 @@
   <!-- Mobile overlay backdrop -->
   <div id="sidebar-backdrop" class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden hidden"></div>
   
-  <div id="sidebar-wrapper" class="fixed top-0 h-full left-0 z-40 flex flex-col transition-all duration-300 shadow-lg bg-white dark:bg-gray-100 w-64 lg:z-40">
+  <div id="sidebar-wrapper" class="fixed top-0 h-full left-0 z-40 flex flex-col transition-all duration-300 shadow-lg bg-white dark:bg-gray-900 w-64 lg:z-40">
     <div class="flex p-2 shrink-0">
-      <button id="toggleSidebar" class="flex items-center justify-center p-2 text-sm text-gray-700 rounded-lg hover:bg-gray-100 focus:ring-2 focus:ring-gray-200 dark:text-gray-600 dark:hover:bg-gray-200 dark:focus:ring-gray-300 transition-colors">
+  <button id="toggleSidebar" class="flex items-center justify-center p-2 text-sm text-gray-700 rounded-lg hover:bg-gray-100 focus:ring-2 focus:ring-gray-200 dark:text-white dark:hover:bg-gray-200 dark:focus:ring-gray-300 transition-colors">
         <span class="sr-only">Toggle Sidebar</span>
         <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
           <path clip-rule="evenodd" fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"></path>
@@ -13,17 +13,18 @@
     </div>
 
     <!-- Sidebar content - will be toggled between collapsed and expanded -->
-    <aside id="sidebar" class="flex-1 overflow-y-auto pb-20 transition-all duration-300 bg-white dark:bg-gray-100 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+  <aside id="sidebar" class="flex-1 overflow-y-auto pb-20 transition-all duration-300 bg-white dark:bg-gray-900 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
       <%= link_to (current_user.has_role?(:ceo) ? cease_fire_report_path : root_path) do %>
         <div class="items-center flex justify-center px-4 py-2 logo-container">
-          <%= image_tag 'logo1.png', id: 'logo-top', class: 'h-8 w-28 sm:h-10 mb-4' %>
+          <%= image_tag 'logo1.png', id: 'logo-top', class: 'h-8 w-28 sm:h-10 mb-4 block dark:hidden' %>
+          <%= image_tag 'logo.png', id: 'logo-top-dark', class: 'h-8 w-28 sm:h-10 mb-4 hidden dark:block' %>
         </div>
       <% end %>
         <div class="items-center flex px-4 py-2 main-menu-heading">
-          <p class="text-gray-700 dark:text-gray-200 text-sm font-medium uppercase tracking-wide">Main Menu</p>
+          <p class="text-gray-700 dark:text-white text-sm font-medium uppercase tracking-wide">Main Menu</p>
         </div>
       <% if !current_user.has_role?(:ceo) %>
-        <ul class="space-y-1 text-sm px-3 py-2 text-gray-700">
+  <ul class="space-y-1 text-sm px-3 py-2 text-gray-700 dark:text-white">
 
           <%= link_to (current_user.has_role?(:ceo) ? cease_fire_report_path : root_path) do %>
             <li class="group hover:bg-blue-50 dark:hover:bg-blue-100 rounded-lg <%= 'bg-blue-50 dark:bg-blue-100' if request.path == root_path || (current_user.has_role?(:ceo) && request.path == cease_fire_report_path) %>">
