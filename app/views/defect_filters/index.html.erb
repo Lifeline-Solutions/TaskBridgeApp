@@ -1,0 +1,33 @@
+<h2>Your saved filters</h2>
+
+<% if @defect_filters.any? %>
+  <table class="w-full">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Product</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @defect_filters.each do |f| %>
+        <tr>
+          <td>
+            <%= form_with model: f, url: defect_filter_path(f), method: :patch, local: true do |form| %>
+              <%= form.text_field :name, value: f.name, class: 'border p-1' %>
+              <%= form.hidden_field :filters, value: f.filters.to_json %>
+              <%= form.submit 'Rename', class: 'ml-2 px-2 py-1 bg-blue-500 text-white rounded' %>
+            <% end %>
+          </td>
+          <td><%= f.product&.document_name || 'All products' %></td>
+          <td>
+            <%= link_to 'Apply', index_show_defect_index_path(f.sanitized_filters_string_keys.merge('product_id' => f.product_id).compact), class: 'px-2 py-1 bg-green-500 text-white rounded' %>
+            <%= link_to 'Delete', defect_filter_path(f), method: :delete, data: { confirm: 'Delete this saved filter?' }, class: 'ml-2 px-2 py-1 bg-red-500 text-white rounded' %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p>No saved filters yet.</p>
+<% end %>
