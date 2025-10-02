@@ -55,7 +55,7 @@
     <div class="flex justify-center w-full my-6 gap-10">
       <div class="flex justify-center gap-10">
         <div>
-        <%= pie_chart @tickets_chart_data, height: "400px", library: { title: { text: "Tickets by User" } } %>
+          <%= pie_chart @tickets_chart_data, height: "400px", library: { title: { text: "Tickets by User" } } %>
         </div>
         <div>
           <h3 class="text-lg font-bold mb-2">Top 5 Users by Tickets</h3>
@@ -95,11 +95,15 @@
         <th class="border border-gray-300 px-4 py-2">Client Confirmation Pending</th>
         <th class="border border-gray-300 px-4 py-2">Awaiting Build</th>
         <th class="border border-gray-300 px-4 py-2">Reopened</th>
-
         <th class="border border-gray-300 px-4 py-2">Initial Response Breaches</th>
         <th class="border border-gray-300 px-4 py-2">Target Response Breaches</th>
         <th class="border border-gray-300 px-4 py-2">Target Resolution Breaches</th>
+        <!-- NEW COLUMNS -->
+        <th class="border border-gray-300 px-4 py-2">Total Tickets Ever Assigned</th>
+        <th class="border border-gray-300 px-4 py-2">Total Breached Tickets</th>
+        <th class="border border-gray-300 px-4 py-2">Breach Percentage (%)</th>
         <th class="border border-gray-300 px-4 py-2">View</th>
+        <th class="border border-gray-300 px-4 py-2">Current Team Ticket?</th>
       </tr>
       </thead>
       <tbody>
@@ -117,6 +121,10 @@
       <% total_sla_status = @team_members.sum { |user| (@sla_status[user.id] || 0).to_i } %>
       <% total_sla_trd = @team_members.sum { |user| (@sla_target_response_deadline[user.id] || 0).to_i } %>
       <% total_sla_rd = @team_members.sum { |user| (@sla_resolution_deadline[user.id] || 0).to_i } %>
+      <!-- NEW TOTALS -->
+      <% total_ever_assigned = @team_members.sum { |user| (@user_total_assigned_tickets[user.id] || 0).to_i } %>
+      <% total_breached = @team_members.sum { |user| (@user_breached_tickets[user.id] || 0).to_i } %>
+      <% overall_breach_percentage = total_ever_assigned > 0 ? ((total_breached.to_f / total_ever_assigned) * 100).round(2) : 0.0 %>
 
       <tr class="font-bold">
         <td class="border border-gray-300 px-4 py-2">Total</td>
@@ -133,6 +141,10 @@
         <td class="border border-gray-300 px-4 py-2"><%= total_sla_status %></td>
         <td class="border border-gray-300 px-4 py-2"><%= total_sla_trd %></td>
         <td class="border border-gray-300 px-4 py-2"><%= total_sla_rd %></td>
+        <!-- NEW TOTAL CELLS -->
+        <td class="border border-gray-300 px-4 py-2"><%= total_ever_assigned %></td>
+        <td class="border border-gray-300 px-4 py-2"><%= total_breached %></td>
+        <td class="border border-gray-300 px-4 py-2"><%= overall_breach_percentage %>%</td>
         <td class="border border-gray-300 px-4 py-2"></td>
       </tr>
 
@@ -154,8 +166,16 @@
           <td class="border border-gray-300 px-4 py-2"><%= @sla_status[user.id] || 0 %></td>
           <td class="border border-gray-300 px-4 py-2"><%= @sla_target_response_deadline[user.id] || 0 %></td>
           <td class="border border-gray-300 px-4 py-2"><%= @sla_resolution_deadline[user.id] || 0 %></td>
+          <!-- NEW USER CELLS -->
+          <td class="border border-gray-300 px-4 py-2"><%= @user_total_assigned_tickets[user.id] || 0 %></td>
+          <td class="border border-gray-300 px-4 py-2"><%= @user_breached_tickets[user.id] || 0 %></td>
+          <td class="border border-gray-300 px-4 py-2"><%= @user_breach_percentage[user.id] || 0 %>%</td>
           <td class="border border-gray-300 px-4 py-2 font-bold">
-            <%= link_to "View", assigned_tickets_path(team_id: @team.id, user_id: user.id, start_date: params[:start_date], end_date: params[:end_date]), class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>          </td>
+            <%= link_to "View", assigned_tickets_path(team_id: @team.id, user_id: user.id, start_date: params[:start_date], end_date: params[:end_date]), class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
+          </td>
+          <td class="border border-gray-300 px-4 py-2">
+            <% ticket_ids = @user_total_assigned_tickets[user.id] ? @user_total_assigned_tickets[user.id] : [] %>
+          </td>
         </tr>
       <% end %>
       </tbody>
