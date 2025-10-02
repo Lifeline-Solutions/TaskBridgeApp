@@ -1,15 +1,15 @@
-<div class="bg-white shadow rounded-lg px-4 py-3 mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+<div class="bg-white dark:bg-gray-900 shadow rounded-lg px-4 py-3 mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
   <!-- Left: Back & Add Product -->
   <div class="flex flex-row gap-2 items-center">
     <% if can? :create, @software %>
       <% if current_user.has_role? :admin  %>
-        <%= link_to software_index_path, class: 'flex items-center gap-1 text-[#0052CC] hover:text-[#0747A6] font-semibold text-sm md:text-base transition-colors duration-150' do %>
+  <%= link_to software_index_path, class: 'flex items-center gap-1 text-[#0052CC] hover:text-[#0747A6] dark:text-white font-semibold text-sm md:text-base transition-colors duration-150' do %>
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-          Back
+          <span class="dark:text-white">Back</span>
         <% end %>
-        <%= link_to new_software_groupware_path(@software), class: 'bg-[#0052CC] hover:bg-[#0747A6] px-3 py-2 rounded font-bold text-white text-sm md:text-base shadow transition-all duration-150 flex items-center gap-1' do %>
+  <%= link_to new_software_groupware_path(@software), class: 'bg-[#0052CC] hover:bg-[#0747A6] px-3 py-2 rounded font-bold text-white dark:text-white text-sm md:text-base shadow transition-all duration-150 flex items-center gap-1' do %>
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-          Add Product
+          <span class="dark:text-white">Add Product</span>
         <% end %>
       <% end %>
     <% end %>
@@ -18,15 +18,15 @@
   <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto items-stretch md:items-center justify-end">
     <%= form_with url: software_path, method: :get, class: 'flex flex-row gap-2 w-full md:w-auto' do |f| %>
       <div class="relative w-full md:w-64">
-        <%= f.text_field :query, placeholder: "Search products...", class: "border border-[#0052CC] rounded-lg w-full pl-8 pr-2 py-1 text-sm md:text-base focus:ring-2 focus:ring-[#0052CC] transition-all duration-150" %>
+  <%= f.text_field :query, placeholder: "Search products...", class: "border border-[#0052CC] rounded-lg w-full pl-8 pr-2 py-1 text-sm md:text-base focus:ring-2 focus:ring-[#0052CC] transition-all duration-150 dark:bg-gray-900 dark:text-white" %>
         <span class="absolute left-2 top-1.5 text-[#0052CC]">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
         </span>
       </div>
-      <%= f.submit "Search", class: 'bg-[#0052CC] hover:bg-[#0747A6] px-3 py-2 rounded font-bold text-white text-sm md:text-base shadow transition-all duration-150'  %>
+  <%= f.submit "Search", class: 'bg-[#0052CC] hover:bg-[#0747A6] px-3 py-2 rounded font-bold text-white dark:text-white text-sm md:text-base shadow transition-all duration-150'  %>
     <% end %>
     <%= form_with url: software_path, method: :get, class: 'flex' do |f| %>
-      <%= f.submit "Clear", class: 'bg-white border border-[#0052CC] hover:bg-[#F4F5F7] px-3 py-2 rounded font-bold text-[#0052CC] text-sm md:text-base shadow transition-all duration-150'  %>
+  <%= f.submit "Clear", class: 'bg-white dark:bg-gray-800 border border-[#0052CC] hover:bg-[#F4F5F7] dark:hover:bg-gray-700 px-3 py-2 rounded font-bold text-[#0052CC] dark:text-white text-sm md:text-base shadow transition-all duration-150'  %>
     <% end %>
   </div>
 </div>
