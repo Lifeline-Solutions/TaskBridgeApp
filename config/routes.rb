@@ -221,6 +221,8 @@ Rails.application.routes.draw do
     get :submodules, on: :member
   end
 
+  resources :defect_filters, only: [:index, :create, :update, :destroy]
+
   resources :reports, only: [:index] do
     collection do
       get :export_csv
