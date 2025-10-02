@@ -2,7 +2,6 @@ require 'csv'
 require 'axlsx'
 class ProfilesController < ApplicationController
   before_action :authenticate_user!
-
   def project_report
     authorize! :generate, :report
 
@@ -87,7 +86,8 @@ class ProfilesController < ApplicationController
           @user_name_to_id[assignee_name] = user.id
         end
       end
-      @user_total_assigned_tickets = @user_total_assigned_tickets.transform_values(&:size)
+      # Ensure the count is of unique ticket IDs (distinct)
+      @user_total_assigned_tickets = @user_total_assigned_tickets.transform_values { |tickets| tickets.to_a.uniq.size }
 
       tickets_fixes = Ticket.all
 
