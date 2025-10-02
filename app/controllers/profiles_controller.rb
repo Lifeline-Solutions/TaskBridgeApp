@@ -67,17 +67,15 @@ class ProfilesController < ApplicationController
       # NEW CODE: Calculate assignment data from team_profiles logic
       @tickets.pluck(:id)
 
-      # Get assignment events for all team members and these tickets
-      assignment_events = Event.where('details ILIKE ?', '%was assigned to the ticket%')
-        .where(user_id: user_ids)
-      assignment_events = assignment_events.where('created_at >= ?', start_date.beginning_of_day) if start_date
-      assignment_events = assignment_events.where('created_at <= ?', end_date.end_of_day) if end_date
+      # Get ALL assignment events for team members (not filtered by date)
+      # This represents "ever assigned" tickets
+      all_assignment_events = Event.where('details ILIKE ?', '%was assigned to the ticket%')
+                                   .where(user_id: user_ids)
 
-      # For each assignee, count UNIQUE tickets they've been assigned to (using assignee name)
-
+      # For each assignee, count UNIQUE tickets they've EVER been assigned to
       @user_total_assigned_tickets = Hash.new { |h, k| h[k] = Set.new }
       @user_name_to_id = {}
-      assignment_events.each do |event|
+      all_assignment_events.each do |event|
         assignee_name = parse_assignment_details(event.details.to_s)[:assigned_to]
         # Try to map assignee_name to a user in @team_members
         user = @team_members.find { |u| u.name.strip == assignee_name.to_s.strip }
@@ -86,25 +84,35 @@ class ProfilesController < ApplicationController
           @user_name_to_id[assignee_name] = user.id
         end
       end
+      # Get the set of ALL ticket IDs that were ever assigned
+      all_assigned_ticket_ids = @user_total_assigned_tickets.values.flat_map(&:to_a).uniq
+
       # Ensure the count is of unique ticket IDs (distinct)
       @user_total_assigned_tickets = @user_total_assigned_tickets.transform_values { |tickets| tickets.to_a.uniq.size }
 
-      tickets_fixes = Ticket.all
-
-      # Get all breached tickets that users were assigned to
+      # Get all breached tickets from ALL tickets ever assigned (not just date-filtered ones)
       breached_ticket_ids = Ticket.joins(:sla_tickets)
-        .where(id: tickets_fixes, sla_tickets: { sla_resolution_deadline: ['Breached'] })
-        .pluck(:id).to_set
+                                  .where(id: all_assigned_ticket_ids, sla_tickets: { sla_resolution_deadline: ['Breached'] })
+                                  .pluck(:id).to_set
 
       # For each user, count UNIQUE breached tickets they were assigned to
       @user_breached_tickets = Hash.new { |h, k| h[k] = Set.new }
-      assignment_events.where(ticket_id: breached_ticket_ids.to_a).each do |event|
+      all_assignment_events.where(ticket_id: breached_ticket_ids.to_a).each do |event|
         assignee_name = parse_assignment_details(event.details.to_s)[:assigned_to]
         user_id = @user_name_to_id[assignee_name]
         @user_breached_tickets[user_id] << event.ticket_id if user_id
       end
       # Convert sets to counts
       @user_breached_tickets = @user_breached_tickets.transform_values(&:size)
+
+      # Calculate breach percentage for each user
+      @user_breach_percentage = {}
+      @team_members.each do |user|
+        total_assigned = @user_total_assigned_tickets[user.id] || 0
+        breached_count = @user_breached_tickets[user.id] || 0
+        @user_breach_percentage[user.id] = total_assigned.positive? ? ((breached_count.to_f / total_assigned) * 100).round(2) : 0.0
+      end
+
 
       # Calculate breach percentage for each user
       @user_breach_percentage = {}
