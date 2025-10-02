@@ -1,37 +1,37 @@
-<div class="shadow-lg rounded-lg w-full bg-[#f4f5f7] p-4">
+<div class="shadow-lg rounded-lg w-full bg-[#f4f5f7] dark:bg-gray-900 p-4">
   <!-- Responsive Table for md and up -->
-  <table class="hidden md:table w-full text-sm text-left bg-white rounded-lg">
-    <thead class="text-xs uppercase bg-[#0747a6] text-white">
+  <table class="hidden md:table w-full text-sm text-left bg-white dark:bg-gray-900 rounded-lg">
+  <thead class="text-xs uppercase bg-[#0747a6] text-white dark:text-white">
       <tr>
-        <th class="px-4 py-3 font-semibold">Client</th>
-        <th class="px-4 py-3 font-semibold">Users</th>
-        <th class="px-4 py-3 font-semibold">Projects</th>
-        <th class="px-4 py-3 font-semibold">Tickets</th>
-        <th class="px-4 py-3 font-semibold hidden lg:table-cell">Email</th>
-        <th class="px-4 py-3 font-semibold hidden lg:table-cell">Contact</th>
+        <th class="px-4 py-3 font-semibold dark:text-white">Client</th>
+        <th class="px-4 py-3 font-semibold dark:text-white">Users</th>
+        <th class="px-4 py-3 font-semibold dark:text-white">Projects</th>
+        <th class="px-4 py-3 font-semibold dark:text-white">Tickets</th>
+        <th class="px-4 py-3 font-semibold hidden lg:table-cell dark:text-white">Email</th>
+        <th class="px-4 py-3 font-semibold hidden lg:table-cell dark:text-white">Contact</th>
         <% if can?(:edit, @client) || can?(:delete, @client) %>
-          <th class="px-4 py-3 font-semibold text-right">Actions</th>
+          <th class="px-4 py-3 font-semibold text-right dark:text-white">Actions</th>
         <% end %>
       </tr>
     </thead>
     <tbody>
       <% @client.each do |client| %>
-        <tr class="border-b hover:bg-[#eae6ff] transition">
-          <td class="px-4 py-3 font-medium whitespace-nowrap truncate max-w-[160px]">
+  <tr class="border-b hover:bg-[#eae6ff] dark:hover:bg-gray-800 transition">
+          <td class="px-4 py-3 font-medium whitespace-nowrap truncate max-w-[160px] dark:text-white">
             <div class="flex items-center gap-2">
               <div class="w-8 h-8 rounded-full bg-[#0052cc] flex items-center justify-center text-white font-bold">
                 <%= client.name[0].upcase %>
               </div>
-              <span><%= client.name %></span>
+              <span class="dark:text-white"><%= client.name %></span>
             </div>
           </td>
-          <td class="px-4 py-3 text-center"><%= client.users_count %></td>
-          <td class="px-4 py-3 text-center"><%= client.projects_count %></td>
-          <td class="px-4 py-3 text-center"><%= client.projects.sum { |project| project.tickets.count } %></td>
-          <td class="px-4 py-3 hidden lg:table-cell"><%= client.email %></td>
-          <td class="px-4 py-3 hidden lg:table-cell"><%= client.client_contact_person %></td>
+          <td class="px-4 py-3 text-center dark:text-white"><%= client.users_count %></td>
+          <td class="px-4 py-3 text-center dark:text-white"><%= client.projects_count %></td>
+          <td class="px-4 py-3 text-center dark:text-white"><%= client.projects.sum { |project| project.tickets.count } %></td>
+          <td class="px-4 py-3 hidden lg:table-cell dark:text-white"><%= client.email %></td>
+          <td class="px-4 py-3 hidden lg:table-cell dark:text-white"><%= client.client_contact_person %></td>
           <% if can?(:edit, client) || can?(:delete, client) %>
-            <td class="px-4 py-3 text-right">
+            <td class="px-4 py-3 text-right dark:text-white">
               <%= render partial: 'client/action_dropdown', locals: { client: client } %>
             </td>
           <% end %>
@@ -42,13 +42,13 @@
   <!-- Mobile Cards -->
   <div class="md:hidden space-y-4 mt-4">
     <% @client.each do |client| %>
-      <div class="bg-white rounded-lg shadow p-4 flex flex-col gap-2 border-l-4 border-[#0052cc]">
+  <div class="bg-white dark:bg-gray-900 rounded-lg shadow p-4 flex flex-col gap-2 border-l-4 border-[#0052cc]">
         <div class="flex justify-between items-center mb-2">
           <div class="flex items-center gap-2">
             <div class="w-8 h-8 rounded-full bg-[#0052cc] flex items-center justify-center text-white font-bold">
               <%= client.name[0].upcase %>
             </div>
-            <span class="font-semibold text-gray-900 text-base"><%= client.name %></span>
+            <span class="font-semibold text-gray-900 dark:text-white text-base"><%= client.name %></span>
           </div>
           <% if can?(:edit, client) || can?(:delete, client) %>
             <div>
@@ -56,26 +56,26 @@
             </div>
           <% end %>
         </div>
-        <div class="grid grid-cols-2 gap-y-2 text-sm text-gray-700">
+  <div class="grid grid-cols-2 gap-y-2 text-sm text-gray-700 dark:text-white">
           <div>
-            <span class="text-xs text-gray-500">Users</span>
-            <span class="font-medium"><%= client.users_count %></span>
+            <span class="text-xs text-gray-500 dark:text-gray-300">Users</span>
+            <span class="font-medium dark:text-white"><%= client.users_count %></span>
           </div>
           <div>
-            <span class="text-xs text-gray-500">Projects</span>
-            <span class="font-medium"><%= client.projects_count %></span>
+            <span class="text-xs text-gray-500 dark:text-gray-300">Projects</span>
+            <span class="font-medium dark:text-white"><%= client.projects_count %></span>
           </div>
           <div>
-            <span class="text-xs text-gray-500">Tickets</span>
-            <span class="font-medium"><%= client.projects.sum { |project| project.tickets.count } %></span>
+            <span class="text-xs text-gray-500 dark:text-gray-300">Tickets</span>
+            <span class="font-medium dark:text-white"><%= client.projects.sum { |project| project.tickets.count } %></span>
           </div>
           <div>
-            <span class="text-xs text-gray-500">Contact</span>
-            <span class="font-medium"><%= client.client_contact_person %></span>
+            <span class="text-xs text-gray-500 dark:text-gray-300">Contact</span>
+            <span class="font-medium dark:text-white"><%= client.client_contact_person %></span>
           </div>
         </div>
-        <div class="mt-2 text-xs text-gray-500">
-          <span><%= client.email %></span>
+        <div class="mt-2 text-xs text-gray-500 dark:text-gray-300">
+          <span class="dark:text-white"><%= client.email %></span>
         </div>
       </div>
     <% end %>
