@@ -72,6 +72,7 @@ class User < ApplicationRecord
   has_many :bugs, through: :add_bugs
 
   has_many :defect_messages, dependent: :destroy
+  has_many :defect_filters, dependent: :destroy
 
   has_many :softwares
   belongs_to :client, optional: true
