@@ -36,10 +36,11 @@
         <th class="border px-2 py-1">Project</th>
         <th class="border px-2 py-1">Subject</th>
         <th class="border px-2 py-1">Total Assignments</th>
-        <th class="border px-2 py-1">Unique Assigned</th>
+        <th class="border px-2 py-1">Assigned Users Count</th>
         <th class="border px-2 py-1">Breached</th>
         <th class="border px-2 py-1">Created At</th>
         <th class="border px-2 py-1">Status</th>
+
       </tr>
     </thead>
     <tbody>
@@ -49,11 +50,18 @@
           <td class="border px-2 py-1"><%= ticket.project&.title %></td>
           <td class="border px-2 py-1"><%= ticket.subject %></td>
           <td class="border px-2 py-1"><%= @ticket_assignment_counts[ticket.id] || 0 %></td>
-          <td class="border px-2 py-1"><%= @ticket_unique_assigned_user[ticket.id] || 0 %></td>
-
+          <td class="border px-2 py-1 font-bold"><%= (@ticket_assigned_names[ticket.id] || []).size %></td>
           <td class="border px-2 py-1"><%= @ticket_breached[ticket.id] ? 'Yes' : 'No' %></td>
           <td class="border px-2 py-1"><%= ticket.created_at.strftime('%d/%b/%Y %I:%M:%S %p') %></td>
           <td class="border px-2 py-1"><%= ticket.statuses.first&.name || 'N/A' %></td>
+          <td class="border px-2 py-1">
+            <% names = @ticket_assigned_names[ticket.id] || [] %>
+            <% if names.any? %>
+              <%= names.join(', ') %>
+            <% else %>
+              None
+            <% end %>
+          </td>
         </tr>
       <% end %>
     </tbody>
