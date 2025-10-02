@@ -18,13 +18,13 @@
             name="query" 
             value="<%= params[:query] %>" 
             placeholder="Search by content..." 
-            class="search-input"
+            class="search-input dark:text-white"
           >
-          <button type="submit" class="search-button">Search</button>
+          <button type="submit" class="search-button dark:text-white">Search</button>
         </form>
         
         <% if params[:query].present? || params[:status].present? || params[:sort_by].present? %>
-          <a href="<%= product_index_path %>" class="clear-button">Clear all</a>
+          <a href="<%= product_index_path %>" class="clear-button dark:text-white">Clear all</a>
         <% end %>
       </div>
 
@@ -32,12 +32,12 @@
       <div class="filter-dropdown" data-controller="product-topbar-dropdown">
         <form action="<%= product_index_path %>" method="get">
           <div class="dropdown-label">
-            <label for="status">Category</label>
+            <label for="status" class="dark:text-white">Category</label>
             <select 
               id="status" 
               name="status" 
               onchange="this.form.submit()" 
-              class="dropdown-select"
+              class="dropdown-select dark:text-white"
             >
               <% ['All', *@used_statuses.sort].each do |option| %>
                 <option value="<%= option %>" <%= 'selected' if params[:status] == option %>>
@@ -51,7 +51,7 @@
         <div class="dropdown-menu" data-product-topbar-dropdown-target="menu">
           <% ['All', *@used_statuses.sort].each do |category| %>
             <button 
-              class="dropdown-item" 
+              class="dropdown-item dark:text-white" 
               data-action="click->product-topbar-dropdown#select"
               data-category="<%= category %>"
             >
@@ -76,7 +76,7 @@
               id="sort_by" 
               name="sort_by" 
               onchange="this.form.submit()" 
-              class="dropdown-select"
+              class="dropdown-select dark:text-white"
             >
               <option value="upcoming" <%= 'selected' if params[:sort_by] == 'upcoming' %>>Sort by: Upcoming</option>
               <option value="recent" <%= 'selected' if params[:sort_by] == 'recent' %>>Sort by: Recent</option>
@@ -89,9 +89,9 @@
     <!-- Right side - Add New Project button -->
     <div class="right-controls">
       <% if can? :create, Product %>
-        <a href="<%= new_product_path %>" class="add-button">
-          <span class="add-icon">＋</span>
-          <span>Add New</span>
+        <a href="<%= new_product_path %>" class="add-button dark:text-white">
+          <span class="add-icon dark:text-white">＋</span>
+          <span class="dark:text-white">Add New</span>
         </a>
       <% end %>
     </div>
