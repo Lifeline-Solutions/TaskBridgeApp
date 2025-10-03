@@ -1,0 +1,10 @@
+
+<% if task.priority == 'SEVERITY 1' %>
+  <span class="p-2 rounded-md font-semibold text-sm bg-red-100 text-red-800">SEVERITY 1</span>
+<% elsif task.priority == 'SEVERITY 2' %>
+  <span class="p-2  rounded-md font-semibold text-sm bg-orange-100 text-orange-800">SEVERITY 2</span>
+<% elsif task.priority == 'SEVERITY 3' %>
+  <span class="p-2 rounded-md font-semibold text-sm bg-yellow-100 text-yellow-800">SEVERITY 3</span>
+<% else %>
+  <span class="p-2 rounded-md font-semibold text-sm bg-blue-100 text-blue-800">SEVERITY 4</span>
+<% end %>
