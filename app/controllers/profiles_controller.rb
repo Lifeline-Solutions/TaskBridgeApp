@@ -20,30 +20,30 @@ class ProfilesController < ApplicationController
       end
 
       @tickets = Ticket.joins(:statuses, :project, :taggings)
-        .where('tickets.created_at >= ? AND tickets.created_at <= ?', start_date.beginning_of_day, end_date.end_of_day)
-        .where(taggings: { user_id: user_ids })
+                       .where('tickets.created_at >= ? AND tickets.created_at <= ?', start_date.beginning_of_day, end_date.end_of_day)
+                       .where(taggings: { user_id: user_ids })
 
       @tickets_by_user = @tickets.joins(:statuses)
-        .group('taggings.user_id', 'statuses.name')
-        .count
+                                 .group('taggings.user_id', 'statuses.name')
+                                 .count
 
       @sla_status = Ticket.joins(:statuses, :project, :taggings, :sla_tickets)
-        .where(sla_tickets: { sla_status: ['Breached'] })
-        .where('tickets.created_at >= ? AND tickets.created_at <= ?', start_date.beginning_of_day, end_date.end_of_day)
-        .group('taggings.user_id')
-        .count
+                          .where(sla_tickets: { sla_status: ['Breached'] })
+                          .where('tickets.created_at >= ? AND tickets.created_at <= ?', start_date.beginning_of_day, end_date.end_of_day)
+                          .group('taggings.user_id')
+                          .count
 
       @sla_target_response_deadline = Ticket.joins(:statuses, :project, :taggings, :sla_tickets)
-        .where(sla_tickets: { sla_target_response_deadline: ['Breached'] })
-        .where('tickets.created_at >= ? AND tickets.created_at <= ?', start_date.beginning_of_day, end_date.end_of_day)
-        .group('taggings.user_id')
-        .count
+                                            .where(sla_tickets: { sla_target_response_deadline: ['Breached'] })
+                                            .where('tickets.created_at >= ? AND tickets.created_at <= ?', start_date.beginning_of_day, end_date.end_of_day)
+                                            .group('taggings.user_id')
+                                            .count
 
       @sla_resolution_deadline = Ticket.joins(:statuses, :project, :taggings, :sla_tickets)
-        .where(sla_tickets: { sla_resolution_deadline: ['Breached'] })
-        .where('tickets.created_at >= ? AND tickets.created_at <= ?', start_date.beginning_of_day, end_date.end_of_day)
-        .group('taggings.user_id')
-        .count
+                                       .where(sla_tickets: { sla_resolution_deadline: ['Breached'] })
+                                       .where('tickets.created_at >= ? AND tickets.created_at <= ?', start_date.beginning_of_day, end_date.end_of_day)
+                                       .group('taggings.user_id')
+                                       .count
 
       @organized_tickets = @tickets_by_user.each_with_object({}) do |((user_id, status), count), hash|
         hash[user_id] ||= { total: 0 }
@@ -61,10 +61,10 @@ class ProfilesController < ApplicationController
       end
       @tickets_chart_data = filtered_chart_data.transform_keys { |id| User.find(id).name }
       @tickets_per_project = @tickets
-        .joins(:statuses)
-        .where.not(statuses: { name: excluded_statuses })
-        .group('projects.title')
-        .count
+                               .joins(:statuses)
+                               .where.not(statuses: { name: excluded_statuses })
+                               .group('projects.title')
+                               .count
 
       # Get all users for mapping assignees (not just team members)
       @all_users = User.all.to_a
@@ -72,39 +72,42 @@ class ProfilesController < ApplicationController
 
       # Get assignment events for all users and these tickets, filtered by date range
       assignment_events = Event.where('details ILIKE ?', '%was assigned to the ticket%')
-      # .where(ticket_id: ticket_ids)
       assignment_events = assignment_events.where('created_at >= ?', start_date.beginning_of_day) if start_date
       assignment_events = assignment_events.where('created_at <= ?', end_date.end_of_day) if end_date
 
-      # For each assignee, count UNIQUE tickets they've been assigned to (using assignee name)
+      # For each assignee, count UNIQUE tickets they've been assigned to (case-insensitive)
       @user_total_assigned_tickets = Hash.new { |h, k| h[k] = Set.new }
       @user_name_to_id = {}
       assignment_events.each do |event|
         assignee_name = parse_assignment_details(event.details.to_s)[:assigned_to]
         next if assignee_name.blank?
 
-        user = @all_users.find { |u| u.name.strip == assignee_name.to_s.strip }
+        normalized_name = assignee_name.to_s.strip.downcase
+        user = @all_users.find { |u| u.name.strip.downcase == normalized_name }
         next unless user
 
         @user_total_assigned_tickets[user.id] << event.ticket_id
-        @user_name_to_id[assignee_name] = user.id
+        @user_name_to_id[normalized_name] = user.id
       end
       # Count unique ticket IDs per user
       @user_total_assigned_tickets = @user_total_assigned_tickets.transform_values(&:size)
 
       # Get all breached tickets from ALL tickets ever assigned (not just date-filtered ones)
       all_assigned_ticket_ids = @user_total_assigned_tickets.keys.flat_map do |user_id|
-        assignment_events.select { |e| @user_name_to_id[parse_assignment_details(e.details.to_s)[:assigned_to]] == user_id }.map(&:ticket_id)
+        assignment_events.select do |e|
+          name = parse_assignment_details(e.details.to_s)[:assigned_to].to_s.strip.downcase
+          @user_name_to_id[name] == user_id
+        end.map(&:ticket_id)
       end.uniq
       breached_ticket_ids = Ticket.joins(:sla_tickets)
-        .where(id: all_assigned_ticket_ids, sla_tickets: { sla_resolution_deadline: ['Breached'] })
-        .pluck(:id).to_set
+                                  .where(id: all_assigned_ticket_ids, sla_tickets: { sla_resolution_deadline: ['Breached'] })
+                                  .pluck(:id).to_set
 
       # For each user, count UNIQUE breached tickets they were assigned to
       @user_breached_tickets = Hash.new { |h, k| h[k] = Set.new }
       assignment_events.where(ticket_id: breached_ticket_ids.to_a).each do |event|
         assignee_name = parse_assignment_details(event.details.to_s)[:assigned_to]
-        user_id = @user_name_to_id[assignee_name]
+        user_id = @user_name_to_id[assignee_name.to_s.strip.downcase]
         @user_breached_tickets[user_id] << event.ticket_id if user_id
       end
       # Convert sets to counts
@@ -192,25 +195,25 @@ class ProfilesController < ApplicationController
     ticket_ids = assignment_events_scope.where.not(ticket_id: nil).distinct.pluck(:ticket_id)
     @assignment_events = assignment_events_scope.includes(:ticket)
     @assigned_at_by_ticket_id = @assignment_events
-      .group_by(&:ticket_id)
-      .transform_values { |evs| evs.min_by(&:created_at)&.created_at }
+                                  .group_by(&:ticket_id)
+                                  .transform_values { |evs| evs.min_by(&:created_at)&.created_at }
 
     @all_ticket_events_by_ticket = Event
-      .where(ticket_id: ticket_ids)
-      .select(:ticket_id, :details, :created_at)
-      .group_by(&:ticket_id)
+                                     .where(ticket_id: ticket_ids)
+                                     .select(:ticket_id, :details, :created_at)
+                                     .group_by(&:ticket_id)
 
     @tickets = Ticket.where(id: ticket_ids)
-      .includes({ project: :client }, :events, :issues, :statuses, :sla_tickets)
-      .distinct
+                     .includes({ project: :client }, :events, :issues, :statuses, :sla_tickets)
+                     .distinct
 
     filtered_tickets = @tickets
     @status_counts = filtered_tickets
-      .group_by { |ticket| ticket.statuses.first&.name || 'N/A' }
-      .transform_values(&:count)
+                       .group_by { |ticket| ticket.statuses.first&.name || 'N/A' }
+                       .transform_values(&:count)
 
     @tickets_by_client = filtered_tickets
-      .group_by { |ticket| ticket.project&.client&.name || 'Unknown Client' }
+                           .group_by { |ticket| ticket.project&.client&.name || 'Unknown Client' }
 
     @events = @assignment_events.to_a
 
@@ -262,8 +265,8 @@ class ProfilesController < ApplicationController
           next_handover = handovers_for_user.find { |h| h.created_at > assign_event.created_at }
           terminal_time = terminal_state_time_for(ticket)
           candidate_end_times = [next_assignment&.created_at, next_handover&.created_at, terminal_time]
-            .compact
-            .select { |t| t > assigned_at }
+                                  .compact
+                                  .select { |t| t > assigned_at }
           end_time = candidate_end_times.min || Time.current
           hold_periods << (end_time - assigned_at)
         end
@@ -302,7 +305,7 @@ class ProfilesController < ApplicationController
       end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
 
       @tickets = @user.tickets.joins(project: :client)
-        .where(clients: { name: params[:client_name] })
+                      .where(clients: { name: params[:client_name] })
       @tickets = @tickets.where('tickets.created_at >= ?', start_date) if start_date
       @tickets = @tickets.where('tickets.created_at <= ?', end_date) if end_date
 
