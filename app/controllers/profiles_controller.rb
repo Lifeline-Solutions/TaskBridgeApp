@@ -72,29 +72,32 @@ class ProfilesController < ApplicationController
 
       # Get assignment events for all users and these tickets, filtered by date range
       assignment_events = Event.where('details ILIKE ?', '%was assigned to the ticket%')
-      # .where(ticket_id: ticket_ids)
       assignment_events = assignment_events.where('created_at >= ?', start_date.beginning_of_day) if start_date
       assignment_events = assignment_events.where('created_at <= ?', end_date.end_of_day) if end_date
 
-      # For each assignee, count UNIQUE tickets they've been assigned to (using assignee name)
+      # For each assignee, count UNIQUE tickets they've been assigned to (case-insensitive)
       @user_total_assigned_tickets = Hash.new { |h, k| h[k] = Set.new }
       @user_name_to_id = {}
       assignment_events.each do |event|
         assignee_name = parse_assignment_details(event.details.to_s)[:assigned_to]
         next if assignee_name.blank?
 
-        user = @all_users.find { |u| u.name.strip == assignee_name.to_s.strip }
+        normalized_name = assignee_name.to_s.strip.downcase
+        user = @all_users.find { |u| u.name.strip.downcase == normalized_name }
         next unless user
 
         @user_total_assigned_tickets[user.id] << event.ticket_id
-        @user_name_to_id[assignee_name] = user.id
+        @user_name_to_id[normalized_name] = user.id
       end
       # Count unique ticket IDs per user
       @user_total_assigned_tickets = @user_total_assigned_tickets.transform_values(&:size)
 
       # Get all breached tickets from ALL tickets ever assigned (not just date-filtered ones)
       all_assigned_ticket_ids = @user_total_assigned_tickets.keys.flat_map do |user_id|
-        assignment_events.select { |e| @user_name_to_id[parse_assignment_details(e.details.to_s)[:assigned_to]] == user_id }.map(&:ticket_id)
+        assignment_events.select do |e|
+          name = parse_assignment_details(e.details.to_s)[:assigned_to].to_s.strip.downcase
+          @user_name_to_id[name] == user_id
+        end.map(&:ticket_id)
       end.uniq
       breached_ticket_ids = Ticket.joins(:sla_tickets)
         .where(id: all_assigned_ticket_ids, sla_tickets: { sla_resolution_deadline: ['Breached'] })
@@ -104,7 +107,7 @@ class ProfilesController < ApplicationController
       @user_breached_tickets = Hash.new { |h, k| h[k] = Set.new }
       assignment_events.where(ticket_id: breached_ticket_ids.to_a).each do |event|
         assignee_name = parse_assignment_details(event.details.to_s)[:assigned_to]
-        user_id = @user_name_to_id[assignee_name]
+        user_id = @user_name_to_id[assignee_name.to_s.strip.downcase]
         @user_breached_tickets[user_id] << event.ticket_id if user_id
       end
       # Convert sets to counts
