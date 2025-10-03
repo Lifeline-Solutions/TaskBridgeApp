@@ -1,0 +1,119 @@
+<div class="overflow-x-auto shadow-md sm:rounded-lg h-full">
+  <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+    <thead class="text-xs uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400 w-[100%]">
+    <tr>
+      <th scope="col" class="px-2 sm:px-6 py-2 sm:py-3">
+        Name of Project
+      </th>
+      <th scope="col" class="hidden sm:table-cell px-2 sm:px-6 py-2 sm:py-3">
+        Production Description
+      </th>
+      <th scope="col" class="hidden md:table-cell px-2 sm:px-6 py-2 sm:py-3">
+        Start Date
+      </th>
+      <th scope="col" class="hidden md:table-cell px-2 sm:px-6 py-2 sm:py-3">
+        End Date
+      </th>
+      <th scope="col" class="hidden sm:table-cell px-2 sm:px-6 py-2 sm:py-3">
+        Assignee
+      </th>
+      <th scope="col" class="hidden lg:table-cell px-2 sm:px-6 py-2 sm:py-3">
+        Product Category
+      </th>
+      <th scope="col" class="hidden md:table-cell px-2 sm:px-6 py-2 sm:py-3">
+        Clients
+      </th>
+      <th scope="col" class="px-2 sm:px-6 py-2 sm:py-3">
+        Actions
+      </th>
+    </tr>
+    </thead>
+    <tbody class="text-xs sm:text-sm font-normal text-gray-900 dark:text-gray-400">
+    <% @product.each do |product|  %>
+      <% if product.added_to?(current_user) or current_user.has_role?(:admin) %>
+        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 h-10 sm:h-12 text-left">
+          <th scope="row" class="px-2 sm:px-6 py-2 sm:py-4 font-medium whitespace-nowrap text-left">
+            <%= link_to product.name, product_path(product.id) %>
+          </th>
+          <td class="hidden sm:table-cell px-2 sm:px-6 py-2 sm:py-4">
+            <%= product.description.truncate(50) %>
+          </td>
+          <td class="hidden md:table-cell px-2 sm:px-6 py-2 sm:py-4">
+            <%= product.start_date.strftime("%d-%b-%y") %>
+          </td>
+          <td class="hidden md:table-cell px-2 sm:px-6 py-2 sm:py-4">
+            <% if product.end_date.present? %>
+              <% if product.end_date <= Date.today %>
+                <p class="text-red-900 p-1 rounded font-bold">
+                  <%= product.end_date.strftime("%d-%b-%y") %>
+                </p>
+              <% else %>
+                <p class="bg-red-green p-1 rounded">
+                  <%= product.end_date.strftime("%d-%b-%y") %>
+                </p>
+              <% end %>
+            <% end %>
+          </td>
+          <td class="hidden sm:table-cell px-2 sm:px-6 py-2 sm:py-4">
+            <%= product.user.name %>
+          </td>
+          <td class="hidden lg:table-cell px-2 sm:px-6 py-2 sm:py-4 capitalize">
+            <% product.softwares.each do |software| %>  <!-- Iterate through software for the current project -->
+              <%= software.name %>
+            <% end %>
+          </td>
+          <td class="hidden md:table-cell px-2 sm:px-6 py-2 sm:py-4 capitalize">
+            <% if product.client.present? && product.client.name.present? %>
+              <%= product.client.name %>
+            <% end %>
+          </td>
+
+          <!-- Actions -->
+          <td class="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap font-medium text-right" data-controller="dropdown" data-dropdown-ticket-id-value="<%= product.id %>">
+            <div class="relative w-full flex justify-start">
+              <%= render partial: 'product/action_dropdown', locals: { product: product } %>
+            </div>
+          </td>
+        </tr>
+      <% end %>
+    <% end %>
+    </tbody>
+  </table>
+</div>
+<div class="flex flex-wrap justify-center sm:justify-start gap-4 sm:gap-10 mt-4 sm:mt-5 px-2 sm:px-0">
+  <!-- Pagination Controls -->
+  <div class="pagination flex items-center flex-wrap gap-2 sm:gap-4">
+    <% if @page > 1 %>
+      <%= link_to 'Previous', product_index_path(@product, page: @page - 1, query: params[:query]), class: 'mb-4 h-8 sm:h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] px-2 sm:p-3 py-1 text-xs sm:text-sm rounded font-bold rounded-lg text-slate-100' %>
+    <% end %>
+    <span class="text-xs sm:text-sm">Page <%= @page %> of <%= @total_pages %></span>
+    <% if @page < @total_pages %>
+      <%= link_to 'Next', product_index_path(@product, page: @page + 1, query: params[:query]), class: 'mb-4 h-8 sm:h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] px-2 sm:p-3 py-1 text-xs sm:text-sm rounded font-bold rounded-lg text-slate-100' %>
+    <% end %>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("turbo:load", function() {
+    const sidebar = document.getElementById("sidebar"); // Ensure sidebar has this ID
+    const tableColumns = document.querySelectorAll(".hide-in-sidebar");
+
+    function toggleColumns() {
+      if (sidebar.classList.contains("w-64")) {
+        // If sidebar is expanded, hide the columns
+        tableColumns.forEach(col => {
+          col.style.display = "none";
+        });
+      } else {
+        // If sidebar is collapsed, show the columns
+        tableColumns.forEach(col => {
+          col.style.display = "table-cell"; // Use table-cell instead of block
+        });
+      }
+    }
+
+    toggleColumns(); // Run initially
+    const observer = new MutationObserver(toggleColumns);
+    observer.observe(sidebar, { attributes: true });
+  });
+</script>
