@@ -1,0 +1,18 @@
+<% provide(:title, "Projects") %>
+
+<% if flash[:notice] %>
+  <div class="bg-[#1a237e] border border-[#4caf50] text-white px-4 py-3 rounded mb-4 shadow-md">
+    <p><%= flash[:notice] %></p>
+  </div>
+<% elsif flash[:alert] %>
+  <div class="bg-red-600 border border-red-400 text-white px-4 py-3 rounded mb-4 shadow-md">
+    <p><%= flash[:alert] %></p>
+  </div>
+<% end %>
+
+<%= render 'product/product_index_topbar' %>
+<%= render partial: 'product/product_grid', locals: {
+  product: @product,
+  chosen_software_id: @chosen_software_id,
+  selected_groupware_id: @selected_groupware_id
+} %>
