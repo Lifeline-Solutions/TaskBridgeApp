@@ -1,6 +1,6 @@
 <% progress = ticket.progress_percentage || 0 %>
-<% radius = 20 %>
-<% stroke = 5 %>
+<% radius = 16 %>
+<% stroke = 3 %>
 <% normalized_radius = radius - stroke %>
 <% circumference = 2 * Math::PI * normalized_radius %>
 <% stroke_dashoffset = circumference - (progress.to_f / 100) * circumference %>
@@ -8,14 +8,14 @@
 <% color = if ticket.progress_percentage.nil?
              '#9CA3AF' # gray-400
            elsif ticket.progress_percentage < 30
-             '#DC2626' # red-600
+             '#830303ff'
            elsif ticket.progress_percentage < 60
-             '#2563EB' # blue-600
+             '#d7eb25ff' # yellow-400
            else
              ticket.progress_percentage >= 100 ? '#000000' : '#16A34A' # black or green-600
            end %>
 
-<div class="relative flex items-center justify-center w-16 h-16">
+<div class="relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12">
   <!-- SVG Donut -->
   <svg
     height="100%"
@@ -46,7 +46,12 @@
       />
   </svg>
   <!-- Centered Label -->
-  <div class="absolute text-sm font-bold" style="color: <%= color %>">
+  <div class="absolute text-xs sm:text-sm font-bold" style="color: <%= color %>">
     <%= progress %>%
   </div>
+  
+  <!-- Mobile percentage text -->
+  <span class="sm:hidden text-xs font-medium text-gray-700 dark:text-gray-300 flex-shrink-0">
+    <%= progress %>%
+  </span>
 </div>

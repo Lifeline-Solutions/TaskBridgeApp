@@ -1,76 +1,67 @@
-
-  <div class="mx-auto">
-    <h2>Update Profile</h2>
-    <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put }, data: {turbo: true}) do |f| %>
-      <%= render "devise/shared/error_messages", resource: resource %>
-      <div class="mb-5">
-        <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-          First Name
-        </label>
+<div class="mx-auto max-w-2xl bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-[#E9EDF5]">
+  <h2 class="text-3xl font-bold mb-6 text-[#0052CC] dark:text-white flex items-center">
+    <svg class="w-8 h-8 mr-2 text-[#0052CC]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="18" rx="2"/><rect x="14" y="3" width="7" height="9" rx="2"/></svg>
+    Update Profile
+  </h2>
+  <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put, class: "space-y-6" }, data: {turbo: true}) do |f| %>
+    <%= render "devise/shared/error_messages", resource: resource %>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-[#F4F5F7] dark:bg-gray-700 rounded-lg p-4 shadow-sm flex flex-col border border-[#E9EDF5]">
+        <label for="first_name" class="mb-2 text-sm font-semibold text-[#172B4D] dark:text-white">First Name</label>
         <% if current_user.has_role?(:admin) %>
-          <%= f.text_field :first_name, autofocus: true, autocomplete: 'name', class: "h-12 border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg w-full dark:bg-gray-700", placeholder: 'Jay', required: true %>
+          <%= f.text_field :first_name, autofocus: true, autocomplete: 'name', class: "h-10 border border-[#0052CC] hover:border-[#0747A6] rounded-lg px-3 w-full dark:bg-gray-700", placeholder: 'Jay', required: true %>
         <% else %>
-          <%= f.text_field :first_name, autofocus: true, autocomplete: 'name', class: "h-12 border border-[#B2B8C2] hover:border-[#3A81EB] border-2 rounded-lg w-full dark:bg-gray-700", placeholder: 'Jay', readonly: true %>
+          <%= f.text_field :first_name, autofocus: true, autocomplete: 'name', class: "h-10 border border-[#B2B8C2] hover:border-[#0747A6] rounded-lg px-3 w-full dark:bg-gray-700", placeholder: 'Jay', readonly: true %>
         <% end %>
       </div>
-      <div class="mb-5">
-        <label for="last name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-          Last Name
-        </label>
+      <div class="bg-[#F4F5F7] dark:bg-gray-700 rounded-lg p-4 shadow-sm flex flex-col border border-[#E9EDF5]">
+        <label for="last_name" class="mb-2 text-sm font-semibold text-[#172B4D] dark:text-white">Last Name</label>
         <% if current_user.has_role?(:admin) %>
-          <%= f.text_field :last_name, autofocus: true, autocomplete: 'name', class: "h-12 border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg w-full dark:bg-gray-700", placeholder: 'Strong', required: true %>
+          <%= f.text_field :last_name, autofocus: true, autocomplete: 'name', class: "h-10 border border-[#0052CC] hover:border-[#0747A6] rounded-lg px-3 w-full dark:bg-gray-700", placeholder: 'Strong', required: true %>
         <% else %>
-          <%= f.text_field :last_name, autofocus: true, autocomplete: 'name', class: "h-12 border border-[#B2B8C2] hover:border-[#3A81EB] border-2 rounded-lg w-full dark:bg-gray-700", placeholder: 'Strong', readonly: true %>
+          <%= f.text_field :last_name, autofocus: true, autocomplete: 'name', class: "h-10 border border-[#B2B8C2] hover:border-[#0747A6] rounded-lg px-3 w-full dark:bg-gray-700", placeholder: 'Strong', readonly: true %>
         <% end %>
       </div>
-      <div class="mb-5">
-        <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-          Your email
-        </label>
+      <div class="bg-[#F4F5F7] dark:bg-gray-700 rounded-lg p-4 shadow-sm flex flex-col col-span-2 border border-[#E9EDF5]">
+        <label for="email" class="mb-2 text-sm font-semibold text-[#172B4D] dark:text-white">Your Email</label>
         <% if current_user.has_role?(:admin) %>
-          <%= f.email_field :email, autofocus: true, autocomplete: 'email', class: "h-12 border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg w-full dark:bg-gray-700", placeholder: 'name@craftsilicon.com', required: true %>
+          <%= f.email_field :email, autofocus: true, autocomplete: 'email', class: "h-10 border border-[#0052CC] hover:border-[#0747A6] rounded-lg px-3 w-full dark:bg-gray-700", placeholder: 'name@craftsilicon.com', required: true %>
         <% else %>
-          <%= f.email_field :email, autofocus: true, autocomplete: 'email', class: "h-12 border border-[#B2B8C2] hover:border-[#3A81EB] border-2 rounded-lg w-full dark:bg-gray-700", placeholder: 'name@craftsilicon.com', readonly: true %>
+          <%= f.email_field :email, autofocus: true, autocomplete: 'email', class: "h-10 border border-[#B2B8C2] hover:border-[#0747A6] rounded-lg px-3 w-full dark:bg-gray-700", placeholder: 'name@craftsilicon.com', readonly: true %>
         <% end %>
       </div>
-      <div class="mb-5">
-        <label for="profile_picture" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-          Profile Picture
-        </label>
-        <%= f.file_field :profile_picture, class: " p-2 border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg w-full"  %>
+      <div class="bg-[#F4F5F7] dark:bg-gray-700 rounded-lg p-4 shadow-sm flex flex-col col-span-2 border border-[#E9EDF5]">
+        <label for="profile_picture" class="mb-2 text-sm font-semibold text-[#172B4D] dark:text-white">Profile Picture</label>
+        <%= f.file_field :profile_picture, class: "h-10 border border-[#0052CC] hover:border-[#0747A6] rounded-lg px-3 w-full bg-white dark:bg-gray-700"  %>
       </div>
-      <% if devise_mapping.confirmable? && resource.pending_reconfirmation? %>
-        <div>Currently waiting confirmation for: <%= resource.unconfirmed_email %>
-        </div>
-      <% end %>
-      <div class="grid-cols-3 grid gap-2">
-        <div class="field">
-          <%= f.label :password %>
-          <i class="block mb-2 text-xs font-medium text-gray-900 dark:text-white ">
-            (leave blank if you don't want to change it)
-          </i><br />
-          <%= f.password_field :password, autocomplete: "new-password", class: " p-2 border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg w-full dark:bg-gray-700" %>
-          <% if @minimum_password_length %>
-            <br />
-            <em>
-              <%= @minimum_password_length %> characters minimum</em>
-          <% end %>
-        </div>
-        <div class="field">
-          <%= f.label :password_confirmation %>
-          <i class="block mb-2 text-xs font-medium text-gray-900 dark:text-white">
-            (Confirm your password)
-          </i><br />
-          <%= f.password_field :password_confirmation, autocomplete: "new-password", class: " p-2 border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg w-full dark:bg-gray-700" %>
-        </div>
-        <div class="field">
-          <%= f.label :current_password %> <i class="block mb-2 text-xs font-medium text-gray-900 dark:text-white">(we need your current password to confirm your changes)</i><br />
-          <%= f.password_field :current_password, autocomplete: "current-password", class: " p-2 border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg w-full dark:bg-gray-700" %>
-        </div>
-      </div>
-      <div class="actions mt-2">
-        <%= f.submit "Update",   class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100 w-1/5'  %>
+    </div>
+    <% if devise_mapping.confirmable? && resource.pending_reconfirmation? %>
+      <div class="bg-[#FFFAE6] text-[#FF991F] rounded-lg p-3 mt-4 border border-[#FFE380]">
+        Currently waiting confirmation for: <%= resource.unconfirmed_email %>
       </div>
     <% end %>
-  </div>
-
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+      <div class="bg-[#F4F5F7] dark:bg-gray-700 rounded-lg p-4 shadow-sm flex flex-col border border-[#E9EDF5]">
+        <%= f.label :password, class: "font-semibold text-[#172B4D] dark:text-white" %>
+        <span class="text-xs text-[#6B778C] dark:text-gray-300 mb-2">(leave blank if you don't want to change it)</span>
+        <%= f.password_field :password, autocomplete: "new-password", class: "h-10 border border-[#0052CC] hover:border-[#0747A6] rounded-lg px-3 w-full dark:bg-gray-700" %>
+        <% if @minimum_password_length %>
+          <span class="text-xs text-[#6B778C] mt-1"><%= @minimum_password_length %> characters minimum</span>
+        <% end %>
+      </div>
+      <div class="bg-[#F4F5F7] dark:bg-gray-700 rounded-lg p-4 shadow-sm flex flex-col border border-[#E9EDF5]">
+        <%= f.label :password_confirmation, class: "font-semibold text-[#172B4D] dark:text-white" %>
+        <span class="text-xs text-[#6B778C] dark:text-gray-300 mb-2">(Confirm your password)</span>
+        <%= f.password_field :password_confirmation, autocomplete: "new-password", class: "h-10 border border-[#0052CC] hover:border-[#0747A6] rounded-lg px-3 w-full dark:bg-gray-700" %>
+      </div>
+      <div class="bg-[#F4F5F7] dark:bg-gray-700 rounded-lg p-4 shadow-sm flex flex-col border border-[#E9EDF5]">
+        <%= f.label :current_password, class: "font-semibold text-[#172B4D] dark:text-white" %>
+        <span class="text-xs text-[#6B778C] dark:text-gray-300 mb-2">(we need your current password to confirm your changes)</span>
+        <%= f.password_field :current_password, autocomplete: "current-password", class: "h-10 border border-[#0052CC] hover:border-[#0747A6] rounded-lg px-3 w-full dark:bg-gray-700" %>
+      </div>
+    </div>
+    <div class="flex justify-end mt-8">
+      <%= f.submit "Update", class: 'h-12 bg-[#0052CC] hover:bg-[#0747A6] px-6 rounded-lg font-bold text-white shadow-md transition-colors duration-200' %>
+    </div>
+  <% end %>
+</div>

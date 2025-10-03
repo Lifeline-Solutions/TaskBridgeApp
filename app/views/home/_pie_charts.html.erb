@@ -1,5 +1,16 @@
-<div class="flex items-center justify-center p-4">
+<div class="flex items-center justify-center p-2 sm:p-4 w-full">
   <div class="w-full sm:w-3/4 md:w-2/3 lg:w-1/2 xl:w-1/3">
-    <%= column_chart @status_data, colors: %w[#EF4444 #10B981 #1F2937 #EC4899 #8B5CF6 #34D399 #F97316 #6EE7B7 #6366F1 #F43F5E #3B82F6 #A3E635], library: { legend: { position: 'bottom' }, plugins: { datalabels: { align: 'end', anchor: 'end' } } } %>
+    <p class="pt-2 text-center text-xs sm:text-sm md:text-base font-medium mb-2">Status Distribution</p>
+    <div class="overflow-x-auto">
+      <%= column_chart @status_data, 
+            colors: %w[#EF4444 #10B981 #1F2937 #EC4899 #8B5CF6 #34D399 #F97316 #6EE7B7 #6366F1 #F43F5E #3B82F6 #A3E635], 
+            library: { 
+              legend: { position: 'bottom' }, 
+              plugins: { datalabels: { align: 'end', anchor: 'end' } },
+              responsive: true,
+              maintainAspectRatio: false,
+              height: '250px'
+            } %>
+    </div>
   </div>
 </div>

@@ -1,77 +1,82 @@
 <h1 class="flex justify-center text-2xl font-bold mb-4">
   Assigned Tickets for <%= @user.name %>
 </h1>
-<div class="mx-auto mb-4 px-4 sm:px-6 lg:px-8 py-8">
-  <!-- New table to show project names and ticket counts -->
-  <table class="border-collapse border border-gray-300 w-full mb-4">
-    <thead>
-    <tr>
-      <th scope="col" class="border border-gray-300 px-4 py-2">Project Name</th>
-      <th scope="col" class="border border-gray-300 px-4 py-2">Number of Tickets</th>
-    </tr>
-    </thead>
-    <tbody>
-    <% @tickets.group_by { |ticket| ticket.project.title }
-               .sort_by { |_, tickets| -tickets.count }
-               .each do |project_title, tickets| %>
-      <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-        <td class="px-4 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white capitalize">
-          <%= project_title %>
-        </td>
-        <td class="px-4 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-          <%= tickets.count %>
-        </td>
-      </tr>
-    <% end %>
-    </tbody>
-  </table>
-  <table class="border-collapse border border-gray-300 w-full mb-4">
-    <thead>
-      <tr>
-        <th scope="col" class="border border-gray-300 px-4 py-2">Date of Creation</th>
-        <th scope="col" class="border border-gray-300 px-4 py-2">Service Desk</th>
-        <th scope="col" class="border border-gray-300 px-4 py-2">Ticket ID</th>
-        <th scope="col" class="border border-gray-300 px-4 py-2">Issue</th>
-        <th scope="col" class="border border-gray-300 px-4 py-2">Priority</th>
-        <th scope="col" class="border border-gray-300 px-4 py-2">Assigned To</th>
-        <th scope="col" class="border border-gray-300 px-4 py-2">STATUS</th>
-        <th scope="col" class="border border-gray-300 px-4 py-2">PROGRESS BAR</th>
-        <th scope="col" class="border border-gray-300 px-4 py-2">VIEW</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @tickets.each do |ticket| %>
+<div class="mx-auto mb-4 px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
+  <!-- Responsive table for project names and ticket counts -->
+  <div class="overflow-x-auto rounded-lg shadow mb-4">
+    <table class="min-w-full border-collapse border border-gray-300">
+      <thead>
+        <tr>
+          <th scope="col" class="border border-gray-300 px-2 sm:px-4 py-2 text-xs sm:text-sm">Project Name</th>
+          <th scope="col" class="border border-gray-300 px-2 sm:px-4 py-2 text-xs sm:text-sm">Number of Tickets</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @tickets.group_by { |ticket| ticket.project.title }
+                   .sort_by { |_, tickets| -tickets.count }
+                   .each do |project_title, tickets| %>
           <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-            <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+            <td class="px-2 sm:px-4 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white capitalize text-xs sm:text-sm">
+              <%= project_title %>
+            </td>
+            <td class="px-2 sm:px-4 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white text-xs sm:text-sm">
+              <%= tickets.count %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <!-- Responsive table for tickets -->
+  <div class="overflow-x-auto rounded-lg shadow">
+    <table class="min-w-full border-collapse border border-gray-300">
+      <thead>
+        <tr>
+          <th scope="col" class="border border-gray-300 px-2 sm:px-4 py-2 text-xs sm:text-sm">Date of Creation</th>
+          <th scope="col" class="border border-gray-300 px-2 sm:px-4 py-2 text-xs sm:text-sm">Service Desk</th>
+          <th scope="col" class="border border-gray-300 px-2 sm:px-4 py-2 text-xs sm:text-sm">Ticket ID</th>
+          <th scope="col" class="border border-gray-300 px-2 sm:px-4 py-2 text-xs sm:text-sm">Issue</th>
+          <th scope="col" class="border border-gray-300 px-2 sm:px-4 py-2 text-xs sm:text-sm">Priority</th>
+          <th scope="col" class="border border-gray-300 px-2 sm:px-4 py-2 text-xs sm:text-sm">Assigned To</th>
+          <th scope="col" class="border border-gray-300 px-2 sm:px-4 py-2 text-xs sm:text-sm">STATUS</th>
+          <th scope="col" class="border border-gray-300 px-2 sm:px-4 py-2 text-xs sm:text-sm">PROGRESS BAR</th>
+          <th scope="col" class="border border-gray-300 px-2 sm:px-4 py-2 text-xs sm:text-sm">VIEW</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @tickets.each do |ticket| %>
+          <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+            <th scope="row" class="px-1 sm:px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white text-xs sm:text-sm">
               <%= link_to ticket.created_at.strftime("%d %b %Y"), project_ticket_path(ticket.project, ticket) %>
             </th>
-            <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white capitalize">
+            <th scope="row" class="px-1 sm:px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white capitalize text-xs sm:text-sm">
               <%= link_to ticket.project.title, project_ticket_path(ticket.project, ticket) if ticket.unique_id.present? %>
             </th>
-            <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
+            <th scope="row" class="px-1 sm:px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase text-xs sm:text-sm">
               <%= link_to ticket.unique_id, project_ticket_path(ticket.project, ticket) if ticket.unique_id.present? %>
             </th>
-            <td class="px-2 py-2 grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-4">
+            <td class="px-1 sm:px-2 py-2 grid grid-cols-[auto_1fr_auto] items-center gap-2 sm:gap-4 text-xs sm:text-sm">
               <%= render partial: 'tickets/summary', locals: { ticket: ticket } %>
             </td>
-            <td class="px-2 py-2">
+            <td class="px-1 sm:px-2 py-2 text-xs sm:text-sm">
               <%= render partial: 'tickets/priority_severity', locals: { ticket: ticket } %>
             </td>
-            <td class="px-2 py-2 font-bold">
+            <td class="px-1 sm:px-2 py-2 font-bold text-xs sm:text-sm">
               <%= @user.name %>
             </td>
-            <td class="px-2 py-2">
+            <td class="px-1 sm:px-2 py-2 text-xs sm:text-sm">
               <%= render partial: 'tickets/ticket_status', locals: { ticket: ticket } %>
             </td>
             <!-- Progress Bar -->
-            <td class="pl-2 pr-5 py-2">
+            <td class="pl-1 sm:pl-2 pr-2 sm:pr-5 py-2 text-xs sm:text-sm">
               <%= render partial: 'tickets/progress_bar', locals: { ticket: ticket } %>
             </td>
-            <td class="px-4 py-4 whitespace-nowrap font-medium" data-controller="dropdown" data-dropdown-ticket-id-value="<%= ticket.id %>">
+            <td class="px-2 py-2 whitespace-nowrap font-medium text-xs sm:text-sm" data-controller="dropdown" data-dropdown-ticket-id-value="<%= ticket.id %>">
               <%= render partial: 'tickets/action_dropdown', locals: { ticket: ticket } %>
             </td>
           </tr>
         <% end %>
       </tbody>
     </table>
+  </div>
 </div>

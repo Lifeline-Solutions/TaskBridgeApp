@@ -1,27 +1,37 @@
-<div class="grid grid-cols-2 mb-4">
-  <div class="grid col-span-1">
-    <% if can? :create, @status %>
-      <% if current_user.has_role? :admin  %>
-        <div class="flex gap-1">
-          <%= button_to root_path, method: :get, class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' do %>
-            &#8656; Back
-          <% end %>
-          <%= button_to 'Add Status +', new_status_path, method: :get, class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100'  %>
+<div class="bg-white dark:bg-gray-900 shadow rounded-lg p-4 mb-4">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <!-- Left: Actions -->
+    <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center w-full sm:w-auto">
+      <% if can? :create, @status %>
+        <% if current_user.has_role? :admin  %>
+          <div class="flex flex-row gap-2 w-full sm:w-auto">
+            <%= button_to root_path, method: :get, class: 'flex items-center gap-2 bg-white dark:bg-gray-800 border border-[#0052CC] dark:border-white hover:bg-[#E3F2FD] dark:hover:bg-gray-700 px-4 py-2 rounded-lg font-semibold text-[#0052CC] dark:text-white shadow-sm transition w-full sm:w-auto whitespace-normal break-words' do %>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+              </svg>
+              <span class="whitespace-normal break-words dark:text-white">Back</span>
+            <% end %>
+            <%= button_to new_status_path, method: :get, class: 'flex items-center gap-2 bg-[#0052CC] hover:bg-[#0747A6] px-4 py-2 rounded-lg font-semibold text-white dark:text-white shadow-lg transition w-full sm:w-auto whitespace-normal break-words' do %>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              <span class="whitespace-normal break-words dark:text-white">Add Status</span>
+            <% end %>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+    <!-- Right: Search -->
+    <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center w-full sm:w-auto">
+      <%= form_with url: status_index_path, method: :get, class: 'w-full sm:w-auto' do |f| %>
+        <div class="flex flex-col sm:flex-row w-full sm:w-auto">
+          <%= f.text_field :query, placeholder: "Search statuses...", class: "w-full sm:w-48 px-2 py-1 border border-[#0052CC] dark:border-white rounded focus:outline-none focus:ring-2 focus:ring-[#0052CC] transition mb-2 sm:mb-0 sm:mr-2 dark:bg-gray-900 dark:text-white" %>
+          <div class="flex flex-row gap-2 w-full sm:w-auto">
+            <%= f.submit "Search", class: 'bg-[#0052CC] hover:bg-[#0747A6] px-3 py-2 rounded font-semibold text-white dark:text-white shadow-sm transition w-full sm:w-auto'  %>
+            <%= button_to "Clear", status_index_path, method: :get, class: 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-2 rounded font-semibold text-[#0052CC] dark:text-white border border-[#0052CC] dark:border-white shadow-sm transition w-full sm:w-auto', form_class: 'inline' %>
+          </div>
         </div>
-      <% end %>
-    <% end %>
-  </div>
-  <!-- Search on the right -->
-  <div class="grid col-span-1 justify-end">
-    <div class="flex flex-col md:flex-row items-start md:items-center w-full gap-1">
-      <%= form_with url: status_index_path, method: :get, class: 'flex gap-1' do |f| %>
-        <%= f.text_field :query, placeholder: "Search ", class: " p-1 border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg w-full" %>
-        <%= f.submit "Search", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100'  %>
-      <% end %>
-      <%= form_with url: status_index_path, method: :get, class: 'flex' do |f| %>
-        <%= f.submit "Clear", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100'  %>
       <% end %>
     </div>
   </div>
-
 </div>

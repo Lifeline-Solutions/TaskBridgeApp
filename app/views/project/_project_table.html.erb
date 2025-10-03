@@ -1,174 +1,162 @@
-<div class="overflow-x-auto shadow-md sm:rounded-lg">
-  <table class="w-full text-sm text-left rtl:text-right text-gray-900 dark:text-gray-400">
-    <thead class="text-xs uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400">
-    <tr>
-      <th scope="col" class="px-4 py-2">Logo</th>
-      <th scope="col" class="px-4 py-2">Name of Project</th>
-      <th scope="col" class="px-4 px-2">Project Description</th>
-      <th scope="col" class="px-4 px-2">Total Tickets</th>
-      <th scope="col" class="px-4 px-2">Average Rating</th>
-      <th scope="col" class="px-4 px-2">Assignee</th>
-      <th scope="col" class="px-4 px-2">Client</th>
-      <th scope="col" class="px-4 px-2">Product Category</th>
-      <% if current_user.has_role? :admin %>
-        <% if can?(:edit, @project) || can?(:delete, @project) %>
-          <th scope="col" class="px-4 px-2">ACTIONS</th>
-        <% end %>
-      <% end %>
-    </tr>
-    </thead>
-    <tbody>
-    <% @project.each do |project| %>  <!-- Looping through each project -->
-      <% if project.assigned_to?(current_user) || current_user.has_role?(:admin) or current_user.has_role?(:observer) or current_user.has_role?(:agent)  %>
-        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 h-12 text-center" style="cursor:pointer;" onclick="window.location='<%= project_path(project.id) %>'">
-            <td class="px-4 py-4 font-medium text-left">
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+  <!-- Mobile card view for small screens -->
+  <div class="block sm:hidden">
+    <% @project.each do |project| %>
+      <% if project.assigned_to?(current_user) || current_user.has_role?(:admin) || current_user.has_role?(:observer) || current_user.has_role?(:agent) %>
+        <div class="border-b border-gray-200 dark:border-gray-700 p-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer" onclick="window.location='<%= project_path(project.id) %>'">
+          <!-- Mobile card header -->
+          <div class="flex items-start space-x-3 mb-3">
+            <div class="flex-shrink-0">
               <% if project.image.present? %>
-                  <%= image_tag(project.image, class: 'w-16') %>
+                <%= image_tag(project.image, class: 'w-12 h-12 rounded-lg object-cover') %>
               <% else %>
-                  <%= image_tag 'default.png', class: 'w-16' %>
+                <%= image_tag 'default.png', class: 'w-12 h-12 rounded-lg object-cover' %>
               <% end %>
-            </td>
-            <td class="px-4 py-4 font-medium text-left">
-              <%= project.title.truncate_words(3) %>
-            </td>
-            <td class="px-4 py-4 text-left">
-              <%= project.description.truncate(30) %>
-            </td>
-            <td class="px-4 py-4 text-center">
-              <%= project.tickets.count %>
-            </td>
-            <td class="px-4 py-4 text-center">
-              <%= project.has_ratings? ? project.average_servicedesk_rating.to_i : "No ratings yet"  %>
-            </td>
-            <td class="px-4 py-4 text-left">
-              <%= project.user.name %>
-            </td>
-            <td class="px-4 py-4 text-left">
-              <% if project.present? && project.client.present? %>
-                <%= project.client.name %>
-              <% else %>
-                No Client Assigned
+            </div>
+            <div class="flex-1 min-w-0">
+              <h3 class="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                <%= project.title %>
+              </h3>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                <%= project.description.truncate(80) %>
+              </p>
+            </div>
+            <div class="flex-shrink-0">
+              <% if current_user.has_role? :admin %>
+                <% if can?(:edit, project) || can?(:delete, project) %>
+                  <div data-controller="dropdown" data-dropdown-ticket-id-value="<%= project.id %>" onclick="event.stopPropagation()">
+                    <%= render partial: 'project/action_dropdown', locals: { project: project } %>
+                  </div>
+                <% end %>
               <% end %>
-            </td>
-            <td class="px-4 py-4 text-left">
-                <% project.softwares.each do |software| %>  <!-- Iterate through software for the current project -->
+            </div>
+          </div>
+          
+          <!-- Mobile card details -->
+          <div class="grid grid-cols-2 gap-4 text-xs">
+            <div>
+              <span class="text-gray-500 dark:text-gray-400 block">Total Tickets</span>
+              <span class="font-medium text-gray-900 dark:text-white"><%= project.tickets.count %></span>
+            </div>
+            <div>
+              <span class="text-gray-500 dark:text-gray-400 block">Assignee</span>
+              <span class="font-medium text-gray-900 dark:text-white truncate block"><%= project.user.name %></span>
+            </div>
+            <div>
+              <span class="text-gray-500 dark:text-gray-400 block">Client</span>
+              <span class="font-medium text-gray-900 dark:text-white truncate block">
+                <% if project.present? && project.client.present? %>
+                  <%= project.client.name %>
+                <% else %>
+                  No Client
+                <% end %>
+              </span>
+            </div>
+            <div>
+              <span class="text-gray-500 dark:text-gray-400 block">Product</span>
+              <span class="font-medium text-gray-900 dark:text-white truncate block">
+                <% project.softwares.each do |software| %>
                   <%= software.name %>
                 <% end %>
-            </td>
+              </span>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
 
+  <!-- Desktop table view -->
+  <div class="hidden sm:block overflow-x-auto">
+    <table class="w-full text-xs sm:text-sm text-left rtl:text-right text-gray-900 dark:text-gray-400">
+      <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600">
+        <tr>
+          <th scope="col" class="px-3 sm:px-6 py-3 font-medium">Logo</th>
+          <th scope="col" class="px-3 sm:px-6 py-3 font-medium">Name</th>
+          <th scope="col" class="hidden md:table-cell px-3 sm:px-6 py-3 font-medium">Product Description</th>
+          <th scope="col" class="px-3 sm:px-6 py-3 font-medium text-center">Total Tickets</th>
+          <th scope="col" class="hidden lg:table-cell px-3 sm:px-6 py-3 font-medium">Assignee</th>
+          <th scope="col" class="hidden xl:table-cell px-3 sm:px-6 py-3 font-medium">Client</th>
+          <th scope="col" class="hidden xl:table-cell px-3 sm:px-6 py-3 font-medium">Product Category</th>
           <% if current_user.has_role? :admin %>
-            <% if can?(:edit, project) || can?(:delete, project) %>
-              <!-- Actions li -->
-              <td class="px-6 py-4 whitespace-nowrap font-medium text-right" data-controller="dropdown" data-dropdown-ticket-id-value="<%= project.id %>" onclick="event.stopPropagation()"> 
-                <div class="relative flex justify-start"> 
-                  <%= render partial: 'project/action_dropdown', locals: { project: project } %>
-                </div>
-              </td>
+            <% if can?(:edit, @project) || can?(:delete, @project) %>
+              <th scope="col" class="px-3 sm:px-6 py-3 font-medium text-center">Actions</th>
             <% end %>
           <% end %>
         </tr>
-      <% end %>
-    <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+        <% @project.each do |project| %>
+          <% if project.assigned_to?(current_user) || current_user.has_role?(:admin) || current_user.has_role?(:observer) || current_user.has_role?(:agent) %>
+            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer" onclick="window.location='<%= project_path(project.id) %>'">
+              <td class="px-3 sm:px-6 py-4">
+                <div class="flex-shrink-0">
+                  <% if project.image.present? %>
+                    <%= image_tag(project.image, class: 'w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover') %>
+                  <% else %>
+                    <%= image_tag 'default.png', class: 'w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover' %>
+                  <% end %>
+                </div>
+              </td>
+              <td class="px-3 sm:px-6 py-4">
+                <div class="text-sm font-medium text-gray-900 dark:text-white">
+                  <%= project.title.truncate_words(3) %>
+                </div>
+              </td>
+              <td class="hidden md:table-cell px-3 sm:px-6 py-4">
+                <div class="text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
+                  <%= project.description.truncate(50) %>
+                </div>
+              </td>
+              <td class="px-3 sm:px-6 py-4 text-center">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                  <%= project.tickets.count %>
+                </span>
+              </td>
+              <td class="hidden lg:table-cell px-3 sm:px-6 py-4">
+                <div class="text-sm text-gray-900 dark:text-white truncate max-w-32">
+                  <%= project.user.name %>
+                </div>
+              </td>
+              <td class="hidden xl:table-cell px-3 sm:px-6 py-4">
+                <div class="text-sm text-gray-500 dark:text-gray-400 truncate max-w-32">
+                  <% if project.present? && project.client.present? %>
+                    <%= project.client.name %>
+                  <% else %>
+                    <span class="text-gray-400 italic">No Client Assigned</span>
+                  <% end %>
+                </div>
+              </td>
+              <td class="hidden xl:table-cell px-3 sm:px-6 py-4">
+                <div class="text-sm text-gray-500 dark:text-gray-400 truncate max-w-32">
+                  <% project.softwares.each do |software| %>
+                    <%= software.name %>
+                  <% end %>
+                </div>
+              </td>
+              <% if current_user.has_role? :admin %>
+                <% if can?(:edit, project) || can?(:delete, project) %>
+                  <td class="px-3 sm:px-6 py-4 text-center" onclick="event.stopPropagation()">
+                    <div data-controller="dropdown" data-dropdown-ticket-id-value="<%= project.id %>">
+                      <%= render partial: 'project/action_dropdown', locals: { project: project } %>
+                    </div>
+                  </td>
+                <% end %>
+              <% end %>
+            </tr>
+          <% end %>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Project count footer -->
   <% if (current_user.has_role?(:'project manager') || current_user.has_role?(:agent)) && current_user.projects.count > 0 %>
-    <% @assigned_projects_count = current_user.projects.count %>
-    <p class="p-2">Number of Projects: <%= @assigned_projects_count %></p>
+    <div class="px-4 sm:px-6 py-3 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
+      <p class="text-sm text-gray-600 dark:text-gray-400">
+        <span class="font-medium"><%= current_user.projects.count %></span>
+        project<%= 's' if current_user.projects.count != 1 %> assigned to you
+      </p>
+    </div>
   <% end %>
 </div>
-
-<script>
-  document.addEventListener('turbo:load', function() {
-    const button = document.getElementById('button');
-    button.addEventListener('click', function() {
-      button.style.backgroundColor = '#1F6DE0';
-    });
-  });
-</script>
-
-<table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-
-<% if params[:query].present? && @tickets.any? %>
-    <% @tickets.each do |ticket| %>
-      <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 ">
-
-        <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-          <%= link_to ticket.created_at.strftime("%d %b %Y"), project_ticket_path(ticket.project, ticket)   %>
-        </th>
-        <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
-          <% if ticket.unique_id.present? %>
-            <%= link_to ticket.unique_id, project_ticket_path(ticket.project, ticket)  %>
-          <% end %>
-        </th>
-        <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-          <%= link_to ticket.issue, project_ticket_path(ticket.project, ticket)   %>
-        </th>
-        <td class="px-2 py-2">
-            <%= render partial: "tickets/priority_severity", locals: { ticket: ticket } %>
-        </td>
-
-        <td class="px-2 py-2 truncate w-64 ">
-          <% if ticket.subject.present? %>
-            <%= ticket.subject.truncate(50) %>
-          <% end %>
-        </td>
-        <td class="px-2 py-2 font-bold">
-          <% ticket.users.each do |user| %>
-            <% if user.name.present? %>
-              <%= user.name %>
-            <% end %>
-          <% end %>
-        </td>
-        <td class="px-2 py-2">
-            <%= render partial: "tickets/ticket_status", locals: { ticket: ticket } %>
-        </td>
-        <!-- Progress Bar -->
-        <td class="pl-2 pr-5 py-2">
-          <div class="relative w-full">
-            <!-- Progress Percentage Tooltip -->
-            <div class="absolute top-[-1.5rem] left-0 translate-x-0 text-sm font-bold"
-                 style="left: calc(<%= ticket.progress_percentage || 0 %>% - 1rem); color: <%= if ticket.progress_percentage.nil?
-                                                                                      '#9CA3AF' # gray-400
-                                                                                    elsif ticket.progress_percentage < 30
-                                                                                      '#DC2626' # red-600
-                                                                                    elsif ticket.progress_percentage < 60
-                                                                                      '#2563EB' # blue-600
-                                                                                    else
-                                                                                      ticket.progress_percentage >= 100 ? '#000000' : '#16A34A' # black or green-600
-                                                                                    end %>;"
-                 class="<%= 'mr-3' if ticket.progress_percentage == 100 %>">
-              <%= ticket.progress_percentage || 0 %>%
-            </div>
-            <!-- Progress Bar Background -->
-            <div class="bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-              <!-- Dynamic Progress Bar -->
-              <div class="<%= if ticket.progress_percentage.nil?
-                                'bg-gray-400'
-                              elsif ticket.progress_percentage < 30
-                                'bg-red-600'
-                              elsif ticket.progress_percentage < 60
-                                'bg-blue-600'
-                              else
-                                ticket.progress_percentage >= 100 ? 'bg-black ' : 'bg-green-600'
-                              end %> h-2.5 rounded-full"
-                   style="width: <%= ticket.progress_percentage || 0 %>%">
-              </div>
-            </div>
-          </div>
-        </td>
-
-        <td class="px-4 py-4 whitespace-nowrap font-medium" data-controller="dropdown" data-dropdown-ticket-id-value="<%= ticket.id %>">
-          <%= render partial: 'tickets/action_dropdown', locals: { ticket: ticket } %>
-        </td>
-        <% if current_user.has_role? :admin or current_user.has_role? :agent  or current_user.has_role?('project manager')%>
-          <td class="px-2 py-2 text-center hide-on-sidebar">
-            <%= ticket.update_count %>
-          </td>
-          <td class="px-2 py-2 text-center hide-on-sidebar">
-            <%= ticket.last_updated_at ? ticket.last_updated_at.strftime("%T") : 'Never' %>
-          </td>
-        <% end %>
-      </tr>
-  <% end %>
-    </table>
-<% end %>

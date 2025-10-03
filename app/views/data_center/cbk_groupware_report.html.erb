@@ -1,13 +1,13 @@
 <% provide(:title, "CBK Report") %>
 
 <%= form_with url: cbk_groupware_report_path, method: :get, local: true, class: "space-y-4" do %>
-  <div class="flex flex-wrap gap-4 justify-center">
-    <div class="field">
+  <div class="flex flex-wrap gap-4 justify-center md:gap-6 md:justify-start">
+    <div class="field w-full sm:w-1/2 md:w-1/4">
       <%= label_tag :groupware_id, 'Select Product', class: "block text-sm font-medium text-gray-700" %>
       <%= select_tag :groupware_id, options_from_collection_for_select(Groupware.all, :id, :name), include_blank: true, class: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" %>
     </div>
 
-    <div class="field">
+    <div class="field w-full sm:w-1/2 md:w-1/4">
       <%= label_tag :country_code, 'Select Country', class: "block text-sm font-medium text-gray-700" %>
       <%= select_tag :country_code,
                      options_for_select(
@@ -17,45 +17,43 @@
                      class: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" %>
     </div>
 
-
-    <div class="field">
+    <div class="field w-full sm:w-1/2 md:w-1/4">
       <%= label_tag :start_date, 'Start Date', class: "block text-sm font-medium text-gray-700" %>
       <%= date_field_tag :start_date, nil, class: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" %>
     </div>
 
-    <div class="field">
+    <div class="field w-full sm:w-1/2 md:w-1/4">
       <%= label_tag :end_date, 'End Date', class: "block text-sm font-medium text-gray-700" %>
       <%= date_field_tag :end_date, nil, class: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" %>
     </div>
 
-
-    <div class="actions mt-6">
-      <%= submit_tag 'Generate Report', class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" %>
+    <div class="actions mt-6 w-full">
+      <%= submit_tag 'Generate Report', class: "inline-flex items-center justify-center w-full sm:w-auto px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" %>
     </div>
   </div>
 <% end %>
 
 <% if @tickets.present? %>
-  <div class="mb-4 px-4 sm:px-6 lg:px-8 py-8 flex gap-2">
-    <h2 class="text-xl font-semibold text-gray-900 mt-6"><%= @groupware.name.capitalize %> Report</h2>
-    <div class="mt-4">
+  <div class="mb-4 px-2 sm:px-4 lg:px-8 py-4 flex flex-col sm:flex-row gap-2">
+    <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mt-2 sm:mt-6"><%= @groupware.name.capitalize %> Report</h2>
+    <div class="mt-2 sm:mt-4">
       <%= link_to 'Download Report', cbk_groupware_report_path(format: :csv, groupware_id: params[:groupware_id], start_date: params[:start_date], end_date: params[:end_date], country_code: params[:country_code]), class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" %>
     </div>
   </div>
   <div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200 mt-4">
+    <table class="min-w-full divide-y divide-gray-200 mt-4 text-xs sm:text-sm">
       <thead class="bg-gray-50">
       <tr>
-        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket ID</th>
-        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Name</th>
-        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severity</th>
-        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Summary</th>
-        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Issue Type</th>
-        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assignee</th>
-        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reporter</th>
-        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Created</th>
-        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Closed</th>
+        <th class="px-2 sm:px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Ticket ID</th>
+        <th class="px-2 sm:px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Project Name</th>
+        <th class="px-2 sm:px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Severity</th>
+        <th class="px-2 sm:px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Summary</th>
+        <th class="px-2 sm:px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Issue Type</th>
+        <th class="px-2 sm:px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Status</th>
+        <th class="px-2 sm:px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Assignee</th>
+        <th class="px-2 sm:px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Reporter</th>
+        <th class="px-2 sm:px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Date Created</th>
+        <th class="px-2 sm:px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Date Closed</th>
       </tr>
       </thead>
       <tbody class="bg-white divide-y divide-gray-200">
@@ -87,16 +85,16 @@
                          ''
                        end %>
         <tr class="<%= row_class %>">
-          <td class="px-6 py-4 whitespace-nowrap"><%= ticket.unique_id %></td>
-          <td class="px-6 py-4 whitespace-nowrap"><%= ticket.project.title %></td>
-          <td class="px-6 py-4 whitespace-nowrap"><%= ticket.priority %></td>
-          <td class="px-6 py-4 whitespace-nowrap"><%= ticket.subject %></td>
-          <td class="px-6 py-4 whitespace-nowrap"><%= ticket.issue %></td>
-          <td class="px-6 py-4 whitespace-nowrap"><%= ticket.statuses.first&.name || 'N/A' %></td>
-          <td class="px-6 py-4 whitespace-nowrap"><%= ticket.users.map(&:name).select(&:present?).join(', ') %></td>
-          <td class="px-6 py-4 whitespace-nowrap"><%= ticket.user.name %></td>
-          <td class="px-6 py-4 whitespace-nowrap"><%= ticket.created_at.strftime('%m/%d/%Y %H:%M') %></td>
-          <td class="px-6 py-4 whitespace-nowrap">
+          <td class="px-2 sm:px-6 py-4 whitespace-nowrap"><%= ticket.unique_id %></td>
+          <td class="px-2 sm:px-6 py-4 whitespace-nowrap"><%= ticket.project.title %></td>
+          <td class="px-2 sm:px-6 py-4 whitespace-nowrap"><%= ticket.priority %></td>
+          <td class="px-2 sm:px-6 py-4 whitespace-nowrap"><%= ticket.subject %></td>
+          <td class="px-2 sm:px-6 py-4 whitespace-nowrap"><%= ticket.issue %></td>
+          <td class="px-2 sm:px-6 py-4 whitespace-nowrap"><%= ticket.statuses.first&.name || 'N/A' %></td>
+          <td class="px-2 sm:px-6 py-4 whitespace-nowrap"><%= ticket.users.map(&:name).select(&:present?).join(', ') %></td>
+          <td class="px-2 sm:px-6 py-4 whitespace-nowrap"><%= ticket.user.name %></td>
+          <td class="px-2 sm:px-6 py-4 whitespace-nowrap"><%= ticket.created_at.strftime('%m/%d/%Y %H:%M') %></td>
+          <td class="px-2 sm:px-6 py-4 whitespace-nowrap">
             <% if %w[Closed Resolved].include?(ticket.statuses.first&.name) %>
                 <%= ticket.add_statuses.order(updated_at: :desc).first&.updated_at&.strftime('%m/%d/%Y %H:%M') || 'N/A' %>
             <% end %>
@@ -107,5 +105,5 @@
     </table>
   </div>
 <% else %>
-  <p class="mt-4 text-gray-500">No tickets available for the selected groupware and date range.</p>
+  <p class="mt-4 text-gray-500 text-center sm:text-left">No tickets available for the selected groupware and date range.</p>
 <% end %>

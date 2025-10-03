@@ -1,53 +1,61 @@
-<div class="col-span-2 space-y-4 mt-6">
-  <div class="grid grid-cols-2 gap-4">
+<div class="col-span-full lg:col-span-2 space-y-4 lg:space-y-6 mt-2 sm:mt-4 lg:mt-6 bg-white dark:bg-gray-800 rounded-lg p-2 xs:p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
     <!-- Due Date Field -->
     <% if current_user.has_role?(:agent) || current_user.has_role?(:admin) || current_user.has_role?('project manager') || current_user.has_role?(:observer) %>
-      <div>
-        <div class="text-sm font-semibold uppercase tracking-wider mb-1">Due Date</div>
-        <%= form_with model: @ticket, url: update_due_date_project_ticket_path(@ticket.project, @ticket), method: :patch, remote: true, class: "flex items-center gap-2" do |f| %>
-          <div class="relative flex-1">
-            <%= f.date_field :due_date, value: @ticket.due_date, 
-                class: "block w-full border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500",
-                required: true %>
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
-              </svg>
+      <div class="space-y-2 w-full min-w-0">
+        <div class="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300">Due Date</div>
+        <%= form_with model: @ticket, url: update_due_date_project_ticket_path(@ticket.project, @ticket), method: :patch, remote: true, class: "space-y-2 w-full" do |f| %>
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full">
+            <div class="relative flex-1 min-w-0">
+              <%= f.date_field :due_date, value: @ticket.due_date, 
+                  class: "block w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 p-2 sm:p-2.5 text-sm transition-colors",
+                  required: true %>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                </svg>
+              </div>
             </div>
+            <button type="submit" class="inline-flex items-center justify-center w-full sm:w-auto px-3 py-2 sm:py-2.5 rounded-lg border border-transparent bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 text-white font-medium text-xs sm:text-sm shadow-sm transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+              </svg>
+              <span class="xs:hidden sm:hidden">Update</span>
+              <span class="hidden xs:inline sm:hidden">Update Date</span>
+              <span class="hidden sm:inline">Update</span>
+            </button>
           </div>
-          <button type="submit" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 p-2 text-sm font-medium shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-            </svg>
-          </button>
         <% end %>
       </div>
     <% end %>
 
     <!-- Priority Field -->
     <% if current_user.has_role?(:admin) || current_user.has_role?('project manager') || current_user.has_role?(:observer) %>
-      <div>
-        <div class="text-sm font-semibold uppercase tracking-wider mb-1">Severity *</div>
-        <%= form_with model: @ticket, url: update_priority_project_ticket_path(@ticket.project, @ticket), method: :patch, remote: true do |f| %>
-          <div class="flex items-center gap-2">
-            <div class="relative flex-1">
+      <div class="space-y-2 w-full min-w-0">
+        <div class="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300">Severity *</div>
+        <%= form_with model: @ticket, url: update_priority_project_ticket_path(@ticket.project, @ticket), method: :patch, remote: true, class: "w-full" do |f| %>
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full">
+            <div class="relative flex-1 min-w-0">
               <%= f.select :priority, options_for_select(['SEVERITY 1', 'SEVERITY 2', 'SEVERITY 3', 'SEVERITY 4'], @ticket.priority), {}, 
-                  class: "block w-full border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500", 
+                  class: "block w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 p-2 sm:p-2.5 text-sm transition-colors", 
                   required: true %>
               <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>
               </div>
             </div>
-            <button type="submit" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 p-2 text-sm font-medium shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+            <button type="submit" class="inline-flex items-center justify-center w-full sm:w-auto px-3 py-2 sm:py-2.5 rounded-lg border border-transparent bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 text-white font-medium text-xs sm:text-sm shadow-sm transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-1.5" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
               </svg>
+              <span class="xs:hidden sm:hidden">Update</span>
+              <span class="hidden xs:inline sm:hidden">Update Severity</span>
+              <span class="hidden sm:inline">Update</span>
             </button>
           </div>
           <% if @ticket.errors[:priority].any? %>
-            <div class="mt-1 text-sm text-red-600"><%= @ticket.errors[:priority].join(", ") %></div>
+            <div class="mt-1 text-xs sm:text-sm text-red-600 dark:text-red-400 break-words"><%= @ticket.errors[:priority].join(", ") %></div>
           <% end %>
         <% end %>
       </div>
@@ -56,34 +64,37 @@
 
   <!-- Issue Type Field -->
   <% if current_user.has_role?(:admin) || current_user.has_role?('project manager') || current_user.has_role?(:observer) %>
-    <div>
-      <div class="text-sm font-semibold uppercase tracking-wider mb-1">Issue Type *</div>
-      <%= form_with model: @ticket, url: update_issue_type_project_ticket_path(@ticket.project, @ticket), method: :patch, remote: true do |f| %>
-        <div class="flex items-center gap-2">
+    <div class="space-y-2 mt-4 w-full">
+      <div class="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300">Issue Type *</div>
+      <%= form_with model: @ticket, url: update_issue_type_project_ticket_path(@ticket.project, @ticket), method: :patch, remote: true, class: "w-full" do |f| %>
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full">
           <div class="relative flex-1">
             <% if @ticket.project.special %>
               <%= f.select :issue, options_for_select(['SUPPORT', 'NEW FEATURE', 'BUG', 'REQUEST', 'INCIDENT', 'CHANGE REQUEST'], @ticket.issue), {}, 
-                  class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 dark:focus:ring-indigo-500 dark:focus:border-indigo-500", 
+                  class: "block w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 p-2 sm:p-2.5 text-sm transition-colors", 
                   required: true %>
             <% else %>
               <%= f.select :issue, options_for_select(['SUPPORT', 'NEW FEATURE', 'BUG', 'REQUEST', 'INCIDENT'], @ticket.issue), {}, 
-                  class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 dark:focus:ring-indigo-500 dark:focus:border-indigo-500", 
+                  class: "block w-full border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 p-2 sm:p-2.5 text-sm transition-colors", 
                   required: true %>
             <% end %>
             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
               </svg>
             </div>
           </div>
-          <button type="submit" class="inline-flex items-center rounded-md border border-transparent bg-indigo-600 p-2 text-sm font-medium shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+          <button type="submit" class="inline-flex items-center justify-center w-full sm:w-auto px-3 py-2 sm:py-2.5 rounded-lg border border-transparent bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 text-white font-medium text-xs sm:text-sm shadow-sm transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-1.5" viewBox="0 0 20 20" fill="currentColor">
               <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
             </svg>
+            <span class="xs:hidden sm:hidden">Update</span>
+            <span class="hidden xs:inline sm:hidden">Update Type</span>
+            <span class="hidden sm:inline">Update</span>
           </button>
         </div>
         <% if @ticket.errors[:issue].any? %>
-          <div class="mt-1 text-sm text-red-600"><%= @ticket.errors[:issue].join(", ") %></div>
+          <div class="mt-1 text-xs sm:text-sm text-red-600 dark:text-red-400 break-words"><%= @ticket.errors[:issue].join(", ") %></div>
         <% end %>
       <% end %>
     </div>

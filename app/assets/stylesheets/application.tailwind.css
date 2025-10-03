@@ -23,3 +23,32 @@
     transform: translateX(32px);
   }
 }
+
+@layer components {
+  /* Bulletproof modal positioning - always anchored to right, fixed position */
+  #modal-container {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    right: 0 !important;
+    left: auto !important;
+    transform: translateX(0) !important;
+    z-index: 50 !important;
+  }
+  
+  /* Fixed width states to prevent shifting */
+  #modal-container.modal-narrow {
+    width: 33.333333% !important;
+    min-width: 400px !important;
+  }
+  
+  #modal-container.modal-wide {
+    width: 75% !important;
+    min-width: 600px !important;
+  }
+  
+  /* Ensure smooth transitions */
+  #modal-container * {
+    transition: width 0.3s ease-in-out;
+  }
+}

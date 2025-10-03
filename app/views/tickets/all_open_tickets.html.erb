@@ -1,38 +1,111 @@
+
 <div class="p-2">
-<%= render 'tickets/open_ticket_search' %>
-<table class="min-w-full bg-white dark:bg-gray-800">
-  <thead>
-  <tr>
-    <th class="py-2 px-4 border-b">ID</th>
-    <th class="py-2 px-4 border-b">Date</th>
-    <th class="py-2 px-4 border-b">SERVICE DESK NAME</th>
-    <th class="py-2 px-4 border-b">ISSUE</th>
-    <th class="py-2 px-4 border-b">PRIORITY</th>
-    <th class="py-2 px-4 border-b">SUMMARY</th>
-    <th class="py-2 px-4 border-b">ASSIGNEE</th>
-    <th class="py-2 px-4 border-b">STATUS</th>
-    <th class="py-2 px-4 border-b">PROGRESS</th>
-    <th class="py-2 px-4 border-b">VIEW</th>
-  </tr>
-  </thead>
-  <tbody>
-    <%= render partial: "tickets/all_open_tickets_body" %>
-  </tbody>
-</table>
+  <%= render 'tickets/open_ticket_search' %>
 
+  <!-- Mobile Card Layout (visible on small screens) -->
+  <div class="lg:hidden space-y-3 sm:space-y-4 p-2 sm:p-4 md:p-6">
+    <% @tickets.each do |ticket| %>
+    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden hover:shadow-md transition-all duration-200">
+        <!-- Card Header -->
+    <div class="px-2 sm:px-4 py-2 sm:py-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2">
+            <div class="flex items-center space-x-1 sm:space-x-2">
+              <%= link_to project_ticket_path(ticket.project, ticket), class: "font-bold text-xs sm:text-sm text-blue-600 dark:text-blue-400" do %>
+                <%= ticket.unique_id if ticket.unique_id.present? %>
+              <% end %>
+              <span class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">•</span>
+              <span class="text-[10px] sm:text-xs text-gray-600 dark:text-gray-300 font-medium">
+                <%= ticket.project.title.truncate(15) %>
+              </span>
+            </div>
+            <span class="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
+              <%= ticket.created_at.strftime("%d %b %Y") %>
+            </span>
+          </div>
+        </div>
+        <!-- Card Content -->
+    <div class="p-2 sm:p-4 space-y-2 sm:space-y-3">
+          <!-- Title/Subject -->
+          <h3 class="font-semibold text-gray-900 dark:text-gray-100 leading-tight text-sm sm:text-base">
+            <%= link_to project_ticket_path(ticket.project, ticket), class: "hover:text-blue-600 dark:hover:text-blue-400 transition-colors" do %>
+              <%= ticket.subject.present? ? ticket.subject.truncate(60) : "Untitled Ticket" %>
+            <% end %>
+          </h3>
+          <!-- Status and Priority Row -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2">
+            <div class="flex items-center space-x-1 sm:space-x-2">
+              <%= render partial: 'tickets/priority_severity', locals: { ticket: ticket } %>
+              <%= render partial: 'tickets/ticket_status', locals: { ticket: ticket } %>
+            </div>
+          </div>
+          <!-- Progress for Mobile -->
+          <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-600">
+            <span class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Progress:</span>
+            <div class="flex items-center space-x-1 sm:space-x-2 flex-1 max-w-24 ml-2 sm:ml-3">
+              <%= render partial: 'tickets/progress_bar', locals: { ticket: ticket } %>
+            </div>
+          </div>
+          <!-- Assignment Info (if exists) -->
+          <% if defined?(ticket.users) && ticket.users.any? %>
+            <div class="text-xs sm:text-sm text-gray-600 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-600">
+              <span class="font-medium">Assigned to:</span>
+              <%= ticket.users.limit(2).map(&:name).join(", ").truncate(40) %>
+              <% if ticket.users.count > 2 %>
+                <span class="text-gray-500"> +<%= ticket.users.count - 2 %> more</span>
+              <% end %>
+              <% ticket.users.each do |user| %>
+                <% unless user.teams.any? %>
+                  <span class="block text-xs text-red-500">No Team Assigned</span>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+          <!-- Action Button -->
+    <div class="pt-2 border-t border-gray-100 dark:border-gray-600">
+            <%= link_to "View Details", project_ticket_path(ticket.project, ticket), 
+                class: "inline-flex items-center text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300" %>
+          </div>
+          <!-- Dropdown Actions for Mobile -->
+         
+        </div>
+      </div>
+    <% end %>
+  </div>
 
-<!-- Pagination Links -->
-<div class="mt-4">
-  <% if @page > 1 %>
-    <%= link_to 'Previous', all_open_tickets_project_tickets_path(@project, page: @page - 1),
-                class: 'bg-blue-600 hover:bg-blue-500 px-4 rounded text-white text-sm font-semibold transition-all p-2 uppercase'
-    %>
-  <% end %>
-  <% if @page < @total_pages %>
-    <%= link_to 'Next', all_open_tickets_project_tickets_path(@project, page: @page + 1),
-                class: 'bg-blue-600 hover:bg-blue-500 px-4 rounded text-white text-sm font-semibold transition-all p-2 uppercase'
-    %>
-  <% end %>
-</div>
+  <!-- Desktop Table Layout (visible on large screens) -->
+  <div class="hidden lg:block w-full overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+    <table class="min-w-full w-full bg-white dark:bg-gray-800 text-xs sm:text-sm md:text-base">
+      <thead>
+      <tr>
+        <th class="py-2 px-4 border-b">ID</th>
+        <th class="py-2 px-4 border-b">Date</th>
+        <th class="py-2 px-4 border-b">SERVICE DESK NAME</th>
+        <th class="py-2 px-4 border-b">ISSUE</th>
+        <th class="py-2 px-4 border-b">PRIORITY</th>
+        <th class="py-2 px-4 border-b">SUMMARY</th>
+        <th class="py-2 px-4 border-b">ASSIGNEE</th>
+        <th class="py-2 px-4 border-b">STATUS</th>
+        <th class="py-2 px-4 border-b">PROGRESS</th>
+        <th class="py-2 px-4 border-b">VIEW</th>
+      </tr>
+      </thead>
+      <tbody>
+        <%= render partial: "tickets/all_open_tickets_body" %>
+      </tbody>
+    </table>
+  </div>
 
+  <!-- Pagination (shared for both layouts) -->
+  <div class="mt-4 px-2 sm:px-4">
+    <% if @page > 1 %>
+      <%= link_to 'Previous', all_open_tickets_project_tickets_path(@project, page: @page - 1),
+                  class: 'bg-blue-600 hover:bg-blue-500 px-4 rounded text-white text-sm font-semibold transition-all p-2 uppercase'
+      %>
+    <% end %>
+    <% if @page < @total_pages %>
+      <%= link_to 'Next', all_open_tickets_project_tickets_path(@project, page: @page + 1),
+                  class: 'bg-blue-600 hover:bg-blue-500 px-4 rounded text-white text-sm font-semibold transition-all p-2 uppercase'
+      %>
+    <% end %>
+  </div>
 </div>

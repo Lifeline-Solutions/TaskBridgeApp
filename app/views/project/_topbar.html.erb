@@ -1,24 +1,21 @@
-<div class="grid grid-cols-2 ">
-  <div class="col-span-1">
-    <% if can? :create, @project %>
-      <% if current_user.has_role? :admin or current_user.has_role?('project manager') %>
-        <div class="flex gap-1">
-          <%= button_to root_path, method: :get, class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-md text-slate-100', id: 'button' do %>
-            &#8656; Back
-          <% end %>
+<div class="w-full">
+  <% if can? :create, @project %>
+    <% if current_user.has_role? :admin or current_user.has_role?('project manager') %>
+      <div class="flex flex-row justify-between items-center w-full gap-2">
+        
+        <!-- Back Button (left) -->
+        <%= button_to root_path, method: :get, 
+            class: 'bg-gray-600 hover:bg-gray-700 px-4 py-2.5 rounded-lg font-bold text-slate-100 flex items-center justify-center transition-all duration-200 w-auto' do %>
+          &#8656; Back
+        <% end %>
 
-        <%= button_to '+ Add Service Desk ', new_project_path, method: :get, class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded-md font-bold rounded-lg text-slate-100', id: 'button' %>
-        </div>
-      <% end %>
+        <!-- Add Service Desk Button (right) -->
+        <%= button_to new_project_path, method: :get, 
+            class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] px-4 py-2.5 rounded-lg font-bold text-slate-100 flex items-center justify-center transition-all duration-200 w-auto' do %>
+          + Add Service Desk
+        <% end %>
+
+      </div>
     <% end %>
-  </div>
+  <% end %>
 </div>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const button = document.getElementById('button');
-    button.addEventListener('click', function() {
-      button.style.backgroundColor = '#1F6DE0';
-    });
-  });
-</script>

@@ -1,0 +1,41 @@
+<div class="flex-shrink-0">
+  <% if ticket.ticket_image.attached? %>
+    <%= image_tag ticket.ticket_image, class: "h-10 w-10 rounded-lg object-cover border border-gray-200/50 dark:border-gray-600/50" %>
+  <% elsif @project&.image.present? %>
+    <%= image_tag @project.image, class: "h-10 w-10 rounded-lg object-cover border border-gray-200/50 dark:border-gray-600/50" %>
+  <% else %>
+    <div class="h-10 w-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center border border-gray-200/50 dark:border-gray-600/50">
+      <svg class="h-5 w-5 text-gray-600 dark:text-gray-200" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd"></path>
+      </svg>
+    </div>
+  <% end %>
+</div>
+
+<div class="flex-1 min-w-0">
+  <!-- Title -->
+  <div class="font-semibold text-gray-900 dark:text-gray-100 leading-tight">
+    <%= link_to project_ticket_path(ticket.project, ticket),
+        class: "hover:text-blue-600 dark:hover:text-blue-400 transition-colors block" do %>
+      <% if ticket.subject.present? %>
+        <span class="block text-sm sm:text-base"><%= ticket.subject.truncate(50, omission: '...') %></span>
+      <% else %>
+        <span class="text-gray-500 dark:text-gray-400 italic text-sm">No subject</span>
+      <% end %>
+    <% end %>
+  </div>
+
+  <!-- Content -->
+  <% if ticket.content.present? %>
+    <div class="mt-1 text-gray-700 dark:text-gray-300 text-xs leading-tight">
+      <span class="block"><%= ticket.content.to_plain_text.truncate(60, omission: '...') %></span>
+    </div>
+  <% end %>
+
+  <!-- Mobile-only issue type -->
+  <div class="mt-2 sm:hidden">
+    <span class="inline-block text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full font-medium">
+      <%= ticket.issue %>
+    </span>
+  </div>
+</div>

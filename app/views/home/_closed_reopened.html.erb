@@ -1,6 +1,14 @@
-<div class="gap-2 p-4">
-  <p class="pt-3 text-center text-sm sm:text-base">Total Number of Closed and Reopened Tickets</p>
-  <div class="w-full sm:w-3/4 mx-auto">
-    <%= column_chart @closed_and_reopened_tickets, colors: %w[#EF4444 #e6000 #ff0000], library: { legend: { position: 'bottom' }, plugins: { datalabels: { align: 'end', anchor: 'end' } } } %>
+<div class="gap-2 p-2 sm:p-4 w-full">
+  <p class="pt-2 sm:pt-3 text-center text-xs sm:text-sm md:text-base font-medium">Total Number of Closed and Reopened Tickets</p>
+  <div class="w-full sm:w-3/4 mx-auto mt-2 overflow-x-auto">
+    <%= column_chart @closed_and_reopened_tickets, 
+          colors: %w[#EF4444 #e6000 #ff0000], 
+          library: { 
+            legend: { position: 'bottom' }, 
+            plugins: { datalabels: { align: 'end', anchor: 'end' } },
+            responsive: true,
+            maintainAspectRatio: false,
+            height: '250px'
+          } %>
   </div>
 </div>

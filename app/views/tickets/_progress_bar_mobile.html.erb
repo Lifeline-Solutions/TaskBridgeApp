@@ -1,0 +1,29 @@
+<% progress = ticket.progress_percentage || 0 %>
+<% 
+  # Determine progress bar color based on percentage and ticket context
+  bar_color = if ticket.progress_percentage.nil?
+    'bg-white/30'
+  elsif ticket.progress_percentage < 30
+    'bg-red-400'
+  elsif ticket.progress_percentage < 60
+    'bg-yellow-400'
+  elsif ticket.progress_percentage < 100
+    'bg-green-400'
+  else
+    'bg-green-500'
+  end
+%>
+
+<!-- Mobile Progress Bar with contrast for colored backgrounds -->
+<div class="flex items-center space-x-2 w-full">
+  <!-- Linear progress bar -->
+  <div class="flex-1 bg-white/20 rounded-full h-2 overflow-hidden min-w-16">
+    <div class="h-full rounded-full transition-all duration-300 <%= bar_color %>" 
+         style="width: <%= progress %>%"></div>
+  </div>
+  
+  <!-- Progress percentage text -->
+  <span class="text-xs font-medium flex-shrink-0 min-w-8 text-right">
+    <%= progress %>%
+  </span>
+</div>

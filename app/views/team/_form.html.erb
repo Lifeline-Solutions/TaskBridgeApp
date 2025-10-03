@@ -9,46 +9,125 @@
     <%= f.text_area :description, class: "border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full", placeholder: 'Enter team description' %>
   </div>
   <div class="mb-2">
-    <%= f.label :user_ids, 'Pick Agents and Project Managers', class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white" %>
+    <%= f.label :user_ids, 'Assign Agents & Project Managers', class: "block mb-2 text-sm font-semibold text-gray-800 dark:text-white tracking-wide" %>
   </div>
-  <div class="relative w-full mb-4">
+  <div class="relative w-full mb-6">
     <!-- Searchable Input -->
-    <input type="text" id="searchUser" class="border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full"
-           placeholder="Search User..." onclick="showDropdown()"  onkeyup="filterUserDropdown()" autocomplete="off">
+    <div class="flex items-center bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500 transition shadow-sm">
+      <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" fill="none"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" stroke-width="2"/>
+      </svg>
+      <input type="text" id="searchUser" class="bg-transparent outline-none w-full text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-gray-400 text-base" placeholder="Search users..." onclick="showDropdown()" onkeyup="filterUserDropdown()" autocomplete="off">
+    </div>
 
     <!-- Selected Items Container -->
-    <div id="selectedUsers" class="flex flex-wrap gap-2 mt-2"></div>
+    <div id="selectedUsers" class="flex flex-wrap gap-2 mt-3"></div>
 
-    <!-- Hidden Inputs for Rails Form (Updated Name) -->
+    <!-- Hidden Inputs for Rails Form -->
     <div id="hiddenUserInputs"></div>
 
     <!-- Dropdown List -->
-    <div id="userDropdown" class="absolute w-full bg-white dark:bg-gray-700 border rounded-lg mt-1 shadow-lg max-h-40 overflow-y-auto hidden z-10">
-      <div class="flex justify-start p-2">
-        <button type="button" onclick="hideDropdown()" class="text-gray-500 hover:text-gray-700 text-left">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
-            <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-1.72 6.97a.75.75 0 1 0-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06L12 13.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L13.06 12l1.72-1.72a.75.75 0 1 0-1.06-1.06L12 10.94l-1.72-1.72Z" clip-rule="evenodd" />
+    <div id="userDropdown" class="absolute w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg mt-1 shadow-2xl max-h-72 overflow-y-auto hidden z-30 transition-all duration-200">
+      <div class="flex justify-between items-center px-3 py-2 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-t-lg">
+        <span class="text-xs text-gray-500 dark:text-gray-400 font-semibold tracking-wide">Select users</span>
+        <button type="button" onclick="hideDropdown()" class="text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
         </button>
       </div>
       <% users = User.with_assigned_role.distinct %>
       <% users.each do |user| %>
-        <div class="dropdown-item px-4 py-2 hover:bg-gray-100 hover:dark:bg-gray-500 cursor-pointer" data-user-id="<%= user.id %>" onclick="selectUser(this)">
-          <%= user.name %>
+        <div class="dropdown-item flex items-center gap-3 px-4 py-2 hover:bg-blue-50 dark:hover:bg-blue-900 cursor-pointer transition-all duration-150 focus:bg-blue-100 dark:focus:bg-blue-900 outline-none" data-user-id="<%= user.id %>" tabindex="0" onclick="selectUser(this)">
+          <div class="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-200 to-blue-500 dark:from-blue-900 dark:to-blue-700 flex items-center justify-center text-blue-800 dark:text-blue-200 font-bold text-base uppercase shadow">
+            <%= user.name[0] %>
+          </div>
+          <div class="flex flex-col">
+            <span class="font-medium text-gray-800 dark:text-gray-100 leading-tight"><%= user.name %></span>
+            <% if user.respond_to?(:email) && user.email.present? %>
+              <span class="text-xs text-gray-500 dark:text-gray-400"><%= user.email %></span>
+            <% end %>
+          </div>
         </div>
       <% end %>
+      <div id="noResults" class="hidden px-4 py-2 text-gray-500 dark:text-gray-300 text-center">No users found.</div>
     </div>
   </div>
   <div class="mb-5">
-    <%= f.submit 'Create Team', class: "h-12 border border-black dark:border-white border-b-4 border-r-2 p-3 rounded font-semibold" %>
+    <%= f.submit 'Create Team', class: "h-12 bg-blue-600 hover:bg-blue-700 text-white border-none rounded font-semibold w-full sm:w-auto shadow-lg transition-all duration-200 flex items-center justify-center gap-2 uppercase tracking-wide" %>
   </div>
 <% end %>
+
+<style>
+  @media (max-width: 640px) {
+    #userDropdown {
+      max-height: 180px;
+      font-size: 0.95rem;
+    }
+    #selectedUsers {
+      gap: 0.4rem;
+    }
+    .dropdown-item {
+      padding-left: 0.7rem;
+      padding-right: 0.7rem;
+      padding-top: 0.45rem;
+      padding-bottom: 0.45rem;
+    }
+  }
+  #selectedUsers > div {
+    background: linear-gradient(90deg, #e3eafc 0%, #f8fafd 100%);
+    border: 1px solid #b6d4fe;
+    color: #2563eb;
+    font-weight: 500;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.97rem;
+    box-shadow: 0 2px 6px rgba(30, 64, 175, 0.07);
+    margin-bottom: 0.2rem;
+    transition: background 0.2s;
+  }
+  #selectedUsers > div .remove-user {
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 1.1em;
+    margin-left: 0.3rem;
+    transition: color 0.15s;
+    border-radius: 50%;
+    padding: 0 0.2em;
+  }
+  #selectedUsers > div .remove-user:hover {
+    color: #b91c1c;
+    background: #fee2e2;
+  }
+  .dropdown-item:focus {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+    background: #e0e7ff;
+  }
+  #userDropdown {
+    scrollbar-width: thin;
+    scrollbar-color: #a5b4fc #f1f5f9;
+  }
+  #userDropdown::-webkit-scrollbar {
+    width: 7px;
+    background: #f1f5f9;
+  }
+  #userDropdown::-webkit-scrollbar-thumb {
+    background: #a5b4fc;
+    border-radius: 6px;
+  }
+</style>
 
 <script>
   let selectedUsers = [];
 
   function showDropdown() {
     document.getElementById("userDropdown").classList.remove("hidden");
+    filterUserDropdown();
   }
 
   function hideDropdown() {
@@ -58,30 +137,38 @@
   function filterUserDropdown() {
     let input = document.getElementById("searchUser").value.toLowerCase();
     let items = document.querySelectorAll("#userDropdown .dropdown-item");
+    let found = false;
 
     items.forEach(item => {
       let text = item.textContent.toLowerCase();
-      item.style.display = text.includes(input) ? "block" : "none";
+      if (text.includes(input)) {
+        item.style.display = "flex";
+        found = true;
+      } else {
+        item.style.display = "none";
+      }
     });
+
+    document.getElementById("noResults").classList.toggle("hidden", found);
   }
 
   function selectUser(element) {
     let userId = element.getAttribute("data-user-id");
-    let userName = element.textContent;
+    let userName = element.querySelector("span").textContent;
+    let userEmail = element.querySelectorAll("span")[1]?.textContent || "";
 
     if (!selectedUsers.some(user => user.id === userId)) {
-      selectedUsers.push({ id: userId, name: userName });
+      selectedUsers.push({ id: userId, name: userName, email: userEmail });
 
       // Update Selected UI
       let tag = document.createElement("div");
-      tag.className = "bg-blue-100 text-blue-800 px-2 py-1 rounded-md flex items-center gap-2";
-      tag.innerHTML = `${userName} <span onclick="removeUser('${userId}', this)" class="cursor-pointer text-red-500">×</span>`;
+      tag.innerHTML = `<span>${userName}${userEmail ? ' <span class="text-xs text-gray-400">(' + userEmail + ')</span>' : ''}</span><span class="remove-user" onclick="removeUser('${userId}', this)">&times;</span>`;
       document.getElementById("selectedUsers").appendChild(tag);
 
       // Add a new hidden input for each selected user
       let input = document.createElement("input");
       input.type = "hidden";
-      input.name = "team[user_ids][]"; // Ensure it's an array
+      input.name = "team[user_ids][]";
       input.value = userId;
       input.classList.add(`user-input-${userId}`);
       document.getElementById("hiddenUserInputs").appendChild(input);
@@ -90,8 +177,8 @@
       element.remove();
     }
 
-    // Hide Dropdown
     hideDropdown();
+    document.getElementById("searchUser").value = "";
   }
 
   function removeUser(userId, element) {
@@ -106,12 +193,50 @@
 
     // Add the user back to the dropdown
     let userDropdown = document.getElementById("userDropdown");
-    let userName = element.parentElement.textContent.trim().slice(0, -1); // Remove the × character
+    let userObj = selectedUsers.find(u => u.id === userId);
+    let userName = element.parentElement.querySelector("span").textContent.split(' (')[0];
+    let userEmail = element.parentElement.querySelector("span .text-xs")?.textContent?.replace(/[()]/g, '') || "";
+
     let dropdownItem = document.createElement("div");
-    dropdownItem.className = "dropdown-item px-4 py-2 hover:bg-gray-100 cursor-pointer";
+    dropdownItem.className = "dropdown-item flex items-center gap-3 px-4 py-2 hover:bg-blue-50 dark:hover:bg-blue-900 cursor-pointer transition-all duration-150 focus:bg-blue-100 dark:focus:bg-blue-900 outline-none";
     dropdownItem.setAttribute("data-user-id", userId);
+    dropdownItem.setAttribute("tabindex", "0");
     dropdownItem.setAttribute("onclick", "selectUser(this)");
-    dropdownItem.textContent = userName;
+    dropdownItem.innerHTML = `<div class="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-200 to-blue-500 dark:from-blue-900 dark:to-blue-700 flex items-center justify-center text-blue-800 dark:text-blue-200 font-bold text-base uppercase shadow">${userName[0]}</div><div class="flex flex-col"><span class="font-medium text-gray-800 dark:text-gray-100 leading-tight">${userName}</span>${userEmail ? `<span class="text-xs text-gray-500 dark:text-gray-400">${userEmail}</span>` : ''}</div>`;
     userDropdown.appendChild(dropdownItem);
+    filterUserDropdown();
   }
+
+  // Responsive: Hide dropdown on outside click
+  document.addEventListener("click", function(event) {
+    const dropdown = document.getElementById("userDropdown");
+    const searchInput = document.getElementById("searchUser");
+    if (!dropdown.contains(event.target) && event.target !== searchInput) {
+      hideDropdown();
+    }
+  });
+
+  // Keyboard navigation for accessibility
+  document.getElementById("searchUser").addEventListener("keydown", function(e) {
+    const dropdown = document.getElementById("userDropdown");
+    if (!dropdown.classList.contains("hidden")) {
+      let items = Array.from(dropdown.querySelectorAll(".dropdown-item")).filter(i => i.style.display !== "none");
+      let index = items.findIndex(i => i === document.activeElement);
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (index < items.length - 1) {
+          items[index + 1].focus();
+        } else if (items.length > 0) {
+          items[0].focus();
+        }
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (index > 0) {
+          items[index - 1].focus();
+        } else if (items.length > 0) {
+          items[items.length - 1].focus();
+        }
+      }
+    }
+  });
 </script>

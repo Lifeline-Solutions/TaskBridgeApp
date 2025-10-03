@@ -1,33 +1,27 @@
-<div class="p-4 border-white rounded-lg w-full">
+<div class="p-2 sm:p-4 border-white rounded-lg w-full">
   <div class="overflow-x-auto w-full">
     <table class="min-w-full w-full text-xs sm:text-sm text-center text-gray-500 dark:text-gray-400">
       <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-      <tr>
-        <th scope="col" class="px-4 sm:px-6 py-2 sm:py-3 text-left whitespace-nowrap">
-          Name of The Project
-        </th>
-        <th scope="col" class="px-4 sm:px-6 py-2 sm:py-3 text-left whitespace-nowrap">
-          Total Number of Tickets
-        </th>
-        <th scope="col" class="px-4 sm:px-6 py-2 sm:py-3 text-left whitespace-nowrap">
-          Total Open Tickets
-        </th>
-      </tr>
+        <tr>
+          <th scope="col" class="px-2 sm:px-4 py-2 sm:py-3 text-left whitespace-nowrap">
+            Project
+          </th>
+          <th scope="col" class="mr-2 px-2 sm:px-4 py-2 sm:py-3 text-left whitespace-nowrap">
+            Open Tickets
+          </th>
+        </tr>
       </thead>
       <tbody>
-      <% @issues_count_per_project_for_current_user.each do |project_title, issue_count| %>
-        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 text-center">
-          <th scope="row" class="text-left capitalize px-4 sm:px-6 py-2 sm:py-4 font-medium whitespace-nowrap">
-            <%= link_to project_title, project_path(Project.find_by(title: project_title)) %>
-          </th>
-          <td class="px-4 sm:px-6 py-2 sm:py-4">
-            <%= @tickets_count_per_project[project_title] %>
-          </td>
-          <td class="px-4 sm:px-6 py-2 sm:py-4">
-            <%= issue_count %>
-          </td>
-        </tr>
-      <% end %>
+        <% @issues_count_per_project_for_current_user.each do |project_title, issue_count| %>
+          <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+            <th scope="row" class="text-left capitalize px-2 sm:px-4 py-2 sm:py-4 font-medium whitespace-nowrap">
+              <%= link_to project_title, project_path(Project.find_by(title: project_title)), class: "block truncate max-w-[120px] sm:max-w-none" %>
+            </th>
+            <td class="text-left px-2 sm:px-4 py-2 sm:py-4">
+              <%= issue_count %>
+            </td>
+          </tr>
+        <% end %>
       </tbody>
     </table>
   </div>

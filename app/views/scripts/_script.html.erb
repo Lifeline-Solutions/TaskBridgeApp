@@ -1,49 +1,45 @@
-<div class="relative overflow-x-auto shadow-md sm:rounded-lg w-[100%] ">
-  <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-    <tr>
-      <th scope="col" class="px-2 py-2">
-        Name of the Module
-      <th scope="col" class="px-2 py-2">
-        Description
-      </th>
-      <th scope="col" class="px-2 py-2">
-        VIEW
-      </th>
-      <th scope="col" class="px-2 py-2">
-        EDIT
-      </th>
-      <th scope="col" class="px-2 py-2">
-        DELETE
-      </th>
-    </tr>
-    </thead>
-    <tbody>
-    <% @scripts.each do |script| %>
-      <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 gap-2">
-
-        <th scope="row" class="px-2 py-2 font-medium  whitespace-nowrap ">
-          <%= script.name   %>
-        </th>
-        <th scope="row" class="px-2 py-2 font-medium  whitespace-nowrap  capitalize">
-          <%= script.description %>
-        </th>
-        <th scope="row" class="px-2 py-2 font-medium  whitespace-nowrap  capitalize">
-          <%#= link_to 'VIEW', [script.software, script], class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
-        </th>
-        <th scope="row" class="px-2 py-2 font-medium  whitespace-nowrap  capitalize">
-          <%#= link_to 'Edit', edit_software_script_path(script.software, script), class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
-        </th>
-        <td class="px-2 py-2">
-          <% if can? :destroy, script %>
-            <%#= button_to 'DELETE', [script.software, script], method: :delete, data: { 'turbo_method': :delete, 'turbo-confirm': 'Are you sure?' }, class: ' bg-[#F65160] hover:bg-[#F65160] p-2 rounded-md font-bold rounded-lg text-slate-100'  %>
-          <% end %>
-        </td>
-
-      </tr>
-
-    <% end %>
-    </tbody>
-  </table>
+<div class="overflow-x-auto w-full">
+  <div class="bg-[#F4F5F7] dark:bg-gray-900 p-4 rounded-lg shadow-md">
+    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+      <thead class="bg-[#F4F5F7] dark:bg-gray-900">
+        <tr>
+          <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-[#42526E] dark:text-white uppercase tracking-wider">
+            Name of the Module
+          </th>
+          <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-[#42526E] dark:text-white uppercase tracking-wider">
+            Description
+          </th>
+          <th scope="col" class="px-4 py-3 text-center text-xs font-bold text-[#42526E] dark:text-white uppercase tracking-wider">
+            View
+          </th>
+          <th scope="col" class="px-4 py-3 text-center text-xs font-bold text-[#42526E] dark:text-white uppercase tracking-wider">
+            Edit
+          </th>
+          <th scope="col" class="px-4 py-3 text-center text-xs font-bold text-[#42526E] dark:text-white uppercase tracking-wider">
+            Delete
+          </th>
+        </tr>
+      </thead>
+      <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
+        <% @scripts.each do |script| %>
+          <tr class="hover:bg-[#DEEBFF] dark:hover:bg-gray-800 transition">
+            <td class="px-4 py-3 whitespace-nowrap font-semibold text-[#172B4D] dark:text-white">
+              <%= script.name %>
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap text-[#5E6C84] dark:text-white">
+              <%= script.description %>
+            </td>
+            <td class="px-4 py-3 text-center dark:text-white">
+              <!-- Removed link here -->
+            </td>
+            <td class="px-4 py-3 text-center dark:text-white">
+            </td>
+            <td class="px-4 py-3 text-center dark:text-white">
+              
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
 </div>
-

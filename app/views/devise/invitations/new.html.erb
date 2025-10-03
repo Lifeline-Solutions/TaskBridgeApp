@@ -1,64 +1,61 @@
-<% provide(:title, "  Create new user invitation") %>
+<% provide(:title, "Create new user invitation") %>
 
-<% if current_user.has_role? :admin or current_user.has_role?('project manager') %>
-  <h2><%= t "devise.invitations.new.header" %></h2>
+<% if current_user.has_role?(:admin) || current_user.has_role?('project manager') %>
+  <div class="max-w-xl mx-auto mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+    <h2 class="text-2xl font-semibold mb-6 text-center text-gray-800 dark:text-gray-100">
+      <%= t "devise.invitations.new.header" %>
+    </h2>
 
-  <% if flash[:alert] %>
-    <div class="alert alert-danger">
-      <%= flash[:alert] %>
-    </div>
-  <% end %>
-
-  <%= form_for(@user, as: @resource_name, url: invitation_path(@resource_name), html: { method: :post }) do |f| %>
-    <%= render "devise/shared/error_messages", resource: @user %>
-    <% @user.class.invite_key_fields.each do |field| -%>
-      <div class="flex flex-wrap">
-        <div class="field flex gap-2 m-2">
-          <%= f.label ('Email*'), class: "flex items-center" %>
-          <%= f.email_field field, class: "block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600", placeholder: 'ab@craftsilicon.com', required: true %>
-        </div>
-        <!-- Firstname field -->
-        <div class="field flex gap-2 m-2">
-          <%= f.label ('First Name*'), class: "flex items-center" %>
-          <%= f.text_field :first_name, class: "block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600", placeholder: 'First Name', required: true  %>
-        </div>
-        <!-- Lastname field -->
-        <div class="field flex gap-2 m-2">
-          <%= f.label ('Last Name*'), class: "flex items-center" %>
-          <%= f.text_field :last_name, class: "block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600", placeholder: 'Last Name', required: true %>
-        </div>
-        <div class="field flex gap-2 m-2">
-          <%= f.label ('Client Name*'), class: "flex items-center" %>
-          <%= f.select :client_id, options_from_collection_for_select(Client.all, :id, :name), { prompt: 'Select Client' }, class: "form-select block rounded-md border-gray-300 w-[250px] shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600", required: true %>
-        </div>
-      </div>
-    <% end %>
-    <% if current_user.has_role? :admin %>
-      <div class="flex flex-wrap">
-        <div class="field flex gap-2 m-2">
-          <%= f.label ('Role*'), class: "flex items-center" %>
-          <%= select_tag :role, options_for_select(Role.where.not(name: %w[creator editor]).distinct.pluck(:name, :name)), class: "form-select mt-1 block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" %>
-        </div>
-        <div class="field flex gap-2 m-2 capitalize">
-          <%= f.label ('Select Location'), class: "flex items-center" %>
-          <%= f.select :location_id, options_from_collection_for_select(Location.all, :id, ->(location) { "#{location.city}, #{location.country}" }, selected: @user.location_id), { prompt: 'Select City, Country', include_blank: true }, class: "form-select block rounded-md border-gray-300 w-[250px] shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" %>
-        </div>
-      </div>
-    <% elsif current_user.has_role?('project manager') %>
-      <div class="flex flex-wrap">
-        <div class="field flex gap-2 m-2">
-          <%= f.label :role, class: "flex items-center" %>
-          <%= select_tag :role, options_for_select(Role.where.not(name: %w[creator editor admin observer sales]).distinct.pluck(:name, :name)), class: "form-select mt-1 block rounded-md border-gray-300  shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" %>
-        </div>
-        <div class="field flex gap-2 m-2 capitalize">
-          <%= f.label ('Select Location'), class: "flex items-center" %>
-          <%= f.select :location_id, options_from_collection_for_select(Location.all, :id, ->(location) { "#{location.city}, #{location.country}" }, selected: @user.location_id), { prompt: 'Select City, Country', include_blank: true }, class: "form-select block rounded-md border-gray-300 w-[250px] shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" %>
-        </div>
+    <% if flash[:alert] %>
+      <div class="alert alert-danger mb-4 text-red-700 bg-red-100 rounded p-2 text-center">
+        <%= flash[:alert] %>
       </div>
     <% end %>
 
-    <div class="actions">
-      <%= f.submit t("devise.invitations.new.submit_button"), class: 'uppercase bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
-    </div>
-  <% end %>
+    <%= form_for(@user, as: @resource_name, url: invitation_path(@resource_name), html: { method: :post, class: "space-y-4" }) do |f| %>
+      <%= render "devise/shared/error_messages", resource: @user %>
+      <% @user.class.invite_key_fields.each do |field| -%>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <%= f.label field, 'Email*', class: "block text-sm font-medium text-gray-700 dark:text-gray-200" %>
+            <%= f.email_field field, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600", placeholder: 'ab@craftsilicon.com', required: true %>
+          </div>
+          <div>
+            <%= f.label :first_name, 'First Name*', class: "block text-sm font-medium text-gray-700 dark:text-gray-200" %>
+            <%= f.text_field :first_name, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600", placeholder: 'First Name', required: true  %>
+          </div>
+          <div>
+            <%= f.label :last_name, 'Last Name*', class: "block text-sm font-medium text-gray-700 dark:text-gray-200" %>
+            <%= f.text_field :last_name, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600", placeholder: 'Last Name', required: true %>
+          </div>
+          <div>
+            <%= f.label :client_id, 'Client Name*', class: "block text-sm font-medium text-gray-700 dark:text-gray-200" %>
+            <%= f.select :client_id, options_from_collection_for_select(Client.all, :id, :name), { prompt: 'Select Client' }, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600", required: true %>
+          </div>
+        </div>
+      <% end %>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <% if current_user.has_role?(:admin) %>
+          <div>
+            <%= f.label :role, 'Role*', class: "block text-sm font-medium text-gray-700 dark:text-gray-200" %>
+            <%= select_tag :role, options_for_select(Role.where.not(name: %w[creator editor]).distinct.pluck(:name, :name)), class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" %>
+          </div>
+        <% elsif current_user.has_role?('project manager') %>
+          <div>
+            <%= f.label :role, 'Role*', class: "block text-sm font-medium text-gray-700 dark:text-gray-200" %>
+            <%= select_tag :role, options_for_select(Role.where.not(name: %w[creator editor admin observer sales]).distinct.pluck(:name, :name)), class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" %>
+          </div>
+        <% end %>
+        <div>
+          <%= f.label :location_id, 'Select Location', class: "block text-sm font-medium text-gray-700 dark:text-gray-200" %>
+          <%= f.select :location_id, options_from_collection_for_select(Location.all, :id, ->(location) { "#{location.city}, #{location.country}" }, selected: @user.location_id), { prompt: 'Select City, Country', include_blank: true }, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" %>
+        </div>
+      </div>
+
+      <div class="pt-4 flex justify-center">
+        <%= f.submit t("devise.invitations.new.submit_button"), class: 'uppercase bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded font-bold text-white transition-colors duration-200 w-full md:w-auto' %>
+      </div>
+    <% end %>
+  </div>
 <% end %>

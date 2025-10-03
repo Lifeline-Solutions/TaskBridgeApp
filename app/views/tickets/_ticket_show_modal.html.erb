@@ -1,35 +1,85 @@
 <%= turbo_frame_tag "modal" do %>
-<div class="fixed inset-0 z-50 overflow-hidden" data-controller="modal">
-  <!-- Blurred background -->
+<div class="fixed inset-0 z-50 overflow-hidden" data-controller="modal navigation">
+  <!-- Light opaque background overlay for left side only -->
   <div class="absolute inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm transition-opacity duration-300"></div>
   
-  <!-- Modal container - now using flex for two columns -->
-  <div class="fixed inset-y-0 right-0 w-full max-w-6xl flex overflow-hidden">
-    <!-- Left panel (ticket details) -->
-    <div class="w-1/2 bg-white dark:bg-gray-800 shadow-xl overflow-y-auto">
-      <div class="p-6">
-        <!-- Close button -->
-        <button class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" 
-                data-action="click->modal#close">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-
-        <!-- SECTION 1: Ticket header -->
-        <div class="border-b border-gray-200 dark:border-gray-700 pb-4 mb-6">
-          <h2 class="text-xl font-bold text-gray-900 dark:text-white">Issue ID <%= @ticket.unique_id %> Details</h2>
-          <div class="flex items-center justify-between mt-2">
-            <p class="text-sm text-gray-600 dark:text-gray-300">
-              <span class="font-medium">Created by: </span> <%= @ticket.user.name %> |
+  <!-- Modal container - right side panel -->
+  <div class="fixed top-0 right-0 bottom-0 bg-white shadow-2xl modal-narrow modal-transition flex flex-col h-screen max-h-screen overflow-hidden"
+       id="modal-container">
+      <!-- Navigation Bar - Fixed header -->
+      <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 bg-white flex-shrink-0">
+        <div class="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-3 sm:gap-0">
+          <div class="flex flex-col space-y-1 sm:space-y-2">
+            <h2 class="text-base sm:text-lg font-semibold text-gray-900 break-words">Issue ID <%= @ticket.unique_id %> Details</h2>
+            <!-- SECTION 1: Ticket info - moved from content area -->
+            <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 break-words">
+              <span class="font-medium">Created by: </span> <%= @ticket.user.name %><br class="sm:hidden">
+              <span class="hidden sm:inline"> | </span>
               <span class="font-medium">Issue Type: </span> <%= @ticket.issue %>
             </p>
           </div>
+          <div class="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+            <!-- Previous/Next Navigation Buttons -->
+            <button class="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                data-action="click->navigation#previous"
+                onclick="
+                  const messagesPanel = document.getElementById('messages-panel');
+                  const mainPanel = document.getElementById('main-panel');
+                  const modalContainer = document.getElementById('modal-container');
+                  
+                  if (messagesPanel) messagesPanel.classList.add('hidden');
+                  if (mainPanel) {
+                    mainPanel.classList.remove('w-1/2', 'sm:w-1/2');
+                    mainPanel.classList.add('w-full');
+                  }
+                  if (modalContainer) {
+                    modalContainer.classList.remove('modal-wide');
+                    modalContainer.classList.add('modal-narrow');
+                  }
+                ">
+              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <button class="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                data-action="click->navigation#next"
+                onclick="
+                  const messagesPanel = document.getElementById('messages-panel');
+                  const mainPanel = document.getElementById('main-panel');
+                  const modalContainer = document.getElementById('modal-container');
+                  
+                  if (messagesPanel) messagesPanel.classList.remove('hidden');
+                  if (mainPanel) {
+                    mainPanel.classList.remove('w-full');
+                    mainPanel.classList.add('w-full', 'sm:w-1/2');
+                  }
+                  if (modalContainer) {
+                    modalContainer.classList.remove('modal-narrow');
+                    modalContainer.classList.add('modal-wide');
+                  }
+                ">
+              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+            <button class="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Close panel"
+                data-action="click->modal#close">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
+      </div>
 
+      <!-- Content container -->
+      <div class="flex flex-1 min-h-0 h-0 overflow-hidden flex-col sm:flex-row">
+        <!-- Main panel (ticket details) - initially full width -->
+        <div id="main-panel" class="w-full bg-white dark:bg-gray-800 overflow-y-auto transition-all duration-300 ease-in-out flex-1 min-h-0">
+          <div class="p-4 sm:p-6">
         <!-- SECTION 2: Image and Details row -->
         <%= render partial: "tickets/ticketshow_top_left" %>
-
 
         <!-- SECTION 3: Target Times and SLA sections of the ticket show-->
         <%= render partial: "tickets/tickets_targets_sla", locals: { ticket: @tickets} %>
@@ -53,54 +103,53 @@
           </div>
         </div>
 
-        <!-- Assigned Users -->
-        <div class="mt-6">
-          <%= render 'tickets/assign_people_tickets' %>
-        </div>
-
-        <!-- Due Date, Severity, Issue Type -->
-        <div class="mt-6">
-          <%= render 'tickets/custom_field' %>
-        </div>
-      </div>
-    </div>
-
-    <!-- Right panel (messaging) -->
-    <div class="w-1/2 bg-gray-50 dark:bg-gray-700 border-l border-gray-200 dark:border-gray-600 flex flex-col">
-      <!-- Messages header -->
-      <div class="p-4 border-b border-gray-200 dark:border-gray-600">
-        <h3 class="font-bold text-gray-900 dark:text-white">Messages</h3>
-      </div>
-
-      <!-- Messages content -->
-      <div class="flex-1 overflow-y-auto p-4 space-y-4" id="messages">
-        <%= render 'issues/issues_table', ticket_items: @ticket %>
-      </div>
-
-      
-
-      <!-- New message button -->
-      <% unless @ticket.statuses.first&.name == 'Closed' %>
-        <div data-controller="messages">
-          <!-- Single New Message Button -->
-          <div class="p-4 border-t border-gray-200 dark:border-gray-600">
-            <button id="newMessageButton" 
-                    class="flex items-center justify-center gap-2 w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition-colors"
-                    data-action="click->messages#toggleForm">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
-              </svg>
-              New Message
-            </button>
+          <!-- Assigned Users -->
+          <div class="mt-6">
+            <%= render 'tickets/assign_people_tickets' %>
           </div>
 
-          <!-- Form Container (initially hidden) -->
-          <div id="messageFormContainer" class="hidden" data-messages-target="form">
-            <%= render 'issues/form', project: @project, ticket: @ticket, issue: Issue.new %>
+          <!-- Due Date, Severity, Issue Type -->
+          <div class="mt-6">
+            <%= render 'tickets/custom_field' %>
+          </div>
           </div>
         </div>
-      <% end %>
 
+        <!-- Messages panel (initially hidden, takes up remaining space when shown) -->
+        <div id="messages-panel" class="hidden w-full sm:w-1/2 bg-gray-50 dark:bg-gray-700 border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-600 flex flex-col transition-all duration-300 ease-in-out min-h-0 overflow-y-auto">
+          <!-- Messages header -->
+          <div class="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-600 flex-shrink-0">
+            <h3 class="font-bold text-sm sm:text-base text-gray-900 dark:text-white">Messages</h3>
+          </div>
+
+          <!-- Messages content -->
+          <div class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 min-h-0" id="messages">
+          <%= render 'issues/issues_table', ticket_items: @ticket %>
+        </div>
+
+        <!-- New message button -->
+        <% unless @ticket.statuses.first&.name == 'Closed' %>
+          <div data-controller="messages">
+            <!-- Single New Message Button -->
+            <div class="p-4 border-t border-gray-200 dark:border-gray-600">
+              <button id="newMessageButton" 
+                      class="flex items-center justify-center gap-2 w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition-colors"
+                      data-action="click->messages#toggleForm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+                </svg>
+                New Message
+              </button>
+            </div>
+
+            <!-- Form Container (initially hidden) -->
+            <div id="messageFormContainer" class="hidden" data-messages-target="form">
+              <%= render 'issues/form', project: @project, ticket: @ticket, issue: Issue.new %>
+            </div>
+          </div>
+        <% end %>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -111,3 +160,40 @@
   <img class="modal-content block max-w-full max-h-screen m-auto" id="fullImage" data-image-modal-target="modalImage" alt='show image'>
 </div>
 <% end %>
+
+<style>
+  .modal-narrow {
+    width: 33.333333%; /* 1/3 of the page */
+    min-width: 320px;
+    max-width: 100vw;
+  }
+  
+  .modal-wide {
+    width: 66.666667%; /* 2/3 of the page */
+    min-width: 320px;
+    max-width: 100vw;
+  }
+  
+  .modal-transition {
+    transition: width 0.3s ease-in-out;
+  }
+  
+  /* Mobile responsiveness */
+  @media (max-width: 768px) {
+    .modal-narrow {
+      width: 100vw !important;
+    }
+    .modal-wide {
+      width: 100vw !important;
+    }
+  }
+  
+  @media (max-width: 1024px) {
+    .modal-narrow {
+      width: 50% !important;
+    }
+    .modal-wide {
+      width: 80% !important;
+    }
+  }
+</style>

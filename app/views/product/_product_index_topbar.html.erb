@@ -1,40 +1,43 @@
-<div class="product-filter-bar bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
-  <div class="filter-container flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+<div class="product-filter-bar">
+  <!-- Main container -->
+  <div class="filter-container">
     <!-- Left side controls -->
-    <div class="left-controls flex flex-col gap-2 w-full sm:flex-row sm:flex-wrap md:flex-nowrap md:items-center md:flex-1">
+    <div class="left-controls">
       <!-- Search form -->
-      <div class="search-container w-full md:w-auto md:flex-1 md:max-w-[380px]">
-        <form action="<%= product_index_path %>" method="get" class="search-form flex flex-col gap-2 w-full sm:flex-row" data-controller="search-form" data-action="submit->search-form#submit">
+      <div class="search-container">
+        <form action="<%= product_index_path %>" method="get" class="search-form" data-controller="search-form" data-action="submit->search-form#submit">
           <% if params[:sort_by].present? %>
             <input type="hidden" name="sort_by" value="<%= params[:sort_by] %>">
           <% end %>
           <% if params[:status].present? %>
             <input type="hidden" name="status" value="<%= params[:status] %>">
           <% end %>
+          
           <input 
             type="text" 
             name="query" 
             value="<%= params[:query] %>" 
             placeholder="Search by content..." 
-            class="search-input w-full border border-gray-300 dark:border-gray-600 rounded-md px-4 py-2 font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:text-white"
+            class="search-input dark:text-white"
           >
-          <button type="submit" class="search-button bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-md px-4 py-2 whitespace-nowrap w-full sm:w-auto">Search</button>
+          <button type="submit" class="search-button dark:text-white">Search</button>
         </form>
+        
         <% if params[:query].present? || params[:status].present? || params[:sort_by].present? %>
-          <a href="<%= product_index_path %>" class="clear-button inline-block bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white font-medium rounded-md px-4 py-2 whitespace-nowrap mt-2 sm:mt-0 sm:ml-2 hover:bg-gray-300 dark:hover:bg-gray-600">Clear all</a>
+          <a href="<%= product_index_path %>" class="clear-button dark:text-white">Clear all</a>
         <% end %>
       </div>
 
       <!-- Category Dropdown -->
-      <div class="filter-dropdown relative w-full min-w-[120px] sm:w-auto">
+      <div class="filter-dropdown" data-controller="product-topbar-dropdown">
         <form action="<%= product_index_path %>" method="get">
-          <div class="dropdown-label flex items-center gap-2 text-gray-700 dark:text-gray-300">
+          <div class="dropdown-label">
             <label for="status" class="dark:text-white">Category</label>
             <select 
               id="status" 
               name="status" 
               onchange="this.form.submit()" 
-              class="dropdown-select border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 px-3 py-2 text-sm w-full min-w-[90px] focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
+              class="dropdown-select dark:text-white"
             >
               <% ['All', *@used_statuses.sort].each do |option| %>
                 <option value="<%= option %>" <%= 'selected' if params[:status] == option %>>
@@ -44,10 +47,11 @@
             </select>
           </div>
         </form>
-        <div class="dropdown-menu absolute left-0 mt-2 w-48 max-h-60 overflow-auto bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-10 hidden" data-product-topbar-dropdown-target="menu">
+        
+        <div class="dropdown-menu" data-product-topbar-dropdown-target="menu">
           <% ['All', *@used_statuses.sort].each do |category| %>
             <button 
-              class="dropdown-item block w-full text-left px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition" 
+              class="dropdown-item dark:text-white" 
               data-action="click->product-topbar-dropdown#select"
               data-category="<%= category %>"
             >
@@ -58,20 +62,21 @@
       </div>
 
       <!-- Sort by Dropdown (fixed) -->
-      <div class="filter-dropdown relative w-full min-w-[120px] sm:w-auto">
+      <div class="filter-dropdown">
         <form action="<%= product_index_path %>" method="get">
+          <%# Preserve other params %>
           <% if params[:status].present? %>
             <input type="hidden" name="status" value="<%= params[:status] %>">
           <% end %>
           <% if params[:query].present? %>
             <input type="hidden" name="query" value="<%= params[:query] %>">
           <% end %>
-          <div class="dropdown-label flex items-center gap-2 text-gray-700 dark:text-gray-300">
+          <div class="dropdown-label">
             <select 
               id="sort_by" 
               name="sort_by" 
               onchange="this.form.submit()" 
-              class="dropdown-select border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 px-3 py-2 text-sm w-full min-w-[90px] focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
+              class="dropdown-select dark:text-white"
             >
               <option value="upcoming" <%= 'selected' if params[:sort_by] == 'upcoming' %>>Sort by: Upcoming</option>
               <option value="recent" <%= 'selected' if params[:sort_by] == 'recent' %>>Sort by: Recent</option>
@@ -82,13 +87,324 @@
     </div>
 
     <!-- Right side - Add New Project button -->
-    <div class="right-controls w-full md:w-auto md:ml-6">
+    <div class="right-controls">
       <% if can? :create, Product %>
-        <a href="<%= new_product_path %>" class="add-button flex items-center justify-center gap-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-md px-4 py-2 text-sm w-full max-w-[160px] shadow transition no-underline">
-          <span class="add-icon text-lg">＋</span>
-          <span>Add New</span>
+        <a href="<%= new_product_path %>" class="add-button dark:text-white">
+          <span class="add-icon dark:text-white">＋</span>
+          <span class="dark:text-white">Add New</span>
         </a>
       <% end %>
     </div>
   </div>
 </div>
+
+<style>
+  .product-filter-bar {
+    background-color: rgb(255 255 255);
+    border-bottom: 1px solid rgb(229 231 235);
+    padding: 1rem;
+  }
+
+  .dark .product-filter-bar {
+    background-color: rgb(31 41 55);
+    border-color: rgb(55 65 81);
+  }
+
+  .filter-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  @media (min-width: 768px) {
+    .filter-container {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+
+  .left-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  @media (min-width: 640px) {
+    .left-controls {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .left-controls {
+      flex-wrap: nowrap;
+      align-items: center;
+      flex: 1;
+    }
+  }
+
+  .search-container {
+    width: 100%;
+  }
+
+  @media (min-width: 768px) {
+    .search-container {
+      width: auto;
+      flex: 1;
+      max-width: 380px;
+    }
+  }
+
+  .search-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  @media (min-width: 640px) {
+    .search-form {
+      flex-direction: row;
+    }
+  }
+
+  .search-input {
+    width: 100%;
+    border: 1px solid rgb(209 213 219);
+    border-radius: 0.375rem;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+  }
+
+  .search-input:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: rgb(59 130 246);
+  }
+
+  .dark .search-input {
+    background-color: rgb(55 65 81);
+    border-color: rgb(75 85 99);
+    color: rgb(255 255 255);
+  }
+
+  .search-button {
+    background-color: rgb(37 99 235);
+    color: rgb(255 255 255);
+    font-weight: 700;
+    border-radius: 0.375rem;
+    padding: 0.5rem 1rem;
+    white-space: nowrap;
+  }
+
+  @media (min-width: 640px) {
+    .search-button {
+      width: auto;
+    }
+  }
+
+  .search-button:hover {
+    background-color: rgb(29 78 216);
+  }
+
+  .clear-button {
+    display: inline-block;
+    background-color: rgb(229 231 235);
+    color: rgb(55 65 81);
+    font-weight: 500;
+    border-radius: 0.375rem;
+    padding: 0.5rem 1rem;
+    white-space: nowrap;
+    margin-top: 0.5rem;
+  }
+
+  @media (min-width: 640px) {
+    .clear-button {
+      margin-top: 0;
+      margin-left: 0.5rem;
+    }
+  }
+
+  .clear-button:hover {
+    background-color: rgb(209 213 219);
+  }
+
+  .dark .clear-button {
+    background-color: rgb(75 85 99);
+    color: rgb(255 255 255);
+  }
+
+  .dark .clear-button:hover {
+    background-color: rgb(107 114 128);
+  }
+
+  .filter-dropdown {
+    position: relative;
+    width: 100%;
+    min-width: 120px;
+  }
+
+  @media (min-width: 640px) {
+    .filter-dropdown {
+      width: auto;
+    }
+  }
+
+  .dropdown-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgb(55 65 81);
+  }
+
+  .dark .dropdown-label {
+    color: rgb(209 213 219);
+  }
+
+  .dropdown-select {
+    border: 1px solid rgb(209 213 219);
+    border-radius: 0.375rem;
+    background-color: rgb(255 255 255);
+    color: rgb(17 24 39);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    width: 100%;
+    min-width: 90px;
+  }
+
+  .dark .dropdown-select {
+    background-color: rgb(31 41 55);
+    border-color: rgb(75 85 99);
+    color: rgb(243 244 246);
+  }
+
+  .dropdown-select:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: rgb(147 197 253);
+    border-color: rgb(59 130 246);
+  }
+
+  .dropdown-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgb(107 114 128);
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    width: 100%;
+  }
+
+  .dark .dropdown-trigger {
+    color: rgb(156 163 175);
+  }
+
+  .dropdown-trigger:hover {
+    color: rgb(55 65 81);
+  }
+
+  .dark .dropdown-trigger:hover {
+    color: rgb(209 213 219);
+  }
+
+  .selected-option {
+    font-weight: 500;
+  }
+
+  .dropdown-trigger svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    left: 0;
+    margin-top: 0.5rem;
+    width: 12rem;
+    max-height: 15rem;
+    overflow: auto;
+    background-color: rgb(255 255 255);
+    border: 1px solid rgb(229 231 235);
+    border-radius: 0.375rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    z-index: 10;
+  }
+
+  .dark .dropdown-menu {
+    background-color: rgb(55 65 81);
+    border-color: rgb(75 85 99);
+  }
+
+  .dropdown-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.5rem 1rem;
+    color: rgb(55 65 81);
+    transition: background-color 0.15s;
+  }
+
+  .dark .dropdown-item {
+    color: rgb(209 213 219);
+  }
+
+  .dropdown-item:hover {
+    background-color: rgb(243 244 246);
+  }
+
+  .dark .dropdown-item:hover {
+    background-color: rgb(75 85 99);
+  }
+
+  .dropdown-item.active {
+    background-color: rgb(243 244 246);
+  }
+
+  .dark .dropdown-item.active {
+    background-color: rgb(75 85 99);
+  }
+
+  .right-controls {
+    width: 100%;
+  }
+
+  @media (min-width: 768px) {
+    .right-controls {
+      width: auto;
+      margin-left: 1.5rem;
+    }
+  }
+
+  .add-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    background-color: rgb(63 140 255);
+    color: rgb(255 255 255);
+    font-weight: 600;
+    border-radius: 0.375rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    transition: all 0.15s;
+    width: 100%;
+    max-width: 160px;
+    text-decoration: none;
+  }
+
+  .add-button:hover {
+    background-color: rgb(58 129 235);
+  }
+
+  .add-icon {
+    font-size: 1.125rem;
+    line-height: 1;
+  }
+</style>

@@ -1,6 +1,6 @@
 <% if @tickets.any? %>
-  <div class="mx-auto mb-4 px-4 sm:px-6 lg:px-8 py-8">
-    <h2 class="text-xl font-bold mb-4 text-center">
+  <div class="mx-auto mb-4 px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
+    <h2 class="text-lg sm:text-xl font-bold mb-4 text-center">
       Ticket Status Report as of <%= Time.now.strftime("%d/%b/%Y at %I:%M %p") %> for
 
       <% if current_user.has_role?(:ceo) %>
@@ -24,14 +24,12 @@
       <% else %>
         All Clients
       <% end %>
-
     </h2>
-    <div class="grid grid-cols-3">
-      <div class="col-span-2">
-        <%= pie_chart @status_counts, height: "400px", library: { title: { text: "Ticket Status Distribution" } } %>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="md:col-span-2">
+        <%= pie_chart @status_counts, height: "300px", library: { title: { text: "Ticket Status Distribution" } } %>
       </div>
-
-      <div class="col-span-1">
+      <div class="md:col-span-1">
         <div class="p-2">
           <h1 class="font-semibold">Total Tickets</h1>
           <% @status_counts.each do |status, count| %>
@@ -41,130 +39,129 @@
       </div>
     </div>
   </div>
-  <div class="mx-auto mb-4 px-4 sm:px-6 lg:px-8 py-8">
-    <div class="flex justify-end gap-2">
+  <div class="mx-auto mb-4 px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
+    <div class="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center w-full">
+      <div class="flex flex-col gap-2 sm:flex-row sm:gap-2 w-full sm:w-auto">
       <%= link_to "Download Status Report",
-                  cease_fire_report_path(
-                    format: :xlsx,
-                    start_date: params[:start_date],
-                    end_date: params[:end_date],
-                    priority: params[:priority],
-                    status: params[:status],
-                    client_ids: params[:client_ids]
-                  ),
-                  class: "bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100" %>
-
-
-      <%= form_with url: cease_fire_report_path, method: :get, local: true do |f| %>
-        <%= f.submit "Clear", class: 'bg-gray-500 hover:bg-gray-700 p-2 rounded font-bold rounded-lg text-slate-100' %>
+          cease_fire_report_path(
+          format: :xlsx,
+          start_date: params[:start_date],
+          end_date: params[:end_date],
+          priority: params[:priority],
+          status: params[:status],
+          client_ids: params[:client_ids]
+          ),
+          class: "bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100 text-xs sm:text-base w-full sm:w-auto text-center transition-colors duration-200" %>
+      <%= form_with url: cease_fire_report_path, method: :get, local: true, html: { class: "w-full sm:w-auto" } do |f| %>
+        <%= f.submit "Clear", class: 'bg-gray-500 hover:bg-gray-700 p-2 rounded font-bold rounded-lg text-slate-100 text-xs sm:text-base w-full sm:w-auto text-center transition-colors duration-200' %>
       <% end %>
       <% if current_user.has_role?(:admin) or current_user.has_role?(:observer) %>
         <% if @clients.present? && @clients.first.present? %>
-          <%= link_to "Send To CEO",
-                      email_report_path(client_id: @clients.first.id),
-                      data: { 'turbo_method': :get, 'turbo-confirm': "Are you sure you want to send the report for #{@clients.first.name} to #{@clients.first.client_contact_person} at #{@clients.first.client_contact_person_email}?" },
-                      class: "bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100" %>
+        <%= link_to "Send To CEO",
+            email_report_path(client_id: @clients.first.id),
+            data: { 'turbo_method': :get, 'turbo-confirm': "Are you sure you want to send the report for #{@clients.first.name} to #{@clients.first.client_contact_person} at #{@clients.first.client_contact_person_email}?" },
+            class: "bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100 text-xs sm:text-base w-full sm:w-auto text-center transition-colors duration-200" %>
         <% else %>
-          <div class="flex justify-end my-4">
-            <span class="text-gray-500">No clients available to email the report.</span>
-          </div>
+        <span class="text-gray-500 text-xs sm:text-base text-center w-full">No clients available to email the report.</span>
         <% end %>
       <% end %>
+      </div>
     </div>
-    <table id="ceasefire" class="table-auto w-full mt-2">
-      <thead>
-      <tr>
-        <th class="border border-black px-4 py-2">Ticket ID</th>
-        <th class="border border-black px-4 py-2">Project Name</th>
-        <th class="border border-black px-4 py-2">Severity</th>
-        <th class="border border-black px-4 py-2">Summary</th>
-        <th class="border border-black px-4 py-2">Issue Type</th>
-        <th class="border border-black px-4 py-2">Status</th>
-        <th class="border border-black px-4 py-2">Assigned To</th>
-        <th class="border border-black px-4 py-2">Reporter</th>
-        <th class="border border-black px-4 py-2">Details</th>
-        <th class="border border-black px-4 py-2">Created</th>
-        <th class="border border-black px-4 py-2">Status Updated At</th>
-        <th class="border border-black px-4 py-2">Last Comment Updated At</th>
-        <th class="border border-black px-4 py-2">Due Date</th>
-        <% if !current_user.has_role?(:ceo) %>
-          <th class="border border-black px-4 py-2">View</th>
-        <% end %>
-
-      </tr>
-      </thead>
-      <tbody>
-      <% @tickets.each do |ticket| %>
-        <% row_class = case ticket.statuses.first&.name
-                       when 'New'
-                         'bg-red-500'
-                       when 'Closed', 'Resolved'
-                         'bg-emerald-100 text-black'
-                       when 'Reopened'
-                         'bg-red-900 text-slate-100'
-                       when 'Under Development'
-                         'bg-blue-300'
-                       when 'Work in Progress'
-                         'bg-[#CCCCCC] text-black'
-                       when 'QA Testing'
-                         'bg-pink-500'
-                       when 'Awaiting Build'
-                         'bg-gray-800 text-slate-100'
-                       when 'Client Confirmation Pending'
-                         'bg-yellow-100 text-black'
-                       when 'On-Hold'
-                         'bg-red-600 text-slate-100'
-                       when 'Assigned'
-                         'bg-blue-800 text-slate-100'
-                       when 'Declined'
-                         'bg-gray-800 text-slate-100'
-                       else
-                         ''
-                       end %>
-        <tr class="<%= row_class %>">
-          <td class="border border border-black px-4 py-2"><%= ticket.unique_id %></td>
-          <td class="border border border-black px-4 py-2"><%= ticket.project.title %></td>
-          <td class="border border border-black px-4 py-2"><%= ticket.priority %></td>
-          <td class="border border border-black px-4 py-2"><%= ticket.subject %></td>
-          <td class="border border border-black px-4 py-2"><%= ticket.issue %></td>
-          <td class="border border border-black px-4 py-2"><%= ticket.statuses.first&.name || "N/A" %></td>
-          <td class="border border border-black px-4 py-2">
-            <div class="flex flex-col gap-2">
-              <% ticket.users.each do |user| %>
-                <% if user.name.present? %>
-                  <span class="font-medium"><%= user.name %></span>
-                  <span class="font-semibold">
-                    <% if user.teams.any? %>
-                      (<%= user.teams.map(&:name).join(', ') %>)
-                    <% else %>
-                      (No Team Assigned)
-                    <% end %>
-                  </span>
-                <% end %>
-              <% end %>
-            </div>
-          </td>
-          <td class="border border border-black px-4 py-2">
-            <% ticket.users.each do |user| %>
-              <% if user.name.present? %>
-                <%= user.name %>
-              <% end %>
-            <% end %>
-          </td>
-          <td class="border border border-black px-4 py-2"><%= ticket.user.name %></td>
-          <td class="border border border-black px-4 py-2 break-words overflow-hidden"><%= raw ticket.content.to_trix_html.gsub(/\[.*?\]/, '').strip.truncate(3000) %></td>
-          <td class="border border border-black px-4 py-2"><%= ticket.created_at.strftime("%d/%b/%Y %I:%M:%S %p") %></td>
-          <td class="border border-black px-4 py-2"><%= ticket.add_statuses.order(updated_at: :desc).first&.updated_at&.strftime('%d/%b/%Y %I:%M:%S %p') || 'N/A' %></td>
-          <td class="border border-black px-4 py-2"><%= ticket.issues.order(updated_at: :desc).first&.updated_at&.strftime('%d/%b/%Y %I:%M:%S %p') || 'N/A' %></td>
-          <td class="border border-black px-4 py-2"><%= ticket.due_date&.strftime('%d/%b/%Y') || 'N/A' %></td>
+    <div class="overflow-x-auto">
+      <table id="ceasefire" class="table-auto w-full mt-2 text-xs sm:text-sm">
+        <thead>
+        <tr>
+          <th class="border border-black px-2 sm:px-4 py-2">Ticket ID</th>
+          <th class="border border-black px-2 sm:px-4 py-2">Project Name</th>
+          <th class="border border-black px-2 sm:px-4 py-2">Severity</th>
+          <th class="border border-black px-2 sm:px-4 py-2">Summary</th>
+          <th class="border border-black px-2 sm:px-4 py-2">Issue Type</th>
+          <th class="border border-black px-2 sm:px-4 py-2">Status</th>
+          <th class="border border-black px-2 sm:px-4 py-2">Assigned To</th>
+          <th class="border border-black px-2 sm:px-4 py-2">Reporter</th>
+          <th class="border border-black px-2 sm:px-4 py-2">Details</th>
+          <th class="border border-black px-2 sm:px-4 py-2">Created</th>
+          <th class="border border-black px-2 sm:px-4 py-2">Status Updated At</th>
+          <th class="border border-black px-2 sm:px-4 py-2">Last Comment Updated At</th>
+          <th class="border border-black px-2 sm:px-4 py-2">Due Date</th>
           <% if !current_user.has_role?(:ceo) %>
-            <td class="border border-black px-4 py-2">
-              <%= link_to 'VIEW', project_ticket_path(ticket.project, ticket), target: "_blank", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-md text-slate-100' %>
-            </td>
+            <th class="border border-black px-2 sm:px-4 py-2">View</th>
           <% end %>
         </tr>
-      <% end %>
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+        <% @tickets.each do |ticket| %>
+          <% row_class = case ticket.statuses.first&.name
+                         when 'New'
+                           'bg-red-500'
+                         when 'Closed', 'Resolved'
+                           'bg-emerald-100 text-black'
+                         when 'Reopened'
+                           'bg-red-900 text-slate-100'
+                         when 'Under Development'
+                           'bg-blue-300'
+                         when 'Work in Progress'
+                           'bg-[#CCCCCC] text-black'
+                         when 'QA Testing'
+                           'bg-pink-500'
+                         when 'Awaiting Build'
+                           'bg-gray-800 text-slate-100'
+                         when 'Client Confirmation Pending'
+                           'bg-yellow-100 text-black'
+                         when 'On-Hold'
+                           'bg-red-600 text-slate-100'
+                         when 'Assigned'
+                           'bg-blue-800 text-slate-100'
+                         when 'Declined'
+                           'bg-gray-800 text-slate-100'
+                         else
+                           ''
+                         end %>
+          <tr class="<%= row_class %>">
+            <td class="border border-black px-2 sm:px-4 py-2"><%= ticket.unique_id %></td>
+            <td class="border border-black px-2 sm:px-4 py-2"><%= ticket.project.title %></td>
+            <td class="border border-black px-2 sm:px-4 py-2"><%= ticket.priority %></td>
+            <td class="border border-black px-2 sm:px-4 py-2"><%= ticket.subject %></td>
+            <td class="border border-black px-2 sm:px-4 py-2"><%= ticket.issue %></td>
+            <td class="border border-black px-2 sm:px-4 py-2"><%= ticket.statuses.first&.name || "N/A" %></td>
+            <td class="border border-black px-2 sm:px-4 py-2">
+              <div class="flex flex-col gap-1">
+                <% ticket.users.each do |user| %>
+                  <% if user.name.present? %>
+                    <span class="font-medium"><%= user.name %></span>
+                    <span class="font-semibold text-xs">
+                      <% if user.teams.any? %>
+                        (<%= user.teams.map(&:name).join(', ') %>)
+                      <% else %>
+                        (No Team Assigned)
+                      <% end %>
+                    </span>
+                  <% end %>
+                <% end %>
+              </div>
+            </td>
+            <td class="border border-black px-2 sm:px-4 py-2">
+              <% ticket.users.each do |user| %>
+                <% if user.name.present? %>
+                  <%= user.name %>
+                <% end %>
+              <% end %>
+            </td>
+            <td class="border border-black px-2 sm:px-4 py-2"><%= ticket.user.name %></td>
+            <td class="border border-black px-2 sm:px-4 py-2 break-words overflow-hidden max-w-[200px] sm:max-w-none"><%= raw ticket.content.to_trix_html.gsub(/\[.*?\]/, '').strip.truncate(3000) %></td>
+            <td class="border border-black px-2 sm:px-4 py-2"><%= ticket.created_at.strftime("%d/%b/%Y %I:%M:%S %p") %></td>
+            <td class="border border-black px-2 sm:px-4 py-2"><%= ticket.add_statuses.order(updated_at: :desc).first&.updated_at&.strftime('%d/%b/%Y %I:%M:%S %p') || 'N/A' %></td>
+            <td class="border border-black px-2 sm:px-4 py-2"><%= ticket.issues.order(updated_at: :desc).first&.updated_at&.strftime('%d/%b/%Y %I:%M:%S %p') || 'N/A' %></td>
+            <td class="border border-black px-2 sm:px-4 py-2"><%= ticket.due_date&.strftime('%d/%b/%Y') || 'N/A' %></td>
+            <% if !current_user.has_role?(:ceo) %>
+              <td class="border border-black px-2 sm:px-4 py-2">
+                <%= link_to 'VIEW', project_ticket_path(ticket.project, ticket), target: "_blank", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-md text-slate-100 text-xs sm:text-base' %>
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+        </tbody>
+      </table>
+    </div>
   </div>
 <% end %>

@@ -1,120 +1,233 @@
 <div class="w-full">
   <%= render 'tickets/search_q' %>
 
-  <div class="overflow-x-auto h-full">
-    <table class="min-w-full divide-y" aria-label="Tickets Table">
-      <thead>
-      <%= render partial: "tickets/ticket_table_headers" %>
-      </thead>
-      <tbody class="text-sm">
-      <% @ticket.each do |ticket| %>
-        <% if ticket.present? %>
-          <tr class="<%= case ticket.issue
-                         when 'SUPPORT' then 'bg-[#007ACC]'
-                         when 'NEW FEATURE' then 'bg-[#00B894]'
-                         when 'BUG' then 'bg-[#E53935]'
-                         when 'REQUEST' then 'bg-[#6c5CE7]'
-                         when 'INCIDENT' then 'bg-[#F39C12]'
-                         when 'CHANGE REQUEST' then 'bg-[#2ECC71]'
-                         else ''
-                         end %>">
-            <!-- Date -->
-            <td class="px-2 py-2 whitespace-nowrap">
-              <%= link_to ticket.created_at.strftime("%d %b %Y"), project_ticket_path(ticket.project, ticket) %>
-            </td>
-
-            <!-- Ticket ID -->
-            <td class="px-4 py-4 whitespace-nowrap font-medium uppercase">
-              <% if ticket.unique_id.present? %>
-                <%= link_to ticket.unique_id, project_ticket_path(ticket.project, ticket) %>
-              <% end %>
-            </td>
-
-            <!-- Issue Type -->
-            <td class="px-4 py-4 whitespace-nowrap">
-              <%= link_to ticket.issue, project_ticket_path(ticket.project, ticket) %>
-            </td>
-
-            <!-- Severity -->
-            <td class="px-4 py-4 whitespace-nowrap">
-              <%= render partial: 'tickets/priority_severity', locals: { ticket: ticket } %>
-            </td>
-
-            <!-- Summary -->
-            <td class="px-4 py-4 grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-4">
-              <%= render partial: 'tickets/summary', locals: { ticket: ticket } %>
-            </td>
-
-            <!-- Assigned To -->
-            <td class="px-4 py-4 whitespace-nowrap">
-              <div class="flex flex-col gap-2">
-                <% ticket.users.each do |user| %>
-                  <% if user.name.present? %>
-                      <span class="font-medium"><%= user.name %></span>
-                      <span class="font-semibold">
-                        <% if user.teams.any? %>
-                          (<%= user.teams.map(&:name).join(', ') %>)
-                        <% else %>
-                          (No Team Assigned)
-                        <% end %>
-                      </span>
-                  <% end %>
-                <% end %>
+  <!-- Mobile & Tablet Card View (shown on <lg) -->
+  <div class="lg:hidden space-y-3 p-2 sm:p-4">
+    <% @ticket.each do |ticket| %>
+      <% if ticket.present? %>
+        <% 
+          bg_class, text_class = case ticket.issue
+            when 'SUPPORT' then ['bg-[#007ACC]', 'text-white']
+            when 'NEW FEATURE' then ['bg-[#00B894]', 'text-white']
+            when 'BUG' then ['bg-[#E53935]', 'text-white']
+            when 'REQUEST' then ['bg-[#6c5CE7]', 'text-white']
+            when 'INCIDENT' then ['bg-[#F39C12]', 'text-black']
+            when 'CHANGE REQUEST' then ['bg-[#2ECC71]', 'text-black']
+            else ['bg-gray-500', 'text-white']
+          end
+        %>
+        <div class="<%= "#{bg_class} rounded-xl shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden" %>">
+          <!-- Card Header -->
+          <div class="px-4 py-3 border-b border-white/20">
+            <div class="flex items-center justify-between <%= text_class %>">
+              <div class="flex items-center space-x-2 min-w-0 flex-1">
+                <span class="font-bold text-sm sm:text-base truncate">
+                  <%= link_to ticket.unique_id, project_ticket_path(ticket.project, ticket), 
+                      class: "#{text_class} hover:opacity-80 transition-opacity" %>
+                </span>
+                <span class="text-sm opacity-60 hidden sm:inline">•</span>
+                <span class="text-xs sm:text-sm opacity-80 truncate hidden sm:inline"><%= ticket.issue %></span>
               </div>
-            </td>
+              <div class="flex items-center space-x-2 flex-shrink-0">
+                <span class="text-xs sm:text-sm opacity-80">
+                  <%= ticket.created_at.strftime("%d %b") %>
+                </span>
+                <!-- Mobile Action Button -->
+                <div data-controller="dropdown" data-dropdown-ticket-id-value="<%= ticket.id %>">
+                  <%= render partial: 'tickets/action_dropdown_mobile', locals: { ticket: ticket } %>
+                </div>
+              </div>
+            </div>
+          </div>
 
-            <!-- Status -->
-            <td class="px-4 py-4 whitespace-nowrap">
-              <%= render partial: 'tickets/ticket_status', locals: { ticket: ticket }  %>
-            </td>
+          <!-- Card Content: Only essentials on mobile -->
+          <div class="p-4 space-y-3">
+            <!-- Summary Section -->
+            <div class="flex items-start space-x-3">
+              <%= render partial: 'tickets/summary_mobile', locals: { ticket: ticket } %>
+            </div>
 
-            <!-- Progress Bar -->
-            <td class="px-4 py-4 whitespace-nowrap">
-              <%= render partial: 'tickets/progress_bar', locals: { ticket: ticket } %>
-            </td>
+            <!-- Priority, Status, and Progress Row -->
+            <div class="flex flex-wrap items-center gap-2 justify-between">
+              <div class="flex items-center space-x-2">
+                <%= render partial: 'tickets/priority_severity', locals: { ticket: ticket } %>
+                <%= render partial: 'tickets/ticket_status', locals: { ticket: ticket } %>
+              </div>
+            </div>
 
-            <!-- Reported By -->
-            <td class="px-4 py-4 whitespace-nowrap">
-              <% if ticket.user.name.present? %>
-                <%= ticket.user.name %>
-              <% end %>
-            </td>
+            <!-- Progress Bar for Mobile -->
+            <div class="flex items-center justify-between border-t border-white/10 pt-2">
+              <span class="<%= "#{text_class} opacity-70 text-xs" %>">Progress:</span>
+              <div class="flex items-center space-x-2 flex-1 max-w-32 ml-3">
+                <%= render partial: 'tickets/progress_bar_mobile', locals: { ticket: ticket, text_class: text_class } %>
+              </div>
+            </div>
 
-            <!-- Last Updated -->
-            <td class="px-4 py-4 whitespace-nowrap text-sm">
-              <% if ticket.add_statuses.present? %>
-                <%= ticket.add_statuses.first.updated_at.strftime('%H:%M %d %b %Y') %>
-              <% end %>
-            </td>
-
-            <!-- Actions -->
-            <td class="px-4 py-4 whitespace-nowrap font-medium" data-controller="dropdown" data-dropdown-ticket-id-value="<%= ticket.id %>">
-              <%= render partial: 'tickets/action_dropdown', locals: { ticket: ticket } %>
-            </td>
-
-            <% if current_user.has_role?(:admin) || current_user.has_role?(:agent) || current_user.has_role?('project manager') %>
-              <td class="py-2 px-4 font-bold text-center">
-                <% closed_status = ticket.add_statuses.joins(:status).where(statuses: { name: %w[Closed Resolved Declined] }).order(updated_at: :desc).first %>
-                <% if ticket.created_at %>
-                  <% if closed_status %>
-                    <%= distance_of_time_in_words(ticket.created_at, closed_status.updated_at).gsub('about ', '') %>
-                  <% else %>
-                    <%= distance_of_time_in_words(ticket.created_at, Time.current).gsub('about ', '') %>
+            <!-- Assignment Info - Compact -->
+            <% if ticket.users.any? %>
+              <div class="flex items-center justify-between text-xs border-t border-white/10 pt-2">
+                <span class="<%= "#{text_class} opacity-70" %>">Assigned to:</span>
+                <div class="text-right">
+                  <% ticket.users.limit(2).each do |user| %>
+                    <% if user.name.present? %>
+                      <div class="<%= "#{text_class} text-xs truncate" %>" style="max-width: 120px;">
+                        <%= user.name.split(' ').first %>
+                      </div>
+                    <% end %>
                   <% end %>
-                <% else %>
-                  N/A
+                  <% if ticket.users.count > 2 %>
+                    <div class="<%= "#{text_class} text-xs opacity-70" %>">
+                      +<%= ticket.users.count - 2 %> more
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+
+  <!-- Desktop Table View (shown on lg and up) -->
+  <div class="hidden lg:block overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700" aria-label="Tickets Table">
+      <thead class="bg-gray-50 dark:bg-gray-700">
+        <%= render partial: "tickets/ticket_table_headers" %>
+      </thead>
+      <tbody class="text-sm divide-y divide-gray-200 dark:divide-gray-700">
+        <% @ticket.each do |ticket| %>
+          <% if ticket.present? %>
+            <tr class="<%= case ticket.issue
+                           when 'SUPPORT' then 'bg-[#007ACC] hover:bg-[#006BB3]'
+                           when 'NEW FEATURE' then 'bg-[#00B894] hover:bg-[#00A085]'
+                           when 'BUG' then 'bg-[#E53935] hover:bg-[#D32F2F]'
+                           when 'REQUEST' then 'bg-[#6c5CE7] hover:bg-[#5B4FCF]'
+                           when 'INCIDENT' then 'bg-[#F39C12] hover:bg-[#E67E22]'
+                           when 'CHANGE REQUEST' then 'bg-[#2ECC71] hover:bg-[#27AE60]'
+                           else 'bg-gray-500 hover:bg-gray-600'
+                           end %> transition-all duration-200">
+              
+              <!-- Date -->
+              <td class="px-3 py-3 whitespace-nowrap text-white text-sm hidden lg:table-cell">
+                <%= link_to ticket.created_at.strftime("%d %b %Y"), project_ticket_path(ticket.project, ticket), 
+                    class: "text-white hover:text-gray-200 transition-colors" %>
+              </td>
+
+              <!-- Ticket ID -->
+              <td class="px-3 py-3 whitespace-nowrap font-bold uppercase text-white text-sm">
+                <% if ticket.unique_id.present? %>
+                  <%= link_to ticket.unique_id, project_ticket_path(ticket.project, ticket), 
+                      class: "text-white hover:text-gray-200 transition-colors" %>
                 <% end %>
               </td>
-              <td class="px-4 py-4 whitespace-nowrap text-sm text-center hide-on-sidebar">
-                <%= ticket.update_count %>
+
+              <!-- Issue Type -->
+              <td class="px-3 py-3 whitespace-nowrap text-white text-xs font-medium hidden xl:table-cell">
+                <%= link_to ticket.issue, project_ticket_path(ticket.project, ticket), 
+                    class: "text-white hover:text-gray-200 transition-colors" %>
               </td>
-              <td class="px-4 py-4 whitespace-nowrap text-sm text-center hide-on-sidebar">
-                <%= ticket.last_updated_at ? ticket.last_updated_at.strftime("%T") : 'Never' %>
+
+              <!-- Severity -->
+              <td class="px-3 py-3 whitespace-nowrap">
+                <%= render partial: 'tickets/priority_severity', locals: { ticket: ticket } %>
               </td>
-            <% end %>
-          </tr>
+
+              <!-- Summary -->
+              <td class="px-3 py-3 max-w-xs">
+                <div class="flex items-center gap-3">
+                  <%= render partial: 'tickets/summary', locals: { ticket: ticket } %>
+                </div>
+              </td>
+
+              <!-- Assigned To -->
+              <td class="px-3 py-3 whitespace-nowrap text-white text-xs hidden xl:table-cell">
+                <div class="flex flex-col gap-1 max-w-32">
+                  <% ticket.users.limit(2).each do |user| %>
+                    <% if user.name.present? %>
+                      <div class="truncate">
+                        <span class="font-medium"><%= user.name.truncate(15) %></span>
+                        <% if user.teams.any? %>
+                          <span class="opacity-80 text-xs">
+                            (<%= user.teams.first.name.truncate(8) %>)
+                          </span>
+                        <% end %>
+                      </div>
+                    <% end %>
+                  <% end %>
+                  <% if ticket.users.count > 2 %>
+                    <div class="text-xs opacity-70">+<%= ticket.users.count - 2 %> more</div>
+                  <% end %>
+                </div>
+              </td>
+
+              <!-- Status -->
+              <td class="px-3 py-3 whitespace-nowrap">
+                <%= render partial: 'tickets/ticket_status', locals: { ticket: ticket } %>
+              </td>
+
+              <!-- Reported By (now visible at xl breakpoint) -->
+              <td class="px-3 py-3 whitespace-nowrap text-white text-xs hidden xl:table-cell max-w-28">
+                <% if ticket.user&.name.present? %>
+                  <div class="flex flex-col">
+                    <div class="truncate font-medium"><%= ticket.user.name.truncate(16) %></div>
+                    <div class="text-xs opacity-80 truncate">
+                      <% if ticket.user.teams.any? %>
+                        <%= ticket.user.teams.first.name.truncate(12) %>
+                      <% else %>
+                        Reporter
+                      <% end %>
+                    </div>
+                  </div>
+                <% else %>
+                  <span class="text-white/60 italic">Unknown</span>
+                <% end %>
+              </td>
+
+              <!-- Progress Bar (hide on smaller screens) -->
+              <td class="px-3 py-3 whitespace-nowrap hidden 2xl:table-cell">
+                <%= render partial: 'tickets/progress_bar', locals: { ticket: ticket } %>
+              </td>
+
+              <!-- Last Updated (hide on smaller screens) -->
+              <td class="px-3 py-3 whitespace-nowrap text-xs text-white hidden 2xl:table-cell">
+                <% if ticket.add_statuses.present? %>
+                  <div class="flex flex-col">
+                    <span><%= ticket.add_statuses.first.updated_at.strftime('%d %b') %></span>
+                    <span class="opacity-70"><%= ticket.add_statuses.first.updated_at.strftime('%H:%M') %></span>
+                  </div>
+                <% end %>
+              </td>
+
+              <!-- Actions -->
+              <td class="px-3 py-3 whitespace-nowrap text-right" data-controller="dropdown" data-dropdown-ticket-id-value="<%= ticket.id %>">
+                <%= render partial: 'tickets/action_dropdown', locals: { ticket: ticket } %>
+              </td>
+
+              <% if current_user.has_role?(:admin) || current_user.has_role?(:agent) || current_user.has_role?('project manager') %>
+                <!-- Only show these on xl screens -->
+                <td class="py-2 px-4 font-bold text-center text-white text-xs hidden xl:table-cell">
+                  <% closed_status = ticket.add_statuses.joins(:status).where(statuses: { name: %w[Closed Resolved Declined] }).order(updated_at: :desc).first %>
+                  <% if ticket.created_at %>
+                    <% if closed_status %>
+                      <%= distance_of_time_in_words(ticket.created_at, closed_status.updated_at).gsub('about ', '') %>
+                    <% else %>
+                      <%= distance_of_time_in_words(ticket.created_at, Time.current).gsub('about ', '') %>
+                    <% end %>
+                  <% else %>
+                    N/A
+                  <% end %>
+                </td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-center hide-on-sidebar text-white hidden xl:table-cell">
+                  <%= ticket.update_count %>
+                </td>
+                <td class="px-4 py-4 whitespace-nowrap text-sm text-center hide-on-sidebar text-white hidden xl:table-cell">
+                  <%= ticket.last_updated_at ? ticket.last_updated_at.strftime("%T") : 'Never' %>
+                </td>
+              <% end %>
+            </tr>
+          <% end %>
         <% end %>
-      <% end %>
       </tbody>
     </table>
   </div>
@@ -125,10 +238,17 @@
     const sidebar = document.getElementById("sidebar");
     const tableColumns = document.querySelectorAll(".hide-on-sidebar");
 
+    // Enhanced responsive sidebar handling
     function toggleColumns() {
       const isExpanded = sidebar && sidebar.classList.contains("w-64");
+      const isLargeScreen = window.innerWidth >= 1280; // xl breakpoint
+      
       tableColumns.forEach(col => {
-        col.style.display = isExpanded ? "none" : "table-cell";
+        if (!isLargeScreen) {
+          col.style.display = "none";
+        } else {
+          col.style.display = isExpanded ? "none" : "table-cell";
+        }
       });
     }
 
@@ -136,8 +256,12 @@
       toggleColumns();
       const observer = new MutationObserver(toggleColumns);
       observer.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
+      
+      // Listen for window resize
+      window.addEventListener('resize', toggleColumns);
     }
 
+    // Enhanced table sorting with mobile considerations
     document.querySelectorAll("th[scope='col']").forEach(header => {
       header.addEventListener("click", function() {
         const table = this.closest("table");
@@ -145,31 +269,92 @@
         const tbody = table.querySelector("tbody");
         const rows = Array.from(tbody.querySelectorAll("tr"));
         const isAscending = !this.classList.contains("asc");
+        
+        // Clear all sort indicators
         table.querySelectorAll("th[scope='col']").forEach(h => {
           h.classList.remove("asc", "desc");
         });
 
+        // Add sort indicator
         this.classList.add(isAscending ? "asc" : "desc");
+
+        // Add visual feedback
+        this.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+        setTimeout(() => {
+          this.style.backgroundColor = '';
+        }, 200);
 
         rows.sort((rowA, rowB) => {
           const cellA = rowA.children[headerIndex].textContent.trim();
           const cellB = rowB.children[headerIndex].textContent.trim();
 
-          if (!isNaN(cellA)) {
+          // Handle numeric values
+          if (!isNaN(cellA) && !isNaN(cellB)) {
             return isAscending ? cellA - cellB : cellB - cellA;
           }
 
+          // Handle dates
           const dateA = Date.parse(cellA);
           const dateB = Date.parse(cellB);
-          if (!isNaN(dateA)) {
+          if (!isNaN(dateA) && !isNaN(dateB)) {
             return isAscending ? dateA - dateB : dateB - dateA;
           }
 
+          // Handle text
           return isAscending ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
         });
 
-        rows.forEach(row => tbody.appendChild(row));
+        // Animate row changes
+        rows.forEach((row, index) => {
+          row.style.opacity = '0.7';
+          setTimeout(() => {
+            tbody.appendChild(row);
+            row.style.opacity = '1';
+          }, index * 10);
+        });
       });
     });
+
+    // Mobile filter dropdown handling
+    const filterButton = document.getElementById('filterDropdownButton');
+    const filterDropdown = document.getElementById('filterDropdown');
+    
+    if (filterButton && filterDropdown) {
+      filterButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        filterDropdown.classList.toggle('hidden');
+        
+        // Rotate arrow icon
+        const arrow = this.querySelector('svg:last-child');
+        if (arrow) {
+          arrow.style.transform = filterDropdown.classList.contains('hidden') ? 
+            'rotate(0deg)' : 'rotate(180deg)';
+        }
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!filterButton.contains(e.target) && !filterDropdown.contains(e.target)) {
+          filterDropdown.classList.add('hidden');
+          const arrow = filterButton.querySelector('svg:last-child');
+          if (arrow) arrow.style.transform = 'rotate(0deg)';
+        }
+      });
+    }
+
+    // Touch-friendly hover effects for mobile
+    if ('ontouchstart' in window) {
+      document.querySelectorAll('.hover\\:opacity-90, .hover\\:bg-gray-50').forEach(el => {
+        el.addEventListener('touchstart', function() {
+          this.classList.add('opacity-90', 'bg-gray-50');
+        });
+        
+        el.addEventListener('touchend', function() {
+          setTimeout(() => {
+            this.classList.remove('opacity-90', 'bg-gray-50');
+          }, 150);
+        });
+      });
+    }
   });
 </script>
