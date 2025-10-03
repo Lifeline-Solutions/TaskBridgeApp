@@ -337,6 +337,7 @@ class TicketsController < ApplicationController
 
       # Set default SLA target response deadline if blank
       sla_target_response_deadline = sla_ticket.sla_target_response_deadline.presence || 'Not Breached'
+      sla_target_resolution_deadline = sla_ticket.sla_resolution_deadline.presence || 'Not Breached'
 
       # Log SLA details
       Rails.logger.info("SlaTicket details: #{sla_ticket.attributes}, SLA Status: #{sla_ticket.sla_status}")
@@ -359,8 +360,10 @@ class TicketsController < ApplicationController
       end
 
       # Log the assignment event
-      log_event(@ticket, current_user, 'assign', "#{user.name} was assigned to the ticket, with Status:
-        #{sla_ticket.sla_status} and Target Response Deadline #{sla_target_response_deadline}", user, assigned_user)
+      assigned_user = User.find(params[:user_id]) if params[:user_id].present?
+      assigned_user ||= @ticket.users.first || @project.user
+      log_event(@ticket, current_user, 'assign', "#{assigned_user.name} was assigned to the ticket, with Status:
+        #{sla_ticket.sla_status} and Target Response Deadline #{sla_target_response_deadline} and Target Resolution deadline #{sla_target_resolution_deadline}", assigned_user)
       activity('user_activity')
         .caused_by(current_user)
         .performed_on(@ticket)
@@ -423,8 +426,9 @@ class TicketsController < ApplicationController
     end
 
     # Emails + logs...
-    assigned_user = @ticket.user.first
-    log_event(@ticket, current_user, 'status_change', "Status was changed to #{status.name}", assigned_user)
+    assigned_user = User.find(params[:user_id]) if params[:user_id].present?
+    assigned_user ||= @ticket.users.first || @project.user
+    log_event(@ticket, current_user, 'status_change', "Status was changed to #{status.name} currently assingned to #{assigned_user.name} ", assigned_user)
 
     activity('user_activity')
       .caused_by(current_user)
