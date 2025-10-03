@@ -1,0 +1,77 @@
+<div class="flex flex-wrap gap-2 mt-2">
+  <% if current_user.has_role?(:admin) || current_user.has_role?('project manager') || current_user.has_role?(:agent) %>
+    <div class="w-full">
+      <%= form_with url: assign_user_product_task_path(@product, @task), local: true, data: { turbo: false } do %>
+        <%= label_tag :user_id, "SELECT USER", class: "sr-only" %>
+        <div class="flex flex-col gap-2">
+          <div>
+            <% available_users = User.with_agent_role.where.not(id: @task.users.pluck(:id)).where(id: @product.users.pluck(:id)).distinct.order(:first_name) %>
+            <% if available_users.any? %>
+              <div class="relative space-y-2">
+                <input type="text" id="searchAssignUser" class="border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Search User..." onkeyup="filterAssignUserDropdown()">
+
+                <div id="assignUserDropdown" class="hidden absolute w-full bg-white dark:bg-gray-700 border rounded mt-1 shadow-md max-h-40 overflow-y-auto z-10">
+                  <% available_users.each do |user| %>
+                    <div class="dropdown-item px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer" data-user-id="<%= user.id %>" onclick="selectAssignUser(this)">
+                      <%= user.name %>
+                    </div>
+                  <% end %>
+                </div>
+
+                <input type="hidden" id="selectedAssignUserId" name="user_id" required>
+              </div>
+            <% end %>
+          </div>
+          <%= submit_tag "ASSIGN USER", class: 'w-full font-semibold bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg' %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<script>
+  function filterAssignUserDropdown() {
+    let input = document.getElementById("searchAssignUser").value.toLowerCase();
+    let dropdown = document.getElementById("assignUserDropdown");
+    let items = dropdown.getElementsByClassName("dropdown-item");
+
+    dropdown.classList.remove("hidden");
+
+    let hasMatch = false;
+    for (let item of items) {
+      let text = item.textContent.toLowerCase();
+      if (text.includes(input)) {
+        item.style.display = "block";
+        hasMatch = true;
+      } else {
+        item.style.display = "none";
+      }
+    }
+
+    if (!hasMatch) {
+      dropdown.classList.add("hidden");
+    }
+  }
+
+  function selectAssignUser(element) {
+    let userName = element.textContent.trim();
+    let userId = element.getAttribute("data-user-id");
+
+    let inputField = document.getElementById("searchAssignUser");
+    inputField.value = userName;
+    inputField.style.paddingRight = "12px";
+    inputField.style.overflow = "visible";
+
+    document.getElementById("selectedAssignUserId").value = userId;
+    document.getElementById("assignUserDropdown").classList.add("hidden");
+  }
+
+  document.addEventListener("click", function(event) {
+    let dropdown = document.getElementById("assignUserDropdown");
+    let searchInput = document.getElementById("searchAssignUser");
+
+    if (!searchInput.contains(event.target) && !dropdown.contains(event.target)) {
+      dropdown.classList.add("hidden");
+    }
+  });
+</script>

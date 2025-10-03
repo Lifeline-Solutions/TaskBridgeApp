@@ -8,28 +8,27 @@
       </tr>
     </thead>
     <tbody>
-    <tbody>
-    <% if @defect_groups.present? %>
-      <% @defect_groups.each do |group_name, defects| %>
-        <!-- Group Header -->
+    <% if @qa_products.present? %>
+      <% @qa_products.each do |product| %>
+        <!-- Product Row -->
         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 h-12 text-left">
           <td class="px-6 py-3 font-semibold text-left">
-            <%= link_to "#{group_name.truncate(30)}",
-                        index_show_defect_index_path(client_name: defects.first.product.client.name, product_id: defects.first.product_id),
+            <%= link_to "#{product.client&.name} #{product.groupwares&.first&.name}".truncate(30),
+                        index_show_defect_index_path(client_name: product.client&.name, product_id: product.id),
                         class: "text-blue-700 hover:underline" %>
           </td>
           <td class="px-6 py-3 font-semibold text-left">
-            <%= defects.first.product.statuses.first&.name %>
+            <%= product.statuses.first&.name %>
           </td>
           <td class="px-6 py-3 font-semibold text-left">
-            <%= defects.size %>
+            <%= @qa_product_defect_counts[product.id] || 0 %>
           </td>
         </tr>
       <% end %>
     <% else %>
       <tr>
         <td class="px-6 py-4 text-center text-gray-500 dark:text-gray-400" colspan="3">
-          No defects found
+          No products in QA status found
         </td>
       </tr>
     <% end %>
@@ -37,7 +36,7 @@
   </table>
 </div>
 
-<% if @defect_groups.present? %>
+<% if @qa_products.present? %>
   <div class="flex gap-10 mt-5">
     <!-- Pagination Controls -->
     <div class="pagination">

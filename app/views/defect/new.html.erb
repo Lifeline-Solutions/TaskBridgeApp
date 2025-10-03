@@ -1,6 +1,9 @@
 <% provide(:title, "New QA") %>
 
-<%= turbo_frame_tag "modal", data: { controller: "modal" } do %>
+<%= turbo_frame_tag "modal",
+      data: { controller: "modal",
+              product_id: params[:product_id],
+              client_name: params[:client_name] } do %>
   <div class="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-hidden bg-black/40 backdrop-blur-sm" data-action="click->modal#closeOnBackdrop">
     <!-- Dialog (90vh cap, internal scroll only in body) -->
     <div data-modal-target="dialog"
@@ -12,12 +15,12 @@
       <div class="shrink-0 px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-start">
         <h2 id="new-defect-title" class="text-xl font-semibold text-gray-800 dark:text-white">New Defect</h2>
 
-        <button type="button"
-                class="ml-auto text-xl font-bold text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded cursor-pointer"
-                onclick="history.back()"
-                aria-label="Close modal">
+        <%= link_to index_show_defect_index_path(product_id: params[:product_id]),
+            data: { turbo_frame: "_top" },
+            class: "ml-auto text-xl font-bold text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded cursor-pointer",
+            aria: { label: "Close modal" } do %>
           X
-        </button>
+        <% end %>
 
       </div>
       <!-- Form wrapper (flex) -->
@@ -54,6 +57,7 @@
                         focus:outline-none focus:ring-2 focus:ring-blue-500
                         dark:bg-gray-700 dark:text-white dark:border-gray-600"
                 required
+                disabled
           />
 
           <!-- Hidden product_id field -->

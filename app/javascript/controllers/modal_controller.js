@@ -51,8 +51,26 @@ export default class extends Controller {
     if (this.dialogTarget.contains(event.target)) {
       return
     }
-    // Otherwise, close modal (go back or remove frame)
-    history.back()
+
+    // Instead of history.back(), redirect to index_show with params
+    const url = `/defect/index_show?product_id=${encodeURIComponent(this.element.dataset.productId)}&client_name=${encodeURIComponent(this.element.dataset.clientName || "")}`
+
+    window.location.href = url
+  }
+
+  closeEditDefectOnBackdrop(event) {
+    if (this.dialogTarget.contains(event.target)) {
+      return
+    }
+
+    // Use product_id from the frame data
+    const productId = this.element.dataset.productId
+    if (productId) {
+      window.location.href = `/defect/index_show?product_id=${productId}`
+    } else {
+      // fallback if no product_id
+      window.location.href = "/defect"
+    }
   }
 
   closeWithKey(event) {

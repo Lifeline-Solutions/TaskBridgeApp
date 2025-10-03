@@ -14,6 +14,7 @@ class Product < ApplicationRecord
   accepts_nested_attributes_for :documents, allow_destroy: true
   has_one_attached :image
   has_many :defects, dependent: :nullify
+  has_many :defect_filters, dependent: :nullify
   before_create :set_default_status
 
   has_rich_text :content

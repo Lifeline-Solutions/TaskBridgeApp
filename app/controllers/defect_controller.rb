@@ -5,50 +5,67 @@ class DefectController < ApplicationController
                          create_failure_report search_for_linking link_defect unlink_defect]
 
   def index
-    # Load defects with needed associations
-    raw_defects = Defect.published.includes(:users, :qa_module, :submodule, :banking_type, :statuses, product: %i[client groupwares])
-      .order(created_at: :desc)
+    # Get products that are in QA status (product-level statuses)
+    qa_status_names = ['Pre Quality Assurance', 'End Of Quality Assurance']
 
-    # Filter defects for non-admin users
-    raw_defects = raw_defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa)
+    @qa_products = Product
+      .includes(:client, :groupwares, :statuses)
+      .joins(:statuses)
+      .where(statuses: { name: qa_status_names })
+      .where('products.deleted_on IS NULL')
+      .distinct
+      .order('products.document_name ASC')
 
-    # Status filter
-    raw_defects = raw_defects.joins(:statuses).where(statuses: { id: params[:status] }) if params[:status].present?
-
-    # Search filter
+    # Apply search filter to QA products if query present
     if params[:query].present?
-      raw_defects = raw_defects.left_joins(:users, product: %i[client groupwares]).where(
-        'clients.name ILIKE :q OR groupwares.name ILIKE :q',
+      @qa_products = @qa_products.left_joins(:client, :groupwares).where(
+        'clients.name ILIKE :q OR groupwares.name ILIKE :q OR products.document_name ILIKE :q',
         q: "%#{params[:query]}%"
       )
     end
 
-    # Group by client and first groupware name
-    grouped = raw_defects.group_by do |defect|
-      client_name = defect.product&.client&.name
-      groupware_name = defect.product&.groupwares&.first&.name
-      "#{client_name} #{groupware_name}"
+    # Get defects for these QA products (for counting and display)
+    qa_product_ids = @qa_products.map(&:id)
+
+    if qa_product_ids.any?
+      # Base defects query for QA products
+      raw_defects = Defect.published
+        .includes(:users, :qa_module, :submodule, :banking_type, :statuses, product: %i[client groupwares])
+        .where(product_id: qa_product_ids)
+
+      # Filter defects for non-admin users
+      raw_defects = raw_defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa)
+
+      # Status filter (defect status)
+      raw_defects = raw_defects.joins(:statuses).where(statuses: { id: params[:status] }) if params[:status].present?
+
+      # Group defects by product for display
+      @defects_by_product = raw_defects.group_by(&:product_id)
+
+      # Defect counts for each product
+      @qa_product_defect_counts = raw_defects.group(:product_id).count
+
+      # For status dropdown - collect statuses from the defects we're showing
+      @statuses = Status.joins(:defects)
+        .where(defects: { id: raw_defects.pluck(:id) })
+        .distinct
+        .order(:name)
+    else
+      @defects_by_product = {}
+      @qa_product_defect_counts = {}
+      @statuses = Status.none
     end
 
-    # Paginate the groups instead of the defects.
+    # Paginate the QA products instead of defect groups
     @per_page = 20
     @page = (params[:page] || 1).to_i
-
-    group_keys = grouped.keys.sort # Optional: sort for stable pagination
-    @total_pages = (group_keys.size / @per_page.to_f).ceil
+    @total_count = @qa_products.size
+    @total_pages = (@total_count / @per_page.to_f).ceil
     @start_count = ((@page - 1) * @per_page) + 1
-    @end_count = [@page * @per_page, group_keys.size].min
-    @total_count = group_keys.size
+    @end_count = [@page * @per_page, @total_count].min
 
-    # Only keep the groups for the current page
-    paged_group_keys = group_keys[((@page - 1) * @per_page)...(((@page - 1) * @per_page) + @per_page)]
-    @defect_groups = paged_group_keys.to_h { |k| [k, grouped[k]] }
-
-    # Collect distinct statuses for dropdown (from currently matching defects)
-    @statuses = Status.joins(:defects)
-      .where(defects: { id: raw_defects.pluck(:id) })
-      .distinct
-      .order(:name)
+    # Paginate the products
+    @qa_products = @qa_products.offset((@page - 1) * @per_page).limit(@per_page)
   end
 
   def index_show
@@ -56,10 +73,28 @@ class DefectController < ApplicationController
     @defects = Defect.published
       .includes(:users, :qa_module, :labels, :banking_type, :statuses, product: %i[client groupwares])
 
-    # Client filter (exact, case-insensitive)
-    if params[:client_name].present?
+    # Apply saved filter shortcut
+    if params[:filter_id].present?
+      filter = current_user.defect_filters.active.find_by(id: params[:filter_id])
+      if filter
+        merged = filter.sanitized_filters_string_keys || {}
+        # Prefer saved product_id if not provided in URL
+        merged['product_id'] = filter.product_id if filter.product_id.present? && !merged.key?('product_id')
+        merged.except!('page')
+        redirect_to index_show_defect_index_path(merged) and return
+      end
+    end
+
+    # Client filter (exact, case-insensitive, and scoped by product_id)
+    if params[:client_name].present? && params[:product_id].present?
       @defects = @defects.joins(product: :client)
         .where('LOWER(clients.name) = ?', params[:client_name].to_s.downcase.strip)
+        .where(products: { id: params[:product_id] })
+    elsif params[:client_name].present?
+      @defects = @defects.joins(product: :client)
+        .where('LOWER(clients.name) = ?', params[:client_name].to_s.downcase.strip)
+    elsif params[:product_id].present?
+      @defects = @defects.where(product_id: params[:product_id])
     end
 
     # Status filter (multiple checkboxes -> status[])
@@ -803,7 +838,123 @@ class DefectController < ApplicationController
       end
     end
 
-    send_data csv_data, filename: "defects_#{Time.zone.now.strftime('%Y%m%d_%H%M%S')}.csv", type: 'text/csv'
+    send_data csv_data, filename: "defects_#{Time.zone.now.strftime('%Y-%m-%d %H:%M')}.csv", type: 'text/csv'
+  end
+
+  def defects_download_excel
+    # Start with base scope matching index_show
+    defects = Defect.published
+      .includes(:users, :qa_module, :labels, :banking_type, :statuses, product: %i[client groupwares])
+
+    # Apply the same filters as index_show
+    # Client filter (exact, case-insensitive)
+    if params[:client_name].present?
+      defects = defects.joins(product: :client)
+        .where('LOWER(clients.name) = ?', params[:client_name].to_s.downcase.strip)
+    end
+
+    # Product filter
+    defects = defects.where(product_id: params[:product_id]) if params[:product_id].present?
+
+    # Status filter (multiple checkboxes -> status[])
+    selected_statuses = Array(params[:status]).reject(&:blank?)
+    if selected_statuses.any?
+      downcased = selected_statuses.map { |s| s.to_s.downcase }
+      defects = defects.joins(:statuses)
+        .where('LOWER(statuses.name) IN (?)', downcased)
+    end
+
+    # Labels filter (multiple checkboxes -> labels_ids[])
+    selected_labels = Array(params[:label_ids]).reject(&:blank?)
+    defects = defects.joins(:labels).where(labels: { id: selected_labels }) if selected_labels.any?
+
+    # Priority filter (exact, case-insensitive)
+    defects = defects.where('LOWER(defects.priority) = ?', params[:priority].to_s.downcase) if params[:priority].present?
+
+    # Assignee filter
+    defects = defects.joins(:users).where(users: { id: params[:user_id] }) if params[:user_id].present?
+
+    # Module/Submodule/BankingType filters
+    defects = defects.where(qa_module_id: params[:qa_module_id]) if params[:qa_module_id].present?
+    defects = defects.where(submodule_id: params[:submodule_id]) if params[:submodule_id].present?
+    defects = defects.where(banking_type_id: params[:banking_type_id]) if params[:banking_type_id].present?
+
+    # Date range filters
+    start_date = params[:start_date].presence
+    end_date = params[:end_date].presence
+    begin
+      if start_date.present? && end_date.present?
+        from = Date.parse(start_date).beginning_of_day
+        to = Date.parse(end_date).end_of_day
+        defects = defects.where(created_at: from..to)
+      elsif start_date.present?
+        from = Date.parse(start_date).beginning_of_day
+        defects = defects.where('defects.created_at >= ?', from)
+      elsif end_date.present?
+        to = Date.parse(end_date).end_of_day
+        defects = defects.where('defects.created_at <= ?', to)
+      end
+    rescue ArgumentError
+      # Ignore invalid dates
+    end
+
+    # Full-text search
+    if params[:query].present?
+      q = "%#{params[:query].to_s.strip}%"
+      defects = defects.left_joins(:users, :qa_module, :banking_type, product: %i[client groupwares]).where(
+        "defects.summary ILIKE :q
+        OR defects.defect_unique ILIKE :q
+        OR defects.priority ILIKE :q
+        OR users.first_name ILIKE :q
+        OR users.last_name ILIKE :q
+        OR clients.name ILIKE :q
+        OR groupwares.name ILIKE :q
+        OR qa_modules.name ILIKE :q
+        OR banking_types.name ILIKE :q",
+        q: q
+      )
+    end
+
+    # Ordering
+    direction = %w[asc desc].include?(params[:order]) ? params[:order] : 'desc'
+    defects = defects.order(created_at: direction)
+
+    # Ensure uniqueness after joins
+    defects = defects.distinct
+
+    # --- generate Excel using caxlsx ---
+    package = Axlsx::Package.new
+    workbook = package.workbook
+
+    workbook.add_worksheet(name: 'Defects') do |sheet|
+      sheet.add_row [
+        'Defect ID', 'Status', 'Summary', 'Priority', 'Module', 'Sub Module',
+        'Banking Types', 'Labels', 'Assignee', 'Reporter', 'Project', 'Created At'
+      ]
+
+      defects.find_each do |defect|
+        client_and_groupware = [defect.product.client&.name, defect.product.groupwares.first&.name].compact.join(' - ')
+
+        sheet.add_row [
+          defect.defect_unique,
+          defect.statuses.map(&:name).join(', '),
+          defect.summary,
+          defect.priority,
+          defect.qa_module&.name,
+          defect.submodule&.name,
+          defect.banking_type&.name,
+          defect.labels.map(&:name).join(', '),
+          defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', '),
+          defect.creator&.name,
+          client_and_groupware,
+          defect.created_at.strftime('%Y-%m-%d %H:%M')
+        ]
+      end
+    end
+
+    send_data package.to_stream.read,
+              filename: "defects_#{Time.zone.now.strftime('%Y%m%d_%H%M%S')}.xlsx",
+              type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   end
 
   def link_defect
