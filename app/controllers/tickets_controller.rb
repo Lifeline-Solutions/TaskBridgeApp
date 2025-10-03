@@ -205,6 +205,13 @@ class TicketsController < ApplicationController
             .with_properties(assigned_user_id: nil)
             .log('Ticket created with no assigned user')
         end
+
+        if assigned_user.present?
+          log_event(@ticket, current_user, 'created and assign', "Ticket was created and assigned to #{assigned_user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}",
+                    assigned_user)
+        else
+          log_event(@ticket, current_user, 'created and assign', "Ticket was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}", nil)
+        end
         format.html { redirect_to project_ticket_path(@project, @ticket), notice: 'Ticket was successfully created.' }
       end
     end
@@ -288,7 +295,7 @@ class TicketsController < ApplicationController
         end
 
         # Log the update event
-        log_event(@ticket, current_user, 'update', "Ticket was updated. at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}")
+        log_event(@ticket, current_user, 'update', "Ticket was updated. at #{Time.now.strftime('%H:%M of  %d-%m-%Y')} and assigned to #{assigned_user.name} ", assigned_user)
         activity('user_activity')
           .caused_by(current_user)
           .performed_on(@ticket)
@@ -353,7 +360,7 @@ class TicketsController < ApplicationController
 
       # Log the assignment event
       log_event(@ticket, current_user, 'assign', "#{user.name} was assigned to the ticket, with Status:
-        #{sla_ticket.sla_status} and Target Response Deadline #{sla_target_response_deadline}")
+        #{sla_ticket.sla_status} and Target Response Deadline #{sla_target_response_deadline}", user, assigned_user)
       activity('user_activity')
         .caused_by(current_user)
         .performed_on(@ticket)
@@ -368,7 +375,7 @@ class TicketsController < ApplicationController
   def unassign_tag
     user = User.find(params[:user_id])
     @ticket.users.delete(user)
-    log_event(@ticket, current_user, 'unassign', "#{user.name} was unassigned from the ticket.")
+    log_event(@ticket, current_user, 'unassign', "#{user.name} was unassigned from the ticket.", user)
     activity('user_activity')
       .caused_by(current_user)
       .performed_on(@ticket)
@@ -416,7 +423,9 @@ class TicketsController < ApplicationController
     end
 
     # Emails + logs...
-    log_event(@ticket, current_user, 'status_change', "Status was changed to #{status.name}")
+    assigned_user = @ticket.user.first
+    log_event(@ticket, current_user, 'status_change', "Status was changed to #{status.name}", assigned_user)
+
     activity('user_activity')
       .caused_by(current_user)
       .performed_on(@ticket)
@@ -689,7 +698,7 @@ class TicketsController < ApplicationController
   end
 
   # Log an event for auditing
-  def log_event(ticket, user, event_type, details)
-    Event.create(ticket: ticket, user: user, event_type: event_type, details: details)
+  def log_event(ticket, user, event_type, details, assigned_user)
+    Event.create(ticket: ticket, user: user, event_type: event_type, details: details, assigned_user_id: assigned_user&.id)
   end
 end
