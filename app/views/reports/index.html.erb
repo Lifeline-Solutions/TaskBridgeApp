@@ -1,5 +1,3 @@
-<!-- erb -->
-
 <div class="container justify-between p-4">
   <%= form_with url: reports_path, method: :get, local: true do %>
     <div class="flex flex-wrap gap-3 items-center">
@@ -7,7 +5,8 @@
         <label for="product_id" class="font-semibold">Select Product:</label>
         <%= select_tag :product_id,
                        options_for_select(@product_options, params[:product_id]),
-                       class: "border rounded p-2 ml-2 bg-white dark:bg-gray-800 min-w-48" %>
+                       class: "border rounded p-2 ml-2 bg-white dark:bg-gray-800 min-w-48",
+                       onchange: "this.form.submit()" %>
       </div>
 
       <div>
@@ -19,20 +18,145 @@
 
       <div class="flex flex-wrap items-center gap-2">
         <span class="font-semibold">Metrics:</span>
-        <% metrics = {
-          'severity' => 'Based on Severity',
-          'reporter' => 'Based on Reporter',
-          'status'   => 'Based on Status',
-          'assignee' => 'Based on Assignee',
-          'ageing'   => 'Based on Ageing',
-          'modules'  => 'Based on Modules',
-          'submodules' => 'Based on Sub Modules'
-        } %>
-        <% metrics.each do |key, label| %>
-          <label class="inline-flex items-center gap-1">
-            <%= check_box_tag 'metrics[]', key, @selected_metrics.include?(key) %>
-            <span><%= label %></span>
-          </label>
+        
+        <!-- Severity Dropdown -->
+        <% if @available_options[:severities] %>
+          <div class="dropdown-group">
+            <label class="inline-flex items-center gap-1">
+              <%= check_box_tag 'metrics[]', 'severity', @selected_metrics.include?('severity'), 
+                  class: 'metric-checkbox', 
+                  data: { target: 'severity-options' } %>
+              <span>Based on Severity</span>
+            </label>
+            <div id="severity-options" class="dropdown-options <%= 'hidden' unless @selected_metrics.include?('severity') %>">
+              <% @available_options[:severities].each do |severity| %>
+                <label class="block pl-6">
+                  <%= check_box_tag 'severities[]', severity, @selected_severities.include?(severity) %>
+                  <span><%= severity %></span>
+                </label>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Reporter Dropdown -->
+        <% if @available_options[:reporters] %>
+          <div class="dropdown-group">
+            <label class="inline-flex items-center gap-1">
+              <%= check_box_tag 'metrics[]', 'reporter', @selected_metrics.include?('reporter'),
+                  class: 'metric-checkbox',
+                  data: { target: 'reporter-options' } %>
+              <span>Based on Reporter</span>
+            </label>
+            <div id="reporter-options" class="dropdown-options <%= 'hidden' unless @selected_metrics.include?('reporter') %>">
+              <% @available_options[:reporters].each do |id, name| %>
+                <label class="block pl-6">
+                  <%= check_box_tag 'reporters[]', id, @selected_reporters.include?(id.to_s) %>
+                  <span><%= name %></span>
+                </label>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Status Dropdown -->
+        <% if @available_options[:statuses] %>
+          <div class="dropdown-group">
+            <label class="inline-flex items-center gap-1">
+              <%= check_box_tag 'metrics[]', 'status', @selected_metrics.include?('status'),
+                  class: 'metric-checkbox',
+                  data: { target: 'status-options' } %>
+              <span>Based on Status</span>
+            </label>
+            <div id="status-options" class="dropdown-options <%= 'hidden' unless @selected_metrics.include?('status') %>">
+              <% @available_options[:statuses].each do |id, name| %>
+                <label class="block pl-6">
+                  <%= check_box_tag 'statuses[]', name, @selected_statuses.include?(name) %>
+                  <span><%= name %></span>
+                </label>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Assignee Dropdown -->
+        <% if @available_options[:assignees] %>
+          <div class="dropdown-group">
+            <label class="inline-flex items-center gap-1">
+              <%= check_box_tag 'metrics[]', 'assignee', @selected_metrics.include?('assignee'),
+                  class: 'metric-checkbox',
+                  data: { target: 'assignee-options' } %>
+              <span>Based on Assignee</span>
+            </label>
+            <div id="assignee-options" class="dropdown-options <%= 'hidden' unless @selected_metrics.include?('assignee') %>">
+              <% @available_options[:assignees].each do |id, name| %>
+                <label class="block pl-6">
+                  <%= check_box_tag 'assignees[]', id, @selected_assignees.include?(id.to_s) %>
+                  <span><%= name %></span>
+                </label>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Modules Dropdown -->
+        <% if @available_options[:modules] %>
+          <div class="dropdown-group">
+            <label class="inline-flex items-center gap-1">
+              <%= check_box_tag 'metrics[]', 'modules', @selected_metrics.include?('modules'),
+                  class: 'metric-checkbox',
+                  data: { target: 'modules-options' } %>
+              <span>Based on Modules</span>
+            </label>
+            <div id="modules-options" class="dropdown-options <%= 'hidden' unless @selected_metrics.include?('modules') %>">
+              <% @available_options[:modules].each do |id, name| %>
+                <label class="block pl-6">
+                  <%= check_box_tag 'modules[]', id, @selected_modules.include?(id.to_s) %>
+                  <span><%= name %></span>
+                </label>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Submodules Dropdown -->
+        <% if @available_options[:submodules] %>
+          <div class="dropdown-group">
+            <label class="inline-flex items-center gap-1">
+              <%= check_box_tag 'metrics[]', 'submodules', @selected_metrics.include?('submodules'),
+                  class: 'metric-checkbox',
+                  data: { target: 'submodules-options' } %>
+              <span>Based on Sub Modules</span>
+            </label>
+            <div id="submodules-options" class="dropdown-options <%= 'hidden' unless @selected_metrics.include?('submodules') %>">
+              <% @available_options[:submodules].each do |id, name, parent_id| %>
+                <label class="block pl-6">
+                  <%= check_box_tag 'submodules[]', id, @selected_submodules.include?(id.to_s) %>
+                  <span><%= name %></span>
+                </label>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Ageing Dropdown -->
+        <% if @available_options[:ageing_types] %>
+          <div class="dropdown-group">
+            <label class="inline-flex items-center gap-1">
+              <%= check_box_tag 'metrics[]', 'ageing', @selected_metrics.include?('ageing'),
+                  class: 'metric-checkbox',
+                  data: { target: 'ageing-options' } %>
+              <span>Based on Ageing</span>
+            </label>
+            <div id="ageing-options" class="dropdown-options <%= 'hidden' unless @selected_metrics.include?('ageing') %>">
+              <% @available_options[:ageing_types].each do |name, value| %>
+                <label class="block pl-6">
+                  <%= radio_button_tag 'ageing_type', value, @selected_ageing_type == value %>
+                  <span><%= name %></span>
+                </label>
+              <% end %>
+            </div>
+          </div>
         <% end %>
       </div>
 
@@ -52,4 +176,56 @@
     defects_age_buckets: @defects_age_buckets,
     selected_metrics: @selected_metrics
   } %>
+<% else %>
+  <div class="container p-4 text-center text-gray-500">
+    Please select a product to view reports
+  </div>
 <% end %>
+
+<style>
+.dropdown-group {
+  position: relative;
+  margin-right: 1rem;
+}
+
+.dropdown-options {
+  position: absolute;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0.5rem;
+  z-index: 1000;
+  min-width: 200px;
+  max-height: 300px;
+  overflow-y: auto;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.dropdown-options.hidden {
+  display: none;
+}
+
+.dropdown-options label {
+  padding: 0.25rem 0;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Toggle dropdown options when metric checkbox is clicked
+  document.querySelectorAll('.metric-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const targetId = this.dataset.target;
+      const target = document.getElementById(targetId);
+      if (target) {
+        target.classList.toggle('hidden', !this.checked);
+      }
+    });
+  });
+
+  // Auto-submit when product changes
+  document.getElementById('product_id')?.addEventListener('change', function() {
+    this.form.submit();
+  });
+});
+</script>
