@@ -75,7 +75,7 @@ class ReportsController < ApplicationController
           .select('statuses.id, statuses.name')
           .distinct
           .map { |s| [s.id, s.name] }
-          .uniq { |id, name| name }
+          .uniq { |_id, name| name }
       end
 
       # Available assignees
@@ -108,7 +108,7 @@ class ReportsController < ApplicationController
       end
 
       # Ageing options
-      @available_options[:ageing_types] = [['Latest', 'latest'], ['Oldest', 'oldest']] if @selected_metrics.include?('ageing')
+      @available_options[:ageing_types] = [%w[Latest latest], %w[Oldest oldest]] if @selected_metrics.include?('ageing')
     end
 
     # ONLY calculate metrics if form was submitted via Apply button AND product is selected
@@ -121,10 +121,10 @@ class ReportsController < ApplicationController
       if @selected_severities.any?
         all_values = @selected_severities.flat_map do |severity|
           case severity.downcase
-          when 'severity 1' then %w[severity\ 1 s1 high]
-          when 'severity 2' then %w[severity\ 2 s2 medium]
-          when 'severity 3' then %w[severity\ 3 s3 low]
-          when 'severity 4' then %w[severity\ 4 s4 very\ low]
+          when 'severity 1' then ['severity 1', 's1', 'high']
+          when 'severity 2' then ['severity 2', 's2', 'medium']
+          when 'severity 3' then ['severity 3', 's3', 'low']
+          when 'severity 4' then ['severity 4', 's4', 'very low']
           else [severity.downcase]
           end
         end
@@ -133,30 +133,22 @@ class ReportsController < ApplicationController
 
       # Apply other filters...
       # Filter: Reporter
-      if @selected_reporters.any?
-        defects_scope = defects_scope.where(creator_id: @selected_reporters)
-      end
+      defects_scope = defects_scope.where(creator_id: @selected_reporters) if @selected_reporters.any?
 
       # Filter: Status
       if @selected_statuses.any?
         downcased_statuses = @selected_statuses.map(&:downcase)
-        defects_scope = defects_scope.joins(:statuses).where("LOWER(statuses.name) IN (?)", downcased_statuses)
+        defects_scope = defects_scope.joins(:statuses).where('LOWER(statuses.name) IN (?)', downcased_statuses)
       end
 
       # Filter: Assignee
-      if @selected_assignees.any?
-        defects_scope = defects_scope.joins(:users).where(users: { id: @selected_assignees })
-      end
+      defects_scope = defects_scope.joins(:users).where(users: { id: @selected_assignees }) if @selected_assignees.any?
 
       # Filter: Module
-      if @selected_modules.any?
-        defects_scope = defects_scope.where(qa_module_id: @selected_modules)
-      end
+      defects_scope = defects_scope.where(qa_module_id: @selected_modules) if @selected_modules.any?
 
       # Filter: Submodule
-      if @selected_submodules.any?
-        defects_scope = defects_scope.where(submodule_id: @selected_submodules)
-      end
+      defects_scope = defects_scope.where(submodule_id: @selected_submodules) if @selected_submodules.any?
 
       # NOW calculate the metrics with the filtered data
       @defects_per_creator = if @selected_metrics.include?('reporter')
@@ -178,11 +170,11 @@ class ReportsController < ApplicationController
                             end
 
       @defects_per_severity = if @selected_metrics.include?('severity')
-        raw = defects_scope.group("LOWER(COALESCE(priority, 'unknown'))").count
-        raw.transform_keys { |k| normalize_severity(k) }
-      else
-        {}
-      end
+                                raw = defects_scope.group("LOWER(COALESCE(priority, 'unknown'))").count
+                                raw.transform_keys { |k| normalize_severity(k) }
+                              else
+                                {}
+                              end
 
       @defects_per_assignee = if @selected_metrics.include?('assignee')
                                 defects_scope
@@ -213,33 +205,31 @@ class ReportsController < ApplicationController
                                end
 
       @defects_age_buckets = if @selected_metrics.include?('ageing')
-        ageing_scope = defects_scope.unscope(:order)
-        
-        buckets = ageing_scope.group(<<~SQL.squish).count
-          CASE
-            WHEN defects.created_at >= NOW() - INTERVAL '7 days' THEN '0-7 days'
-            WHEN defects.created_at >= NOW() - INTERVAL '14 days' THEN '8-14 days'
-            WHEN defects.created_at >= NOW() - INTERVAL '30 days' THEN '15-30 days'
-            ELSE '31+ days'
-          END
-        SQL
-        
-        if @selected_ageing_type == 'latest'
-          ordered_buckets = {}
-          ['0-7 days', '8-14 days', '15-30 days', '31+ days'].each do |bucket|
-            ordered_buckets[bucket] = buckets[bucket] || 0
-          end
-          ordered_buckets
-        else
-          ordered_buckets = {}
-          ['31+ days', '15-30 days', '8-14 days', '0-7 days'].each do |bucket|
-            ordered_buckets[bucket] = buckets[bucket] || 0
-          end
-          ordered_buckets
-        end
-      else
-        {}
-      end
+                               ageing_scope = defects_scope.unscope(:order)
+
+                               buckets = ageing_scope.group(<<~SQL.squish).count
+                                 CASE
+                                   WHEN defects.created_at >= NOW() - INTERVAL '7 days' THEN '0-7 days'
+                                   WHEN defects.created_at >= NOW() - INTERVAL '14 days' THEN '8-14 days'
+                                   WHEN defects.created_at >= NOW() - INTERVAL '30 days' THEN '15-30 days'
+                                   ELSE '31+ days'
+                                 END
+                               SQL
+
+                               ordered_buckets = {}
+                               if @selected_ageing_type == 'latest'
+                                 ['0-7 days', '8-14 days', '15-30 days', '31+ days'].each do |bucket|
+                                   ordered_buckets[bucket] = buckets[bucket] || 0
+                                 end
+                               else
+                                 ['31+ days', '15-30 days', '8-14 days', '0-7 days'].each do |bucket|
+                                   ordered_buckets[bucket] = buckets[bucket] || 0
+                                 end
+                               end
+                               ordered_buckets
+                             else
+                               {}
+                             end
     else
       # Initialize empty metrics if form not submitted via Apply button
       @defects_per_creator = {}
