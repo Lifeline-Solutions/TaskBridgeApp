@@ -207,7 +207,8 @@ class TicketsController < ApplicationController
         end
 
         if assigned_user.present?
-          log_event(@ticket, current_user, 'created and assign', "Ticket was created and assigned to #{assigned_user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}",
+          log_event(@ticket, current_user, 'created and assign',
+                    "Ticket was created and assigned to #{assigned_user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}",
                     assigned_user)
         else
           log_event(@ticket, current_user, 'created and assign', "Ticket was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}", nil)
