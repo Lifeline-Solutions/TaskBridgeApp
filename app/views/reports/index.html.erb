@@ -1,5 +1,5 @@
 <div class="container justify-between p-4">
-  <%= form_with url: reports_path, method: :get, local: true do %>
+  <%= form_with url: reports_path, method: :get, local: true, id: 'reports-form' do %>
     <div class="flex flex-wrap gap-3 items-center">
       <div>
         <label for="product_id" class="font-semibold">Select Product:</label>
@@ -20,7 +20,7 @@
         <span class="font-semibold">Metrics:</span>
         
         <!-- Severity Dropdown -->
-        <% if @available_options[:severities] %>
+        <% if @available_options[:severities] && params[:product_id].present? %>
           <div class="dropdown-group">
             <label class="inline-flex items-center gap-1">
               <%= check_box_tag 'metrics[]', 'severity', @selected_metrics.include?('severity'), 
@@ -31,7 +31,7 @@
             <div id="severity-options" class="dropdown-options <%= 'hidden' unless @selected_metrics.include?('severity') %>">
               <% @available_options[:severities].each do |severity| %>
                 <label class="block pl-6">
-                  <%= check_box_tag 'severities[]', severity, @selected_severities.include?(severity) %>
+                  <%= check_box_tag 'severities[]', severity, @selected_severities.include?(severity) || @selected_severities.empty? %>
                   <span><%= severity %></span>
                 </label>
               <% end %>
@@ -40,7 +40,7 @@
         <% end %>
 
         <!-- Reporter Dropdown -->
-        <% if @available_options[:reporters] %>
+        <% if @available_options[:reporters] && params[:product_id].present? %>
           <div class="dropdown-group">
             <label class="inline-flex items-center gap-1">
               <%= check_box_tag 'metrics[]', 'reporter', @selected_metrics.include?('reporter'),
@@ -51,7 +51,7 @@
             <div id="reporter-options" class="dropdown-options <%= 'hidden' unless @selected_metrics.include?('reporter') %>">
               <% @available_options[:reporters].each do |id, name| %>
                 <label class="block pl-6">
-                  <%= check_box_tag 'reporters[]', id, @selected_reporters.include?(id.to_s) %>
+                  <%= check_box_tag 'reporters[]', id, @selected_reporters.include?(id.to_s) || @selected_reporters.empty? %>
                   <span><%= name %></span>
                 </label>
               <% end %>
@@ -60,7 +60,7 @@
         <% end %>
 
         <!-- Status Dropdown -->
-        <% if @available_options[:statuses] %>
+        <% if @available_options[:statuses] && params[:product_id].present? %>
           <div class="dropdown-group">
             <label class="inline-flex items-center gap-1">
               <%= check_box_tag 'metrics[]', 'status', @selected_metrics.include?('status'),
@@ -71,7 +71,7 @@
             <div id="status-options" class="dropdown-options <%= 'hidden' unless @selected_metrics.include?('status') %>">
               <% @available_options[:statuses].each do |id, name| %>
                 <label class="block pl-6">
-                  <%= check_box_tag 'statuses[]', name, @selected_statuses.include?(name) %>
+                  <%= check_box_tag 'statuses[]', name, @selected_statuses.include?(name) || @selected_statuses.empty? %>
                   <span><%= name %></span>
                 </label>
               <% end %>
@@ -80,7 +80,7 @@
         <% end %>
 
         <!-- Assignee Dropdown -->
-        <% if @available_options[:assignees] %>
+        <% if @available_options[:assignees] && params[:product_id].present? %>
           <div class="dropdown-group">
             <label class="inline-flex items-center gap-1">
               <%= check_box_tag 'metrics[]', 'assignee', @selected_metrics.include?('assignee'),
@@ -91,7 +91,7 @@
             <div id="assignee-options" class="dropdown-options <%= 'hidden' unless @selected_metrics.include?('assignee') %>">
               <% @available_options[:assignees].each do |id, name| %>
                 <label class="block pl-6">
-                  <%= check_box_tag 'assignees[]', id, @selected_assignees.include?(id.to_s) %>
+                  <%= check_box_tag 'assignees[]', id, @selected_assignees.include?(id.to_s) || @selected_assignees.empty? %>
                   <span><%= name %></span>
                 </label>
               <% end %>
@@ -100,7 +100,7 @@
         <% end %>
 
         <!-- Modules Dropdown -->
-        <% if @available_options[:modules] %>
+        <% if @available_options[:modules] && params[:product_id].present? %>
           <div class="dropdown-group">
             <label class="inline-flex items-center gap-1">
               <%= check_box_tag 'metrics[]', 'modules', @selected_metrics.include?('modules'),
@@ -111,7 +111,7 @@
             <div id="modules-options" class="dropdown-options <%= 'hidden' unless @selected_metrics.include?('modules') %>">
               <% @available_options[:modules].each do |id, name| %>
                 <label class="block pl-6">
-                  <%= check_box_tag 'modules[]', id, @selected_modules.include?(id.to_s) %>
+                  <%= check_box_tag 'modules[]', id, @selected_modules.include?(id.to_s) || @selected_modules.empty? %>
                   <span><%= name %></span>
                 </label>
               <% end %>
@@ -120,7 +120,7 @@
         <% end %>
 
         <!-- Submodules Dropdown -->
-        <% if @available_options[:submodules] %>
+        <% if @available_options[:submodules] && params[:product_id].present? %>
           <div class="dropdown-group">
             <label class="inline-flex items-center gap-1">
               <%= check_box_tag 'metrics[]', 'submodules', @selected_metrics.include?('submodules'),
@@ -131,7 +131,7 @@
             <div id="submodules-options" class="dropdown-options <%= 'hidden' unless @selected_metrics.include?('submodules') %>">
               <% @available_options[:submodules].each do |id, name, parent_id| %>
                 <label class="block pl-6">
-                  <%= check_box_tag 'submodules[]', id, @selected_submodules.include?(id.to_s) %>
+                  <%= check_box_tag 'submodules[]', id, @selected_submodules.include?(id.to_s) || @selected_submodules.empty? %>
                   <span><%= name %></span>
                 </label>
               <% end %>
@@ -140,7 +140,7 @@
         <% end %>
 
         <!-- Ageing Dropdown -->
-        <% if @available_options[:ageing_types] %>
+        <% if @available_options[:ageing_types] && params[:product_id].present? %>
           <div class="dropdown-group">
             <label class="inline-flex items-center gap-1">
               <%= check_box_tag 'metrics[]', 'ageing', @selected_metrics.include?('ageing'),
@@ -160,12 +160,20 @@
         <% end %>
       </div>
 
-      <%= submit_tag "Apply", class: "ml-2 px-4 py-2 bg-blue-500 text-white rounded" %>
+      <% if params[:product_id].present? %>
+        <%= submit_tag "Apply", class: "ml-2 px-4 py-2 bg-blue-500 text-white rounded" %>
+        <% if params[:commit].present? %>
+          <%= link_to "Clear", reports_path, class: "ml-2 px-4 py-2 bg-gray-500 text-white rounded" %>
+        <% end %>
+      <% end %>
     </div>
+
+    <!-- Hidden field to track if this is a product change (not Apply click) -->
+    <%= hidden_field_tag :product_change, value: params[:product_change] %>
   <% end %>
 </div>
 
-<% if params[:product_id].present? %>
+<% if params[:commit].present? && params[:product_id].present? %>
   <%= render partial: "defect_per_user", locals: {
     defects_per_creator: @defects_per_creator,
     defects_per_status: @defects_per_status,
@@ -176,6 +184,10 @@
     defects_age_buckets: @defects_age_buckets,
     selected_metrics: @selected_metrics
   } %>
+<% elsif params[:product_id].present? %>
+  <div class="container p-4 text-center text-gray-500">
+    Please configure your metrics and click "Apply" to generate the report
+  </div>
 <% else %>
   <div class="container p-4 text-center text-gray-500">
     Please select a product to view reports
@@ -251,9 +263,14 @@
       }
     });
 
-    // Auto-submit when product changes
+    // Set product_change flag when product is changed
     document.getElementById('product_id')?.addEventListener('change', function() {
-      this.form.submit();
+      document.getElementById('product_change').value = 'true';
+    });
+
+    // Clear product_change flag when Apply is clicked
+    document.querySelector('input[type="submit"]')?.addEventListener('click', function() {
+      document.getElementById('product_change').value = '';
     });
   });
 </script>
