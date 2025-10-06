@@ -87,8 +87,8 @@
   </div>
 
   <!-- Responsive Table View (hidden on mobile, shown on lg and up) -->
-  <div class="hidden w-full overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs sm:text-sm" aria-label="Tickets Table" style="table-layout: auto;">
+  <div class="hidden lg:block overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs sm:text-sm" aria-label="Tickets Table" style="table-layout: auto;" id="desktop-ticket-search-table">
       <thead class="bg-gray-50 dark:bg-gray-700">
         <tr>
           <th class="px-2 py-2 whitespace-nowrap">Date</th>
@@ -99,7 +99,6 @@
           <th class="px-2 py-2 whitespace-nowrap">Assigned To</th>
           <th class="px-2 py-2 whitespace-nowrap">Status</th>
           <th class="px-2 py-2 whitespace-nowrap">Progress</th>
-          <th class="px-2 py-2 whitespace-nowrap">Actions</th>
           <% if current_user.has_role? :admin or current_user.has_role? :agent  or current_user.has_role?('project manager')%>
             <th class="px-2 py-2 text-center hide-on-sidebar whitespace-nowrap">Updates</th>
             <th class="px-2 py-2 text-center hide-on-sidebar whitespace-nowrap">Last Updated</th>
@@ -140,7 +139,7 @@
               <td class="px-2 py-2 whitespace-nowrap">
                 <%= render partial: 'tickets/progress_bar', locals: { ticket: ticket } %>
               </td>
-              <td class="px-2 py-2 whitespace-nowrap"><!-- Actions column left blank for dropdown placement below --></td>
+              
               <% if current_user.has_role? :admin or current_user.has_role? :agent  or current_user.has_role?('project manager')%>
                 <td class="px-2 py-2 text-center hide-on-sidebar text-gray-900 dark:text-gray-100 whitespace-nowrap">
                   <%= ticket.update_count %>
@@ -150,12 +149,7 @@
                 </td>
               <% end %>
             </tr>
-            <!-- Dropdown always visible below each ticket row -->
-            <tr class="bg-transparent">
-              <td colspan="12" class="pl-2 pb-2">
-                <%= render partial: 'tickets/action_dropdown', locals: { ticket: ticket } %>
-              </td>
-            </tr>
+           
           <% end %>
         <% end %>
       </tbody>
