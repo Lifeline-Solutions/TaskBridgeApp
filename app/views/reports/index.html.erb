@@ -28,7 +28,7 @@
                   data: { target: 'severity-options' } %>
               <span>Based on Severity</span>
             </label>
-            <div id="severity-options" class="dropdown-options <%= 'hidden' unless @selected_metrics.include?('severity') %>">
+            <div id="severity-options" class="dropdown-options hidden">
               <% @available_options[:severities].each do |severity| %>
                 <label class="block pl-6">
                   <%= check_box_tag 'severities[]', severity, @selected_severities.include?(severity) || @selected_severities.empty? %>
@@ -48,7 +48,7 @@
                   data: { target: 'reporter-options' } %>
               <span>Based on Reporter</span>
             </label>
-            <div id="reporter-options" class="dropdown-options <%= 'hidden' unless @selected_metrics.include?('reporter') %>">
+            <div id="reporter-options" class="dropdown-options hidden">
               <% @available_options[:reporters].each do |id, name| %>
                 <label class="block pl-6">
                   <%= check_box_tag 'reporters[]', id, @selected_reporters.include?(id.to_s) || @selected_reporters.empty? %>
@@ -68,7 +68,7 @@
                   data: { target: 'status-options' } %>
               <span>Based on Status</span>
             </label>
-            <div id="status-options" class="dropdown-options <%= 'hidden' unless @selected_metrics.include?('status') %>">
+            <div id="status-options" class="dropdown-options hidden">
               <% @available_options[:statuses].each do |id, name| %>
                 <label class="block pl-6">
                   <%= check_box_tag 'statuses[]', name, @selected_statuses.include?(name) || @selected_statuses.empty? %>
@@ -88,7 +88,7 @@
                   data: { target: 'assignee-options' } %>
               <span>Based on Assignee</span>
             </label>
-            <div id="assignee-options" class="dropdown-options <%= 'hidden' unless @selected_metrics.include?('assignee') %>">
+            <div id="assignee-options" class="dropdown-options hidden">
               <% @available_options[:assignees].each do |id, name| %>
                 <label class="block pl-6">
                   <%= check_box_tag 'assignees[]', id, @selected_assignees.include?(id.to_s) || @selected_assignees.empty? %>
@@ -108,7 +108,7 @@
                   data: { target: 'modules-options' } %>
               <span>Based on Modules</span>
             </label>
-            <div id="modules-options" class="dropdown-options <%= 'hidden' unless @selected_metrics.include?('modules') %>">
+            <div id="modules-options" class="dropdown-options hidden">
               <% @available_options[:modules].each do |id, name| %>
                 <label class="block pl-6">
                   <%= check_box_tag 'modules[]', id, @selected_modules.include?(id.to_s) || @selected_modules.empty? %>
@@ -128,7 +128,7 @@
                   data: { target: 'submodules-options' } %>
               <span>Based on Sub Modules</span>
             </label>
-            <div id="submodules-options" class="dropdown-options <%= 'hidden' unless @selected_metrics.include?('submodules') %>">
+            <div id="submodules-options" class="dropdown-options hidden">
               <% @available_options[:submodules].each do |id, name, parent_id| %>
                 <label class="block pl-6">
                   <%= check_box_tag 'submodules[]', id, @selected_submodules.include?(id.to_s) || @selected_submodules.empty? %>
@@ -148,7 +148,7 @@
                   data: { target: 'ageing-options' } %>
               <span>Based on Ageing</span>
             </label>
-            <div id="ageing-options" class="dropdown-options <%= 'hidden' unless @selected_metrics.include?('ageing') %>">
+            <div id="ageing-options" class="dropdown-options hidden">
               <% @available_options[:ageing_types].each do |name, value| %>
                 <label class="block pl-6">
                   <%= radio_button_tag 'ageing_type', value, @selected_ageing_type == value %>
@@ -238,7 +238,7 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    // Close all dropdowns by default
+    // Close all dropdowns by default - this is the key fix
     document.querySelectorAll('.dropdown-options').forEach(dropdown => {
       dropdown.classList.add('hidden');
     });
@@ -249,7 +249,15 @@
         const targetId = this.dataset.target;
         const target = document.getElementById(targetId);
         if (target) {
+          // Only toggle this specific dropdown
           target.classList.toggle('hidden');
+          
+          // Close all other dropdowns
+          document.querySelectorAll('.dropdown-options').forEach(otherDropdown => {
+            if (otherDropdown.id !== targetId) {
+              otherDropdown.classList.add('hidden');
+            }
+          });
         }
       });
     });
