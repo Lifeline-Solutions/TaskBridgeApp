@@ -1,6 +1,6 @@
 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6 mt-6">
   <% @product.each do |product| %>
-    <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg transition-transform duration-200 hover:scale-105"
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg transition-transform duration-200 hover:scale-95"
          style="cursor:pointer;"
          onclick="window.location='<%= product_path(product.id) %>'">
       <div>
