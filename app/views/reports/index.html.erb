@@ -4,9 +4,9 @@
       <div>
         <label for="product_id" class="font-semibold">Select Product:</label>
         <%= select_tag :product_id,
-                       options_for_select(@product_options, params[:product_id]),
-                       class: "border rounded p-2 ml-2 bg-white dark:bg-gray-800 min-w-48",
-                       onchange: "this.form.submit()" %>
+                      options_for_select([['Select a product...', '']] + @product_options, params[:product_id]),
+                      class: "border rounded p-2 ml-2 bg-white dark:bg-gray-800 min-w-48",
+                      onchange: "this.form.submit()" %>
       </div>
 
       <div>
@@ -183,49 +183,77 @@
 <% end %>
 
 <style>
-.dropdown-group {
-  position: relative;
-  margin-right: 1rem;
-}
+  .dropdown-group {
+    position: relative;
+    margin-right: 1rem;
+  }
 
-.dropdown-options {
-  position: absolute;
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 0.5rem;
-  z-index: 1000;
-  min-width: 200px;
-  max-height: 300px;
-  overflow-y: auto;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
+  .dropdown-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 0.5rem;
+    z-index: 1000;
+    min-width: 200px;
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-top: 4px;
+  }
 
-.dropdown-options.hidden {
-  display: none;
-}
+  .dropdown-options.hidden {
+    display: none;
+  }
 
-.dropdown-options label {
-  padding: 0.25rem 0;
-}
+  .dropdown-options label {
+    padding: 0.25rem 0;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .dropdown-options label:hover {
+    background-color: #f5f5f5;
+  }
+
+  .metric-checkbox {
+    margin-right: 0.5rem;
+  }
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  // Toggle dropdown options when metric checkbox is clicked
-  document.querySelectorAll('.metric-checkbox').forEach(checkbox => {
-    checkbox.addEventListener('change', function() {
-      const targetId = this.dataset.target;
-      const target = document.getElementById(targetId);
-      if (target) {
-        target.classList.toggle('hidden', !this.checked);
+  document.addEventListener('DOMContentLoaded', function() {
+    // Close all dropdowns by default
+    document.querySelectorAll('.dropdown-options').forEach(dropdown => {
+      dropdown.classList.add('hidden');
+    });
+
+    // Toggle dropdown options when metric checkbox is clicked
+    document.querySelectorAll('.metric-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        const targetId = this.dataset.target;
+        const target = document.getElementById(targetId);
+        if (target) {
+          target.classList.toggle('hidden');
+        }
+      });
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(event) {
+      if (!event.target.closest('.dropdown-group')) {
+        document.querySelectorAll('.dropdown-options').forEach(dropdown => {
+          dropdown.classList.add('hidden');
+        });
       }
     });
-  });
 
-  // Auto-submit when product changes
-  document.getElementById('product_id')?.addEventListener('change', function() {
-    this.form.submit();
+    // Auto-submit when product changes
+    document.getElementById('product_id')?.addEventListener('change', function() {
+      this.form.submit();
+    });
   });
-});
 </script>

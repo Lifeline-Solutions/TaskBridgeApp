@@ -35,17 +35,18 @@ class ReportsController < ApplicationController
     start_date = parse_date(params[:start_date])
     end_date = parse_date(params[:end_date])
 
-    defects_scope = Defect.published
-    defects_scope = defects_scope.where(product_id: product_id) if product_id.present?
-    defects_scope = defects_scope.where('defects.created_at >= ?', start_date.beginning_of_day) if start_date
-    defects_scope = defects_scope.where('defects.created_at <= ?', end_date.end_of_day) if end_date
+    # Create base scope for gathering available options (WITHOUT sub-filters)
+    base_scope_for_options = Defect.published
+    base_scope_for_options = base_scope_for_options.where(product_id: product_id) if product_id.present?
+    base_scope_for_options = base_scope_for_options.where('defects.created_at >= ?', start_date.beginning_of_day) if start_date
+    base_scope_for_options = base_scope_for_options.where('defects.created_at <= ?', end_date.end_of_day) if end_date
 
-    # Gather available options for each metric based on the filtered defects
+    # Gather available options based on the base scope (without sub-filters)
     @available_options = {}
 
     # Available severities
     if @selected_metrics.include?('severity')
-      @available_options[:severities] = defects_scope
+      @available_options[:severities] = base_scope_for_options
         .where.not(priority: [nil, ''])
         .distinct
         .pluck(:priority)
@@ -56,7 +57,7 @@ class ReportsController < ApplicationController
 
     # Available reporters
     if @selected_metrics.include?('reporter')
-      @available_options[:reporters] = defects_scope
+      @available_options[:reporters] = base_scope_for_options
         .joins(:creator)
         .select('users.id, users.first_name, users.last_name')
         .distinct
@@ -65,7 +66,7 @@ class ReportsController < ApplicationController
 
     # Available statuses
     if @selected_metrics.include?('status')
-      @available_options[:statuses] = defects_scope
+      @available_options[:statuses] = base_scope_for_options
         .joins(:statuses)
         .select('statuses.id, statuses.name')
         .distinct
@@ -75,7 +76,7 @@ class ReportsController < ApplicationController
 
     # Available assignees
     if @selected_metrics.include?('assignee')
-      @available_options[:assignees] = defects_scope
+      @available_options[:assignees] = base_scope_for_options
         .joins(:users)
         .select('users.id, users.first_name, users.last_name')
         .distinct
@@ -84,7 +85,7 @@ class ReportsController < ApplicationController
 
     # Available modules
     if @selected_metrics.include?('modules')
-      @available_options[:modules] = defects_scope
+      @available_options[:modules] = base_scope_for_options
         .joins(:qa_module)
         .where.not(qa_modules: { id: nil })
         .select('qa_modules.id, qa_modules.name')
@@ -94,7 +95,7 @@ class ReportsController < ApplicationController
 
     # Available submodules (dependent on modules)
     if @selected_metrics.include?('submodules')
-      @available_options[:submodules] = defects_scope
+      @available_options[:submodules] = base_scope_for_options
         .joins('LEFT JOIN qa_modules submods ON submods.id = defects.submodule_id')
         .where.not(submods: { id: nil })
         .select('submods.id, submods.name, submods.parent_id')
@@ -105,13 +106,55 @@ class ReportsController < ApplicationController
     # Ageing options
     @available_options[:ageing_types] = [['Latest', 'latest'], ['Oldest', 'oldest']] if @selected_metrics.include?('ageing')
 
+    # NOW create the filtered scope for metric calculations
+    defects_scope = base_scope_for_options
+
+    # Apply sub-filters for metric calculations
+    # Filter: Severity (priority)
+    if @selected_severities.any?
+      all_values = @selected_severities.flat_map do |severity|
+        case severity.downcase
+        when 'severity 1' then %w[severity\ 1 s1 high]
+        when 'severity 2' then %w[severity\ 2 s2 medium]
+        when 'severity 3' then %w[severity\ 3 s3 low]
+        when 'severity 4' then %w[severity\ 4 s4 very\ low]
+        else [severity.downcase]
+        end
+      end
+      defects_scope = defects_scope.where("LOWER(COALESCE(defects.priority, 'unknown')) IN (?)", all_values)
+    end
+
+    # Filter: Reporter
+    if @selected_reporters.any?
+      defects_scope = defects_scope.where(creator_id: @selected_reporters)
+    end
+
+    # Filter: Status
+    if @selected_statuses.any?
+      downcased_statuses = @selected_statuses.map(&:downcase)
+      defects_scope = defects_scope.joins(:statuses).where("LOWER(statuses.name) IN (?)", downcased_statuses)
+    end
+
+    # Filter: Assignee
+    if @selected_assignees.any?
+      defects_scope = defects_scope.joins(:users).where(users: { id: @selected_assignees })
+    end
+
+    # Filter: Module
+    if @selected_modules.any?
+      defects_scope = defects_scope.where(qa_module_id: @selected_modules)
+    end
+
+    # Filter: Submodule
+    if @selected_submodules.any?
+      defects_scope = defects_scope.where(submodule_id: @selected_submodules)
+    end
+
     # NOW calculate the metrics with the filtered data
 
     # Reporter
     @defects_per_creator = if @selected_metrics.include?('reporter')
-                             scope = defects_scope
-                             scope = scope.joins(:creator).where(users: { id: @selected_reporters }) if @selected_reporters.any?
-                             scope
+                             defects_scope
                                .joins(:creator)
                                .group('users.id', 'users.first_name', 'users.last_name')
                                .count
@@ -121,9 +164,7 @@ class ReportsController < ApplicationController
 
     # Status
     @defects_per_status = if @selected_metrics.include?('status')
-                            scope = defects_scope
-                            scope = scope.joins(:statuses).where(statuses: { name: @selected_statuses }) if @selected_statuses.any?
-                            scope
+                            defects_scope
                               .joins(:statuses)
                               .group('statuses.id', 'statuses.name')
                               .count
@@ -133,29 +174,7 @@ class ReportsController < ApplicationController
 
     # Severity (priority)
     @defects_per_severity = if @selected_metrics.include?('severity')
-      scope = defects_scope
-      # Filter by selected severities if any are chosen
-      if @selected_severities.any?
-        # Build individual OR conditions
-        or_conditions = @selected_severities.map do |severity|
-          normalized_severity = severity.downcase
-          case normalized_severity
-          when 'severity 1'
-            "LOWER(COALESCE(priority, 'unknown')) IN ('severity 1', 's1', 'high')"
-          when 'severity 2'
-            "LOWER(COALESCE(priority, 'unknown')) IN ('severity 2', 's2', 'medium')"
-          when 'severity 3'
-            "LOWER(COALESCE(priority, 'unknown')) IN ('severity 3', 's3', 'low')"
-          else
-            "LOWER(COALESCE(priority, 'unknown')) = '#{normalized_severity}'"
-          end
-        end
-        
-        # Join with OR
-        scope = scope.where(or_conditions.join(' OR '))
-      end
-      
-      raw = scope.group("LOWER(COALESCE(priority, 'unknown'))").count
+      raw = defects_scope.group("LOWER(COALESCE(priority, 'unknown'))").count
       raw.transform_keys { |k| normalize_severity(k) }
     else
       {}
@@ -163,9 +182,7 @@ class ReportsController < ApplicationController
 
     # Assignee
     @defects_per_assignee = if @selected_metrics.include?('assignee')
-                              scope = defects_scope
-                              scope = scope.joins(:users).where(users: { id: @selected_assignees }) if @selected_assignees.any?
-                              scope
+                              defects_scope
                                 .joins(:users)
                                 .group('users.id', 'users.first_name', 'users.last_name')
                                 .count
@@ -175,9 +192,7 @@ class ReportsController < ApplicationController
 
     # Modules
     @defects_per_module = if @selected_metrics.include?('modules')
-                            scope = defects_scope
-                            scope = scope.where(qa_module_id: @selected_modules) if @selected_modules.any?
-                            scope
+                            defects_scope
                               .joins(:qa_module)
                               .group('qa_modules.id', 'qa_modules.name')
                               .count
@@ -187,9 +202,7 @@ class ReportsController < ApplicationController
 
     # Submodules (LEFT JOIN because optional)
     @defects_per_submodule = if @selected_metrics.include?('submodules')
-                               scope = defects_scope
-                               scope = scope.where(submodule_id: @selected_submodules) if @selected_submodules.any?
-                               scope
+                               defects_scope
                                  .joins('LEFT JOIN qa_modules submods ON submods.id = defects.submodule_id')
                                  .group('submods.id', 'submods.name')
                                  .count
@@ -203,37 +216,23 @@ class ReportsController < ApplicationController
       # Remove any ordering before grouping
       ageing_scope = defects_scope.unscope(:order)
       
-      # Apply ordering to the base scope, not the grouped one
+      buckets = ageing_scope.group(<<~SQL.squish).count
+        CASE
+          WHEN defects.created_at >= NOW() - INTERVAL '7 days' THEN '0-7 days'
+          WHEN defects.created_at >= NOW() - INTERVAL '14 days' THEN '8-14 days'
+          WHEN defects.created_at >= NOW() - INTERVAL '30 days' THEN '15-30 days'
+          ELSE '31+ days'
+        END
+      SQL
+      
+      # Order based on selected ageing type
       if @selected_ageing_type == 'latest'
-        # For latest, we'll handle ordering in the view or manually
-        # Just get the counts without ordering
-        buckets = ageing_scope.group(<<~SQL.squish).count
-          CASE
-            WHEN defects.created_at >= NOW() - INTERVAL '7 days' THEN '0-7 days'
-            WHEN defects.created_at >= NOW() - INTERVAL '14 days' THEN '8-14 days'
-            WHEN defects.created_at >= NOW() - INTERVAL '30 days' THEN '15-30 days'
-            ELSE '31+ days'
-          END
-        SQL
-        
-        # Order the buckets manually for display
         ordered_buckets = {}
         ['0-7 days', '8-14 days', '15-30 days', '31+ days'].each do |bucket|
           ordered_buckets[bucket] = buckets[bucket] || 0
         end
         ordered_buckets
       else
-        # For oldest, reverse the bucket order
-        buckets = ageing_scope.group(<<~SQL.squish).count
-          CASE
-            WHEN defects.created_at >= NOW() - INTERVAL '7 days' THEN '0-7 days'
-            WHEN defects.created_at >= NOW() - INTERVAL '14 days' THEN '8-14 days'
-            WHEN defects.created_at >= NOW() - INTERVAL '30 days' THEN '15-30 days'
-            ELSE '31+ days'
-          END
-        SQL
-        
-        # Order the buckets manually for display (oldest first)
         ordered_buckets = {}
         ['31+ days', '15-30 days', '8-14 days', '0-7 days'].each do |bucket|
           ordered_buckets[bucket] = buckets[bucket] || 0
@@ -244,61 +243,7 @@ class ReportsController < ApplicationController
       {}
     end
 
-    # Filter: Severity (priority)
-if params[:severities].present?
-  all_values = params[:severities].flat_map do |severity|
-    case severity.downcase
-    when 'severity 1' then %w[severity 1 s1 high]
-    when 'severity 2' then %w[severity 2 s2 medium]
-    when 'severity 3' then %w[severity 3 s3 low]
-    when 'severity 4' then %w[severity 4 s4 very low]
-    else [severity.downcase]
-    end
-  end
-  defects_scope = defects_scope.where("LOWER(COALESCE(defects.priority, 'unknown')) IN (?)", all_values)
-end
-
-# Filter: Reporter
-if params[:reporters].present?
-  defects_scope = defects_scope.where(creator_id: params[:reporters])
-end
-
-# Filter: Status
-if params[:statuses].present?
-  downcased_statuses = params[:statuses].map(&:downcase)
-  defects_scope = defects_scope.joins(:statuses).where("LOWER(statuses.name) IN (?)", downcased_statuses)
-end
-
-# Filter: Assignee
-if params[:assignees].present?
-  defects_scope = defects_scope.joins(:users).where(users: { id: params[:assignees] })
-end
-
-# Filter: Module
-if params[:modules].present?
-  defects_scope = defects_scope.where(qa_module_id: params[:modules])
-end
-
-# Filter: Submodule
-if params[:submodules].present?
-  defects_scope = defects_scope.where(submodule_id: params[:submodules])
-end
-
-# Filter: Ageing (latest/oldest)
-if params[:ageing_type].present?
-  direction = params[:ageing_type] == 'latest' ? :desc : :asc
-  defects_scope = defects_scope.order(created_at: direction)
-end
-
-  end
-
-  def severity_aliases(severity)
-    case severity.downcase
-      when 'severity 1' then %w[severity 1 s1 high]
-      when 'severity 2' then %w[severity 2 s2 medium]
-      when 'severity 3' then %w[severity 3 s3 low]
-      else [severity.downcase]
-    end
+    # REMOVE the duplicate filtering section at the bottom (lines 270-310)
   end
 
   private
