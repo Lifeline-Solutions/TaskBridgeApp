@@ -12,7 +12,7 @@
   <% @ticket.statuses.each do |status| %>
     <%= status.name %>
   <% end %>
-  by <%= @current_user&.name || @current_user&.email || 'A user' %>.
+  by <%= @assigned_user&.name || @assigned_user&.email || 'A user' %>.
 </p>
 
 <p><strong>Ticket Details:</strong></p>

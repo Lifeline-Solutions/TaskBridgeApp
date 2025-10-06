@@ -411,24 +411,38 @@ class TicketsController < ApplicationController
         user_id: @ticket.users.first&.id
       )
     end
+    # Assigned Users added to the email
+    assigned_user = User.find(params[:user_id]) if params[:user_id].present?
+    assigned_user ||= @ticket.users.first || @project.user
 
     # Send status update emails
     if status.name != 'Reopened'
       @ticket.users.each do |ticket_user|
-        UserMailer.status_update_email(ticket_user, @ticket, current_user, @project).deliver_later
+        UserMailer.status_update_email(ticket_user, @ticket, current_user, @project, assigned_user).deliver_later
       end
     end
 
     if status.name == 'Reopened'
       @project.users.each do |project_user|
-        UserMailer.status_update_email(project_user, @ticket, current_user, @project).deliver_later
+        UserMailer.status_update_email(project_user, @ticket, current_user, @project, assigned_user).deliver_later
       end
     end
 
     # Emails + logs...
-    assigned_user = User.find(params[:user_id]) if params[:user_id].present?
-    assigned_user ||= @ticket.users.first || @project.user
-    log_event(@ticket, current_user, 'status_change', "Status was changed to #{status.name} currently assingned to #{assigned_user.name} ", assigned_user)
+    # Set SLA for the ticket
+    sla_ticket = SlaTicket.find_or_create_by!(ticket_id: @ticket.id) do |sla|
+      sla.sla_status = @ticket.sla_status
+    end
+
+    # Set default SLA target response deadline if blank
+    sla_target_response_deadline = sla_ticket.sla_target_response_deadline.presence || 'Not Breached'
+    sla_target_resolution_deadline = sla_ticket.sla_resolution_deadline.presence || 'Not Breached'
+
+    log_event(@ticket, current_user, 'status_change',
+              "Status was changed to #{status.name} currently assigned to #{assigned_user.name},
+                \n and Target Response Deadline:  #{sla_target_response_deadline} and
+                \n Target Resolution deadline: #{sla_target_resolution_deadline} ",
+              assigned_user)
 
     activity('user_activity')
       .caused_by(current_user)
