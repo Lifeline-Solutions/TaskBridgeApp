@@ -38,17 +38,17 @@
     
     <!-- Main Content -->
     <div id="mainContent" class="transition-all duration-300 bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-slate-100 ml-16 lg:ml-64 min-h-screen">
-      <div class="p-1">
-        <%= turbo_frame_tag "modal" %>
-        <%= render 'layouts/topbar' %>
+      <%= turbo_frame_tag "modal" %>
+      <%= render 'layouts/topbar' %>
+      <div class="p-2">
         <%= yield %>
       </div>
     </div>
   <% else %>
     <main class="mx-auto bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-slate-100">
       <%= render 'layouts/sidebar' %>
-      <div>
-        <%= render 'layouts/topbar' %>
+      <%= render 'layouts/topbar' %>
+      <div class="p-2">
         <%= yield %>
       </div>
     </main>
