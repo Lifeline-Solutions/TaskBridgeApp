@@ -38,76 +38,23 @@
     
     <!-- Main Content -->
     <div id="mainContent" class="transition-all duration-300 bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-slate-100 ml-16 lg:ml-64 min-h-screen">
-      <div class="p-1">
-        <%= turbo_frame_tag "modal" %>
-        <%= render 'layouts/topbar' %>
+      <%= turbo_frame_tag "modal" %>
+      <%= render 'layouts/topbar' %>
+      <div class="p-2">
         <%= yield %>
       </div>
     </div>
   <% else %>
     <main class="mx-auto bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-slate-100">
       <%= render 'layouts/sidebar' %>
+      
+      <%= render 'layouts/topbar' %>
       <div class="p-2">
-        <%= render 'layouts/topbar' %>
         <%= yield %>
       </div>
     </main>
   <% end %>
 </main>
-
-<script>
-  document.addEventListener('turbo:load', () => {
-    const mainContent = document.getElementById('mainContent');
-    
-    if (mainContent) {
-      // Function to update main content margin based on sidebar width and screen size
-      function updateMainContentMargin() {
-        const sidebarWrapper = document.getElementById('sidebar-wrapper');
-        if (sidebarWrapper) {
-          if (window.innerWidth < 1024) {
-            // On mobile/tablet, sidebar overlays content
-            mainContent.style.marginLeft = '4rem'; // Always collapsed spacing on mobile
-          } else {
-            // On desktop, check sidebar state
-            if (sidebarWrapper.classList.contains('w-16')) {
-              // Collapsed sidebar (64px = 4rem)
-              mainContent.style.marginLeft = '4rem';
-            } else {
-              // Expanded sidebar (256px = 16rem)
-              mainContent.style.marginLeft = '16rem';
-            }
-          }
-        }
-      }
-
-      // Initial setup
-      updateMainContentMargin();
-
-      // Listen for sidebar width changes
-      const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-          if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-            updateMainContentMargin();
-          }
-        });
-      });
-
-      // Start observing sidebar wrapper for class changes
-      const sidebarWrapper = document.getElementById('sidebar-wrapper');
-      if (sidebarWrapper) {
-        observer.observe(sidebarWrapper, {
-          attributes: true,
-          attributeFilter: ['class']
-        });
-      }
-
-      // Handle window resize for responsive behavior
-      window.addEventListener('resize', () => {
-        updateMainContentMargin();
-      });
-    }
-  });
-</script>
 
 <!-- Additional scripts from dev branch (if any) -->
 <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js" crossorigin="anonymous"></script>

@@ -35,7 +35,7 @@ export default class extends Controller {
 
   closeModal() {
     this.modalTarget.classList.add('hidden');
-    document.body.classList.add('overflow-auto');
+    document.body.classList.remove('overflow-hidden');
   }
 
   // Close when clicking outside
