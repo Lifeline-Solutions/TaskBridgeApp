@@ -8,104 +8,21 @@
   <!-- Ticket Information Section -->
   <div class="grid md:grid-cols-5 md:items-center mt-4">
     <div class="w-full col-span-4 h-full flex">
-      <div class="w-full gap-4">
+      <div class="grid grid-cols-4">
         <div class="col-span-4">
           <div class="mb-2.5 font-bold capitalize">
-              <%= @ticket.subject %>
+            <%= @ticket.subject %>
           </div>
           <div class="mb-2.5 flex flex-wrap">
             <%= render partial: 'tickets/ticket_content' %>
+
             <%= render partial: 'tickets/communication_center' %>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Mobile Sidebar Trigger Button (Bottom Right) -->
-    <div class="block md:hidden fixed bottom-4 right-4 z-40">
-      <button id="openSidebarBtn" class="bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg">Show Details</button>
-    </div>
-
-    <!-- Sidebar Panel (Mobile Only) -->
-    <div id="mobileSidebar" class="fixed top-0 right-0 h-full w-4/5 bg-white shadow-lg z-50 overflow-y-auto transition-transform transform translate-x-full md:hidden" style="max-width: 350px;">
-      <div class="flex justify-between items-center p-4 border-b">
-        <h2 class="font-bold text-lg">Ticket Details</h2>
-        <button id="closeSidebarBtn" class="text-2xl font-bold">&times;</button>
-      </div>
-      <div class="p-4">
-        <!-- Ticket image -->
-        <div class="mb-4 font-bold capitalize">
-          <% if @ticket.ticket_image.present? %>
-            <p> Click to Enlarge</p>
-            <%= image_tag @ticket.ticket_image, class: 'zoomable-image w-48 object-cover' %>
-          <% elsif @project.image.present? %>
-            <%= image_tag @project.image, class: 'w-16' %>
-          <% else %>
-            <%= image_tag 'default.png', class: 'w-16' %>
-          <% end %>
-        </div>
-
-        <div id="imageModal" class="modal" data-controller="image-modal" data-image-modal-target="modal">
-          <span class="close" data-action="click->image-modal#closeModal" data-image-modal-target="closeButton">&times;</span>
-          <img class="modal-content" id="fullImage" data-image-modal-target="modalImage" alt='show image'>
-        </div>
-
-        <!-- Ticket status -->
-        <div class="mb-2.5 font-bold capitalize flex">Status:
-          <span class="font-medium ml-1">
-            <%= render partial: 'tickets/ticket_status', locals: { ticket: @ticket } %>
-          </span>
-        </div>
-        <div class="mb-2.5 font-bold capitalize flex">
-          <% unless (@ticket.statuses.first&.name == 'Closed') && !current_user.has_role?(:admin) %>
-            <%= render 'tickets/ticket_action' %>
-          <% end %>
-        </div>
-
-        <!-- Software -->
-        <div class="mb-2.5 font-bold capitalize flex">
-          <span class="font-medium ml-1">
-            <%= render 'tickets/ticket_software' %>
-          </span>
-        </div>
-
-        <!-- Assignments -->
-        <%= render 'tickets/assign_people_tickets' %>
-
-        <!-- Attachments -->
-        <% if @ticket.attachments.any? %>
-          <h3 class="text-lg font-bold mt-4">Attachments:</h3>
-          <% @ticket.attachments.each do |attachment| %>
-            <div class="mb-2">
-              <%= link_to attachment.filename.to_s, rails_blob_path(attachment, disposition: "inline"), target: "_blank", class: "text-blue-500 underline" %>
-              <%= link_to "Download", rails_blob_path(attachment, disposition: "attachment"), class: "ml-2 text-green-500 underline" %>
-            </div>
-          <% end %>
-        <% else %>
-          <p class="text-gray-500 italic">No attachments available.</p>
-        <% end %>
-
-        <!-- Due/Severity -->
-        <div class="mb-2.5">
-          <%= render 'ticket_show_due_severity_issue' %>
-        </div>
-
-        <!-- SLA -->
-        <%= render 'sla' %>
-
-        <!-- Client Feedbacks -->
-        <div class="mt-2">
-          <div class="bg-gray-50 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Client Feedback</h3>
-          </div>
-          <%= render partial: "ticket_feedbacks/list", locals: { feedbacks: @feedbacks } %>
-        </div>
-      </div>
-    </div>
-
-    <!-- Desktop Details -->
-    <div class="hidden md:block w-full col-span-1 h-full p-2">
-      <!-- Ticket image -->
+    <div class="w-full col-span-1 h-full p-2">
       <div class="mb-4 font-bold capitalize">
         <% if @ticket.ticket_image.present? %>
           <p> Click to Enlarge</p>
@@ -116,13 +33,12 @@
           <%= image_tag 'default.png', class: 'w-16' %>
         <% end %>
       </div>
-
       <div id="imageModal" class="modal" data-controller="image-modal" data-image-modal-target="modal">
         <span class="close" data-action="click->image-modal#closeModal" data-image-modal-target="closeButton">&times;</span>
         <img class="modal-content" id="fullImage" data-image-modal-target="modalImage" alt='show image'>
       </div>
 
-      <!-- Status -->
+
       <div class="mb-2.5 font-bold capitalize flex">Status:
         <span class="font-medium ml-1">
           <%= render partial: 'tickets/ticket_status', locals: { ticket: @ticket } %>
@@ -134,17 +50,14 @@
         <% end %>
       </div>
 
-      <!-- Software -->
       <div class="mb-2.5 font-bold capitalize flex">
         <span class="font-medium ml-1">
           <%= render 'tickets/ticket_software' %>
         </span>
       </div>
 
-      <!-- Assignments -->
       <%= render 'tickets/assign_people_tickets' %>
 
-      <!-- Attachments -->
       <% if @ticket.attachments.any? %>
         <h3 class="text-lg font-bold mt-4">Attachments:</h3>
         <% @ticket.attachments.each do |attachment| %>
@@ -154,18 +67,15 @@
           </div>
         <% end %>
       <% else %>
-        <p class="text-gray-500 italic mt-4">No attachments available.</p>
+        <p class="text-gray-500 italic">No attachments available.</p>
       <% end %>
-
-      <!-- Due/Severity -->
       <div class="mb-2.5">
         <%= render 'ticket_show_due_severity_issue' %>
       </div>
-
       <!-- SLA -->
       <%= render 'sla' %>
 
-      <!-- Client Feedbacks -->
+      <!-- Client feedbacks -->
       <div class="mt-2">
         <div class="bg-gray-50 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
           <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Client Feedback</h3>
@@ -175,92 +85,109 @@
     </div>
   </div>
 
-  <!-- Feedback Modal Trigger -->
   <% if @ticket.user == current_user && @ticket.statuses.first&.name == 'Closed' && @ticket.feedbacks.blank? %>
     <%= render "tickets/feedback_modal", project: @project, ticket: @ticket %>
     <script>
       document.addEventListener("DOMContentLoaded", function() {
         const modal = document.getElementById("feedback-modal");
-        if (modal) modal.classList.remove("hidden");
+        if (modal) {
+          modal.classList.remove("hidden");
+        }
       });
     </script>
   <% end %>
-
-  <!-- Timeline -->
   <% if current_user.has_role?(:agent) || current_user.has_role?(:admin) || current_user.has_role?('project manager') || current_user.has_role?(:observer) || current_user.has_role?(:client)%>
     <div class="w-full">
       <%= render 'tickets/timeline_down' %>
     </div>
   <% end %>
 </div>
-
 <style>
-  .zoomable-image { cursor: pointer; }
-  .modal {
-    display: none; position: fixed; z-index: 1000; top: 50%; left: 50%;
-    width: 100%; height: 100%; overflow: auto;
-    background-color: rgba(0, 0, 0, 0.9);
-    justify-content: center; align-items: center;
-    transform: translate(-50%, -50%);
-  }
-  .modal-content {
-    margin: auto; display: block; max-width: 90%; max-height: 90%;
-  }
-  .close {
-    position: absolute; top: 15px; right: 35px; color: #fff;
-    font-size: 40px; font-weight: bold; cursor: pointer;
-  }
-  #mobileSidebar { box-shadow: 0 0 10px rgba(0,0,0,0.2); transition: transform 0.3s ease-in-out; }
-  #mobileSidebar.open { transform: translateX(0); }
-  #mobileSidebar { transform: translateX(100%); }
+    .zoomable-image {
+        cursor: pointer;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        top: 50%;
+        left: 50%;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.9);
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-content {
+        margin: auto;
+        display: block;
+        max-width: 90%;
+        max-height: 90%;
+    }
+
+    .close {
+        position: absolute;
+        top: 15px;
+        right: 35px;
+        color: #fff;
+        font-size: 40px;
+        font-weight: bold;
+        cursor: pointer;
+    }
 </style>
 
 <script>
+
   document.addEventListener('turbo:load', function() {
     const modal = document.getElementById('imageModal');
     const modalImg = document.getElementById('fullImage');
     const closeBtn = document.querySelector('.close');
 
+    // Use event delegation for dynamically added images
     document.addEventListener('click', function(event) {
-      if (event.target.classList.contains('zoomable-image')) {
+      const target = event.target;
+
+      if (target.classList.contains('zoomable-image')) {
         modal.style.display = 'block';
-        modalImg.src = event.target.src;
+        modalImg.src = target.src;
       }
     });
 
-    if (closeBtn) closeBtn.onclick = () => modal.style.display = 'none';
-    if (modal) modal.onclick = () => modal.style.display = 'none';
-
-    const openSidebarBtn = document.getElementById('openSidebarBtn');
-    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
-    const mobileSidebar = document.getElementById('mobileSidebar');
-
-    if (openSidebarBtn && mobileSidebar) {
-      openSidebarBtn.addEventListener('click', () => mobileSidebar.classList.add('open'));
-    }
-    if (closeSidebarBtn && mobileSidebar) {
-      closeSidebarBtn.addEventListener('click', () => mobileSidebar.classList.remove('open'));
-    }
-
-    document.addEventListener('click', function(event) {
-      if (mobileSidebar.classList.contains('open') && !mobileSidebar.contains(event.target) && event.target !== openSidebarBtn) {
-        mobileSidebar.classList.remove('open');
+    if (closeBtn) {
+      closeBtn.onclick = function() {
+        modal.style.display = 'none';
       }
-    });
+    }
+
+    if (modal) {
+      modal.onclick = function() {
+        modal.style.display = 'none';
+      }
+    }
   });
 
   function openCity(evt, cityName) {
     const tabcontent = document.getElementsByClassName("tabcontent");
     const tablinks = document.getElementsByClassName("tablinks");
 
-    for (let i = 0; i < tabcontent.length; i++) tabcontent[i].style.display = "none";
-    for (let i = 0; i < tablinks.length; i++) tablinks[i].classList.remove("text-[#3F8CFF]", "underline");
+    // Hide all tab content
+    for (let i = 0; i < tabcontent.length; i++) {
+      tabcontent[i].style.display = "none";
+    }
 
+    // Remove active class from all tab links
+    for (let i = 0; i < tablinks.length; i++) {
+      tablinks[i].classList.remove("text-[#3F8CFF]", "underline");
+    }
+
+    // Show current tab content and add active class to clicked tab
     document.getElementById(cityName).style.display = "block";
     evt.currentTarget.classList.add("text-[#3F8CFF]", "underline");
   }
 
-  // Default tab
-  const defaultTab = document.getElementById("tab-history");
-  if (defaultTab) defaultTab.click();
+  // Set default tab to open
+  document.getElementById("tab-history").click();
 </script>
