@@ -31,7 +31,7 @@
               <% end %>
             </div>
           </div>
-          
+
           <!-- Mobile card details -->
           <div class="grid grid-cols-2 gap-4 text-xs">
             <div>
@@ -149,6 +149,18 @@
       </tbody>
     </table>
   </div>
+
+  <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+    <% if params[:query].present? && @tickets.any? %>
+     <%= render partial: 'project/ticket_search_project', locals: { tickets: @tickets } %>
+    <% end %>
+  </table>
+
+
+
+
+
+
 
   <!-- Project count footer -->
   <% if (current_user.has_role?(:'project manager') || current_user.has_role?(:agent)) && current_user.projects.count > 0 %>
