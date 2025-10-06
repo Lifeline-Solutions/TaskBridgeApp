@@ -1,10 +1,10 @@
 <% if current_user && user_signed_in?  %>
   <!-- Mobile overlay backdrop -->
-  <div id="sidebar-backdrop" class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden hidden"></div>
+  <div id="sidebar-backdrop" data-sidebar-target="backdrop" class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden hidden"></div>
   
-  <div id="sidebar-wrapper" class="fixed top-0 h-full left-0 z-40 flex flex-col transition-all duration-300 shadow-lg bg-white dark:bg-gray-900 w-64 lg:z-40">
+  <div id="sidebar-wrapper" data-controller="sidebar" data-sidebar-target="sidebar" class="fixed top-0 h-full left-0 z-40 flex flex-col transition-all duration-300 shadow-lg bg-white dark:bg-gray-900 w-64 lg:z-40">
     <div class="flex p-2 shrink-0">
-  <button id="toggleSidebar" class="flex items-center justify-center p-2 text-sm text-gray-700 rounded-lg hover:bg-gray-100 focus:ring-2 focus:ring-gray-200 dark:text-white dark:hover:bg-gray-200 dark:focus:ring-gray-300 transition-colors">
+  <button data-action="click->sidebar#toggle" class="flex items-center justify-center p-2 text-sm text-gray-700 rounded-lg hover:bg-gray-100 focus:ring-2 focus:ring-gray-200 dark:text-white dark:hover:bg-gray-200 dark:focus:ring-gray-300 transition-colors">
         <span class="sr-only">Toggle Sidebar</span>
         <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
           <path clip-rule="evenodd" fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"></path>
@@ -15,12 +15,12 @@
     <!-- Sidebar content - will be toggled between collapsed and expanded -->
   <aside id="sidebar" class="flex-1 overflow-y-auto pb-20 transition-all duration-300 bg-white dark:bg-gray-900 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
       <%= link_to (current_user.has_role?(:ceo) ? cease_fire_report_path : root_path) do %>
-        <div class="items-center flex justify-center px-4 py-2 logo-container">
+        <div data-sidebar-target="logo" class="items-center flex justify-center px-4 py-2 logo-container">
           <%= image_tag 'logo1.png', id: 'logo-top', class: 'h-8 w-28 sm:h-10 mb-4 block dark:hidden' %>
           <%= image_tag 'logo.png', id: 'logo-top-dark', class: 'h-8 w-28 sm:h-10 mb-4 hidden dark:block' %>
         </div>
       <% end %>
-        <div class="items-center flex px-4 py-2 main-menu-heading">
+        <div data-sidebar-target="mainMenuHeading" class="items-center flex px-4 py-2 main-menu-heading">
           <p class="text-gray-700 dark:text-white text-sm font-medium uppercase tracking-wide">Main Menu</p>
         </div>
       <% if !current_user.has_role?(:ceo) %>
@@ -507,233 +507,14 @@
 <% end %>
 
 <script>
-  // Define utility functions at global scope so they can be used anywhere
-  function createTooltip(text, targetElement) {
-    // Remove any existing tooltip
-    removeTooltip();
-    
-    const tooltip = document.createElement('div');
-    tooltip.className = 'fixed bg-gray-800 text-white px-3 py-2 rounded-md shadow-lg z-50 text-sm whitespace-nowrap pointer-events-none';
-    tooltip.textContent = text;
-    tooltip.id = 'sidebar-tooltip';
-    
-    // Position tooltip to the right of the sidebar
-    const rect = targetElement.getBoundingClientRect();
-    tooltip.style.left = (rect.right + 8) + 'px';
-    tooltip.style.top = (rect.top + (rect.height / 2) - 12) + 'px';
-    
-    document.body.appendChild(tooltip);
-  }
-  
-  function removeTooltip() {
-    const tooltip = document.getElementById('sidebar-tooltip');
-    if (tooltip) {
-      tooltip.remove();
-    }
-  }
-
   document.addEventListener("turbo:load", function() {
-    const sidebar = document.getElementById('sidebar');
-    const sidebarItems = document.querySelectorAll('#sidebar span');
-    const sidebarMain = document.getElementById('sidebar-wrapper');
-    const sidebarBackdrop = document.getElementById('sidebar-backdrop');
-    const logoImg = document.getElementById('logo-top');
-    
-    function addTooltipToElement(element) {
-      element.addEventListener('mouseenter', function(e) {
-        if (sidebarMain.classList.contains('w-16')) { // Only show tooltip when collapsed
-          const span = element.querySelector('.whitespace-nowrap');
-          if (span) {
-            createTooltip(span.textContent.trim(), element);
-          }
-        }
+    // Check if element exists before adding event listener
+    const dropdownDashboard = document.getElementById("dropdownDashboard");
+    if (dropdownDashboard) {
+      dropdownDashboard.addEventListener("click", function() {
+        const dropdownMenuDashboard = document.getElementById("dropdownMenuDashboard");
+        dropdownMenuDashboard.classList.toggle("hidden");
       });
-      
-      element.addEventListener('mouseleave', function() {
-        removeTooltip();
-      });
-    }
-    
-    // Initial state - start with collapsed sidebar on mobile
-    if (window.innerWidth < 1024) { // lg breakpoint
-      collapseSidebar();
-      
-      // Make sure logo and main menu are hidden on mobile initially
-      const logoContainer = document.querySelector('#sidebar-wrapper .logo-container');
-      const mainMenuHeading = document.querySelector('#sidebar-wrapper .main-menu-heading');
-      
-      if (logoContainer) logoContainer.classList.add('hidden');
-      if (mainMenuHeading) mainMenuHeading.classList.add('hidden');
-    } else {
-      // On desktop, ensure main content margin matches current sidebar state
-      const mainContent = document.getElementById('mainContent');
-      if (mainContent) {
-        if (sidebarMain.classList.contains('w-16')) {
-          mainContent.style.marginLeft = '4rem';
-        } else {
-          mainContent.style.marginLeft = '16rem';
-        }
-      }
-    }
-
-    // Toggle sidebar function - only happens on button click
-    document.getElementById('toggleSidebar').addEventListener('click', () => {
-      if (sidebarMain.classList.contains('w-16')) {
-        expandSidebar();
-      } else {
-        collapseSidebar();
-      }
-    });
-
-    // Close sidebar when clicking backdrop on mobile
-    if (sidebarBackdrop) {
-      sidebarBackdrop.addEventListener('click', () => {
-        if (window.innerWidth < 1024) {
-          collapseSidebar();
-        }
-      });
-    }
-
-    // Handle window resize for responsiveness
-    window.addEventListener('resize', () => {
-      removeTooltip(); // Clean up any tooltips on resize
-      
-      if (window.innerWidth < 1024 && sidebarMain.classList.contains('w-64')) {
-        // On mobile, auto-collapse if expanded
-        collapseSidebar();
-      } else if (window.innerWidth >= 1024) {
-        // On desktop, hide backdrop if visible
-        if (sidebarBackdrop && !sidebarBackdrop.classList.contains('hidden')) {
-          sidebarBackdrop.classList.add('hidden');
-        }
-        // Ensure main content margin is correct on resize
-        const mainContent = document.getElementById('mainContent');
-        if (mainContent) {
-          if (sidebarMain.classList.contains('w-16')) {
-            mainContent.style.marginLeft = '4rem';
-          } else {
-            mainContent.style.marginLeft = '16rem';
-          }
-        }
-      }
-    });
-
-    function expandSidebar() {
-      sidebarMain.classList.remove('w-16');
-      sidebarMain.classList.add('w-64');
-      
-      // Show backdrop on mobile
-      if (window.innerWidth < 1024 && sidebarBackdrop) {
-        sidebarBackdrop.classList.remove('hidden');
-      }
-      
-      // Remove any existing tooltips
-      removeTooltip();
-      
-      // Update main content margin only on desktop
-      if (window.innerWidth >= 1024) {
-        const mainContent = document.getElementById('mainContent');
-        if (mainContent) {
-          mainContent.style.marginLeft = '16rem'; // 256px
-        }
-      }
-      
-      // Show logo container
-      const logoContainer = document.querySelector('#sidebar-wrapper .logo-container');
-      if (logoContainer) {
-        logoContainer.classList.remove('hidden');
-      }
-      
-      // Show main menu heading
-      const mainMenuHeading = document.querySelector('#sidebar-wrapper .main-menu-heading');
-      if (mainMenuHeading) {
-        mainMenuHeading.classList.remove('hidden');
-      }
-      
-      // Show all menu items
-      const menuItems = document.querySelectorAll('#sidebar > ul');
-      menuItems.forEach(menu => {
-        menu.classList.remove('hidden');
-      });
-      
-      // Show all text elements
-      sidebarItems.forEach(item => item.classList.remove('hidden'));
-      
-      // Show all text labels
-      const textElements = document.querySelectorAll('#sidebar-wrapper .whitespace-nowrap');
-      textElements.forEach(el => el.classList.remove('hidden'));
-      
-      // Show counters
-      const counters = document.querySelectorAll('#sidebar-wrapper .rounded-full');
-      counters.forEach(counter => counter.classList.remove('hidden'));
-    }
-
-    function collapseSidebar() {
-      sidebarMain.classList.remove('w-64');
-      sidebarMain.classList.add('w-16');
-      
-      // Hide backdrop
-      if (sidebarBackdrop) {
-        sidebarBackdrop.classList.add('hidden');
-      }
-      
-      // Update main content margin only on desktop
-      if (window.innerWidth >= 1024) {
-        const mainContent = document.getElementById('mainContent');
-        if (mainContent) {
-          mainContent.style.marginLeft = '4rem'; // 64px
-        }
-      }
-      
-      // Hide dropdown menu if it's currently visible
-      const dropdownMenu = document.getElementById('dropdownMenu');
-      if (dropdownMenu && !dropdownMenu.classList.contains('hidden')) {
-        dropdownMenu.classList.add('hidden');
-      }
-      
-      // Hide logo container completely
-      const logoContainer = document.querySelector('#sidebar-wrapper .logo-container');
-      if (logoContainer) {
-        logoContainer.classList.add('hidden');
-      }
-      // Hide main menu heading
-      const mainMenuHeading = document.querySelector('#sidebar-wrapper .main-menu-heading');
-      if (mainMenuHeading) {
-        mainMenuHeading.classList.add('hidden');
-      }
-      // Hide all text labels and counters, but keep icons visible
-      const textElements = document.querySelectorAll('#sidebar-wrapper .whitespace-nowrap');
-      textElements.forEach(el => el.classList.add('hidden'));
-      const counters = document.querySelectorAll('#sidebar-wrapper .rounded-full');
-      counters.forEach(counter => counter.classList.add('hidden'));
-      // Show all menu items (so icons remain visible)
-      const menuItems = document.querySelectorAll('#sidebar > ul');
-      menuItems.forEach(menu => {
-        menu.classList.remove('hidden');
-        // Add tooltip listeners to main menu items
-        const menuLinks = menu.querySelectorAll('li .group');
-        menuLinks.forEach(link => {
-          addTooltipToElement(link);
-        });
-      });
-      
-      // Add tooltip to dropdown button
-      const dropdownBtn = document.querySelector('.relative.group .flex.items-center');
-      if (dropdownBtn) {
-        addTooltipToElement(dropdownBtn);
-      }
-      
-      // Hide all text elements (span inside menu)
-      sidebarItems.forEach(item => item.classList.add('hidden'));
     }
   });
-
-  // Check if element exists before adding event listener
-  const dropdownDashboard = document.getElementById("dropdownDashboard");
-  if (dropdownDashboard) {
-    dropdownDashboard.addEventListener("click", function() {
-      const dropdownMenuDashboard = document.getElementById("dropdownMenuDashboard");
-      dropdownMenuDashboard.classList.toggle("hidden");
-    });
-  }
 </script>
