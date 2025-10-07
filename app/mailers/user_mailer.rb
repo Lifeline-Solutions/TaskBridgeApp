@@ -69,8 +69,9 @@ class UserMailer < ApplicationMailer
 
   # From Ticket Controller
 
-  def status_update_email(user, ticket, current_user, project)
+  def status_update_email(user, ticket, current_user, project, assigned_user)
     @user = user
+    @assigned_user = assigned_user
     @ticket = ticket
     @current_user = current_user
     @project = project
