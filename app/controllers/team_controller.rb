@@ -12,6 +12,10 @@ class TeamController < ApplicationController
             else
               Team.all.order('created_at DESC')
             end
+    # Paginate the QA products instead of defect groups
+
+    @per_page = 10
+    @page = (params[:page] || 1).to_i
     @total_pages = (@team.count / @per_page.to_f).ceil
     @team = @team.offset((@page - 1) * @per_page).limit(@per_page)
   end
