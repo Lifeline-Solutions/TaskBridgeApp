@@ -186,11 +186,15 @@
   } %>
 <% elsif params[:product_id].present? %>
   <div class="container p-4 text-center text-gray-500">
-    Please configure your metrics and click "Apply" to generate the report
+    Please configure your metrics and click <strong>"Apply"</strong> to generate the report.<br>
+    <span class="text-sm text-gray-400">
+      Note: The dropdowns only display items available for the selected product. 
+      For example, if you don’t see all statuses, it means only those statuses exist among the current product’s defects.
+    </span>
   </div>
 <% else %>
   <div class="container p-4 text-center text-gray-500">
-    Please select a product to view reports
+    Please select a product to view reports. <strong>Selecting the date-range is optional</strong>.
   </div>
 <% end %>
 
