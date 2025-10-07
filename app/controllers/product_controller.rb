@@ -115,19 +115,23 @@ class ProductController < ApplicationController
 
     require 'csv'
     csv_data = CSV.generate(headers: true) do |csv|
-      csv << ['Task ID', 'Name', 'Priority', 'Status', 'Assigned Users', 'Created At']
+      csv << ['Prerequisite Task', 'Task ID', 'Name', 'Priority', 'Status', 'Assigned Users', 'Start Date', 'End Date', 'Created At']
       tasks.find_each do |task|
         csv << [
+          task.prerequisite_task&.name || 'N/A',
           task.unique_task_id,
           task.name,
           task.priority,
           task.statuses.first&.name,
           task.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', '),
-          task.created_at.strftime('%Y-%m-%d %H:%M')
+          task.start_date.strftime('%d %b, %Y'),
+          task.end_date.strftime('%d %b, %Y'),
+          task.created_at.strftime('%d %b, %Y')
         ]
       end
     end
-    send_data csv_data, filename: "tasks_#{@product.client.name.parameterize}_#{Time.zone.now.strftime('%Y%m%d_%H%M%S')}.csv", type: 'text/csv'
+    send_data csv_data,
+              filename: "tasks_#{@product.client.name.parameterize}_#{@product.groupwares.map(&:name).join(', ').presence}_#{Time.zone.now.strftime('%d-%b-%Y-%I-%M%p')}.csv", type: 'text/csv'
   end
 
   def manage_users
