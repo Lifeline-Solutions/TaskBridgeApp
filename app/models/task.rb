@@ -112,6 +112,10 @@ class Task < ApplicationRecord
     end
   end
 
+  def name_with_unique_id
+    "#{unique_task_id} - #{name}"
+  end
+
   private
 
   def unique_task_id_missing?
