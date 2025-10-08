@@ -207,6 +207,12 @@ class HomeController < ApplicationController
         .distinct
         .count
 
+      @total_no_of_open_tasks_for_current_user_count = Task.joins(:statuses, :product)
+                                                               .where(products: { id: current_user.products.ids })
+                                                               .where.not(statuses: { name: %w[Closed Resolved Declined] })
+                                                               .distinct
+                                                               .count
+
       # Count of all the tickets
       @all_tickets_count = Ticket.distinct.count
 

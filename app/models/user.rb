@@ -50,6 +50,10 @@ class User < ApplicationRecord
 
   has_many :invitees, class_name: 'User', foreign_key: :invited_by_id
 
+  def all_product_for_the_current_user_count
+    products.distinct.count
+  end
+
   # To ensure that a user has at least one role
   before_create :assign_default_role
   # To ensure that a user has at least one role
