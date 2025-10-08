@@ -188,11 +188,28 @@ class DefectController < ApplicationController
     # Assignee filter
     @defects = @defects.joins(:users).where(users: { id: params[:user_id] }) if params[:user_id].present?
 
-    # NEW: Module/Submodule/BankingType filters (by id)
-    @defects = @defects.where(qa_module_id: params[:qa_module_id]) if params[:qa_module_id].present?
-    @defects = @defects.where(qa_module_id: params[:submodule_id]) if params[:submodule_id].present?
+    # NEW: Module/Submodule/BankingType filters (by id) - UPDATED SUBMODULE LOGIC
+    if params[:qa_module_id].present?
+      if params[:submodule_id].present?
+        # Filter by specific submodule
+        @defects = @defects.where(qa_module_id: params[:submodule_id])
+      else
+        # Filter by parent module - include all its submodules
+        parent_module = QaModule.find_by(id: params[:qa_module_id])
+        if parent_module
+          submodule_ids = parent_module.children.pluck(:id)
+          all_module_ids = [parent_module.id] + submodule_ids
+          @defects = @defects.where(qa_module_id: all_module_ids)
+        else
+          @defects = @defects.where(qa_module_id: params[:qa_module_id])
+        end
+      end
+    elsif params[:submodule_id].present?
+      # If only submodule is selected without parent module
+      @defects = @defects.where(qa_module_id: params[:submodule_id])
+    end
+
     @defects = @defects.where(banking_type_id: params[:banking_type_id]) if params[:banking_type_id].present?
-    @statuses = Status.joins(:defects).where(defects: { id: @defects.ids }).distinct.order(:name)
 
     # Date range filters
     start_date = params[:start_date].presence
@@ -218,14 +235,14 @@ class DefectController < ApplicationController
       q = "%#{params[:query].to_s.strip}%"
       @defects = @defects.left_joins(:users, :qa_module, :banking_type, product: %i[client groupwares]).where(
         "defects.summary ILIKE :q
-         OR defects.defect_unique ILIKE :q
-         OR defects.priority ILIKE :q
-         OR users.first_name ILIKE :q
-         OR users.last_name ILIKE :q
-         OR clients.name ILIKE :q
-         OR groupwares.name ILIKE :q
-         OR qa_modules.name ILIKE :q
-         OR banking_types.name ILIKE :q",
+        OR defects.defect_unique ILIKE :q
+        OR defects.priority ILIKE :q
+        OR users.first_name ILIKE :q
+        OR users.last_name ILIKE :q
+        OR clients.name ILIKE :q
+        OR groupwares.name ILIKE :q
+        OR qa_modules.name ILIKE :q
+        OR banking_types.name ILIKE :q",
         q: q
       )
     end
@@ -247,17 +264,26 @@ class DefectController < ApplicationController
       .distinct
       .order(:name)
 
-    # NEW: option lists for QA Module, Submodule, Banking Type
+    # NEW: option lists for QA Module, Submodule, Banking Type - UPDATED SUBMODULE LOGIC
     @qa_modules = QaModule.joins(:defects)
       .where(defects: { id: filtered_ids })
+      .where(parent_id: nil)  # Only parent modules
       .distinct
       .order(:name)
 
-    @submodules = QaModule.joins(:defects)
-      .where(defects: { id: filtered_ids })
-      .where.not(parent_id: nil)
-      .distinct
-      .order(:name)
+    # Handle submodules based on selected module
+    if params[:qa_module_id].present?
+      # Get ALL submodules for the selected module (not just those with defects)
+      @submodules = QaModule.where(parent_id: params[:qa_module_id])
+                          .order(:name)
+    else
+      # Show all submodules for the product (all qa_modules with parent_id not nil)
+      @submodules = QaModule.joins(:defects)
+        .where(defects: { id: filtered_ids })
+        .where.not(parent_id: nil)  # All submodules
+        .distinct
+        .order(:name)
+    end
 
     @banking_types = BankingType.joins(:defects)
       .where(defects: { id: filtered_ids })
