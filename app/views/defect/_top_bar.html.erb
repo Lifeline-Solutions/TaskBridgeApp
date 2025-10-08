@@ -135,17 +135,18 @@
                 <div>
                   <%= label_tag :qa_module_id, 'Module', class: 'block text-xs font-medium mb-1' %>
                   <%= select_tag :qa_module_id,
-                                options_for_select([['All Modules', '']] + @qa_modules.map { |m| [m.name, m.id] }, params[:qa_module_id]),
-                                class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded",
-                                onchange: "addFilterOpenParam(this)" %>
+                        options_for_select([['All Modules', '']] + @qa_modules.map { |m| [m.name, m.id] }, params[:qa_module_id]),
+                        class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded qa-module-select",
+                        onchange: "updateSubmodules(this.value)" %>
                 </div>
 
                 <!-- Submodule Filter -->
                 <div>
                   <%= label_tag :submodule_id, 'Submodule', class: 'block text-xs font-medium mb-1' %>
                   <%= select_tag :submodule_id,
-                                options_for_select([['All Submodules', '']] + @submodules.map { |s| [s.name, s.id] }, params[:submodule_id]),
-                                class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
+                        options_for_select([['All Submodules', '']] + @submodules.map { |s| [s.name, s.id] }, params[:submodule_id]),
+                        class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded",
+                        id: 'submodule_id' %>
                 </div>
 
                 <!-- Banking Type Filter -->
@@ -206,9 +207,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Products Listing Section (your existing products table goes here) -->
-  <!-- ... your products listing code ... -->
 </div>
 
 <script>
@@ -223,7 +221,81 @@
       newInput.value = 'true';
       form.appendChild(newInput);
     }
-    form.submit();
+    
+    // If it's the QA module dropdown, update submodules via AJAX
+    if (selectElement.name === 'qa_module_id') {
+      updateSubmodules(selectElement.value);
+    } else {
+      form.submit();
+    }
+  }
+
+  function updateSubmodules(moduleId) {
+    if (moduleId) {
+      fetch(`/defect/get_submodules?module_id=${moduleId}`, {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(submodules => {
+        updateSubmoduleDropdown(submodules);
+        
+        // Submit the form after updating submodules
+        const form = document.getElementById('filter-form');
+        if (form) {
+          form.submit();
+        }
+      })
+      .catch(error => {
+        console.error('Error updating submodules:', error);
+        // If there's an error, just submit the form without updating submodules
+        const form = document.getElementById('filter-form');
+        if (form) {
+          form.submit();
+        }
+      });
+    } else {
+      // If no module selected, clear submodules and submit
+      clearSubmoduleDropdown();
+      
+      const form = document.getElementById('filter-form');
+      if (form) {
+        form.submit();
+      }
+    }
+  }
+
+  function updateSubmoduleDropdown(submodules) {
+    const submoduleSelect = document.getElementById('submodule_id');
+    if (submoduleSelect) {
+      // Clear existing options except the first one
+      submoduleSelect.innerHTML = '<option value="">All Submodules</option>';
+      
+      // Add new submodule options from JSON response
+      submodules.forEach(submodule => {
+        const option = document.createElement('option');
+        option.value = submodule.id;
+        option.textContent = submodule.name;
+        submoduleSelect.appendChild(option);
+      });
+      
+      // If there are no submodules, disable the dropdown
+      if (submodules.length === 0) {
+        submoduleSelect.disabled = true;
+      } else {
+        submoduleSelect.disabled = false;
+      }
+    }
+  }
+
+  function clearSubmoduleDropdown() {
+    const submoduleSelect = document.getElementById('submodule_id');
+    if (submoduleSelect) {
+      submoduleSelect.innerHTML = '<option value="">All Submodules</option>';
+      submoduleSelect.disabled = false;
+    }
   }
 
   document.addEventListener("turbo:load", function () {
@@ -325,4 +397,121 @@
       });
     }
   });
+
+  function updateSubmodules(moduleId) {
+    console.log('updateSubmodules called with:', moduleId);
+    
+    const submoduleSelect = document.getElementById('submodule_id');
+    
+    if (!moduleId) {
+      // Clear submodules if no module selected
+      submoduleSelect.innerHTML = '<option value="">All Submodules</option>';
+      submoduleSelect.disabled = false;
+      submitFilterForm();
+      return;
+    }
+    
+    // Show loading state
+    submoduleSelect.innerHTML = '<option value="">Loading submodules...</option>';
+    submoduleSelect.disabled = true;
+    
+    // Make AJAX call to get submodules
+    fetch(`/defect/get_submodules?module_id=${moduleId}`, {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
+    .then(submodules => {
+      console.log('Received submodules:', submodules);
+      
+      // Update submodule dropdown
+      submoduleSelect.innerHTML = '<option value="">All Submodules</option>';
+      
+      submodules.forEach(submodule => {
+        const option = document.createElement('option');
+        option.value = submodule.id;
+        option.textContent = submodule.name;
+        submoduleSelect.appendChild(option);
+      });
+      
+      submoduleSelect.disabled = submodules.length === 0;
+      
+      // Submit the form to apply the filter
+      submitFilterForm();
+    })
+    .catch(error => {
+      console.error('Error fetching submodules:', error);
+      submoduleSelect.innerHTML = '<option value="">Error loading submodules</option>';
+      submitFilterForm();
+    });
+  }
+
+  function submitFilterForm() {
+    const form = document.getElementById('filter-form');
+    if (form) {
+      // Ensure filter_open parameter is included
+      let filterOpenInput = form.querySelector('input[name="filter_open"]');
+      if (!filterOpenInput) {
+        filterOpenInput = document.createElement('input');
+        filterOpenInput.type = 'hidden';
+        filterOpenInput.name = 'filter_open';
+        filterOpenInput.value = 'true';
+        form.appendChild(filterOpenInput);
+      }
+      
+      form.submit();
+    }
+  }
+
+  // Initialize submodules when page loads if a module is already selected
+  document.addEventListener('DOMContentLoaded', function() {
+    const selectedModuleId = '<%= params[:qa_module_id] %>';
+    if (selectedModuleId && selectedModuleId !== '') {
+      console.log('Initializing with module:', selectedModuleId);
+      // Don't trigger form submission on page load
+      initializeSubmodules(selectedModuleId);
+    }
+  });
+
+  function initializeSubmodules(moduleId) {
+    if (!moduleId) return;
+    
+    const submoduleSelect = document.getElementById('submodule_id');
+    
+    fetch(`/defect/get_submodules?module_id=${moduleId}`, {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(submodules => {
+      submoduleSelect.innerHTML = '<option value="">All Submodules</option>';
+      
+      submodules.forEach(submodule => {
+        const option = document.createElement('option');
+        option.value = submodule.id;
+        option.textContent = submodule.name;
+        
+        // Select the option if it matches the current param
+        if (submodule.id === '<%= params[:submodule_id] %>') {
+          option.selected = true;
+        }
+        
+        submoduleSelect.appendChild(option);
+      });
+      
+      submoduleSelect.disabled = submodules.length === 0;
+    })
+    .catch(error => {
+      console.error('Error initializing submodules:', error);
+    });
+  }
 </script>
