@@ -200,14 +200,14 @@
 
                     <!-- Store all current report filters -->
                     <%= hidden_field_tag 'defect_filter[filters]', {
-                      metrics: @selected_metrics,
-                      severities: @selected_severities,
-                      reporters: @selected_reporters,
-                      statuses: @selected_statuses,
-                      assignees: @selected_assignees,
-                      modules: @selected_modules,
-                      submodules: @selected_submodules,
-                      ageing_type: @selected_ageing_type,
+                      metrics: params[:metrics] || [],
+                      severities: params[:severities] || [],
+                      reporters: params[:reporters] || [],
+                      statuses: params[:statuses] || [],
+                      assignees: params[:assignees] || [],
+                      modules: params[:modules] || [],
+                      submodules: params[:submodules] || [],
+                      ageing_type: params[:ageing_type],
                       start_date: params[:start_date],
                       end_date: params[:end_date],
                       product_id: params[:product_id]

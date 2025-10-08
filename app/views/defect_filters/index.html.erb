@@ -1,3 +1,4 @@
+<%# app/views/defect_filters/index.html.erb %>
 <% provide(:title, "Saved Filters & Dashboards for #{current_user.name}") %>
 
 <div class="container mx-auto px-4 py-8">
@@ -91,7 +92,7 @@
                 <td class="px-3 py-2"><%= d.product&.document_name || 'All products' %></td>
                 <td class="px-3 py-2 text-right">
                   <%= link_to 'Open Dashboard',
-                    reports_path(d.sanitized_filters_string_keys.merge('product_id' => d.product_id).compact),
+                    reports_path(d.to_report_params.merge(commit: 'Apply')),
                     class: 'px-2 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600' %>
                   <%= link_to 'Delete',
                     defect_filter_path(d),
