@@ -56,6 +56,123 @@ class DefectController < ApplicationController
       @statuses = Status.none
     end
 
+    # NEW: Get filter options based on selected product (MIRRORING index_show)
+    @selected_product_id = params[:product_id]
+    
+    # Create base scope for filter options
+    if @selected_product_id.present?
+      defects_scope = Defect.published.where(product_id: @selected_product_id)
+    else
+      defects_scope = Defect.published.where(product_id: qa_product_ids) if qa_product_ids.any?
+    end
+
+    # Apply user filter for non-admin users
+    if defects_scope && !current_user.has_any_role?(:admin, :observer, :qa)
+      defects_scope = defects_scope.joins(:users).where(users: { id: current_user.id })
+    end
+
+    # Get filter options from defects scope
+    if defects_scope
+      filtered_ids = defects_scope.except(:select, :order, :limit, :offset).select(:id)
+      
+      @qa_modules = QaModule.joins(:defects)
+        .where(defects: { id: filtered_ids })
+        .distinct
+        .order(:name)
+
+      @submodules = QaModule.joins(:defects)
+        .where(defects: { id: filtered_ids })
+        .where.not(parent_id: nil)
+        .distinct
+        .order(:name)
+
+      @banking_types = BankingType.joins(:defects)
+        .where(defects: { id: filtered_ids })
+        .distinct
+        .order(:name)
+
+      @labels = Label.joins(:defects)
+        .where(defects: { id: filtered_ids })
+        .distinct
+        .order(:name)
+
+      @assignees = User.joins(:defects)
+        .where(defects: { id: filtered_ids })
+        .distinct
+        .order(:first_name, :last_name)
+    else
+      # Initialize empty arrays if no defects scope
+      @qa_modules = []
+      @submodules = []
+      @banking_types = []
+      @labels = []
+      @assignees = []
+    end
+
+    @selected_product_id = params[:product_id]
+    @selected_module_id = params[:qa_module_id]
+    
+    # Create base scope for filter options
+    if @selected_product_id.present?
+      defects_scope = Defect.published.where(product_id: @selected_product_id)
+    else
+      defects_scope = Defect.published.where(product_id: qa_product_ids) if qa_product_ids.any?
+    end
+
+    # Apply user filter for non-admin users
+    if defects_scope && !current_user.has_any_role?(:admin, :observer, :qa)
+      defects_scope = defects_scope.joins(:users).where(users: { id: current_user.id })
+    end
+
+    # Get filter options from defects scope
+    if defects_scope
+      filtered_ids = defects_scope.except(:select, :order, :limit, :offset).select(:id)
+      
+      @qa_modules = QaModule.joins(:defects)
+        .where(defects: { id: filtered_ids })
+        .distinct
+        .order(:name)
+
+      # Handle submodules based on selected module
+      if @selected_module_id.present?
+        # Only show submodules for the selected module
+        @submodules = QaModule.joins(:defects)
+          .where(defects: { id: filtered_ids })
+          .where(parent_id: @selected_module_id)
+          .distinct
+          .order(:name)
+      else
+        # Show all submodules for the product
+        @submodules = QaModule.joins(:defects)
+          .where(defects: { id: filtered_ids })
+          .where.not(parent_id: nil)
+          .distinct
+          .order(:name)
+      end
+
+      @banking_types = BankingType.joins(:defects)
+        .where(defects: { id: filtered_ids })
+        .distinct
+        .order(:name)
+
+      @labels = Label.joins(:defects)
+        .where(defects: { id: filtered_ids })
+        .distinct
+        .order(:name)
+
+      @assignees = User.joins(:defects)
+        .where(defects: { id: filtered_ids })
+        .distinct
+        .order(:first_name, :last_name)
+    else
+      # Initialize empty arrays if no defects scope
+      @qa_modules = []
+      @submodules = []
+      @banking_types = []
+      @labels = []
+      @assignees = []
+    end
+
     # Paginate the QA products instead of defect groups
     @per_page = 20
     @page = (params[:page] || 1).to_i
@@ -73,28 +190,10 @@ class DefectController < ApplicationController
     @defects = Defect.published
       .includes(:users, :qa_module, :labels, :banking_type, :statuses, product: %i[client groupwares])
 
-    # Apply saved filter shortcut
-    if params[:filter_id].present?
-      filter = current_user.defect_filters.active.find_by(id: params[:filter_id])
-      if filter
-        merged = filter.sanitized_filters_string_keys || {}
-        # Prefer saved product_id if not provided in URL
-        merged['product_id'] = filter.product_id if filter.product_id.present? && !merged.key?('product_id')
-        merged.except!('page')
-        redirect_to index_show_defect_index_path(merged) and return
-      end
-    end
-
-    # Client filter (exact, case-insensitive, and scoped by product_id)
-    if params[:client_name].present? && params[:product_id].present?
+    # Client filter (exact, case-insensitive)
+    if params[:client_name].present?
       @defects = @defects.joins(product: :client)
         .where('LOWER(clients.name) = ?', params[:client_name].to_s.downcase.strip)
-        .where(products: { id: params[:product_id] })
-    elsif params[:client_name].present?
-      @defects = @defects.joins(product: :client)
-        .where('LOWER(clients.name) = ?', params[:client_name].to_s.downcase.strip)
-    elsif params[:product_id].present?
-      @defects = @defects.where(product_id: params[:product_id])
     end
 
     # Status filter (multiple checkboxes -> status[])
@@ -249,6 +348,48 @@ class DefectController < ApplicationController
   def modal_show
     render partial: 'defect/defect_show_modal', layout: false
   end
+
+  # def new
+  #   @defect = Defect.new
+
+  #   # Handle default assignee
+  #   default_assignee = DefaultDefectAssignee.where(archive_status: false).order(created_at: :desc).first
+  #   @defect.user_ids = [default_assignee.user_id] if default_assignee&.user_id.present?
+
+  #   # Preselect product only if product_id is passed
+  #   if params[:product_id].present?
+  #     @defect.product_id = params[:product_id]
+  #     @selected_product = Product.find_by(id: params[:product_id])
+
+  #     # Collect product users (based on selected @product from set_form_data)
+  #     product_user_ids = params[:product_id].present? ? @product.users.pluck(:id) : []
+
+  #     # Combine QA + Product users
+  #     @available_users = User.where(id: qa_user_ids + product_user_ids)
+  #                         .distinct
+  #                         .order(:first_name, :last_name)
+  #   else
+  #     @selected_product = nil
+  #   end
+
+  #   set_form_data
+
+  #   # Collect QA users
+  #   qa_user_ids = User.joins(:roles)
+  #                     .where(roles: { name: 'qa' })
+  #                     .pluck(:id)
+
+  #   # Collect product users (based on selected @product from set_form_data)
+  #   product_user_ids = @product.present? ? @product.users.pluck(:id) : []
+
+  #   # Combine QA + Product users
+  #   @available_users = User.where(id: qa_user_ids + product_user_ids)
+  #                         .distinct
+  #                         .order(:first_name, :last_name)
+
+  #   # For JS (assignee search dropdown)
+  #   @assignee_users_data = @available_users.map { |u| { id: u.id, name: u.name } }
+  # end
 
   def new
     @defect = Defect.new
@@ -506,6 +647,28 @@ class DefectController < ApplicationController
     end
   end
 
+  def add_label
+    label_name = params[:label_name].strip
+    label = Label.find_or_create_by(name: label_name.downcase)
+
+    @defect.labels << label unless @defect.labels.include?(label)
+
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to @defect, notice: 'Label added successfully.' }
+    end
+  end
+
+  def remove_label
+    label = @defect.labels.find(params[:label_id])
+    @defect.labels.destroy(label)
+
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to @defect, notice: 'Label removed successfully.' }
+    end
+  end
+
   def drafts
     @defects = Defect.drafts.includes(:users, :qa_module, :submodule).order(updated_at: :desc)
 
@@ -666,6 +829,35 @@ class DefectController < ApplicationController
     render json: @submodules
   end
 
+  def add_attachments
+    # Handle the file upload
+    if params[:attachments].present?
+      # params[:attachments] will be an array when using 'attachments[]' field name
+      attachments = Array(params[:attachments]).reject(&:blank?)
+
+      if attachments.any?
+        attachments.each do |attachment|
+          @defect.attachments.attach(attachment)
+        end
+        redirect_to defect_path(@defect), notice: "#{attachments.size} file(s) were successfully uploaded."
+      else
+        redirect_to defect_path(@defect), alert: 'No valid files selected.'
+      end
+    else
+      redirect_to defect_path(@defect), alert: 'Please select at least one file to upload.'
+    end
+  rescue ActiveRecord::RecordNotFound
+    redirect_to defects_path, alert: 'Defect not found.'
+  end
+
+  def remove_attachment
+    attachment = @defect.attachments.find(params[:attachment_id])
+    attachment.purge
+    redirect_to defect_path(@defect), notice: 'File was successfully removed.'
+  rescue ActiveRecord::RecordNotFound
+    redirect_to defects_path, alert: 'File or defect not found.'
+  end
+
   def update_priority
     if @defect.update(priority: params[:defect][:priority])
       activity('user_activity')
@@ -746,6 +938,30 @@ class DefectController < ApplicationController
         creator_name: defect.creator&.full_name || defect.creator&.email
       }
     }
+  end
+
+  def link_defect
+    target_defect = Defect.find(params[:target_defect_id])
+
+    if @defect.link_as_blocked_by(target_defect)
+      render json: {
+        success: true,
+        message: "Successfully linked #{@defect.defect_unique} as blocked by #{target_defect.defect_unique}",
+        target_defect: {
+          id: target_defect.id,
+          defect_unique: target_defect.defect_unique,
+          title: target_defect.title,
+          status: target_defect.statuses.first&.name
+        }
+      }
+    else
+      render json: {
+        success: false,
+        message: 'Failed to link defects. They may already be linked or there was an error.'
+      }
+    end
+  rescue ActiveRecord::RecordNotFound
+    render json: { success: false, message: 'Defect not found.' }
   end
 
   def unlink_defect
@@ -838,208 +1054,7 @@ class DefectController < ApplicationController
       end
     end
 
-    send_data csv_data, filename: "defects_#{Time.zone.now.strftime('%Y-%m-%d %H:%M')}.csv", type: 'text/csv'
-  end
-
-  def defects_download_excel
-    # Start with base scope matching index_show
-    defects = Defect.published
-      .includes(:users, :qa_module, :labels, :banking_type, :statuses, product: %i[client groupwares])
-
-    # Apply the same filters as index_show
-    # Client filter (exact, case-insensitive)
-    if params[:client_name].present?
-      defects = defects.joins(product: :client)
-        .where('LOWER(clients.name) = ?', params[:client_name].to_s.downcase.strip)
-    end
-
-    # Product filter
-    defects = defects.where(product_id: params[:product_id]) if params[:product_id].present?
-
-    # Status filter (multiple checkboxes -> status[])
-    selected_statuses = Array(params[:status]).reject(&:blank?)
-    if selected_statuses.any?
-      downcased = selected_statuses.map { |s| s.to_s.downcase }
-      defects = defects.joins(:statuses)
-        .where('LOWER(statuses.name) IN (?)', downcased)
-    end
-
-    # Labels filter (multiple checkboxes -> labels_ids[])
-    selected_labels = Array(params[:label_ids]).reject(&:blank?)
-    defects = defects.joins(:labels).where(labels: { id: selected_labels }) if selected_labels.any?
-
-    # Priority filter (exact, case-insensitive)
-    defects = defects.where('LOWER(defects.priority) = ?', params[:priority].to_s.downcase) if params[:priority].present?
-
-    # Assignee filter
-    defects = defects.joins(:users).where(users: { id: params[:user_id] }) if params[:user_id].present?
-
-    # Module/Submodule/BankingType filters
-    defects = defects.where(qa_module_id: params[:qa_module_id]) if params[:qa_module_id].present?
-    defects = defects.where(submodule_id: params[:submodule_id]) if params[:submodule_id].present?
-    defects = defects.where(banking_type_id: params[:banking_type_id]) if params[:banking_type_id].present?
-
-    # Date range filters
-    start_date = params[:start_date].presence
-    end_date = params[:end_date].presence
-    begin
-      if start_date.present? && end_date.present?
-        from = Date.parse(start_date).beginning_of_day
-        to = Date.parse(end_date).end_of_day
-        defects = defects.where(created_at: from..to)
-      elsif start_date.present?
-        from = Date.parse(start_date).beginning_of_day
-        defects = defects.where('defects.created_at >= ?', from)
-      elsif end_date.present?
-        to = Date.parse(end_date).end_of_day
-        defects = defects.where('defects.created_at <= ?', to)
-      end
-    rescue ArgumentError
-      # Ignore invalid dates
-    end
-
-    # Full-text search
-    if params[:query].present?
-      q = "%#{params[:query].to_s.strip}%"
-      defects = defects.left_joins(:users, :qa_module, :banking_type, product: %i[client groupwares]).where(
-        "defects.summary ILIKE :q
-        OR defects.defect_unique ILIKE :q
-        OR defects.priority ILIKE :q
-        OR users.first_name ILIKE :q
-        OR users.last_name ILIKE :q
-        OR clients.name ILIKE :q
-        OR groupwares.name ILIKE :q
-        OR qa_modules.name ILIKE :q
-        OR banking_types.name ILIKE :q",
-        q: q
-      )
-    end
-
-    # Ordering
-    direction = %w[asc desc].include?(params[:order]) ? params[:order] : 'desc'
-    defects = defects.order(created_at: direction)
-
-    # Ensure uniqueness after joins
-    defects = defects.distinct
-
-    # --- generate Excel using caxlsx ---
-    package = Axlsx::Package.new
-    workbook = package.workbook
-
-    workbook.add_worksheet(name: 'Defects') do |sheet|
-      sheet.add_row [
-        'Defect ID', 'Status', 'Summary', 'Priority', 'Module', 'Sub Module',
-        'Banking Types', 'Labels', 'Assignee', 'Reporter', 'Project', 'Created At'
-      ]
-
-      defects.find_each do |defect|
-        client_and_groupware = [defect.product.client&.name, defect.product.groupwares.first&.name].compact.join(' - ')
-
-        sheet.add_row [
-          defect.defect_unique,
-          defect.statuses.map(&:name).join(', '),
-          defect.summary,
-          defect.priority,
-          defect.qa_module&.name,
-          defect.submodule&.name,
-          defect.banking_type&.name,
-          defect.labels.map(&:name).join(', '),
-          defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', '),
-          defect.creator&.name,
-          client_and_groupware,
-          defect.created_at.strftime('%Y-%m-%d %H:%M')
-        ]
-      end
-    end
-
-    send_data package.to_stream.read,
-              filename: "defects_#{Time.zone.now.strftime('%Y%m%d_%H%M%S')}.xlsx",
-              type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  end
-
-  def link_defect
-    target_defect = Defect.find(params[:target_defect_id])
-
-    if @defect.link_as_blocked_by(target_defect)
-      log_event(@defect, current_user, 'link_defect', "Linked as blocked by #{target_defect.defect_unique}")
-
-      render json: {
-        success: true,
-        message: "Successfully linked #{@defect.defect_unique} as blocked by #{target_defect.defect_unique}",
-        target_defect: {
-          id: target_defect.id,
-          defect_unique: target_defect.defect_unique,
-          title: target_defect.title,
-          status: target_defect.statuses.first&.name
-        }
-      }
-    else
-      render json: {
-        success: false,
-        message: 'Failed to link defects. They may already be linked or there was an error.'
-      }
-    end
-  rescue ActiveRecord::RecordNotFound
-    render json: { success: false, message: 'Defect not found.' }
-  end
-
-  def add_attachments
-    if params[:attachments].present?
-      attachments = Array(params[:attachments]).reject(&:blank?)
-
-      if attachments.any?
-        attachments.each do |attachment|
-          @defect.attachments.attach(attachment)
-          log_event(@defect, current_user, 'add_attachment', "Added attachment #{attachment.original_filename}")
-        end
-        redirect_to defect_path(@defect), notice: "#{attachments.size} file(s) were successfully uploaded."
-      else
-        redirect_to defect_path(@defect), alert: 'No valid files selected.'
-      end
-    else
-      redirect_to defect_path(@defect), alert: 'Please select at least one file to upload.'
-    end
-  rescue ActiveRecord::RecordNotFound
-    redirect_to defects_path, alert: 'Defect not found.'
-  end
-
-  def remove_attachment
-    attachment = @defect.attachments.find(params[:attachment_id])
-    filename = attachment.blob.filename.to_s
-    attachment.purge
-
-    log_event(@defect, current_user, 'remove_attachment', "Removed attachment #{filename}")
-
-    redirect_to defect_path(@defect), notice: 'File was successfully removed.'
-  rescue ActiveRecord::RecordNotFound
-    redirect_to defects_path, alert: 'File or defect not found.'
-  end
-
-  def add_label
-    label_name = params[:label_name].strip
-    label = Label.find_or_create_by(name: label_name.downcase)
-
-    unless @defect.labels.include?(label)
-      @defect.labels << label
-      log_event(@defect, current_user, 'add_label', "Added label #{label.name}")
-    end
-
-    respond_to do |format|
-      format.turbo_stream
-      format.html { redirect_to @defect, notice: 'Label added successfully.' }
-    end
-  end
-
-  def remove_label
-    label = @defect.labels.find(params[:label_id])
-    @defect.labels.destroy(label)
-
-    log_event(@defect, current_user, 'remove_label', "Removed label #{label.name}")
-
-    respond_to do |format|
-      format.turbo_stream
-      format.html { redirect_to @defect, notice: 'Label removed successfully.' }
-    end
+    send_data csv_data, filename: "defects_#{Time.zone.now.strftime('%Y%m%d_%H%M%S')}.csv", type: 'text/csv'
   end
 
   private
