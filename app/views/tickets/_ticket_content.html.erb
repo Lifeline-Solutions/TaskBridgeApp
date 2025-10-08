@@ -157,6 +157,75 @@
     initImagePreviewModal();
   }
   document.addEventListener("turbo:load", initImagePreviewModal);
+
+  // Handle Trix attachment events for drag-and-drop images
+  document.addEventListener("trix-attachment-add", function(event) {
+    var attachment = event.attachment;
+
+    if (attachment.attachment.previewable) {
+      // Wait for the attachment to be processed and appear in the DOM
+      setTimeout(function() {
+        // Find all Trix attachment figures (images) that don't have our custom preview wrapper
+        var trixEditor = event.target;
+        var figures = trixEditor.querySelectorAll("figure[data-trix-attachment]:not(.has-modal-preview)");
+
+        figures.forEach(function(figure) {
+          var img = figure.querySelector("img");
+          if (img && img.src) {
+            // Mark this figure as processed
+            figure.classList.add("has-modal-preview");
+
+            // Make the image clickable for modal preview
+            img.style.cursor = "pointer";
+            img.classList.add("image-preview-thumb");
+
+            // Extract image info from the figure's data attributes or img element
+            var attachmentData = figure.dataset.trixAttachment ? JSON.parse(figure.dataset.trixAttachment) : {};
+            var imageUrl = img.src;
+            var imageName = attachmentData.filename || "image.png";
+            var imageSize = attachmentData.filesize || "Unknown";
+
+            // Create a wrapper link for modal functionality
+            img.addEventListener("click", function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+
+              var modal = document.getElementById("imageModal");
+              var modalImage = document.getElementById("modalImage");
+              var nameEl = document.getElementById("modalImageName");
+              var sizeEl = document.getElementById("modalImageSize");
+              var createdEl = document.getElementById("modalImageCreated");
+              var downloadBtn = document.getElementById("downloadImage");
+
+              if (modal && modalImage) {
+                modalImage.src = imageUrl;
+                nameEl.textContent = imageName;
+                sizeEl.textContent = typeof imageSize === 'number' ? formatBytes(imageSize) : imageSize;
+                createdEl.textContent = new Date().toISOString().slice(0, 16).replace('T', ' ');
+                downloadBtn.href = imageUrl;
+                downloadBtn.setAttribute("download", imageName);
+
+                modal.classList.remove("hidden");
+              }
+            });
+          }
+        });
+
+        // Re-initialize modal listeners to ensure everything is wired up
+        initImagePreviewModal();
+      }, 100);
+    }
+  });
+
+  // Helper function to format file size
+  function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  }
 </script>
 
 <style>
