@@ -1,4 +1,6 @@
 class Task < ApplicationRecord
+  resourcify
+
   belongs_to :user
   belongs_to :product
   has_one_attached :image
@@ -9,10 +11,10 @@ class Task < ApplicationRecord
   after_update :task_unique_id, if: :unique_task_id_missing?
 
   belongs_to :prerequisite_task, class_name: 'Task', foreign_key: 'tasks_id', optional: true
-  resourcify
 
-  has_many :role_users, through: :roles, class_name: 'User', source: :user
+  has_many :users, through: :roles, class_name: 'User', source: :users
   has_many :creators, -> { where(roles: { name: :creator }) }, class_name: 'User', through: :roles, source: :user
+  has_many :editors, -> { where(roles: { name: :editor }) }, class_name: 'User', through: :roles, source: :user
 
   validate :end_date_after_start_date
   validate :image_must_be_an_image
