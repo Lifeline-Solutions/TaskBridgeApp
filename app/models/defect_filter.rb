@@ -27,6 +27,7 @@ class DefectFilter < ApplicationRecord
   ].freeze
 
   # Enum for filter types
+  attribute :filter_type, :string
   enum filter_type: {
     defect: 'defect',
     report: 'report',

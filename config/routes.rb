@@ -221,7 +221,19 @@ Rails.application.routes.draw do
     get :submodules, on: :member
   end
 
-  resources :defect_filters, only: [:index, :create, :update, :destroy]
+  resources :defect_filters, only: [:index, :create, :update, :destroy] do
+    collection do
+      get :manage
+    end
+  end
+
+  post 'reports/save_dashboard', to: 'reports#save_dashboard', as: :save_report_dashboard
+  
+  resources :report_dashboards, only: [:index, :show, :new, :create, :edit, :update, :destroy] do
+    member do
+      get :apply
+    end
+  end
 
   resources :reports, only: [:index] do
     collection do
