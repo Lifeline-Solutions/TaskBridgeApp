@@ -11,6 +11,7 @@ class Product < ApplicationRecord
   belongs_to :client
   has_many :boards, dependent: :destroy
   has_many :tasks, dependent: :destroy
+  has_many :open_tasks, -> { joins(:statuses).where.not(statuses: { name: %w[Closed Resolved Declined] }) }, class_name: 'Task'
   has_many :documents, dependent: :destroy
   accepts_nested_attributes_for :documents, allow_destroy: true
   has_one_attached :image
