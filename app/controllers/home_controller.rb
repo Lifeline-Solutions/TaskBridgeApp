@@ -237,6 +237,23 @@ class HomeController < ApplicationController
       # Count the total number of service desks\
       @all_service_desks_count = Project.distinct.count
 
+      # Count of all the users
+      @all_users_count = User.distinct.count
+
+      # Count of all the teams
+      @all_teams_count = Team.distinct.count
+
+      # Count of all the active users
+      @all_active_users_count = User.where(active: true).distinct.count
+
+      # Count of all the inactive users
+      @all_inactive_users_count = User.where(active: false).distinct.count
+
+      # Show all products for only the user has been assigned to the product
+      @tasks_per_project = current_user.products
+        .joins(:tasks, :statuses)
+        .where.not(statuses: { name: %w[Closed Resolved Declined] })
+        .distinct
     end
   end
 end

@@ -1,0 +1,28 @@
+<div class="p-2 sm:p-4 border-white rounded-lg w-full">
+  <div class="overflow-x-auto w-full">
+    <table class="min-w-full w-full text-xs sm:text-sm text-center text-gray-500 dark:text-gray-400">
+      <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+      <tr>
+        <th scope="col" class="px-2 sm:px-4 py-2 sm:py-3 text-left whitespace-nowrap">
+          Projects
+        </th>
+        <th scope="col" class="mr-2 px-2 sm:px-4 py-2 sm:py-3 text-left whitespace-nowrap">
+          Open Tasks
+        </th>
+      </tr>
+      </thead>
+      <tbody>
+      <% @tasks_per_project.each do |product, tasks| %>
+        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+          <th scope="row" class="text-left capitalize px-2 sm:px-4 py-2 sm:py-4 font-medium whitespace-nowrap">
+            <%= link_to [product.client&.name.presence || 'No Client Assigned', product.groupwares.map(&:name).join(', ')].reject(&:blank?).join(' - '), product_path(product), class: "block truncate max-w-[220px] sm:max-w-none" %>
+          </th>
+          <td class="text-left px-2 sm:px-4 py-2 sm:py-4">
+            <%= product.open_tasks.count %>
+          </td>
+        </tr>
+      <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

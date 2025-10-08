@@ -1,4 +1,5 @@
 class Product < ApplicationRecord
+  resourcify
   belongs_to :user
   has_and_belongs_to_many :softwares
   has_and_belongs_to_many :groupwares
@@ -10,6 +11,7 @@ class Product < ApplicationRecord
   belongs_to :client
   has_many :boards, dependent: :destroy
   has_many :tasks, dependent: :destroy
+  has_many :open_tasks, -> { joins(:statuses).where.not(statuses: { name: %w[Closed Resolved Declined] }) }, class_name: 'Task'
   has_many :documents, dependent: :destroy
   accepts_nested_attributes_for :documents, allow_destroy: true
   has_one_attached :image
@@ -19,7 +21,6 @@ class Product < ApplicationRecord
 
   has_rich_text :content
 
-  resourcify
   has_many :users, through: :roles, class_name: 'User', source: :users
   has_many :creators, -> { where(roles: { name: ['admin', 'project manager'] }) }, class_name: 'User', through: :roles, source: :users
 
