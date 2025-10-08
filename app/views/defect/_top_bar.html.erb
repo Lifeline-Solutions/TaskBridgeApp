@@ -37,8 +37,11 @@
           </button>
 
           <!-- Filter Dropdown Menu -->
-          <div id="filterDropdown" class="hidden absolute bg-white dark:bg-gray-700 right-0 mt-2 w-64 origin-top-right rounded-md shadow-lg border border-gray-200 z-10">
-            <%= form_with url: defect_index_path, method: :get, class: 'p-2 space-y-2' do |f| %>
+          <div id="filterDropdown" class="<%= @filter_open ? '' : 'hidden' %> absolute bg-white dark:bg-gray-700 right-0 mt-2 w-64 origin-top-right rounded-md shadow-lg border border-gray-200 z-10">
+            <%= form_with url: defect_index_path, method: :get, class: 'p-2 space-y-2', id: 'filter-form' do |f| %>
+              <!-- Hidden field to keep filter open -->
+              <%= hidden_field_tag :filter_open, 'true' %>
+              
               <!-- Product Filter -->
               <div>
                 <%= label_tag :product_id, 'Product', class: 'block font-medium mb-1 text-sm border-gray-300 dark:bg-gray-500' %>
@@ -53,7 +56,7 @@
                         params[:product_id]
                       ),
                       class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded product-select",
-                      onchange: "this.form.submit()" %>
+                      onchange: "addFilterOpenParam(this)" %>
               </div>
 
               <!-- Only show other filters if product is selected -->
@@ -134,7 +137,7 @@
                   <%= select_tag :qa_module_id,
                                 options_for_select([['All Modules', '']] + @qa_modules.map { |m| [m.name, m.id] }, params[:qa_module_id]),
                                 class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded",
-                                onchange: "this.form.submit()" %>
+                                onchange: "addFilterOpenParam(this)" %>
                 </div>
 
                 <!-- Submodule Filter -->
@@ -203,19 +206,40 @@
       </div>
     </div>
   </div>
+
+  <!-- Products Listing Section (your existing products table goes here) -->
+  <!-- ... your products listing code ... -->
 </div>
 
 <script>
+  // Function to add filter_open parameter when form is submitted via select change
+  function addFilterOpenParam(selectElement) {
+    const form = selectElement.closest('form');
+    const hiddenInput = form.querySelector('input[name="filter_open"]');
+    if (!hiddenInput) {
+      const newInput = document.createElement('input');
+      newInput.type = 'hidden';
+      newInput.name = 'filter_open';
+      newInput.value = 'true';
+      form.appendChild(newInput);
+    }
+    form.submit();
+  }
+
   document.addEventListener("turbo:load", function () {
     const filterButton = document.getElementById("filterDropdownButton");
     const filterDropdown = document.getElementById("filterDropdown");
 
     // Remove any previously attached event listeners (cleanup)
     const newButton = filterButton.cloneNode(true);
-    filterButton.parentNode.replaceChild(newButton, filterButton);
+    if (filterButton && filterButton.parentNode) {
+      filterButton.parentNode.replaceChild(newButton, filterButton);
+    }
 
     const newDropdown = filterDropdown.cloneNode(true);
-    filterDropdown.parentNode.replaceChild(newDropdown, filterDropdown);
+    if (filterDropdown && filterDropdown.parentNode) {
+      filterDropdown.parentNode.replaceChild(newDropdown, filterDropdown);
+    }
 
     // Re-query after DOM replacement
     const button = document.getElementById("filterDropdownButton");
@@ -227,8 +251,10 @@
         dropdown.classList.toggle("hidden");
       });
 
-      document.addEventListener("click", function () {
-        dropdown.classList.add("hidden");
+      document.addEventListener("click", function (e) {
+        if (!dropdown.contains(e.target) && !button.contains(e.target)) {
+          dropdown.classList.add("hidden");
+        }
       });
 
       dropdown.addEventListener("click", function (e) {
@@ -293,7 +319,7 @@
 
       // Hide dropdown when clicking outside
       document.addEventListener("click", e => {
-        if (!document.getElementById("label-select").contains(e.target)) {
+        if (document.getElementById("label-select") && !document.getElementById("label-select").contains(e.target)) {
           dropdown.classList.add("hidden");
         }
       });

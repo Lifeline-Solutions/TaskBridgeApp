@@ -58,58 +58,6 @@ class DefectController < ApplicationController
 
     # NEW: Get filter options based on selected product (MIRRORING index_show)
     @selected_product_id = params[:product_id]
-    
-    # Create base scope for filter options
-    if @selected_product_id.present?
-      defects_scope = Defect.published.where(product_id: @selected_product_id)
-    else
-      defects_scope = Defect.published.where(product_id: qa_product_ids) if qa_product_ids.any?
-    end
-
-    # Apply user filter for non-admin users
-    if defects_scope && !current_user.has_any_role?(:admin, :observer, :qa)
-      defects_scope = defects_scope.joins(:users).where(users: { id: current_user.id })
-    end
-
-    # Get filter options from defects scope
-    if defects_scope
-      filtered_ids = defects_scope.except(:select, :order, :limit, :offset).select(:id)
-      
-      @qa_modules = QaModule.joins(:defects)
-        .where(defects: { id: filtered_ids })
-        .distinct
-        .order(:name)
-
-      @submodules = QaModule.joins(:defects)
-        .where(defects: { id: filtered_ids })
-        .where.not(parent_id: nil)
-        .distinct
-        .order(:name)
-
-      @banking_types = BankingType.joins(:defects)
-        .where(defects: { id: filtered_ids })
-        .distinct
-        .order(:name)
-
-      @labels = Label.joins(:defects)
-        .where(defects: { id: filtered_ids })
-        .distinct
-        .order(:name)
-
-      @assignees = User.joins(:defects)
-        .where(defects: { id: filtered_ids })
-        .distinct
-        .order(:first_name, :last_name)
-    else
-      # Initialize empty arrays if no defects scope
-      @qa_modules = []
-      @submodules = []
-      @banking_types = []
-      @labels = []
-      @assignees = []
-    end
-
-    @selected_product_id = params[:product_id]
     @selected_module_id = params[:qa_module_id]
     
     # Create base scope for filter options
@@ -172,6 +120,9 @@ class DefectController < ApplicationController
       @labels = []
       @assignees = []
     end
+
+    # Track if filter should be open
+    @filter_open = params[:filter_open].present?
 
     # Paginate the QA products instead of defect groups
     @per_page = 20
