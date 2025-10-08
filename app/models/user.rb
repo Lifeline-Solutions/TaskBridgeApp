@@ -162,6 +162,10 @@ class User < ApplicationRecord
     tickets.joins(:statuses).where.not(statuses: { name: %w[Closed Resolved Declined Approved] }).distinct.count(:id)
   end
 
+  def all_open_tasks_for_the_current_user_count
+    tasks.joins(:statuses).where.not(statuses: { name: %w[Closed Resolved Declined Approved] }).distinct.count(:id)
+  end
+
   private
 
   def email_domain_must_be_certified
