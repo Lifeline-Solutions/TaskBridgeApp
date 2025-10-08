@@ -1,35 +1,120 @@
-<% provide(:title, "Saved QA Filters for #{current_user.name}") %>
+<%# app/views/defect_filters/index.html.erb %>
+<% provide(:title, "Saved Filters & Dashboards for #{current_user.name}") %>
 
-<h2>Your saved filters</h2>
+<div class="container mx-auto px-4 py-8">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">Saved Filters & Dashboards</h1>
+    <div class="flex gap-2">
+      <%= link_to 'Report Dashboards', report_dashboards_path, class: 'bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700' %>
+      <%= link_to 'Defect Filters', defect_filters_path, class: 'bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700' %>
+    </div>
+  </div>
 
-<% if @defect_filters.any? %>
-  <table class="w-full">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Product</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @defect_filters.each do |f| %>
-        <tr>
-          <td>
-            <%= form_with model: f, url: defect_filter_path(f), method: :patch, local: true do |form| %>
-              <%= form.text_field :name, value: f.name, class: 'border p-1' %>
-              <%= form.hidden_field :filters, value: f.filters.to_json %>
-              <%= form.submit 'Rename', class: 'ml-2 px-2 py-1 bg-blue-500 text-white rounded' %>
+  <!-- Intro Text -->
+  <div class="p-4 mb-6 text-center text-gray-500 bg-gray-50 rounded">
+    Please configure your metrics and click "Apply" to generate the report.  
+    Note: the dropdowns only show items related to the selected project.  
+    If you don't see all statuses, it means those are the only ones available across the defects.
+  </div>
+
+  <!-- Two-column Layout -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <!-- Defect Filters Section -->
+    <div>
+      <h2 class="text-xl font-semibold mb-4">Defect Filters</h2>
+      <% defect_filters = current_user.defect_filters.defect_filters.active %>
+
+      <% if defect_filters.any? %>
+        <table class="w-full border border-gray-200 rounded-lg overflow-hidden">
+          <thead class="bg-gray-100 text-left">
+            <tr>
+              <th class="px-3 py-2 font-medium">Name</th>
+              <th class="px-3 py-2 font-medium">Product</th>
+              <th class="px-3 py-2 font-medium text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% defect_filters.each do |f| %>
+              <tr class="border-t hover:bg-gray-50">
+                <td class="px-3 py-2">
+                  <%= form_with model: f, url: defect_filter_path(f), method: :patch, local: true, class: "flex items-center" do |form| %>
+                    <%= form.text_field :name, value: f.name, class: 'border p-1 rounded w-full text-sm' %>
+                    <%= form.hidden_field :filters, value: f.filters.to_json %>
+                    <%= form.submit 'Rename', class: 'ml-2 px-2 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600' %>
+                  <% end %>
+                </td>
+                <td class="px-3 py-2"><%= f.product&.document_name || 'All products' %></td>
+                <td class="px-3 py-2 text-right">
+                  <%= link_to 'Apply',
+                    index_show_defect_index_path(f.sanitized_filters_string_keys.merge('product_id' => f.product_id).compact),
+                    class: 'px-2 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600' %>
+                  <%= link_to 'Delete',
+                    defect_filter_path(f),
+                    method: :delete,
+                    data: { 
+                      confirm: "Are you sure you want to delete the filter '#{f.name}'? This action cannot be undone.",
+                      turbo_confirm: "Are you sure you want to delete the filter '#{f.name}'? This action cannot be undone.",
+                      turbo_method: :delete
+                    },
+                    class: 'ml-2 px-2 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600' %>
+                </td>
+              </tr>
             <% end %>
-          </td>
-          <td><%= f.product&.document_name || 'All products' %></td>
-          <td>
-            <%= link_to 'Apply', index_show_defect_index_path(f.sanitized_filters_string_keys.merge('product_id' => f.product_id).compact), class: 'px-2 py-1 bg-green-500 text-white rounded' %>
-            <%= link_to 'Delete', defect_filter_path(f), method: :delete, data: { confirm: 'Delete this saved filter?' }, class: 'ml-2 px-2 py-1 bg-red-500 text-white rounded' %>
-          </td>
-        </tr>
+          </tbody>
+        </table>
+      <% else %>
+        <p class="text-gray-500 italic">No defect filters saved yet.</p>
       <% end %>
-    </tbody>
-  </table>
-<% else %>
-  <p>No saved filters yet.</p>
-<% end %>
+    </div>
+
+    <!-- Report Dashboards Section -->
+    <div>
+      <h2 class="text-xl font-semibold mb-4">Report Dashboards</h2>
+      <% report_dashboards = current_user.defect_filters.report_dashboards.active %>
+
+      <% if report_dashboards.any? %>
+        <table class="w-full border border-gray-200 rounded-lg overflow-hidden">
+          <thead class="bg-gray-100 text-left">
+            <tr>
+              <th class="px-3 py-2 font-medium">Name</th>
+              <th class="px-3 py-2 font-medium">Product</th>
+              <th class="px-3 py-2 font-medium text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% report_dashboards.each do |d| %>
+              <tr class="border-t hover:bg-gray-50">
+                <td class="px-3 py-2">
+                  <%= form_with model: d, url: defect_filter_path(d), method: :patch, local: true, class: "flex items-center" do |form| %>
+                    <%= form.text_field :name, value: d.name, class: 'border p-1 rounded w-full text-sm' %>
+                    <%= form.hidden_field :filters, value: d.filters.to_json %>
+                    <%= form.hidden_field :chart_config, value: d.chart_config.to_json %>
+                    <%= form.submit 'Rename', class: 'ml-2 px-2 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600' %>
+                  <% end %>
+                </td>
+                <td class="px-3 py-2"><%= d.product&.document_name || 'All products' %></td>
+                <td class="px-3 py-2 text-right">
+                  <%= link_to 'Open Dashboard',
+                    reports_path(d.to_report_params.merge(commit: 'Apply')),
+                    class: 'px-2 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600' %>
+                  <%= link_to 'Delete',
+                    defect_filter_path(d),
+                    method: :delete,
+                    data: { 
+                      confirm: "Are you sure you want to delete the dashboard '#{d.name}'? This action cannot be undone.",
+                      turbo_confirm: "Are you sure you want to delete the dashboard '#{d.name}'? This action cannot be undone.",
+                      turbo_method: :delete
+                    },
+                    class: 'ml-2 px-2 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600' %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p class="text-gray-500 italic">No report dashboards saved yet.</p>
+      <% end %>
+    </div>
+  </div>
+</div>

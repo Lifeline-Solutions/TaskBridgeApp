@@ -242,7 +242,44 @@ class ReportsController < ApplicationController
     end
   end
 
+  def save_dashboard
+    # Parse and prepare the filters for storage
+    filters_data = if params[:defect_filter] && params[:defect_filter][:filters].is_a?(String)
+                     JSON.parse(params[:defect_filter][:filters])
+                   else
+                     params[:defect_filter][:filters] || {}
+                   end
+
+    # Convert array parameters to JSON strings for proper storage
+    %w[metrics severities reporters statuses assignees modules submodules].each do |array_key|
+      filters_data[array_key] = filters_data[array_key].to_json if filters_data[array_key].is_a?(Array)
+    end
+
+    @dashboard = current_user.defect_filters.build(
+      name: params[:defect_filter][:name],
+      product_id: params[:defect_filter][:product_id],
+      filters: filters_data,
+      filter_type: 'report',
+      is_dashboard: true
+    )
+
+    # Audit fields
+    @dashboard.created_by = current_user
+    @dashboard.modified_by = current_user
+
+    if @dashboard.save
+      redirect_to report_dashboards_path, notice: 'Dashboard saved successfully!'
+    else
+      redirect_to reports_path(params.except(:defect_filter, :commit, :action, :controller)),
+                  alert: "Failed to save dashboard: #{@dashboard.errors.full_messages.join(', ')}"
+    end
+  end
+
   private
+
+  def dashboard_params
+    params.require(:defect_filter).permit(:name, :product_id, filters: {})
+  end
 
   def parse_date(value)
     return nil if value.blank?

@@ -148,6 +148,14 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_08_073744) do
     t.index ["product_id"], name: "index_banking_types_on_product_id"
   end
 
+  create_table "banking_types_products", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "product_id", null: false
+    t.uuid "banking_type_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id", "banking_type_id"], name: "index_banking_types_products_on_product_and_banking_type", unique: true
+  end
+
   create_table "boards", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "status"
     t.uuid "product_id", null: false
@@ -266,13 +274,19 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_08_073744) do
     t.boolean "archive_status", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "filter_type", default: "defect", null: false
+    t.jsonb "chart_config", default: {}
+    t.boolean "is_dashboard", default: false, null: false
     t.index ["archive_status"], name: "index_defect_filters_on_archive_status"
     t.index ["created_by_id"], name: "index_defect_filters_on_created_by_id"
     t.index ["deleted_by_id"], name: "index_defect_filters_on_deleted_by_id"
     t.index ["deleted_on"], name: "index_defect_filters_on_deleted_on"
+    t.index ["filter_type"], name: "index_defect_filters_on_filter_type"
     t.index ["filters"], name: "index_defect_filters_on_filters", using: :gin
+    t.index ["is_dashboard"], name: "index_defect_filters_on_is_dashboard"
     t.index ["modified_by_id"], name: "index_defect_filters_on_modified_by_id"
     t.index ["product_id"], name: "index_defect_filters_on_product_id"
+    t.index ["user_id", "name", "filter_type"], name: "index_user_name_filter_type_unique", unique: true
     t.index ["user_id"], name: "index_defect_filters_on_user_id"
   end
 
@@ -1255,6 +1269,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_08_073744) do
   add_foreign_key "banking_types", "users", column: "created_by_id"
   add_foreign_key "banking_types", "users", column: "deleted_by_id"
   add_foreign_key "banking_types", "users", column: "modified_by_id"
+  add_foreign_key "banking_types_products", "banking_types"
+  add_foreign_key "banking_types_products", "products"
   add_foreign_key "boards", "products"
   add_foreign_key "boards", "users"
   add_foreign_key "clients", "users"
