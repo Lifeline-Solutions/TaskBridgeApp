@@ -26,6 +26,12 @@ class DefectFilter < ApplicationRecord
     qa_module_id submodule_id banking_type_id label_ids status page
   ].freeze
 
+  # Report-specific allowed keys
+  REPORT_ALLOWED_FILTER_KEYS = %w[
+    metrics severities reporters statuses assignees modules submodules 
+    ageing_type start_date end_date product_id
+  ].freeze
+
   # Enum for filter types
   attribute :filter_type, :string
   enum filter_type: {
@@ -33,13 +39,42 @@ class DefectFilter < ApplicationRecord
     report: 'report',
   }
 
-  # Return sanitized filters (symbol/string indifferent)
+  # Return sanitized filters based on filter type
   def sanitized_filters
+    return sanitized_report_filters if report_filter?
+    
     (filters || {}).with_indifferent_access.slice(*ALLOWED_FILTER_KEYS)
   end
 
   def sanitized_filters_string_keys
     sanitized_filters.deep_stringify_keys
+  end
+
+  # Return sanitized report filters
+  def sanitized_report_filters
+    return {} unless report_filter?
+    
+    filters_hash = (filters || {}).with_indifferent_access
+    
+    # Handle both string and symbol keys, and parse JSON strings if needed
+    report_filters = {}
+    
+    REPORT_ALLOWED_FILTER_KEYS.each do |key|
+      value = filters_hash[key]
+      
+      # Parse JSON strings back to arrays/objects for report parameters
+      if value.is_a?(String) && (key.end_with?('s') || key == 'metrics')
+        begin
+          value = JSON.parse(value)
+        rescue JSON::ParserError
+          # Keep as string if parsing fails
+        end
+      end
+      
+      report_filters[key] = value unless value.blank?
+    end
+    
+    report_filters.with_indifferent_access
   end
 
   def self.defect_filter_params
@@ -50,11 +85,6 @@ class DefectFilter < ApplicationRecord
     %w[metrics severities reporters statuses assignees modules submodules ageing_type start_date end_date]
   end
 
-  def sanitized_filters_string_keys
-    return {} if filters.blank?
-    filters.transform_keys(&:to_s)
-  end
-
   def defect_filter?
     filter_type == 'defect'
   end
@@ -63,16 +93,20 @@ class DefectFilter < ApplicationRecord
     filter_type == 'report'
   end
 
+  # Generate proper report parameters for URL
   def to_report_params
     return {} unless report_filter?
     
-    params = sanitized_filters_string_keys
-    # Convert array fields properly
+    params = sanitized_report_filters
+    
+    # Ensure array parameters are properly formatted for URLs
     %w[metrics severities reporters statuses assignees modules submodules].each do |array_field|
-      if params[array_field].is_a?(String)
-        params[array_field] = JSON.parse(params[array_field]) rescue params[array_field]
+      if params[array_field].is_a?(Array)
+        # Rails will automatically handle array parameters in URLs
+        # This will create params like: metrics[]=severity&metrics[]=reporter
       end
     end
+    
     params
   end
 
