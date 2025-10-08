@@ -254,7 +254,6 @@ class HomeController < ApplicationController
         .joins(:tasks, :statuses)
         .where.not(statuses: { name: %w[Closed Resolved Declined] })
         .distinct
-
     end
   end
 end
