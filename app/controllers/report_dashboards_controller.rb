@@ -1,6 +1,6 @@
 class ReportDashboardsController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_dashboard, only: [:show, :edit, :update, :destroy, :apply]
+  before_action :set_dashboard, only: %i[show edit update destroy apply]
 
   def index
     @dashboards = current_user.defect_filters.report_dashboards.active.order(:name)
@@ -35,8 +35,7 @@ class ReportDashboardsController < ApplicationController
     redirect_to reports_path(report_params)
   end
 
-  def edit
-  end
+  def edit; end
 
   def update
     if @dashboard.update(dashboard_params.merge(modified_by: current_user))
@@ -64,9 +63,7 @@ class ReportDashboardsController < ApplicationController
       chart_config: {}
     ).tap do |whitelisted|
       # Handle the filters from reports form
-      if params[:defect_filter] && params[:defect_filter][:filters].is_a?(String)
-        whitelisted[:filters] = JSON.parse(params[:defect_filter][:filters])
-      end
+      whitelisted[:filters] = JSON.parse(params[:defect_filter][:filters]) if params[:defect_filter] && params[:defect_filter][:filters].is_a?(String)
     end
   end
 end

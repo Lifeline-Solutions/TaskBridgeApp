@@ -28,7 +28,7 @@ class DefectFilter < ApplicationRecord
 
   # Report-specific allowed keys
   REPORT_ALLOWED_FILTER_KEYS = %w[
-    metrics severities reporters statuses assignees modules submodules 
+    metrics severities reporters statuses assignees modules submodules
     ageing_type start_date end_date product_id
   ].freeze
 
@@ -36,13 +36,13 @@ class DefectFilter < ApplicationRecord
   attribute :filter_type, :string
   enum filter_type: {
     defect: 'defect',
-    report: 'report',
+    report: 'report'
   }
 
   # Return sanitized filters based on filter type
   def sanitized_filters
     return sanitized_report_filters if report_filter?
-    
+
     (filters || {}).with_indifferent_access.slice(*ALLOWED_FILTER_KEYS)
   end
 
@@ -53,15 +53,15 @@ class DefectFilter < ApplicationRecord
   # Return sanitized report filters
   def sanitized_report_filters
     return {} unless report_filter?
-    
+
     filters_hash = (filters || {}).with_indifferent_access
-    
+
     # Handle both string and symbol keys, and parse JSON strings if needed
     report_filters = {}
-    
+
     REPORT_ALLOWED_FILTER_KEYS.each do |key|
       value = filters_hash[key]
-      
+
       # Parse JSON strings back to arrays/objects for report parameters
       if value.is_a?(String) && (key.end_with?('s') || key == 'metrics')
         begin
@@ -70,10 +70,10 @@ class DefectFilter < ApplicationRecord
           # Keep as string if parsing fails
         end
       end
-      
+
       report_filters[key] = value unless value.blank?
     end
-    
+
     report_filters.with_indifferent_access
   end
 
@@ -96,9 +96,9 @@ class DefectFilter < ApplicationRecord
   # Generate proper report parameters for URL
   def to_report_params
     return {} unless report_filter?
-    
+
     params = sanitized_report_filters
-    
+
     # Ensure array parameters are properly formatted for URLs
     %w[metrics severities reporters statuses assignees modules submodules].each do |array_field|
       if params[array_field].is_a?(Array)
@@ -106,7 +106,7 @@ class DefectFilter < ApplicationRecord
         # This will create params like: metrics[]=severity&metrics[]=reporter
       end
     end
-    
+
     params
   end
 
