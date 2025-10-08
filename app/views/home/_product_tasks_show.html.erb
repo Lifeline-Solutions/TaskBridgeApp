@@ -10,7 +10,7 @@
     </div>
   <% end %>
   <% if current_user.projects.any? %>
-    <%= link_to project_tickets_path(project_id: current_user.projects.first.id, status: 'open', user_id: current_user.id), class: 'flex items-center justify-between w-full' do %>
+    <%#= link_to project_tickets_path(project_id: current_user.projects.first.id, status: 'open', user_id: current_user.id), class: 'flex items-center justify-between w-full' do %>
       <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
         <p class="text-xs sm:text-sm truncate">
           My Open Project
@@ -19,18 +19,18 @@
           <%= current_user.all_open_tickets_for_the_current_user_count %>
         </span>
       </div>
-    <% end %>
+    <%# end %>
   <% else %>
     <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
 
       <p class="text-xs sm:text-sm truncate">
-        No Tickets Available
+        No Tasks Projects Available
       </p>
     </div>
   <% end %>
 
-  <% if current_user.projects.any? %>
-    <%= link_to all_tickets_project_tickets_path(project_id: current_user.projects.first.id, status: 'open'), class: 'flex items-center justify-between w-full' do %>
+  <% if current_user.products.any? %>
+    <%#= link_to all_tickets_project_tickets_path(project_id: current_user.projects.first.id, status: 'open'), class: 'flex items-center justify-between w-full' do %>
       <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
         <p class="text-xs sm:text-sm truncate">
           Total Number of Open Tickets
@@ -39,11 +39,11 @@
           <%= @total_no_of_open_tasks_for_current_user_count %>
         </span>
       </div>
-    <% end %>
+    <%# end %>
   <% else %>
     <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
       <p class="text-xs sm:text-sm truncate">
-        No Open Tickets Available
+        No Open Tasks Available
       </p>
     </div>
   <% end %>
