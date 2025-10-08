@@ -242,7 +242,27 @@ class ReportsController < ApplicationController
     end
   end
 
+  def save_dashboard
+    @dashboard = current_user.defect_filters.build(dashboard_params)
+    @dashboard.filter_type = 'report'
+    @dashboard.is_dashboard = true
+    @dashboard.created_by = current_user
+
+    if @dashboard.save
+      redirect_to report_dashboards_path, notice: 'Dashboard saved successfully!'
+    else
+      # If save fails, redirect back to reports with error
+      redirect_to reports_path(params.except(:defect_filter, :commit, :action, :controller)), 
+                  alert: "Failed to save dashboard: #{@dashboard.errors.full_messages.join(', ')}"
+    end
+  end
+
   private
+
+  def dashboard_params
+    params.require(:defect_filter).permit(:name, :product_id, filters: {})
+  end
+
 
   def parse_date(value)
     return nil if value.blank?
