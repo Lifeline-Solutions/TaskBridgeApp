@@ -1,4 +1,5 @@
 class Product < ApplicationRecord
+  resourcify
   belongs_to :user
   has_and_belongs_to_many :softwares
   has_and_belongs_to_many :groupwares
@@ -19,7 +20,6 @@ class Product < ApplicationRecord
 
   has_rich_text :content
 
-  resourcify
   has_many :users, through: :roles, class_name: 'User', source: :users
   has_many :creators, -> { where(roles: { name: ['admin', 'project manager'] }) }, class_name: 'User', through: :roles, source: :users
 
