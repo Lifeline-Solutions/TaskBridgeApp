@@ -15,7 +15,7 @@ class QaModule < ApplicationRecord
   def module?
     parent_id.nil?
   end
-  
+
   def submodule?
     parent_id.present?
   end

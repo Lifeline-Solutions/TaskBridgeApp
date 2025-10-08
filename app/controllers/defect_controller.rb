@@ -63,45 +63,43 @@ class DefectController < ApplicationController
     # NEW: Get filter options based on selected product (MIRRORING index_show)
     @selected_product_id = params[:product_id]
     @selected_module_id = params[:qa_module_id]
-    
+
     # Create base scope for filter options
     if @selected_product_id.present?
       defects_scope = Defect.published.where(product_id: @selected_product_id)
-    else
-      defects_scope = Defect.published.where(product_id: qa_product_ids) if qa_product_ids.any?
+    elsif qa_product_ids.any?
+      defects_scope = Defect.published.where(product_id: qa_product_ids)
     end
 
     # Apply user filter for non-admin users
-    if defects_scope && !current_user.has_any_role?(:admin, :observer, :qa)
-      defects_scope = defects_scope.joins(:users).where(users: { id: current_user.id })
-    end
+    defects_scope = defects_scope.joins(:users).where(users: { id: current_user.id }) if defects_scope && !current_user.has_any_role?(:admin, :observer, :qa)
 
     # Get filter options from defects scope
     if defects_scope
       # Remove ordering for filter options queries
       filtered_ids = defects_scope.except(:select, :order, :limit, :offset).select(:id)
-      
+
       # Get modules (qa_modules with no parent_id)
       @qa_modules = QaModule.joins(:defects)
         .where(defects: { id: filtered_ids })
-        .where(parent_id: nil)  # Only modules, not submodules
+        .where(parent_id: nil) # Only modules, not submodules
         .distinct
         .order(:name)
 
       # Handle submodules based on selected module - FIXED VERSION
-      if @selected_module_id.present?
-        # Get ALL submodules for the selected module (not just those with defects)
-        # This ensures the dropdown shows all available submodules even if they don't have defects yet
-        @submodules = QaModule.where(parent_id: @selected_module_id)
-                            .order(:name)
-      else
-        # Show all submodules for the product (all qa_modules with parent_id not nil)
-        @submodules = QaModule.joins(:defects)
-          .where(defects: { id: filtered_ids })
-          .where.not(parent_id: nil)  # All submodules
-          .distinct
-          .order(:name)
-      end
+      @submodules = if @selected_module_id.present?
+                      # Get ALL submodules for the selected module (not just those with defects)
+                      # This ensures the dropdown shows all available submodules even if they don't have defects yet
+                      QaModule.where(parent_id: @selected_module_id)
+                        .order(:name)
+                    else
+                      # Show all submodules for the product (all qa_modules with parent_id not nil)
+                      QaModule.joins(:defects)
+                        .where(defects: { id: filtered_ids })
+                        .where.not(parent_id: nil) # All submodules
+                        .distinct
+                        .order(:name)
+                    end
 
       @banking_types = BankingType.joins(:defects)
         .where(defects: { id: filtered_ids })
@@ -267,23 +265,23 @@ class DefectController < ApplicationController
     # NEW: option lists for QA Module, Submodule, Banking Type - UPDATED SUBMODULE LOGIC
     @qa_modules = QaModule.joins(:defects)
       .where(defects: { id: filtered_ids })
-      .where(parent_id: nil)  # Only parent modules
+      .where(parent_id: nil) # Only parent modules
       .distinct
       .order(:name)
 
     # Handle submodules based on selected module
-    if params[:qa_module_id].present?
-      # Get ALL submodules for the selected module (not just those with defects)
-      @submodules = QaModule.where(parent_id: params[:qa_module_id])
-                          .order(:name)
-    else
-      # Show all submodules for the product (all qa_modules with parent_id not nil)
-      @submodules = QaModule.joins(:defects)
-        .where(defects: { id: filtered_ids })
-        .where.not(parent_id: nil)  # All submodules
-        .distinct
-        .order(:name)
-    end
+    @submodules = if params[:qa_module_id].present?
+                    # Get ALL submodules for the selected module (not just those with defects)
+                    QaModule.where(parent_id: params[:qa_module_id])
+                      .order(:name)
+                  else
+                    # Show all submodules for the product (all qa_modules with parent_id not nil)
+                    QaModule.joins(:defects)
+                      .where(defects: { id: filtered_ids })
+                      .where.not(parent_id: nil) # All submodules
+                      .distinct
+                      .order(:name)
+                  end
 
     @banking_types = BankingType.joins(:defects)
       .where(defects: { id: filtered_ids })
@@ -760,20 +758,20 @@ class DefectController < ApplicationController
   end
 
   def get_submodules
-  if params[:module_id].present?
-    parent_module = QaModule.find_by(id: params[:module_id])
-    if parent_module
-      # Use .children instead of .submodules if that's your association name
-      @submodules = parent_module.children.order(:name)
+    if params[:module_id].present?
+      parent_module = QaModule.find_by(id: params[:module_id])
+      @submodules = if parent_module
+                      # Use .children instead of .submodules if that's your association name
+                      parent_module.children.order(:name)
+                    else
+                      []
+                    end
     else
       @submodules = []
     end
-  else
-    @submodules = []
+
+    render json: @submodules.as_json(only: %i[id name])
   end
-  
-  render json: @submodules.as_json(only: [:id, :name])
-end
 
   def update_priority
     if @defect.update(priority: params[:defect][:priority])
@@ -1190,10 +1188,9 @@ end
 
     # Ordering
     order = params[:order] == 'asc' ? :asc : :desc
-    defects_scope = defects_scope.order(created_at: order)
-
-    defects_scope
+    defects_scope.order(created_at: order)
   end
+
   def authorize_view_failure_reports!
     return if current_user.has_role?(:qa) || current_user.has_role?(:hod) || current_user.has_role?(:admin)
 
