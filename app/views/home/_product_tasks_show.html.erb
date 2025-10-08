@@ -33,7 +33,7 @@
     <%#= link_to all_tickets_project_tickets_path(project_id: current_user.projects.first.id, status: 'open'), class: 'flex items-center justify-between w-full' do %>
       <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
         <p class="text-xs sm:text-sm truncate">
-          Total Number of Open Tickets
+          Total Number of Open Tasks
         </p>
         <span class="text-lg sm:text-xl font-bold">
           <%= @total_no_of_open_tasks_for_current_user_count %>
