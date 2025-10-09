@@ -173,10 +173,14 @@
   <% end %>
 
   <% if params[:commit].present? && params[:product_id].present? %>
-              <div class="mt-4 border-t pt-4">
+              <div class="mt-4 border-t pt-4 flex">
                 <button type="button" id="openSaveDashboardModal" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
                   Save as Dashboard
                 </button>
+
+                <div class="ml-4 mt-2">
+                  <%= link_to "Download CSV", download_report_reports_path(request.query_parameters), class: "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" %>
+                </div>
               </div>
 
               <div id="saveDashboardModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -218,8 +222,10 @@
                       <%= submit_tag 'Save Dashboard', class: 'px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700' %>
                     </div>
                   <% end %>
+
                 </div>
               </div>
+
 
               <script>
                 document.addEventListener('turbo:load', function() {
@@ -249,6 +255,7 @@
                 });
               </script>
             <% end %>
+  <!-- Download CSV Button -->
 </div>
 
 <% if params[:commit].present? && params[:product_id].present? %>

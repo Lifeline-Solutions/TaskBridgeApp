@@ -190,7 +190,7 @@ class DefectController < ApplicationController
     if params[:qa_module_id].present? && params[:submodule_id].present?
       # Both parent module and submodule selected
       submodule_defects = @defects.where(qa_module_id: params[:submodule_id])
-      
+
       # Check if there are any defects for the specific submodule
       if submodule_defects.exists?
         # Use the specific submodule filter

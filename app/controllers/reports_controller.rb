@@ -275,6 +275,86 @@ class ReportsController < ApplicationController
     end
   end
 
+  def download_report
+    require 'csv'
+    # Download the current report data as CSV  for all reports once selected.
+    authorize! :generate, :report
+
+    product_id = params[:product_id]
+    start_date = parse_date(params[:start_date])
+    end_date = parse_date(params[:end_date])
+
+    # Create base scope
+    defects_scope = Defect.published
+    defects_scope = defects_scope.where(product_id: product_id) if product_id.present?
+    defects_scope = defects_scope.where('defects.created_at >= ?', start_date.beginning_of_day) if start_date
+    defects_scope = defects_scope.where('defects.created_at <= ?', end_date.end_of_day) if end_date
+
+    # Apply filters from params
+    selected_severities = Array(params[:severities]).reject(&:blank?)
+    if selected_severities.any?
+      all_values = selected_severities.flat_map do |severity|
+        case severity.downcase
+        when 'severity 1' then ['severity 1', 's1', 'high']
+        when 'severity 2' then ['severity 2', 's2', 'medium']
+        when 'severity 3' then ['severity 3', 's3', 'low']
+        when 'severity 4' then ['severity 4', 's4', 'very low']
+        else [severity.downcase]
+        end
+      end
+      defects_scope = defects_scope.where("LOWER(COALESCE(defects.priority, 'unknown')) IN (?)", all_values)
+    end
+
+    selected_reporters = Array(params[:reporters]).reject(&:blank?)
+    defects_scope = defects_scope.where(creator_id: selected_reporters) if selected_reporters.any?
+
+    selected_statuses = Array(params[:statuses]).reject(&:blank?)
+    if selected_statuses.any?
+      downcased_statuses = selected_statuses.map(&:downcase)
+      defects_scope = defects_scope.joins(:statuses).where('LOWER(statuses.name) IN (?)', downcased_statuses)
+    end
+
+    selected_assignees = Array(params[:assignees]).reject(&:blank?)
+    defects_scope = defects_scope.joins(:users).where(users: { id: selected_assignees }) if selected_assignees.any?
+
+    selected_modules = Array(params[:modules]).reject(&:blank?)
+    defects_scope = defects_scope.where(qa_module_id: selected_modules) if selected_modules.any?
+
+    selected_submodules = Array(params[:submodules]).reject(&:blank?)
+    defects_scope = defects_scope.where(submodule_id: selected_submodules) if selected_submodules.any?
+
+    # Fetch defects with necessary associations to avoid N+1 queries
+    defects = defects_scope
+      .includes(:creator, :users, :statuses, :qa_module, :product)
+      .order('defects.created_at DESC')
+
+    # Generate CSV
+    csv_data = CSV.generate(headers: true) do |csv|
+      csv << ['ID', 'Summary', 'Project', 'Priority', 'Reporter', 'Assignees', 'Statuses', 'Module', 'Submodule', 'Created At', 'Updated At']
+
+      defects.each do |defect|
+        client_and_groupware = [defect.product.client&.name, defect.product.groupwares.first&.name].compact.join(' - ')
+
+        csv << [
+          defect.defect_unique,
+          defect.summary,
+          client_and_groupware,
+          normalize_severity(defect.priority),
+          defect.creator ? "#{defect.creator.first_name} #{defect.creator.last_name}" : 'N/A',
+          defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join('; '),
+          defect.statuses.map(&:name).join('; '),
+          defect.qa_module&.name || 'N/A',
+          defect.submodule&.name || 'N/A',
+          defect.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+          defect.updated_at.strftime('%Y-%m-%d %H:%M:%S')
+        ]
+      end
+    end
+
+    filename = "defect_report_#{Time.now.strftime('%Y%m%d_%H%M')}.csv"
+    send_data csv_data, filename: filename, type: 'text/csv'
+  end
+
   private
 
   def dashboard_params

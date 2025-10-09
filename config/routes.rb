@@ -52,6 +52,7 @@ Rails.application.routes.draw do
   get 'profiles_show_user', to: 'profiles#profiles_show_user', as: 'profiles_show_user'
 
 
+
   get 'dashboard', to: 'dashboards#index'
   get 'dashboards/fetch_stats', to: 'dashboards#fetch_stats'
   get 'dashboards/tickets', to: 'dashboards#tickets'
@@ -235,9 +236,10 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :reports, only: [:index] do
+  resources :reports do
     collection do
       get :export_csv
+      get :download_report
     end
   end
 end
