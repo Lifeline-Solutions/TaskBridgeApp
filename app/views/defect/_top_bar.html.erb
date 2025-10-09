@@ -56,7 +56,7 @@
                         params[:product_id]
                       ),
                       class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded product-select",
-                      onchange: "addFilterOpenParam(this)" %>
+                      onchange: "handleProductChange(this)" %>
               </div>
 
               <!-- Only show other filters if product is selected -->
@@ -137,7 +137,7 @@
                   <%= select_tag :qa_module_id,
                         options_for_select([['All Modules', '']] + @qa_modules.map { |m| [m.name, m.id] }, params[:qa_module_id]),
                         class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded qa-module-select",
-                        onchange: "updateSubmodules(this.value)" %>
+                        onchange: "handleModuleChange(this.value)" %>
                 </div>
 
                 <!-- Submodule Filter -->
@@ -189,11 +189,12 @@
 
                 <!-- Apply button to go to index_show -->
                 <div class="pt-2 flex justify-between">
-                  <%= submit_tag 'View Defects', name: nil, 
-                        formaction: index_show_defect_index_path,
-                        formtarget: '_blank',
-                        class: 'px-3 py-1 text-sm bg-blue-600 rounded-r-lg border border-blue-600 hover:bg-blue-700 focus:outline-none' %>
-                  <%= link_to 'Reset', defect_index_path, class: 'px-3 py-1 text-sm bg-red-600 rounded-r-lg border border-red-600 hover:bg-red-700 focus:outline-none' %>
+                  <button type="button" 
+                          onclick="handleViewDefects()" 
+                          class="px-3 py-1 text-sm bg-blue-600 rounded-r-lg border border-blue-600 hover:bg-blue-700 focus:outline-none text-white">
+                    View Defects
+                  </button>
+                  <%= link_to 'Reset', defect_index_path, class: 'px-3 py-1 text-sm bg-red-600 rounded-r-lg border border-red-600 hover:bg-red-700 focus:outline-none text-white' %>
                 </div>
               <% else %>
                 <!-- Message when no product selected -->
@@ -210,94 +211,7 @@
 </div>
 
 <script>
-  // Function to add filter_open parameter when form is submitted via select change
-  function addFilterOpenParam(selectElement) {
-    const form = selectElement.closest('form');
-    const hiddenInput = form.querySelector('input[name="filter_open"]');
-    if (!hiddenInput) {
-      const newInput = document.createElement('input');
-      newInput.type = 'hidden';
-      newInput.name = 'filter_open';
-      newInput.value = 'true';
-      form.appendChild(newInput);
-    }
-    
-    // If it's the QA module dropdown, update submodules via AJAX
-    if (selectElement.name === 'qa_module_id') {
-      updateSubmodules(selectElement.value);
-    } else {
-      form.submit();
-    }
-  }
-
-  function updateSubmodules(moduleId) {
-    if (moduleId) {
-      fetch(`/defect/get_submodules?module_id=${moduleId}`, {
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'Accept': 'application/json'
-        }
-      })
-      .then(response => response.json())
-      .then(submodules => {
-        updateSubmoduleDropdown(submodules);
-        
-        // Submit the form after updating submodules
-        const form = document.getElementById('filter-form');
-        if (form) {
-          form.submit();
-        }
-      })
-      .catch(error => {
-        console.error('Error updating submodules:', error);
-        // If there's an error, just submit the form without updating submodules
-        const form = document.getElementById('filter-form');
-        if (form) {
-          form.submit();
-        }
-      });
-    } else {
-      // If no module selected, clear submodules and submit
-      clearSubmoduleDropdown();
-      
-      const form = document.getElementById('filter-form');
-      if (form) {
-        form.submit();
-      }
-    }
-  }
-
-  function updateSubmoduleDropdown(submodules) {
-    const submoduleSelect = document.getElementById('submodule_id');
-    if (submoduleSelect) {
-      // Clear existing options except the first one
-      submoduleSelect.innerHTML = '<option value="">All Submodules</option>';
-      
-      // Add new submodule options from JSON response
-      submodules.forEach(submodule => {
-        const option = document.createElement('option');
-        option.value = submodule.id;
-        option.textContent = submodule.name;
-        submoduleSelect.appendChild(option);
-      });
-      
-      // If there are no submodules, disable the dropdown
-      if (submodules.length === 0) {
-        submoduleSelect.disabled = true;
-      } else {
-        submoduleSelect.disabled = false;
-      }
-    }
-  }
-
-  function clearSubmoduleDropdown() {
-    const submoduleSelect = document.getElementById('submodule_id');
-    if (submoduleSelect) {
-      submoduleSelect.innerHTML = '<option value="">All Submodules</option>';
-      submoduleSelect.disabled = false;
-    }
-  }
-
+  // ========== FILTER DROPDOWN MANAGEMENT ==========
   document.addEventListener("turbo:load", function () {
     const filterButton = document.getElementById("filterDropdownButton");
     const filterDropdown = document.getElementById("filterDropdown");
@@ -335,6 +249,7 @@
     }
   });
 
+  // ========== LABELS FILTER MANAGEMENT ==========
   document.addEventListener("turbo:load", () => {
     const searchInput   = document.getElementById("label-search");
     const dropdown      = document.getElementById("label-dropdown");
@@ -398,8 +313,30 @@
     }
   });
 
-  function updateSubmodules(moduleId) {
-    console.log('updateSubmodules called with:', moduleId);
+  // ========== PRODUCT SELECTION LOGIC ==========
+  function handleProductChange(selectElement) {
+    const form = selectElement.closest('form');
+    const hiddenInput = form.querySelector('input[name="filter_open"]');
+    if (!hiddenInput) {
+      const newInput = document.createElement('input');
+      newInput.type = 'hidden';
+      newInput.name = 'filter_open';
+      newInput.value = 'true';
+      form.appendChild(newInput);
+    }
+    
+    // For product selection, submit to current page (index) to show filter options
+    form.submit();
+  }
+
+  // ========== MODULE AND SUBMODULE MANAGEMENT ==========
+  function handleModuleChange(moduleId) {
+    // Update submodules but don't submit the form
+    updateSubmodules(moduleId, false);
+  }
+
+  function updateSubmodules(moduleId, shouldSubmit = false) {
+    console.log('updateSubmodules called with:', moduleId, 'shouldSubmit:', shouldSubmit);
     
     const submoduleSelect = document.getElementById('submodule_id');
     
@@ -407,7 +344,11 @@
       // Clear submodules if no module selected
       submoduleSelect.innerHTML = '<option value="">All Submodules</option>';
       submoduleSelect.disabled = false;
-      submitFilterForm();
+      
+      // Only submit if explicitly requested
+      if (shouldSubmit) {
+        submitToIndexShow();
+      }
       return;
     }
     
@@ -432,8 +373,31 @@
       console.log('Received submodules:', submodules);
       
       // Update submodule dropdown
+      updateSubmoduleDropdown(submodules);
+      
+      // Only submit if explicitly requested
+      if (shouldSubmit) {
+        submitToIndexShow();
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching submodules:', error);
+      submoduleSelect.innerHTML = '<option value="">Error loading submodules</option>';
+      
+      // Only submit if explicitly requested
+      if (shouldSubmit) {
+        submitToIndexShow();
+      }
+    });
+  }
+
+  function updateSubmoduleDropdown(submodules) {
+    const submoduleSelect = document.getElementById('submodule_id');
+    if (submoduleSelect) {
+      // Clear existing options except the first one
       submoduleSelect.innerHTML = '<option value="">All Submodules</option>';
       
+      // Add new submodule options from JSON response
       submodules.forEach(submodule => {
         const option = document.createElement('option');
         option.value = submodule.id;
@@ -441,21 +405,34 @@
         submoduleSelect.appendChild(option);
       });
       
-      submoduleSelect.disabled = submodules.length === 0;
-      
-      // Submit the form to apply the filter
-      submitFilterForm();
-    })
-    .catch(error => {
-      console.error('Error fetching submodules:', error);
-      submoduleSelect.innerHTML = '<option value="">Error loading submodules</option>';
-      submitFilterForm();
-    });
+      // If there are no submodules, disable the dropdown
+      if (submodules.length === 0) {
+        submoduleSelect.disabled = true;
+      } else {
+        submoduleSelect.disabled = false;
+      }
+    }
   }
 
-  function submitFilterForm() {
+  function clearSubmoduleDropdown() {
+    const submoduleSelect = document.getElementById('submodule_id');
+    if (submoduleSelect) {
+      submoduleSelect.innerHTML = '<option value="">All Submodules</option>';
+      submoduleSelect.disabled = false;
+    }
+  }
+
+  // ========== VIEW DEFECTS BUTTON LOGIC ==========
+  function handleViewDefects() {
+    submitToIndexShow();
+  }
+
+  function submitToIndexShow() {
     const form = document.getElementById('filter-form');
     if (form) {
+      // Change form action to index_show for the final submission
+      form.action = '<%= index_show_defect_index_path %>';
+      
       // Ensure filter_open parameter is included
       let filterOpenInput = form.querySelector('input[name="filter_open"]');
       if (!filterOpenInput) {
@@ -466,10 +443,12 @@
         form.appendChild(filterOpenInput);
       }
       
+      // Submit the form to index_show
       form.submit();
     }
   }
 
+  // ========== INITIALIZATION ==========
   // Initialize submodules when page loads if a module is already selected
   document.addEventListener('DOMContentLoaded', function() {
     const selectedModuleId = '<%= params[:qa_module_id] %>';
@@ -478,6 +457,9 @@
       // Don't trigger form submission on page load
       initializeSubmodules(selectedModuleId);
     }
+    
+    // Initialize selected labels from params
+    initializeSelectedLabels();
   });
 
   function initializeSubmodules(moduleId) {
@@ -513,5 +495,19 @@
     .catch(error => {
       console.error('Error initializing submodules:', error);
     });
+  }
+
+  function initializeSelectedLabels() {
+    const selectedBox = document.getElementById('selected-labels');
+    const hiddenInputs = document.getElementById('hidden-labels');
+    
+    // Get label IDs from params (this would need to be set from your controller)
+    // For now, this is a placeholder - you might need to pass label data differently
+    const selectedLabelIds = []; // You would populate this from your params
+    
+    if (selectedLabelIds.length > 0) {
+      // Fetch label details and populate the selected labels
+      // This would require additional server-side implementation
+    }
   }
 </script>

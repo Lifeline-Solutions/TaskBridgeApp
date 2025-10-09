@@ -186,24 +186,42 @@ class DefectController < ApplicationController
     # Assignee filter
     @defects = @defects.joins(:users).where(users: { id: params[:user_id] }) if params[:user_id].present?
 
-    # NEW: Module/Submodule/BankingType filters (by id) - UPDATED SUBMODULE LOGIC
-    if params[:qa_module_id].present?
-      if params[:submodule_id].present?
-        # Filter by specific submodule
-        @defects = @defects.where(qa_module_id: params[:submodule_id])
+    # FIXED: Module/Submodule filtering logic with intelligent fallback
+    if params[:qa_module_id].present? && params[:submodule_id].present?
+      # Both parent module and submodule selected
+      submodule_defects = @defects.where(qa_module_id: params[:submodule_id])
+      
+      # Check if there are any defects for the specific submodule
+      if submodule_defects.exists?
+        # Use the specific submodule filter
+        @defects = submodule_defects
+        @used_submodule_filter = true
       else
-        # Filter by parent module - include all its submodules
-        parent_module = QaModule.find_by(id: params[:qa_module_id])
-        if parent_module
-          submodule_ids = parent_module.children.pluck(:id)
-          all_module_ids = [parent_module.id] + submodule_ids
-          @defects = @defects.where(qa_module_id: all_module_ids)
+        # Fallback: Check if parent module has defects
+        parent_module_defects = @defects.where(qa_module_id: params[:qa_module_id])
+        if parent_module_defects.exists?
+          # Use parent module defects since submodule has none
+          @defects = parent_module_defects
+          @used_parent_fallback = true
+          @requested_submodule = QaModule.find_by(id: params[:submodule_id])
         else
-          @defects = @defects.where(qa_module_id: params[:qa_module_id])
+          # Neither submodule nor parent module has defects
+          @defects = submodule_defects
+          @used_submodule_filter = true
         end
       end
+    elsif params[:qa_module_id].present?
+      # Only parent module selected - include all its submodules
+      parent_module = QaModule.find_by(id: params[:qa_module_id])
+      if parent_module
+        submodule_ids = parent_module.children.pluck(:id)
+        all_module_ids = [parent_module.id] + submodule_ids
+        @defects = @defects.where(qa_module_id: all_module_ids)
+      else
+        @defects = @defects.where(qa_module_id: params[:qa_module_id])
+      end
     elsif params[:submodule_id].present?
-      # If only submodule is selected without parent module
+      # Only submodule selected without parent module
       @defects = @defects.where(qa_module_id: params[:submodule_id])
     end
 
