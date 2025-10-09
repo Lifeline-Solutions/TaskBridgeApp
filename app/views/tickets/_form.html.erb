@@ -5,8 +5,10 @@
               data: { 
                 turbo: false,
                 controller: 'ticket-form',
-                'ticket-form-project-id-value': @project.id 
-              }) do |f| %>
+                'ticket-form-project-id-value': @project.id,
+                'ticket-form-target': 'form'
+              },
+              id: 'new-ticket-form') do |f| %>
   <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-4 sm:p-6 lg:p-8 w-full">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
 
@@ -156,6 +158,78 @@
   </div>
 
   <%= f.submit "Submit",
-               data: { disable_with: "Creating..." },
-               class: 'mt-4 w-2/5 h-12 mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
+               id: 'ticket-submit-btn',
+               data: {
+                 disable_with: "Creating..."
+               },
+               class: 'mt-4 w-2/5 h-12 mb-4 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all' %>
 <% end %>
+
+<script>
+  (function() {
+    'use strict';
+
+    // Use both DOMContentLoaded and turbo:load for compatibility
+    function initializeFormProtection() {
+      const form = document.getElementById('new-ticket-form');
+      const submitButton = document.getElementById('ticket-submit-btn');
+
+      if (!form || !submitButton) {
+        console.log('Form or button not found');
+        return;
+      }
+
+      let isSubmitting = false;
+
+      // Prevent multiple form submissions
+      form.addEventListener('submit', function(e) {
+        if (isSubmitting) {
+          console.log('Form already submitting, preventing duplicate submission');
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          return false;
+        }
+
+        // Mark as submitting
+        isSubmitting = true;
+
+        // Disable the button immediately and update UI
+        submitButton.disabled = true;
+        submitButton.value = 'Creating...';
+        submitButton.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+
+        // Make the entire form visually non-interactive (but don't disable elements)
+        form.style.pointerEvents = 'none';
+        form.style.opacity = '0.6';
+
+        console.log('Form submission started - button disabled, form locked');
+
+        // Allow the form to submit with all values intact
+        return true;
+      });
+
+      // Prevent multiple clicks on submit button
+      submitButton.addEventListener('click', function(e) {
+        if (isSubmitting) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          return false;
+        }
+      });
+
+      console.log('Form protection initialized');
+    }
+
+    // Initialize on both events
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeFormProtection);
+    } else {
+      initializeFormProtection();
+    }
+
+    // Also handle Turbo navigation
+    document.addEventListener('turbo:load', initializeFormProtection);
+  })();
+</script>
