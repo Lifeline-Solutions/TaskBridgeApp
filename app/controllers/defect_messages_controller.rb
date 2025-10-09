@@ -40,6 +40,9 @@ class DefectMessagesController < ApplicationController
     @defect_message.user = current_user
 
     if @defect_message.save
+      # Log the message creation in defect history
+      log_event(@defect, current_user, 'message_created', "Message created: #{@defect_message.content.to_plain_text.truncate(100)}")
+
       # Process mentions asynchronously - convert ActionText to HTML string for job serialization
       ProcessMentionsJob.perform_later(
         @defect_message.content.body.to_html,
@@ -63,8 +66,13 @@ class DefectMessagesController < ApplicationController
   end
 
   def update
+    old_content = @defect_message.content.to_plain_text
     audit_on_update(@defect_message)
+    
     if @defect_message.update(defect_message_params)
+      # Log the message update in defect history
+      log_event(@defect, current_user, 'message_updated', "Message updated from: #{old_content.truncate(100)} to: #{@defect_message.content.to_plain_text.truncate(100)}")
+
       # Process mentions asynchronously for updated message - convert ActionText to HTML string for job serialization
       ProcessMentionsJob.perform_later(
         @defect_message.content.body.to_html,
@@ -83,23 +91,33 @@ class DefectMessagesController < ApplicationController
   end
 
   def destroy
+    message_content = @defect_message.content.to_plain_text.truncate(100)
+    
     if audit_soft_delete(@defect_message)
+      # Log the message archival in defect history
+      log_event(@defect, current_user, 'message_archived', "Message archived: #{message_content}")
+
       respond_to do |format|
         format.turbo_stream
         format.html { redirect_to @defect, notice: 'Message archived successfully.' }
       end
     else
+      # Log the message permanent deletion in defect history
+      log_event(@defect, current_user, 'message_deleted', "Message permanently deleted: #{message_content}")
+
       @defect_message.destroy
       respond_to do |format|
         format.turbo_stream
         format.html { redirect_to @defect, notice: 'Message deleted permanently.' }
       end
     end
-
-    redirect_to defect_path(@defect), notice: 'Message deleted successfully.'
   end
 
   private
+
+  def log_event(defect, user, history_type, history)
+    DefectHistory.create(defect: defect, user: user, history_type: history_type, history: history)
+  end
 
   def authorize_message_owner
     return if @defect_message.user == current_user
