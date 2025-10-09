@@ -268,7 +268,7 @@ class ReportsController < ApplicationController
     @dashboard.modified_by = current_user
 
     if @dashboard.save
-      redirect_to report_dashboards_path, notice: 'Dashboard saved successfully!'
+      redirect_to defect_filters_path, notice: 'Dashboard saved successfully!'
     else
       redirect_to reports_path(params.except(:defect_filter, :commit, :action, :controller)),
                   alert: "Failed to save dashboard: #{@dashboard.errors.full_messages.join(', ')}"
