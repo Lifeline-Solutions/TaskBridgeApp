@@ -679,17 +679,23 @@ class DefectController < ApplicationController
           )
         end
         format.html do
-          redirect_to defect_path(@defect), alert: "Cannot change status: This defect is blocked by #{@defect.blocking_defect_names}. Please unlink blocking defects first."
+          redirect_to defect_path(@defect),
+                      alert: "Cannot change status: This defect is blocked by #{@defect.blocking_defect_names}. Please unlink blocking defects first."
         end
-        format.json { render json: { success: false, message: "Cannot change status: This defect is blocked by #{@defect.blocking_defect_names}" } }
+        format.json do
+          render json: {
+            success: false,
+            message: "Cannot change status: This defect is blocked by #{@defect.blocking_defect_names}"
+          }
+        end
       end
       return
     end
 
     status = Status.find(params[:status_id])
 
+    # Handle special case: Failed QA
     if status.name.strip.downcase == 'failed qa'
-      # DO NOT persist the status yet; we need a reason
       respond_to do |format|
         format.turbo_stream do
           render turbo_stream: turbo_stream.replace(
@@ -703,22 +709,28 @@ class DefectController < ApplicationController
       return
     end
 
-    # Non-Failed QA: commit the status change now
+    # Proceed with normal status change
     @defect.transaction do
       @defect.statuses.clear
       @defect.statuses << status
+
+      # Log event after successful status update
+      log_event(
+        @defect,
+        current_user,
+        'Status Changed',
+        "Defect status was changed to #{status.name} by #{current_user.name} at #{Time.now.strftime('%H:%M on %d-%m-%Y')}"
+      )
     end
 
-    log_event(
-      @defect, current_user, 'Status Changed',
-      "Defect Status was changed to #{status.name} by #{current_user.name} at #{Time.now.strftime('%H:%M of %d-%m-%Y')}"
-    )
-
+    # Respond to the request
     respond_to do |format|
       format.turbo_stream do
         render turbo_stream: [
           turbo_stream.replace('modal', partial: 'defect/modal_empty'),
-          turbo_stream.replace("defect_status_#{@defect.id}", partial: 'defect/status_badge', locals: { defect: @defect })
+          turbo_stream.replace("defect_status_#{@defect.id}",
+                              partial: 'defect/status_badge',
+                              locals: { defect: @defect })
         ]
       end
       format.html { redirect_to defect_path(@defect), notice: 'Defect status was successfully updated.' }
