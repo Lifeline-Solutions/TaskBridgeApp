@@ -33,16 +33,4 @@
       </div>
     </div>
   </div>
-  <!-- Search on the right -->
-  <div class="grid col-span-1 justify-end">
-    <div class="flex flex-col md:flex-row items-start md:items-center w-full">
-      <%= form_with url: defect_path(@defect), method: :get, class: 'flex gap-2' do |f| %>
-        <%= f.text_field :query, placeholder: "Search ", class: "border bg-white dark:bg-gray-800  border-[#3F8CFF] p-1 hover:border-[#3A81EB] border-2 rounded-lg" %>
-        <%= f.submit "Search", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100 mr-2'  %>
-      <% end %>
-      <%= form_with url: defect_path(@defect), method: :get, class: 'flex' do |f| %>
-        <%= f.submit "Clear", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100'  %>
-      <% end %>
-    </div>
-  </div>
 </div>
