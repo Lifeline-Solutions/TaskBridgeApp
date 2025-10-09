@@ -1,30 +1,513 @@
-<div class="grid grid-cols-2">
-  <div class="col-span-1">
-    <div class="flex gap-1">
-      <%= button_to root_path, method: :get, class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-md text-slate-100', id: 'button' do %>
-        &#8656; Back
-      <% end %>
+<div class="container mx-auto px-4 py-8">
+  <div class="grid grid-cols-2 mb-6">
+    <div class="col-span-1">
+      <div class="flex gap-1">
+        <%= button_to root_path, method: :get, class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-md text-slate-100', id: 'button' do %>
+          &#8656; Back
+        <% end %>
 
-      <!-- Draft Defects button -->
-      <%= button_to 'Draft Defects', drafts_defect_index_path, method: :get,
-                    class: 'bg-gray-600 hover:bg-gray-700 p-2 rounded-md font-bold rounded-lg text-slate-100',
-                    id: 'button' %>
+        <!-- Draft Defects button -->
+        <%= button_to 'Draft Defects', drafts_defect_index_path, method: :get,
+                      class: 'bg-gray-600 hover:bg-gray-700 p-2 rounded-md font-bold rounded-lg text-slate-100',
+                      id: 'button' %>
+      </div>
     </div>
-  </div>
 
-  <!-- Right side: search + filter -->
-  <div class="grid col-span-1 justify-end">
-    <div class="flex flex-col md:flex-row items-start md:items-center w-full gap-2">
-      <!-- Search -->
-      <%= form_with url: defect_index_path, method: :get, class: 'flex gap-2' do |f| %>
-        <%= f.text_field :query, value: params[:query], placeholder: "Search", class: "border border-gray-300 px-5 pr-10 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100" %>
-        <%= f.submit "Search", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
-      <% end %>
+    <!-- Right side: search + filter -->
+    <div class="grid col-span-1 justify-end">
+      <div class="flex flex-col md:flex-row items-start md:items-center w-full gap-2">
+        <!-- Search -->
+        <%= form_with url: defect_index_path, method: :get, class: 'flex gap-2' do |f| %>
+          <%= f.text_field :query, value: params[:query], placeholder: "Search", class: "border border-gray-300 px-5 pr-10 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100" %>
+          <%= f.submit "Search", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
+        <% end %>
 
-      <!-- Clear button -->
-      <%= form_with url: defect_index_path, method: :get, class: 'flex' do |f| %>
-        <%= f.submit "Clear", class: 'ml-2 bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
-      <% end %>
+        <!-- Clear button -->
+        <%= form_with url: defect_index_path, method: :get, class: 'flex' do |f| %>
+          <%= f.submit "Clear", class: 'ml-2 bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
+        <% end %>
+
+        <!-- Filter Dropdown -->
+        <div class="relative">
+          <button id="filterDropdownButton" class="flex items-center text-sm hover:text-blue-600">
+            <svg class="w-8 h-8 mr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
+            </svg>
+            Filter
+          </button>
+
+          <!-- Filter Dropdown Menu -->
+          <div id="filterDropdown" class="<%= @filter_open ? '' : 'hidden' %> absolute bg-white dark:bg-gray-700 right-0 mt-2 w-64 origin-top-right rounded-md shadow-lg border border-gray-200 z-10">
+            <%= form_with url: defect_index_path, method: :get, class: 'p-2 space-y-2', id: 'filter-form' do |f| %>
+              <!-- Hidden field to keep filter open -->
+              <%= hidden_field_tag :filter_open, 'true' %>
+              
+              <!-- Product Filter -->
+              <div>
+                <%= label_tag :product_id, 'Product', class: 'block font-medium mb-1 text-sm border-gray-300 dark:bg-gray-500' %>
+                <%= select_tag :product_id, 
+                      options_for_select(
+                        [['Select Product...', '']] + 
+                        @qa_products.map { |p| 
+                          display_name = "#{p.client&.name} #{p.groupwares&.first&.name}".strip
+                          display_name = p.document_name if display_name.blank?
+                          [display_name.truncate(30), p.id] 
+                        }, 
+                        params[:product_id]
+                      ),
+                      class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded product-select",
+                      onchange: "handleProductChange(this)" %>
+              </div>
+
+              <!-- Only show other filters if product is selected -->
+              <% if params[:product_id].present? %>
+                <!-- Order Filter -->
+                <div>
+                  <%= label_tag :order, 'Sort By', class: 'block font-medium mb-1 text-sm border-gray-300 dark:bg-gray-500' %>
+                  <%= select_tag :order, options_for_select([['Latest First', 'desc'], ['Oldest First', 'asc']], params[:order]),
+                                class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
+                </div>
+
+                <!-- Date Range -->
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <%= label_tag :start_date, 'From', class: 'block font-medium mb-1 text-sm border-gray-300 dark:bg-gray-500' %>
+                    <%= date_field_tag :start_date, params[:start_date], class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
+                  </div>
+                  <div>
+                    <%= label_tag :end_date, 'To', class: 'block font-medium mb-1 text-sm border-gray-300 dark:bg-gray-500' %>
+                    <%= date_field_tag :end_date, params[:end_date], class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
+                  </div>
+                </div>
+
+                <!-- Status Filter (checkbox multi-select) -->
+                <div>
+                  <%= label_tag 'status[]', 'Status', class: 'block text-sm border-gray-300 dark:bg-gray-500 font-medium mb-1' %>
+                  <div class="relative inline-block text-left w-full">
+                    <button type="button"
+                            id="statusDropdownButton"
+                            class="w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded text-left inline-flex justify-between items-center"
+                            onclick="document.getElementById('statusDropdown').classList.toggle('hidden')">
+                      Filter by Status
+                      <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M19 9l-7 7-7-7"/>
+                      </svg>
+                    </button>
+
+                    <div id="statusDropdown"
+                        class="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg w-full hidden">
+                      <div class="p-2 max-h-60 overflow-y-auto space-y-2">
+                        <% selected_statuses = Array(params[:status]).map { |s| s.to_s.downcase } %>
+                        <% @statuses.each do |status| %>
+                          <div class="flex items-center">
+                            <%= check_box_tag 'status[]',
+                                              status.name,
+                                              selected_statuses.include?(status.name.downcase),
+                                              id: "status_#{status.name.parameterize}",
+                                              class: "mr-2" %>
+                            <%= label_tag "status_#{status.name.parameterize}", status.name.capitalize, class: "text-sm" %>
+                          </div>
+                        <% end %>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Priority Filter -->
+                <div>
+                  <%= label_tag :priority, 'Priority', class: 'block text-sm border-gray-300 dark:bg-gray-500 font-medium mb-1' %>
+                  <%= select_tag :priority, options_for_select(['SEVERITY 1', 'SEVERITY 2', 'SEVERITY 3', 'SEVERITY 4'], params[:priority]),
+                                include_blank: 'All Priorities',
+                                class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
+                </div>
+
+                <!-- Assignee Filter -->
+                <div>
+                  <%= label_tag :user_id, 'Assignee', class: 'block text-xs font-medium mb-1' %>
+                  <%= select_tag :user_id, 
+                        options_for_select([['All Assignees', '']] + @assignees.map { |a| ["#{a.first_name} #{a.last_name}", a.id] }, params[:user_id]),
+                        include_blank: false,
+                        class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
+                </div>
+
+                <!-- QA Module Filter -->
+                <div>
+                  <%= label_tag :qa_module_id, 'Module', class: 'block text-xs font-medium mb-1' %>
+                  <%= select_tag :qa_module_id,
+                        options_for_select([['All Modules', '']] + @qa_modules.map { |m| [m.name, m.id] }, params[:qa_module_id]),
+                        class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded qa-module-select",
+                        onchange: "handleModuleChange(this.value)" %>
+                </div>
+
+                <!-- Submodule Filter -->
+                <div>
+                  <%= label_tag :submodule_id, 'Submodule', class: 'block text-xs font-medium mb-1' %>
+                  <%= select_tag :submodule_id,
+                        options_for_select([['All Submodules', '']] + @submodules.map { |s| [s.name, s.id] }, params[:submodule_id]),
+                        class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded",
+                        id: 'submodule_id' %>
+                </div>
+
+                <!-- Banking Type Filter -->
+                <div>
+                  <%= label_tag :banking_type_id, 'Banking Type', class: 'block text-xs font-medium mb-1' %>
+                  <%= select_tag :banking_type_id,
+                                options_for_select([['All Banking Types', '']] + @banking_types.map { |b| [b.name, b.id] }, params[:banking_type_id]),
+                                class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
+                </div>
+
+                <!-- Labels filter -->
+                <div class="mb-4">
+                  <label for="label-search" class="block text-sm font-medium text-gray-700">Labels</label>
+                  <div id="label-select" class="relative border border-gray-300 rounded-md shadow-sm bg-white">
+                    <!-- Search input -->
+                    <input type="text"
+                          id="label-search"
+                          class="w-full px-3 py-2 focus:outline-none"
+                          placeholder="Type to search labels...">
+
+                    <!-- Dropdown list -->
+                    <div id="label-dropdown"
+                        class="absolute z-10 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-40 overflow-y-auto hidden">
+                      <% @labels.each do |label| %>
+                        <div class="dropdown-item px-3 py-2 cursor-pointer hover:bg-gray-100"
+                            data-id="<%= label.id %>"
+                            data-name="<%= label.name %>">
+                          <%= label.name %>
+                        </div>
+                      <% end %>
+                    </div>
+
+                    <!-- Selected labels (tags) -->
+                    <div id="selected-labels" class="flex flex-wrap gap-2 p-2"></div>
+
+                    <!-- Hidden inputs -->
+                    <div id="hidden-labels"></div>
+                  </div>
+                </div>
+
+                <!-- Apply button to go to index_show -->
+                <div class="pt-2 flex justify-between">
+                  <button type="button" 
+                          onclick="handleViewDefects()" 
+                          class="px-3 py-1 text-sm bg-blue-600 rounded-r-lg border border-blue-600 hover:bg-blue-700 focus:outline-none text-white">
+                    View Defects
+                  </button>
+                  <%= link_to 'Reset', defect_index_path, class: 'px-3 py-1 text-sm bg-red-600 rounded-r-lg border border-red-600 hover:bg-red-700 focus:outline-none text-white' %>
+                </div>
+              <% else %>
+                <!-- Message when no product selected -->
+                <div class="text-sm text-gray-500 text-center py-4">
+                  Select a product to view filter options
+                </div>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
+
+<script>
+  // ========== FILTER DROPDOWN MANAGEMENT ==========
+  document.addEventListener("turbo:load", function () {
+    const filterButton = document.getElementById("filterDropdownButton");
+    const filterDropdown = document.getElementById("filterDropdown");
+
+    // Remove any previously attached event listeners (cleanup)
+    const newButton = filterButton.cloneNode(true);
+    if (filterButton && filterButton.parentNode) {
+      filterButton.parentNode.replaceChild(newButton, filterButton);
+    }
+
+    const newDropdown = filterDropdown.cloneNode(true);
+    if (filterDropdown && filterDropdown.parentNode) {
+      filterDropdown.parentNode.replaceChild(newDropdown, filterDropdown);
+    }
+
+    // Re-query after DOM replacement
+    const button = document.getElementById("filterDropdownButton");
+    const dropdown = document.getElementById("filterDropdown");
+
+    if (button && dropdown) {
+      button.addEventListener("click", function (e) {
+        e.stopPropagation();
+        dropdown.classList.toggle("hidden");
+      });
+
+      document.addEventListener("click", function (e) {
+        if (!dropdown.contains(e.target) && !button.contains(e.target)) {
+          dropdown.classList.add("hidden");
+        }
+      });
+
+      dropdown.addEventListener("click", function (e) {
+        e.stopPropagation();
+      });
+    }
+  });
+
+  // ========== LABELS FILTER MANAGEMENT ==========
+  document.addEventListener("turbo:load", () => {
+    const searchInput   = document.getElementById("label-search");
+    const dropdown      = document.getElementById("label-dropdown");
+    const selectedBox   = document.getElementById("selected-labels");
+    const hiddenInputs  = document.getElementById("hidden-labels");
+
+    if (searchInput && dropdown) {
+      // Filter dropdown items as user types
+      searchInput.addEventListener("input", () => {
+        const query = searchInput.value.toLowerCase();
+        dropdown.querySelectorAll(".dropdown-item").forEach(item => {
+          item.classList.toggle("hidden", !item.dataset.name.toLowerCase().includes(query));
+        });
+        dropdown.classList.remove("hidden");
+      });
+
+      // Handle selecting a label
+      dropdown.addEventListener("click", e => {
+        if (!e.target.classList.contains("dropdown-item")) return;
+
+        const id   = e.target.dataset.id;
+        const name = e.target.dataset.name;
+
+        // Prevent duplicates
+        if (document.getElementById(`label-tag-${id}`)) return;
+
+        // Create tag
+        const tag = document.createElement("span");
+        tag.id = `label-tag-${id}`;
+        tag.className = "bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-xs flex items-center gap-1";
+        tag.innerHTML = `${name} <button type="button" data-id="${id}" class="remove-tag text-red-500">×</button>`;
+        selectedBox.appendChild(tag);
+
+        // Hidden input
+        const hidden = document.createElement("input");
+        hidden.type = "hidden";
+        hidden.name = "label_ids[]";
+        hidden.value = id;
+        hidden.id = `label-hidden-${id}`;
+        hiddenInputs.appendChild(hidden);
+
+        // Reset input & hide dropdown
+        searchInput.value = "";
+        dropdown.classList.add("hidden");
+      });
+
+      // Remove tag
+      selectedBox.addEventListener("click", e => {
+        if (!e.target.classList.contains("remove-tag")) return;
+        const id = e.target.dataset.id;
+        document.getElementById(`label-tag-${id}`).remove();
+        document.getElementById(`label-hidden-${id}`).remove();
+      });
+
+      // Hide dropdown when clicking outside
+      document.addEventListener("click", e => {
+        if (document.getElementById("label-select") && !document.getElementById("label-select").contains(e.target)) {
+          dropdown.classList.add("hidden");
+        }
+      });
+    }
+  });
+
+  // ========== PRODUCT SELECTION LOGIC ==========
+  function handleProductChange(selectElement) {
+    const form = selectElement.closest('form');
+    const hiddenInput = form.querySelector('input[name="filter_open"]');
+    if (!hiddenInput) {
+      const newInput = document.createElement('input');
+      newInput.type = 'hidden';
+      newInput.name = 'filter_open';
+      newInput.value = 'true';
+      form.appendChild(newInput);
+    }
+    
+    // For product selection, submit to current page (index) to show filter options
+    form.submit();
+  }
+
+  // ========== MODULE AND SUBMODULE MANAGEMENT ==========
+  function handleModuleChange(moduleId) {
+    // Update submodules but don't submit the form
+    updateSubmodules(moduleId, false);
+  }
+
+  function updateSubmodules(moduleId, shouldSubmit = false) {
+    console.log('updateSubmodules called with:', moduleId, 'shouldSubmit:', shouldSubmit);
+    
+    const submoduleSelect = document.getElementById('submodule_id');
+    
+    if (!moduleId) {
+      // Clear submodules if no module selected
+      submoduleSelect.innerHTML = '<option value="">All Submodules</option>';
+      submoduleSelect.disabled = false;
+      
+      // Only submit if explicitly requested
+      if (shouldSubmit) {
+        submitToIndexShow();
+      }
+      return;
+    }
+    
+    // Show loading state
+    submoduleSelect.innerHTML = '<option value="">Loading submodules...</option>';
+    submoduleSelect.disabled = true;
+    
+    // Make AJAX call to get submodules
+    fetch(`/defect/get_submodules?module_id=${moduleId}`, {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
+    .then(submodules => {
+      console.log('Received submodules:', submodules);
+      
+      // Update submodule dropdown
+      updateSubmoduleDropdown(submodules);
+      
+      // Only submit if explicitly requested
+      if (shouldSubmit) {
+        submitToIndexShow();
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching submodules:', error);
+      submoduleSelect.innerHTML = '<option value="">Error loading submodules</option>';
+      
+      // Only submit if explicitly requested
+      if (shouldSubmit) {
+        submitToIndexShow();
+      }
+    });
+  }
+
+  function updateSubmoduleDropdown(submodules) {
+    const submoduleSelect = document.getElementById('submodule_id');
+    if (submoduleSelect) {
+      // Clear existing options except the first one
+      submoduleSelect.innerHTML = '<option value="">All Submodules</option>';
+      
+      // Add new submodule options from JSON response
+      submodules.forEach(submodule => {
+        const option = document.createElement('option');
+        option.value = submodule.id;
+        option.textContent = submodule.name;
+        submoduleSelect.appendChild(option);
+      });
+      
+      // If there are no submodules, disable the dropdown
+      if (submodules.length === 0) {
+        submoduleSelect.disabled = true;
+      } else {
+        submoduleSelect.disabled = false;
+      }
+    }
+  }
+
+  function clearSubmoduleDropdown() {
+    const submoduleSelect = document.getElementById('submodule_id');
+    if (submoduleSelect) {
+      submoduleSelect.innerHTML = '<option value="">All Submodules</option>';
+      submoduleSelect.disabled = false;
+    }
+  }
+
+  // ========== VIEW DEFECTS BUTTON LOGIC ==========
+  function handleViewDefects() {
+    submitToIndexShow();
+  }
+
+  function submitToIndexShow() {
+    const form = document.getElementById('filter-form');
+    if (form) {
+      // Change form action to index_show for the final submission
+      form.action = '<%= index_show_defect_index_path %>';
+      
+      // Ensure filter_open parameter is included
+      let filterOpenInput = form.querySelector('input[name="filter_open"]');
+      if (!filterOpenInput) {
+        filterOpenInput = document.createElement('input');
+        filterOpenInput.type = 'hidden';
+        filterOpenInput.name = 'filter_open';
+        filterOpenInput.value = 'true';
+        form.appendChild(filterOpenInput);
+      }
+      
+      // Submit the form to index_show
+      form.submit();
+    }
+  }
+
+  // ========== INITIALIZATION ==========
+  // Initialize submodules when page loads if a module is already selected
+  document.addEventListener('DOMContentLoaded', function() {
+    const selectedModuleId = '<%= params[:qa_module_id] %>';
+    if (selectedModuleId && selectedModuleId !== '') {
+      console.log('Initializing with module:', selectedModuleId);
+      // Don't trigger form submission on page load
+      initializeSubmodules(selectedModuleId);
+    }
+    
+    // Initialize selected labels from params
+    initializeSelectedLabels();
+  });
+
+  function initializeSubmodules(moduleId) {
+    if (!moduleId) return;
+    
+    const submoduleSelect = document.getElementById('submodule_id');
+    
+    fetch(`/defect/get_submodules?module_id=${moduleId}`, {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(submodules => {
+      submoduleSelect.innerHTML = '<option value="">All Submodules</option>';
+      
+      submodules.forEach(submodule => {
+        const option = document.createElement('option');
+        option.value = submodule.id;
+        option.textContent = submodule.name;
+        
+        // Select the option if it matches the current param
+        if (submodule.id === '<%= params[:submodule_id] %>') {
+          option.selected = true;
+        }
+        
+        submoduleSelect.appendChild(option);
+      });
+      
+      submoduleSelect.disabled = submodules.length === 0;
+    })
+    .catch(error => {
+      console.error('Error initializing submodules:', error);
+    });
+  }
+
+  function initializeSelectedLabels() {
+    const selectedBox = document.getElementById('selected-labels');
+    const hiddenInputs = document.getElementById('hidden-labels');
+    
+    // Get label IDs from params (this would need to be set from your controller)
+    // For now, this is a placeholder - you might need to pass label data differently
+    const selectedLabelIds = []; // You would populate this from your params
+    
+    if (selectedLabelIds.length > 0) {
+      // Fetch label details and populate the selected labels
+      // This would require additional server-side implementation
+    }
+  }
+</script>

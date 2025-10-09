@@ -149,18 +149,20 @@
               <div>
                 <%= label_tag :qa_module_id, 'Module', class: 'block text-xs font-medium mb-1' %>
                 <%= select_tag :qa_module_id,
-                               options_from_collection_for_select(@qa_modules, :id, :name, params[:qa_module_id]),
-                               include_blank: 'All Modules',
-                               class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
+                              options_from_collection_for_select(@qa_modules, :id, :name, params[:qa_module_id]),
+                              include_blank: 'All Modules',
+                              class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded",
+                              onchange: "this.form.submit()" %>
               </div>
 
               <!-- NEW: Submodule Filter -->
               <div>
                 <%= label_tag :submodule_id, 'Submodule', class: 'block text-xs font-medium mb-1' %>
                 <%= select_tag :submodule_id,
-                               options_from_collection_for_select(@submodules, :id, :name, params[:submodule_id]),
-                               include_blank: 'All Submodules',
-                               class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
+                              options_from_collection_for_select(@submodules, :id, :name, params[:submodule_id]),
+                              include_blank: 'All Submodules',
+                              class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded",
+                              onchange: "this.form.submit()" %>
               </div>
 
               <!-- NEW: Banking Type Filter -->

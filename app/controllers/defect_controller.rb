@@ -28,7 +28,7 @@ class DefectController < ApplicationController
     qa_product_ids = @qa_products.map(&:id)
 
     if qa_product_ids.any?
-      # Base defects query for QA products
+      # Base defects query for QA products - NO ORDERING YET
       raw_defects = Defect.published
         .includes(:users, :qa_module, :submodule, :banking_type, :statuses, product: %i[client groupwares])
         .where(product_id: qa_product_ids)
@@ -36,18 +36,22 @@ class DefectController < ApplicationController
       # Filter defects for non-admin users
       raw_defects = raw_defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa)
 
+      # Apply additional filters (this adds ordering)
+      raw_defects = apply_defect_filters(raw_defects)
+
       # Status filter (defect status)
       raw_defects = raw_defects.joins(:statuses).where(statuses: { id: params[:status] }) if params[:status].present?
 
-      # Group defects by product for display
-      @defects_by_product = raw_defects.group_by(&:product_id)
+      # Get defect counts FIRST - before any grouping/ordering issues
+      @qa_product_defect_counts = raw_defects.except(:order).group(:product_id).count
 
-      # Defect counts for each product
-      @qa_product_defect_counts = raw_defects.group(:product_id).count
+      # For grouping defects by product, remove ordering to avoid PG grouping error
+      defects_for_grouping = raw_defects.except(:order)
+      @defects_by_product = defects_for_grouping.group_by(&:product_id)
 
       # For status dropdown - collect statuses from the defects we're showing
       @statuses = Status.joins(:defects)
-        .where(defects: { id: raw_defects.pluck(:id) })
+        .where(defects: { id: raw_defects.except(:order).pluck(:id) })
         .distinct
         .order(:name)
     else
@@ -55,6 +59,73 @@ class DefectController < ApplicationController
       @qa_product_defect_counts = {}
       @statuses = Status.none
     end
+
+    # NEW: Get filter options based on selected product (MIRRORING index_show)
+    @selected_product_id = params[:product_id]
+    @selected_module_id = params[:qa_module_id]
+
+    # Create base scope for filter options
+    if @selected_product_id.present?
+      defects_scope = Defect.published.where(product_id: @selected_product_id)
+    elsif qa_product_ids.any?
+      defects_scope = Defect.published.where(product_id: qa_product_ids)
+    end
+
+    # Apply user filter for non-admin users
+    defects_scope = defects_scope.joins(:users).where(users: { id: current_user.id }) if defects_scope && !current_user.has_any_role?(:admin, :observer, :qa)
+
+    # Get filter options from defects scope
+    if defects_scope
+      # Remove ordering for filter options queries
+      filtered_ids = defects_scope.except(:select, :order, :limit, :offset).select(:id)
+
+      # Get modules (qa_modules with no parent_id)
+      @qa_modules = QaModule.joins(:defects)
+        .where(defects: { id: filtered_ids })
+        .where(parent_id: nil) # Only modules, not submodules
+        .distinct
+        .order(:name)
+
+      # Handle submodules based on selected module - FIXED VERSION
+      @submodules = if @selected_module_id.present?
+                      # Get ALL submodules for the selected module (not just those with defects)
+                      # This ensures the dropdown shows all available submodules even if they don't have defects yet
+                      QaModule.where(parent_id: @selected_module_id)
+                        .order(:name)
+                    else
+                      # Show all submodules for the product (all qa_modules with parent_id not nil)
+                      QaModule.joins(:defects)
+                        .where(defects: { id: filtered_ids })
+                        .where.not(parent_id: nil) # All submodules
+                        .distinct
+                        .order(:name)
+                    end
+
+      @banking_types = BankingType.joins(:defects)
+        .where(defects: { id: filtered_ids })
+        .distinct
+        .order(:name)
+
+      @labels = Label.joins(:defects)
+        .where(defects: { id: filtered_ids })
+        .distinct
+        .order(:name)
+
+      @assignees = User.joins(:defects)
+        .where(defects: { id: filtered_ids })
+        .distinct
+        .order(:first_name, :last_name)
+    else
+      # Initialize empty arrays if no defects scope
+      @qa_modules = []
+      @submodules = []
+      @banking_types = []
+      @labels = []
+      @assignees = []
+    end
+
+    # Track if filter should be open
+    @filter_open = params[:filter_open].present?
 
     # Paginate the QA products instead of defect groups
     @per_page = 20
@@ -115,11 +186,46 @@ class DefectController < ApplicationController
     # Assignee filter
     @defects = @defects.joins(:users).where(users: { id: params[:user_id] }) if params[:user_id].present?
 
-    # NEW: Module/Submodule/BankingType filters (by id)
-    @defects = @defects.where(qa_module_id: params[:qa_module_id]) if params[:qa_module_id].present?
-    @defects = @defects.where(qa_module_id: params[:submodule_id]) if params[:submodule_id].present?
+    # FIXED: Module/Submodule filtering logic with intelligent fallback
+    if params[:qa_module_id].present? && params[:submodule_id].present?
+      # Both parent module and submodule selected
+      submodule_defects = @defects.where(qa_module_id: params[:submodule_id])
+      
+      # Check if there are any defects for the specific submodule
+      if submodule_defects.exists?
+        # Use the specific submodule filter
+        @defects = submodule_defects
+        @used_submodule_filter = true
+      else
+        # Fallback: Check if parent module has defects
+        parent_module_defects = @defects.where(qa_module_id: params[:qa_module_id])
+        if parent_module_defects.exists?
+          # Use parent module defects since submodule has none
+          @defects = parent_module_defects
+          @used_parent_fallback = true
+          @requested_submodule = QaModule.find_by(id: params[:submodule_id])
+        else
+          # Neither submodule nor parent module has defects
+          @defects = submodule_defects
+          @used_submodule_filter = true
+        end
+      end
+    elsif params[:qa_module_id].present?
+      # Only parent module selected - include all its submodules
+      parent_module = QaModule.find_by(id: params[:qa_module_id])
+      if parent_module
+        submodule_ids = parent_module.children.pluck(:id)
+        all_module_ids = [parent_module.id] + submodule_ids
+        @defects = @defects.where(qa_module_id: all_module_ids)
+      else
+        @defects = @defects.where(qa_module_id: params[:qa_module_id])
+      end
+    elsif params[:submodule_id].present?
+      # Only submodule selected without parent module
+      @defects = @defects.where(qa_module_id: params[:submodule_id])
+    end
+
     @defects = @defects.where(banking_type_id: params[:banking_type_id]) if params[:banking_type_id].present?
-    @statuses = Status.joins(:defects).where(defects: { id: @defects.ids }).distinct.order(:name)
 
     # Date range filters
     start_date = params[:start_date].presence
@@ -145,14 +251,14 @@ class DefectController < ApplicationController
       q = "%#{params[:query].to_s.strip}%"
       @defects = @defects.left_joins(:users, :qa_module, :banking_type, product: %i[client groupwares]).where(
         "defects.summary ILIKE :q
-         OR defects.defect_unique ILIKE :q
-         OR defects.priority ILIKE :q
-         OR users.first_name ILIKE :q
-         OR users.last_name ILIKE :q
-         OR clients.name ILIKE :q
-         OR groupwares.name ILIKE :q
-         OR qa_modules.name ILIKE :q
-         OR banking_types.name ILIKE :q",
+        OR defects.defect_unique ILIKE :q
+        OR defects.priority ILIKE :q
+        OR users.first_name ILIKE :q
+        OR users.last_name ILIKE :q
+        OR clients.name ILIKE :q
+        OR groupwares.name ILIKE :q
+        OR qa_modules.name ILIKE :q
+        OR banking_types.name ILIKE :q",
         q: q
       )
     end
@@ -174,17 +280,26 @@ class DefectController < ApplicationController
       .distinct
       .order(:name)
 
-    # NEW: option lists for QA Module, Submodule, Banking Type
+    # NEW: option lists for QA Module, Submodule, Banking Type - UPDATED SUBMODULE LOGIC
     @qa_modules = QaModule.joins(:defects)
       .where(defects: { id: filtered_ids })
+      .where(parent_id: nil) # Only parent modules
       .distinct
       .order(:name)
 
-    @submodules = QaModule.joins(:defects)
-      .where(defects: { id: filtered_ids })
-      .where.not(parent_id: nil)
-      .distinct
-      .order(:name)
+    # Handle submodules based on selected module
+    @submodules = if params[:qa_module_id].present?
+                    # Get ALL submodules for the selected module (not just those with defects)
+                    QaModule.where(parent_id: params[:qa_module_id])
+                      .order(:name)
+                  else
+                    # Show all submodules for the product (all qa_modules with parent_id not nil)
+                    QaModule.joins(:defects)
+                      .where(defects: { id: filtered_ids })
+                      .where.not(parent_id: nil) # All submodules
+                      .distinct
+                      .order(:name)
+                  end
 
     @banking_types = BankingType.joins(:defects)
       .where(defects: { id: filtered_ids })
@@ -661,9 +776,19 @@ class DefectController < ApplicationController
   end
 
   def get_submodules
-    parent_module = QaModule.find(params[:module_id])
-    @submodules = parent_module.submodules.active
-    render json: @submodules
+    if params[:module_id].present?
+      parent_module = QaModule.find_by(id: params[:module_id])
+      @submodules = if parent_module
+                      # Use .children instead of .submodules if that's your association name
+                      parent_module.children.order(:name)
+                    else
+                      []
+                    end
+    else
+      @submodules = []
+    end
+
+    render json: @submodules.as_json(only: %i[id name])
   end
 
   def update_priority
@@ -1043,6 +1168,46 @@ class DefectController < ApplicationController
   end
 
   private
+
+  def apply_defect_filters(defects_scope)
+    # Priority filter
+    defects_scope = defects_scope.where(priority: params[:priority]) if params[:priority].present?
+
+    # Assignee filter
+    defects_scope = defects_scope.joins(:users).where(users: { id: params[:user_id] }) if params[:user_id].present?
+
+    # Banking type filter
+    defects_scope = defects_scope.where(banking_type_id: params[:banking_type_id]) if params[:banking_type_id].present?
+
+    # Date range filter
+    if params[:start_date].present? && params[:end_date].present?
+      start_date = Date.parse(params[:start_date])
+      end_date = Date.parse(params[:end_date])
+      defects_scope = defects_scope.where(created_at: start_date.beginning_of_day..end_date.end_of_day)
+    end
+
+    # QA Module and Submodule filter - THIS IS THE KEY FIX
+    if params[:qa_module_id].present?
+      if params[:submodule_id].present?
+        # Filter by specific submodule
+        defects_scope = defects_scope.where(qa_module_id: params[:submodule_id])
+      else
+        # Filter by parent module - include all its submodules
+        parent_module = QaModule.find_by(id: params[:qa_module_id])
+        if parent_module
+          submodule_ids = parent_module.children.pluck(:id)
+          all_module_ids = [parent_module.id] + submodule_ids
+          defects_scope = defects_scope.where(qa_module_id: all_module_ids)
+        else
+          defects_scope = defects_scope.where(qa_module_id: params[:qa_module_id])
+        end
+      end
+    end
+
+    # Ordering
+    order = params[:order] == 'asc' ? :asc : :desc
+    defects_scope.order(created_at: order)
+  end
 
   def authorize_view_failure_reports!
     return if current_user.has_role?(:qa) || current_user.has_role?(:hod) || current_user.has_role?(:admin)
