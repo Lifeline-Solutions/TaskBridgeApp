@@ -15,6 +15,10 @@
           <span class="px-2 py-1 text-xs font-medium rounded <%= priority_badge_class(@defect.priority) %>">
             <%= @defect.priority %>
           </span>
+          /
+          <span class="py-1 px-2 font-medium">
+            <%= @defect.creator.name %>
+          </span>
 
           <% if @defect.retest_count.to_i > 1 %>
             /
