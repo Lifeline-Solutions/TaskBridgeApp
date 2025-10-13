@@ -184,7 +184,7 @@ class IssuesController < ApplicationController
   end
 
   def send_email_notifications(_issue, sender)
-    selected_users = User.where(id: params.dig(:team, :user_ids)) # Safely fetch user IDs
+    selected_users = User.where(id: params.dig(:team, :user_ids))
     return if selected_users.blank?
 
     selected_users.each do |user|
@@ -196,7 +196,19 @@ class IssuesController < ApplicationController
           priority: :normal,
           type: 'mention_issue'
         )
-        .use_template(view: 'user_mailer/mention_user_in_issue', assigns: { user:, issue: @issue, sender:, project: @project, ticket: @ticket })
+        # This is horrible fix and am not sure if it is good enough
+        # Warning Do not tamper with it!
+        .use_template(
+          view: 'user_mailer/mention_user_in_issue',
+          assigns: {
+            user: user,
+            issue: @issue,
+            sender: sender,
+            project: @project,
+            ticket: @ticket,
+            url: project_ticket_url(@project, @ticket)
+          }
+        )
         .set_source('ticket', @ticket.id)
         .set_party('user', sender.id)
         .send(queue: true)
