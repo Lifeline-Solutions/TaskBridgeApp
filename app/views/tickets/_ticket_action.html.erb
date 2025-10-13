@@ -1,5 +1,5 @@
 <% if @project.special && @ticket.issue == 'CHANGE REQUEST' %>
-  <% if current_user.has_role?(:admin) || current_user.has_role?(:observer) %>
+  <% if current_user.has_role?(:admin) || current_user.has_role?(:observer) || current_user.has_role?(:hod)%>
     <%= form_with url: add_status_project_ticket_path(@project, @ticket, data: { turbo: false}), local: true do %>
       <% current_status = @ticket.statuses.first&.name %>
       <div class="relative flex flex-row gap-2">
