@@ -729,14 +729,6 @@ class DefectController < ApplicationController
       )
     end
 
-    # Log event after successful status update
-    log_event(
-      @defect,
-      current_user,
-      'Status Changed',
-      "Defect status was changed to #{status.name} by #{current_user.name} at #{Time.now.strftime('%H:%M on %d-%m-%Y')}"
-    )
-
     # Respond to the request
     respond_to do |format|
       format.turbo_stream do
@@ -825,14 +817,6 @@ class DefectController < ApplicationController
         .event('defect.update_priority')
         .with_properties(priority: @defect.priority)
         .log("Updated priority to #{@defect.priority} for Defect ##{@defect.id}")
-
-      # Add history log
-      log_event(
-        @defect,
-        current_user,
-        'Priority Updated',
-        "Priority was updated to #{@defect.priority} by #{current_user.name} at #{Time.now.strftime('%H:%M of %d-%m-%Y')}"
-      )
 
       # Add history log and trigger notification
       log_event(
