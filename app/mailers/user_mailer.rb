@@ -259,4 +259,35 @@ class UserMailer < ApplicationMailer
     @url = defect_url(@defect, Rails.application.config.action_mailer.default_url_options)
     mail(to: @user.respond_to?(:email) ? @user.email : @user, subject: "Defect with Defect ID #{@defect.defect_unique} Assigned")
   end
+
+  ACTION_TITLES = {
+    "publish" => "Defect Published",
+    "defect_status" => "Status Updated", 
+    "update_priority" => "Priority Changed",
+    "update_label" => "Label Updated",
+    "unlink_defect" => "Defect Unlinked",
+    "link_defect" => "Defect Linked",
+    "attachment_added" => "Attachment Added",
+    "remove_attachment" => "Attachment Removed",
+    "add_label" => "Label Added",
+    "remove_label" => "Label Removed"
+  }.freeze
+
+  def defect_action_email(defect, recipient_emails, actor, action_name)
+    return if recipient_emails.blank?
+
+    @defect = defect
+    @actor = actor
+    @action_name = action_name.titleize
+    @url = defect_url(@defect, Rails.application.config.action_mailer.default_url_options)
+
+    # Build subject line dynamically
+    title = ACTION_TITLES[action_name] || action_name.titleize
+    subject_text = "[Defect #{@defect.defect_unique}] #{title} by #{@actor.name}"
+
+    mail(to: recipient_emails, subject: subject_text) do |format|
+      format.html { render 'defect_action_email' }
+      format.text { render plain: "Defect #{@defect.defect_unique} - #{@action_name} by #{@actor.name}" }
+    end
+  end
 end
