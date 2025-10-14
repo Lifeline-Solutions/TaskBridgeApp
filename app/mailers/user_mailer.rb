@@ -261,16 +261,16 @@ class UserMailer < ApplicationMailer
   end
 
   ACTION_TITLES = {
-    "publish" => "Defect Published",
-    "defect_status" => "Status Updated", 
-    "update_priority" => "Priority Changed",
-    "update_label" => "Label Updated",
-    "unlink_defect" => "Defect Unlinked",
-    "link_defect" => "Defect Linked",
-    "attachment_added" => "Attachment Added",
-    "remove_attachment" => "Attachment Removed",
-    "add_label" => "Label Added",
-    "remove_label" => "Label Removed"
+    'publish' => 'Defect Published',
+    'defect_status' => 'Status Updated',
+    'update_priority' => 'Priority Changed',
+    'update_label' => 'Label Updated',
+    'unlink_defect' => 'Defect Unlinked',
+    'link_defect' => 'Defect Linked',
+    'attachment_added' => 'Attachment Added',
+    'remove_attachment' => 'Attachment Removed',
+    'add_label' => 'Label Added',
+    'remove_label' => 'Label Removed'
   }.freeze
 
   def defect_action_email(defect, recipient_emails, actor, action_name)
