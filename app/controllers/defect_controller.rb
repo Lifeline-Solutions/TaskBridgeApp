@@ -661,6 +661,8 @@ class DefectController < ApplicationController
   def publish
     @defect = Defect.find(params[:id])
     if @defect.update(draft: false)
+      # Send notification email to the assigned and the creator of the defect
+      UserMailer.defect_action_email(@defect, @defect.users.pluck(:email), current_user, 'publish').deliver_later
       redirect_to @defect, notice: 'Defect has been published successfully.'
     else
       redirect_to @defect, alert: 'Failed to publish defect.'
@@ -722,6 +724,9 @@ class DefectController < ApplicationController
         "Defect status was changed to #{status.name} by #{current_user.name} at #{Time.now.strftime('%H:%M on %d-%m-%Y')}"
       )
     end
+
+    # Send an email notification to the creator of the defect and the assignee
+    UserMailer.defect_action_email(@defect, @defect.users.pluck(:email), current_user, 'defect_status').deliver_later
 
     # Respond to the request
     respond_to do |format|
@@ -819,6 +824,9 @@ class DefectController < ApplicationController
         'Priority Updated',
         "Priority was updated to #{@defect.priority} by #{current_user.name} at #{Time.now.strftime('%H:%M of %d-%m-%Y')}"
       )
+
+      # Send an email notificatiob
+      UserMailer.defect_action_email(@defect, @defect.users.pluck(:email), current_user, 'update_priority').deliver_later
 
       respond_to do |format|
         format.js
