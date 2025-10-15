@@ -121,7 +121,18 @@ class DefectMessagesController < ApplicationController
   private
 
   def log_event(defect, user, history_type, history)
-    DefectHistory.create(defect: defect, user: user, history_type: history_type, history: history)
+    # Always record in defect history
+    DefectHistory.create!(defect: defect, user: user, history_type: history_type, history: history)
+
+    # Gather recipients (assigned users)
+    recipients = defect.users.pluck(:email).compact.uniq
+    return if recipients.blank?
+
+    # Convert history_type (e.g. "Message Created") → "message_created"
+    action_name = history_type.parameterize.underscore
+
+    # Send async notification
+    UserMailer.defect_action_email(defect, recipients, user, action_name).deliver_later
   end
 
   def authorize_message_owner

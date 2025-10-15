@@ -270,7 +270,9 @@ class UserMailer < ApplicationMailer
     'attachment_added' => 'Attachment Added',
     'remove_attachment' => 'Attachment Removed',
     'add_label' => 'Label Added',
-    'remove_label' => 'Label Removed'
+    'remove_label' => 'Label Removed',
+    'message_created' => 'New Message Added',
+    'message_updated' => 'Message Updated'
   }.freeze
 
   def defect_action_email(defect, recipient_emails, actor, action_name)
