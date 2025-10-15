@@ -142,6 +142,7 @@ class TicketsController < ApplicationController
         # Determine recipients: current assignee and project owner
         assigned_user = @ticket.users.first || @project.user
         project_owner = @project.user
+        url = project_ticket_url(@project, @ticket)
         if @ticket.issue == 'CHANGE REQUEST'
           Messaging::EmailSender
             .send_email(
@@ -151,7 +152,10 @@ class TicketsController < ApplicationController
               priority: :normal,
               type: 'ticket_create_change_request'
             )
-            .use_template(view: 'user_mailer/create_ticket_email', assigns: { ticket: @ticket, current_user:, assigned_user: 'change@craftsilicon.com', project: @project })
+            .use_template(
+              view: 'user_mailer/create_ticket_email',
+              assigns: { ticket: @ticket, current_user: current_user, assigned_user: 'change@craftsilicon.com', project: @project, url: url }
+            )
             .set_source('ticket', @ticket.id)
             .set_party('user', current_user.id)
             .send(queue: true)
@@ -166,7 +170,7 @@ class TicketsController < ApplicationController
                 priority: :normal,
                 type: 'ticket_create_assign'
               )
-              .use_template(view: 'user_mailer/create_ticket_email', assigns: { ticket: @ticket, current_user:, assigned_user:, project: @project })
+              .use_template(view: 'user_mailer/create_ticket_email', assigns: { ticket: @ticket, current_user:, assigned_user:, project: @project, url: url })
               .set_source('ticket', @ticket.id)
               .set_party('user', assigned_user.id)
               .send(queue: true)
@@ -181,7 +185,7 @@ class TicketsController < ApplicationController
                 priority: :normal,
                 type: 'ticket_create_project_owner'
               )
-              .use_template(view: 'user_mailer/create_ticket_email', assigns: { ticket: @ticket, current_user:, assigned_user: project_owner, project: @project })
+              .use_template(view: 'user_mailer/create_ticket_email', assigns: { ticket: @ticket, current_user:, assigned_user: project_owner, project: @project, url: url })
               .set_source('ticket', @ticket.id)
               .set_party('user', project_owner.id)
               .send(queue: true)
@@ -264,6 +268,7 @@ class TicketsController < ApplicationController
         # Send notification emails only to the assignee and the project owner
         assigned_user = @ticket.users.first || @project.user
         project_owner = @project.user
+        url = project_ticket_url(@project, @ticket)
 
         if assigned_user.present?
           Messaging::EmailSender
@@ -274,7 +279,7 @@ class TicketsController < ApplicationController
               priority: :normal,
               type: 'ticket_edit_assignee'
             )
-            .use_template(view: 'user_mailer/edit_ticket_email', assigns: { user: assigned_user, ticket: @ticket, current_user:, assigned_user:, project: @project })
+            .use_template(view: 'user_mailer/edit_ticket_email', assigns: { user: assigned_user, ticket: @ticket, current_user:, assigned_user:, project: @project, url: url })
             .set_source('ticket', @ticket.id)
             .set_party('user', assigned_user.id)
             .send(queue: true)
@@ -289,7 +294,8 @@ class TicketsController < ApplicationController
               priority: :normal,
               type: 'ticket_edit_project_owner'
             )
-            .use_template(view: 'user_mailer/edit_ticket_email', assigns: { user: project_owner, ticket: @ticket, current_user:, assigned_user: project_owner, project: @project })
+            .use_template(view: 'user_mailer/edit_ticket_email', assigns: { user: project_owner, ticket: @ticket, current_user:, assigned_user: project_owner, project: @project,
+                                                                            url: url })
             .set_source('ticket', @ticket.id)
             .set_party('user', project_owner.id)
             .send(queue: true)
@@ -538,7 +544,10 @@ class TicketsController < ApplicationController
     if params[:search].present?
       search = "%#{params[:search]}%"
       @tickets = @tickets.where(
-        'projects.title ILIKE :search OR statuses.name ILIKE :search OR users.first_name ILIKE :search OR users.last_name ILIKE :search',
+        'projects.title ILIKE :search OR
+         statuses.name ILIKE :search OR
+         users.first_name ILIKE :search OR
+         users.last_name ILIKE :search',
         search: search
       )
     end
@@ -628,7 +637,10 @@ class TicketsController < ApplicationController
     if params[:search].present?
       search = "%#{params[:search]}%"
       @tickets = @tickets.where(
-        'projects.title ILIKE :search OR statuses.name ILIKE :search OR users.first_name ILIKE :search OR users.last_name ILIKE :search',
+        'projects.title ILIKE :search OR
+         statuses.name ILIKE :search OR
+         users.first_name ILIKE :search OR
+         users.last_name ILIKE :search',
         search: search
       )
     end
@@ -650,7 +662,10 @@ class TicketsController < ApplicationController
     if params[:search].present?
       search = "%#{params[:search]}%"
       @tickets = @tickets.where(
-        'projects.title ILIKE :search OR statuses.name ILIKE :search OR users.first_name ILIKE :search OR users.last_name ILIKE :search',
+        'projects.title ILIKE :search OR
+         statuses.name ILIKE :search OR
+         users.first_name ILIKE :search OR
+         users.last_name ILIKE :search',
         search: search
       )
     end

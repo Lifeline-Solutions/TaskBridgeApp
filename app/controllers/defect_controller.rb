@@ -324,9 +324,7 @@ class DefectController < ApplicationController
   end
 
   def show
-    unless current_user.has_any_role?(:admin, :observer, :qa) || Defect.joins(:users).where(id: params[:id], users: { id: current_user.id }).exists?
-      redirect_to defect_index_path, alert: 'You are not authorized to view this defect.' and return
-    end
+    redirect_to defect_index_path, alert: 'You are not authorized to view this defect.' and return unless current_user.has_any_role?(:admin, :observer, :qa) || Defect.joins(:users).where(id: params[:id], users: { id: current_user.id }).exists?
 
     @defect = Defect.find(params[:id])
 
@@ -510,14 +508,14 @@ class DefectController < ApplicationController
     # Dropdown options for product selection
     @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
       .select do |product|
-      product.statuses.any? do |status|
-        ['Pre Quality Assurance', 'End Of Quality Assurance'].include?(status.name)
+        product.statuses.any? do |status|
+          ['Pre Quality Assurance', 'End Of Quality Assurance'].include?(status.name)
+        end
+      end.map do |product|
+        client_name = product.client&.name || 'No Client'
+        groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
+        ["#{client_name} - #{groupware_names}", product.id]
       end
-    end.map do |product|
-      client_name = product.client&.name || 'No Client'
-      groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
-      ["#{client_name} - #{groupware_names}", product.id]
-    end
 
     @qa_modules = if @defect.product_id.present?
                     QaModule.where(product_id: @defect.product_id)

@@ -14,9 +14,7 @@ class MergeDuplicateLabelsJob < ApplicationJob
       (group - [survivor]).each do |dupe|
         ActiveRecord::Base.transaction do
           DefectLabel.where(label_id: dupe.id).distinct.pluck(:defect_id).each do |defect_id|
-            unless DefectLabel.exists?(defect_id: defect_id, label_id: survivor.id)
-              DefectLabel.create!(defect_id: defect_id, label_id: survivor.id, created_by: dupe.created_by, modified_by: dupe.modified_by)
-            end
+            DefectLabel.create!(defect_id: defect_id, label_id: survivor.id, created_by: dupe.created_by, modified_by: dupe.modified_by) unless DefectLabel.exists?(defect_id: defect_id, label_id: survivor.id)
           end
           # Soft delete duplicate if not already
           dupe.soft_delete!(User.find_by(id: dupe.modified_by)) unless dupe.deleted_on.present?

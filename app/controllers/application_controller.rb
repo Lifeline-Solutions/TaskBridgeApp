@@ -48,9 +48,7 @@ class ApplicationController < ActionController::Base
     end
 
     # If the user hasn't completed their profile, force them to edit it
-    if !current_user.first_login && controller_name != 'registrations' && action_name != 'edit'
-      redirect_to edit_user_registration_path, alert: 'Please complete your profile before continuing.' and return
-    end
+    redirect_to edit_user_registration_path, alert: 'Please complete your profile before continuing.' and return if !current_user.first_login && controller_name != 'registrations' && action_name != 'edit'
 
     # On profile update, set first_login and update names
     return unless controller_name == 'registrations' && action_name == 'update' && params[:user].present?

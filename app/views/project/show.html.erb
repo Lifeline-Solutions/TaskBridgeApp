@@ -59,7 +59,7 @@
         </div>
         <div class="flex flex-col">
           <h2 class="text-md font-light">Overall Rating</h2>
-          <% if @project.has_ratings? %>
+          <% if @project.ratings? %>
             <p class="text-sm font-semibold flex items-center space-x-2">
               <span><%= @project.average_servicedesk_rating.to_i %> / 5</span>
               <span class="flex">
