@@ -10,7 +10,7 @@
       )
     ) %>
     <%= raw(html.gsub(/<a([^>]*)>([@#][^<]+)<\/a>/,
-                      '<a\1 class="bg-blue-500 rounded-lg hover:underline p-2">\2</a>')
+                      '<a\1 class="bg-blue-400 text-white rounded-full hover:underline p-1">\2</a>')
         ) %>
   </span>
   <% if message.updated_at > (message.created_at + 5.seconds) %>
