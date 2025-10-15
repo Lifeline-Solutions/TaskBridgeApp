@@ -31,15 +31,18 @@
                       class: "text-xs px-2.5 py-0.5 rounded bg-blue-200 text-blue-900 hover:bg-blue-300 dark:bg-blue-700 dark:text-blue-100 hover:no-underline" do %>
             Edit
           <% end %>
-          <%= link_to 'Delete',
-              defect_defect_message_path(message.defect, message),
-              data: {
-                turbo_method: :delete,
-                turbo_confirm: 'Are you sure?',
-                turbo_frame: "_top"
-              },
-              onclick: "setTimeout(function(){ window.location.reload(); }, 500)",
-              class: "text-xs px-2.5 py-0.5 rounded bg-red-200 text-red-900 hover:bg-red-300 dark:bg-red-700 dark:text-red-100 hover:no-underline" %>
+          <% deleteDefectMesage = true %>
+          <% unless deleteDefectMesage %>
+          `  <%= link_to 'Delete',
+                defect_defect_message_path(message.defect, message),
+                data: {
+                  turbo_method: :delete,
+                  turbo_confirm: 'Are you sure?',
+                  turbo_frame: "_top"
+                },
+                onclick: "setTimeout(function(){ window.location.reload(); }, 500)",
+                class: "text-xs px-2.5 py-0.5 rounded bg-red-200 text-red-900 hover:bg-red-300 dark:bg-red-700 dark:text-red-100 hover:no-underline" %>
+          <% end %>`
         </div>
       <% end %>
     </div>

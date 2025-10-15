@@ -1,0 +1,69 @@
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    color: #333;
+    background-color: #f9f9f9;
+    margin: 0;
+    padding: 20px;
+  }
+
+  .container {
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+
+  h2 {
+    color: #0d6efd;
+  }
+
+  a {
+    color: #0d6efd;
+    text-decoration: none;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+
+  .footer {
+    margin-top: 20px;
+    font-size: 0.9em;
+    color: #666;
+  }
+</style>
+
+<div class="container">
+  <p>Hello,</p>
+
+  <p>
+    <strong><%= @actor&.name || @actor&.email || 'A user' %></strong>
+    performed the action <b>"<%= @action_name.titleize %>"</b> on
+    defect (<b>ID: <%= @defect.defect_unique %></b>).
+  </p>
+
+  <p>
+    <b>Summary:</b> <%= @defect.summary %><br>
+    <b>Issue Type:</b> <%= @defect.issue_type %><br>
+    <b>Status:</b> <%= @defect.statuses.first&.name || 'N/A' %><br>
+    <b>Priority:</b> <%= @defect.priority || 'N/A' %><br>
+    <b>Assigned to:</b>
+    <%= @defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', ') %>
+  </p>
+
+  <p>
+    <% if @url.present? %>
+      Click <%= link_to 'here', @url, target: '_blank', rel: 'noopener noreferrer nofollow' %> to view the defect.
+    <% else %>
+      Click here to view the defect (link unavailable).
+    <% end %>
+  </p>
+
+  <p>Best regards,</p>
+  <p><strong>TaskBridge Support Team</strong></p>
+
+  <div class="footer">
+    <p>— Automated notification from TaskBridge</p>
+  </div>
+</div>

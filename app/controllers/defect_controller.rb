@@ -659,6 +659,12 @@ class DefectController < ApplicationController
   def publish
     @defect = Defect.find(params[:id])
     if @defect.update(draft: false)
+      log_event(
+        @defect,
+        current_user,
+        'Defect Published',
+        "Defect ##{@defect.id} was published by #{current_user.name} at #{Time.now.strftime('%H:%M on %d-%m-%Y')}"
+      )
       redirect_to @defect, notice: 'Defect has been published successfully.'
     else
       redirect_to @defect, alert: 'Failed to publish defect.'
@@ -810,7 +816,7 @@ class DefectController < ApplicationController
         .with_properties(priority: @defect.priority)
         .log("Updated priority to #{@defect.priority} for Defect ##{@defect.id}")
 
-      # Add history log
+      # Add history log and trigger notification
       log_event(
         @defect,
         current_user,
@@ -840,7 +846,7 @@ class DefectController < ApplicationController
         .with_properties(label: @defect.label)
         .log("Updated label to #{@defect.label} for Defect ##{@defect.id}")
 
-      # History log
+      # History log — will automatically send the notification
       log_event(
         @defect,
         current_user,
@@ -887,6 +893,14 @@ class DefectController < ApplicationController
     target_defect = Defect.find(params[:target_defect_id])
 
     if @defect.unlink_from(target_defect)
+      # Log and notify
+      log_event(
+        @defect,
+        current_user,
+        'Defect Unlinked',
+        "Unlinked #{@defect.defect_unique} from #{target_defect.defect_unique} by #{current_user.name} at #{Time.now.strftime('%H:%M on %d-%m-%Y')}"
+      )
+
       render json: {
         success: true,
         message: "Successfully unlinked #{@defect.defect_unique} from #{target_defect.defect_unique}"
@@ -1096,7 +1110,13 @@ class DefectController < ApplicationController
     target_defect = Defect.find(params[:target_defect_id])
 
     if @defect.link_as_blocked_by(target_defect)
-      log_event(@defect, current_user, 'link_defect', "Linked as blocked by #{target_defect.defect_unique}")
+      # Log and notify
+      log_event(
+        @defect,
+        current_user,
+        'Defect Linked',
+        "Linked #{@defect.defect_unique} as blocked by #{target_defect.defect_unique} by #{current_user.name} at #{Time.now.strftime('%H:%M on %d-%m-%Y')}"
+      )
 
       render json: {
         success: true,
@@ -1125,7 +1145,13 @@ class DefectController < ApplicationController
       if attachments.any?
         attachments.each do |attachment|
           @defect.attachments.attach(attachment)
-          log_event(@defect, current_user, 'add_attachment', "Added attachment #{attachment.original_filename}")
+          # Log each addition (and trigger the notification)
+          log_event(
+            @defect,
+            current_user,
+            'Attachment Added',
+            "Added attachment #{attachment.original_filename} by #{current_user.name} at #{Time.now.strftime('%H:%M on %d-%m-%Y')}"
+          )
         end
         redirect_to defect_path(@defect), notice: "#{attachments.size} file(s) were successfully uploaded."
       else
@@ -1327,5 +1353,11 @@ class DefectController < ApplicationController
 
   def log_event(defect, user, history_type, history)
     DefectHistory.create(defect: defect, user: user, history_type: history_type, history: history)
+
+    # Automatically trigger a user email notification
+    # Convert history_type to a clean action name (e.g., "Priority Updated" -> "priority_updated")
+    action_name = history_type.parameterize.underscore
+
+    UserMailer.defect_action_email(defect, defect.users.pluck(:email), user, action_name).deliver_later
   end
 end
