@@ -664,7 +664,8 @@ class TicketsController < ApplicationController
       @tickets = @tickets.where(
         'projects.title ILIKE :search OR
          statuses.name ILIKE :search OR
-  users.first_name ILIKE :search OR users.last_name ILIKE :search',
+         users.first_name ILIKE :search OR
+         users.last_name ILIKE :search',
         search: search
       )
     end
