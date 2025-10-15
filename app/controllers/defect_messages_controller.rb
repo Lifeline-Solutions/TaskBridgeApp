@@ -69,9 +69,14 @@ class DefectMessagesController < ApplicationController
     old_content = @defect_message.content.to_plain_text
     audit_on_update(@defect_message)
 
-    if @defect_message.update(defect_message_params)
+    if @defect_message.update(defect_message_params.merge(modified_by_id: current_user.id))
       # Log the message update in defect history
-      log_event(@defect, current_user, 'message_updated', "Message updated from: #{old_content.truncate(100)} to: #{@defect_message.content.to_plain_text.truncate(100)}")
+      log_event(
+        @defect,
+        current_user,
+        'message_updated',
+        "Message updated from: #{old_content.truncate(100)} to: #{@defect_message.content.to_plain_text.truncate(100)}"
+      )
 
       # Process mentions asynchronously for updated message - convert ActionText to HTML string for job serialization
       ProcessMentionsJob.perform_later(
