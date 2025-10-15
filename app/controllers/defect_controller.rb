@@ -729,8 +729,8 @@ class DefectController < ApplicationController
         render turbo_stream: [
           turbo_stream.replace('modal', partial: 'defect/modal_empty'),
           turbo_stream.replace("defect_status_#{@defect.id}",
-                              partial: 'defect/status_badge',
-                              locals: { defect: @defect })
+                               partial: 'defect/status_badge',
+                               locals: { defect: @defect })
         ]
       end
       format.html { redirect_to defect_path(@defect), notice: 'Defect status was successfully updated.' }

@@ -68,7 +68,7 @@ class DefectMessagesController < ApplicationController
   def update
     old_content = @defect_message.content.to_plain_text
     audit_on_update(@defect_message)
-    
+
     if @defect_message.update(defect_message_params)
       # Log the message update in defect history
       log_event(@defect, current_user, 'message_updated', "Message updated from: #{old_content.truncate(100)} to: #{@defect_message.content.to_plain_text.truncate(100)}")
@@ -92,7 +92,7 @@ class DefectMessagesController < ApplicationController
 
   def destroy
     message_content = @defect_message.content.to_plain_text.truncate(100)
-    
+
     if audit_soft_delete(@defect_message)
       # Log the message archival in defect history
       log_event(@defect, current_user, 'message_archived', "Message archived: #{message_content}")
