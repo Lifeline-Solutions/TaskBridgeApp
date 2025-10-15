@@ -37,7 +37,6 @@
         class: 'text-sm hover:text-blue-600 hover:underline' %>
    </div>
 
-   <% if current_user.has_role? :admin %>
      <% if can? :edit, product %>
     <div class="flex items-center gap-2">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
@@ -57,7 +56,6 @@
        class: "text-sm text-red-600 hover:text-red-800 hover:underline" %>
     </div>
      <% end %>
-   <% end %>
     </div>
   </div>
 </div>
