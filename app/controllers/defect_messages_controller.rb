@@ -58,7 +58,9 @@ class DefectMessagesController < ApplicationController
     else
       respond_to do |format|
         format.turbo_stream do
-          render turbo_stream: turbo_stream.replace('new_defect_message', partial: 'defect_messages/form', locals: { defect: @defect, defect_message: @defect_message })
+          render turbo_stream: turbo_stream.replace('new_defect_message',
+                                                    partial: 'defect_messages/form',
+                                                    locals: { defect: @defect, defect_message: @defect_message })
         end
         format.html { render 'defect/show', status: :unprocessable_entity }
       end

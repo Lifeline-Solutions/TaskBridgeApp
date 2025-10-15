@@ -1,15 +1,17 @@
 <% if message.content.present? %>
   <span class="break-words overflow-hidden">
-    <%= render_mentions(
-          sanitize(
-            raw(
-              message.content.to_trix_html.gsub(/\[.*?\]/, '').strip
-            ),
-            tags: %w[strong em b i u p br span div h1 h2 h3 h4 h5 h6 blockquote ul ol li a table tr td th thead tbody],
-            attributes: %w[href style border class title data-mention-id data-mention-type target rel]
-          )
-        )
-    %>
+    <% html = render_mentions(
+      sanitize(
+        raw(
+          message.content.to_trix_html.gsub(/\[.*?\]/, '').strip
+        ),
+        tags: %w[strong em b i u p br span div h1 h2 h3 h4 h5 h6 blockquote ul ol li a table tr td th thead tbody],
+        attributes: %w[href style border class title data-mention-id data-mention-type target rel]
+      )
+    ) %>
+    <%= raw(html.gsub(/<a([^>]*)>([@#][^<]+)<\/a>/,
+                      '<a\1 class="bg-blue-400 text-white rounded-full hover:underline p-1">\2</a>')
+        ) %>
   </span>
   <% if message.updated_at > (message.created_at + 5.seconds) %>
     <div class="mt-3 text-xs italic text-gray-500 dark:text-gray-400 flex items-center gap-1">

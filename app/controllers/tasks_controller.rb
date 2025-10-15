@@ -3,10 +3,6 @@ class TasksController < ApplicationController
   before_action :set_product
   before_action :set_task, only: %i[show edit update destroy assign_user remove_task add_state]
 
-  def index
-    @tasks = @product.tasks
-  end
-
   def new
     @task = @product.tasks.new
     @prerequisite_tasks = Task.prerequisite_tasks(@product.id)
