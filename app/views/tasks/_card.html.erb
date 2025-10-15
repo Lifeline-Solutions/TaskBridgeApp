@@ -12,7 +12,7 @@
     end
   end
 %>
-<div class="<%= "#{bg_class} shadow-md rounded-lg border "%>" style="cursor:pointer;" onclick="window.location='<%= product_task_path(@product, task) %>'">
+<div class="<%= "#{bg_class} shadow-md rounded-lg border  cursor-pointer" %>" onclick="window.location='<%= product_task_path(@product, task) %>'">
   <div class="flex justify-between mb-2 bg-gray-200 dark:bg-gray-700 p-4 rounded-t-lg">
     <div class="flex items-center gap-4">
       <h3 class="text-lg font-semibold">
@@ -32,7 +32,7 @@
     <div class="mb-4 min-w-0">
       <h2 class="text-xs sm:text-sm font-bold break-words truncate flex-wrap max-w-[150px]">
         <% if task.prerequisite_task.present? %>
-          <%= task.prerequisite_task.unique_task_id %> <%= task.prerequisite_task.name %>
+          <%= link_to "#{task.prerequisite_task.unique_task_id} - #{task.prerequisite_task.name}", product_task_path(@product, task.prerequisite_task), class: "text-blue-600 hover:underline", data: { turbo: false } %>
         <% else %>
           No Prerequisite
         <% end %>

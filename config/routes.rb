@@ -145,13 +145,6 @@ Rails.application.routes.draw do
       post :link_defect
       delete :unlink_defect
     end
-    resources :bugs do
-      member do
-        post :add_bug
-        delete :remove_bug
-        post :bug_status
-      end
-    end
   end
 
   # config/routes.rb
