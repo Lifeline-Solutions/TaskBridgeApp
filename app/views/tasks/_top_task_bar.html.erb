@@ -2,9 +2,11 @@
   <div class="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-6 w-full">
     <!-- Back button -->
     <div class="flex-shrink-0 mb-3 md:mb-0">
-      <button onclick="history.back()" class="bg-[#3F8CFF] hover:bg-[#3A81EB] px-4 py-2 h-12 flex items-center rounded-lg font-bold text-slate-100 shadow transition-all duration-150">
-        &#8656; Back
-      </button>
+      <%= link_to product_path(@product) do %>
+        <p class="bg-[#3F8CFF] hover:bg-[#3A81EB] px-4 py-2 h-12 flex items-center rounded-lg font-bold text-slate-100 shadow transition-all duration-150">
+          &#8656; Back
+        </p>
+      <% end %>
     </div>
 
     <!-- Product details (from dev + tickets styling) -->
