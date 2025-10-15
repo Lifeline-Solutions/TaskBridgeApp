@@ -47,7 +47,7 @@ class Project < ApplicationRecord
     feedbacks.average(:rating).to_f.round(1)
   end
 
-  def has_ratings?
+  def ratings?
     TicketFeedback.joins(:ticket).where(tickets: { project_id: id }).exists?
   end
 

@@ -134,9 +134,7 @@ class TasksController < ApplicationController
       return
     end
 
-    if @task.prerequisite_task.present? && !@task.prerequisite_task.statuses.exists?(name: 'Resolved')
-      return redirect_to product_task_path(@product, @task), notice: 'Cannot update, until Prerequisite Task is Resolved.'
-    end
+    return redirect_to product_task_path(@product, @task), notice: 'Cannot update, until Prerequisite Task is Resolved.' if @task.prerequisite_task.present? && !@task.prerequisite_task.statuses.exists?(name: 'Resolved')
 
     @task.statuses.clear
     @task.statuses << status
