@@ -29,6 +29,55 @@
     />
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <script>
+    // Theme initialization - must run before body loads to prevent flash
+    (function() {
+      // Force override any existing theme settings
+      const savedTheme = localStorage.getItem('theme') || 'system';
+      const html = document.documentElement;
+      const body = document.body;
+      
+      console.log('Initial theme load:', savedTheme);
+      
+      function forceApplyTheme(theme) {
+        // Remove all possible theme classes
+        html.classList.remove('dark', 'light');
+        if (body) {
+          body.classList.remove('dark', 'light');
+        }
+        
+        if (theme === 'dark') {
+          html.classList.add('dark');
+          if (body) body.classList.add('dark');
+          html.style.colorScheme = 'dark';
+        } else if (theme === 'light') {
+          html.classList.add('light');
+          if (body) body.classList.add('light');
+          html.style.colorScheme = 'light';
+        } else { // system
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (prefersDark) {
+            html.classList.add('dark');
+            if (body) body.classList.add('dark');
+            html.style.colorScheme = 'dark';
+          } else {
+            html.classList.add('light');
+            if (body) body.classList.add('light');
+            html.style.colorScheme = 'light';
+          }
+        }
+        
+        console.log('Applied theme:', theme, 'HTML classes:', html.className);
+      }
+      
+      // Apply theme immediately
+      forceApplyTheme(savedTheme);
+      
+      // Make the function available globally
+      window.forceApplyTheme = forceApplyTheme;
+    })();
+  </script>
 </head>
 <body class="bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-slate-100">
 <main class="relative">
