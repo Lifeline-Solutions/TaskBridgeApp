@@ -195,7 +195,7 @@ class ProfilesController < ApplicationController
 
         # Use parameterized queries to avoid injection. ~* is case-insensitive regex match in Postgres.
         assignment_events_scope = assignment_events_scope.where(
-          "events.details ~* ? OR events.details ~* ? OR events.details ILIKE ?",
+          'events.details ~* ? OR events.details ~* ? OR events.details ILIKE ?',
           regex, regex_reversed, "%#{ilike_safe}%"
         )
       end

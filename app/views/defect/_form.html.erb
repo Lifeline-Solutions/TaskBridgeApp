@@ -66,11 +66,11 @@
 
     </div>
 
-    <!-- Description (CKEditor) -->
+    <!-- Description (ActionText) -->
     <div>
       <%= f.label :content, 'Description', class: 'block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300' %>
-  <%= text_area_tag 'defect[content]', @defect.content&.body&.to_s, id: 'defect_content', class: 'min-h-[200px] w-full border-none focus:ring-0 dark:bg-gray-700 dark:text-white', data: { required: true } %>
-  <p id="defect_content_error" class="mt-1 text-sm text-red-600 hidden">Description is required.</p>
+      <%= f.rich_text_area :content, id: 'defect_content', class: 'min-h-[200px] w-full border-none focus:ring-0 dark:bg-gray-700 dark:text-white', data: { required: true } %>
+      <p id="defect_content_error" class="mt-1 text-sm text-red-600 hidden">Description is required.</p>
     </div>
 
     <!-- Severity, Status, Assignee -->
