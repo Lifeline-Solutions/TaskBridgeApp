@@ -98,15 +98,15 @@
                 </div>
               </div>
 
-              <!-- Load Filters Button - Shows when products are selected -->
-              <% if Array(params[:product_id]).any? { |id| id.present? } %>
-                <div class="pt-2">
-                  <button type="submit" 
-                          class="w-full px-3 py-1 text-sm bg-green-600 rounded border border-green-600 hover:bg-green-700 focus:outline-none text-white">
-                    Load Filters
-                  </button>
-                </div>
-              <% end %>
+              <!-- Load Filters Button - Always show but conditionally enable -->
+              <div class="pt-2">
+                <button type="submit" 
+                        id="loadFiltersButton"
+                        class="w-full px-3 py-1 text-sm bg-gray-400 rounded border border-gray-400 text-white cursor-not-allowed"
+                        disabled>
+                  Load Filters
+                </button>
+              </div>
 
               <!-- Only show other filters if at least one product is selected AND filters are loaded -->
               <% if Array(params[:product_id]).any? { |id| id.present? } && @filters_loaded %>
@@ -559,6 +559,7 @@
     initializeMultiSelectDropdowns();
     initializeSelectAllFunctionality();
     updateAllButtonTexts();
+    setupProductSelectionListener();
   });
 
   // ========== MULTI-SELECT DROPDOWN MANAGEMENT ==========
@@ -703,6 +704,47 @@
     return textMap[filterType] || 'Filter...';
   }
 
+  // ========== PRODUCT SELECTION LISTENER ==========
+  function setupProductSelectionListener() {
+    const productCheckboxes = document.querySelectorAll('.product-checkbox');
+    const loadFiltersButton = document.getElementById('loadFiltersButton');
+    
+    if (productCheckboxes.length > 0 && loadFiltersButton) {
+      // Add event listener to each product checkbox
+      productCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+          updateLoadFiltersButton();
+        });
+      });
+      
+      // Initialize button state
+      updateLoadFiltersButton();
+    }
+  }
+
+  function updateLoadFiltersButton() {
+    const productCheckboxes = document.querySelectorAll('.product-checkbox');
+    const loadFiltersButton = document.getElementById('loadFiltersButton');
+    
+    if (productCheckboxes.length > 0 && loadFiltersButton) {
+      const selectedCount = Array.from(productCheckboxes).filter(cb => cb.checked).length;
+      
+      if (selectedCount > 0) {
+        // Enable the button
+        loadFiltersButton.disabled = false;
+        loadFiltersButton.classList.remove('bg-gray-400', 'border-gray-400', 'cursor-not-allowed');
+        loadFiltersButton.classList.add('bg-green-600', 'border-green-600', 'hover:bg-green-700', 'cursor-pointer');
+        loadFiltersButton.textContent = `Load Filters (${selectedCount} selected)`;
+      } else {
+        // Disable the button
+        loadFiltersButton.disabled = true;
+        loadFiltersButton.classList.remove('bg-green-600', 'border-green-600', 'hover:bg-green-700', 'cursor-pointer');
+        loadFiltersButton.classList.add('bg-gray-400', 'border-gray-400', 'cursor-not-allowed');
+        loadFiltersButton.textContent = 'Load Filters';
+      }
+    }
+  }
+
   // ========== MODULE AND SUBMODULE MANAGEMENT ==========
   function handleModuleSelection(checkbox) {
     const moduleId = checkbox.value;
@@ -803,22 +845,4 @@
       form.submit();
     }
   }
-
-  // ========== PRODUCT SELECTION AUTO-SUBMIT (Optional) ==========
-  // If you want to auto-submit when products are selected instead of using the "Load Filters" button
-  function setupProductAutoSubmit() {
-    const productCheckboxes = document.querySelectorAll('.product-checkbox');
-    productCheckboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
-        // Optional: Auto-submit when products are selected
-        // Uncomment the line below if you want auto-submit behavior
-        // document.getElementById('filter-form').submit();
-      });
-    });
-  }
-
-  // Initialize product auto-submit on page load
-  document.addEventListener('turbo:load', function() {
-    setupProductAutoSubmit();
-  });
 </script>
