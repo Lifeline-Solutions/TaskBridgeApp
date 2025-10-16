@@ -15,11 +15,16 @@
       <div class="space-y-3">
         <% @defects_history.each do |defect| %>
           <div class="flex gap-3 group hover:bg-gray-50 rounded px-2 py-1 transition-colors">
-            <!-- Avatar -->
-            <div class="flex-shrink-0">
-              <div class="w-8 h-8 bg-[#0052CC] rounded-full flex items-center justify-center text-white text-xs font-medium">
+            <!-- Timeline connector line -->
+            <div class="flex flex-col items-center flex-shrink-0">
+              <!-- Avatar -->
+              <div class="w-8 h-8 bg-[#0052CC] rounded-full flex items-center justify-center text-white text-xs font-medium relative z-10">
                 <%= render 'defect/defect_user_initials', defect: defect %>
               </div>
+              <!-- Vertical line connecting to next item -->
+              <% unless defect == @defects_history.last %>
+                <div class="flex-1 w-0.5 bg-gray-200 my-1"></div>
+              <% end %>
             </div>
 
             <!-- Content -->
@@ -40,14 +45,74 @@
 
               <!-- Field Changes -->
               <% if defect.respond_to?(:field_changed) && defect.field_changed.present? %>
-                <div class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
-                  <div class="font-medium text-gray-700 mb-1"><%= defect.field_changed.titleize %></div>
-                  <div class="flex items-center gap-2 text-gray-600">
-                    <span class="line-through text-gray-500 bg-white px-2 py-0.5 rounded border"><%= defect.old_value.presence || 'None' %></span>
-                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+                  <div class="font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
                     </svg>
-                    <span class="bg-white text-green-700 px-2 py-0.5 rounded border font-medium"><%= defect.new_value.presence || 'None' %></span>
+                    <%= defect.field_changed.titleize %> Updated
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <!-- Old Value -->
+                    <div class="flex-1 text-center">
+                      <div class="text-xs text-gray-500 mb-1 font-medium">Previous</div>
+                      <div class="line-through text-gray-600 bg-white px-3 py-2 rounded border border-red-300 text-sm shadow-sm">
+                        <%= defect.old_value.presence || 'None' %>
+                      </div>
+                    </div>
+                    
+                    <!-- Enhanced Arrow -->
+                    <div class="mx-4 flex flex-col items-center">
+                      <div class="relative">
+                        <!-- Arrow background circle -->
+                        <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
+                          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                          </svg>
+                        </div>
+                        <!-- Pulse animation -->
+                        <div class="absolute inset-0 w-10 h-10 bg-blue-400 rounded-full animate-ping opacity-25"></div>
+                      </div>
+                      <div class="text-xs text-blue-600 mt-2 font-medium">CHANGED</div>
+                    </div>
+                    
+                    <!-- New Value -->
+                    <div class="flex-1 text-center">
+                      <div class="text-xs text-gray-500 mb-1 font-medium">Current</div>
+                      <div class="bg-green-50 text-green-700 px-3 py-2 rounded border border-green-300 font-medium text-sm shadow-sm">
+                        <%= defect.new_value.presence || 'None' %>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% elsif defect.respond_to?(:old_value) && defect.old_value.present? %>
+                <!-- Generic change display for other history types -->
+                <div class="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
+                  <div class="flex items-center justify-between">
+                    <!-- From -->
+                    <div class="flex-1 text-center">
+                      <div class="text-xs text-gray-500 mb-1 font-medium">From</div>
+                      <div class="text-gray-600 bg-white px-3 py-2 rounded border border-gray-300 text-sm">
+                        <%= defect.old_value %>
+                      </div>
+                    </div>
+                    
+                    <!-- Arrow -->
+                    <div class="mx-4 flex flex-col items-center">
+                      <div class="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                        </svg>
+                      </div>
+                    </div>
+                    
+                    <!-- To -->
+                    <div class="flex-1 text-center">
+                      <div class="text-xs text-gray-500 mb-1 font-medium">To</div>
+                      <div class="bg-amber-100 text-amber-800 px-3 py-2 rounded border border-amber-300 font-medium text-sm">
+                        <%= defect.new_value.presence || 'Updated' %>
+                      </div>
+                    </div>
                   </div>
                 </div>
               <% end %>
