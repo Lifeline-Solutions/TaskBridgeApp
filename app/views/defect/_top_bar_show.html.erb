@@ -838,6 +838,9 @@
     const moduleCheckboxes = document.querySelectorAll('.module-checkbox');
     moduleCheckboxes.forEach(checkbox => {
       checkbox.addEventListener('change', function() {
+        // Store filter state before submitting
+        sessionStorage.setItem('filterDropdownOpen', 'true');
+        
         // Small delay to allow multiple selections
         setTimeout(() => {
           document.getElementById('index-show-filter-form').requestSubmit();
@@ -855,6 +858,19 @@
           }
         });
       }
+    });
+
+    // Restore filter state on page load
+    document.addEventListener("turbo:load", function () {
+      const filterDropdown = document.getElementById("filterDropdown");
+      const shouldOpenFilter = sessionStorage.getItem('filterDropdownOpen') === 'true';
+      
+      if (shouldOpenFilter && filterDropdown) {
+        filterDropdown.classList.remove("hidden");
+        // Clear the stored state
+        sessionStorage.removeItem('filterDropdownOpen');
+      }
+      
     });
   });
 </script>
