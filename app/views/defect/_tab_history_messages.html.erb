@@ -1,37 +1,40 @@
-<div class="mb-10 text-center mt-10">
-  <ul class="flex flex-wrap justify-center space-x-2 sm:space-x-6">
-    <li>
-      <button
-        class= "p-2 text-slate-100 bg-blue-600 rounded-lg hover:bg-blue-700 hover:underline"
-        id="tab-comments"
-        onclick="openCity(event, 'Comments')"
-      >
-        Comments
-      </button>
-    </li>
-    <li>
-      <button
-        class= "p-2 text-slate-100 bg-blue-600 rounded-lg hover:bg-blue-700 hover:underline"
-        id="tab-history"
-        onclick="openCity(event, 'History')"
-      >
-        History
-      </button>
-    </li>
-  </ul>
+<div class="mb-6 mt-6 border-b border-gray-200">
+  <nav class="flex space-x-2 justify-start" aria-label="Tabs">
+    <button
+      class="tablinks px-6 py-2 rounded-t-lg text-sm font-semibold border-b-2 transition focus:outline-none
+        text-blue-700 border-blue-700 bg-blue-50
+        hover:bg-blue-100 hover:text-blue-800"
+      id="tab-comments"
+      onclick="openTab(event, 'Comments')"
+      type="button"
+      aria-selected="true"
+    >
+      🗨️ Comments
+    </button>
+    <button
+      class="tablinks px-6 py-2 rounded-t-lg text-sm font-semibold border-b-2 transition focus:outline-none
+        text-gray-500 border-transparent bg-white
+        hover:bg-gray-100 hover:text-blue-700"
+      id="tab-history"
+      onclick="openTab(event, 'History')"
+      type="button"
+      aria-selected="false"
+    >
+      🕒 History
+    </button>
+  </nav>
 </div>
 
-<div id="Comments" class="tabcontent active">
+<div id="Comments" class="tabcontent bg-white p-4 rounded-b-lg shadow" style="display: block;">
   <%= render 'defect_messages/defect_message' %>
 </div>
 
-<div id="History" class="tabcontent">
+<div id="History" class="tabcontent bg-white p-4 rounded-b-lg shadow" style="display: none;">
   <%= render 'defect/timeline' %>
-
 </div>
 
 <script>
-  function openCity(evt, cityName) {
+  function openTab(evt, tabName) {
     const tabcontent = document.getElementsByClassName("tabcontent");
     const tablinks = document.getElementsByClassName("tablinks");
 
@@ -40,14 +43,18 @@
       tabcontent[i].style.display = "none";
     }
 
-    // Remove active class from all tab links
+    // Remove active styling from all tab links
     for (let i = 0; i < tablinks.length; i++) {
-      tablinks[i].classList.remove("underline");
+      tablinks[i].classList.remove("text-blue-700", "border-blue-700", "bg-blue-50", "hover:bg-blue-100", "hover:text-blue-800");
+      tablinks[i].classList.add("text-gray-500", "border-transparent", "bg-white", "hover:bg-gray-100", "hover:text-blue-700");
+      tablinks[i].setAttribute("aria-selected", "false");
     }
 
-    // Show current tab content and add active class to clicked tab
-    document.getElementById(cityName).style.display = "block";
-    evt.currentTarget.classList.add( "underline");
+    // Show current tab content and add active styling to clicked tab
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.classList.add("text-blue-700", "border-blue-700", "bg-blue-50");
+    evt.currentTarget.classList.remove("text-gray-500", "border-transparent", "bg-white");
+    evt.currentTarget.setAttribute("aria-selected", "true");
   }
 
   // Set default tab to open
