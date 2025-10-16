@@ -833,5 +833,28 @@
         }
       });
     }
+
+    // Auto-submit form when module selection changes to load submodules
+    const moduleCheckboxes = document.querySelectorAll('.module-checkbox');
+    moduleCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        // Small delay to allow multiple selections
+        setTimeout(() => {
+          document.getElementById('index-show-filter-form').requestSubmit();
+        }, 300);
+      });
+    });
+
+    // Prevent form submission when only updating button text
+    document.querySelectorAll('[class$="-checkbox"]').forEach(checkbox => {
+      if (!checkbox.classList.contains('module-checkbox')) {
+        checkbox.addEventListener('change', function(e) {
+          // Only prevent default for non-module checkboxes to avoid unnecessary submissions
+          if (!e.target.classList.contains('module-checkbox')) {
+            e.stopPropagation();
+          }
+        });
+      }
+    });
   });
 </script>

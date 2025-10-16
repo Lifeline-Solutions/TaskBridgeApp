@@ -334,40 +334,58 @@ class DefectController < ApplicationController
 
     # Build option lists for dropdowns from the CURRENT filtered (but unpaginated) result set
     filtered_ids = @defects.except(:select, :order, :limit, :offset).select(:id)
-    @statuses = Status.joins(:defects)
+
+    # FIX: Use subqueries to avoid DISTINCT + ORDER BY issues
+    @statuses = Status.where(id: Status.joins(:defects)
       .where(defects: { id: filtered_ids })
       .distinct
+      .select(:id))
       .order(:name)
 
-    # NEW: option lists for QA Module, Submodule, Banking Type - UPDATED SUBMODULE LOGIC
-    @qa_modules = QaModule.joins(:defects)
+    # NEW: option lists for QA Module, Submodule, Banking Type - FIXED LOGIC
+    @qa_modules = QaModule.where(id: QaModule.joins(:defects)
       .where(defects: { id: filtered_ids })
-      .where(parent_id: nil) # Only parent modules
+      .where(parent_id: nil)
       .distinct
+      .select(:id))
       .order(:name)
 
-    # Handle submodules based on selected modules
+    # Handle submodules based on selected modules - FIXED LOGIC
     @submodules = if qa_module_ids.any?
-                    # Get ALL submodules for the selected modules (not just those with defects)
-                    QaModule.where(parent_id: qa_module_ids)
-                      .order(:name)
+                    # Get ALL submodules for the selected modules
+                    QaModule.where(parent_id: qa_module_ids).order(:name)
                   else
-                    # Show all submodules for the products (all qa_modules with parent_id not nil)
-                    QaModule.joins(:defects)
+                    # Show submodules that have defects in current filter OR are children of available modules
+                    available_module_ids = @qa_modules.pluck(:id)
+                    
+                    # Get submodule IDs from defects
+                    submodule_ids_from_defects = QaModule.joins(:defects)
                       .where(defects: { id: filtered_ids })
-                      .where.not(parent_id: nil) # All submodules
+                      .where.not(parent_id: nil)
                       .distinct
-                      .order(:name)
+                      .pluck(:id)
+                    
+                    # Get submodule IDs from available modules
+                    submodule_ids_from_modules = available_module_ids.any? ? 
+                      QaModule.where(parent_id: available_module_ids).pluck(:id) : []
+                    
+                    # Combine all submodule IDs
+                    all_submodule_ids = (submodule_ids_from_defects + submodule_ids_from_modules).uniq
+                    
+                    # Return ordered submodules
+                    QaModule.where(id: all_submodule_ids).order(:name)
                   end
 
-    @banking_types = BankingType.joins(:defects)
+    @banking_types = BankingType.where(id: BankingType.joins(:defects)
       .where(defects: { id: filtered_ids })
       .distinct
+      .select(:id))
       .order(:name)
 
-    @labels = Label.joins(:defects)
+    @labels = Label.where(id: Label.joins(:defects)
       .where(defects: { id: filtered_ids })
       .distinct
+      .select(:id))
       .order(:name)
 
     # Pagination
