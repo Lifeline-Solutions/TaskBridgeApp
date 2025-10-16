@@ -983,49 +983,108 @@ class DefectController < ApplicationController
 
   def defects_download
     require 'csv'
-    defects = Defect.all
 
-    # Search query (client or groupware)
-    if params[:query].present?
-      q = "%#{params[:query]}%"
-      defects = defects.left_joins(product: %i[client groupwares])
-        .where('clients.name ILIKE :q OR groupwares.name ILIKE :q', q: q)
+    # Start with a scope matching what index_show shows (published + includes for joins)
+    defects = Defect.published
+      .includes(:users, :qa_module, :labels, :banking_type, :statuses, product: %i[client groupwares])
+
+    # Client/Product filters (exact client name match when both provided)
+    if params[:client_name].present? && params[:product_id].present?
+      defects = defects.joins(product: :client)
+        .where('LOWER(clients.name) = ?', params[:client_name].to_s.downcase.strip)
+        .where(products: { id: params[:product_id] })
+    elsif params[:client_name].present?
+      defects = defects.joins(product: :client)
+        .where('LOWER(clients.name) = ?', params[:client_name].to_s.downcase.strip)
+    elsif params[:product_id].present?
+      defects = defects.where(product_id: params[:product_id])
     end
 
-    defects = defects.where(banking_type_id: params[:banking_type_id]) if params[:banking_type_id].present?
-    defects = defects.where('created_at >= ?', params[:start_date]) if params[:start_date].present?
-    defects = defects.where('created_at <= ?', params[:end_date]) if params[:end_date].present?
+    # Restrict for non-admin/observer/qa users
+    defects = defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa)
 
-    # Status filter (multi-select)
-    if params[:status].present?
-      statuses = Array(params[:status])
-      defects = defects.joins(:statuses).where(statuses: { name: statuses })
+    # Status filter (multiple values, case-insensitive)
+    selected_statuses = Array(params[:status]).reject(&:blank?)
+    if selected_statuses.any?
+      downcased = selected_statuses.map { |s| s.to_s.downcase }
+      defects = defects.joins(:statuses).where('LOWER(statuses.name) IN (?)', downcased)
     end
 
-    # Priority filter
-    defects = defects.where(priority: params[:priority]) if params[:priority].present?
+    # Labels filter (multi-select by id)
+    selected_labels = Array(params[:label_ids]).reject(&:blank?)
+    defects = defects.joins(:labels).where(labels: { id: selected_labels }) if selected_labels.any?
+
+    # Priority filter (case-insensitive)
+    defects = defects.where('LOWER(defects.priority) = ?', params[:priority].to_s.downcase) if params[:priority].present?
 
     # Assignee filter
     defects = defects.joins(:users).where(users: { id: params[:user_id] }) if params[:user_id].present?
 
-    # Module filter
-    defects = defects.where(qa_module_id: params[:qa_module_id]) if params[:qa_module_id].present?
+    # Module/Submodule filtering with sensible fallback similar to index_show
+    if params[:qa_module_id].present? && params[:submodule_id].present?
+      submodule_defects = defects.where(qa_module_id: params[:submodule_id])
 
-    # Submodule filter
-    defects = defects.where(submodule_id: params[:submodule_id]) if params[:submodule_id].present?
-
-    # Labels filter (multi-select)
-    if params[:label_ids].present?
-      label_ids = Array(params[:label_ids]).reject(&:blank?)
-      defects = defects.joins(:labels).where(labels: { id: label_ids }).distinct if label_ids.any?
+      if submodule_defects.exists?
+        defects = submodule_defects
+      else
+        parent_module_defects = defects.where(qa_module_id: params[:qa_module_id])
+        defects = parent_module_defects.exists? ? parent_module_defects : submodule_defects
+      end
+    elsif params[:qa_module_id].present?
+      parent_module = QaModule.find_by(id: params[:qa_module_id])
+      if parent_module
+        submodule_ids = parent_module.children.pluck(:id)
+        all_module_ids = [parent_module.id] + submodule_ids
+        defects = defects.where(qa_module_id: all_module_ids)
+      else
+        defects = defects.where(qa_module_id: params[:qa_module_id])
+      end
+    elsif params[:submodule_id].present?
+      defects = defects.where(qa_module_id: params[:submodule_id])
     end
 
-    # Order (sort by created_at)
-    defects = if params[:order].present? && %w[asc desc].include?(params[:order])
-                defects.order(created_at: params[:order])
-              else
-                defects.order(created_at: :desc)
-              end
+    # Banking type
+    defects = defects.where(banking_type_id: params[:banking_type_id]) if params[:banking_type_id].present?
+
+    # Date range filters (parse dates defensively)
+    start_date = params[:start_date].presence
+    end_date = params[:end_date].presence
+    begin
+      if start_date.present? && end_date.present?
+        from = Date.parse(start_date).beginning_of_day
+        to = Date.parse(end_date).end_of_day
+        defects = defects.where(created_at: from..to)
+      elsif start_date.present?
+        from = Date.parse(start_date).beginning_of_day
+        defects = defects.where('defects.created_at >= ?', from)
+      elsif end_date.present?
+        to = Date.parse(end_date).end_of_day
+        defects = defects.where('defects.created_at <= ?', to)
+      end
+    rescue ArgumentError
+      # Ignore invalid dates
+    end
+
+    # Full-text / free-text search across related tables
+    if params[:query].present?
+      q = "%#{params[:query].to_s.strip}%"
+      defects = defects.left_joins(:users, :qa_module, :banking_type, product: %i[client groupwares]).where(
+        "defects.summary ILIKE :q
+         OR defects.defect_unique ILIKE :q
+         OR defects.priority ILIKE :q
+         OR users.first_name ILIKE :q
+         OR users.last_name ILIKE :q
+         OR clients.name ILIKE :q
+         OR groupwares.name ILIKE :q
+         OR qa_modules.name ILIKE :q
+         OR banking_types.name ILIKE :q",
+        q: q
+      )
+    end
+
+    # Ordering and uniqueness
+    direction = %w[asc desc].include?(params[:order]) ? params[:order] : 'desc'
+    defects = defects.order(created_at: direction).distinct
 
     # Generate CSV
     csv_data = CSV.generate(headers: true) do |csv|
@@ -1034,6 +1093,7 @@ class DefectController < ApplicationController
         'Banking Types', 'Labels', 'Assignee', 'Reporter', 'Project',
         'Created At'
       ]
+
       defects.find_each do |defect|
         client_and_groupware = [defect.product.client&.name, defect.product.groupwares.first&.name].compact.join(' - ')
         csv << [
@@ -1053,7 +1113,8 @@ class DefectController < ApplicationController
       end
     end
 
-    send_data csv_data, filename: "defects_#{Time.zone.now.strftime('%Y-%m-%d %H:%M')}.csv", type: 'text/csv'
+    # Use a filesystem-safe timestamp format for filename
+    send_data csv_data, filename: "defects_#{Time.zone.now.strftime('%Y%m%d_%H%M%S')}.csv", type: 'text/csv'
   end
 
   def defects_download_excel
@@ -1133,9 +1194,6 @@ class DefectController < ApplicationController
     # Ordering
     direction = %w[asc desc].include?(params[:order]) ? params[:order] : 'desc'
     defects = defects.order(created_at: direction)
-
-    # Ensure uniqueness after joins
-    defects = defects.distinct
 
     # --- generate Excel using caxlsx ---
     package = Axlsx::Package.new

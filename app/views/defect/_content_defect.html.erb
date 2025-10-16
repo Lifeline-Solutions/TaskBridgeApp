@@ -1,12 +1,10 @@
 <% if @defect.content.present? %>
   <span class="break-words overflow-hidden">
-    <div class="prose dark:prose-invert">
+    <div class="prose dark:prose-invert max-w-full w-full">
       <%= sanitize(
-        raw(
-          @defect.content.to_trix_html.gsub(/\[.*?\]/, '').strip
-        ),
-        tags: %w[strong em b i u p br span div h1 h2 h3 h4 h5 h6 blockquote ul ol li a table tr td th thead tbody],
-        attributes: %w[href style border]
+        @defect.content.to_trix_html.gsub(/\[.*?\]/, '').strip,
+        tags: %w[strong em b i u p br span div figure figcaption h1 h2 h3 h4 h5 h6 blockquote ul ol li a table thead tbody tfoot tr th td caption colgroup col],
+        attributes: %w[href style border class title colspan rowspan scope align cellpadding cellspacing]
       ) %>
     </div>
 
@@ -161,18 +159,52 @@
 </script>
 
 <style>
-    #imageModal {
-        transition: opacity 0.2s;
-    }
-    #imageModal.hidden {
-        opacity: 0;
-        pointer-events: none;
-    }
-    .image-preview-thumb {
-        transition: transform 0.2s;
-    }
-    .image-preview-thumb:hover {
-        transform: scale(1.08);
-        box-shadow: 0 0 8px #222;
-    }
+  /* Scope styling to prose container so only ActionText content is affected */
+  .prose table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .prose th,
+  .prose td {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #000; /* black borders in light mode */
+    vertical-align: top;
+  }
+
+  /* Bold table headers */
+  .prose th {
+    font-weight: 700;
+  }
+
+  /* Dark mode: use a light border color (Tailwind slate-100 ~ #f1f5f9) */
+  .dark .prose th,
+  .dark .prose td {
+    border-color: #f1f5f9;
+  }
+
+  /* Optional nicer table appearance in prose */
+  .prose table caption {
+    caption-side: top;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  #imageModal {
+      transition: opacity 0.2s;
+  }
+  #imageModal.hidden {
+      opacity: 0;
+      pointer-events: none;
+  }
+  .image-preview-thumb {
+      transition: transform 0.2s;
+  }
+  .image-preview-thumb:hover {
+      transform: scale(1.08);
+      box-shadow: 0 0 8px #222;
+  }
 </style>
