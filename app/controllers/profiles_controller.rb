@@ -177,11 +177,26 @@ class ProfilesController < ApplicationController
     if @selected_user.present?
       display_name = [@selected_user.first_name, @selected_user.last_name].compact.join(' ').strip
       if display_name.present?
-        escaped = ActiveRecord::Base.sanitize_sql_like(display_name)
+        # Build a safe case-insensitive regex for Postgres (~*).
+        # - Escape regex metacharacters in the name
+        # - Replace spaces with \s+ so any whitespace (single/multiple/newline) matches
+        # - Allow optional whitespace between the name and 'was assigned'
+        escaped_for_regex = Regexp.escape(display_name)
+        regex_name = escaped_for_regex.gsub(/\s+/, '\\\s+')
+        regex = "#{regex_name}\\s*was assigned to the ticket"
+
+        # Also try reversed name (last_name first) in case events store that
+        reversed_name = [@selected_user.last_name, @selected_user.first_name].compact.join(' ').strip
+        escaped_reversed = Regexp.escape(reversed_name)
+        regex_reversed = "#{escaped_reversed.gsub(/\s+/, '\\\s+')}\\s*was assigned to the ticket"
+
+        # Fallback: sanitized ILIKE substring search (also case-insensitive in Postgres)
+        ilike_safe = ActiveRecord::Base.sanitize_sql_like(display_name)
+
+        # Use parameterized queries to avoid injection. ~* is case-insensitive regex match in Postgres.
         assignment_events_scope = assignment_events_scope.where(
-          'events.details ILIKE ? OR events.details ILIKE ?',
-          "%#{escaped} was assigned to the ticket%",
-          "%#{escaped}was assigned to the ticket%"
+          "events.details ~* ? OR events.details ~* ? OR events.details ILIKE ?",
+          regex, regex_reversed, "%#{ilike_safe}%"
         )
       end
     end
