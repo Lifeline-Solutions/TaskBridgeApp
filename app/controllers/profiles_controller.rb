@@ -164,7 +164,7 @@ class ProfilesController < ApplicationController
 
     return respond_to(&:html) unless params[:user_id].present? || params[:start_date].present? || params[:end_date].present?
 
-    @users = User.where(id: params[:user_id])
+    @users = User.where(id: params[:user_id], first_login: true, active: true)
     @selected_user = @users.first
 
     start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : nil
