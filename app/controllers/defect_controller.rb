@@ -26,7 +26,7 @@ class DefectController < ApplicationController
 
     # Get selected product IDs from params
     @selected_product_ids = Array(params[:product_id]).reject(&:blank?)
-    
+
     # Determine if filters should be loaded
     @filters_loaded = @selected_product_ids.any? && params[:filter_open].present?
 
@@ -46,39 +46,25 @@ class DefectController < ApplicationController
       raw_defects = apply_defect_filters(raw_defects)
 
       # Status filter (defect status) - handle array parameter
-      if params[:status].present?
-        raw_defects = raw_defects.joins(:statuses).where(statuses: { name: Array(params[:status]) })
-      end
+      raw_defects = raw_defects.joins(:statuses).where(statuses: { name: Array(params[:status]) }) if params[:status].present?
 
       # Priority filter - handle array parameter
-      if params[:priority].present?
-        raw_defects = raw_defects.where(priority: Array(params[:priority]))
-      end
+      raw_defects = raw_defects.where(priority: Array(params[:priority])) if params[:priority].present?
 
       # Assignee filter - handle array parameter
-      if params[:user_id].present?
-        raw_defects = raw_defects.joins(:users).where(users: { id: Array(params[:user_id]) })
-      end
+      raw_defects = raw_defects.joins(:users).where(users: { id: Array(params[:user_id]) }) if params[:user_id].present?
 
       # Module filter - handle array parameter
-      if params[:qa_module_id].present?
-        raw_defects = raw_defects.where(qa_module_id: Array(params[:qa_module_id]))
-      end
+      raw_defects = raw_defects.where(qa_module_id: Array(params[:qa_module_id])) if params[:qa_module_id].present?
 
       # Submodule filter - handle array parameter
-      if params[:submodule_id].present?
-        raw_defects = raw_defects.where(submodule_id: Array(params[:submodule_id]))
-      end
+      raw_defects = raw_defects.where(submodule_id: Array(params[:submodule_id])) if params[:submodule_id].present?
 
       # Banking type filter - handle array parameter
-      if params[:banking_type_id].present?
-        raw_defects = raw_defects.where(banking_type_id: Array(params[:banking_type_id]))
-      end
+      raw_defects = raw_defects.where(banking_type_id: Array(params[:banking_type_id])) if params[:banking_type_id].present?
 
       # Labels filter - handle array parameter
-      if params[:label_ids].present?
-        raw_defects = raw_defects.joins(:labels).where(labels: { id: Array(params[:label_ids]) })
-      end
+      raw_defects = raw_defects.joins(:labels).where(labels: { id: Array(params[:label_ids]) }) if params[:label_ids].present?
 
       # Get defect counts FIRST - before any grouping/ordering issues
       @qa_product_defect_counts = raw_defects.except(:order).group(:product_id).count
@@ -194,7 +180,7 @@ class DefectController < ApplicationController
 
     # Handle multiple product_ids (array) or single product_id
     product_ids = Array(params[:product_id]).reject(&:blank?)
-    
+
     # Client filter (exact, case-insensitive, and scoped by product_id)
     if params[:client_name].present? && product_ids.any?
       @defects = @defects.joins(product: :client)
@@ -229,7 +215,7 @@ class DefectController < ApplicationController
     # Handle multiple qa_module_ids and submodule_ids
     qa_module_ids = Array(params[:qa_module_id]).reject(&:blank?)
     submodule_ids = Array(params[:submodule_id]).reject(&:blank?)
-    
+
     if qa_module_ids.any? && submodule_ids.any?
       # Both parent modules and submodules selected
       submodule_defects = @defects.where(qa_module_id: submodule_ids)
@@ -357,21 +343,24 @@ class DefectController < ApplicationController
                   else
                     # Show submodules that have defects in current filter OR are children of available modules
                     available_module_ids = @qa_modules.pluck(:id)
-                    
+
                     # Get submodule IDs from defects
                     submodule_ids_from_defects = QaModule.joins(:defects)
                       .where(defects: { id: filtered_ids })
                       .where.not(parent_id: nil)
                       .distinct
                       .pluck(:id)
-                    
+
                     # Get submodule IDs from available modules
-                    submodule_ids_from_modules = available_module_ids.any? ? 
-                      QaModule.where(parent_id: available_module_ids).pluck(:id) : []
-                    
+                    submodule_ids_from_modules = if available_module_ids.any?
+                                                   QaModule.where(parent_id: available_module_ids).pluck(:id)
+                                                 else
+                                                   []
+                                                 end
+
                     # Combine all submodule IDs
                     all_submodule_ids = (submodule_ids_from_defects + submodule_ids_from_modules).uniq
-                    
+
                     # Return ordered submodules
                     QaModule.where(id: all_submodule_ids).order(:name)
                   end
@@ -1327,15 +1316,11 @@ class DefectController < ApplicationController
     defects = defects.order(created_at: params[:order] == 'asc' ? :asc : :desc)
 
     # Date range filters
-    if params[:start_date].present?
-      defects = defects.where('defects.created_at >= ?', params[:start_date].to_date.beginning_of_day)
-    end
+    defects = defects.where('defects.created_at >= ?', params[:start_date].to_date.beginning_of_day) if params[:start_date].present?
 
-    if params[:end_date].present?
-      defects = defects.where('defects.created_at <= ?', params[:end_date].to_date.end_of_day)
-    end
+    defects = defects.where('defects.created_at <= ?', params[:end_date].to_date.end_of_day) if params[:end_date].present?
 
-    # Note: The individual array filters (status, priority, user_id, etc.)
+    # NOTE: The individual array filters (status, priority, user_id, etc.)
     # are now handled in the main index action to ensure proper ordering
 
     defects
