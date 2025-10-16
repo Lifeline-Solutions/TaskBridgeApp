@@ -51,6 +51,39 @@
       </div>
     </div>
 
+    <!-- Mobile Theme Toggle Button -->
+    <div class="relative group">
+      <div id="mobileThemeToggle" class="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white cursor-pointer rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <svg id="mobileThemeIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <!-- This will be updated by JavaScript -->
+        </svg>
+      </div>
+      
+      <!-- Mobile Theme Dropdown -->
+      <div id="mobileThemeDropdown" class="absolute z-50 right-0 top-full mt-2 opacity-0 invisible transition-all duration-200 w-40 bg-white shadow-lg rounded-xl dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+        <div class="py-1">
+          <button onclick="setTheme('light'); closeThemeDropdowns();" class="flex items-center w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-t-xl">
+            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+            Light
+          </button>
+          <button onclick="setTheme('dark'); closeThemeDropdowns();" class="flex items-center w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            </svg>
+            Dark
+          </button>
+          <button onclick="setTheme('system'); closeThemeDropdowns();" class="flex items-center w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-b-xl transition-colors">
+            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            System
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Mobile Notification Button -->
     <div class="relative group">
       <div class="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white cursor-pointer rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
@@ -138,6 +171,42 @@
 
   <!-- Desktop: Notifications and Profile -->
   <div class="hidden lg:flex items-center gap-6 text-gray-700 dark:text-gray-200 order-2">
+    <!-- Theme Toggle Button -->
+    <div class="relative group">
+      <div id="themeToggle" class="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white cursor-pointer rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200">
+        <svg id="themeIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <!-- This will be updated by JavaScript -->
+        </svg>
+      </div>
+      
+      <!-- Theme Dropdown -->
+      <div id="themeDropdown" class="absolute z-50 right-0 top-full mt-2 opacity-0 invisible transition-all duration-200 w-40 bg-white shadow-lg rounded-xl dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+        <div class="py-1">
+          <button onclick="setTheme('light'); closeThemeDropdowns();" id="lightBtn" class="flex items-center w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-t-xl">
+            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+            Light
+            <span id="lightCheck" class="ml-auto hidden">✓</span>
+          </button>
+          <button onclick="setTheme('dark'); closeThemeDropdowns();" id="darkBtn" class="flex items-center w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            </svg>
+            Dark
+            <span id="darkCheck" class="ml-auto hidden">✓</span>
+          </button>
+          <button onclick="setTheme('system'); closeThemeDropdowns();" id="systemBtn" class="flex items-center w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-b-xl transition-colors">
+            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            System
+            <span id="systemCheck" class="ml-auto hidden">✓</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Desktop Notification Button -->
     <div class="relative group">
       <div class="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white cursor-pointer rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200">
@@ -279,7 +348,145 @@
 <% end %>
 
 <script>
+  // Theme management functions
+  function setTheme(theme) {
+    // console.log('Setting theme to:', theme);
+    localStorage.setItem('theme', theme);
+    
+    // Use the global force apply function if available, otherwise use local
+    if (window.forceApplyTheme) {
+      window.forceApplyTheme(theme);
+    } else {
+      applyTheme(theme);
+    }
+    
+    updateThemeIcon(theme);
+  }
+
+  function applyTheme(theme) {
+    const html = document.documentElement;
+    const body = document.body;
+    
+    // Force remove all theme classes
+    html.classList.remove('dark', 'light');
+    if (body) {
+      body.classList.remove('dark', 'light');
+    }
+    
+    if (theme === 'dark') {
+      html.classList.add('dark');
+      if (body) body.classList.add('dark');
+      html.style.colorScheme = 'dark';
+    } else if (theme === 'light') {
+      html.classList.add('light');
+      if (body) body.classList.add('light');
+      html.style.colorScheme = 'light';
+    } else { // system
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (prefersDark) {
+        html.classList.add('dark');
+        if (body) body.classList.add('dark');
+        html.style.colorScheme = 'dark';
+      } else {
+        html.classList.add('light');
+        if (body) body.classList.add('light');
+        html.style.colorScheme = 'light';
+      }
+    }
+    
+    // console.log('Theme applied:', theme, 'HTML classes:', html.className);
+  }
+
+  function updateThemeIcon(theme) {
+    const themeIcon = document.getElementById("themeIcon");
+    const mobileThemeIcon = document.getElementById("mobileThemeIcon");
+    
+    let iconPath;
+    if (theme === 'light') {
+      iconPath = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>';
+    } else if (theme === 'dark') {
+      iconPath = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>';
+    } else {
+      iconPath = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>';
+    }
+    
+    if (themeIcon) themeIcon.innerHTML = iconPath;
+    if (mobileThemeIcon) mobileThemeIcon.innerHTML = iconPath;
+    
+    // Update active theme indicator
+    const checks = ['lightCheck', 'darkCheck', 'systemCheck'];
+    checks.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('hidden');
+    });
+    
+    const activeCheck = document.getElementById(theme + 'Check');
+    if (activeCheck) activeCheck.classList.remove('hidden');
+  }
+
+  function closeThemeDropdowns() {
+    const themeDropdown = document.getElementById("themeDropdown");
+    const mobileThemeDropdown = document.getElementById("mobileThemeDropdown");
+    
+    if (themeDropdown) {
+      themeDropdown.classList.add('opacity-0', 'invisible');
+    }
+    if (mobileThemeDropdown) {
+      mobileThemeDropdown.classList.add('opacity-0', 'invisible');
+    }
+  }
+
+  // Listen for system theme changes
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'system' || !savedTheme) {
+      if (window.forceApplyTheme) {
+        window.forceApplyTheme('system');
+      } else {
+        applyTheme('system');
+      }
+      updateThemeIcon('system');
+    }
+  });
+
   document.addEventListener("turbo:load", function() {
+    // Initialize theme icons on page load
+    const savedTheme = localStorage.getItem('theme') || 'system';
+    updateThemeIcon(savedTheme);
+
+    // Theme toggle dropdown visibility
+    const themeToggle = document.getElementById("themeToggle");
+    const mobileThemeToggle = document.getElementById("mobileThemeToggle");
+    const themeDropdown = document.getElementById("themeDropdown");
+    const mobileThemeDropdown = document.getElementById("mobileThemeDropdown");
+
+    // Click outside to close dropdowns
+    document.addEventListener("click", function(event) {
+      if (!themeToggle?.contains(event.target)) {
+        themeDropdown?.classList.add('opacity-0', 'invisible');
+      }
+      if (!mobileThemeToggle?.contains(event.target)) {
+        mobileThemeDropdown?.classList.add('opacity-0', 'invisible');
+      }
+    });
+
+    // Theme toggle button click handlers
+    if (themeToggle) {
+      themeToggle.addEventListener("click", function(e) {
+        e.stopPropagation();
+        themeDropdown?.classList.toggle('opacity-0');
+        themeDropdown?.classList.toggle('invisible');
+      });
+    }
+
+    if (mobileThemeToggle) {
+      mobileThemeToggle.addEventListener("click", function(e) {
+        e.stopPropagation();
+        mobileThemeDropdown?.classList.toggle('opacity-0');
+        mobileThemeDropdown?.classList.toggle('invisible');
+      });
+    }
+
     // Desktop search functionality
     const searchInput = document.getElementById("searchInput");
     const clearSearch = document.getElementById("clearSearch");
