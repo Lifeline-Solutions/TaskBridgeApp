@@ -42,26 +42,75 @@
               <!-- Hidden field to keep filter open -->
               <%= hidden_field_tag :filter_open, 'true' %>
               
-              <!-- Product Filter -->
+              <!-- Product Filter (Multi-Select) -->
               <div>
-                <%= label_tag :product_id, 'Product', class: 'block font-medium mb-1 text-sm border-gray-300 dark:bg-gray-500' %>
-                <%= select_tag :product_id, 
-                      options_for_select(
-                        [['Select Product...', '']] + 
-                        @qa_products.map { |p| 
-                          display_name = "#{p.client&.name} #{p.groupwares&.first&.name}".strip
-                          display_name = p.document_name if display_name.blank?
-                          [display_name.truncate(30), p.id] 
-                        }, 
-                        params[:product_id]
-                      ),
-                      class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded product-select",
-                      onchange: "handleProductChange(this)" %>
+                <%= label_tag 'product_id[]', 'Product', class: 'block font-medium mb-1 text-sm border-gray-300 dark:bg-gray-500' %>
+                <div class="relative inline-block text-left w-full multi-select-dropdown">
+                  <button type="button"
+                          id="productDropdownButton"
+                          class="w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded text-left inline-flex justify-between items-center"
+                          onclick="toggleDropdown('productDropdown')">
+                    <span id="productButtonText">Select Products...</span>
+                    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+
+                  <div id="productDropdown" class="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg w-full hidden dropdown-content">
+                    <div class="p-2 border-b">
+                      <input type="text" 
+                            id="productSearch" 
+                            placeholder="Search products..." 
+                            class="w-full p-1 text-sm border rounded"
+                            onkeyup="filterDropdownItems('productSearch', 'productItems')">
+                    </div>
+                    
+                    <div class="max-h-60 overflow-y-auto">
+                      <div id="productItems" class="p-2 space-y-2">
+                        <% selected_products = Array(params[:product_id]) %>
+                        
+                        <!-- Select All Option -->
+                        <div class="flex items-center border-b pb-2 mb-2">
+                          <%= check_box_tag 'select_all_product', 
+                                            'all', 
+                                            selected_products.length == @qa_products.length,
+                                            id: "select_all_product",
+                                            class: "mr-2 select-all-checkbox",
+                                            data: { target: 'product' } %>
+                          <%= label_tag "select_all_product", "Select All", class: "text-sm font-medium" %>
+                        </div>
+                        
+                        <% @qa_products.each do |product| %>
+                          <% display_name = "#{product.client&.name} #{product.groupwares&.first&.name}".strip %>
+                          <% display_name = product.document_name if display_name.blank? %>
+                          <div class="flex items-center dropdown-item">
+                            <%= check_box_tag 'product_id[]',
+                                              product.id,
+                                              selected_products.include?(product.id.to_s),
+                                              id: "product_#{product.id}",
+                                              class: "mr-2 product-checkbox" %>
+                            <%= label_tag "product_#{product.id}", display_name.truncate(30), class: "text-sm" %>
+                          </div>
+                        <% end %>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <!-- Only show other filters if product is selected -->
-              <% if params[:product_id].present? %>
-                <!-- Order Filter -->
+              <!-- Load Filters Button - Shows when products are selected -->
+              <% if Array(params[:product_id]).any? { |id| id.present? } %>
+                <div class="pt-2">
+                  <button type="submit" 
+                          class="w-full px-3 py-1 text-sm bg-green-600 rounded border border-green-600 hover:bg-green-700 focus:outline-none text-white">
+                    Load Filters
+                  </button>
+                </div>
+              <% end %>
+
+              <!-- Only show other filters if at least one product is selected AND filters are loaded -->
+              <% if Array(params[:product_id]).any? { |id| id.present? } && @filters_loaded %>
+                <!-- Order Filter (Single Select - Keep as dropdown) -->
                 <div>
                   <%= label_tag :order, 'Sort By', class: 'block font-medium mb-1 text-sm border-gray-300 dark:bg-gray-500' %>
                   <%= select_tag :order, options_for_select([['Latest First', 'desc'], ['Oldest First', 'asc']], params[:order]),
@@ -80,84 +129,333 @@
                   </div>
                 </div>
 
-                <!-- Status Filter (checkbox multi-select) -->
+                <!-- Status Filter (Multi-Select) -->
                 <div>
                   <%= label_tag 'status[]', 'Status', class: 'block text-sm border-gray-300 dark:bg-gray-500 font-medium mb-1' %>
-                  <div class="relative inline-block text-left w-full">
+                  <div class="relative inline-block text-left w-full multi-select-dropdown">
                     <button type="button"
                             id="statusDropdownButton"
                             class="w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded text-left inline-flex justify-between items-center"
-                            onclick="document.getElementById('statusDropdown').classList.toggle('hidden')">
-                      Filter by Status
+                            onclick="toggleDropdown('statusDropdown')">
+                      <span id="statusButtonText">Filter by Status</span>
                       <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M19 9l-7 7-7-7"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                       </svg>
                     </button>
 
-                    <div id="statusDropdown"
-                        class="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg w-full hidden">
-                      <div class="p-2 max-h-60 overflow-y-auto space-y-2">
-                        <% selected_statuses = Array(params[:status]).map { |s| s.to_s.downcase } %>
-                        <% @statuses.each do |status| %>
-                          <div class="flex items-center">
-                            <%= check_box_tag 'status[]',
-                                              status.name,
-                                              selected_statuses.include?(status.name.downcase),
-                                              id: "status_#{status.name.parameterize}",
-                                              class: "mr-2" %>
-                            <%= label_tag "status_#{status.name.parameterize}", status.name.capitalize, class: "text-sm" %>
+                    <div id="statusDropdown" class="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg w-full hidden dropdown-content">
+                      <div class="p-2 border-b">
+                        <input type="text" 
+                              id="statusSearch" 
+                              placeholder="Search statuses..." 
+                              class="w-full p-1 text-sm border rounded"
+                              onkeyup="filterDropdownItems('statusSearch', 'statusItems')">
+                      </div>
+                      
+                      <div class="max-h-60 overflow-y-auto">
+                        <div id="statusItems" class="p-2 space-y-2">
+                          <% selected_statuses = Array(params[:status]).map { |s| s.to_s.downcase } %>
+                          
+                          <!-- Select All Option -->
+                          <div class="flex items-center border-b pb-2 mb-2">
+                            <%= check_box_tag 'select_all_status', 
+                                              'all', 
+                                              selected_statuses.length == @statuses.length,
+                                              id: "select_all_status",
+                                              class: "mr-2 select-all-checkbox",
+                                              data: { target: 'status' } %>
+                            <%= label_tag "select_all_status", "Select All", class: "text-sm font-medium" %>
                           </div>
-                        <% end %>
+                          
+                          <% @statuses.each do |status| %>
+                            <div class="flex items-center dropdown-item">
+                              <%= check_box_tag 'status[]',
+                                                status.name,
+                                                selected_statuses.include?(status.name.downcase),
+                                                id: "status_#{status.name.parameterize}",
+                                                class: "mr-2 status-checkbox" %>
+                              <%= label_tag "status_#{status.name.parameterize}", status.name.capitalize, class: "text-sm" %>
+                            </div>
+                          <% end %>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <!-- Priority Filter -->
+                <!-- Priority Filter (Multi-Select) -->
                 <div>
-                  <%= label_tag :priority, 'Priority', class: 'block text-sm border-gray-300 dark:bg-gray-500 font-medium mb-1' %>
-                  <%= select_tag :priority, options_for_select(['SEVERITY 1', 'SEVERITY 2', 'SEVERITY 3', 'SEVERITY 4'], params[:priority]),
-                                include_blank: 'All Priorities',
-                                class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
+                  <%= label_tag 'priority[]', 'Priority', class: 'block text-sm border-gray-300 dark:bg-gray-500 font-medium mb-1' %>
+                  <div class="relative inline-block text-left w-full multi-select-dropdown">
+                    <button type="button"
+                            id="priorityDropdownButton"
+                            class="w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded text-left inline-flex justify-between items-center"
+                            onclick="toggleDropdown('priorityDropdown')">
+                      <span id="priorityButtonText">Filter by Priority</span>
+                      <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                      </svg>
+                    </button>
+
+                    <div id="priorityDropdown" class="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg w-full hidden dropdown-content">
+                      <div class="p-2 border-b">
+                        <input type="text" 
+                              id="prioritySearch" 
+                              placeholder="Search priorities..." 
+                              class="w-full p-1 text-sm border rounded"
+                              onkeyup="filterDropdownItems('prioritySearch', 'priorityItems')">
+                      </div>
+                      
+                      <div class="max-h-60 overflow-y-auto">
+                        <div id="priorityItems" class="p-2 space-y-2">
+                          <% selected_priorities = Array(params[:priority]) %>
+                          <% priorities = ['SEVERITY 1', 'SEVERITY 2', 'SEVERITY 3', 'SEVERITY 4'] %>
+                          
+                          <!-- Select All Option -->
+                          <div class="flex items-center border-b pb-2 mb-2">
+                            <%= check_box_tag 'select_all_priority', 
+                                              'all', 
+                                              selected_priorities.length == priorities.length,
+                                              id: "select_all_priority",
+                                              class: "mr-2 select-all-checkbox",
+                                              data: { target: 'priority' } %>
+                            <%= label_tag "select_all_priority", "Select All", class: "text-sm font-medium" %>
+                          </div>
+                          
+                          <% priorities.each do |priority| %>
+                            <div class="flex items-center dropdown-item">
+                              <%= check_box_tag 'priority[]',
+                                                priority,
+                                                selected_priorities.include?(priority),
+                                                id: "priority_#{priority.parameterize}",
+                                                class: "mr-2 priority-checkbox" %>
+                              <%= label_tag "priority_#{priority.parameterize}", priority, class: "text-sm" %>
+                            </div>
+                          <% end %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <!-- Assignee Filter -->
+                <!-- Assignee Filter (Multi-Select) -->
                 <div>
-                  <%= label_tag :user_id, 'Assignee', class: 'block text-xs font-medium mb-1' %>
-                  <%= select_tag :user_id, 
-                        options_for_select([['All Assignees', '']] + @assignees.map { |a| ["#{a.first_name} #{a.last_name}", a.id] }, params[:user_id]),
-                        include_blank: false,
-                        class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
+                  <%= label_tag 'user_id[]', 'Assignee', class: 'block text-xs font-medium mb-1' %>
+                  <div class="relative inline-block text-left w-full multi-select-dropdown">
+                    <button type="button"
+                            id="assigneeDropdownButton"
+                            class="w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded text-left inline-flex justify-between items-center"
+                            onclick="toggleDropdown('assigneeDropdown')">
+                      <span id="assigneeButtonText">Filter by Assignee</span>
+                      <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                      </svg>
+                    </button>
+
+                    <div id="assigneeDropdown" class="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg w-full hidden dropdown-content">
+                      <div class="p-2 border-b">
+                        <input type="text" 
+                              id="assigneeSearch" 
+                              placeholder="Search assignees..." 
+                              class="w-full p-1 text-sm border rounded"
+                              onkeyup="filterDropdownItems('assigneeSearch', 'assigneeItems')">
+                      </div>
+                      
+                      <div class="max-h-60 overflow-y-auto">
+                        <div id="assigneeItems" class="p-2 space-y-2">
+                          <% selected_assignees = Array(params[:user_id]) %>
+                          
+                          <!-- Select All Option -->
+                          <div class="flex items-center border-b pb-2 mb-2">
+                            <%= check_box_tag 'select_all_assignee', 
+                                              'all', 
+                                              selected_assignees.length == @assignees.length,
+                                              id: "select_all_assignee",
+                                              class: "mr-2 select-all-checkbox",
+                                              data: { target: 'assignee' } %>
+                            <%= label_tag "select_all_assignee", "Select All", class: "text-sm font-medium" %>
+                          </div>
+                          
+                          <% @assignees.each do |assignee| %>
+                            <div class="flex items-center dropdown-item">
+                              <%= check_box_tag 'user_id[]',
+                                                assignee.id,
+                                                selected_assignees.include?(assignee.id.to_s),
+                                                id: "assignee_#{assignee.id}",
+                                                class: "mr-2 assignee-checkbox" %>
+                              <%= label_tag "assignee_#{assignee.id}", "#{assignee.first_name} #{assignee.last_name}", class: "text-sm" %>
+                            </div>
+                          <% end %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <!-- QA Module Filter -->
+                <!-- QA Module Filter (Multi-Select) -->
                 <div>
-                  <%= label_tag :qa_module_id, 'Module', class: 'block text-xs font-medium mb-1' %>
-                  <%= select_tag :qa_module_id,
-                        options_for_select([['All Modules', '']] + @qa_modules.map { |m| [m.name, m.id] }, params[:qa_module_id]),
-                        class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded qa-module-select",
-                        onchange: "handleModuleChange(this.value)" %>
+                  <%= label_tag 'qa_module_id[]', 'Module', class: 'block text-xs font-medium mb-1' %>
+                  <div class="relative inline-block text-left w-full multi-select-dropdown">
+                    <button type="button"
+                            id="moduleDropdownButton"
+                            class="w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded text-left inline-flex justify-between items-center"
+                            onclick="toggleDropdown('moduleDropdown')">
+                      <span id="moduleButtonText">Filter by Module</span>
+                      <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                      </svg>
+                    </button>
+
+                    <div id="moduleDropdown" class="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg w-full hidden dropdown-content">
+                      <div class="p-2 border-b">
+                        <input type="text" 
+                              id="moduleSearch" 
+                              placeholder="Search modules..." 
+                              class="w-full p-1 text-sm border rounded"
+                              onkeyup="filterDropdownItems('moduleSearch', 'moduleItems')">
+                      </div>
+                      
+                      <div class="max-h-60 overflow-y-auto">
+                        <div id="moduleItems" class="p-2 space-y-2">
+                          <% selected_modules = Array(params[:qa_module_id]) %>
+                          
+                          <!-- Select All Option -->
+                          <div class="flex items-center border-b pb-2 mb-2">
+                            <%= check_box_tag 'select_all_module', 
+                                              'all', 
+                                              selected_modules.length == @qa_modules.length,
+                                              id: "select_all_module",
+                                              class: "mr-2 select-all-checkbox",
+                                              data: { target: 'module' } %>
+                            <%= label_tag "select_all_module", "Select All", class: "text-sm font-medium" %>
+                          </div>
+                          
+                          <% @qa_modules.each do |module_item| %>
+                            <div class="flex items-center dropdown-item">
+                              <%= check_box_tag 'qa_module_id[]',
+                                                module_item.id,
+                                                selected_modules.include?(module_item.id.to_s),
+                                                id: "module_#{module_item.id}",
+                                                class: "mr-2 module-checkbox",
+                                                onchange: "handleModuleSelection(this)" %>
+                              <%= label_tag "module_#{module_item.id}", module_item.name, class: "text-sm" %>
+                            </div>
+                          <% end %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <!-- Submodule Filter -->
+                <!-- Submodule Filter (Multi-Select) -->
                 <div>
-                  <%= label_tag :submodule_id, 'Submodule', class: 'block text-xs font-medium mb-1' %>
-                  <%= select_tag :submodule_id,
-                        options_for_select([['All Submodules', '']] + @submodules.map { |s| [s.name, s.id] }, params[:submodule_id]),
-                        class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded",
-                        id: 'submodule_id' %>
+                  <%= label_tag 'submodule_id[]', 'Submodule', class: 'block text-xs font-medium mb-1' %>
+                  <div class="relative inline-block text-left w-full multi-select-dropdown">
+                    <button type="button"
+                            id="submoduleDropdownButton"
+                            class="w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded text-left inline-flex justify-between items-center"
+                            onclick="toggleDropdown('submoduleDropdown')">
+                      <span id="submoduleButtonText">Filter by Submodule</span>
+                      <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                      </svg>
+                    </button>
+
+                    <div id="submoduleDropdown" class="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg w-full hidden dropdown-content">
+                      <div class="p-2 border-b">
+                        <input type="text" 
+                              id="submoduleSearch" 
+                              placeholder="Search submodules..." 
+                              class="w-full p-1 text-sm border rounded"
+                              onkeyup="filterDropdownItems('submoduleSearch', 'submoduleItems')">
+                      </div>
+                      
+                      <div class="max-h-60 overflow-y-auto">
+                        <div id="submoduleItems" class="p-2 space-y-2">
+                          <% selected_submodules = Array(params[:submodule_id]) %>
+                          
+                          <!-- Select All Option -->
+                          <div class="flex items-center border-b pb-2 mb-2">
+                            <%= check_box_tag 'select_all_submodule', 
+                                              'all', 
+                                              selected_submodules.length == @submodules.length,
+                                              id: "select_all_submodule",
+                                              class: "mr-2 select-all-checkbox",
+                                              data: { target: 'submodule' } %>
+                            <%= label_tag "select_all_submodule", "Select All", class: "text-sm font-medium" %>
+                          </div>
+                          
+                          <% @submodules.each do |submodule| %>
+                            <div class="flex items-center dropdown-item">
+                              <%= check_box_tag 'submodule_id[]',
+                                                submodule.id,
+                                                selected_submodules.include?(submodule.id.to_s),
+                                                id: "submodule_#{submodule.id}",
+                                                class: "mr-2 submodule-checkbox" %>
+                              <%= label_tag "submodule_#{submodule.id}", submodule.name, class: "text-sm" %>
+                            </div>
+                          <% end %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <!-- Banking Type Filter -->
+                <!-- Banking Type Filter (Multi-Select) -->
                 <div>
-                  <%= label_tag :banking_type_id, 'Banking Type', class: 'block text-xs font-medium mb-1' %>
-                  <%= select_tag :banking_type_id,
-                                options_for_select([['All Banking Types', '']] + @banking_types.map { |b| [b.name, b.id] }, params[:banking_type_id]),
-                                class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
+                  <%= label_tag 'banking_type_id[]', 'Banking Type', class: 'block text-xs font-medium mb-1' %>
+                  <div class="relative inline-block text-left w-full multi-select-dropdown">
+                    <button type="button"
+                            id="bankingTypeDropdownButton"
+                            class="w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded text-left inline-flex justify-between items-center"
+                            onclick="toggleDropdown('bankingTypeDropdown')">
+                      <span id="bankingTypeButtonText">Filter by Banking Type</span>
+                      <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                      </svg>
+                    </button>
+
+                    <div id="bankingTypeDropdown" class="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg w-full hidden dropdown-content">
+                      <div class="p-2 border-b">
+                        <input type="text" 
+                              id="bankingTypeSearch" 
+                              placeholder="Search banking types..." 
+                              class="w-full p-1 text-sm border rounded"
+                              onkeyup="filterDropdownItems('bankingTypeSearch', 'bankingTypeItems')">
+                      </div>
+                      
+                      <div class="max-h-60 overflow-y-auto">
+                        <div id="bankingTypeItems" class="p-2 space-y-2">
+                          <% selected_banking_types = Array(params[:banking_type_id]) %>
+                          
+                          <!-- Select All Option -->
+                          <div class="flex items-center border-b pb-2 mb-2">
+                            <%= check_box_tag 'select_all_banking_type', 
+                                              'all', 
+                                              selected_banking_types.length == @banking_types.length,
+                                              id: "select_all_banking_type",
+                                              class: "mr-2 select-all-checkbox",
+                                              data: { target: 'banking-type' } %>
+                            <%= label_tag "select_all_banking_type", "Select All", class: "text-sm font-medium" %>
+                          </div>
+                          
+                          <% @banking_types.each do |banking_type| %>
+                            <div class="flex items-center dropdown-item">
+                              <%= check_box_tag 'banking_type_id[]',
+                                                banking_type.id,
+                                                selected_banking_types.include?(banking_type.id.to_s),
+                                                id: "banking_type_#{banking_type.id}",
+                                                class: "mr-2 banking-type-checkbox" %>
+                              <%= label_tag "banking_type_#{banking_type.id}", banking_type.name, class: "text-sm" %>
+                            </div>
+                          <% end %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <!-- Labels filter -->
+                <!-- Labels filter (Keep existing implementation) -->
                 <div class="mb-4">
                   <label for="label-search" class="block text-sm font-medium text-gray-700">Labels</label>
                   <div id="label-select" class="relative border border-gray-300 rounded-md shadow-sm bg-white">
@@ -196,10 +494,15 @@
                   </button>
                   <%= link_to 'Reset', defect_index_path, class: 'px-3 py-1 text-sm bg-red-600 rounded-r-lg border border-red-600 hover:bg-red-700 focus:outline-none text-white' %>
                 </div>
+              <% elsif Array(params[:product_id]).any? { |id| id.present? } %>
+                <!-- Message when products are selected but filters not loaded -->
+                <div class="text-sm text-gray-500 text-center py-4">
+                  Click "Load Filters" to view filter options for selected products
+                </div>
               <% else %>
                 <!-- Message when no product selected -->
                 <div class="text-sm text-gray-500 text-center py-4">
-                  Select a product to view filter options
+                  Select at least one product to view filter options
                 </div>
               <% end %>
             <% end %>
@@ -211,152 +514,207 @@
 </div>
 
 <script>
-  // ========== FILTER DROPDOWN MANAGEMENT ==========
+  // ========== MAIN FILTER DROPDOWN TOGGLE ==========
   document.addEventListener("turbo:load", function () {
     const filterButton = document.getElementById("filterDropdownButton");
     const filterDropdown = document.getElementById("filterDropdown");
 
-    // Remove any previously attached event listeners (cleanup)
-    const newButton = filterButton.cloneNode(true);
-    if (filterButton && filterButton.parentNode) {
-      filterButton.parentNode.replaceChild(newButton, filterButton);
-    }
+    if (filterButton && filterDropdown) {
+      // Remove any existing event listeners by cloning and replacing
+      const newButton = filterButton.cloneNode(true);
+      if (filterButton.parentNode) {
+        filterButton.parentNode.replaceChild(newButton, filterButton);
+      }
+      
+      const newDropdown = filterDropdown.cloneNode(true);
+      if (filterDropdown.parentNode) {
+        filterDropdown.parentNode.replaceChild(newDropdown, filterDropdown);
+      }
 
-    const newDropdown = filterDropdown.cloneNode(true);
-    if (filterDropdown && filterDropdown.parentNode) {
-      filterDropdown.parentNode.replaceChild(newDropdown, filterDropdown);
-    }
+      // Re-query the elements after replacement
+      const button = document.getElementById("filterDropdownButton");
+      const dropdown = document.getElementById("filterDropdown");
 
-    // Re-query after DOM replacement
-    const button = document.getElementById("filterDropdownButton");
-    const dropdown = document.getElementById("filterDropdown");
-
-    if (button && dropdown) {
-      button.addEventListener("click", function (e) {
-        e.stopPropagation();
-        dropdown.classList.toggle("hidden");
-      });
-
-      document.addEventListener("click", function (e) {
-        if (!dropdown.contains(e.target) && !button.contains(e.target)) {
-          dropdown.classList.add("hidden");
-        }
-      });
-
-      dropdown.addEventListener("click", function (e) {
-        e.stopPropagation();
-      });
-    }
-  });
-
-  // ========== LABELS FILTER MANAGEMENT ==========
-  document.addEventListener("turbo:load", () => {
-    const searchInput   = document.getElementById("label-search");
-    const dropdown      = document.getElementById("label-dropdown");
-    const selectedBox   = document.getElementById("selected-labels");
-    const hiddenInputs  = document.getElementById("hidden-labels");
-
-    if (searchInput && dropdown) {
-      // Filter dropdown items as user types
-      searchInput.addEventListener("input", () => {
-        const query = searchInput.value.toLowerCase();
-        dropdown.querySelectorAll(".dropdown-item").forEach(item => {
-          item.classList.toggle("hidden", !item.dataset.name.toLowerCase().includes(query));
+      if (button && dropdown) {
+        button.addEventListener("click", function (e) {
+          e.stopPropagation();
+          dropdown.classList.toggle("hidden");
         });
-        dropdown.classList.remove("hidden");
-      });
 
-      // Handle selecting a label
-      dropdown.addEventListener("click", e => {
-        if (!e.target.classList.contains("dropdown-item")) return;
+        // Close dropdown when clicking outside
+        document.addEventListener("click", function (e) {
+          if (!dropdown.contains(e.target) && !button.contains(e.target)) {
+            dropdown.classList.add("hidden");
+          }
+        });
 
-        const id   = e.target.dataset.id;
-        const name = e.target.dataset.name;
-
-        // Prevent duplicates
-        if (document.getElementById(`label-tag-${id}`)) return;
-
-        // Create tag
-        const tag = document.createElement("span");
-        tag.id = `label-tag-${id}`;
-        tag.className = "bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-xs flex items-center gap-1";
-        tag.innerHTML = `${name} <button type="button" data-id="${id}" class="remove-tag text-red-500">×</button>`;
-        selectedBox.appendChild(tag);
-
-        // Hidden input
-        const hidden = document.createElement("input");
-        hidden.type = "hidden";
-        hidden.name = "label_ids[]";
-        hidden.value = id;
-        hidden.id = `label-hidden-${id}`;
-        hiddenInputs.appendChild(hidden);
-
-        // Reset input & hide dropdown
-        searchInput.value = "";
-        dropdown.classList.add("hidden");
-      });
-
-      // Remove tag
-      selectedBox.addEventListener("click", e => {
-        if (!e.target.classList.contains("remove-tag")) return;
-        const id = e.target.dataset.id;
-        document.getElementById(`label-tag-${id}`).remove();
-        document.getElementById(`label-hidden-${id}`).remove();
-      });
-
-      // Hide dropdown when clicking outside
-      document.addEventListener("click", e => {
-        if (document.getElementById("label-select") && !document.getElementById("label-select").contains(e.target)) {
-          dropdown.classList.add("hidden");
-        }
-      });
+        // Prevent dropdown from closing when clicking inside it
+        dropdown.addEventListener("click", function (e) {
+          e.stopPropagation();
+        });
+      }
     }
+
+    // Initialize the multi-select functionality
+    initializeMultiSelectDropdowns();
+    initializeSelectAllFunctionality();
+    updateAllButtonTexts();
   });
 
-  // ========== PRODUCT SELECTION LOGIC ==========
-  function handleProductChange(selectElement) {
-    const form = selectElement.closest('form');
-    const hiddenInput = form.querySelector('input[name="filter_open"]');
-    if (!hiddenInput) {
-      const newInput = document.createElement('input');
-      newInput.type = 'hidden';
-      newInput.name = 'filter_open';
-      newInput.value = 'true';
-      form.appendChild(newInput);
+  // ========== MULTI-SELECT DROPDOWN MANAGEMENT ==========
+  function initializeMultiSelectDropdowns() {
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.multi-select-dropdown')) {
+        document.querySelectorAll('.dropdown-content').forEach(dropdown => {
+          dropdown.classList.add('hidden');
+        });
+      }
+    });
+  }
+
+  function toggleDropdown(dropdownId) {
+    const dropdown = document.getElementById(dropdownId);
+    if (dropdown) {
+      // Close all other dropdowns
+      document.querySelectorAll('.dropdown-content').forEach(otherDropdown => {
+        if (otherDropdown.id !== dropdownId) {
+          otherDropdown.classList.add('hidden');
+        }
+      });
+      
+      // Toggle current dropdown
+      dropdown.classList.toggle('hidden');
     }
+  }
+
+  function filterDropdownItems(searchInputId, itemsContainerId) {
+    const searchTerm = document.getElementById(searchInputId).value.toLowerCase();
+    const items = document.getElementById(itemsContainerId).getElementsByClassName('dropdown-item');
     
-    // For product selection, submit to current page (index) to show filter options
-    form.submit();
+    Array.from(items).forEach(item => {
+      const text = item.textContent.toLowerCase();
+      item.style.display = text.includes(searchTerm) ? 'flex' : 'none';
+    });
+  }
+
+  function initializeSelectAllFunctionality() {
+    // Add event listeners to all "Select All" checkboxes
+    document.querySelectorAll('.select-all-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', function(e) {
+        const target = this.dataset.target;
+        const checkboxes = document.querySelectorAll(`.${target}-checkbox`);
+        
+        checkboxes.forEach(cb => {
+          if (cb !== e.target) {
+            cb.checked = e.target.checked;
+            cb.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        });
+      });
+    });
+
+    // Update "Select All" when individual checkboxes change
+    document.querySelectorAll('[class$="-checkbox"]').forEach(checkbox => {
+      if (!checkbox.classList.contains('select-all-checkbox')) {
+        checkbox.addEventListener('change', function() {
+          updateSelectAllState(this);
+          updateButtonText(this);
+        });
+      }
+    });
+  }
+
+  function updateSelectAllState(checkbox) {
+    const className = Array.from(checkbox.classList).find(cls => cls.endsWith('-checkbox'));
+    if (!className) return;
+    
+    const target = className.replace('-checkbox', '');
+    const selectAllCheckbox = document.querySelector(`.select-all-checkbox[data-target="${target}"]`);
+    const checkboxes = document.querySelectorAll(`.${target}-checkbox:not(.select-all-checkbox)`);
+    
+    if (selectAllCheckbox && checkboxes.length > 0) {
+      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+      const someChecked = Array.from(checkboxes).some(cb => cb.checked);
+      
+      selectAllCheckbox.checked = allChecked;
+      selectAllCheckbox.indeterminate = someChecked && !allChecked;
+    }
+  }
+
+  function updateButtonText(checkbox) {
+    const className = Array.from(checkbox.classList).find(cls => cls.endsWith('-checkbox'));
+    if (!className) return;
+    
+    const target = className.replace('-checkbox', '');
+    const buttonId = `${target}DropdownButton`;
+    const buttonTextId = `${target}ButtonText`;
+    const checkboxes = document.querySelectorAll(`.${target}-checkbox:not(.select-all-checkbox)`);
+    
+    const selectedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+    const totalCount = checkboxes.length;
+    
+    updateDropdownButtonText(buttonId, buttonTextId, selectedCount, totalCount, getDefaultText(target));
+  }
+
+  function updateAllButtonTexts() {
+    const filterTypes = ['product', 'status', 'priority', 'assignee', 'module', 'submodule', 'banking-type'];
+    
+    filterTypes.forEach(type => {
+      const buttonId = `${type}DropdownButton`;
+      const buttonTextId = `${type}ButtonText`;
+      const checkboxes = document.querySelectorAll(`.${type}-checkbox:not(.select-all-checkbox)`);
+      
+      if (checkboxes.length > 0) {
+        const selectedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+        const totalCount = checkboxes.length;
+        
+        updateDropdownButtonText(buttonId, buttonTextId, selectedCount, totalCount, getDefaultText(type));
+      }
+    });
+  }
+
+  function updateDropdownButtonText(buttonId, buttonTextId, selectedCount, totalCount, defaultText) {
+    const button = document.getElementById(buttonId);
+    const buttonText = document.getElementById(buttonTextId);
+    
+    if (buttonText) {
+      if (selectedCount === 0) {
+        buttonText.textContent = defaultText;
+      } else if (selectedCount === totalCount) {
+        buttonText.textContent = `${defaultText} (All)`;
+      } else {
+        buttonText.textContent = `${defaultText} (${selectedCount} selected)`;
+      }
+    }
+  }
+
+  function getDefaultText(filterType) {
+    const textMap = {
+      'product': 'Select Products...',
+      'status': 'Filter by Status',
+      'priority': 'Filter by Priority',
+      'assignee': 'Filter by Assignee',
+      'module': 'Filter by Module',
+      'submodule': 'Filter by Submodule',
+      'banking-type': 'Filter by Banking Type'
+    };
+    
+    return textMap[filterType] || 'Filter...';
   }
 
   // ========== MODULE AND SUBMODULE MANAGEMENT ==========
-  function handleModuleChange(moduleId) {
-    // Update submodules but don't submit the form
-    updateSubmodules(moduleId, false);
+  function handleModuleSelection(checkbox) {
+    const moduleId = checkbox.value;
+    const isChecked = checkbox.checked;
+    
+    if (isChecked) {
+      // Load submodules for this module when selected
+      updateSubmodulesForMultiSelect(moduleId);
+    }
   }
 
-  function updateSubmodules(moduleId, shouldSubmit = false) {
-    console.log('updateSubmodules called with:', moduleId, 'shouldSubmit:', shouldSubmit);
-    
-    const submoduleSelect = document.getElementById('submodule_id');
-    
-    if (!moduleId) {
-      // Clear submodules if no module selected
-      submoduleSelect.innerHTML = '<option value="">All Submodules</option>';
-      submoduleSelect.disabled = false;
-      
-      // Only submit if explicitly requested
-      if (shouldSubmit) {
-        submitToIndexShow();
-      }
-      return;
-    }
-    
-    // Show loading state
-    submoduleSelect.innerHTML = '<option value="">Loading submodules...</option>';
-    submoduleSelect.disabled = true;
-    
-    // Make AJAX call to get submodules
+  function updateSubmodulesForMultiSelect(moduleId) {
     fetch(`/defect/get_submodules?module_id=${moduleId}`, {
       headers: {
         'Accept': 'application/json',
@@ -370,55 +728,56 @@
       return response.json();
     })
     .then(submodules => {
-      console.log('Received submodules:', submodules);
-      
-      // Update submodule dropdown
-      updateSubmoduleDropdown(submodules);
-      
-      // Only submit if explicitly requested
-      if (shouldSubmit) {
-        submitToIndexShow();
-      }
+      addSubmodulesToDropdown(submodules);
     })
     .catch(error => {
       console.error('Error fetching submodules:', error);
-      submoduleSelect.innerHTML = '<option value="">Error loading submodules</option>';
-      
-      // Only submit if explicitly requested
-      if (shouldSubmit) {
-        submitToIndexShow();
-      }
     });
   }
 
-  function updateSubmoduleDropdown(submodules) {
-    const submoduleSelect = document.getElementById('submodule_id');
-    if (submoduleSelect) {
-      // Clear existing options except the first one
-      submoduleSelect.innerHTML = '<option value="">All Submodules</option>';
-      
-      // Add new submodule options from JSON response
-      submodules.forEach(submodule => {
-        const option = document.createElement('option');
-        option.value = submodule.id;
-        option.textContent = submodule.name;
-        submoduleSelect.appendChild(option);
-      });
-      
-      // If there are no submodules, disable the dropdown
-      if (submodules.length === 0) {
-        submoduleSelect.disabled = true;
-      } else {
-        submoduleSelect.disabled = false;
+  function addSubmodulesToDropdown(submodules) {
+    const submoduleContainer = document.getElementById('submoduleItems');
+    const existingIds = new Set();
+    
+    submoduleContainer.querySelectorAll('.submodule-checkbox').forEach(checkbox => {
+      existingIds.add(checkbox.value);
+    });
+    
+    submodules.forEach(submodule => {
+      if (!existingIds.has(submodule.id.toString())) {
+        const div = document.createElement('div');
+        div.className = 'flex items-center dropdown-item';
+        div.innerHTML = `
+          <input type="checkbox" 
+                name="submodule_id[]" 
+                value="${submodule.id}" 
+                id="submodule_${submodule.id}" 
+                class="mr-2 submodule-checkbox">
+          <label for="submodule_${submodule.id}" class="text-sm">${submodule.name}</label>
+        `;
+        submoduleContainer.appendChild(div);
+        
+        const newCheckbox = div.querySelector('.submodule-checkbox');
+        newCheckbox.addEventListener('change', function() {
+          updateSelectAllState(this);
+          updateButtonText(this);
+        });
       }
-    }
+    });
+    
+    updateSelectAllStateForFilter('submodule');
   }
 
-  function clearSubmoduleDropdown() {
-    const submoduleSelect = document.getElementById('submodule_id');
-    if (submoduleSelect) {
-      submoduleSelect.innerHTML = '<option value="">All Submodules</option>';
-      submoduleSelect.disabled = false;
+  function updateSelectAllStateForFilter(filterType) {
+    const checkboxes = document.querySelectorAll(`.${filterType}-checkbox:not(.select-all-checkbox)`);
+    const selectAllCheckbox = document.querySelector(`.select-all-checkbox[data-target="${filterType}"]`);
+    
+    if (selectAllCheckbox && checkboxes.length > 0) {
+      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+      const someChecked = Array.from(checkboxes).some(cb => cb.checked);
+      
+      selectAllCheckbox.checked = allChecked;
+      selectAllCheckbox.indeterminate = someChecked && !allChecked;
     }
   }
 
@@ -430,10 +789,8 @@
   function submitToIndexShow() {
     const form = document.getElementById('filter-form');
     if (form) {
-      // Change form action to index_show for the final submission
       form.action = '<%= index_show_defect_index_path %>';
       
-      // Ensure filter_open parameter is included
       let filterOpenInput = form.querySelector('input[name="filter_open"]');
       if (!filterOpenInput) {
         filterOpenInput = document.createElement('input');
@@ -443,71 +800,25 @@
         form.appendChild(filterOpenInput);
       }
       
-      // Submit the form to index_show
       form.submit();
     }
   }
 
-  // ========== INITIALIZATION ==========
-  // Initialize submodules when page loads if a module is already selected
-  document.addEventListener('DOMContentLoaded', function() {
-    const selectedModuleId = '<%= params[:qa_module_id] %>';
-    if (selectedModuleId && selectedModuleId !== '') {
-      console.log('Initializing with module:', selectedModuleId);
-      // Don't trigger form submission on page load
-      initializeSubmodules(selectedModuleId);
-    }
-    
-    // Initialize selected labels from params
-    initializeSelectedLabels();
-  });
-
-  function initializeSubmodules(moduleId) {
-    if (!moduleId) return;
-    
-    const submoduleSelect = document.getElementById('submodule_id');
-    
-    fetch(`/defect/get_submodules?module_id=${moduleId}`, {
-      headers: {
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
-      }
-    })
-    .then(response => response.json())
-    .then(submodules => {
-      submoduleSelect.innerHTML = '<option value="">All Submodules</option>';
-      
-      submodules.forEach(submodule => {
-        const option = document.createElement('option');
-        option.value = submodule.id;
-        option.textContent = submodule.name;
-        
-        // Select the option if it matches the current param
-        if (submodule.id === '<%= params[:submodule_id] %>') {
-          option.selected = true;
-        }
-        
-        submoduleSelect.appendChild(option);
+  // ========== PRODUCT SELECTION AUTO-SUBMIT (Optional) ==========
+  // If you want to auto-submit when products are selected instead of using the "Load Filters" button
+  function setupProductAutoSubmit() {
+    const productCheckboxes = document.querySelectorAll('.product-checkbox');
+    productCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        // Optional: Auto-submit when products are selected
+        // Uncomment the line below if you want auto-submit behavior
+        // document.getElementById('filter-form').submit();
       });
-      
-      submoduleSelect.disabled = submodules.length === 0;
-    })
-    .catch(error => {
-      console.error('Error initializing submodules:', error);
     });
   }
 
-  function initializeSelectedLabels() {
-    const selectedBox = document.getElementById('selected-labels');
-    const hiddenInputs = document.getElementById('hidden-labels');
-    
-    // Get label IDs from params (this would need to be set from your controller)
-    // For now, this is a placeholder - you might need to pass label data differently
-    const selectedLabelIds = []; // You would populate this from your params
-    
-    if (selectedLabelIds.length > 0) {
-      // Fetch label details and populate the selected labels
-      // This would require additional server-side implementation
-    }
-  }
+  // Initialize product auto-submit on page load
+  document.addEventListener('turbo:load', function() {
+    setupProductAutoSubmit();
+  });
 </script>
