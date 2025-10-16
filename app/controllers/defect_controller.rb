@@ -321,11 +321,15 @@ class DefectController < ApplicationController
       if product_ids.size == 1
         # Single product - set @product for backward compatibility
         @product = Product.find_by(id: product_ids.first)
+        @products = nil
       else
         # Multiple products - set @products array and leave @product nil
         @products = Product.where(id: product_ids).order(:document_name)
         @product = nil # Ensure @product is nil to avoid errors in partial
       end
+    else
+      @product = nil
+      @products = nil
     end
 
     # Build option lists for dropdowns from the CURRENT filtered (but unpaginated) result set
