@@ -1,12 +1,68 @@
 <div class="container justify-between p-4">
   <%= form_with url: reports_path, method: :get, local: true, id: 'reports-form' do %>
     <div class="flex flex-wrap gap-3 items-center">
-      <div>
-        <label for="product_id" class="font-semibold">Select Product:</label>
-        <%= select_tag :product_id,
-                      options_for_select([['Select a product...', '']] + @product_options, params[:product_id]),
-                      class: "border rounded p-2 ml-2 bg-white dark:bg-gray-800 min-w-48",
-                      onchange: "this.form.submit()" %>
+      <!-- Product Selection Dropdown -->
+      <div class="dropdown-group">
+        <label for="product_selection" class="font-semibold">Select Products:</label>
+        <div class="relative">
+          <button type="button" id="product-dropdown-toggle" class="border rounded p-2 ml-2 bg-white dark:bg-gray-800 min-w-48 text-left flex justify-between items-center">
+            <span id="product-selection-text">
+              <% if @selected_products.any? %>
+                <% if @selected_products.size == 1 %>
+                  <% selected_product = @product_options.find { |p| p[1].to_s == @selected_products.first } %>
+                  <%= selected_product ? selected_product[0] : "Product selected" %>
+                <% else %>
+                  <%= "#{@selected_products.size} products selected" %>
+                <% end %>
+              <% else %>
+                Select products...
+              <% end %>
+            </span>
+            <span class="ml-2">▼</span>
+          </button>
+          
+          <div id="product-options" class="dropdown-options hidden">
+            <!-- Saved Filters Section -->
+            <% if @defect_filters.any? %>
+              <div class="border-b pb-2 mb-2">
+                <h4 class="font-semibold text-sm text-gray-700 mb-1">Saved Filters</h4>
+                <% @defect_filters.each do |filter| %>
+                  <label class="block pl-2 py-1 hover:bg-gray-100 cursor-pointer">
+                    <%= radio_button_tag 'defect_filter_id', filter.id, params[:defect_filter_id] == filter.id.to_s, 
+                          class: 'defect-filter-radio',
+                          data: { 
+                            products: Array(filter.filters['product_id']).to_json,
+                            start_date: filter.filters['start_date'],
+                            end_date: filter.filters['end_date']
+                          } %>
+                    <span class="ml-2"><%= filter.name %></span>
+                    <% if filter.product %>
+                      <span class="text-xs text-gray-500 ml-1">(<%= filter.product.document_name %>)</span>
+                    <% end %>
+                  </label>
+                <% end %>
+              </div>
+            <% end %>
+
+            <!-- Individual Products Section -->
+            <div>
+              <h4 class="font-semibold text-sm text-gray-700 mb-1">Individual Products</h4>
+              <% @product_options.each do |name, id| %>
+                <label class="block pl-2 py-1 hover:bg-gray-100 cursor-pointer">
+                  <%= check_box_tag 'product_ids[]', id, @selected_products.include?(id.to_s), 
+                        class: 'product-checkbox' %>
+                  <span class="ml-2"><%= name %></span>
+                </label>
+              <% end %>
+            </div>
+
+            <div class="border-t pt-2 mt-2">
+              <button type="button" id="apply-product-selection" class="w-full bg-blue-500 text-white py-1 px-2 rounded text-sm hover:bg-blue-600">
+                Apply Selection
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div>
@@ -20,7 +76,7 @@
         <span class="font-semibold">Metrics:</span>
         
         <!-- Severity Dropdown -->
-        <% if @available_options[:severities] && params[:product_id].present? %>
+        <% if @available_options[:severities] && @selected_products.any? %>
           <div class="dropdown-group">
             <label class="inline-flex items-center gap-1">
               <%= check_box_tag 'metrics[]', 'severity', @selected_metrics.include?('severity'), 
@@ -40,7 +96,7 @@
         <% end %>
 
         <!-- Reporter Dropdown -->
-        <% if @available_options[:reporters] && params[:product_id].present? %>
+        <% if @available_options[:reporters] && @selected_products.any? %>
           <div class="dropdown-group">
             <label class="inline-flex items-center gap-1">
               <%= check_box_tag 'metrics[]', 'reporter', @selected_metrics.include?('reporter'),
@@ -60,7 +116,7 @@
         <% end %>
 
         <!-- Status Dropdown -->
-        <% if @available_options[:statuses] && params[:product_id].present? %>
+        <% if @available_options[:statuses] && @selected_products.any? %>
           <div class="dropdown-group">
             <label class="inline-flex items-center gap-1">
               <%= check_box_tag 'metrics[]', 'status', @selected_metrics.include?('status'),
@@ -80,7 +136,7 @@
         <% end %>
 
         <!-- Assignee Dropdown -->
-        <% if @available_options[:assignees] && params[:product_id].present? %>
+        <% if @available_options[:assignees] && @selected_products.any? %>
           <div class="dropdown-group">
             <label class="inline-flex items-center gap-1">
               <%= check_box_tag 'metrics[]', 'assignee', @selected_metrics.include?('assignee'),
@@ -100,7 +156,7 @@
         <% end %>
 
         <!-- Modules Dropdown -->
-        <% if @available_options[:modules] && params[:product_id].present? %>
+        <% if @available_options[:modules] && @selected_products.any? %>
           <div class="dropdown-group">
             <label class="inline-flex items-center gap-1">
               <%= check_box_tag 'metrics[]', 'modules', @selected_metrics.include?('modules'),
@@ -120,7 +176,7 @@
         <% end %>
 
         <!-- Submodules Dropdown -->
-        <% if @available_options[:submodules] && params[:product_id].present? %>
+        <% if @available_options[:submodules] && @selected_products.any? %>
           <div class="dropdown-group">
             <label class="inline-flex items-center gap-1">
               <%= check_box_tag 'metrics[]', 'submodules', @selected_metrics.include?('submodules'),
@@ -140,7 +196,7 @@
         <% end %>
 
         <!-- Ageing Dropdown -->
-        <% if @available_options[:ageing_types] && params[:product_id].present? %>
+        <% if @available_options[:ageing_types] && @selected_products.any? %>
           <div class="dropdown-group">
             <label class="inline-flex items-center gap-1">
               <%= check_box_tag 'metrics[]', 'ageing', @selected_metrics.include?('ageing'),
@@ -160,9 +216,9 @@
         <% end %>
       </div>
 
-      <% if params[:product_id].present? %>
+      <% if @selected_products.any? %>
         <%= submit_tag "Apply", class: "ml-2 px-4 py-2 bg-blue-500 text-white rounded" %>
-        <% if params[:commit].present? %>
+        <% if params[:commit].present? || params[:defect_filter_id].present? %>
           <%= link_to "Clear", reports_path, class: "ml-2 px-4 py-2 bg-gray-500 text-white rounded" %>
         <% end %>
       <% end %>
@@ -172,93 +228,90 @@
     <%= hidden_field_tag :product_change, value: params[:product_change] %>
   <% end %>
 
-  <% if params[:commit].present? && params[:product_id].present? %>
-              <div class="mt-4 border-t pt-4 flex">
-                <button type="button" id="openSaveDashboardModal" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                  Save as Dashboard
-                </button>
+  <% if (params[:commit].present? || params[:defect_filter_id].present?) && @selected_products.any? %>
+    <div class="mt-4 border-t pt-4 flex">
+      <button type="button" id="openSaveDashboardModal" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+        Save as Dashboard
+      </button>
 
-                <div class="ml-4 mt-2">
-                  <%= link_to "Download CSV", download_report_reports_path(request.query_parameters), class: "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" %>
-                </div>
-              </div>
+      <div class="ml-4 mt-2">
+        <%= link_to "Download CSV", download_report_reports_path(request.query_parameters), class: "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" %>
+      </div>
+    </div>
 
-              <div id="saveDashboardModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                <div class="bg-white rounded-lg p-6 w-96">
-                  <h3 class="text-lg font-bold mb-4">Save Current Report as Dashboard</h3>
-                  <%= form_with url: save_report_dashboard_path, method: :post, local: true do |f| %>
-                    <div class="mb-4">
-                      <%= label_tag 'defect_filter[name]', 'Dashboard Name', class: 'block font-medium mb-2' %>
-                      <%= text_field_tag 'defect_filter[name]', '', class: 'w-full border p-2 rounded', required: true %>
-                    </div>
+    <div id="saveDashboardModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div class="bg-white rounded-lg p-6 w-96">
+        <h3 class="text-lg font-bold mb-4">Save Current Report as Dashboard</h3>
+        <%= form_with url: save_report_dashboard_path, method: :post, local: true do |f| %>
+          <div class="mb-4">
+            <%= label_tag 'defect_filter[name]', 'Dashboard Name', class: 'block font-medium mb-2' %>
+            <%= text_field_tag 'defect_filter[name]', '', class: 'w-full border p-2 rounded', required: true %>
+          </div>
 
-                    <% if @product_options.any? %>
-                      <div class="mb-4">
-                        <%= label_tag 'defect_filter[product_id]', 'Product (Optional)', class: 'block font-medium mb-2' %>
-                        <%= select_tag 'defect_filter[product_id]', 
-                              options_for_select(@product_options, params[:product_id]),
-                              include_blank: 'Select product...',
-                              class: 'w-full border p-2 rounded' %>
-                      </div>
-                    <% end %>
+          <% if @product_options.any? %>
+            <div class="mb-4">
+              <%= label_tag 'defect_filter[product_id]', 'Product (Optional)', class: 'block font-medium mb-2' %>
+              <%= select_tag 'defect_filter[product_id]', 
+                    options_for_select(@product_options, @product_id),
+                    include_blank: 'Select product...',
+                    class: 'w-full border p-2 rounded' %>
+            </div>
+          <% end %>
 
-                    <!-- Store all current report filters -->
-                    <%= hidden_field_tag 'defect_filter[filters]', {
-                      metrics: params[:metrics] || [],
-                      severities: params[:severities] || [],
-                      reporters: params[:reporters] || [],
-                      statuses: params[:statuses] || [],
-                      assignees: params[:assignees] || [],
-                      modules: params[:modules] || [],
-                      submodules: params[:submodules] || [],
-                      ageing_type: params[:ageing_type],
-                      start_date: params[:start_date],
-                      end_date: params[:end_date],
-                      product_id: params[:product_id]
-                    }.to_json %>
+          <!-- Store all current report filters -->
+          <%= hidden_field_tag 'defect_filter[filters]', {
+            metrics: params[:metrics] || [],
+            severities: params[:severities] || [],
+            reporters: params[:reporters] || [],
+            statuses: params[:statuses] || [],
+            assignees: params[:assignees] || [],
+            modules: params[:modules] || [],
+            submodules: params[:submodules] || [],
+            ageing_type: params[:ageing_type],
+            start_date: params[:start_date],
+            end_date: params[:end_date],
+            product_id: @selected_products
+          }.to_json %>
 
-                    <div class="flex justify-end gap-2">
-                      <button type="button" id="cancelSaveDashboard" class="px-4 py-2 border rounded hover:bg-gray-100">Cancel</button>
-                      <%= submit_tag 'Save Dashboard', class: 'px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700' %>
-                    </div>
-                  <% end %>
+          <div class="flex justify-end gap-2">
+            <button type="button" id="cancelSaveDashboard" class="px-4 py-2 border rounded hover:bg-gray-100">Cancel</button>
+            <%= submit_tag 'Save Dashboard', class: 'px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700' %>
+          </div>
+        <% end %>
+      </div>
+    </div>
 
-                </div>
-              </div>
+    <script>
+      document.addEventListener('turbo:load', function() {
+        const openBtn = document.getElementById('openSaveDashboardModal');
+        const modal = document.getElementById('saveDashboardModal');
+        const cancel = document.getElementById('cancelSaveDashboard');
 
+        if (openBtn) {
+          openBtn.addEventListener('click', function() {
+            modal.classList.remove('hidden');
+          });
+        }
 
-              <script>
-                document.addEventListener('turbo:load', function() {
-                  const openBtn = document.getElementById('openSaveDashboardModal');
-                  const modal = document.getElementById('saveDashboardModal');
-                  const cancel = document.getElementById('cancelSaveDashboard');
+        if (cancel) {
+          cancel.addEventListener('click', function() {
+            modal.classList.add('hidden');
+          });
+        }
 
-                  if (openBtn) {
-                    openBtn.addEventListener('click', function() {
-                      modal.classList.remove('hidden');
-                    });
-                  }
-
-                  if (cancel) {
-                    cancel.addEventListener('click', function() {
-                      modal.classList.add('hidden');
-                    });
-                  }
-
-                  if (modal) {
-                    modal.addEventListener('click', function(e) {
-                      if (e.target === modal) {
-                        modal.classList.add('hidden');
-                      }
-                    });
-                  }
-                });
-              </script>
-            <% end %>
-  <!-- Download CSV Button -->
+        if (modal) {
+          modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+              modal.classList.add('hidden');
+            }
+          });
+        }
+      });
+    </script>
+  <% end %>
 </div>
 
-<% if params[:commit].present? && params[:product_id].present? %>
+<% if (params[:commit].present? || params[:defect_filter_id].present?) && @selected_products.any? %>
   <%= render partial: "defect_per_user", locals: {
     defects_per_creator: @defects_per_creator,
     defects_per_status: @defects_per_status,
@@ -269,17 +322,17 @@
     defects_age_buckets: @defects_age_buckets,
     selected_metrics: @selected_metrics
   } %>
-<% elsif params[:product_id].present? %>
+<% elsif @selected_products.any? %>
   <div class="container p-4 text-center text-gray-500">
     Please configure your metrics and click <strong>"Apply"</strong> to generate the report.<br>
     <span class="text-sm text-gray-400">
-      Note: The dropdowns only display items available for the selected product. 
-      For example, if you don’t see all statuses, it means only those statuses exist among the current product’s defects.
+      Note: The dropdowns only display items available for the selected products. 
+      For example, if you don't see all statuses, it means only those statuses exist among the current products' defects.
     </span>
   </div>
 <% else %>
   <div class="container p-4 text-center text-gray-500">
-    Please select a product to view reports. <strong>Selecting the date-range is optional</strong>.
+    Please select products to view reports. <strong>Selecting the date-range is optional</strong>.
   </div>
 <% end %>
 
@@ -298,8 +351,8 @@
     border-radius: 4px;
     padding: 0.5rem;
     z-index: 1000;
-    min-width: 200px;
-    max-height: 300px;
+    min-width: 300px;
+    max-height: 400px;
     overflow-y: auto;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     margin-top: 4px;
@@ -314,6 +367,7 @@
     display: flex;
     align-items: center;
     cursor: pointer;
+    white-space: nowrap;
   }
 
   .dropdown-options label:hover {
@@ -323,27 +377,69 @@
   .metric-checkbox {
     margin-right: 0.5rem;
   }
+
+  .product-checkbox, .defect-filter-radio {
+    margin-right: 0.5rem;
+  }
 </style>
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    // Close all dropdowns by default - this is the key fix
+    // Close all dropdowns by default
     document.querySelectorAll('.dropdown-options').forEach(dropdown => {
       dropdown.classList.add('hidden');
     });
 
-    // Toggle dropdown options when metric checkbox is clicked
+    // Toggle product dropdown
+    document.getElementById('product-dropdown-toggle')?.addEventListener('click', function() {
+      const dropdown = document.getElementById('product-options');
+      dropdown.classList.toggle('hidden');
+      
+      // Close other dropdowns
+      document.querySelectorAll('.dropdown-options').forEach(otherDropdown => {
+        if (otherDropdown.id !== 'product-options') {
+          otherDropdown.classList.add('hidden');
+        }
+      });
+    });
+
+    // Apply product selection
+    document.getElementById('apply-product-selection')?.addEventListener('click', function() {
+      document.getElementById('reports-form').submit();
+    });
+
+    // Auto-submit when defect filter is selected
+    document.querySelectorAll('.defect-filter-radio').forEach(radio => {
+      radio.addEventListener('change', function() {
+        if (this.checked) {
+          // Clear individual product selections
+          document.querySelectorAll('.product-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+          });
+          document.getElementById('reports-form').submit();
+        }
+      });
+    });
+
+    // Clear defect filter when individual products are selected
+    document.querySelectorAll('.product-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        document.querySelectorAll('.defect-filter-radio').forEach(radio => {
+          radio.checked = false;
+        });
+      });
+    });
+
+    // Toggle metric dropdowns
     document.querySelectorAll('.metric-checkbox').forEach(checkbox => {
       checkbox.addEventListener('change', function() {
         const targetId = this.dataset.target;
         const target = document.getElementById(targetId);
         if (target) {
-          // Only toggle this specific dropdown
           target.classList.toggle('hidden');
           
-          // Close all other dropdowns
           document.querySelectorAll('.dropdown-options').forEach(otherDropdown => {
-            if (otherDropdown.id !== targetId) {
+            if (otherDropdown.id !== targetId && otherDropdown.id !== 'product-options') {
               otherDropdown.classList.add('hidden');
             }
           });
@@ -358,6 +454,25 @@
           dropdown.classList.add('hidden');
         });
       }
+    });
+
+    // Update product selection text
+    function updateProductSelectionText() {
+      const selectedProducts = document.querySelectorAll('.product-checkbox:checked');
+      const textElement = document.getElementById('product-selection-text');
+      
+      if (selectedProducts.length === 0) {
+        textElement.textContent = 'Select products...';
+      } else if (selectedProducts.length === 1) {
+        const productName = selectedProducts[0].closest('label').querySelector('span').textContent;
+        textElement.textContent = productName;
+      } else {
+        textElement.textContent = `${selectedProducts.length} products selected`;
+      }
+    }
+
+    document.querySelectorAll('.product-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', updateProductSelectionText);
     });
 
     // Set product_change flag when product is changed
