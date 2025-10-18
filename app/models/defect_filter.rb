@@ -24,6 +24,7 @@ class DefectFilter < ApplicationRecord
   ALLOWED_FILTER_KEYS = %w[
     client_name product_id query order start_date end_date priority user_id
     qa_module_id submodule_id banking_type_id label_ids status page
+    filter_open select_all_module select_all_submodule
   ].freeze
 
   # Report-specific allowed keys
