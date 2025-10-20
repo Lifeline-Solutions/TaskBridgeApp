@@ -1,17 +1,14 @@
 require 'csv'
 require 'axlsx'
+
 class ReportsController < ApplicationController
   before_action :authenticate_user!
 
   def index
     authorize! :generate, :report
     
-    Rails.logger.info "=== REPORTS INDEX START ==="
-    Rails.logger.info "Initial params: #{params.to_s}"
     # Load saved report dashboards for the current user
     @saved_dashboards = current_user.defect_filters.defect_filters.active.order(:name)
-    
-    Rails.logger.info "Found #{@saved_dashboards.count} saved dashboards: #{@saved_dashboards.map(&:name)}"
 
     @products = Product.includes(:client, :groupwares, :statuses)
       .select do |product|
@@ -382,113 +379,22 @@ class ReportsController < ApplicationController
 
   private
 
-  # def load_saved_dashboard(dashboard_id)
-  #   # FIX: Use defect_filters scope since that's what you're loading
-  #   dashboard = current_user.defect_filters.defect_filters.active.find_by(id: dashboard_id)
-  #   return unless dashboard
-
-  #   # Debug: log what we found
-  #   Rails.logger.info "Loading dashboard: #{dashboard.name}, filters: #{dashboard.filters}"
-
-  #   # Apply the saved filters to the current params
-  #   # For defect filters, we need to convert them to report parameters
-  #   saved_filters = dashboard.sanitized_filters
-    
-  #   # Convert defect filter parameters to report parameters
-  #   report_params = convert_defect_filters_to_report_params(saved_filters)
-    
-  #   # Set all the parameters from the saved dashboard
-  #   report_params.each do |key, value|
-  #     params[key] = value unless value.blank?
-  #   end
-    
-  #   # Set the dashboard_id to indicate we're loading a saved dashboard
-  #   params[:dashboard_id] = dashboard_id
-    
-  #   # Clear commit and product_change to prevent form submission logic
-  #   params[:commit] = nil
-  #   params[:product_change] = nil
-    
-  #   # Debug: log the final params
-  #   Rails.logger.info "Final params after loading dashboard: #{params.to_h}"
-  # end
-
-  # def convert_defect_filters_to_report_params(defect_filters)
-  #   report_params = {}
-    
-  #   # Map defect filter keys to report parameter keys
-  #   defect_filters.each do |key, value|
-  #     case key
-  #     when 'product_id'
-  #       report_params['product_id'] = Array(value)
-  #     when 'user_id'
-  #       report_params['assignees'] = Array(value)
-  #     when 'qa_module_id'
-  #       report_params['modules'] = Array(value)
-  #     when 'submodule_id'
-  #       report_params['submodules'] = Array(value)
-  #     when 'priority'
-  #       # Convert priority to severities
-  #       report_params['severities'] = Array(value).map { |p| normalize_severity(p) }
-  #     when 'status'
-  #       report_params['statuses'] = Array(value)
-  #     when 'start_date'
-  #       report_params['start_date'] = value
-  #     when 'end_date'
-  #       report_params['end_date'] = value
-  #     end
-  #   end
-    
-  #   # Set default metrics based on what filters are available
-  #   metrics = []
-  #   metrics << 'severity' if report_params['severities'].present?
-  #   metrics << 'reporter' if defect_filters['user_id'].present? # Use creator from defect filters
-  #   metrics << 'status' if report_params['statuses'].present?
-  #   metrics << 'assignee' if report_params['assignees'].present?
-  #   metrics << 'modules' if report_params['modules'].present?
-  #   metrics << 'submodules' if report_params['submodules'].present?
-  #   metrics << 'ageing' # Always include ageing by default
-    
-  #   report_params['metrics'] = metrics.any? ? metrics : %w[severity reporter status assignee ageing modules submodules]
-    
-  #   report_params
-  # end
-
-
   def load_saved_dashboard(dashboard_id)
     # Clean up the dashboard_id parameter (remove any "value+" corruption)
     clean_dashboard_id = dashboard_id.to_s.gsub(/value\+/, '').strip
     return if clean_dashboard_id.blank?
-    
-    Rails.logger.info "=== LOADING SAVED DASHBOARD ==="
-    Rails.logger.info "Raw dashboard_id: #{dashboard_id}"
-    Rails.logger.info "Clean dashboard_id: #{clean_dashboard_id}"
 
-    # FIX: Use defect_filters scope since that's what you're loading
+    # Use defect_filters scope since that's what you're loading
     dashboard = current_user.defect_filters.defect_filters.active.find_by(id: clean_dashboard_id)
-    
-    if dashboard
-      Rails.logger.info "Found dashboard: #{dashboard.name}"
-      Rails.logger.info "Dashboard filters: #{dashboard.filters.inspect}"
-      Rails.logger.info "Dashboard sanitized_filters: #{dashboard.sanitized_filters.inspect}"
-    else
-      Rails.logger.error "Dashboard not found with ID: #{clean_dashboard_id}"
-      Rails.logger.error "Available dashboards: #{current_user.defect_filters.defect_filters.active.pluck(:id, :name).inspect}"
-      return
-    end
+    return unless dashboard
 
     # Apply the saved filters to the current params
     # For defect filters, we need to convert them to report parameters
     saved_filters = dashboard.sanitized_filters
     
-    Rails.logger.info "Original saved filters: #{saved_filters.inspect}"
-    
     # Convert defect filter parameters to report parameters
     report_params = convert_defect_filters_to_report_params(saved_filters)
     
-    Rails.logger.info "Converted report params: #{report_params.inspect}"
-    
-    # FIX: Instead of clearing params, we'll selectively delete and set parameters
     # Delete all existing params except the ones we want to keep
     params.keys.each do |key|
       unless key == 'controller' || key == 'action'
@@ -503,23 +409,16 @@ class ReportsController < ApplicationController
     report_params.each do |key, value|
       if value.present?
         params[key] = value 
-        Rails.logger.info "Set param: #{key} = #{value}"
       end
     end
     
     # Clear commit and product_change to prevent form submission logic
     params[:commit] = nil
     params[:product_change] = nil
-    
-    # Debug: log the final params
-    Rails.logger.info "Final params after loading dashboard: #{params.to_s}"
-    Rails.logger.info "=== FINISHED LOADING DASHBOARD ==="
   end
 
   def convert_defect_filters_to_report_params(defect_filters)
     report_params = {}
-    
-    Rails.logger.info "Converting defect filters: #{defect_filters.inspect}"
     
     # Map defect filter keys to report parameter keys
     defect_filters.each do |key, value|
@@ -527,43 +426,35 @@ class ReportsController < ApplicationController
       when 'product_id'
         if value.present?
           report_params['product_id'] = Array(value)
-          Rails.logger.info "Converted product_id: #{value} -> #{report_params['product_id']}"
         end
       when 'user_id'
         if value.present?
           report_params['assignees'] = Array(value)
-          Rails.logger.info "Converted user_id: #{value} -> #{report_params['assignees']}"
         end
       when 'qa_module_id'
         if value.present?
           report_params['modules'] = Array(value)
-          Rails.logger.info "Converted qa_module_id: #{value} -> #{report_params['modules']}"
         end
       when 'submodule_id'
         if value.present?
           report_params['submodules'] = Array(value)
-          Rails.logger.info "Converted submodule_id: #{value} -> #{report_params['submodules']}"
         end
       when 'priority'
         if value.present?
           # Convert priority to severities
           report_params['severities'] = Array(value).map { |p| normalize_severity(p) }
-          Rails.logger.info "Converted priority: #{value} -> #{report_params['severities']}"
         end
       when 'status'
         if value.present?
           report_params['statuses'] = Array(value)
-          Rails.logger.info "Converted status: #{value} -> #{report_params['statuses']}"
         end
       when 'start_date'
         if value.present?
           report_params['start_date'] = value
-          Rails.logger.info "Converted start_date: #{value}"
         end
       when 'end_date'
         if value.present?
           report_params['end_date'] = value
-          Rails.logger.info "Converted end_date: #{value}"
         end
       end
     end
@@ -579,8 +470,6 @@ class ReportsController < ApplicationController
     metrics << 'ageing' # Always include ageing by default
     
     report_params['metrics'] = metrics.any? ? metrics : %w[severity reporter status assignee ageing modules submodules]
-    
-    Rails.logger.info "Final metrics: #{report_params['metrics']}"
     
     report_params
   end
