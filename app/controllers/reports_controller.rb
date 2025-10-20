@@ -4,59 +4,263 @@ class ReportsController < ApplicationController
   before_action :authenticate_user!
 
   def index
-    # Get available products for dropdown - FIXED: Include client and groupware associations
-    @product_options = Product.active
-                              .includes(:client, :groupwares)
-                              .map { |p| ["#{p.client&.name} #{p.groupwares&.first&.name}".strip, p.id] }
+    authorize! :generate, :report
     
-    # Initialize defect filters for the dropdown
-    @defect_filters = current_user.defect_filters.active.defect_filters.includes(:product)
+    Rails.logger.info "=== REPORTS INDEX START ==="
+    Rails.logger.info "Initial params: #{params.to_s}"
+    # Load saved report dashboards for the current user
+    @saved_dashboards = current_user.defect_filters.defect_filters.active.order(:name)
     
-    # Handle defect filter selection
-    if params[:defect_filter_id].present?
-      defect_filter = @defect_filters.find_by(id: params[:defect_filter_id])
-      if defect_filter
-        # Apply the saved defect filter to report parameters
-        apply_defect_filter_to_report(defect_filter)
-      end
+    Rails.logger.info "Found #{@saved_dashboards.count} saved dashboards: #{@saved_dashboards.map(&:name)}"
+
+    @products = Product.includes(:client, :groupwares, :statuses)
+      .select do |product|
+      product.statuses.any? { |status| ['Pre Quality Assurance', 'End Of Quality Assurance'].include?(status.name) } &&
+        Defect.published.where(product_id: product.id).exists?
     end
 
-    # Handle product selection (single or multiple)
-    @selected_products = if params[:product_ids].present?
-                          Array(params[:product_ids])
-                        elsif params[:product_id].present?
-                          [params[:product_id]]
-                        else
-                          []
-                        end
+    @product_options = @products.map do |product|
+      client_name = product.client&.name || 'No Client Assigned'
+      groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
+      ["#{client_name} - #{groupware_names}", product.id]
+    end
 
-    # Set main product_id for backward compatibility (first selected product)
-    @product_id = @selected_products.first
+    # Check if we're loading a saved dashboard
+    if params[:dashboard_id].present?
+      load_saved_dashboard(params[:dashboard_id])
+    end
 
-    # Get available options based on selected products
-    if @selected_products.any?
-      @available_options = get_available_options(@selected_products)
-      
-      # Get selected metrics and their values
-      @selected_metrics = Array(params[:metrics] || [])
-      @selected_severities = Array(params[:severities] || [])
-      @selected_reporters = Array(params[:reporters] || [])
-      @selected_statuses = Array(params[:statuses] || [])
-      @selected_assignees = Array(params[:assignees] || [])
-      @selected_modules = Array(params[:modules] || [])
-      @selected_submodules = Array(params[:submodules] || [])
-      @selected_ageing_type = params[:ageing_type]
+    # Check if form was submitted via Apply button (not product change or dashboard load)
+    form_submitted = params[:commit].present? && params[:product_change].blank? && params[:dashboard_id].blank?
 
-      # Generate report data if Apply was clicked or defect filter was selected
-      if params[:commit].present? || params[:defect_filter_id].present?
-        generate_report_data(@selected_products)
+    # Handle multiple product selection - convert to array if it's a string
+    product_ids = if params[:product_id].is_a?(String)
+                   params[:product_id].split(',')
+                 else
+                   Array(params[:product_id]).reject(&:blank?)
+                 end
+    
+    # Metrics selection (configurable)
+    default_metrics = %w[severity reporter status assignee ageing modules submodules]
+    @selected_metrics = Array(params[:metrics]).presence || default_metrics
+
+    # Get selected sub-options from params
+    @selected_severities = Array(params[:severities]).reject(&:blank?)
+    @selected_reporters = Array(params[:reporters]).reject(&:blank?)
+    @selected_statuses = Array(params[:statuses]).reject(&:blank?)
+    @selected_assignees = Array(params[:assignees]).reject(&:blank?)
+    @selected_modules = Array(params[:modules]).reject(&:blank?)
+    @selected_submodules = Array(params[:submodules]).reject(&:blank?)
+    @selected_ageing_type = params[:ageing_type] || 'latest'
+
+    # Filters
+    start_date = parse_date(params[:start_date])
+    end_date = parse_date(params[:end_date])
+
+    # Create base scope for gathering available options (WITHOUT sub-filters)
+    base_scope_for_options = Defect.published
+    base_scope_for_options = base_scope_for_options.where(product_id: product_ids) if product_ids.any?
+    base_scope_for_options = base_scope_for_options.where('defects.created_at >= ?', start_date.beginning_of_day) if start_date
+    base_scope_for_options = base_scope_for_options.where('defects.created_at <= ?', end_date.end_of_day) if end_date
+
+    # Gather available options based on the base scope (without sub-filters)
+    @available_options = {}
+
+    if product_ids.any?
+      # Available severities
+      if @selected_metrics.include?('severity')
+        @available_options[:severities] = base_scope_for_options
+          .where.not(priority: [nil, ''])
+          .distinct
+          .pluck(:priority)
+          .map { |p| normalize_severity(p) }
+          .uniq
+          .sort
       end
+
+      # Available reporters
+      if @selected_metrics.include?('reporter')
+        @available_options[:reporters] = base_scope_for_options
+          .joins(:creator)
+          .select('users.id, users.first_name, users.last_name')
+          .distinct
+          .map { |u| [u.id, "#{u.first_name} #{u.last_name}"] }
+      end
+
+      # Available statuses
+      if @selected_metrics.include?('status')
+        @available_options[:statuses] = base_scope_for_options
+          .joins(:statuses)
+          .select('statuses.id, statuses.name')
+          .distinct
+          .map { |s| [s.id, s.name] }
+          .uniq { |_id, name| name }
+      end
+
+      # Available assignees
+      if @selected_metrics.include?('assignee')
+        @available_options[:assignees] = base_scope_for_options
+          .joins(:users)
+          .select('users.id, users.first_name, users.last_name')
+          .distinct
+          .map { |u| [u.id, "#{u.first_name} #{u.last_name}"] }
+      end
+
+      # Available modules
+      if @selected_metrics.include?('modules')
+        @available_options[:modules] = base_scope_for_options
+          .joins(:qa_module)
+          .where.not(qa_modules: { id: nil })
+          .select('qa_modules.id, qa_modules.name')
+          .distinct
+          .map { |m| [m.id, m.name] }
+      end
+
+      # Available submodules (dependent on modules)
+      if @selected_metrics.include?('submodules')
+        @available_options[:submodules] = base_scope_for_options
+          .joins('LEFT JOIN qa_modules submods ON submods.id = defects.submodule_id')
+          .where.not(submods: { id: nil })
+          .select('submods.id, submods.name, submods.parent_id')
+          .distinct
+          .map { |sm| [sm.id, sm.name, sm.parent_id] }
+      end
+
+      # Ageing options
+      @available_options[:ageing_types] = [%w[Latest latest], %w[Oldest oldest]] if @selected_metrics.include?('ageing')
+    end
+
+    # ONLY calculate metrics if form was submitted via Apply button OR dashboard is loaded AND products are selected
+    if (form_submitted || params[:dashboard_id].present?) && product_ids.any?
+      # NOW create the filtered scope for metric calculations
+      defects_scope = base_scope_for_options
+
+      # Apply sub-filters for metric calculations
+      # Filter: Severity (priority) - only if specific severities are selected
+      if @selected_severities.any?
+        all_values = @selected_severities.flat_map do |severity|
+          case severity.downcase
+          when 'severity 1' then ['severity 1', 's1', 'high']
+          when 'severity 2' then ['severity 2', 's2', 'medium']
+          when 'severity 3' then ['severity 3', 's3', 'low']
+          when 'severity 4' then ['severity 4', 's4', 'very low']
+          else [severity.downcase]
+          end
+        end
+        defects_scope = defects_scope.where("LOWER(COALESCE(defects.priority, 'unknown')) IN (?)", all_values)
+      end
+
+      # Apply other filters...
+      # Filter: Reporter
+      defects_scope = defects_scope.where(creator_id: @selected_reporters) if @selected_reporters.any?
+
+      # Filter: Status
+      if @selected_statuses.any?
+        downcased_statuses = @selected_statuses.map(&:downcase)
+        defects_scope = defects_scope.joins(:statuses).where('LOWER(statuses.name) IN (?)', downcased_statuses)
+      end
+
+      # Filter: Assignee
+      defects_scope = defects_scope.joins(:users).where(users: { id: @selected_assignees }) if @selected_assignees.any?
+
+      # Filter: Module
+      defects_scope = defects_scope.where(qa_module_id: @selected_modules) if @selected_modules.any?
+
+      # Filter: Submodule
+      defects_scope = defects_scope.where(submodule_id: @selected_submodules) if @selected_submodules.any?
+
+      # NOW calculate the metrics with the filtered data
+      @defects_per_creator = if @selected_metrics.include?('reporter')
+                               defects_scope
+                                 .joins(:creator)
+                                 .group('users.id', 'users.first_name', 'users.last_name')
+                                 .count
+                             else
+                               {}
+                             end
+
+      @defects_per_status = if @selected_metrics.include?('status')
+                              defects_scope
+                                .joins(:statuses)
+                                .group('statuses.id', 'statuses.name')
+                                .count
+                            else
+                              {}
+                            end
+
+      @defects_per_severity = if @selected_metrics.include?('severity')
+                                raw = defects_scope.group("LOWER(COALESCE(priority, 'unknown'))").count
+                                raw.transform_keys { |k| normalize_severity(k) }
+                              else
+                                {}
+                              end
+
+      @defects_per_assignee = if @selected_metrics.include?('assignee')
+                                defects_scope
+                                  .joins(:users)
+                                  .group('users.id', 'users.first_name', 'users.last_name')
+                                  .count
+                              else
+                                {}
+                              end
+
+      @defects_per_module = if @selected_metrics.include?('modules')
+                              defects_scope
+                                .joins(:qa_module)
+                                .group('qa_modules.id', 'qa_modules.name')
+                                .count
+                            else
+                              {}
+                            end
+
+      @defects_per_submodule = if @selected_metrics.include?('submodules')
+                                 defects_scope
+                                   .joins('LEFT JOIN qa_modules submods ON submods.id = defects.submodule_id')
+                                   .group('submods.id', 'submods.name')
+                                   .count
+                                   .reject { |(id, name), _| id.nil? || name.nil? }
+                               else
+                                 {}
+                               end
+
+      @defects_age_buckets = if @selected_metrics.include?('ageing')
+                               ageing_scope = defects_scope.unscope(:order)
+
+                               buckets = ageing_scope.group(<<~SQL.squish).count
+                                 CASE
+                                   WHEN defects.created_at >= NOW() - INTERVAL '7 days' THEN '0-7 days'
+                                   WHEN defects.created_at >= NOW() - INTERVAL '14 days' THEN '8-14 days'
+                                   WHEN defects.created_at >= NOW() - INTERVAL '30 days' THEN '15-30 days'
+                                   ELSE '31+ days'
+                                 END
+                               SQL
+
+                               ordered_buckets = {}
+                               if @selected_ageing_type == 'latest'
+                                 ['0-7 days', '8-14 days', '15-30 days', '31+ days'].each do |bucket|
+                                   ordered_buckets[bucket] = buckets[bucket] || 0
+                                 end
+                               else
+                                 ['31+ days', '15-30 days', '8-14 days', '0-7 days'].each do |bucket|
+                                   ordered_buckets[bucket] = buckets[bucket] || 0
+                                 end
+                               end
+                               ordered_buckets
+                             else
+                               {}
+                             end
     else
-      @available_options = {}
-      @selected_metrics = []
+      # Initialize empty metrics if form not submitted via Apply button
+      @defects_per_creator = {}
+      @defects_per_status = {}
+      @defects_per_severity = {}
+      @defects_per_assignee = {}
+      @defects_per_module = {}
+      @defects_per_submodule = {}
+      @defects_age_buckets = {}
     end
   end
-  
+
   def save_dashboard
     # Parse and prepare the filters for storage
     filters_data = if params[:defect_filter] && params[:defect_filter][:filters].is_a?(String)
@@ -65,14 +269,17 @@ class ReportsController < ApplicationController
                      params[:defect_filter][:filters] || {}
                    end
 
-    # Convert array parameters to JSON strings for proper storage
-    %w[metrics severities reporters statuses assignees modules submodules].each do |array_key|
-      filters_data[array_key] = filters_data[array_key].to_json if filters_data[array_key].is_a?(Array)
-    end
+    # Handle multiple product selection for storage
+    product_ids = if params[:defect_filter][:product_id].is_a?(String)
+                   params[:defect_filter][:product_id].split(',')
+                 else
+                   Array(params[:defect_filter][:product_id]).reject(&:blank?)
+                 end
+    product_id = product_ids.any? ? product_ids.first : nil
 
     @dashboard = current_user.defect_filters.build(
       name: params[:defect_filter][:name],
-      product_id: params[:defect_filter][:product_id],
+      product_id: product_id,
       filters: filters_data,
       filter_type: 'report',
       is_dashboard: true
@@ -83,7 +290,7 @@ class ReportsController < ApplicationController
     @dashboard.modified_by = current_user
 
     if @dashboard.save
-      redirect_to defect_filters_path, notice: 'Dashboard saved successfully!'
+      redirect_to reports_path, notice: 'Dashboard saved successfully!'
     else
       redirect_to reports_path(params.except(:defect_filter, :commit, :action, :controller)),
                   alert: "Failed to save dashboard: #{@dashboard.errors.full_messages.join(', ')}"
@@ -92,16 +299,19 @@ class ReportsController < ApplicationController
 
   def download_report
     require 'csv'
-    # Download the current report data as CSV  for all reports once selected.
     authorize! :generate, :report
 
-    product_id = params[:product_id]
+    product_ids = if params[:product_id].is_a?(String)
+                   params[:product_id].split(',')
+                 else
+                   Array(params[:product_id]).reject(&:blank?)
+                 end
     start_date = parse_date(params[:start_date])
     end_date = parse_date(params[:end_date])
 
     # Create base scope
     defects_scope = Defect.published
-    defects_scope = defects_scope.where(product_id: product_id) if product_id.present?
+    defects_scope = defects_scope.where(product_id: product_ids) if product_ids.any?
     defects_scope = defects_scope.where('defects.created_at >= ?', start_date.beginning_of_day) if start_date
     defects_scope = defects_scope.where('defects.created_at <= ?', end_date.end_of_day) if end_date
 
@@ -172,6 +382,209 @@ class ReportsController < ApplicationController
 
   private
 
+  # def load_saved_dashboard(dashboard_id)
+  #   # FIX: Use defect_filters scope since that's what you're loading
+  #   dashboard = current_user.defect_filters.defect_filters.active.find_by(id: dashboard_id)
+  #   return unless dashboard
+
+  #   # Debug: log what we found
+  #   Rails.logger.info "Loading dashboard: #{dashboard.name}, filters: #{dashboard.filters}"
+
+  #   # Apply the saved filters to the current params
+  #   # For defect filters, we need to convert them to report parameters
+  #   saved_filters = dashboard.sanitized_filters
+    
+  #   # Convert defect filter parameters to report parameters
+  #   report_params = convert_defect_filters_to_report_params(saved_filters)
+    
+  #   # Set all the parameters from the saved dashboard
+  #   report_params.each do |key, value|
+  #     params[key] = value unless value.blank?
+  #   end
+    
+  #   # Set the dashboard_id to indicate we're loading a saved dashboard
+  #   params[:dashboard_id] = dashboard_id
+    
+  #   # Clear commit and product_change to prevent form submission logic
+  #   params[:commit] = nil
+  #   params[:product_change] = nil
+    
+  #   # Debug: log the final params
+  #   Rails.logger.info "Final params after loading dashboard: #{params.to_h}"
+  # end
+
+  # def convert_defect_filters_to_report_params(defect_filters)
+  #   report_params = {}
+    
+  #   # Map defect filter keys to report parameter keys
+  #   defect_filters.each do |key, value|
+  #     case key
+  #     when 'product_id'
+  #       report_params['product_id'] = Array(value)
+  #     when 'user_id'
+  #       report_params['assignees'] = Array(value)
+  #     when 'qa_module_id'
+  #       report_params['modules'] = Array(value)
+  #     when 'submodule_id'
+  #       report_params['submodules'] = Array(value)
+  #     when 'priority'
+  #       # Convert priority to severities
+  #       report_params['severities'] = Array(value).map { |p| normalize_severity(p) }
+  #     when 'status'
+  #       report_params['statuses'] = Array(value)
+  #     when 'start_date'
+  #       report_params['start_date'] = value
+  #     when 'end_date'
+  #       report_params['end_date'] = value
+  #     end
+  #   end
+    
+  #   # Set default metrics based on what filters are available
+  #   metrics = []
+  #   metrics << 'severity' if report_params['severities'].present?
+  #   metrics << 'reporter' if defect_filters['user_id'].present? # Use creator from defect filters
+  #   metrics << 'status' if report_params['statuses'].present?
+  #   metrics << 'assignee' if report_params['assignees'].present?
+  #   metrics << 'modules' if report_params['modules'].present?
+  #   metrics << 'submodules' if report_params['submodules'].present?
+  #   metrics << 'ageing' # Always include ageing by default
+    
+  #   report_params['metrics'] = metrics.any? ? metrics : %w[severity reporter status assignee ageing modules submodules]
+    
+  #   report_params
+  # end
+
+
+  def load_saved_dashboard(dashboard_id)
+    # Clean up the dashboard_id parameter (remove any "value+" corruption)
+    clean_dashboard_id = dashboard_id.to_s.gsub(/value\+/, '').strip
+    return if clean_dashboard_id.blank?
+    
+    Rails.logger.info "=== LOADING SAVED DASHBOARD ==="
+    Rails.logger.info "Raw dashboard_id: #{dashboard_id}"
+    Rails.logger.info "Clean dashboard_id: #{clean_dashboard_id}"
+
+    # FIX: Use defect_filters scope since that's what you're loading
+    dashboard = current_user.defect_filters.defect_filters.active.find_by(id: clean_dashboard_id)
+    
+    if dashboard
+      Rails.logger.info "Found dashboard: #{dashboard.name}"
+      Rails.logger.info "Dashboard filters: #{dashboard.filters.inspect}"
+      Rails.logger.info "Dashboard sanitized_filters: #{dashboard.sanitized_filters.inspect}"
+    else
+      Rails.logger.error "Dashboard not found with ID: #{clean_dashboard_id}"
+      Rails.logger.error "Available dashboards: #{current_user.defect_filters.defect_filters.active.pluck(:id, :name).inspect}"
+      return
+    end
+
+    # Apply the saved filters to the current params
+    # For defect filters, we need to convert them to report parameters
+    saved_filters = dashboard.sanitized_filters
+    
+    Rails.logger.info "Original saved filters: #{saved_filters.inspect}"
+    
+    # Convert defect filter parameters to report parameters
+    report_params = convert_defect_filters_to_report_params(saved_filters)
+    
+    Rails.logger.info "Converted report params: #{report_params.inspect}"
+    
+    # FIX: Instead of clearing params, we'll selectively delete and set parameters
+    # Delete all existing params except the ones we want to keep
+    params.keys.each do |key|
+      unless key == 'controller' || key == 'action'
+        params.delete(key)
+      end
+    end
+    
+    # Set the dashboard_id
+    params[:dashboard_id] = clean_dashboard_id
+    
+    # Set all the parameters from the saved dashboard
+    report_params.each do |key, value|
+      if value.present?
+        params[key] = value 
+        Rails.logger.info "Set param: #{key} = #{value}"
+      end
+    end
+    
+    # Clear commit and product_change to prevent form submission logic
+    params[:commit] = nil
+    params[:product_change] = nil
+    
+    # Debug: log the final params
+    Rails.logger.info "Final params after loading dashboard: #{params.to_s}"
+    Rails.logger.info "=== FINISHED LOADING DASHBOARD ==="
+  end
+
+  def convert_defect_filters_to_report_params(defect_filters)
+    report_params = {}
+    
+    Rails.logger.info "Converting defect filters: #{defect_filters.inspect}"
+    
+    # Map defect filter keys to report parameter keys
+    defect_filters.each do |key, value|
+      case key
+      when 'product_id'
+        if value.present?
+          report_params['product_id'] = Array(value)
+          Rails.logger.info "Converted product_id: #{value} -> #{report_params['product_id']}"
+        end
+      when 'user_id'
+        if value.present?
+          report_params['assignees'] = Array(value)
+          Rails.logger.info "Converted user_id: #{value} -> #{report_params['assignees']}"
+        end
+      when 'qa_module_id'
+        if value.present?
+          report_params['modules'] = Array(value)
+          Rails.logger.info "Converted qa_module_id: #{value} -> #{report_params['modules']}"
+        end
+      when 'submodule_id'
+        if value.present?
+          report_params['submodules'] = Array(value)
+          Rails.logger.info "Converted submodule_id: #{value} -> #{report_params['submodules']}"
+        end
+      when 'priority'
+        if value.present?
+          # Convert priority to severities
+          report_params['severities'] = Array(value).map { |p| normalize_severity(p) }
+          Rails.logger.info "Converted priority: #{value} -> #{report_params['severities']}"
+        end
+      when 'status'
+        if value.present?
+          report_params['statuses'] = Array(value)
+          Rails.logger.info "Converted status: #{value} -> #{report_params['statuses']}"
+        end
+      when 'start_date'
+        if value.present?
+          report_params['start_date'] = value
+          Rails.logger.info "Converted start_date: #{value}"
+        end
+      when 'end_date'
+        if value.present?
+          report_params['end_date'] = value
+          Rails.logger.info "Converted end_date: #{value}"
+        end
+      end
+    end
+    
+    # Set default metrics based on what filters are available
+    metrics = []
+    metrics << 'severity' if report_params['severities'].present?
+    metrics << 'reporter' if defect_filters['user_id'].present? # Use creator from defect filters
+    metrics << 'status' if report_params['statuses'].present?
+    metrics << 'assignee' if report_params['assignees'].present?
+    metrics << 'modules' if report_params['modules'].present?
+    metrics << 'submodules' if report_params['submodules'].present?
+    metrics << 'ageing' # Always include ageing by default
+    
+    report_params['metrics'] = metrics.any? ? metrics : %w[severity reporter status assignee ageing modules submodules]
+    
+    Rails.logger.info "Final metrics: #{report_params['metrics']}"
+    
+    report_params
+  end
+
   def dashboard_params
     params.require(:defect_filter).permit(:name, :product_id, filters: {})
   end
@@ -195,114 +608,5 @@ class ReportsController < ApplicationController
     when 'unknown', '' then 'Unknown'
     else k.titleize
     end
-  end
-
-  def apply_defect_filter_to_report(defect_filter)
-    filters = defect_filter.sanitized_filters
-    
-    # Map defect filter parameters to report parameters
-    params[:product_ids] = Array(filters['product_id']) if filters['product_id'].present?
-    params[:start_date] = filters['start_date'] if filters['start_date'].present?
-    params[:end_date] = filters['end_date'] if filters['end_date'].present?
-    
-    # Note: Defect filters don't have report metrics, so we keep existing metric selections
-    # or you could set default metrics here if needed
-  end
-
-  def get_available_options(product_ids)
-    defects_scope = Defect.where(product_id: product_ids, draft: false)
-    defects_scope = defects_scope.where(created_at: params[:start_date]..params[:end_date]) if params[:start_date].present? && params[:end_date].present?
-
-    {
-      severities: defects_scope.distinct.pluck(:priority).compact.sort,
-      reporters: defects_scope.joins(:creator)
-                             .select('users.id, users.first_name, users.last_name')
-                             .distinct
-                             .map { |u| [u.id, "#{u.first_name} #{u.last_name}"] },
-      statuses: defects_scope.joins(:statuses)
-                            .select('statuses.id, statuses.name')
-                            .distinct
-                            .map { |s| [s.id, s.name] },
-      assignees: defects_scope.joins(:users) # FIXED: Removed incorrect join
-                             .select('users.id, users.first_name, users.last_name')
-                             .distinct
-                             .map { |u| [u.id, "#{u.first_name} #{u.last_name}"] },
-      modules: defects_scope.joins(:qa_module)
-                           .where(qa_modules: { parent_id: nil })
-                           .select('qa_modules.id, qa_modules.name')
-                           .distinct
-                           .map { |m| [m.id, m.name] },
-      submodules: defects_scope.joins(:qa_module)
-                              .where.not(qa_modules: { parent_id: nil })
-                              .select('qa_modules.id, qa_modules.name, qa_modules.parent_id')
-                              .distinct
-                              .map { |m| [m.id, m.name, m.parent_id] },
-      ageing_types: [
-        ['Last 7 days', '7_days'],
-        ['Last 30 days', '30_days'],
-        ['Last 90 days', '90_days'],
-        ['Last 6 months', '6_months'],
-        ['Last 1 year', '1_year']
-      ]
-    }
-  end
-
-  def generate_report_data(product_ids)
-    defects_scope = Defect.where(product_id: product_ids, draft: false)
-    defects_scope = defects_scope.where(created_at: params[:start_date]..params[:end_date]) if params[:start_date].present? && params[:end_date].present?
-
-    # Defects by Reporter
-    if @selected_metrics.include?('reporter')
-      @defects_per_creator = defects_scope.joins(:creator)
-                                         .group('users.id, users.first_name, users.last_name')
-                                         .count
-    end
-
-    # Defects by Status
-    if @selected_metrics.include?('status')
-      status_scope = defects_scope
-      status_scope = status_scope.joins(:statuses).where(statuses: { name: @selected_statuses }) if @selected_statuses.any?
-      @defects_per_status = status_scope.joins(:statuses)
-                                       .group('statuses.id, statuses.name')
-                                       .count
-    end
-
-    # Defects by Severity
-    if @selected_metrics.include?('severity')
-      severity_scope = defects_scope
-      severity_scope = severity_scope.where(priority: @selected_severities) if @selected_severities.any?
-      @defects_per_severity = severity_scope.group(:priority).count
-    end
-
-    # Defects by Assignee
-    if @selected_metrics.include?('assignee')
-      assignee_scope = defects_scope.joins(:users)
-      assignee_scope = assignee_scope.where(users: { id: @selected_assignees }) if @selected_assignees.any?
-      @defects_per_assignee = assignee_scope.group('users.id, users.first_name, users.last_name').count
-    end
-
-    # Defects by Module
-    if @selected_metrics.include?('modules')
-      module_scope = defects_scope.joins(:qa_module).where(qa_modules: { parent_id: nil })
-      module_scope = module_scope.where(qa_modules: { id: @selected_modules }) if @selected_modules.any?
-      @defects_per_module = module_scope.group('qa_modules.id, qa_modules.name').count
-    end
-
-    # Defects by Submodule
-    if @selected_metrics.include?('submodules')
-      submodule_scope = defects_scope.joins(:qa_module).where.not(qa_modules: { parent_id: nil })
-      submodule_scope = submodule_scope.where(qa_modules: { id: @selected_submodules }) if @selected_submodules.any?
-      @defects_per_submodule = submodule_scope.group('qa_modules.id, qa_modules.name').count
-    end
-
-    # Defects Ageing
-    if @selected_metrics.include?('ageing')
-      @defects_age_buckets = calculate_defects_age_buckets(defects_scope, @selected_ageing_type)
-    end
-  end
-
-  def calculate_defects_age_buckets(defects_scope, ageing_type)
-    # ... existing ageing calculation logic ...
-    # This should remain the same as your current implementation
   end
 end
