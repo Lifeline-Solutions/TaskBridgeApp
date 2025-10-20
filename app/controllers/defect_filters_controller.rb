@@ -23,8 +23,6 @@ class DefectFiltersController < ApplicationController
         product_param.first
       when String
         product_param.split(/[ ,]+/).reject(&:blank?).first
-      else
-        nil
       end
 
     # 4. Build the defect filter record
@@ -116,20 +114,18 @@ class DefectFiltersController < ApplicationController
 
   def permit_filter_keys(raw_hash)
     raw = raw_hash.to_h.with_indifferent_access.slice(*DefectFilter::ALLOWED_FILTER_KEYS)
-    
+
     # Normalize array parameters
     array_keys = %w[product_id user_id qa_module_id submodule_id label_ids status]
     array_keys.each do |key|
-      if raw_hash.key?(key)
-        raw[key] = Array(raw_hash[key]).reject(&:blank?)
-      end
+      raw[key] = Array(raw_hash[key]).reject(&:blank?) if raw_hash.key?(key)
     end
-    
+
     # Handle boolean/string parameters
     raw['filter_open'] = raw_hash['filter_open'] if raw_hash.key?('filter_open')
     raw['select_all_module'] = raw_hash['select_all_module'] if raw_hash.key?('select_all_module')
     raw['select_all_submodule'] = raw_hash['select_all_submodule'] if raw_hash.key?('select_all_submodule')
-    
+
     raw
   end
 end

@@ -6,7 +6,7 @@ class ReportsController < ApplicationController
 
   def index
     authorize! :generate, :report
-    
+
     # Load saved report dashboards for the current user
     @saved_dashboards = current_user.defect_filters.defect_filters.active.order(:name)
 
@@ -23,20 +23,18 @@ class ReportsController < ApplicationController
     end
 
     # Check if we're loading a saved dashboard
-    if params[:dashboard_id].present?
-      load_saved_dashboard(params[:dashboard_id])
-    end
+    load_saved_dashboard(params[:dashboard_id]) if params[:dashboard_id].present?
 
     # Check if form was submitted via Apply button (not product change or dashboard load)
     form_submitted = params[:commit].present? && params[:product_change].blank? && params[:dashboard_id].blank?
 
     # Handle multiple product selection - convert to array if it's a string
     product_ids = if params[:product_id].is_a?(String)
-                   params[:product_id].split(',')
-                 else
-                   Array(params[:product_id]).reject(&:blank?)
-                 end
-    
+                    params[:product_id].split(',')
+                  else
+                    Array(params[:product_id]).reject(&:blank?)
+                  end
+
     # Metrics selection (configurable)
     default_metrics = %w[severity reporter status assignee ageing modules submodules]
     @selected_metrics = Array(params[:metrics]).presence || default_metrics
@@ -268,10 +266,10 @@ class ReportsController < ApplicationController
 
     # Handle multiple product selection for storage
     product_ids = if params[:defect_filter][:product_id].is_a?(String)
-                   params[:defect_filter][:product_id].split(',')
-                 else
-                   Array(params[:defect_filter][:product_id]).reject(&:blank?)
-                 end
+                    params[:defect_filter][:product_id].split(',')
+                  else
+                    Array(params[:defect_filter][:product_id]).reject(&:blank?)
+                  end
     product_id = product_ids.any? ? product_ids.first : nil
 
     @dashboard = current_user.defect_filters.build(
@@ -299,10 +297,10 @@ class ReportsController < ApplicationController
     authorize! :generate, :report
 
     product_ids = if params[:product_id].is_a?(String)
-                   params[:product_id].split(',')
-                 else
-                   Array(params[:product_id]).reject(&:blank?)
-                 end
+                    params[:product_id].split(',')
+                  else
+                    Array(params[:product_id]).reject(&:blank?)
+                  end
     start_date = parse_date(params[:start_date])
     end_date = parse_date(params[:end_date])
 
@@ -381,7 +379,7 @@ class ReportsController < ApplicationController
 
   def load_saved_dashboard(dashboard_id)
     # Clean up the dashboard_id parameter (remove any "value+" corruption)
-    clean_dashboard_id = dashboard_id.to_s.gsub(/value\+/, '').strip
+    clean_dashboard_id = dashboard_id.to_s.gsub('value+', '').strip
     return if clean_dashboard_id.blank?
 
     # Use defect_filters scope since that's what you're loading
@@ -391,27 +389,23 @@ class ReportsController < ApplicationController
     # Apply the saved filters to the current params
     # For defect filters, we need to convert them to report parameters
     saved_filters = dashboard.sanitized_filters
-    
+
     # Convert defect filter parameters to report parameters
     report_params = convert_defect_filters_to_report_params(saved_filters)
-    
+
     # Delete all existing params except the ones we want to keep
     params.keys.each do |key|
-      unless key == 'controller' || key == 'action'
-        params.delete(key)
-      end
+      params.delete(key) unless %w[controller action].include?(key)
     end
-    
+
     # Set the dashboard_id
     params[:dashboard_id] = clean_dashboard_id
-    
+
     # Set all the parameters from the saved dashboard
     report_params.each do |key, value|
-      if value.present?
-        params[key] = value 
-      end
+      params[key] = value if value.present?
     end
-    
+
     # Clear commit and product_change to prevent form submission logic
     params[:commit] = nil
     params[:product_change] = nil
@@ -419,46 +413,32 @@ class ReportsController < ApplicationController
 
   def convert_defect_filters_to_report_params(defect_filters)
     report_params = {}
-    
+
     # Map defect filter keys to report parameter keys
     defect_filters.each do |key, value|
       case key
       when 'product_id'
-        if value.present?
-          report_params['product_id'] = Array(value)
-        end
+        report_params['product_id'] = Array(value) if value.present?
       when 'user_id'
-        if value.present?
-          report_params['assignees'] = Array(value)
-        end
+        report_params['assignees'] = Array(value) if value.present?
       when 'qa_module_id'
-        if value.present?
-          report_params['modules'] = Array(value)
-        end
+        report_params['modules'] = Array(value) if value.present?
       when 'submodule_id'
-        if value.present?
-          report_params['submodules'] = Array(value)
-        end
+        report_params['submodules'] = Array(value) if value.present?
       when 'priority'
         if value.present?
           # Convert priority to severities
           report_params['severities'] = Array(value).map { |p| normalize_severity(p) }
         end
       when 'status'
-        if value.present?
-          report_params['statuses'] = Array(value)
-        end
+        report_params['statuses'] = Array(value) if value.present?
       when 'start_date'
-        if value.present?
-          report_params['start_date'] = value
-        end
+        report_params['start_date'] = value if value.present?
       when 'end_date'
-        if value.present?
-          report_params['end_date'] = value
-        end
+        report_params['end_date'] = value if value.present?
       end
     end
-    
+
     # Set default metrics based on what filters are available
     metrics = []
     metrics << 'severity' if report_params['severities'].present?
@@ -468,9 +448,9 @@ class ReportsController < ApplicationController
     metrics << 'modules' if report_params['modules'].present?
     metrics << 'submodules' if report_params['submodules'].present?
     metrics << 'ageing' # Always include ageing by default
-    
+
     report_params['metrics'] = metrics.any? ? metrics : %w[severity reporter status assignee ageing modules submodules]
-    
+
     report_params
   end
 
