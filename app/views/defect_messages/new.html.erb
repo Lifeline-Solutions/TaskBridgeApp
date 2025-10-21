@@ -9,11 +9,11 @@
     <div data-draft-target="draftAlert" style="display: none;"></div>
 
     <%= form_with(model: [@defect, @defect_message], local: false, 
-                  data: { 
-                    controller: "mention-system", 
-                    mention_system_defect_id_value: @defect.id,
-                    action: "turbo:submit-start->draft#clearDrafts input->draft#debouncedLocalSave" 
-                  }) do |f| %>
+              data: { 
+                controller: "mention-system", 
+                mention_system_defect_id_value: @defect.id,
+                action: "submit->draft#clearAllDrafts input->draft#debouncedLocalSave" 
+              }) do |f| %>
 
       <div class="mb-4 rich-text-editor" data-mention-system-target="editor" data-draft-target="editor">
         <%= f.rich_text_area :content,

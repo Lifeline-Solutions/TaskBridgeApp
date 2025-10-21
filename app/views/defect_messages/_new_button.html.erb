@@ -1,9 +1,13 @@
 <%= turbo_frame_tag "new_defect_message" do %>
-  <%= link_to "➕ New Message",
+  <% draft_exists = DraftDefectMessage.find_for_user(defect, current_user).present? %>
+  
+  <%= link_to draft_exists ? "💾 Continue Draft Message" : "➕ New Message",
               new_defect_defect_message_path(defect),
               data: { 
                 turbo_frame: "new_defect_message"
               },
-              class: "px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors",
+              class: draft_exists ? 
+                "px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors" :
+                "px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors",
               id: "new-message-button" %>
 <% end %>
