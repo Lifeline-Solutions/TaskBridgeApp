@@ -1,12 +1,26 @@
 <%= turbo_frame_tag "new_defect_message" do %>
-  <div class="p-4 border rounded-lg bg-gray-50 dark:bg-gray-900">
-    <%= form_with(model: [@defect, @defect_message], local: false, data: { controller: "mention-system", mention_system_defect_id_value: @defect.id }) do |f| %>
+  <div class="p-4 border rounded-lg bg-gray-50 dark:bg-gray-900"
+       data-controller="draft mention-system"
+       data-draft-defect-id-value="<%= @defect.id %>"
+       data-draft-check-url-value="<%= check_defect_draft_defect_messages_path(@defect) %>"
+       data-draft-save-url-value="<%= defect_draft_defect_messages_path(@defect) %>">
+    
+    <!-- Draft alert will appear here -->
+    <div data-draft-target="draftAlert" style="display: none;"></div>
 
-      <div class="mb-4 rich-text-editor" data-mention-system-target="editor">
+    <%= form_with(model: [@defect, @defect_message], local: false, 
+              data: { 
+                controller: "mention-system", 
+                mention_system_defect_id_value: @defect.id,
+                action: "submit->draft#clearAllDrafts input->draft#debouncedLocalSave" 
+              }) do |f| %>
+
+      <div class="mb-4 rich-text-editor" data-mention-system-target="editor" data-draft-target="editor">
         <%= f.rich_text_area :content,
                              class: "w-full",
                              data: {
                                mention_system_target: "editor",
+                               draft_target: "editor",
                                action: "mention-system#handleInput"
                              } %>
 
@@ -21,17 +35,25 @@
         <p class="mention-help">
           💡 Type <strong>@</strong> to mention users or <strong>#</strong> to reference defects. Use <strong>ESC</strong> to close suggestions.
         </p>
+        <p class="text-xs text-gray-500 mt-1">
+          💾 Drafts are automatically saved as you type.
+        </p>
       </div>
 
       <div class="flex space-x-2">
         <%= f.submit "Post Message",
                      class: "px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700",
-                     data: { turbo: false, action: "click->mention-system#beforeSubmit" },
-                     onclick: "window.location.reload();" %>
+                     data: { 
+                       turbo: false, 
+                       action: "click->mention-system#beforeSubmit" 
+                     } %>
 
         <%= link_to "Cancel",
                     defect_path(@defect),
-                    class: "px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700" %>
+                    class: "px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700",
+                    data: { 
+                      action: "click->draft#clearDrafts" 
+                    } %>
       </div>
     <% end %>
   </div>

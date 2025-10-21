@@ -40,10 +40,14 @@ class DefectMessagesController < ApplicationController
     @defect_message.user = current_user
 
     if @defect_message.save
+      # CLEAN UP DRAFT - BYPASS AUDIT SYSTEM
+      draft = DraftDefectMessage.find_for_user(@defect, current_user)
+      draft&.hard_delete # This will bypass the audit system
+
       # Log the message creation in defect history
       log_event(@defect, current_user, 'message_created', "Message created: #{@defect_message.content.to_plain_text.truncate(100)}")
 
-      # Process mentions asynchronously - convert ActionText to HTML string for job serialization
+      # Process mentions asynchronously
       ProcessMentionsJob.perform_later(
         @defect_message.content.body.to_html,
         @defect.id,
@@ -52,7 +56,12 @@ class DefectMessagesController < ApplicationController
       )
 
       respond_to do |format|
-        format.turbo_stream
+        format.turbo_stream do
+          # Just replace the entire defect-messages section - it will re-check for drafts
+          render turbo_stream: turbo_stream.replace('defect-messages',
+                                                    partial: 'defect_messages/defect_messages',
+                                                    locals: { defect: @defect, timeline_items: @defect.timeline_items })
+        end
         format.html { redirect_to defect_path(@defect), notice: 'Message posted!' }
       end
     else
