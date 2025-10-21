@@ -7,11 +7,32 @@ export default class extends Controller {
   }
   
   connect() {
-    this.checkForDrafts()
+    console.log('Draft notification controller connected')
+    // Check immediately when connected
+    setTimeout(() => this.checkForDrafts(), 100)
     
-    // Check when page loads or when coming back via Turbo
+    // Listen for Turbo events
+    this.setupEventListeners()
+  }
+  
+  setupEventListeners() {
+    // Check when page loads
     document.addEventListener("turbo:load", () => {
       setTimeout(() => this.checkForDrafts(), 100)
+    })
+    
+    // Check when frames load (after form submission)
+    document.addEventListener("turbo:frame-load", (event) => {
+      if (event.target.id === 'defect-messages') {
+        setTimeout(() => this.checkForDrafts(), 100)
+      }
+    })
+    
+    // Check after form submissions
+    document.addEventListener("turbo:submit-end", (event) => {
+      if (event.detail.success) {
+        setTimeout(() => this.checkForDrafts(), 300)
+      }
     })
   }
   
@@ -40,6 +61,8 @@ export default class extends Controller {
       const localDraft = localStorage.getItem(`defect_${this.defectIdValue}_draft_message`)
       if (localDraft) {
         this.showNotification()
+      } else {
+        this.hideNotification()
       }
     }
   }
@@ -96,5 +119,9 @@ export default class extends Controller {
         console.error("Failed to discard draft:", error)
       }
     }
+  }
+  
+  forceRefresh() {
+    this.checkForDrafts()
   }
 }

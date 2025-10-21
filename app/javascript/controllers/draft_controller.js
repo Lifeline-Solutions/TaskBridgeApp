@@ -325,6 +325,52 @@ export default class extends Controller {
   clearLocalStorage() {
     localStorage.removeItem(this.localStorageKey)
   }
+
+  clearAllDrafts() {
+    console.log('clearAllDrafts called - form submitted')
+    
+    // Clear localStorage for THIS defect
+    const storageKey = `defect_${this.defectIdValue}_draft_message`
+    localStorage.removeItem(storageKey)
+    
+    // Also clear any other potential localStorage keys
+    this.clearAllLocalStorageDrafts()
+    
+    this.hideDraftAlert()
+    
+    // Manually hide the notification as backup
+    const notification = document.getElementById('draft-notification')
+    if (notification) {
+      notification.classList.add('hidden')
+    }
+    
+    // Reset the button
+    this.resetNewMessageButton()
+  }
+
+  // Add this method to clear all possible localStorage draft keys
+  clearAllLocalStorageDrafts() {
+    const keysToRemove = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && key.includes('defect_') && key.includes('_draft_message')) {
+        keysToRemove.push(key)
+      }
+    }
+    
+    keysToRemove.forEach(key => {
+      localStorage.removeItem(key)
+    })
+  }
+
+  resetNewMessageButton() {
+    const newMessageBtn = document.querySelector('[href*="/defect_messages/new"]')
+    if (newMessageBtn) {
+      newMessageBtn.innerHTML = '➕ New Message'
+      newMessageBtn.classList.add('bg-blue-600', 'hover:bg-blue-700')
+      newMessageBtn.classList.remove('bg-yellow-600', 'hover:bg-yellow-700')
+    }
+  }
   
   clearTimers() {
     if (this.localSaveTimeout) clearTimeout(this.localSaveTimeout)
