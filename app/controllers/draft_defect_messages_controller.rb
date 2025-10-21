@@ -1,7 +1,7 @@
 class DraftDefectMessagesController < ApplicationController
   before_action :authenticate_user!
   before_action :set_defect
-  before_action :set_draft, only: [:show, :update, :destroy]
+  before_action :set_draft, only: %i[show update destroy]
 
   def show
     respond_to do |format|
@@ -11,8 +11,8 @@ class DraftDefectMessagesController < ApplicationController
 
   def create
     @draft = DraftDefectMessage.create_or_update_for_user(
-      @defect, 
-      current_user, 
+      @defect,
+      current_user,
       draft_params.merge(modified_by_id: current_user.id)
     )
 
@@ -54,12 +54,12 @@ class DraftDefectMessagesController < ApplicationController
 
   def check
     @draft = DraftDefectMessage.find_for_user(@defect, current_user)
-    
+
     respond_to do |format|
       format.json do
         if @draft
-          render json: { 
-            has_draft: true, 
+          render json: {
+            has_draft: true,
             content: @draft.content&.to_trix_html,
             updated_at: @draft.updated_at.iso8601
           }
