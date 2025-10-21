@@ -138,15 +138,18 @@ export default class extends Controller {
     
     alert.style.display = "block"
     
+    // Always use the most recent draft (server takes priority if both exist)
+    const mostRecentDraft = this.getMostRecentDraft(serverDraft, localDraft)
+    
     if (serverDraft && localDraft) {
-      alert.innerHTML = this.bothDraftsTemplate(serverDraft, localDraft)
+      alert.innerHTML = this.multipleDraftsTemplate(serverDraft, localDraft, mostRecentDraft)
     } else if (serverDraft) {
-      alert.innerHTML = this.serverDraftTemplate(serverDraft)
+      alert.innerHTML = this.singleDraftTemplate(serverDraft, 'server')
     } else {
-      alert.innerHTML = this.localDraftTemplate(localDraft)
+      alert.innerHTML = this.singleDraftTemplate(localDraft, 'local')
     }
     
-    this.setupDraftAlertEvents(alert, serverDraft, localDraft)
+    this.setupDraftAlertEvents(alert, mostRecentDraft)
   }
   
   createDraftAlert() {
@@ -157,30 +160,42 @@ export default class extends Controller {
     return alert
   }
   
-  bothDraftsTemplate(serverDraft, localDraft) {
+  getMostRecentDraft(serverDraft, localDraft) {
+    if (!serverDraft) return { draft: localDraft, source: 'local' }
+    if (!localDraft) return { draft: serverDraft, source: 'server' }
+    
+    const serverTime = new Date(serverDraft.updated_at)
+    const localTime = new Date(localDraft.updated_at)
+    
+    return serverTime > localTime 
+      ? { draft: serverDraft, source: 'server' }
+      : { draft: localDraft, source: 'local' }
+  }
+  
+  multipleDraftsTemplate(serverDraft, localDraft, mostRecentDraft) {
     const serverTime = new Date(serverDraft.updated_at).toLocaleString()
     const localTime = new Date(localDraft.updated_at).toLocaleString()
+    const sourceText = mostRecentDraft.source === 'server' ? 'server' : 'local'
     
     return `
       <div class="flex items-center justify-between">
         <div>
-          <strong>💾 Multiple drafts found:</strong>
-          <ul class="list-disc list-inside ml-4 mt-1">
+          <strong>💾 Multiple drafts found</strong>
+          <div class="text-sm text-gray-600 mt-1">
+            Using most recent (${sourceText}) draft from ${mostRecentDraft.source === 'server' ? serverTime : localTime}
+          </div>
+          <ul class="list-disc list-inside ml-4 mt-1 text-sm text-gray-600">
             <li>Server draft (${serverTime})</li>
             <li>Local draft (${localTime})</li>
           </ul>
         </div>
         <div class="flex gap-2">
-          <button type="button" data-action="click->draft#loadServerDraft" 
-                  class="px-3 py-1 bg-blue-600 text-white rounded text-sm">
-            Use Server Draft
-          </button>
-          <button type="button" data-action="click->draft#loadLocalDraft"
-                  class="px-3 py-1 bg-green-600 text-white rounded text-sm">
-            Use Local Draft
+          <button type="button" data-action="click->draft#loadMostRecentDraft" 
+                  class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+            Restore Most Recent
           </button>
           <button type="button" data-action="click->draft#discardAllDrafts"
-                  class="px-3 py-1 bg-gray-600 text-white rounded text-sm">
+                  class="px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700">
             Discard All
           </button>
         </div>
@@ -188,20 +203,25 @@ export default class extends Controller {
     `
   }
   
-  serverDraftTemplate(serverDraft) {
-    const time = new Date(serverDraft.updated_at).toLocaleString()
+  singleDraftTemplate(draft, source) {
+    const time = new Date(draft.updated_at).toLocaleString()
+    const sourceText = source === 'server' ? 'server' : 'local'
+    
     return `
       <div class="flex items-center justify-between">
         <div>
-          <strong>💾 Unsaved draft found</strong> (saved ${time})
+          <strong>💾 Unsaved draft found</strong>
+          <div class="text-sm text-gray-600 mt-1">
+            Saved on ${sourceText} (${time})
+          </div>
         </div>
         <div class="flex gap-2">
-          <button type="button" data-action="click->draft#loadServerDraft" 
-                  class="px-3 py-1 bg-blue-600 text-white rounded text-sm">
+          <button type="button" data-action="click->draft#loadMostRecentDraft" 
+                  class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
             Restore Draft
           </button>
-          <button type="button" data-action="click->draft#discardServerDraft"
-                  class="px-3 py-1 bg-gray-600 text-white rounded text-sm">
+          <button type="button" data-action="click->draft#discardAllDrafts"
+                  class="px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700">
             Discard
           </button>
         </div>
@@ -209,51 +229,52 @@ export default class extends Controller {
     `
   }
   
-  localDraftTemplate(localDraft) {
-    const time = new Date(localDraft.updated_at).toLocaleString()
-    return `
-      <div class="flex items-center justify-between">
-        <div>
-          <strong>💾 Unsaved draft found</strong> (saved ${time})
-        </div>
-        <div class="flex gap-2">
-          <button type="button" data-action="click->draft#loadLocalDraft" 
-                  class="px-3 py-1 bg-blue-600 text-white rounded text-sm">
-            Restore Draft
-          </button>
-          <button type="button" data-action="click->draft#discardLocalDraft"
-                  class="px-3 py-1 bg-gray-600 text-white rounded text-sm">
-            Discard
-          </button>
-        </div>
-      </div>
-    `
+  setupDraftAlertEvents(alert, mostRecentDraft) {
+    const restoreBtn = alert.querySelector('[data-action="click->draft#loadMostRecentDraft"]')
+    if (restoreBtn) {
+      restoreBtn.addEventListener('click', () => this.loadMostRecentDraft())
+    }
+    
+    const discardBtn = alert.querySelector('[data-action="click->draft#discardAllDrafts"]')
+    if (discardBtn) {
+      discardBtn.addEventListener('click', () => this.discardAllDrafts())
+    }
   }
   
-  setupDraftAlertEvents(alert, serverDraft, localDraft) {
-    const serverBtn = alert.querySelector('[data-action="click->draft#loadServerDraft"]')
-    if (serverBtn) {
-      serverBtn.addEventListener('click', () => this.loadServerDraft())
-    }
+  loadMostRecentDraft() {
+    // Check both sources and load the most recent one
+    const localDraft = this.getLocalDraft()
     
-    const localBtn = alert.querySelector('[data-action="click->draft#loadLocalDraft"]')
-    if (localBtn) {
-      localBtn.addEventListener('click', () => this.loadLocalDraft())
-    }
-    
-    const discardServerBtn = alert.querySelector('[data-action="click->draft#discardServerDraft"]')
-    if (discardServerBtn) {
-      discardServerBtn.addEventListener('click', () => this.discardServerDraft())
-    }
-    
-    const discardLocalBtn = alert.querySelector('[data-action="click->draft#discardLocalDraft"]')
-    if (discardLocalBtn) {
-      discardLocalBtn.addEventListener('click', () => this.discardLocalDraft())
-    }
-    
-    const discardAllBtn = alert.querySelector('[data-action="click->draft#discardAllDrafts"]')
-    if (discardAllBtn) {
-      discardAllBtn.addEventListener('click', () => this.discardAllDrafts())
+    if (localDraft) {
+      // Check server to see which is more recent
+      fetch(this.checkUrlValue)
+        .then(response => response.json())
+        .then(serverData => {
+          if (serverData.has_draft) {
+            const serverTime = new Date(serverData.updated_at)
+            const localTime = new Date(localDraft.updated_at)
+            
+            if (serverTime > localTime) {
+              console.log('Loading server draft (more recent)')
+              this.editor.editor.loadHTML(serverData.content)
+            } else {
+              console.log('Loading local draft (more recent)')
+              this.editor.editor.loadHTML(localDraft.content)
+            }
+          } else {
+            console.log('Loading local draft (only option)')
+            this.editor.editor.loadHTML(localDraft.content)
+          }
+          this.hideDraftAlert()
+        })
+        .catch(error => {
+          console.error('Failed to check server draft, loading local:', error)
+          this.editor.editor.loadHTML(localDraft.content)
+          this.hideDraftAlert()
+        })
+    } else {
+      // No local draft, try server
+      this.loadServerDraft()
     }
   }
   
@@ -271,15 +292,11 @@ export default class extends Controller {
     }
   }
 
-  loadLocalDraft() {
-    const draft = this.getLocalDraft()
-    if (draft && draft.content) {
-      this.editor.editor.loadHTML(draft.content)
-      this.hideDraftAlert()
-    }
-  }
-
-  async discardServerDraft() {
+  async discardAllDrafts() {
+    // Clear localStorage
+    this.clearLocalStorage()
+    
+    // Clear server draft
     try {
       await fetch(this.saveUrlValue, {
         method: "DELETE",
@@ -287,24 +304,11 @@ export default class extends Controller {
           "X-CSRF-Token": document.querySelector("[name='csrf-token']").content
         }
       })
-      this.hideDraftAlert()
     } catch (error) {
       console.error("Failed to discard server draft:", error)
     }
-  }
-
-  discardLocalDraft() {
-    this.clearLocalStorage()
+    
     this.hideDraftAlert()
-  }
-
-  async discardAllDrafts() {
-    this.clearLocalStorage()
-    await this.discardServerDraft()
-  }
-
-  clearDrafts() {
-    this.clearLocalStorage()
   }
 
   hideDraftAlert() {
