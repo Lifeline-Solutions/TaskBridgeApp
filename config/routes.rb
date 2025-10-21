@@ -117,6 +117,11 @@ Rails.application.routes.draw do
   resources :defect do
     resources :defect_failure_reports, only: [:index, :show], controller: 'defect_failure_reports'
     resources :defect_messages, only: [:new, :create, :edit, :update, :destroy]
+    resources :draft_defect_messages, only: [:show, :create, :update, :destroy] do
+      collection do
+        get :check
+      end
+    end
     post 'attachments', to: 'defect#add_attachments', as: 'attachments'
     delete 'attachments/:attachment_id', to: 'defect#remove_attachment', as: 'attachment'
     resources :comments, only: [:create, :update, :destroy]
