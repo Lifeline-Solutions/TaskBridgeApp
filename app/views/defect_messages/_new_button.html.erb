@@ -1,6 +1,9 @@
 <%= turbo_frame_tag "new_defect_message" do %>
   <%= link_to "➕ New Message",
               new_defect_defect_message_path(defect),
-              data: { turbo_frame: "new_defect_message" },
-              class: "px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" %>
+              data: { 
+                turbo_frame: "new_defect_message"
+              },
+              class: "px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors",
+              id: "new-message-button" %>
 <% end %>
