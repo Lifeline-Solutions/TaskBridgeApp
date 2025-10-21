@@ -35,73 +35,6 @@ class DefectMessagesController < ApplicationController
     @defect_messages = @defect_messages.offset((@page - 1) * @per_page).limit(@per_page)
   end
 
-  # def create
-  #   @defect_message = @defect.defect_messages.build(defect_message_params)
-  #   @defect_message.user = current_user
-
-  #   if @defect_message.save
-  #     # Log the message creation in defect history
-  #     log_event(@defect, current_user, 'message_created', "Message created: #{@defect_message.content.to_plain_text.truncate(100)}")
-
-  #     # Process mentions asynchronously - convert ActionText to HTML string for job serialization
-  #     ProcessMentionsJob.perform_later(
-  #       @defect_message.content.body.to_html,
-  #       @defect.id,
-  #       current_user.id,
-  #       'message'
-  #     )
-
-  #     respond_to do |format|
-  #       format.turbo_stream
-  #       format.html { redirect_to defect_path(@defect), notice: 'Message posted!' }
-  #     end
-  #   else
-  #     respond_to do |format|
-  #       format.turbo_stream do
-  #         render turbo_stream: turbo_stream.replace('new_defect_message',
-  #                                                   partial: 'defect_messages/form',
-  #                                                   locals: { defect: @defect, defect_message: @defect_message })
-  #       end
-  #       format.html { render 'defect/show', status: :unprocessable_entity }
-  #     end
-  #   end
-  # end
-
-  # def create
-  #   @defect_message = @defect.defect_messages.build(defect_message_params)
-  #   @defect_message.user = current_user
-
-  #   if @defect_message.save
-  #     # CLEAN UP DRAFT AFTER SUCCESSFUL MESSAGE CREATION
-  #     DraftDefectMessage.find_for_user(@defect, current_user)&.destroy
-      
-  #     # Log the message creation in defect history
-  #     log_event(@defect, current_user, 'message_created', "Message created: #{@defect_message.content.to_plain_text.truncate(100)}")
-
-  #     # Process mentions asynchronously
-  #     ProcessMentionsJob.perform_later(
-  #       @defect_message.content.body.to_html,
-  #       @defect.id,
-  #       current_user.id,
-  #       'message'
-  #     )
-
-  #     respond_to do |format|
-  #       format.turbo_stream
-  #       format.html { redirect_to defect_path(@defect), notice: 'Message posted!' }
-  #     end
-  #   else
-  #     respond_to do |format|
-  #       format.turbo_stream do
-  #         render turbo_stream: turbo_stream.replace('new_defect_message',
-  #                                                   partial: 'defect_messages/form',
-  #                                                   locals: { defect: @defect, defect_message: @defect_message })
-  #       end
-  #       format.html { render 'defect/show', status: :unprocessable_entity }
-  #     end
-  #   end
-  # end
-
   def create
     @defect_message = @defect.defect_messages.build(defect_message_params)
     @defect_message.user = current_user
@@ -109,11 +42,7 @@ class DefectMessagesController < ApplicationController
     if @defect_message.save
       # CLEAN UP DRAFT - BYPASS AUDIT SYSTEM
       draft = DraftDefectMessage.find_for_user(@defect, current_user)
-      if draft
-        # Use delete instead of destroy to bypass callbacks and audit
-        # DraftDefectMessage.delete(draft.id)
-        draft&.hard_delete
-      end
+      draft&.hard_delete  # This will bypass the audit system
 
       # Log the message creation in defect history
       log_event(@defect, current_user, 'message_created', "Message created: #{@defect_message.content.to_plain_text.truncate(100)}")
@@ -127,7 +56,12 @@ class DefectMessagesController < ApplicationController
       )
 
       respond_to do |format|
-        format.turbo_stream
+        format.turbo_stream do
+          # Just replace the entire defect-messages section - it will re-check for drafts
+          render turbo_stream: turbo_stream.replace("defect-messages", 
+            partial: "defect_messages/defect_messages", 
+            locals: { defect: @defect, timeline_items: @defect.timeline_items })
+        end
         format.html { redirect_to defect_path(@defect), notice: 'Message posted!' }
       end
     else
