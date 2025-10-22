@@ -10,7 +10,6 @@
                         params[:dashboard_id]),
                       class: "border rounded p-2 ml-2 bg-white dark:bg-gray-800 min-w-48",
                       id: "dashboard_id" %>
-        <!-- REMOVED: onchange="this.form.submit()" - We handle this in JavaScript -->
       </div>
 
       <!-- Multiple Product Selection with Checkboxes -->
@@ -204,19 +203,38 @@
     
     <!-- Hidden field to track if this is a dashboard load -->
     <%= hidden_field_tag :dashboard_id, value: params[:dashboard_id] %>
+
+    <!-- Hidden field for view type -->
+    <%= hidden_field_tag :view_type, params[:view_type] || 'graphical' %>
   <% end %>
 
   <% if (params[:commit].present? || params[:dashboard_id].present?) && params[:product_id].present? %>
-    <div class="mt-4 border-t pt-4 flex">
-      <button type="button" id="openSaveDashboardModal" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-        Save as Dashboard
-      </button>
+    <!-- View Toggle and Action Buttons -->
+    <div class="mt-4 border-t pt-4 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <!-- View Toggle Buttons -->
+        <div class="flex bg-gray-200 rounded-lg p-1">
+          <button type="button" id="graphicalViewBtn" class="view-toggle-btn px-4 py-2 rounded-lg transition-all duration-200 <%= (params[:view_type] || 'graphical') == 'graphical' ? 'bg-blue-500 text-white' : 'text-gray-600 hover:bg-gray-300' %>">
+            <i class="fas fa-chart-pie mr-2"></i>Graphical View
+          </button>
+          <button type="button" id="tabularViewBtn" class="view-toggle-btn px-4 py-2 rounded-lg transition-all duration-200 <%= params[:view_type] == 'tabular' ? 'bg-blue-500 text-white' : 'text-gray-600 hover:bg-gray-300' %>">
+            <i class="fas fa-table mr-2"></i>Tabular View
+          </button>
+        </div>
+      </div>
 
-      <div class="ml-4 mt-2">
-        <%= link_to "Download CSV", download_report_reports_path(request.query_parameters), class: "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" %>
+      <div class="flex items-center space-x-2">
+        <button type="button" id="openSaveDashboardModal" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center">
+          <i class="fas fa-save mr-2"></i>Save as Dashboard
+        </button>
+
+        <%= link_to download_report_reports_path(request.query_parameters), class: "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center" do %>
+          <i class="fas fa-download mr-2"></i>Download CSV
+        <% end %>
       </div>
     </div>
 
+    <!-- Save Dashboard Modal -->
     <div id="saveDashboardModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div class="bg-white rounded-lg p-6 w-96">
         <h3 class="text-lg font-bold mb-4">Save Current Report as Dashboard</h3>
@@ -248,7 +266,8 @@
             ageing_type: params[:ageing_type],
             start_date: params[:start_date],
             end_date: params[:end_date],
-            product_id: params[:product_id]
+            product_id: params[:product_id],
+            view_type: params[:view_type] || 'graphical'
           }.to_json %>
 
           <div class="flex justify-end gap-2">
@@ -262,16 +281,34 @@
 </div>
 
 <% if (params[:commit].present? || params[:dashboard_id].present?) && params[:product_id].present? %>
-  <%= render partial: "defect_per_user", locals: {
-    defects_per_creator: @defects_per_creator,
-    defects_per_status: @defects_per_status,
-    defects_per_severity: @defects_per_severity,
-    defects_per_assignee: @defects_per_assignee,
-    defects_per_module: @defects_per_module,
-    defects_per_submodule: @defects_per_submodule,
-    defects_age_buckets: @defects_age_buckets,
-    selected_metrics: @selected_metrics
-  } %>
+  <!-- Results Display Area -->
+  <div id="results-container">
+    <% if (params[:view_type] || 'graphical') == 'graphical' %>
+      <!-- Graphical View -->
+      <%= render partial: "defect_per_user", locals: {
+        defects_per_creator: @defects_per_creator,
+        defects_per_status: @defects_per_status,
+        defects_per_severity: @defects_per_severity,
+        defects_per_assignee: @defects_per_assignee,
+        defects_per_module: @defects_per_module,
+        defects_per_submodule: @defects_per_submodule,
+        defects_age_buckets: @defects_age_buckets,
+        selected_metrics: @selected_metrics
+      } %>
+    <% else %>
+      <!-- Tabular View -->
+      <%= render partial: "tabular_view", locals: {
+        defects_per_creator: @defects_per_creator,
+        defects_per_status: @defects_per_status,
+        defects_per_severity: @defects_per_severity,
+        defects_per_assignee: @defects_per_assignee,
+        defects_per_module: @defects_per_module,
+        defects_per_submodule: @defects_per_submodule,
+        defects_age_buckets: @defects_age_buckets,
+        selected_metrics: @selected_metrics
+      } %>
+    <% end %>
+  </div>
 <% elsif params[:product_id].present? %>
   <div class="container p-4 text-center text-gray-500">
     Please configure your metrics and click <strong>"Apply"</strong> to generate the report.<br>
@@ -325,6 +362,15 @@
 
   .metric-checkbox, .product-checkbox {
     margin-right: 0.5rem;
+  }
+
+  .view-toggle-btn {
+    transition: all 0.2s ease-in-out;
+  }
+
+  .view-toggle-btn.active {
+    background-color: #3b82f6;
+    color: white;
   }
 </style>
 
@@ -403,27 +449,36 @@
       document.getElementById('dashboard_id').value = '';
     });
 
-    // FIX: Proper dashboard selection handling - COMPLETELY NEW APPROACH
+    // Dashboard selection handling
     const dashboardSelect = document.getElementById('dashboard_id');
     if (dashboardSelect) {
-      // Remove the onchange attribute to prevent default form submission
       dashboardSelect.removeAttribute('onchange');
       
       dashboardSelect.addEventListener('change', function() {
         if (this.value) {
-          console.log('Dashboard selected:', this.value);
-          
-          // Create a new form submission that only includes the dashboard_id
           const form = document.getElementById('reports-form');
           const url = new URL(form.action);
-          
-          // Clear all parameters and only set dashboard_id
           url.search = '';
           url.searchParams.set('dashboard_id', this.value);
-          
-          // Navigate to the clean URL
           window.location.href = url.toString();
         }
+      });
+    }
+
+    // View toggle functionality
+    const graphicalViewBtn = document.getElementById('graphicalViewBtn');
+    const tabularViewBtn = document.getElementById('tabularViewBtn');
+    const viewTypeField = document.getElementById('view_type');
+
+    if (graphicalViewBtn && tabularViewBtn && viewTypeField) {
+      graphicalViewBtn.addEventListener('click', function() {
+        viewTypeField.value = 'graphical';
+        document.getElementById('reports-form').submit();
+      });
+
+      tabularViewBtn.addEventListener('click', function() {
+        viewTypeField.value = 'tabular';
+        document.getElementById('reports-form').submit();
       });
     }
 
