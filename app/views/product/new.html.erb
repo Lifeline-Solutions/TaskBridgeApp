@@ -45,7 +45,7 @@
                          id="software-search-input"
                          placeholder="Search and select categories..."
                          autocomplete="off"
-                         class="border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                         class="border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 bg-white dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
 
                   <!-- Dropdown Results -->
                   <div id="software-dropdown"
@@ -259,7 +259,8 @@
     // Char counter (kept)
     wireCharCounter();
 
-    // Initialize Software Multi-Select
+    // Initialize BOTH multi-selects - groupware first to set up the global reference
+    initGroupwareMultiSelect();
     initSoftwareMultiSelect();
   }
 
@@ -437,164 +438,8 @@
     update();
   }
 
-  // ---------- Software Multi-Select with Search ----------
-  function initSoftwareMultiSelect() {
-    const searchInput = document.getElementById('software-search-input');
-    const dropdown = document.getElementById('software-dropdown');
-    const resultsContainer = document.getElementById('software-results');
-    const tagsContainer = document.getElementById('selected-software-tags');
-    const hiddenInputsContainer = document.getElementById('software-hidden-inputs');
-
-    if (!searchInput || !dropdown || !resultsContainer) return;
-
-    // Software data from Rails
-    const allSoftware = <%= raw Software.all.map { |s| { id: s.id, name: s.name } }.to_json %>;
-    let selectedSoftware = [];
-
-    // Show dropdown on focus
-    searchInput.addEventListener('focus', () => {
-      renderDropdown('');
-      dropdown.classList.remove('hidden');
-    });
-
-    // Search as user types
-    searchInput.addEventListener('input', (e) => {
-      const query = e.target.value.toLowerCase();
-      renderDropdown(query);
-      dropdown.classList.remove('hidden');
-    });
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
-        dropdown.classList.add('hidden');
-      }
-    });
-
-    // Render dropdown options
-    function renderDropdown(query) {
-      resultsContainer.innerHTML = '';
-
-      const filtered = allSoftware.filter(soft => {
-        const isSelected = selectedSoftware.some(s => s.id === soft.id);
-        const matchesQuery = soft.name.toLowerCase().includes(query);
-        return !isSelected && matchesQuery;
-      });
-
-      if (filtered.length === 0) {
-        const noResults = document.createElement('li');
-        noResults.className = 'px-4 py-2 text-sm text-gray-500 dark:text-gray-400';
-        noResults.textContent = selectedSoftware.length === allSoftware.length
-          ? 'All categories selected'
-          : 'No matching categories';
-        resultsContainer.appendChild(noResults);
-        return;
-      }
-
-      filtered.forEach(soft => {
-        const li = document.createElement('li');
-        li.className = 'px-4 py-2 hover:bg-blue-500 hover:text-white cursor-pointer text-sm text-gray-900 dark:text-white transition-colors';
-        li.textContent = soft.name;
-        li.addEventListener('click', () => {
-          addSoftware(soft);
-          searchInput.value = '';
-          renderDropdown('');
-          searchInput.focus();
-        });
-        resultsContainer.appendChild(li);
-      });
-    }
-
-    // Add selected software
-    function addSoftware(soft) {
-      if (selectedSoftware.some(s => s.id === soft.id)) return;
-
-      selectedSoftware.push(soft);
-      renderTags();
-      renderHiddenInputs();
-
-      // Update groupware options when software selection changes
-      updateGroupwareOptions();
-
-      // Trigger change event for groupware update
-      const event = new Event('change', { bubbles: true });
-      hiddenInputsContainer.dispatchEvent(event);
-    }
-
-    // Remove software
-    function removeSoftware(softId) {
-      selectedSoftware = selectedSoftware.filter(s => s.id !== softId);
-      renderTags();
-      renderHiddenInputs();
-      renderDropdown(searchInput.value.toLowerCase());
-
-      // Update groupware options when software is removed
-      updateGroupwareOptions();
-    }
-
-    // Render selected tags
-    function renderTags() {
-      tagsContainer.innerHTML = '';
-
-      if (selectedSoftware.length === 0) {
-        const placeholder = document.createElement('div');
-        placeholder.className = 'text-sm text-gray-400 dark:text-gray-500';
-        placeholder.textContent = 'No categories selected';
-        tagsContainer.appendChild(placeholder);
-        return;
-      }
-
-      selectedSoftware.forEach(soft => {
-        const tag = document.createElement('div');
-        tag.className = 'inline-flex items-center gap-1 px-3 py-1 bg-blue-500 text-white rounded-full text-sm';
-        tag.innerHTML = `
-          <span>${soft.name}</span>
-          <button type="button"
-                  class="ml-1 hover:bg-blue-600 rounded-full p-0.5 transition-colors"
-                  data-soft-id="${soft.id}">
-            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-            </svg>
-          </button>
-        `;
-
-        const removeBtn = tag.querySelector('button');
-        removeBtn.addEventListener('click', () => removeSoftware(soft.id));
-
-        tagsContainer.appendChild(tag);
-      });
-    }
-
-    // Render hidden inputs for form submission
-    function renderHiddenInputs() {
-      hiddenInputsContainer.innerHTML = '';
-
-      selectedSoftware.forEach(soft => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'product[software_ids][]';
-        input.value = soft.id;
-        hiddenInputsContainer.appendChild(input);
-      });
-    }
-
-    // Update groupware options based on selected software
-    function updateGroupwareOptions() {
-      // Trigger the groupware multi-select to update
-      if (window.groupwareMultiSelect) {
-        window.groupwareMultiSelect.updateAvailableOptions(selectedSoftware.map(s => s.id));
-      }
-    }
-
-    // Initialize with empty state
-    renderTags();
-
-    // Initialize groupware multi-select after software select is ready
-    initGroupwareMultiSelect(selectedSoftware);
-  }
-
-  // ---------- Groupware Multi-Select with Search ----------
-  function initGroupwareMultiSelect(selectedSoftwareRef) {
+  // ---------- Groupware Multi-Select with Search (Initialize FIRST) ----------
+  function initGroupwareMultiSelect() {
     const searchInput = document.getElementById('groupware-search-input');
     const dropdown = document.getElementById('groupware-dropdown');
     const resultsContainer = document.getElementById('groupware-results');
@@ -771,5 +616,153 @@
     window.groupwareMultiSelect = {
       updateAvailableOptions: updateAvailableOptions
     };
+  }
+
+  // ---------- Software Multi-Select with Search ----------
+  function initSoftwareMultiSelect() {
+    const searchInput = document.getElementById('software-search-input');
+    const dropdown = document.getElementById('software-dropdown');
+    const resultsContainer = document.getElementById('software-results');
+    const tagsContainer = document.getElementById('selected-software-tags');
+    const hiddenInputsContainer = document.getElementById('software-hidden-inputs');
+
+    if (!searchInput || !dropdown || !resultsContainer) return;
+
+    // Software data from Rails
+    const allSoftware = <%= raw Software.all.map { |s| { id: s.id, name: s.name } }.to_json %>;
+    let selectedSoftware = [];
+
+    // Show dropdown on focus
+    searchInput.addEventListener('focus', () => {
+      renderDropdown('');
+      dropdown.classList.remove('hidden');
+    });
+
+    // Search as user types
+    searchInput.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase();
+      renderDropdown(query);
+      dropdown.classList.remove('hidden');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.add('hidden');
+      }
+    });
+
+    // Render dropdown options
+    function renderDropdown(query) {
+      resultsContainer.innerHTML = '';
+
+      const filtered = allSoftware.filter(soft => {
+        const isSelected = selectedSoftware.some(s => s.id === soft.id);
+        const matchesQuery = soft.name.toLowerCase().includes(query);
+        return !isSelected && matchesQuery;
+      });
+
+      if (filtered.length === 0) {
+        const noResults = document.createElement('li');
+        noResults.className = 'px-4 py-2 text-sm text-gray-500 dark:text-gray-400';
+        noResults.textContent = selectedSoftware.length === allSoftware.length
+          ? 'All categories selected'
+          : 'No matching categories';
+        resultsContainer.appendChild(noResults);
+        return;
+      }
+
+      filtered.forEach(soft => {
+        const li = document.createElement('li');
+        li.className = 'px-4 py-2 hover:bg-blue-500 hover:text-white cursor-pointer text-sm text-gray-900 dark:text-white transition-colors';
+        li.textContent = soft.name;
+        li.addEventListener('click', () => {
+          addSoftware(soft);
+          searchInput.value = '';
+          renderDropdown('');
+          searchInput.focus();
+        });
+        resultsContainer.appendChild(li);
+      });
+    }
+
+    // Add selected software
+    function addSoftware(soft) {
+      if (selectedSoftware.some(s => s.id === soft.id)) return;
+
+      selectedSoftware.push(soft);
+      renderTags();
+      renderHiddenInputs();
+
+      // Update groupware options when software selection changes
+      updateGroupwareBasedOnSoftware();
+    }
+
+    // Remove software
+    function removeSoftware(softId) {
+      selectedSoftware = selectedSoftware.filter(s => s.id !== softId);
+      renderTags();
+      renderHiddenInputs();
+      renderDropdown(searchInput.value.toLowerCase());
+
+      // Update groupware options when software is removed
+      updateGroupwareBasedOnSoftware();
+    }
+
+    // Render selected tags
+    function renderTags() {
+      tagsContainer.innerHTML = '';
+
+      if (selectedSoftware.length === 0) {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'text-sm text-gray-400 dark:text-gray-500';
+        placeholder.textContent = 'No categories selected';
+        tagsContainer.appendChild(placeholder);
+        return;
+      }
+
+      selectedSoftware.forEach(soft => {
+        const tag = document.createElement('div');
+        tag.className = 'inline-flex items-center gap-1 px-3 py-1 bg-blue-500 text-white rounded-full text-sm';
+        tag.innerHTML = `
+          <span>${soft.name}</span>
+          <button type="button"
+                  class="ml-1 hover:bg-blue-600 rounded-full p-0.5 transition-colors"
+                  data-soft-id="${soft.id}">
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            </svg>
+          </button>
+        `;
+
+        const removeBtn = tag.querySelector('button');
+        removeBtn.addEventListener('click', () => removeSoftware(soft.id));
+
+        tagsContainer.appendChild(tag);
+      });
+    }
+
+    // Render hidden inputs for form submission
+    function renderHiddenInputs() {
+      hiddenInputsContainer.innerHTML = '';
+
+      selectedSoftware.forEach(soft => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'product[software_ids][]';
+        input.value = soft.id;
+        hiddenInputsContainer.appendChild(input);
+      });
+    }
+
+    // Update groupware options based on selected software
+    function updateGroupwareBasedOnSoftware() {
+      if (window.groupwareMultiSelect) {
+        window.groupwareMultiSelect.updateAvailableOptions(selectedSoftware.map(s => s.id));
+      }
+    }
+
+    // Initialize with empty state
+    renderTags();
   }
 </script>
