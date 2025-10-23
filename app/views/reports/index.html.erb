@@ -195,7 +195,7 @@
         <!-- Show Apply button only when products are selected -->
         <%= submit_tag "Apply", class: "ml-2 px-4 py-2 bg-blue-500 text-white rounded" %>
         <% if params[:commit].present? || params[:dashboard_id].present? %>
-          <%= link_to "Clear", reports_path, class: "ml-2 px-4 py-2 bg-gray-500 text-white rounded" %>
+          <%= link_to "Clear", "javascript:void(0);", class: "ml-2 px-4 py-2 bg-gray-500 text-white rounded", onclick: "window.location.href='#{reports_path}';" %>
         <% end %>
       <% end %>
     </div>
