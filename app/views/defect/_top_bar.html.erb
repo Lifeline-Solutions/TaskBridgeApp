@@ -16,17 +16,6 @@
     <!-- Right side: search + filter -->
     <div class="grid col-span-1 justify-end">
       <div class="flex flex-col md:flex-row items-start md:items-center w-full gap-2">
-        <!-- Search -->
-        <%= form_with url: defect_index_path, method: :get, class: 'flex gap-2' do |f| %>
-          <%= f.text_field :query, value: params[:query], placeholder: "Search", class: "border border-gray-300 px-5 pr-10 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100" %>
-          <%= f.submit "Search", class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
-        <% end %>
-
-        <!-- Clear button -->
-        <%= form_with url: defect_index_path, method: :get, class: 'flex' do |f| %>
-          <%= f.submit "Clear", class: 'ml-2 bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
-        <% end %>
-
         <!-- Filter Dropdown -->
         <div class="relative">
           <button id="filterDropdownButton" class="flex items-center text-sm hover:text-blue-600">
