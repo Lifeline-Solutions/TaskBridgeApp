@@ -594,55 +594,6 @@
     }
   }
 
-  function initTomSelect() {
-    const el = document.getElementById('defect_label_ids_modal');
-    if (el && typeof TomSelect !== 'undefined' && !el.tomselect) {
-      new TomSelect(el, {
-        placeholder: 'Labels: Type to search or add. Press Enter to create new.',
-        plugins: ['remove_button'],
-        persist: false,
-        preload: 'focus',
-        valueField: 'id',
-        labelField: 'name',
-        searchField: ['name'],
-        load: function (q, cb) {
-          const url = new URL('/labels.json', window.location.origin); // ✅ fixed
-          if (q) url.searchParams.set('q', q);
-          url.searchParams.set('limit', '100');
-          fetch(url.toString())
-            .then(r => r.json())
-            .then(d => cb(d))
-            .catch(() => cb());
-        },
-        create: function (input, callback) {
-          let name = input.trim();
-          if (!name) return callback();
-          fetch('/labels', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
-            },
-            body: JSON.stringify({ name })
-          })
-            .then(r => r.json())
-            .then(data => {
-              if (data.id) {
-                callback({ id: data.id, name: data.name });
-              } else {
-                callback();
-              }
-            })
-            .catch(() => callback());
-        },
-        render: {
-          item: (d, e) => `<div class='ts-chip'>${e(d.name)}</div>`,
-          option: (d, e) => `<div class='px-2 py-1'>${e(d.name)}</div>`
-        }
-      });
-    }
-  }
-
   function initModuleSubmoduleLoading() {
     // ===== Dynamic module/submodule loading =====
     const modSelect = document.querySelector('[data-project-modules-target="moduleSelect"]');
@@ -708,7 +659,6 @@
   // Initialize everything
   function initializeAll() {
     initSearchableDropdowns();
-    initTomSelect();
     initModuleSubmoduleLoading();
     initStatusDropdown();
   }
