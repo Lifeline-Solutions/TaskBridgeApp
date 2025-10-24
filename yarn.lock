@@ -256,17 +256,17 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@rails/actiontext@^8.0.200":
-  version "8.1.0"
-  resolved "https://registry.npmjs.org/@rails/actiontext/-/actiontext-8.1.0.tgz"
-  integrity sha512-N5liu+rVlYQixDGydzm+TnT1N5dsgwvSjk1EL8Frnzp0girTWAVU5LjJa7k2g63RxoPcY4S7JZhnjoyJw4ocJA==
+"@rails/actiontext@^8.0.100":
+  version "8.0.100"
+  resolved "https://registry.npmjs.org/@rails/actiontext/-/actiontext-8.0.100.tgz"
+  integrity sha512-/Q1m6owfmRsVQ6xL/pyRtJiSgQxE3LMsqVk5/6d+H7om5E9xmjZNr2fGy5n3PZfrpAuJhFjWZZjTPLYrMqTaKA==
   dependencies:
-    "@rails/activestorage" ">= 8.1.0-alpha"
+    "@rails/activestorage" ">= 8.0.0-alpha"
 
-"@rails/activestorage@>= 8.1.0-alpha":
-  version "8.1.0"
-  resolved "https://registry.npmjs.org/@rails/activestorage/-/activestorage-8.1.0.tgz"
-  integrity sha512-D2T6flCX+W3dGMzqHNikVgw1D1xpVb5wvxnQB/naHUpxgZ55Ch4D8yb246umSA3SDvk4qhuwU7knQF79VMG/Eg==
+"@rails/activestorage@>= 8.0.0-alpha":
+  version "8.0.100"
+  resolved "https://registry.npmjs.org/@rails/activestorage/-/activestorage-8.0.100.tgz"
+  integrity sha512-/fIFav9RFFzQKK3a91O2OOdnHxPx+mBIR6wZDxeH9bcbDf2dZqhVcr5DGRJuhkF8U7C3s0tYvYafscmkBNRlHQ==
   dependencies:
     spark-md5 "^3.0.1"
 
@@ -750,14 +750,7 @@ datatables.net-dt@^2.2.2:
     datatables.net "2.2.2"
     jquery ">=1.7"
 
-datatables.net@^2.3.2:
-  version "2.3.4"
-  resolved "https://registry.npmjs.org/datatables.net/-/datatables.net-2.3.4.tgz"
-  integrity sha512-fKuRlrBIdpAl2uIFgl9enKecHB41QmFd/2nN9LBbOvItV/JalAxLcyqdZXex7wX4ZXjnJQEnv6xeS9veOpKzSw==
-  dependencies:
-    jquery ">=1.7"
-
-datatables.net@2.2.2:
+datatables.net@^2.2.2, datatables.net@2.2.2:
   version "2.2.2"
   resolved "https://registry.npmjs.org/datatables.net/-/datatables.net-2.2.2.tgz"
   integrity sha512-gfODIKE3gpgbVeZy2QGj2Dq9roO6hy00S+k1knklrqlMyAMrh1wt0Q6ryBUM7gU96U77ysbq8dYhxFdmcC/oPQ==
