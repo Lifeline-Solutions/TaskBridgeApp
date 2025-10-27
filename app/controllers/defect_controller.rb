@@ -437,6 +437,15 @@ class DefectController < ApplicationController
 
     @defect = Defect.find(params[:id])
 
+    # Preserve product_id for back navigation
+    @product_id = params[:product_id] || @defect.product_id
+
+    # Store the referrer for proper back navigation if it's from index_show
+    session[:defect_return_path] = request.referer if request.referer&.include?('index_show') || request.referer&.include?('/defect?')
+
+    # Get the return path from session or construct default
+    @return_path = session[:defect_return_path] || index_show_defect_index_path(product_id: @product_id)
+
     qa_user_ids = User.joins(:roles)
       .where(roles: { name: 'qa' })
       .pluck(:id)
