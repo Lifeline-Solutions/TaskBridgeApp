@@ -143,28 +143,37 @@
                   Assignee *
                 </label>
 
-                <% if (default_assignee = DefaultDefectAssignee.instance)&.user.present? %>
-                  <input type="text"
-                        id="assignee-search"
-                        placeholder="Type to search users..."
-                        value="<%= default_assignee.user.name %>"
-                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
-                                focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+                <div class="relative">
+                  <% if (default_assignee = DefaultDefectAssignee.instance)&.user.present? %>
+                    <input type="text"
+                          id="assignee-search"
+                          placeholder="Type to search users..."
+                          value="<%= default_assignee.user.name %>"
+                          class="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 text-sm focus:outline-none
+                                  focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
 
-                  <%= hidden_field_tag 'defect[user_ids][]',
-                        default_assignee.user.id,
-                        id: "assignee-id-field" %>
-                <% else %>
-                  <input type="text"
-                        id="assignee-search"
-                        placeholder="Type to search users..."
-                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
-                                focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+                    <%= hidden_field_tag 'defect[user_ids][]',
+                          default_assignee.user.id,
+                          id: "assignee-id-field" %>
+                  <% else %>
+                    <input type="text"
+                          id="assignee-search"
+                          placeholder="Type to search users..."
+                          class="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 text-sm focus:outline-none
+                                  focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
 
-                  <%= hidden_field_tag 'defect[user_ids][]',
-                        @defect.user_ids.first,
-                        id: "assignee-id-field" %>
-                <% end %>
+                    <%= hidden_field_tag 'defect[user_ids][]',
+                          @defect.user_ids.first,
+                          id: "assignee-id-field" %>
+                  <% end %>
+                  
+                  <!-- Dropdown caret icon -->
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </div>
+                </div>
 
                 <!-- Results dropdown -->
                 <ul id="assignee-results"
@@ -182,13 +191,22 @@
               class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
                 Banking Type *
             </label>
-            <!-- Search input -->
-            <input type="text"
-                  id="banking-type-search"
-                  placeholder="Type to search banking types..."
-                  value="<%= @defect.banking_type&.name %>"
-                  class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
-                          focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+            <!-- Search input wrapper -->
+            <div class="relative">
+              <input type="text"
+                    id="banking-type-search"
+                    placeholder="Type to search banking types..."
+                    value="<%= @defect.banking_type&.name %>"
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 text-sm focus:outline-none
+                            focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+
+              <!-- Dropdown caret icon -->
+              <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+            </div>
 
             <!-- Hidden field for selected banking_type_id -->
             <%= f.hidden_field :banking_type_id, id: "banking-type-id-field" %>
