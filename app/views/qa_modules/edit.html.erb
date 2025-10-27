@@ -6,7 +6,7 @@
       <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
         Edit Module: <%= @qa_module.name %>
       </h1>
-      <%= link_to "Back", qa_modules_path, class: "text-sm text-blue-600 dark:text-blue-400 hover:underline" %>
+      <%= link_to "Back", qa_modules_path(product_id: @product_id), class: "text-sm text-blue-600 dark:text-blue-400 hover:underline" %>
     </div>
 
     <%= render 'form' %>

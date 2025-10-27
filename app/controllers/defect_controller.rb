@@ -102,31 +102,57 @@ class DefectController < ApplicationController
       # Remove ordering for filter options queries
       filtered_ids = defects_scope.except(:select, :order, :limit, :offset).select(:id)
 
-      # Get modules (qa_modules with no parent_id)
-      @qa_modules = QaModule.joins(:defects)
-        .where(defects: { id: filtered_ids })
-        .where(parent_id: nil) # Only modules, not submodules
-        .distinct
-        .order(:name)
-
-      # Handle submodules based on selected modules
-      @submodules = if @selected_module_ids.any?
-                      # Get ALL submodules for the selected modules
-                      QaModule.where(parent_id: @selected_module_ids)
+      # FIXED: Scope modules directly to selected products for consistency
+      @qa_modules = if @selected_product_ids.any?
+                      QaModule.where(product_id: @selected_product_ids, parent_id: nil)
+                        .distinct
                         .order(:name)
                     else
-                      # Show all submodules for the products
+                      # Fallback to modules from defects if no specific products selected
                       QaModule.joins(:defects)
                         .where(defects: { id: filtered_ids })
-                        .where.not(parent_id: nil) # All submodules
+                        .where(parent_id: nil)
                         .distinct
                         .order(:name)
                     end
 
-      @banking_types = BankingType.joins(:defects)
-        .where(defects: { id: filtered_ids })
-        .distinct
-        .order(:name)
+      # Handle submodules based on selected modules
+      @submodules = if @selected_module_ids.any?
+                      # Get ALL submodules for the selected modules (scoped to selected products)
+                      if @selected_product_ids.any?
+                        QaModule.where(parent_id: @selected_module_ids, product_id: @selected_product_ids)
+                          .order(:name)
+                      else
+                        QaModule.where(parent_id: @selected_module_ids)
+                          .order(:name)
+                      end
+                    elsif @selected_product_ids.any?
+                      # Show all submodules for the selected products
+                      QaModule.where(product_id: @selected_product_ids)
+                        .where.not(parent_id: nil)
+                        .distinct
+                        .order(:name)
+                    else
+                      # Fallback to submodules from defects
+                      QaModule.joins(:defects)
+                        .where(defects: { id: filtered_ids })
+                        .where.not(parent_id: nil)
+                        .distinct
+                        .order(:name)
+                    end
+
+      # FIXED: Scope banking types directly to selected products for consistency
+      @banking_types = if @selected_product_ids.any?
+                         BankingType.where(product_id: @selected_product_ids)
+                           .distinct
+                           .order(:name)
+                       else
+                         # Fallback to banking types from defects
+                         BankingType.joins(:defects)
+                           .where(defects: { id: filtered_ids })
+                           .distinct
+                           .order(:name)
+                       end
 
       @labels = Label.joins(:defects)
         .where(defects: { id: filtered_ids })
@@ -136,7 +162,7 @@ class DefectController < ApplicationController
       @assignees = User.joins(:defects)
         .where(defects: { id: filtered_ids })
         .distinct
-        .order(:first_name, :last_name)
+        .order(:name)
     else
       # Initialize empty arrays if no defects scope
       @qa_modules = []
@@ -328,48 +354,65 @@ class DefectController < ApplicationController
       .select(:id))
       .order(:name)
 
-    # NEW: option lists for QA Module, Submodule, Banking Type - FIXED LOGIC
-    @qa_modules = QaModule.where(id: QaModule.joins(:defects)
-      .where(defects: { id: filtered_ids })
-      .where(parent_id: nil)
-      .distinct
-      .select(:id))
-      .order(:name)
-
-    # Handle submodules based on selected modules - FIXED LOGIC
-    @submodules = if qa_module_ids.any?
-                    # Get ALL submodules for the selected modules
-                    QaModule.where(parent_id: qa_module_ids).order(:name)
+    # FIXED: Scope QA modules directly to selected products for consistency
+    @qa_modules = if product_ids.any?
+                    QaModule.where(product_id: product_ids, parent_id: nil)
+                      .distinct
+                      .order(:name)
                   else
-                    # Show submodules that have defects in current filter OR are children of available modules
-                    available_module_ids = @qa_modules.pluck(:id)
+                    QaModule.where(id: QaModule.joins(:defects)
+                      .where(defects: { id: filtered_ids })
+                      .where(parent_id: nil)
+                      .distinct
+                      .select(:id))
+                      .order(:name)
+                  end
 
-                    # Get submodule IDs from defects
+    # Handle submodules based on selected modules - FIXED LOGIC with product scoping
+    @submodules = if qa_module_ids.any?
+                    # Get ALL submodules for the selected modules (scoped to products)
+                    if product_ids.any?
+                      QaModule.where(parent_id: qa_module_ids, product_id: product_ids).order(:name)
+                    else
+                      QaModule.where(parent_id: qa_module_ids).order(:name)
+                    end
+                  elsif product_ids.any?
+                    # Show submodules for selected products
+                    QaModule.where(product_id: product_ids)
+                      .where.not(parent_id: nil)
+                      .distinct
+                      .order(:name)
+                  else
+                    # Fallback to submodules from defects
+                    available_module_ids = @qa_modules.pluck(:id)
                     submodule_ids_from_defects = QaModule.joins(:defects)
                       .where(defects: { id: filtered_ids })
                       .where.not(parent_id: nil)
                       .distinct
                       .pluck(:id)
 
-                    # Get submodule IDs from available modules
                     submodule_ids_from_modules = if available_module_ids.any?
                                                    QaModule.where(parent_id: available_module_ids).pluck(:id)
                                                  else
                                                    []
                                                  end
 
-                    # Combine all submodule IDs
                     all_submodule_ids = (submodule_ids_from_defects + submodule_ids_from_modules).uniq
-
-                    # Return ordered submodules
                     QaModule.where(id: all_submodule_ids).order(:name)
                   end
 
-    @banking_types = BankingType.where(id: BankingType.joins(:defects)
-      .where(defects: { id: filtered_ids })
-      .distinct
-      .select(:id))
-      .order(:name)
+    # FIXED: Scope banking types directly to selected products for consistency
+    @banking_types = if product_ids.any?
+                       BankingType.where(product_id: product_ids)
+                         .distinct
+                         .order(:name)
+                     else
+                       BankingType.where(id: BankingType.joins(:defects)
+                         .where(defects: { id: filtered_ids })
+                         .distinct
+                         .select(:id))
+                         .order(:name)
+                     end
 
     @labels = Label.where(id: Label.joins(:defects)
       .where(defects: { id: filtered_ids })

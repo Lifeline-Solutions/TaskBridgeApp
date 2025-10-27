@@ -13,20 +13,29 @@ class BankingTypesController < ApplicationController
   end
 
   # GET /banking_types/1
-  def show; end
+  def show
+    # Preserve product_id for back navigation
+    @product_id = params[:product_id] || @banking_type.product_id
+  end
 
   # GET /banking_types/new
   def new
     @banking_type = BankingType.new
 
-    return unless params[:product_id].present?
-
-    # Pre-select the product on the new form
-    @banking_type.product_id = params[:product_id]
+    if params[:product_id].present?
+      # Pre-select the product on the new form
+      @banking_type.product_id = params[:product_id]
+      @product_id = params[:product_id]
+    else
+      @product_id = nil
+    end
   end
 
   # GET /banking_types/1/edit
-  def edit; end
+  def edit
+    # Preserve product_id for back navigation
+    @product_id = params[:product_id] || @banking_type.product_id
+  end
 
   # POST /banking_types
   def create
@@ -59,7 +68,8 @@ class BankingTypesController < ApplicationController
           .performed_on(@banking_type)
           .event('banking_type.update')
           .log('BankingType updated')
-        format.html { redirect_to banking_types_path, notice: 'Banking type was successfully updated.' }
+        # FIXED: Preserve product_id in redirect to maintain project context
+        format.html { redirect_to banking_types_path(product_id: @banking_type.product_id), notice: 'Banking type was successfully updated.' }
         format.json { render :show, status: :ok, location: @banking_type }
       else
         format.html { render :edit, status: :unprocessable_entity }
@@ -70,6 +80,7 @@ class BankingTypesController < ApplicationController
 
   # DELETE /banking_types/1
   def destroy
+    product_id = @banking_type.product_id # Store product_id before deletion
     if audit_soft_delete(@banking_type)
       notice_message = 'Banking type was successfully deleted.'
     else
@@ -83,7 +94,8 @@ class BankingTypesController < ApplicationController
       .event('banking_type.destroy')
       .log('BankingType removed')
 
-    redirect_to banking_types_path, notice: notice_message
+    # FIXED: Preserve product_id in redirect to maintain project context
+    redirect_to banking_types_path(product_id: product_id), notice: notice_message
   end
 
   private
