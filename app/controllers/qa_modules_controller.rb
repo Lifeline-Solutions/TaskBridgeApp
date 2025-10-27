@@ -40,6 +40,8 @@ class QaModulesController < ApplicationController
   def show
     @qa_module = QaModule.find(params[:id])
     @child_modules = QaModule.where(parent_id: @qa_module.id).order(:name)
+    # Preserve product_id for back navigation
+    @product_id = params[:product_id] || @qa_module.product_id
   end
 
   def new
@@ -49,11 +51,13 @@ class QaModulesController < ApplicationController
     if params[:product_id].present?
       # Pre-select the product on the new form
       @qa_module.product_id = params[:product_id]
+      @product_id = params[:product_id]
 
       # Parent modules for that product only
       @parents = QaModule.where(product_id: params[:product_id], parent_id: nil).order(:name)
     else
       @parents = []
+      @product_id = nil
     end
   end
 
@@ -73,6 +77,7 @@ class QaModulesController < ApplicationController
 
     if @qa_module.save
       respond_to do |format|
+        # FIXED: Preserve product_id in redirect to maintain project context
         format.html { redirect_to qa_modules_path(product_id: @qa_module.product_id), notice: 'Module created successfully.' }
         format.turbo_stream
       end
@@ -84,6 +89,8 @@ class QaModulesController < ApplicationController
 
   def edit
     @parents = QaModule.where(parent_id: nil)
+    # Preserve product_id for back navigation
+    @product_id = params[:product_id] || @qa_module.product_id
   end
 
   def update
@@ -97,7 +104,8 @@ class QaModulesController < ApplicationController
         .event('qa_module.update')
         .with_properties(parent_id: parent_id)
         .log('QA Module updated')
-      redirect_to qa_modules_path, notice: 'Module was successfully updated.'
+      # FIXED: Preserve product_id in redirect to maintain project context
+      redirect_to qa_modules_path(product_id: @qa_module.product_id), notice: 'Module was successfully updated.'
     else
       @parents = QaModule.where.not(id: @qa_module.id)
       render :edit, status: :unprocessable_entity
@@ -105,11 +113,14 @@ class QaModulesController < ApplicationController
   end
 
   def destroy
+    product_id = @qa_module.product_id # Store product_id before deletion
     if audit_soft_delete(@qa_module)
-      redirect_to qa_modules_path, notice: 'Module deleted.'
+      # FIXED: Preserve product_id in redirect to maintain project context
+      redirect_to qa_modules_path(product_id: product_id), notice: 'Module deleted.'
     else
       @qa_module.destroy
-      redirect_to qa_modules_path, notice: 'Module destroyed.'
+      # FIXED: Preserve product_id in redirect to maintain project context
+      redirect_to qa_modules_path(product_id: product_id), notice: 'Module destroyed.'
     end
     activity('user_activity')
       .caused_by(current_user)
