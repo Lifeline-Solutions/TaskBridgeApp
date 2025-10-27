@@ -137,7 +137,7 @@ class QaModulesController < ApplicationController
   private
 
   def set_products_and_clients_defects
-    Product.includes(:client, :groupwares, :statuses)
+    @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
       .select do |product|
         product.statuses.any? { |s| ['Pre Quality Assurance', 'End Of Quality Assurance'].include?(s.name) }
       end
