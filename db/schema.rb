@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_09_093444) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_27_114441) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -380,12 +380,20 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_09_093444) do
     t.string "issue_type", default: "Bug"
     t.boolean "draft", default: false, null: false
     t.integer "retest_count", default: 0, null: false
+    t.uuid "qa_module_id"
+    t.uuid "submodule_id"
+    t.uuid "banking_type_id"
+    t.uuid "creator_id"
+    t.index ["banking_type_id"], name: "index_defects_on_banking_type_id"
+    t.index ["creator_id"], name: "index_defects_on_creator_id"
     t.index ["defect_unique"], name: "index_defects_on_defect_unique", unique: true
     t.index ["deleted_on"], name: "index_defects_on_deleted_on"
     t.index ["groupware_id"], name: "index_defects_on_groupware_id"
     t.index ["product_id"], name: "index_defects_on_product_id"
+    t.index ["qa_module_id"], name: "index_defects_on_qa_module_id"
     t.index ["script_id"], name: "index_defects_on_script_id"
     t.index ["software_id"], name: "index_defects_on_software_id"
+    t.index ["submodule_id"], name: "index_defects_on_submodule_id"
     t.index ["user_id"], name: "index_defects_on_user_id"
   end
 
@@ -1128,7 +1136,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_09_093444) do
   add_foreign_key "defect_messages", "users", column: "modified_by_id"
   add_foreign_key "defect_statuses", "defects"
   add_foreign_key "defect_statuses", "statuses"
+  add_foreign_key "defects", "banking_types"
   add_foreign_key "defects", "products"
+  add_foreign_key "defects", "qa_modules"
+  add_foreign_key "defects", "qa_modules", column: "submodule_id"
+  add_foreign_key "defects", "users", column: "creator_id"
   add_foreign_key "documents", "products"
   add_foreign_key "draft_defect_messages", "defects"
   add_foreign_key "draft_defect_messages", "users"
