@@ -38,6 +38,9 @@
             </div>
           <% end %>
 
+          <%= f.hidden_field :product_id, value: @product.id %>
+
+
       <!-- Project -->
       <div data-controller="project-modules"
        data-project-modules-modules-url-value="<%= modules_by_product_defect_index_path %>"

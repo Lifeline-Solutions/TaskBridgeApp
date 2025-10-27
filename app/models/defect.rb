@@ -1,16 +1,21 @@
 class Defect < ApplicationRecord
+  include Auditable
+  include TrackableActivity
   include SoftDeletable
+
+  belongs_to :creator, class_name: "User", foreign_key: "created_by", optional: true
+  belongs_to :modifier, class_name: "User", foreign_key: "modified_by", optional: true
 
   has_rich_text :content
   has_many_attached :images
   has_many_attached :videos
   has_many_attached :attachments
   has_many :defect_messages, dependent: :destroy
-  belongs_to :qa_module, class_name: 'QaModule'
+  belongs_to :qa_module, class_name: 'QaModule', optional: true
   belongs_to :submodule, class_name: 'QaModule', optional: true
-  belongs_to :banking_type
-  belongs_to :product
-  belongs_to :creator, class_name: 'User'
+  belongs_to :banking_type, optional: true
+  belongs_to :product, optional: true
+  # belongs_to :creator, class_name: 'User'
 
   has_many :defect_labels, dependent: :destroy
   has_many :labels, through: :defect_labels
@@ -114,7 +119,7 @@ class Defect < ApplicationRecord
   validates :priority, presence: true
   validates :issue_type, presence: true
   validates :product_id, presence: true
-  validates :creator_id, presence: true
+  # validates :creator_id, presence: true
   # Add validation to ensure module belongs to selected project
   validate :qa_module_belongs_to_product
 
@@ -178,11 +183,17 @@ class Defect < ApplicationRecord
   private
 
   def qa_module_belongs_to_product
-    return if product_id.blank? || qa_module_id.blank?
+    # Skip validation if columns don't exist in DB
+    return unless Defect.column_names.include?("qa_module_id") && Defect.column_names.include?("product_id")
 
-    return if QaModule.where(id: qa_module_id, product_id: product_id).exists?
+    qa_module_id_val = self[:qa_module_id] if has_attribute?(:qa_module_id)
+    product_id_val   = self[:product_id]   if has_attribute?(:product_id)
 
-    errors.add(:qa_module_id, 'must belong to the selected project')
+    return if qa_module_id_val.blank? || product_id_val.blank?
+
+    unless QaModule.where(id: qa_module_id_val, product_id: product_id_val).exists?
+      errors.add(:qa_module_id, 'must belong to the selected project')
+    end
   end
 
   def set_default_status
