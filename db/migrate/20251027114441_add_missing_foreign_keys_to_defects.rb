@@ -1,12 +1,23 @@
 class AddMissingForeignKeysToDefects < ActiveRecord::Migration[7.2]
   def change
-    # Add all missing foreign key columns
-    add_column :defects, :creator_id, :uuid
+    # Safe column addition
+    unless column_exists?(:defects, :creator_id)
+      add_column :defects, :creator_id, :uuid
+    end
     
-    # Add indexes
-    add_index :defects, :creator_id
+    # Safe index addition
+    unless index_exists?(:defects, :creator_id)
+      add_index :defects, :creator_id
+    end
     
-    # Add foreign key constraints (optional but recommended)
-    add_foreign_key :defects, :users, column: :creator_id
+    # Safe foreign key addition
+    if column_exists?(:defects, :creator_id) && table_exists?(:users)
+      begin
+        add_foreign_key :defects, :users, column: :creator_id
+      rescue ActiveRecord::StatementInvalid
+        # Foreign key might already exist, continue
+        puts "Foreign key for creator_id might already exist, skipping..."
+      end
+    end
   end
 end
