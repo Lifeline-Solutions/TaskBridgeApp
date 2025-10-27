@@ -18,7 +18,7 @@
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
             </svg>
-            <%= link_to "View parent module", qa_module_path(@qa_module.parent), 
+            <%= link_to "View parent module", qa_module_path(@qa_module.parent, product_id: @product_id), 
                        class: "text-blue-600 dark:text-blue-400 hover:underline" %>
           </div>
         <% end %>
@@ -26,7 +26,7 @@
 
       <div class="flex space-x-3">
         <%= link_to 'Back', qa_modules_path(product_id: @product_id), class: "px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600" %>
-        <%= link_to "Edit", edit_qa_module_path(@qa_module),
+        <%= link_to "Edit", edit_qa_module_path(@qa_module, product_id: @product_id),
                     class: "px-3 py-1 text-sm bg-yellow-500 hover:bg-yellow-600 text-white rounded" %>
       </div>
     </div>
@@ -39,7 +39,7 @@
         <%= @qa_module.parent ? "Related Modules" : "Child Modules" %>
       </h2>
       <%= link_to "Add #{@qa_module.parent ? 'Related' : 'Child'} Module", 
-                  new_qa_module_path(parent_id: @qa_module.id),
+                  new_qa_module_path(parent_id: @qa_module.id, product_id: @product_id),
                   class: "px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm" %>
     </div>
 
@@ -62,7 +62,7 @@
           <% @child_modules.each do |child| %>
             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
               <td class="px-6 py-4 whitespace-nowrap">
-                <%= link_to child.name, qa_module_path(child), 
+                <%= link_to child.name, qa_module_path(child, product_id: @product_id), 
                             class: "text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium" %>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-gray-500 dark:text-gray-300">
@@ -77,9 +77,9 @@
                 <% end %>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <%= link_to "View", qa_module_path(child),
+                <%= link_to "View", qa_module_path(child, product_id: @product_id),
                             class: "text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 mr-3" %>
-                <%= link_to "Edit", edit_qa_module_path(child),
+                <%= link_to "Edit", edit_qa_module_path(child, product_id: @product_id),
                             class: "text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-300 mr-3" %>
               </td>
             </tr>
@@ -95,7 +95,7 @@
         </svg>
         <h3 class="mt-2 text-lg font-medium text-gray-900 dark:text-gray-100">This is a submodule</h3>
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Submodule of: <%= link_to @qa_module.parent.name, qa_module_path(@qa_module.parent), 
+          Submodule of: <%= link_to @qa_module.parent.name, qa_module_path(@qa_module.parent, product_id: @product_id), 
                                  class: "text-blue-600 dark:text-blue-400 hover:underline" %>
         </p>
         <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">
@@ -112,7 +112,7 @@
       <% end %>
       <div class="mt-6">
         <%= link_to @qa_module.parent ? "Add Related Module" : "Add Child Module", 
-                    new_qa_module_path(parent_id: @qa_module.id),
+                    new_qa_module_path(parent_id: @qa_module.id, product_id: @product_id),
                     class: "inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm" %>
       </div>
     </div>
