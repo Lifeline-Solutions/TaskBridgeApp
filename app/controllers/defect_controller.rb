@@ -565,16 +565,16 @@ class DefectController < ApplicationController
     # @defect.qa_module_id ||= params[:qa_module_id] if params[:qa_module_id].present?
     # @defect.submodule_id ||= params[:submodule_id] if params[:submodule_id].present?
 
-    if Defect.column_names.include?("product_id")
-      @defect.product_id ||= params[:product_id] if params[:product_id].present?
+    if Defect.column_names.include?("product_id") && params[:product_id].present?
+      @defect.product_id = params[:product_id]
     end
 
-    if Defect.column_names.include?("qa_module_id")
-      @defect.qa_module_id ||= params[:qa_module_id] if params[:qa_module_id].present?
+    if Defect.column_names.include?("qa_module_id") && params[:qa_module_id].present?
+      @defect.qa_module_id = params[:qa_module_id]
     end
 
-    if Defect.column_names.include?("submodule_id")
-      @defect.submodule_id ||= params[:submodule_id] if params[:submodule_id].present?
+    if Defect.column_names.include?("submodule_id") && params[:submodule_id].present?
+      @defect.submodule_id = params[:submodule_id]
     end
 
     # Clean user_ids coming from hidden field (will be [""] if none selected)
