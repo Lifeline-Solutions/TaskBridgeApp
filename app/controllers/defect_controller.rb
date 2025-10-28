@@ -1211,19 +1211,24 @@ class DefectController < ApplicationController
   end
 
   def defects_download_excel
-    # Start with base scope matching index_show
+    # Base scope (published defects) - include all necessary associations
     defects = Defect.published
-      .includes(:users, :qa_module, :labels, :banking_type, :statuses, product: %i[client groupwares])
+      .includes(:users, :labels, :statuses, :qa_module, :submodule, :banking_type, product: [:client, :groupwares])
 
-    # Apply the same filters as index_show
-    # Client filter (exact, case-insensitive)
-    if params[:client_name].present?
+    # Apply the same filters as index_show for consistency
+    product_ids = Array(params[:product_id]).reject(&:blank?)
+    
+    # Client filter (exact, case-insensitive, and scoped by product_id)
+    if params[:client_name].present? && product_ids.any?
       defects = defects.joins(product: :client)
         .where('LOWER(clients.name) = ?', params[:client_name].to_s.downcase.strip)
+        .where(products: { id: product_ids })
+    elsif params[:client_name].present?
+      defects = defects.joins(product: :client)
+        .where('LOWER(clients.name) = ?', params[:client_name].to_s.downcase.strip)
+    elsif product_ids.any?
+      defects = defects.where(product_id: product_ids)
     end
-
-    # Product filter
-    defects = defects.where(product_id: params[:product_id]) if params[:product_id].present?
 
     # Status filter (multiple checkboxes -> status[])
     selected_statuses = Array(params[:status]).reject(&:blank?)
@@ -1255,7 +1260,7 @@ class DefectController < ApplicationController
       if start_date.present? && end_date.present?
         from = Date.parse(start_date).beginning_of_day
         to = Date.parse(end_date).end_of_day
-        defects = defects.where(created_at: from..to)
+        defects = defects.where(defects: { created_at: from..to })
       elsif start_date.present?
         from = Date.parse(start_date).beginning_of_day
         defects = defects.where('defects.created_at >= ?', from)
@@ -1264,13 +1269,13 @@ class DefectController < ApplicationController
         defects = defects.where('defects.created_at <= ?', to)
       end
     rescue ArgumentError
-      # Ignore invalid dates
+      # Ignore invalid dates without breaking
     end
 
-    # Full-text search
+    # Full-text search across related tables
     if params[:query].present?
       q = "%#{params[:query].to_s.strip}%"
-      defects = defects.left_joins(:users, :qa_module, :banking_type, product: %i[client groupwares]).where(
+      defects = defects.left_joins(:users, :qa_module, :submodule, :banking_type, product: [:client, :groupwares]).where(
         "defects.summary ILIKE :q
         OR defects.defect_unique ILIKE :q
         OR defects.priority ILIKE :q
@@ -1279,6 +1284,7 @@ class DefectController < ApplicationController
         OR clients.name ILIKE :q
         OR groupwares.name ILIKE :q
         OR qa_modules.name ILIKE :q
+        OR submodules.name ILIKE :q
         OR banking_types.name ILIKE :q",
         q: q
       )
@@ -1286,34 +1292,64 @@ class DefectController < ApplicationController
 
     # Ordering
     direction = %w[asc desc].include?(params[:order]) ? params[:order] : 'desc'
-    defects = defects.order(created_at: direction)
+    defects = defects.order(created_at: direction).distinct
 
-    # --- generate Excel using caxlsx ---
+    # Restrict for non-admin/observer/qa users (same as index_show)
+    defects = defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa)
+
+    # Build Excel via Axlsx (caxlsx)
     package = Axlsx::Package.new
     workbook = package.workbook
 
     workbook.add_worksheet(name: 'Defects') do |sheet|
+      # Headers with ALL available columns including the new associations
       sheet.add_row [
-        'Defect ID', 'Status', 'Summary', 'Priority', 'Module', 'Sub Module',
-        'Banking Types', 'Labels', 'Assignee', 'Reporter', 'Project', 'Created At'
+        'Defect ID', 
+        'Status', 
+        'Summary', 
+        'Priority', 
+        'Issue Type',
+        'Module',           # From qa_module association
+        'Sub Module',       # From submodule association  
+        'Banking Type',     # From banking_type association
+        'Submodule (Legacy)', # From the old string submodule field
+        'Issue',
+        'Retest Count',
+        'Labels', 
+        'Assignee', 
+        'Reporter', 
+        'Project',
+        'Created At',
+        'Start Date',
+        'End Date',
+        'Description'
       ]
 
       defects.find_each do |defect|
-        client_and_groupware = [defect.product.client&.name, defect.product.groupwares.first&.name].compact.join(' - ')
+        client_name = defect.product&.client&.name
+        groupware_name = defect.product&.groupwares&.first&.name
+        client_and_groupware = [client_name, groupware_name].compact.join(' - ')
 
         sheet.add_row [
           defect.defect_unique,
           defect.statuses.map(&:name).join(', '),
           defect.summary,
           defect.priority,
-          defect.qa_module&.name,
-          defect.submodule&.name,
-          defect.banking_type&.name,
+          defect.issue_type,
+          defect.qa_module&.name,      # New association
+          defect.submodule&.name,      # New association (submodule QaModule)
+          defect.banking_type&.name,   # New association
+          defect.submodule,            # Legacy string field
+          defect.issue,
+          defect.retest_count,
           defect.labels.map(&:name).join(', '),
           defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', '),
           defect.creator&.name,
           client_and_groupware,
-          defect.created_at.strftime('%Y-%m-%d %H:%M')
+          defect.created_at.strftime('%Y-%m-%d %H:%M'),
+          defect.start_date&.strftime('%Y-%m-%d'),
+          defect.end_date&.strftime('%Y-%m-%d'),
+          defect.description
         ]
       end
     end
@@ -1504,31 +1540,35 @@ class DefectController < ApplicationController
   end
 
   def defect_params
-    # Normalize user_ids: could be a string, array or single value
-    if params[:defect] && params[:defect][:user_ids]
+    # Handle the qa_submodule_id to submodule_id mapping
+    if params[:defect]
+      params[:defect][:submodule_id] = params[:defect].delete(:qa_submodule_id) if params[:defect][:qa_submodule_id].present?
+
+      # Normalize user_ids: could be a string, array or single value
       if params[:defect][:user_ids].is_a?(String)
         params[:defect][:user_ids] = [params[:defect][:user_ids]].reject(&:blank?)
       elsif params[:defect][:user_ids].is_a?(Array)
         params[:defect][:user_ids] = params[:defect][:user_ids].reject(&:blank?)
       end
+
+      # Normalize incoming single status_id into status_ids array
+      if params[:defect][:status_id].present?
+        # If status_ids already present, merge; otherwise set
+        existing = Array(params[:defect][:status_ids]).reject(&:blank?)
+        params[:defect][:status_ids] = (existing + [params[:defect][:status_id]]).uniq
+        params[:defect].delete(:status_id)
+      end
     end
 
-    # Normalize incoming single status_id into status_ids array
-    if params[:defect] && params[:defect][:status_id].present?
-      # If status_ids already present, merge; otherwise set
-      existing = Array(params[:defect][:status_ids]).reject(&:blank?)
-      params[:defect][:status_ids] = (existing + [params[:defect][:status_id]]).uniq
-      params[:defect].delete(:status_id)
-    end
-
-    # Only permit fields that actually exist in the database
-    permitted_params = params.require(:defect).permit(
+    params.require(:defect).permit(
       :summary,
       :content,
+      :qa_module_id,
+      :submodule_id,
+      :banking_type_id,
       :priority,
       :draft,
       :product_id,
-      :banking_type_id,
       :issue_type,
       :retest_count,
       :defect_unique,
@@ -1537,13 +1577,6 @@ class DefectController < ApplicationController
       status_ids: [],
       attachments: []
     )
-
-    # Remove any fields that don't exist in the database
-    permitted_params.delete(:qa_module_id) if permitted_params.key?(:qa_module_id)
-    permitted_params.delete(:submodule_id) if permitted_params.key?(:submodule_id)
-    permitted_params.delete(:banking_type_id) if permitted_params.key?(:banking_type_id)
-
-    permitted_params
   end
 
   def log_event(defect, user, history_type, history)
