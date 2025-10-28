@@ -3,8 +3,8 @@ class Defect < ApplicationRecord
   include TrackableActivity
   include SoftDeletable
 
-  belongs_to :creator, class_name: "User", foreign_key: "created_by", optional: true
-  belongs_to :modifier, class_name: "User", foreign_key: "modified_by", optional: true
+  belongs_to :creator, class_name: 'User', foreign_key: 'created_by', optional: true
+  belongs_to :modifier, class_name: 'User', foreign_key: 'modified_by', optional: true
 
   has_rich_text :content
   has_many_attached :images
@@ -184,16 +184,16 @@ class Defect < ApplicationRecord
 
   def qa_module_belongs_to_product
     # Skip validation if columns don't exist in DB
-    return unless Defect.column_names.include?("qa_module_id") && Defect.column_names.include?("product_id")
+    return unless Defect.column_names.include?('qa_module_id') && Defect.column_names.include?('product_id')
 
     qa_module_id_val = self[:qa_module_id] if has_attribute?(:qa_module_id)
-    product_id_val   = self[:product_id]   if has_attribute?(:product_id)
+    product_id_val = self[:product_id] if has_attribute?(:product_id)
 
     return if qa_module_id_val.blank? || product_id_val.blank?
 
-    unless QaModule.where(id: qa_module_id_val, product_id: product_id_val).exists?
-      errors.add(:qa_module_id, 'must belong to the selected project')
-    end
+    return if QaModule.where(id: qa_module_id_val, product_id: product_id_val).exists?
+
+    errors.add(:qa_module_id, 'must belong to the selected project')
   end
 
   def set_default_status

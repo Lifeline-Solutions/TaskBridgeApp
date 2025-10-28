@@ -97,7 +97,7 @@ class DefectController < ApplicationController
     @assignees = []
 
     # Only try to load filter options if we have defects AND the columns exist
-    if defects_scope && defects_scope.exists?
+    if defects_scope&.exists?
       # Remove ordering for filter options queries
       filtered_ids = defects_scope.except(:select, :order, :limit, :offset).select(:id)
 
@@ -116,7 +116,7 @@ class DefectController < ApplicationController
       begin
         # Test if qa_module_id column exists by trying a simple query
         Defect.where(qa_module_id: nil).limit(1)
-        
+
         # If we get here, the column exists - load the modules
         @qa_modules = if @selected_product_ids.any?
                         QaModule.where(product_id: @selected_product_ids, parent_id: nil)
@@ -152,27 +152,27 @@ class DefectController < ApplicationController
                       end
       rescue ActiveRecord::StatementInvalid
         # Columns don't exist yet, skip module options
-        Rails.logger.warn "QA module columns not available - skipping module filters"
+        Rails.logger.warn 'QA module columns not available - skipping module filters'
       end
 
       begin
         # Test if banking_type_id column exists
         Defect.where(banking_type_id: nil).limit(1)
-        
+
         # If we get here, the column exists - load banking types
         @banking_types = if @selected_product_ids.any?
-                          BankingType.where(product_id: @selected_product_ids)
-                            .distinct
-                            .order(:name)
-                        else
-                          BankingType.joins(:defects)
-                            .where(defects: { id: filtered_ids })
-                            .distinct
-                            .order(:name)
-                        end
+                           BankingType.where(product_id: @selected_product_ids)
+                             .distinct
+                             .order(:name)
+                         else
+                           BankingType.joins(:defects)
+                             .where(defects: { id: filtered_ids })
+                             .distinct
+                             .order(:name)
+                         end
       rescue ActiveRecord::StatementInvalid
         # Column doesn't exist yet, skip banking types
-        Rails.logger.warn "Banking type column not available - skipping banking type filters"
+        Rails.logger.warn 'Banking type column not available - skipping banking type filters'
       end
     end
 
@@ -201,7 +201,7 @@ class DefectController < ApplicationController
       @defects = @defects.includes(:qa_module, :banking_type)
     rescue ActiveRecord::StatementInvalid
       # Columns don't exist yet, continue without these includes
-      Rails.logger.warn "Optional defect associations not available yet"
+      Rails.logger.warn 'Optional defect associations not available yet'
     end
 
     # Apply saved filter shortcut
@@ -293,7 +293,7 @@ class DefectController < ApplicationController
       end
     rescue ActiveRecord::StatementInvalid
       # Module filtering not available, skip it
-      Rails.logger.warn "Module filtering not available - skipping"
+      Rails.logger.warn 'Module filtering not available - skipping'
     end
 
     # Banking type filter - only apply if column exists
@@ -302,7 +302,7 @@ class DefectController < ApplicationController
       @defects = @defects.where(banking_type_id: banking_type_ids) if banking_type_ids.any?
     rescue ActiveRecord::StatementInvalid
       # Banking type filtering not available, skip it
-      Rails.logger.warn "Banking type filtering not available - skipping"
+      Rails.logger.warn 'Banking type filtering not available - skipping'
     end
 
     # Date range filters
@@ -328,30 +328,30 @@ class DefectController < ApplicationController
     if params[:query].present?
       q = "%#{params[:query].to_s.strip}%"
       search_conditions = [
-        "defects.summary ILIKE :q",
-        "defects.defect_unique ILIKE :q", 
-        "defects.priority ILIKE :q",
-        "users.first_name ILIKE :q",
-        "users.last_name ILIKE :q",
-        "clients.name ILIKE :q",
-        "groupwares.name ILIKE :q"
+        'defects.summary ILIKE :q',
+        'defects.defect_unique ILIKE :q',
+        'defects.priority ILIKE :q',
+        'users.first_name ILIKE :q',
+        'users.last_name ILIKE :q',
+        'clients.name ILIKE :q',
+        'groupwares.name ILIKE :q'
       ]
-      
+
       # Safely add optional search conditions
       begin
-        search_conditions << "qa_modules.name ILIKE :q"
-      rescue
+        search_conditions << 'qa_modules.name ILIKE :q'
+      rescue StandardError
         # Skip if qa_modules association not available
       end
-      
+
       begin
-        search_conditions << "banking_types.name ILIKE :q"
-      rescue
+        search_conditions << 'banking_types.name ILIKE :q'
+      rescue StandardError
         # Skip if banking_types association not available
       end
 
       @defects = @defects.left_joins(:users, product: %i[client groupwares]).where(
-        search_conditions.join(" OR "), q: q
+        search_conditions.join(' OR '), q: q
       )
     end
 
@@ -427,10 +427,10 @@ class DefectController < ApplicationController
                       .pluck(:id)
 
                     submodule_ids_from_modules = if available_module_ids.any?
-                                                  QaModule.where(parent_id: available_module_ids).pluck(:id)
-                                                else
-                                                  []
-                                                end
+                                                   QaModule.where(parent_id: available_module_ids).pluck(:id)
+                                                 else
+                                                   []
+                                                 end
 
                     all_submodule_ids = (submodule_ids_from_defects + submodule_ids_from_modules).uniq
                     QaModule.where(id: all_submodule_ids).order(:name)
@@ -438,16 +438,16 @@ class DefectController < ApplicationController
 
     # FIXED: Scope banking types directly to selected products for consistency
     @banking_types = if product_ids.any?
-                      BankingType.where(product_id: product_ids)
-                        .distinct
-                        .order(:name)
-                    else
-                      BankingType.where(id: BankingType.joins(:defects)
-                        .where(defects: { id: filtered_ids })
-                        .distinct
-                        .select(:id))
-                        .order(:name)
-                    end
+                       BankingType.where(product_id: product_ids)
+                         .distinct
+                         .order(:name)
+                     else
+                       BankingType.where(id: BankingType.joins(:defects)
+                         .where(defects: { id: filtered_ids })
+                         .distinct
+                         .select(:id))
+                         .order(:name)
+                     end
 
     @labels = Label.where(id: Label.joins(:defects)
       .where(defects: { id: filtered_ids })
@@ -565,17 +565,11 @@ class DefectController < ApplicationController
     # @defect.qa_module_id ||= params[:qa_module_id] if params[:qa_module_id].present?
     # @defect.submodule_id ||= params[:submodule_id] if params[:submodule_id].present?
 
-    if Defect.column_names.include?("product_id") && params[:product_id].present?
-      @defect.product_id = params[:product_id]
-    end
+    @defect.product_id = params[:product_id] if Defect.column_names.include?('product_id') && params[:product_id].present?
 
-    if Defect.column_names.include?("qa_module_id") && params[:qa_module_id].present?
-      @defect.qa_module_id = params[:qa_module_id]
-    end
+    @defect.qa_module_id = params[:qa_module_id] if Defect.column_names.include?('qa_module_id') && params[:qa_module_id].present?
 
-    if Defect.column_names.include?("submodule_id") && params[:submodule_id].present?
-      @defect.submodule_id = params[:submodule_id]
-    end
+    @defect.submodule_id = params[:submodule_id] if Defect.column_names.include?('submodule_id') && params[:submodule_id].present?
 
     # Clean user_ids coming from hidden field (will be [""] if none selected)
     selected_user_ids = Array(params[:defect][:user_ids]).reject(&:blank?)
