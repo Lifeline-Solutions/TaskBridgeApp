@@ -9,9 +9,24 @@
         attributes: %w[href style border class title data-mention-id data-mention-type target rel]
       )
     ) %>
-    <%= raw(html.gsub(/<a([^>]*)>([@#][^<]+)<\/a>/,
-                      '<a\1 class="bg-blue-400 text-white rounded-full hover:underline p-1">\2</a>')
-        ) %>
+    <%
+      styled_html = html.gsub(/<a([^>]*)>([@#][^<]+)<\/a>/) do
+        match = Regexp.last_match
+        attrs = match[1]
+        text = match[2]
+        
+        if text.start_with?('@')
+          # Style for user mentions
+          "<a#{attrs} class=\"bg-gray-400 text-white rounded-full p-1 no-underline\">#{text}</a>"
+        elsif text.start_with?('#')
+          # Style for defect/bug mentions
+          "<a#{attrs} class=\"bg-blue-400 text-white rounded-full p-1 no-underline\">#{text}</a>"
+        else
+          match[0] # fallback to original link
+        end
+      end
+    %>
+    <%= raw(styled_html) %>
   </span>
   <% if message.updated_at > (message.created_at + 5.seconds) %>
     <div class="mt-3 text-xs italic text-gray-500 dark:text-gray-400 flex items-center gap-1">
