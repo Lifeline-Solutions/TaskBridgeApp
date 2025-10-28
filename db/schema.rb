@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_09_093444) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_28_124053) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -380,12 +380,18 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_09_093444) do
     t.string "issue_type", default: "Bug"
     t.boolean "draft", default: false, null: false
     t.integer "retest_count", default: 0, null: false
+    t.uuid "qa_module_id"
+    t.uuid "submodule_id"
+    t.uuid "banking_type_id"
+    t.index ["banking_type_id"], name: "index_defects_on_banking_type_id"
     t.index ["defect_unique"], name: "index_defects_on_defect_unique", unique: true
     t.index ["deleted_on"], name: "index_defects_on_deleted_on"
     t.index ["groupware_id"], name: "index_defects_on_groupware_id"
     t.index ["product_id"], name: "index_defects_on_product_id"
+    t.index ["qa_module_id"], name: "index_defects_on_qa_module_id"
     t.index ["script_id"], name: "index_defects_on_script_id"
     t.index ["software_id"], name: "index_defects_on_software_id"
+    t.index ["submodule_id"], name: "index_defects_on_submodule_id"
     t.index ["user_id"], name: "index_defects_on_user_id"
   end
 
