@@ -1213,11 +1213,11 @@ class DefectController < ApplicationController
   def defects_download_excel
     # Base scope (published defects) - include all necessary associations
     defects = Defect.published
-      .includes(:users, :labels, :statuses, :qa_module, :submodule, :banking_type, product: [:client, :groupwares])
+      .includes(:users, :labels, :statuses, :qa_module, :submodule, :banking_type, product: %i[client groupwares])
 
     # Apply the same filters as index_show for consistency
     product_ids = Array(params[:product_id]).reject(&:blank?)
-    
+
     # Client filter (exact, case-insensitive, and scoped by product_id)
     if params[:client_name].present? && product_ids.any?
       defects = defects.joins(product: :client)
@@ -1275,7 +1275,7 @@ class DefectController < ApplicationController
     # Full-text search across related tables
     if params[:query].present?
       q = "%#{params[:query].to_s.strip}%"
-      defects = defects.left_joins(:users, :qa_module, :submodule, :banking_type, product: [:client, :groupwares]).where(
+      defects = defects.left_joins(:users, :qa_module, :submodule, :banking_type, product: %i[client groupwares]).where(
         "defects.summary ILIKE :q
         OR defects.defect_unique ILIKE :q
         OR defects.priority ILIKE :q
@@ -1304,20 +1304,20 @@ class DefectController < ApplicationController
     workbook.add_worksheet(name: 'Defects') do |sheet|
       # Headers with ALL available columns including the new associations
       sheet.add_row [
-        'Defect ID', 
-        'Status', 
-        'Summary', 
-        'Priority', 
+        'Defect ID',
+        'Status',
+        'Summary',
+        'Priority',
         'Issue Type',
-        'Module',           # From qa_module association
-        'Sub Module',       # From submodule association  
-        'Banking Type',     # From banking_type association
+        'Module', # From qa_module association
+        'Sub Module', # From submodule association
+        'Banking Type', # From banking_type association
         'Submodule (Legacy)', # From the old string submodule field
         'Issue',
         'Retest Count',
-        'Labels', 
-        'Assignee', 
-        'Reporter', 
+        'Labels',
+        'Assignee',
+        'Reporter',
         'Project',
         'Created At',
         'Start Date',
@@ -1336,10 +1336,10 @@ class DefectController < ApplicationController
           defect.summary,
           defect.priority,
           defect.issue_type,
-          defect.qa_module&.name,      # New association
-          defect.submodule&.name,      # New association (submodule QaModule)
-          defect.banking_type&.name,   # New association
-          defect.submodule,            # Legacy string field
+          defect.qa_module&.name, # New association
+          defect.submodule&.name, # New association (submodule QaModule)
+          defect.banking_type&.name, # New association
+          defect.submodule, # Legacy string field
           defect.issue,
           defect.retest_count,
           defect.labels.map(&:name).join(', '),
