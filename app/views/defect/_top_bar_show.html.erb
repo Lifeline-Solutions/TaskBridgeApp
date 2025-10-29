@@ -497,34 +497,57 @@
                 </div>
               </div>
 
-              <!-- Labels filter -->
-              <div class="mb-4">
-                <label for="label-search" class="block text-sm font-medium text-gray-700">Labels</label>
+              <!-- Labels Filter (Multi-Select) -->
+              <div>
+                <%= label_tag 'label_ids[]', 'Labels', class: 'block text-xs font-medium mb-1' %>
+                <div class="relative inline-block text-left w-full multi-select-dropdown">
+                  <button type="button"
+                          id="labelsDropdownButton"
+                          class="w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded text-left inline-flex justify-between items-center"
+                          onclick="toggleDropdown('labelsDropdown')">
+                    <span id="labelsButtonText">Filter by Labels</span>
+                    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
 
-                <div id="label-select" class="relative border border-gray-300 rounded-md shadow-sm bg-white">
-                  <!-- Search input -->
-                  <input type="text"
-                        id="label-search"
-                        class="w-full px-3 py-2 focus:outline-none"
-                        placeholder="Type to search labels...">
-
-                  <!-- Dropdown list -->
-                  <div id="label-dropdown"
-                      class="absolute z-10 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-40 overflow-y-auto hidden">
-                    <% @labels.each do |label| %>
-                      <div class="dropdown-item px-3 py-2 cursor-pointer hover:bg-gray-100"
-                          data-id="<%= label.id %>"
-                          data-name="<%= label.name %>">
-                        <%= label.name %>
+                  <div id="labelsDropdown" class="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg w-full hidden dropdown-content">
+                    <div class="p-2 border-b">
+                      <input type="text" 
+                            id="labelsSearch" 
+                            placeholder="Search labels..." 
+                            class="w-full p-1 text-sm border rounded"
+                            onkeyup="filterDropdownItems('labelsSearch', 'labelsItems')">
+                    </div>
+                    
+                    <div class="max-h-60 overflow-y-auto">
+                      <div id="labelsItems" class="p-2 space-y-2">
+                        <% selected_labels = Array(params[:label_ids]) %>
+                        
+                        <!-- Select All Option -->
+                        <div class="flex items-center border-b pb-2 mb-2">
+                          <%= check_box_tag 'select_all_labels', 
+                                            'all', 
+                                            selected_labels.length == @labels.length,
+                                            id: "select_all_labels",
+                                            class: "mr-2 select-all-checkbox",
+                                            data: { target: 'labels' } %>
+                          <%= label_tag "select_all_labels", "Select All", class: "text-sm font-medium" %>
+                        </div>
+                        
+                        <% @labels.each do |label| %>
+                          <div class="flex items-center dropdown-item">
+                            <%= check_box_tag 'label_ids[]',
+                                              label.id,
+                                              selected_labels.include?(label.id.to_s),
+                                              id: "label_#{label.id}",
+                                              class: "mr-2 labels-checkbox" %>
+                            <%= label_tag "label_#{label.id}", label.name, class: "text-sm" %>
+                          </div>
+                        <% end %>
                       </div>
-                    <% end %>
+                    </div>
                   </div>
-
-                  <!-- Selected labels (tags) -->
-                  <div id="selected-labels" class="flex flex-wrap gap-2 p-2"></div>
-
-                  <!-- Hidden inputs -->
-                  <div id="hidden-labels"></div>
                 </div>
               </div>
 
@@ -726,7 +749,7 @@
   }
 
   function updateAllButtonTexts() {
-    const filterTypes = ['product', 'status', 'priority', 'assignee', 'module', 'submodule', 'banking-type'];
+    const filterTypes = ['product', 'status', 'priority', 'assignee', 'module', 'submodule', 'banking-type', 'labels'];
     
     filterTypes.forEach(type => {
       const buttonId = `${type}DropdownButton`;
@@ -765,75 +788,15 @@
       'assignee': 'Filter by Assignee',
       'module': 'Filter by Module',
       'submodule': 'Filter by Submodule',
-      'banking-type': 'Filter by Banking Type'
+      'banking-type': 'Filter by Banking Type',
+      'labels': 'Filter by Labels'
     };
     
     return textMap[filterType] || 'Filter...';
   }
 
-  // ========== LABELS FILTER MANAGEMENT ==========
-  document.addEventListener("turbo:load", () => {
-    const searchInput   = document.getElementById("label-search");
-    const dropdown      = document.getElementById("label-dropdown");
-    const selectedBox   = document.getElementById("selected-labels");
-    const hiddenInputs  = document.getElementById("hidden-labels");
-
-    if (searchInput && dropdown) {
-      // Filter dropdown items as user types
-      searchInput.addEventListener("input", () => {
-        const query = searchInput.value.toLowerCase();
-        dropdown.querySelectorAll(".dropdown-item").forEach(item => {
-          item.classList.toggle("hidden", !item.dataset.name.toLowerCase().includes(query));
-        });
-        dropdown.classList.remove("hidden");
-      });
-
-      // Handle selecting a label
-      dropdown.addEventListener("click", e => {
-        if (!e.target.classList.contains("dropdown-item")) return;
-
-        const id   = e.target.dataset.id;
-        const name = e.target.dataset.name;
-
-        // Prevent duplicates
-        if (document.getElementById(`label-tag-${id}`)) return;
-
-        // Create tag
-        const tag = document.createElement("span");
-        tag.id = `label-tag-${id}`;
-        tag.className = "bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-xs flex items-center gap-1";
-        tag.innerHTML = `${name} <button type="button" data-id="${id}" class="remove-tag text-red-500">×</button>`;
-        selectedBox.appendChild(tag);
-
-        // Hidden input
-        const hidden = document.createElement("input");
-        hidden.type = "hidden";
-        hidden.name = "label_ids[]";
-        hidden.value = id;
-        hidden.id = `label-hidden-${id}`;
-        hiddenInputs.appendChild(hidden);
-
-        // Reset input & hide dropdown
-        searchInput.value = "";
-        dropdown.classList.add("hidden");
-      });
-
-      // Remove tag
-      selectedBox.addEventListener("click", e => {
-        if (!e.target.classList.contains("remove-tag")) return;
-        const id = e.target.dataset.id;
-        document.getElementById(`label-tag-${id}`).remove();
-        document.getElementById(`label-hidden-${id}`).remove();
-      });
-
-      // Hide dropdown when clicking outside
-      document.addEventListener("click", e => {
-        if (document.getElementById("label-select") && !document.getElementById("label-select").contains(e.target)) {
-          dropdown.classList.add("hidden");
-        }
-      });
-    }
-
+  // ========== FORM SUBMISSION MANAGEMENT ==========
+  document.addEventListener("turbo:load", function () {
     // Auto-submit form when module selection changes to load submodules
     const moduleCheckboxes = document.querySelectorAll('.module-checkbox');
     moduleCheckboxes.forEach(checkbox => {
@@ -848,7 +811,7 @@
       });
     });
 
-    // Prevent form submission when only updating button text
+    // Prevent form submission when only updating button text for other filters
     document.querySelectorAll('[class$="-checkbox"]').forEach(checkbox => {
       if (!checkbox.classList.contains('module-checkbox')) {
         checkbox.addEventListener('change', function(e) {
@@ -861,16 +824,13 @@
     });
 
     // Restore filter state on page load
-    document.addEventListener("turbo:load", function () {
-      const filterDropdown = document.getElementById("filterDropdown");
-      const shouldOpenFilter = sessionStorage.getItem('filterDropdownOpen') === 'true';
-      
-      if (shouldOpenFilter && filterDropdown) {
-        filterDropdown.classList.remove("hidden");
-        // Clear the stored state
-        sessionStorage.removeItem('filterDropdownOpen');
-      }
-      
-    });
+    const filterDropdown = document.getElementById("filterDropdown");
+    const shouldOpenFilter = sessionStorage.getItem('filterDropdownOpen') === 'true';
+    
+    if (shouldOpenFilter && filterDropdown) {
+      filterDropdown.classList.remove("hidden");
+      // Clear the stored state
+      sessionStorage.removeItem('filterDropdownOpen');
+    }
   });
 </script>
