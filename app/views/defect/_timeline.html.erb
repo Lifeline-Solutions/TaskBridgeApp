@@ -1,126 +1,36 @@
 <% if @defects_history.present? %>
-  <div class="bg-white rounded-md border border-gray-300 shadow-sm">
+  <div class="bg-white rounded border border-gray-200">
     <!-- Header -->
-    <div class="px-4 py-3 bg-gray-50 border-b border-gray-300">
-      <h2 class="text-lg font-semibold text-gray-700 flex items-center gap-2">
-        <svg class="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
-        </svg>
-        Activity
-      </h2>
+    <div class="px-4 py-2 border-b border-gray-200">
+      <h3 class="text-sm font-medium text-gray-700">Activity</h3>
     </div>
 
-    <!-- Activity Timeline -->
+    <!-- Timeline -->
     <div class="p-4">
-      <div class="space-y-3">
+      <div class="space-y-4">
         <% @defects_history.each do |defect| %>
-          <div class="flex gap-3 group hover:bg-gray-50 rounded px-2 py-1 transition-colors">
-            <!-- Timeline connector line -->
-            <div class="flex flex-col items-center flex-shrink-0">
-              <!-- Avatar -->
-              <div class="w-8 h-8 bg-[#0052CC] rounded-full flex items-center justify-center text-white text-xs font-medium relative z-10">
+          <div class="flex gap-3">
+            <!-- Avatar -->
+            <div class="flex-shrink-0">
+              <div class="w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-medium">
                 <%= render 'defect/defect_user_initials', defect: defect %>
               </div>
-              <!-- Vertical line connecting to next item -->
-              <% unless defect == @defects_history.last %>
-                <div class="flex-1 w-0.5 bg-gray-200 my-1"></div>
-              <% end %>
             </div>
 
             <!-- Content -->
             <div class="flex-1 min-w-0">
-              <!-- Header -->
-              <div class="flex items-baseline gap-2 flex-wrap">
-                <span class="font-semibold text-gray-900 text-sm"><%= defect.user.name %></span>
-                <span class="text-gray-600 text-sm"><%= defect.history_type.present? ? defect.history_type.downcase : 'updated' %> this item</span>
-                <span class="text-gray-400 text-xs"><%= time_ago_in_words(defect.created_at) %> ago</span>
+              <div class="text-sm">
+                <span class="font-medium text-gray-900"><%= defect.user.name %></span>
+                <span class="text-gray-500 ml-1"><%= defect.history_type.present? ? defect.history_type.downcase : 'updated' %></span>
+                <span class="text-gray-400 text-xs ml-2"><%= time_ago_in_words(defect.created_at) %> ago</span>
               </div>
 
-              <!-- Main History Text -->
+              <!-- History Text with Highlights -->
               <% if defect.history.present? %>
-                <div class="mt-1 text-gray-700 text-sm leading-relaxed">
-                  <%= defect.history %>
+                <div class="mt-2">
+                  <%= format_history_with_highlights(defect) %>
                 </div>
               <% end %>
-
-              <!-- Field Changes -->
-              <% if defect.respond_to?(:field_changed) && defect.field_changed.present? %>
-                <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
-                  <div class="font-medium text-gray-700 mb-2 flex items-center gap-2">
-                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                    </svg>
-                    <%= defect.field_changed.titleize %> Updated
-                  </div>
-                  <div class="flex items-center justify-between">
-                    <!-- Old Value -->
-                    <div class="flex-1 text-center">
-                      <div class="text-xs text-gray-500 mb-1 font-medium">Previous</div>
-                      <div class="line-through text-gray-600 bg-white px-3 py-2 rounded border border-red-300 text-sm shadow-sm">
-                        <%= defect.old_value.presence || 'None' %>
-                      </div>
-                    </div>
-                    
-                    <!-- Enhanced Arrow -->
-                    <div class="mx-4 flex flex-col items-center">
-                      <div class="relative">
-                        <!-- Arrow background circle -->
-                        <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
-                          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                          </svg>
-                        </div>
-                        <!-- Pulse animation -->
-                        <div class="absolute inset-0 w-10 h-10 bg-blue-400 rounded-full animate-ping opacity-25"></div>
-                      </div>
-                      <div class="text-xs text-blue-600 mt-2 font-medium">CHANGED</div>
-                    </div>
-                    
-                    <!-- New Value -->
-                    <div class="flex-1 text-center">
-                      <div class="text-xs text-gray-500 mb-1 font-medium">Current</div>
-                      <div class="bg-green-50 text-green-700 px-3 py-2 rounded border border-green-300 font-medium text-sm shadow-sm">
-                        <%= defect.new_value.presence || 'None' %>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              <% elsif defect.respond_to?(:old_value) && defect.old_value.present? %>
-                <!-- Generic change display for other history types -->
-                <div class="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm">
-                  <div class="flex items-center justify-between">
-                    <!-- From -->
-                    <div class="flex-1 text-center">
-                      <div class="text-xs text-gray-500 mb-1 font-medium">From</div>
-                      <div class="text-gray-600 bg-white px-3 py-2 rounded border border-gray-300 text-sm">
-                        <%= defect.old_value %>
-                      </div>
-                    </div>
-                    
-                    <!-- Arrow -->
-                    <div class="mx-4 flex flex-col items-center">
-                      <div class="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                        </svg>
-                      </div>
-                    </div>
-                    
-                    <!-- To -->
-                    <div class="flex-1 text-center">
-                      <div class="text-xs text-gray-500 mb-1 font-medium">To</div>
-                      <div class="bg-amber-100 text-amber-800 px-3 py-2 rounded border border-amber-300 font-medium text-sm">
-                        <%= defect.new_value.presence || 'Updated' %>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              <% end %>
-
-              <!-- Timestamp (subtle) -->
-              <div class="mt-1 text-gray-400 text-xs">
-                <%= defect.created_at.strftime("%b %d, %Y at %H:%M") %>
-              </div>
             </div>
           </div>
         <% end %>
@@ -129,21 +39,12 @@
   </div>
 <% else %>
   <!-- Empty State -->
-  <div class="bg-white rounded-md border border-gray-300 shadow-sm">
-    <div class="px-4 py-3 bg-gray-50 border-b border-gray-300">
-      <h2 class="text-lg font-semibold text-gray-700 flex items-center gap-2">
-        <svg class="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
-        </svg>
-        Activity
-      </h2>
+  <div class="bg-white rounded border border-gray-200">
+    <div class="px-4 py-2 border-b border-gray-200">
+      <h3 class="text-sm font-medium text-gray-700">Activity</h3>
     </div>
     <div class="p-8 text-center">
-      <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-      </svg>
-      <p class="text-gray-500 text-sm">No activity yet</p>
-      <p class="text-gray-400 text-xs mt-1">Updates and comments will appear here</p>
+      <p class="text-gray-400 text-sm">No activity yet</p>
     </div>
   </div>
 <% end %>
