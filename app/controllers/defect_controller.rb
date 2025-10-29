@@ -110,7 +110,7 @@ class DefectController < ApplicationController
       @assignees = User.joins(:defects)
         .where(defects: { id: filtered_ids })
         .distinct
-        .order(:name)
+        .order(:first_name, :last_name)
 
       # Try to load module/banking type options only if columns exist
       begin
@@ -239,12 +239,13 @@ class DefectController < ApplicationController
         .where('LOWER(statuses.name) IN (?)', downcased)
     end
 
+    # FIXED: Priority filter (multiple checkboxes -> priority[])
+    selected_priorities = Array(params[:priority]).reject(&:blank?)
+    @defects = @defects.where(defects: { priority: selected_priorities }) if selected_priorities.any?
+
     # Labels filter (multiple check_boxes -> labels_ids[])
     selected_labels = Array(params[:label_ids]).reject(&:blank?)
     @defects = @defects.joins(:labels).where(labels: { id: selected_labels }) if selected_labels.any?
-
-    # Priority filter (exact, case-insensitive)
-    @defects = @defects.where('LOWER(defects.priority) = ?', params[:priority].to_s.downcase) if params[:priority].present?
 
     # Assignee filter
     @defects = @defects.joins(:users).where(users: { id: params[:user_id] }) if params[:user_id].present?
@@ -1339,7 +1340,7 @@ class DefectController < ApplicationController
           defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', '),
           defect.creator&.name,
           client_and_groupware,
-          defect.created_at.strftime('%Y-%m-%d %H:%M'),
+          defect.created_at.strftime('%Y-%m-%d %H:%M')
           # defect.start_date&.strftime('%Y-%m-%d'),
           # defect.end_date&.strftime('%Y-%m-%d'),
           # defect.description
