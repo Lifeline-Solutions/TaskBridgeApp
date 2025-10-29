@@ -110,7 +110,7 @@ class DefectController < ApplicationController
       @assignees = User.joins(:defects)
         .where(defects: { id: filtered_ids })
         .distinct
-        .order(:name)
+        .order(:first_name, :last_name)
 
       # Try to load module/banking type options only if columns exist
       begin
