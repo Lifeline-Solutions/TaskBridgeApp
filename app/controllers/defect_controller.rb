@@ -611,7 +611,7 @@ class DefectController < ApplicationController
         assigned_names = @defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', ')
         log_event(
           @defect, current_user, 'Created and Assigned',
-          assigned_names.present? ? "Defect was created and assigned to #{assigned_names} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
+          "Assignee changed from None to #{assigned_names} by #{current_user.name}"
         )
 
         redirect_to @defect, notice: 'Defect was successfully created.'
@@ -759,8 +759,13 @@ class DefectController < ApplicationController
       redirect_to @defect, notice: 'User has already been assigned.'
     else
       user = User.find(params[:user_id])
+
+      # Capture old assignees BEFORE changing
+      old_assignees = @defect.users.map(&:name).join(', ').presence || 'None'
+
       @defect.users.clear
       @defect.users << user
+
       activity('user_activity')
         .caused_by(current_user)
         .performed_on(@defect)
@@ -773,8 +778,10 @@ class DefectController < ApplicationController
       UserMailer.add_user_defect_email(@defect, user.email, current_user).deliver_later
 
       log_event(
-        @defect, current_user, 'Assigned to',
-        user.present? ? "Defect was assigned to #{user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}" : "Defect was Updated but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}"
+        @defect,
+        current_user,
+        'Assigned to',
+        "Assignee changed from #{old_assignees} to #{user.name} by #{current_user.name}"
       )
     end
   end
@@ -873,17 +880,20 @@ class DefectController < ApplicationController
       return
     end
 
+    # Capture old status BEFORE changing
+    old_status_name = @defect.statuses.first&.name || 'None'
+
     # Proceed with normal status change
     @defect.transaction do
       @defect.statuses.clear
       @defect.statuses << status
 
-      # Log event after successful status update
+      # Log event with from/to format
       log_event(
         @defect,
         current_user,
         'Status Changed',
-        "Defect status was changed to #{status.name} by #{current_user.name} at #{Time.now.strftime('%H:%M on %d-%m-%Y')}"
+        "Status changed from #{old_status_name} to #{status.name} by #{current_user.name}"
       )
     end
 
@@ -941,13 +951,29 @@ class DefectController < ApplicationController
   def remove_defect
     @defect = Defect.find(params[:id])
     user = User.find(params[:user_id])
+
+    # Capture old assignees BEFORE removing
+    old_assignees = @defect.users.map(&:name).join(', ')
+
     @defect.users.delete(user)
+
+    # New assignees after removal
+    new_assignees = @defect.users.map(&:name).join(', ').presence || 'None'
+
     activity('user_activity')
       .caused_by(current_user)
       .performed_on(@defect)
       .event('defect.unassign_user')
       .with_properties(user_id: user.id)
       .log("Unassigned #{user.name} from Defect ##{@defect.id}")
+
+    log_event(
+      @defect,
+      current_user,
+      'Unassigned',
+      "Assignee changed from #{old_assignees} to #{new_assignees} by #{current_user.name}"
+    )
+
     redirect_to defect_path(@defect), notice: "#{user.name} was successfully removed from the defect."
   end
 
@@ -968,6 +994,9 @@ class DefectController < ApplicationController
   end
 
   def update_priority
+    # Capture old priority BEFORE changing
+    old_priority = @defect.priority || 'None'
+
     if @defect.update(priority: params[:defect][:priority])
       activity('user_activity')
         .caused_by(current_user)
@@ -981,7 +1010,7 @@ class DefectController < ApplicationController
         @defect,
         current_user,
         'Priority Updated',
-        "Priority was updated to #{@defect.priority} by #{current_user.name} at #{Time.now.strftime('%H:%M of %d-%m-%Y')}"
+        "Priority changed from #{old_priority} to #{@defect.priority}"
       )
 
       respond_to do |format|
