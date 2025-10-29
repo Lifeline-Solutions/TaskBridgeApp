@@ -241,9 +241,7 @@ class DefectController < ApplicationController
 
     # FIXED: Priority filter (multiple checkboxes -> priority[])
     selected_priorities = Array(params[:priority]).reject(&:blank?)
-    if selected_priorities.any?
-      @defects = @defects.where(defects: { priority: selected_priorities })
-    end
+    @defects = @defects.where(defects: { priority: selected_priorities }) if selected_priorities.any?
 
     # Labels filter (multiple check_boxes -> labels_ids[])
     selected_labels = Array(params[:label_ids]).reject(&:blank?)
@@ -1342,7 +1340,7 @@ class DefectController < ApplicationController
           defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', '),
           defect.creator&.name,
           client_and_groupware,
-          defect.created_at.strftime('%Y-%m-%d %H:%M'),
+          defect.created_at.strftime('%Y-%m-%d %H:%M')
           # defect.start_date&.strftime('%Y-%m-%d'),
           # defect.end_date&.strftime('%Y-%m-%d'),
           # defect.description
