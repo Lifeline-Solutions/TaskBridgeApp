@@ -239,12 +239,15 @@ class DefectController < ApplicationController
         .where('LOWER(statuses.name) IN (?)', downcased)
     end
 
+    # FIXED: Priority filter (multiple checkboxes -> priority[])
+    selected_priorities = Array(params[:priority]).reject(&:blank?)
+    if selected_priorities.any?
+      @defects = @defects.where(defects: { priority: selected_priorities })
+    end
+
     # Labels filter (multiple check_boxes -> labels_ids[])
     selected_labels = Array(params[:label_ids]).reject(&:blank?)
     @defects = @defects.joins(:labels).where(labels: { id: selected_labels }) if selected_labels.any?
-
-    # Priority filter (exact, case-insensitive)
-    @defects = @defects.where('LOWER(defects.priority) = ?', params[:priority].to_s.downcase) if params[:priority].present?
 
     # Assignee filter
     @defects = @defects.joins(:users).where(users: { id: params[:user_id] }) if params[:user_id].present?

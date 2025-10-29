@@ -749,7 +749,7 @@
   }
 
   function updateAllButtonTexts() {
-    const filterTypes = ['product', 'status', 'priority', 'assignee', 'module', 'submodule', 'banking-type', 'labels'];
+    const filterTypes = ['product', 'status', 'priority', 'assignee', 'module', 'submodule', 'banking-type'];
     
     filterTypes.forEach(type => {
       const buttonId = `${type}DropdownButton`;
@@ -788,15 +788,75 @@
       'assignee': 'Filter by Assignee',
       'module': 'Filter by Module',
       'submodule': 'Filter by Submodule',
-      'banking-type': 'Filter by Banking Type',
-      'labels': 'Filter by Labels'
+      'banking-type': 'Filter by Banking Type'
     };
     
     return textMap[filterType] || 'Filter...';
   }
 
-  // ========== FORM SUBMISSION MANAGEMENT ==========
-  document.addEventListener("turbo:load", function () {
+  // ========== LABELS FILTER MANAGEMENT ==========
+  document.addEventListener("turbo:load", () => {
+    const searchInput   = document.getElementById("label-search");
+    const dropdown      = document.getElementById("label-dropdown");
+    const selectedBox   = document.getElementById("selected-labels");
+    const hiddenInputs  = document.getElementById("hidden-labels");
+
+    if (searchInput && dropdown) {
+      // Filter dropdown items as user types
+      searchInput.addEventListener("input", () => {
+        const query = searchInput.value.toLowerCase();
+        dropdown.querySelectorAll(".dropdown-item").forEach(item => {
+          item.classList.toggle("hidden", !item.dataset.name.toLowerCase().includes(query));
+        });
+        dropdown.classList.remove("hidden");
+      });
+
+      // Handle selecting a label
+      dropdown.addEventListener("click", e => {
+        if (!e.target.classList.contains("dropdown-item")) return;
+
+        const id   = e.target.dataset.id;
+        const name = e.target.dataset.name;
+
+        // Prevent duplicates
+        if (document.getElementById(`label-tag-${id}`)) return;
+
+        // Create tag
+        const tag = document.createElement("span");
+        tag.id = `label-tag-${id}`;
+        tag.className = "bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-xs flex items-center gap-1";
+        tag.innerHTML = `${name} <button type="button" data-id="${id}" class="remove-tag text-red-500">×</button>`;
+        selectedBox.appendChild(tag);
+
+        // Hidden input
+        const hidden = document.createElement("input");
+        hidden.type = "hidden";
+        hidden.name = "label_ids[]";
+        hidden.value = id;
+        hidden.id = `label-hidden-${id}`;
+        hiddenInputs.appendChild(hidden);
+
+        // Reset input & hide dropdown
+        searchInput.value = "";
+        dropdown.classList.add("hidden");
+      });
+
+      // Remove tag
+      selectedBox.addEventListener("click", e => {
+        if (!e.target.classList.contains("remove-tag")) return;
+        const id = e.target.dataset.id;
+        document.getElementById(`label-tag-${id}`).remove();
+        document.getElementById(`label-hidden-${id}`).remove();
+      });
+
+      // Hide dropdown when clicking outside
+      document.addEventListener("click", e => {
+        if (document.getElementById("label-select") && !document.getElementById("label-select").contains(e.target)) {
+          dropdown.classList.add("hidden");
+        }
+      });
+    }
+
     // Auto-submit form when module selection changes to load submodules
     const moduleCheckboxes = document.querySelectorAll('.module-checkbox');
     moduleCheckboxes.forEach(checkbox => {
@@ -811,7 +871,7 @@
       });
     });
 
-    // Prevent form submission when only updating button text for other filters
+    // Prevent form submission when only updating button text
     document.querySelectorAll('[class$="-checkbox"]').forEach(checkbox => {
       if (!checkbox.classList.contains('module-checkbox')) {
         checkbox.addEventListener('change', function(e) {
@@ -824,13 +884,16 @@
     });
 
     // Restore filter state on page load
-    const filterDropdown = document.getElementById("filterDropdown");
-    const shouldOpenFilter = sessionStorage.getItem('filterDropdownOpen') === 'true';
-    
-    if (shouldOpenFilter && filterDropdown) {
-      filterDropdown.classList.remove("hidden");
-      // Clear the stored state
-      sessionStorage.removeItem('filterDropdownOpen');
-    }
+    document.addEventListener("turbo:load", function () {
+      const filterDropdown = document.getElementById("filterDropdown");
+      const shouldOpenFilter = sessionStorage.getItem('filterDropdownOpen') === 'true';
+      
+      if (shouldOpenFilter && filterDropdown) {
+        filterDropdown.classList.remove("hidden");
+        // Clear the stored state
+        sessionStorage.removeItem('filterDropdownOpen');
+      }
+      
+    });
   });
 </script>
