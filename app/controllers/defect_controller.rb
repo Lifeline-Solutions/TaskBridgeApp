@@ -1317,10 +1317,7 @@ class DefectController < ApplicationController
         'Assignee',
         'Reporter',
         'Project',
-        'Created At',
-        'Start Date',
-        'End Date',
-        'Description'
+        'Created At'
       ]
 
       defects.find_each do |defect|
@@ -1343,9 +1340,9 @@ class DefectController < ApplicationController
           defect.creator&.name,
           client_and_groupware,
           defect.created_at.strftime('%Y-%m-%d %H:%M'),
-          defect.start_date&.strftime('%Y-%m-%d'),
-          defect.end_date&.strftime('%Y-%m-%d'),
-          defect.description
+          # defect.start_date&.strftime('%Y-%m-%d'),
+          # defect.end_date&.strftime('%Y-%m-%d'),
+          # defect.description
         ]
       end
     end
