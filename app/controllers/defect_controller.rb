@@ -1312,8 +1312,6 @@ class DefectController < ApplicationController
         'Module', # From qa_module association
         'Sub Module', # From submodule association
         'Banking Type', # From banking_type association
-        'Submodule (Legacy)', # From the old string submodule field
-        'Issue',
         'Retest Count',
         'Labels',
         'Assignee',
@@ -1339,8 +1337,6 @@ class DefectController < ApplicationController
           defect.qa_module&.name, # New association
           defect.submodule&.name, # New association (submodule QaModule)
           defect.banking_type&.name, # New association
-          defect.submodule, # Legacy string field
-          defect.issue,
           defect.retest_count,
           defect.labels.map(&:name).join(', '),
           defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', '),
