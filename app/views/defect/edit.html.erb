@@ -1,334 +1,557 @@
+<% provide(:title, "Edit QA") %>
+
 <%= turbo_frame_tag "modal",
-                    data: { controller: "modal",
-                            product_id: params[:product_id],
-                            client_name: params[:client_name]} do %>
-  <div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start z-50 overflow-y-auto py-8" data-controller="modal" data-action="click->modal#closeEditDefectOnBackdrop">
-    <div data-modal-target="dialog" role="dialog" class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-[90%] max-w-4xl relative m-4">
+      data: { controller: "modal",
+              product_id: params[:product_id],
+              client_name: params[:client_name] } do %>
+  <div class="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-hidden bg-black/40 backdrop-blur-sm" data-action="click->modal#closeOnBackdrop">
+    <!-- Dialog (90vh cap, internal scroll only in body) -->
+    <div data-modal-target="dialog"
+         class="w-full max-w-[80%] h-[95%] bg-white dark:bg-gray-800 rounded-lg shadow-xl flex flex-col overflow-hidden p-4"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="edit-defect-title">
       <!-- Header -->
-      <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 rounded-t-lg border-b border-gray-200 dark:border-gray-600 flex items-start">
-        <h2 class="text-xl font-semibold text-gray-800 dark:text-white">Edit Defect</h2>
-        <%= link_to "×", index_show_defect_index_path(@defect, product_id: params[:product_id]),
-                    class: "ml-auto text-2xl font-bold text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100",
-                    data: { turbo_frame: "_top" } %>
-      </div>
+      <div class="shrink-0 px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-start">
+        <h2 id="edit-defect-title" class="text-xl font-semibold text-gray-800 dark:text-white">Edit Defect</h2>
 
-      <!-- Content -->
-      <div class="p-6">
-        <% if @defect.errors.any? %>
-          <div id="error_explanation" class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-            <h2 class="font-semibold mb-2"><%= pluralize(@defect.errors.count, "error") %> prohibited this defect from being saved:</h2>
-            <ul class="list-disc list-inside">
-              <% @defect.errors.each do |error| %>
-                <li><%= error.full_message %></li>
-              <% end %>
-            </ul>
-          </div>
+        <%= link_to defect_path(@defect, product_id: params[:product_id]),
+            data: { turbo_frame: "_top" },
+            class: "ml-auto text-xl font-bold text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded cursor-pointer",
+            aria: { label: "Close modal" } do %>
+          X
         <% end %>
+      </div>
+      <!-- Form wrapper (flex) -->
+      <%= form_with model: @defect, url: defect_path(@defect), method: :patch, data: { turbo: false }, local: true, html: { class: 'flex flex-col grow overflow-hidden', multipart: true } do |f| %>
+        <!-- Scrollable Body -->
+        <div id="defect-modal-body" class="grow overflow-y-auto overflow-x-hidden px-6 py-4 space-y-5">
+          <% if @defect.errors.any? %>
+            <div id="error_explanation" class="mb-2 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              <h2 class="font-semibold mb-1"><%= pluralize(@defect.errors.count, 'error') %> prohibited this defect from being saved:</h2>
+              <ul class="list-disc list-inside text-sm">
+                <% @defect.errors.each do |error| %>
+                  <li><%= error.full_message %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
 
-        <%= form_with model: @defect, url: defect_path(@defect), method: :patch, local: true, html: { multipart: true, class: 'space-y-6' }, data: { turbo: false } do |f| %>
+          <!-- Project -->
           <div data-controller="project-modules"
                data-project-modules-modules-url-value="<%= modules_by_product_defect_index_path %>"
-               data-project-modules-current-module-id-value="<%= @selected_module_id %>"
-               data-project-modules-current-submodule-id-value="<%= @selected_submodule_id %>">
+               class="space-y-3">
+            <div class="relative w-full">
+              <label for="project-search"
+                class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+                Project *
+              </label>
 
+              <!-- Project Search -->
+              <input type="text"
+                    id="project-search"
+                    placeholder="Type to search projects..."
+                    value="<%= @defect.product.present? ? @defect.product.client.name + ' - ' + @defect.product.groupwares.map(&:name).join(', ') : '' %>"
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm
+                            focus:outline-none focus:ring-2 focus:ring-blue-500
+                            dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                    required
+                    disabled
+              />
 
-            <!-- Project -->
-            <div>
-              <label for="defect_product_id" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Project *</label>
-              <%= f.select :product_id,
-                           options_for_select(@products_and_clients_defects, @defect.product_id),
-                           { prompt: "Select Project" },
-                           { class: "w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600",
-                             required: true,
-                             data: {
-                               action: "change->project-modules#loadModules",
-                               "project-modules-target": "projectSelect"
-                             } } %>
+              <!-- Hidden product_id field -->
+              <%= hidden_field_tag :product_id, (@defect.product&.id || ''), id: "project-id-field" %>
+
+              <!-- Results dropdown -->
+              <ul id="project-results"
+                  class="absolute mt-1 border border-gray-300 rounded-md bg-white dark:bg-gray-700
+                        text-sm hidden z-10 w-full max-h-60 overflow-y-auto">
+              </ul>
             </div>
 
-            <!-- Banking type / Module / Submodule -->
-            <div class="flex flex-col sm:flex-row gap-2">
-              <!-- Banking Type Search -->
-              <div class="relative flex-1">
-                <label for="banking-type-search" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Banking Type *</label>
-                <input type="text"
-                       id="banking-type-search"
-                       placeholder="Type to search banking types..."
-                       value="<%= @defect.banking_type&.name %>"
-                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
-
-                <%= f.hidden_field :banking_type_id, id: "banking-type-id-field", value: @defect.banking_type_id %>
-
-                <ul id="banking-type-results"
-                    class="absolute mt-1 border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-sm hidden z-10 w-full">
-                </ul>
+            <!-- Issue Type -->
+            <div class="w-full">
+              <div>
+                <label class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Issue Type</label>
+                <%= f.text_field :issue_type, value: 'Bug', disabled: true,
+                      class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-not-allowed' %>
               </div>
 
-              <!-- Module -->
-              <div class="flex-1">
-                <label for="defect_qa_module_id" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Modules *</label>
-                <%= f.collection_select :qa_module_id,
-                                        @qa_modules, :id, :name,
-                                        { selected: @defect.qa_module_id, prompt: "Select Module" },
-                                        { class: "w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600",
-                                          required: true,
-                                          data: {
-                                            "project-modules-target": "moduleSelect",
-                                            currentModuleId: @qa_modules,
-                                            action: "change->project-modules#loadSubmodules"
-                                          } } %>
-
+              <!-- Status -->
+              <div class="relative flex flex-col gap-2 mt-2">
+                <label for="defect_status_id"
+                  class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+                    Status *
+                </label>
+                <% if @defect.blocked? %>
+                  <%= select_tag "defect[status_id]",
+                    options_from_collection_for_select(@statuses, :id, :name, @defect.statuses.first&.id),
+                    disabled: true,
+                    class: "block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed opacity-60
+                            dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 p-2.5 text-transform: uppercase" %>
+                  <p class="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                    🚫 Status locked: Blocked by <%= @defect.blocking_defect_names %>
+                  </p>
+                <% else %>
+                  <%= select_tag "defect[status_id]",
+                    options_from_collection_for_select(@statuses, :id, :name, @defect.statuses.first&.id),
+                    id: "defect_status_id",
+                    class: "block w-full px-3 py-2 border border-gray-300 rounded-lg
+                            focus:ring-primary-600 focus:border-primary-600 p-2.5
+                            dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400
+                            text-transform: uppercase" %>
+                <% end %>
               </div>
 
-              <!-- Submodule -->
-              <div class="flex-1">
-                <label for="defect_submodule_id" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Sub-Module</label>
-                <%= f.collection_select :submodule_id,
-                                        @submodules || [], :id, :name,
-                                        { selected: @defect.submodule_id, prompt: "Select Sub-Module" },
-                                        { class: "w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600",
-                                          data: { "project-modules-target": "submoduleSelect" } } %>
+              <!-- Summary -->
+              <div>
+                <label for="defect_summary" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Summary *</label>
+                <%= f.text_field :summary, placeholder: 'Enter concise summary', required: true,
+                      value: @defect.summary,
+                      class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 placeholder-gray-400' %>
               </div>
-            </div>
 
-            <!-- Summary -->
-            <div>
-              <label for="defect_summary" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Summary *</label>
-              <%= f.text_field :summary, placeholder: 'Enter concise summary', required: true,
-                               class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 placeholder-gray-400',
-                               value: @defect.summary %>
-            </div>
+              <!-- Description (CKEditor) -->
+              <div>
+                <label for="defect_content" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+                  Description *
+                </label>
+                <%= text_area_tag 'defect[content]',
+                      @defect.content&.body&.to_s,
+                      id: 'defect_content',
+                      class: 'min-h-[200px] w-full border border-gray-300 rounded-md px-3 py-2 text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600',
+                      data: { required: true } %>
 
-            <!-- Description (CKEditor) -->
-            <div>
-              <label for="defect_content" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Description *</label>
-              <%= text_area_tag 'defect[content]', @defect.content&.to_s,
-                                id: 'defect_content',
-                                class: 'min-h-[200px] w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600',
-                                data: { required: true } %>
-              <p id="defect_content_error" class="mt-1 text-xs text-red-600 hidden">Description is required.</p>
-            </div>
+                <p id="defect_content_error" class="mt-1 text-xs text-red-600 hidden">Description is required.</p>
+              </div>
 
-            <!-- Priority / Users / Status -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <!-- Assignee Search -->
-              <div class="relative">
-                <%= f.label :user_ids, "Assignee *", class: "block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase" %>
-
-                <%= f.collection_select :user_ids,
-                                        @users,                # list of users from controller
-                                        :id, :name,            # value and label
-                                        { prompt: "Select Assignee" },
-                                        { class: "w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600",
-                                          required: true } %>
+              <!-- Reported By -->
+              <div>
+                <label class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Reported By</label>
+                <%= text_field_tag :creator_name, @defect.creator&.name, disabled: true,
+                      class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-not-allowed' %>
               </div>
 
               <!-- Priority -->
               <div>
                 <label for="defect_priority" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Priority *</label>
-                <%= f.select :priority,
-                             options_for_select(['SEVERITY 1','SEVERITY 2','SEVERITY 3','SEVERITY 4'], @defect.priority),
-                             { prompt: 'Select Priority' },
-                             { class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600', required: true } %>
+                <%= f.select :priority, options_for_select(['SEVERITY 1','SEVERITY 2','SEVERITY 3','SEVERITY 4'], @defect.priority), { prompt: 'Select Priority' },
+                      class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600', required: true %>
               </div>
 
-              <!-- Status -->
-              <div>
-                <label for="defect_status_ids" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Status *</label>
-                <% if @defect.blocked? %>
-                  <%= select_tag "defect[status_ids][]",
-                                 options_from_collection_for_select(@statuses, :id, :name, @defect.statuses.first&.id),
-                                 { disabled: true, class: "w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-100 cursor-not-allowed opacity-60 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600" } %>
-                  <p class="text-xs text-orange-600 dark:text-orange-400 mt-1">
-                    🚫 Status locked: Blocked by <%= @defect.blocking_defect_names %>
-                  </p>
-                <% else %>
-                  <%= select_tag "defect[status_ids][]",
-                                 options_from_collection_for_select(@statuses, :id, :name, @defect.statuses.first&.id),
-                                 { class: "w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" } %>
+              <!-- Labels -->
+              <%= render "defect/form_labels", f: f, defect: @defect %>
+
+              <!-- Assignee -->
+              <div class="relative">
+                <label for="assignee-search"
+                      class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+                  Assignee *
+                </label>
+
+                <div class="relative">
+                  <input type="text"
+                        id="assignee-search"
+                        placeholder="Type to search users..."
+                        value="<%= @defect.users.first&.name %>"
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 text-sm focus:outline-none
+                                focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+
+                  <%= hidden_field_tag 'defect[user_ids][]',
+                        @defect.user_ids.first,
+                        id: "assignee-id-field" %>
+                  
+                  <!-- Dropdown caret icon -->
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </div>
+                </div>
+
+                <!-- Results dropdown -->
+                <ul id="assignee-results"
+                    class="absolute mt-1 border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-sm hidden z-10 w-full max-h-60 overflow-y-auto">
+                </ul>
+
+                <p class="mb-2 text-xs text-gray-500 dark:text-gray-400 italic">
+                  You can remove this and type to search for another user if needed.
+                </p>
+              </div>
+
+              <!-- Banking Type -->
+              <div class="relative w-full">
+                <label for="banking-type-search"
+                  class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+                    Banking Type *
+                </label>
+                <!-- Search input wrapper -->
+                <div class="relative">
+                  <input type="text"
+                        id="banking-type-search"
+                        placeholder="Type to search banking types..."
+                        value="<%= @defect.banking_type&.name %>"
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 text-sm focus:outline-none
+                                focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+
+                  <!-- Dropdown caret icon -->
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </div>
+                </div>
+
+                <!-- Hidden field for selected banking_type_id -->
+                <%= f.hidden_field :banking_type_id, id: "banking-type-id-field", value: @defect.banking_type_id %>
+
+                <!-- Results dropdown -->
+                <ul id="banking-type-results"
+                    class="absolute mt-1 border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-sm hidden z-10 w-full max-h-60 overflow-y-auto">
+                </ul>
+              </div>
+
+              <!-- QA Module Filter (parent modules) -->
+              <div class="w-full">
+                <label for="qa_module_id" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+                  Module *
+                </label>
+
+                <%= select_tag :qa_module_id,
+                      options_from_collection_for_select(@qa_modules, :id, :name, @defect.qa_module_id),
+                      include_blank: 'Select Module',
+                      id: 'qa_module_id',
+                      data: {
+                        'project-modules-target' => 'moduleSelect',
+                        'selected-module-id' => @defect.qa_module_id
+                      },
+                      class: 'w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 disabled:opacity-60',
+                      required: true %>
+              </div>
+
+              <!-- Submodule Filter -->
+              <div class="w-full">
+                <label for="submodule_id" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+                  Sub Module
+                </label>
+
+                <%= select_tag :submodule_id,
+                      options_from_collection_for_select(@submodules, :id, :name, @defect.submodule_id),
+                      include_blank: 'Select Sub-Module',
+                      id: 'submodule_id',
+                      data: { 'project-modules-target' => 'submoduleSelect', 'selected-submodule-id' => @defect.submodule_id },
+                      class: 'w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600' %>
+              </div>
+            </div>
+          </div>
+
+          <!-- Existing Attachments -->
+          <% if @defect.attachments.attached? %>
+            <div>
+              <label class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+                Existing Attachments
+              </label>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <% @defect.attachments.each do |attachment| %>
+                  <div class="border border-gray-200 rounded-lg p-3 dark:border-gray-700">
+                    <% if attachment.image? || attachment.previewable? %>
+                      <%= image_tag attachment, class: "w-full h-24 object-cover mb-2 rounded" %>
+                    <% elsif attachment.video? %>
+                      <video controls class="w-full h-24 object-cover mb-2 rounded">
+                        <source src="<%= url_for(attachment) %>" type="<%= attachment.content_type %>">
+                      </video>
+                    <% else %>
+                      <div class="w-full h-24 bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-2 rounded">
+                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                      </div>
+                    <% end %>
+
+                    <div class="flex justify-between items-center">
+                      <%= link_to attachment.filename, rails_blob_path(attachment, disposition: "attachment"),
+                          class: "text-xs font-medium text-blue-600 dark:text-blue-500 hover:underline truncate" %>
+                      <%= link_to 'Delete',
+                          defect_attachment_path(@defect, attachment_id: attachment.id),
+                          data: { turbo_method: :delete, turbo_confirm: 'Are you sure?' },
+                          class: "text-red-600 dark:text-red-500 hover:text-red-900 dark:hover:text-red-700 text-xs" %>
+                    </div>
+                  </div>
                 <% end %>
               </div>
             </div>
+          <% end %>
 
-            <!-- Attachments -->
-            <div>
-              <label for="defect_attachments" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Attachments *</label>
+          <!-- New Attachments -->
+          <div>
+            <label for="defect_attachments" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+              Add More Attachments
+            </label>
 
-              <% if @defect.attachments.attached? %>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <% @defect.attachments.each do |attachment| %>
-                    <div class="border border-gray-200 rounded-lg p-3 dark:border-gray-700">
-                      <% if attachment.image? || attachment.previewable? %>
-                        <%= image_tag attachment, class: "w-full h-24 object-cover mb-2 rounded" %>
-                      <% elsif attachment.video? %>
-                        <video controls class="w-full h-24 object-cover mb-2 rounded">
-                          <source src="<%= url_for(attachment) %>" type="<%= attachment.content_type %>">
-                        </video>
-                      <% else %>
-                        <div class="w-full h-24 bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-2 rounded">
-                          <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                          </svg>
-                        </div>
-                      <% end %>
+            <%= f.file_field :attachments, multiple: true, direct_upload: true, name: 'defect[attachments][]',
+                  id: "defect_attachments",
+                  class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none
+                          focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600' %>
 
-                      <div class="flex justify-between items-center">
-                        <%= link_to attachment.filename, rails_blob_path(attachment, disposition: "attachment"),
-                                    class: "text-xs font-medium text-blue-600 dark:text-blue-500 hover:underline truncate" %>
-                        <%= link_to 'Delete',
-                                    defect_attachment_path(@defect, attachment_id: attachment.id),
-                                    data: { turbo_method: :delete, turbo_confirm: 'Are you sure?' },
-                                    class: "text-red-600 dark:text-red-500 hover:text-red-900 dark:hover:text-red-700 text-xs" %>
-                      </div>
-                    </div>
-                  <% end %>
-                </div>
-              <% else %>
-                <p class="text-gray-500 dark:text-gray-400 mb-4">No attachments yet.</p>
-              <% end %>
+            <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">You can upload one or multiple files.</p>
 
-              <!-- Add more attachments -->
-              <%= f.file_field :attachments, multiple: true, direct_upload: true, name: 'defect[attachments][]',
-                               class: 'block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400',
-                               accept: 'image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx' %>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Upload additional files (Max size: 25MB each)</p>
-            </div>
-
-            <!-- Reported By / Issue Type -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Reported By</label>
-                <%= text_field_tag :creator_name, @defect.creator&.name, disabled: true,
-                                   class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-not-allowed' %>
-              </div>
-              <div>
-                <label class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">Issue Type</label>
-                <%= f.text_field :issue_type, value: 'Bug', disabled: true,
-                                 class: 'w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-not-allowed' %>
-              </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="flex items-center justify-between pt-4 border-t">
-              <%= f.submit "Update Defect",
-                           data: { disable_with: "Updating..." },
-                           class: "bg-[#3F8CFF] hover:bg-[#3A81EB] text-white font-medium rounded-lg px-6 py-2 shadow-md" %>
-            </div>
+            <!-- Previews will go here -->
+            <div id="attachment-previews" class="mt-3 flex flex-wrap gap-3"></div>
           </div>
-        <% end %>
-      </div>
+        </div>
+        <!-- Footer (fixed) -->
+        <div class="flex items-center justify-between pt-4 border-t">
+          <%= f.submit "Update Defect",
+          data: { disable_with: "Updating..." },
+                class: "bg-[#3F8CFF] hover:bg-[#3A81EB] text-white font-medium rounded-lg px-6 py-2 shadow-md" %>
+
+          <%= f.submit "Save as Draft",
+            name: "commit",
+            value: "draft",
+            data: { disable_with: "Saving..." },
+            class: "bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg px-6 py-2 shadow-md" %>
+        </div>
+      <% end %>
     </div>
   </div>
 <% end %>
 
 <script>
-  document.addEventListener('turbo:load', function () {
-    // ===== Dynamic module/submodule loading =====
-    const projectSelect = document.querySelector('[data-project-modules-target="projectSelect"]');
-    const modSelect = document.querySelector('[data-project-modules-target="moduleSelect"]');
-    const submodSelect = document.querySelector('[data-project-modules-target="submoduleSelect"]');
+  // Load or preview selected items in the defect edit
+  document.addEventListener("turbo:load", () => {
+    const fileInput = document.getElementById("defect_attachments");
+    const previewContainer = document.getElementById("attachment-previews");
 
-    // Load submodules for the selected module on page load
-    if (modSelect && modSelect.value) {
-      const moduleId = modSelect.value;
-      if (submodSelect) {
-        submodSelect.innerHTML = '<option value="">Select Sub-Module</option>';
-        if (moduleId) {
-          fetch(`/qa_modules/${moduleId}/submodules`)
-            .then(r => r.json())
-            .then(submodules => {
-              submodules.forEach(sm => {
-                const opt = document.createElement('option');
-                opt.value = sm.id;
-                opt.textContent = sm.name;
-                // Select the current defect's submodule
-                if (sm.id == '<%= @defect.submodule_id %>') {
-                  opt.selected = true;
-                }
-                submodSelect.appendChild(opt);
-              });
-            });
+    if (!fileInput || !previewContainer) return;
+
+    // keep a persistent list of files across changes
+    let allFiles = [];
+
+    fileInput.addEventListener("change", () => {
+      // append new files to the existing list
+      const newFiles = Array.from(fileInput.files);
+      allFiles = allFiles.concat(newFiles);
+
+      // update the <input> with the merged list
+      updateFileInput(allFiles);
+
+      // rebuild the preview area
+      renderPreviews();
+    });
+
+    function renderPreviews() {
+      previewContainer.innerHTML = "";
+      allFiles.forEach((file, index) => {
+        const wrapper = document.createElement("div");
+        wrapper.className =
+          "relative border rounded-md p-2 w-32 h-32 flex flex-col items-center justify-center text-center bg-gray-50 dark:bg-gray-800 cursor-pointer";
+
+        if (file.type.startsWith("image/")) {
+          const img = document.createElement("img");
+          img.src = URL.createObjectURL(file);
+          img.className = "object-cover w-full h-full rounded-md";
+          wrapper.appendChild(img);
+          wrapper.addEventListener("click", () =>
+            openPreviewPopup("image", img.src, file.name)
+          );
+        } else if (file.type.startsWith("video/")) {
+          const videoIcon = document.createElement("div");
+          videoIcon.textContent = "🎬 " + file.name;
+          videoIcon.className =
+            "text-xs text-gray-700 dark:text-gray-300 break-words p-1";
+          wrapper.appendChild(videoIcon);
+          wrapper.addEventListener("click", () =>
+            openPreviewPopup("video", URL.createObjectURL(file), file.name)
+          );
+        } else {
+          const icon = document.createElement("div");
+          icon.textContent = file.name;
+          icon.className =
+            "text-xs text-gray-700 dark:text-gray-300 break-words p-1";
+          wrapper.appendChild(icon);
+          wrapper.addEventListener("click", () =>
+            openPreviewPopup("file", null, file.name)
+          );
         }
+
+        const removeBtn = document.createElement("button");
+        removeBtn.innerHTML = "✕";
+        removeBtn.type = "button";
+        removeBtn.className =
+          "absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs";
+        removeBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          allFiles.splice(index, 1);
+          updateFileInput(allFiles);
+          renderPreviews();
+        });
+
+        wrapper.appendChild(removeBtn);
+        previewContainer.appendChild(wrapper);
+      });
+    }
+
+    function updateFileInput(files) {
+      const dataTransfer = new DataTransfer();
+      files.forEach((f) => dataTransfer.items.add(f));
+      fileInput.files = dataTransfer.files;
+    }
+
+    // --- Modal Preview ---
+    function openPreviewPopup(type, src, name) {
+      // Create overlay
+      const overlay = document.createElement("div");
+      overlay.className =
+        "fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50";
+
+      // Close on background click
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) overlay.remove();
+      });
+
+      // Modal content
+      const modal = document.createElement("div");
+      modal.className =
+        "relative bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg max-w-4xl max-h-[90vh] flex flex-col items-center";
+
+      if (type === "image") {
+        const img = document.createElement("img");
+        img.src = src;
+        img.alt = name;
+        img.className = "max-w-full max-h-[80vh] rounded-md";
+        modal.appendChild(img);
+      } else if (type === "video") {
+        const video = document.createElement("video");
+        video.src = src;
+        video.controls = true;
+        video.autoplay = false;
+        video.className = "max-w-full max-h-[80vh] rounded-md";
+        modal.appendChild(video);
+      } else {
+        const fileText = document.createElement("p");
+        fileText.textContent = `Preview not available for "${name}".`;
+        fileText.className = "text-gray-700 dark:text-gray-300";
+        modal.appendChild(fileText);
+      }
+
+      // Close button
+      const closeBtn = document.createElement("button");
+      closeBtn.innerHTML = "✕";
+      closeBtn.type = "button";
+      closeBtn.className =
+        "absolute top-2 right-2 bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-lg";
+      closeBtn.addEventListener("click", () => overlay.remove());
+
+      modal.appendChild(closeBtn);
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+    }
+  });
+
+  // Store the data in global variables so they're accessible
+  window.bankingTypesData = <%= raw (@banking_types || []).map { |bt| { id: bt.id, name: bt.name } }.to_json %>;
+  window.assigneeUsersData = <%= raw @users.map { |u| { id: u.id, name: u.name } }.to_json %>;
+  window.projectsData = <%= raw @products_and_clients_defects.map { |name, id|
+    { name: name, id: id }
+  }.to_json %>;
+
+  function initSearchableDropdowns() {
+    // ===== Projects ====
+    const projectInput = document.getElementById("project-search");
+    const projectResults = document.getElementById("project-results");
+    const projectHidden = document.getElementById("project-id-field");
+
+    // --- Preselect from server-side values ---
+    const preselectedId = projectHidden ? projectHidden.value : null;
+    if (preselectedId) {
+      const match = window.projectsData.find(p => String(p.id) === String(preselectedId));
+      if (match && projectInput) {
+        projectInput.value = match.name;
+        projectHidden.value = match.id;
       }
     }
 
-    // ===== Assignee Search =====
-    const assigneeInput = document.getElementById("assignee-search");
-    const assigneeResults = document.getElementById("assignee-results");
-    const assigneeHidden = document.getElementById("assignee-id-field");
+    function renderProjects(projects) {
+      projectResults.innerHTML = "";
 
-    let assigneeUsers = <%= raw @users.map { |u| { id: u.id, name: u.name } }.to_json %>;
+      if (projects.length > 0) {
+        projectResults.classList.remove("hidden");
+        projects.forEach(p => {
+          const li = document.createElement("li");
+          li.textContent = p.name;
+          li.className = "px-3 py-2 hover:bg-blue-500 hover:text-white cursor-pointer";
+          li.addEventListener("click", function () {
+            projectInput.value = p.name;
+            if (projectHidden) projectHidden.value = p.id;
+            projectResults.classList.add("hidden");
 
-    if (assigneeInput) {
-      assigneeInput.addEventListener("input", () => {
-        const query = assigneeInput.value.toLowerCase();
-        assigneeResults.innerHTML = "";
+            // Trigger Stimulus action (project-modules#loadModules)
+            // projectHidden.dispatchEvent(new Event("change"));
+            window.location.href = `/defect/new?product_id=${encodeURIComponent(p.id)}`;
+          });
+          projectResults.appendChild(li);
+        });
+      } else {
+        projectResults.classList.add("hidden");
+      }
+    }
 
+    if (projectInput && projectResults && window.projectsData) {
+      // Search as you type
+      projectInput.addEventListener("input", function () {
+        const query = this.value.toLowerCase();
         if (query.length === 0) {
-          assigneeResults.classList.add("hidden");
+          projectResults.classList.add("hidden");
           return;
         }
 
-        const matches = assigneeUsers.filter(user =>
-          user.name.toLowerCase().includes(query)
+        const matches = window.projectsData.filter(p =>
+          p.name.toLowerCase().includes(query)
         );
-
-        if (matches.length > 0) {
-          assigneeResults.classList.remove("hidden");
-          matches.forEach(user => {
-            const li = document.createElement("li");
-            li.textContent = user.name;
-            li.className = "px-3 py-2 hover:bg-blue-500 hover:text-white cursor-pointer";
-            li.addEventListener("click", () => {
-              assigneeInput.value = user.name;
-              assigneeHidden.value = user.id;
-              assigneeResults.classList.add("hidden");
-            });
-            assigneeResults.appendChild(li);
-          });
-        } else {
-          assigneeResults.classList.add("hidden");
-        }
+        renderProjects(matches);
       });
 
-      // Hide results if clicking outside
-      document.addEventListener("click", (e) => {
-        if (!assigneeResults.contains(e.target) && e.target !== assigneeInput) {
-          assigneeResults.classList.add("hidden");
+      // Show all projects on focus
+      projectInput.addEventListener("focus", function () {
+        renderProjects(window.projectsData);
+      });
+
+      // Hide results when clicking outside
+      document.addEventListener("click", function (e) {
+        if (projectResults && !projectResults.contains(e.target) && e.target !== projectInput) {
+          projectResults.classList.add("hidden");
         }
       });
     }
-
+      
     // ===== Banking Type Search =====
     const bankingTypeInput = document.getElementById("banking-type-search");
     const bankingTypeResults = document.getElementById("banking-type-results");
     const bankingTypeHidden = document.getElementById("banking-type-id-field");
 
-    let bankingTypes = <%= raw (@banking_types || []).map { |bt| { id: bt.id, name: bt.name } }.to_json %>;
+    // Preselect banking type
+    const preselectedBankingTypeId = bankingTypeHidden ? bankingTypeHidden.value : null;
+    if (preselectedBankingTypeId) {
+      const match = window.bankingTypesData.find(bt => String(bt.id) === String(preselectedBankingTypeId));
+      if (match && bankingTypeInput) {
+        bankingTypeInput.value = match.name;
+        bankingTypeHidden.value = match.id;
+      }
+    }
 
-    if (bankingTypeInput) {
-      bankingTypeInput.addEventListener("input", () => {
-        const query = bankingTypeInput.value.toLowerCase();
+    if (bankingTypeInput && bankingTypeResults && window.bankingTypesData) {
+      function renderBankingTypes(list) {
         bankingTypeResults.innerHTML = "";
 
-        if (query.length === 0) {
-          bankingTypeResults.classList.add("hidden");
-          return;
-        }
-
-        const matches = bankingTypes.filter(bt =>
-          bt.name.toLowerCase().includes(query)
-        );
-
-        if (matches.length > 0) {
+        if (list.length > 0) {
           bankingTypeResults.classList.remove("hidden");
-          matches.forEach(bt => {
+          list.forEach(bt => {
             const li = document.createElement("li");
             li.textContent = bt.name;
             li.className = "px-3 py-2 hover:bg-blue-500 hover:text-white cursor-pointer";
-            li.addEventListener("click", () => {
+            li.addEventListener("click", function () {
               bankingTypeInput.value = bt.name;
-              bankingTypeHidden.value = bt.id;
+              if (bankingTypeHidden) bankingTypeHidden.value = bt.id;
               bankingTypeResults.classList.add("hidden");
             });
             bankingTypeResults.appendChild(li);
@@ -336,31 +559,188 @@
         } else {
           bankingTypeResults.classList.add("hidden");
         }
+      }
+
+      // Filtered search on input
+      bankingTypeInput.addEventListener("input", function () {
+        const query = this.value.toLowerCase();
+
+        if (query.length === 0) {
+          bankingTypeResults.classList.add("hidden");
+          return;
+        }
+
+        const matches = window.bankingTypesData.filter(bt =>
+          bt.name.toLowerCase().includes(query)
+        );
+        renderBankingTypes(matches);
       });
 
-      // Hide results if clicking outside
-      document.addEventListener("click", (e) => {
-        if (!bankingTypeResults.contains(e.target) && e.target !== bankingTypeInput) {
+      // Show all BankingTypes on focus
+      bankingTypeInput.addEventListener("focus", function () {
+        renderBankingTypes(window.bankingTypesData);
+      });
+
+      // Hide results when clicking outside
+      document.addEventListener("click", function (e) {
+        if (
+          bankingTypeResults &&
+          !bankingTypeResults.contains(e.target) &&
+          e.target !== bankingTypeInput
+        ) {
           bankingTypeResults.classList.add("hidden");
         }
       });
     }
 
-    // ===== Form Validation =====
-    const form = document.querySelector('form');
-    if (form) {
-      form.addEventListener('submit', function(e) {
-        const content = document.getElementById('defect_content');
-        const contentError = document.getElementById('defect_content_error');
+    // ===== Assignee Search =====
+    const assigneeInput = document.getElementById("assignee-search");
+    const assigneeResults = document.getElementById("assignee-results");
+    const assigneeHidden = document.getElementById("assignee-id-field");
 
-        if (content && content.value.trim() === '') {
-          e.preventDefault();
-          contentError.classList.remove('hidden');
-          content.focus();
+    // Preselect assignee
+    const preselectedAssigneeId = assigneeHidden ? assigneeHidden.value : null;
+    if (preselectedAssigneeId) {
+      const match = window.assigneeUsersData.find(user => String(user.id) === String(preselectedAssigneeId));
+      if (match && assigneeInput) {
+        assigneeInput.value = match.name;
+        assigneeHidden.value = match.id;
+      }
+    }
+
+    if (assigneeInput && assigneeResults && window.assigneeUsersData) {
+      function renderAssignees(list) {
+        assigneeResults.innerHTML = "";
+
+        if (list.length > 0) {
+          assigneeResults.classList.remove("hidden");
+          list.forEach(user => {
+            const li = document.createElement("li");
+            li.textContent = user.name;
+            li.className = "px-3 py-2 hover:bg-blue-500 hover:text-white cursor-pointer";
+            li.addEventListener("click", function () {
+              assigneeInput.value = user.name;
+              if (assigneeHidden) assigneeHidden.value = user.id;
+              assigneeResults.classList.add("hidden");
+            });
+            assigneeResults.appendChild(li);
+          });
         } else {
-          contentError.classList.add('hidden');
+          assigneeResults.classList.add("hidden");
+        }
+      }
+
+      assigneeInput.addEventListener("input", function () {
+        const query = this.value.toLowerCase();
+        if (assigneeHidden) assigneeHidden.value = "";
+
+        if (query.length === 0) {
+          assigneeResults.classList.add("hidden");
+          return;
+        }
+
+        const matches = window.assigneeUsersData.filter(user =>
+          user.name.toLowerCase().includes(query)
+        );
+
+        renderAssignees(matches);
+      });
+
+      assigneeInput.addEventListener("focus", function () {
+        renderAssignees(window.assigneeUsersData);
+      });
+
+      document.addEventListener("click", function (e) {
+        if (
+          assigneeResults &&
+          !assigneeResults.contains(e.target) &&
+          e.target !== assigneeInput
+        ) {
+          assigneeResults.classList.add("hidden");
         }
       });
     }
-  });
+  }
+
+  function initModuleSubmoduleLoading() {
+    // ===== Dynamic module/submodule loading =====
+    const modSelect = document.querySelector('[data-project-modules-target="moduleSelect"]');
+    const submodSelect = document.querySelector('[data-project-modules-target="submoduleSelect"]');
+    
+    if (modSelect) {
+      modSelect.addEventListener('change', function () {
+        const moduleId = this.value;
+        if (submodSelect) {
+          submodSelect.innerHTML = '<option value="">Select Sub-Module</option>';
+          if (moduleId) {
+            fetch(`/qa_modules/${moduleId}/submodules`)
+              .then(r => r.json())
+              .then(submodules => {
+                submodules.forEach(sm => {
+                  const opt = document.createElement('option');
+                  opt.value = sm.id;
+                  opt.textContent = sm.name;
+                  // Select the current defect's submodule if it matches
+                  if (sm.id == '<%= @defect.submodule_id %>') {
+                    opt.selected = true;
+                  }
+                  submodSelect.appendChild(opt);
+                });
+              })
+              .catch(error => {
+                console.error('Error loading submodules:', error);
+              });
+          }
+        }
+      });
+    }
+
+    // Also trigger change event if module is already selected on page load
+    if (modSelect && modSelect.value) {
+      const event = new Event('change');
+      modSelect.dispatchEvent(event);
+    }
+  }
+
+  function initStatusDropdown() {
+    const statusDropdown = document.querySelector("select[name='defect[status_id]']");
+    if (statusDropdown && !statusDropdown.disabled) {
+      statusDropdown.addEventListener("change", () => {
+        const url = statusDropdown.dataset.defectStatusUrl;
+        const statusId = statusDropdown.value;
+
+        if (url && statusId) {
+          fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRF-Token": document.querySelector("meta[name='csrf-token']").content
+            },
+            body: JSON.stringify({ status_id: statusId })
+          })
+          .then(resp => resp.json())
+          .then(data => {
+            console.log("Status updated:", data);
+          })
+          .catch(err => console.error("Status update failed:", err));
+        }
+      });
+    }
+  }
+
+  // Initialize everything
+  function initializeAll() {
+    initSearchableDropdowns();
+    initModuleSubmoduleLoading();
+    initStatusDropdown();
+  }
+
+  // Initialize when DOM is loaded
+  document.addEventListener('turbo:load', initializeAll);
+
+  // Also initialize when Turbo loads the content
+  document.addEventListener('turbo:load', initializeAll);
+
+  // Initialize when the frame is loaded (for modals)
+  document.addEventListener('turbo:frame-load', initializeAll);
 </script>
