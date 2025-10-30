@@ -15,7 +15,6 @@ class TicketsController < ApplicationController
              else
                @ticket.issues.with_rich_text_content.order('created_at DESC')
              end
-
     # Get all comments with rich text, ordered by creation date
     @comment = @ticket.comments.with_rich_text_content.order('created_at DESC')
 
