@@ -1,9 +1,9 @@
-<div class="mb-6 mt-6 border-b border-gray-200">
-  <nav class="flex space-x-2 justify-start" aria-label="Tabs">
+<div class="mb-6 mt-6 border-b border-gray-200 dark:border-gray-700">
+  <nav class="flex space-x-2 justify-start overflow-x-auto" aria-label="Tabs">
     <button
-      class="tablinks px-6 py-2 rounded-t-lg text-sm font-semibold border-b-2 transition focus:outline-none
-        text-blue-700 border-blue-700 bg-blue-50
-        hover:bg-blue-100 hover:text-blue-800"
+      class="tablinks px-4 sm:px-6 py-2 rounded-t-lg text-sm font-semibold border-b-2 transition focus:outline-none whitespace-nowrap
+        text-blue-700 dark:text-blue-400 border-blue-700 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/30
+        hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:text-blue-800 dark:hover:text-blue-300"
       id="tab-comments"
       onclick="openTab(event, 'Comments')"
       type="button"
@@ -12,9 +12,9 @@
       🗨️ Comments
     </button>
     <button
-      class="tablinks px-6 py-2 rounded-t-lg text-sm font-semibold border-b-2 transition focus:outline-none
-        text-gray-500 border-transparent bg-white
-        hover:bg-gray-100 hover:text-blue-700"
+      class="tablinks px-4 sm:px-6 py-2 rounded-t-lg text-sm font-semibold border-b-2 transition focus:outline-none whitespace-nowrap
+        text-gray-500 dark:text-gray-400 border-transparent bg-white dark:bg-gray-800
+        hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-blue-700 dark:hover:text-blue-400"
       id="tab-history"
       onclick="openTab(event, 'History')"
       type="button"
@@ -25,11 +25,11 @@
   </nav>
 </div>
 
-<div id="Comments" class="tabcontent bg-white p-4 rounded-b-lg shadow" style="display: block;">
+<div id="Comments" class="tabcontent bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-b-lg shadow dark:shadow-gray-900/50" style="display: block;">
   <%= render 'defect_messages/defect_message' %>
 </div>
 
-<div id="History" class="tabcontent bg-white p-4 rounded-b-lg shadow" style="display: none;">
+<div id="History" class="tabcontent bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-b-lg shadow dark:shadow-gray-900/50" style="display: none;">
   <%= render 'defect/timeline' %>
 </div>
 
@@ -45,15 +45,15 @@
 
     // Remove active styling from all tab links
     for (let i = 0; i < tablinks.length; i++) {
-      tablinks[i].classList.remove("text-blue-700", "border-blue-700", "bg-blue-50", "hover:bg-blue-100", "hover:text-blue-800");
-      tablinks[i].classList.add("text-gray-500", "border-transparent", "bg-white", "hover:bg-gray-100", "hover:text-blue-700");
+      tablinks[i].classList.remove("text-blue-700", "dark:text-blue-400", "border-blue-700", "dark:border-blue-400", "bg-blue-50", "dark:bg-blue-900/30", "hover:bg-blue-100", "dark:hover:bg-blue-900/50", "hover:text-blue-800", "dark:hover:text-blue-300");
+      tablinks[i].classList.add("text-gray-500", "dark:text-gray-400", "border-transparent", "bg-white", "dark:bg-gray-800", "hover:bg-gray-100", "dark:hover:bg-gray-700", "hover:text-blue-700", "dark:hover:text-blue-400");
       tablinks[i].setAttribute("aria-selected", "false");
     }
 
     // Show current tab content and add active styling to clicked tab
     document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.classList.add("text-blue-700", "border-blue-700", "bg-blue-50");
-    evt.currentTarget.classList.remove("text-gray-500", "border-transparent", "bg-white");
+    evt.currentTarget.classList.add("text-blue-700", "dark:text-blue-400", "border-blue-700", "dark:border-blue-400", "bg-blue-50", "dark:bg-blue-900/30");
+    evt.currentTarget.classList.remove("text-gray-500", "dark:text-gray-400", "border-transparent", "bg-white", "dark:bg-gray-800");
     evt.currentTarget.setAttribute("aria-selected", "true");
   }
 
