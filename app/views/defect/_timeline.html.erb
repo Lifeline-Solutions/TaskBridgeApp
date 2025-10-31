@@ -1,18 +1,18 @@
 <% if @defects_history.present? %>
-  <div class="bg-white rounded border border-gray-200">
+  <div class="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
     <!-- Header -->
-    <div class="px-4 py-2 border-b border-gray-200">
-      <h3 class="text-sm font-medium text-gray-700">Activity</h3>
+    <div class="px-3 sm:px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+      <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Activity</h3>
     </div>
 
     <!-- Timeline -->
-    <div class="p-4">
+    <div class="p-3 sm:p-4">
       <div class="space-y-4">
         <% @defects_history.each do |defect| %>
-          <div class="flex gap-3">
+          <div class="flex gap-2 sm:gap-3">
             <!-- Avatar -->
             <div class="flex-shrink-0">
-              <div class="w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-medium">
+              <div class="w-7 h-7 bg-blue-600 dark:bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
                 <%= render 'defect/defect_user_initials', defect: defect %>
               </div>
             </div>
@@ -20,9 +20,9 @@
             <!-- Content -->
             <div class="flex-1 min-w-0">
               <div class="text-sm">
-                <span class="font-medium text-gray-900"><%= defect.user.name %></span>
-                <span class="text-gray-500 ml-1"><%= defect.history_type.present? ? defect.history_type.downcase : 'updated' %></span>
-                <span class="text-gray-400 text-xs ml-2"><%= time_ago_in_words(defect.created_at) %> ago</span>
+                <span class="font-medium text-gray-900 dark:text-gray-100"><%= defect.user.name %></span>
+                <span class="text-gray-500 dark:text-gray-400 ml-1"><%= defect.history_type.present? ? defect.history_type.downcase : 'updated' %></span>
+                <span class="text-gray-400 dark:text-gray-500 text-xs ml-2"><%= time_ago_in_words(defect.created_at) %> ago</span>
               </div>
 
               <!-- History Text with Highlights -->
@@ -39,12 +39,12 @@
   </div>
 <% else %>
   <!-- Empty State -->
-  <div class="bg-white rounded border border-gray-200">
-    <div class="px-4 py-2 border-b border-gray-200">
-      <h3 class="text-sm font-medium text-gray-700">Activity</h3>
+  <div class="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+    <div class="px-3 sm:px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+      <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Activity</h3>
     </div>
-    <div class="p-8 text-center">
-      <p class="text-gray-400 text-sm">No activity yet</p>
+    <div class="p-6 sm:p-8 text-center">
+      <p class="text-gray-400 dark:text-gray-500 text-sm">No activity yet</p>
     </div>
   </div>
 <% end %>
