@@ -76,6 +76,11 @@ class ProductController < ApplicationController
   def show
     if current_user.has_any_role?(:admin, :observer, :hod, 'project manager') or @product.users.include?(current_user)
       @days_remaining = (@product.end_date - Date.today).to_i if @product.end_date.present?
+
+      # Handle view mode (grid or list)
+      @view_mode = params[:view] || session[:tasks_view_mode] || 'grid'
+      session[:tasks_view_mode] = @view_mode
+
       # Base tasks query with all necessary includes
       @tasks = @product.tasks.includes(:statuses, :users).order(created_at: 'desc')
 
