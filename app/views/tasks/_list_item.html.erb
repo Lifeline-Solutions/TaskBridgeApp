@@ -1,0 +1,133 @@
+<%
+  today = Date.current
+  end_date = task.end_date.is_a?(Date) ? task.end_date : (task.end_date.respond_to?(:to_date) ? task.end_date.to_date : nil)
+  if end_date
+    days_diff = (end_date - today).to_i
+    if days_diff > 7
+      bg_class = 'bg-white dark:bg-gray-800'
+      border_class = 'border-gray-200 dark:border-gray-700'
+    elsif days_diff > 3
+      bg_class = 'bg-yellow-50 dark:bg-yellow-900/20'
+      border_class = 'border-yellow-300 dark:border-yellow-700'
+    elsif today > end_date
+      bg_class = 'bg-red-50 dark:bg-red-900/20'
+      border_class = 'border-red-300 dark:border-red-700'
+    end
+  end
+%>
+<div class="<%= "#{bg_class} shadow-sm hover:shadow-md rounded-lg border #{border_class} cursor-pointer transition-all" %>" 
+     onclick="window.location='<%= product_task_path(@product, task) %>'">
+  <div class="p-3 sm:p-4">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+      <!-- Task ID and Status Badge -->
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="flex-shrink-0">
+          <span class="inline-flex items-center px-2 sm:px-3 py-1 rounded-md text-xs sm:text-sm font-semibold bg-gray-100 dark:bg-gray-700">
+            <% if task.unique_task_id.present? %>
+              <%= task.unique_task_id %>
+            <% else %>
+              No ID
+            <% end %>
+          </span>
+        </div>
+        
+        <!-- Status Badge -->
+        <div class="flex-shrink-0">
+          <% status = task.statuses.first %>
+          <% if status %>
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+              <%= case status.name
+                  when 'TO DO' then 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                  when 'In Progress' then 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400'
+                  when 'Resolved' then 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                  when 'Closed' then 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400'
+                  when 'Blocked' then 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                  when 'On-Hold' then 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                  else 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400'
+                  end %>">
+              <%= status.name %>
+            </span>
+          <% else %>
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400">
+              Uncategorized
+            </span>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Task Details - Takes most space -->
+      <div class="flex-1 min-w-0 space-y-1">
+        <!-- Task Name -->
+        <h3 class="text-sm sm:text-base font-semibold break-words line-clamp-1">
+          <%= task.name %>
+        </h3>
+        
+        <!-- Prerequisite Task -->
+        <% if task.prerequisite_task.present? %>
+          <p class="text-xs text-gray-600 dark:text-gray-400 truncate">
+            Prerequisite: 
+            <%= link_to "#{task.prerequisite_task.unique_task_id} - #{task.prerequisite_task.name}", 
+                        product_task_path(@product, task.prerequisite_task), 
+                        class: "text-blue-600 dark:text-blue-400 hover:underline",
+                        data: { turbo: false },
+                        onclick: "event.stopPropagation()" %>
+          </p>
+        <% end %>
+      </div>
+
+      <!-- Priority -->
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <div class="text-xs sm:text-sm">
+          <%= render partial: 'tasks/priority', locals: { task: task } %>
+        </div>
+      </div>
+
+      <!-- Due Date -->
+      <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 flex-shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+        </svg>
+        <span class="text-xs sm:text-sm whitespace-nowrap"><%= task.end_date.strftime("%b %d, %Y") %></span>
+      </div>
+
+      <!-- Assigned Users -->
+      <div class="flex items-center gap-1 flex-shrink-0">
+        <% if task.users.any? %>
+          <div class="flex -space-x-2">
+            <% task.users.first(3).each do |user| %>
+              <% if user.profile_picture.attached? %>
+                <%= image_tag user.profile_picture, class: 'object-cover h-8 w-8 rounded-full border-2 border-white dark:border-gray-800', title: user.full_name %>
+              <% elsif user.name_initials.present? %>
+                <div class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 capitalize border-2 border-white dark:border-gray-800 text-xs font-medium" title="<%= user.full_name %>">
+                  <%= user.name_initials %>
+                </div>
+              <% else %>
+                <%= image_tag 'default.png', class: 'w-8 h-8 rounded-full border-2 border-white dark:border-gray-800', title: user.full_name %>
+              <% end %>
+            <% end %>
+            <% if task.users.count > 3 %>
+              <div class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-2 border-white dark:border-gray-800 text-xs font-medium">
+                +<%= task.users.count - 3 %>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <span class="text-xs text-gray-400 dark:text-gray-500">Unassigned</span>
+        <% end %>
+      </div>
+
+      <!-- Comments Count -->
+      <div class="flex items-center gap-1 text-gray-600 dark:text-gray-400 flex-shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+        </svg>
+        <span class="text-xs sm:text-sm"><%= task.messages.count %></span>
+      </div>
+
+      <!-- Action Dropdown -->
+      <div class="flex-shrink-0" onclick="event.stopPropagation()">
+        <%= render partial: "tasks/action_dropdown", locals: { product: @product, task: task } %>
+      </div>
+    </div>
+  </div>
+</div>
