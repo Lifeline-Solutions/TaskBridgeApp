@@ -149,6 +149,61 @@ class ProfilesController < ApplicationController
     end
   end
 
+  def workload_project_tickets
+    authorize! :generate, :report
+
+    # Parse dates (default last 6 months)
+    if params[:start_date].present? && params[:end_date].present?
+      begin
+        start_date = Date.parse(params[:start_date])
+        end_date = Date.parse(params[:end_date])
+      rescue ArgumentError
+        start_date = 6.months.ago.to_date
+        end_date = Date.today
+      end
+    else
+      start_date = 6.months.ago.to_date
+      end_date = Date.today
+    end
+
+    # Find project: allow params[:id] (from routes) or params[:project_id]
+    @project = if params[:id].present?
+                 Project.find_by(id: params[:id])
+               elsif params[:project_id].present?
+                 Project.find_by(id: params[:project_id])
+               elsif params[:project_title].present?
+                 t = params[:project_title].to_s.strip
+                 Project.where('LOWER(title) = ?', t.downcase).first || Project.where('title ILIKE ?', "%#{t}%").first
+               end
+
+    # If a team is provided, load it and get its member ids
+    @team = Team.find_by(id: params[:team_id]) if params[:team_id].present?
+    team_user_ids = @team ? @team.users.pluck(:id) : []
+
+    if @project
+      # Base scope: tickets for the given project in date range
+      @tickets = Ticket.where(project_id: @project.id)
+        .where(created_at: start_date.beginning_of_day..end_date.end_of_day)
+
+      # If team filter present, only include tickets that have taggings to those users
+      @tickets = @tickets.joins(:taggings).where(taggings: { user_id: team_user_ids }) if team_user_ids.any?
+
+      # By default, show only open tickets unless all_tickets param is provided
+      @tickets = @tickets.joins(:statuses).where.not(statuses: { name: %w[Closed Resolved Declined] }) unless params[:all_tickets]
+
+      # Eager load for view performance
+      @tickets = @tickets.includes(:project, :statuses, :users).distinct
+    else
+      @tickets = Ticket.none
+      flash.now[:alert] = 'Please select a valid project.' if params[:id].present? || params[:project_id].present? || params[:project_title].present?
+    end
+
+    # The tickets partial expects @ticket to be set
+    @ticket = @tickets
+
+    respond_to(&:html)
+  end
+
   def profiles_show
     authorize! :generate, :report
 

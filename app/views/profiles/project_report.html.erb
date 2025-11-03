@@ -74,7 +74,12 @@
           <h3 class="text-lg font-bold mb-2">Project Ticket Counts</h3>
           <ul>
             <% @tickets_per_project.sort_by { |_, count| -count }.each do |project, count| %>
-              <li class="mb-1 capitalize"><%= project %>: <%= count %> <%= link_to "View", project_path(Project.find_by(title: project)), class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded" %>
+              <li class="mb-1 capitalize">
+                <%= project %>: <%= count %>
+                <%= link_to "View",
+                            workload_project_tickets_path(team_id: @team.id, project_title: project, start_date: params[:start_date], end_date: params[:end_date]),
+                            class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded" %>
+              </li>
             <% end %>
           </ul>
         </div>

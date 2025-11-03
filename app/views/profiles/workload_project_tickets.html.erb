@@ -1,0 +1,7 @@
+<%# Ensure the tickets partial has the variables it expects %>
+<% @ticket = @tickets %>
+<%# Provide @project for filters in the partial if available %>
+<% @project ||= @project %>
+<div>
+  <%= render partial: 'tickets/ticket' %>
+</div>
