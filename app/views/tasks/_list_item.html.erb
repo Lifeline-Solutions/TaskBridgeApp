@@ -5,54 +5,29 @@
     days_diff = (end_date - today).to_i
     if days_diff > 7
       bg_class = 'bg-white dark:bg-gray-800'
-      border_class = 'border-gray-200 dark:border-gray-700'
+      border_class = 'border-transparent'
     elsif days_diff > 3
       bg_class = 'bg-yellow-50 dark:bg-yellow-900/20'
-      border_class = 'border-yellow-300 dark:border-yellow-700'
+      border_class = 'border-l-4 border-yellow-400 dark:border-yellow-600'
     elsif today > end_date
       bg_class = 'bg-red-50 dark:bg-red-900/20'
-      border_class = 'border-red-300 dark:border-red-700'
+      border_class = 'border-l-4 border-red-500 dark:border-red-700'
     end
   end
 %>
-<div class="<%= "#{bg_class} shadow-sm hover:shadow-md rounded-lg border #{border_class} cursor-pointer transition-all" %>" 
+<div class="<%= "#{bg_class} hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg #{border_class} cursor-pointer transition-all" %>" 
      onclick="window.location='<%= product_task_path(@product, task) %>'">
-  <div class="p-3 sm:p-4">
-    <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-      <!-- Task ID and Status Badge -->
-      <div class="flex items-center gap-3 min-w-0">
-        <div class="flex-shrink-0">
-          <span class="inline-flex items-center px-2 sm:px-3 py-1 rounded-md text-xs sm:text-sm font-semibold bg-gray-100 dark:bg-gray-700">
-            <% if task.unique_task_id.present? %>
-              <%= task.unique_task_id %>
-            <% else %>
-              No ID
-            <% end %>
-          </span>
-        </div>
-        
-        <!-- Status Badge -->
-        <div class="flex-shrink-0">
-          <% status = task.statuses.first %>
-          <% if status %>
-            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-              <%= case status.name
-                  when 'TO DO' then 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                  when 'In Progress' then 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400'
-                  when 'Resolved' then 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                  when 'Closed' then 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400'
-                  when 'Blocked' then 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                  when 'On-Hold' then 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                  else 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400'
-                  end %>">
-              <%= status.name %>
-            </span>
+  <div class="p-2 sm:p-3">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+      <!-- Task ID -->
+      <div class="flex-shrink-0">
+        <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+          <% if task.unique_task_id.present? %>
+            <%= task.unique_task_id %>
           <% else %>
-            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400">
-              Uncategorized
-            </span>
+            No ID
           <% end %>
-        </div>
+        </span>
       </div>
 
       <!-- Task Details - Takes most space -->
@@ -96,13 +71,13 @@
           <div class="flex -space-x-2">
             <% task.users.first(3).each do |user| %>
               <% if user.profile_picture.attached? %>
-                <%= image_tag user.profile_picture, class: 'object-cover h-8 w-8 rounded-full border-2 border-white dark:border-gray-800', title: user.full_name %>
+                <%= image_tag user.profile_picture, class: 'object-cover h-8 w-8 rounded-full border-2 border-white dark:border-gray-800', title: user.name %>
               <% elsif user.name_initials.present? %>
-                <div class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 capitalize border-2 border-white dark:border-gray-800 text-xs font-medium" title="<%= user.full_name %>">
+                <div class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 capitalize border-2 border-white dark:border-gray-800 text-xs font-medium" title="<%= user.name %>">
                   <%= user.name_initials %>
                 </div>
               <% else %>
-                <%= image_tag 'default.png', class: 'w-8 h-8 rounded-full border-2 border-white dark:border-gray-800', title: user.full_name %>
+                <%= image_tag 'default.png', class: 'w-8 h-8 rounded-full border-2 border-white dark:border-gray-800', title: user.name %>
               <% end %>
             <% end %>
             <% if task.users.count > 3 %>
