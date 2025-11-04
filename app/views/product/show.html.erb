@@ -88,22 +88,22 @@
 
 <!-- View Toggle Buttons -->
 <div class="w-full flex justify-end items-center gap-2 p-2 sm:p-4">
-  <div class="inline-flex rounded-lg shadow-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700" role="group">
+  <div class="inline-flex rounded-xl shadow-lg bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 overflow-hidden" role="group">
     <%= link_to product_path(@product, view: 'grid', query: params[:query]), 
-        class: "px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-l-lg transition-colors #{@view_mode == 'grid' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}", 
+        class: "px-4 sm:px-6 py-2.5 text-xs sm:text-sm font-bold transition-all duration-300 ease-in-out flex items-center gap-2 #{@view_mode == 'grid' ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-inner' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}", 
         title: "Grid View" do %>
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 sm:w-5 sm:h-5">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
       </svg>
-      <span class="ml-1 hidden sm:inline">Grid</span>
+      <span class="hidden sm:inline">Grid</span>
     <% end %>
     <%= link_to product_path(@product, view: 'list', query: params[:query]), 
-        class: "px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-r-lg transition-colors #{@view_mode == 'list' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}", 
+        class: "px-4 sm:px-6 py-2.5 text-xs sm:text-sm font-bold transition-all duration-300 ease-in-out flex items-center gap-2 border-l-2 border-gray-200 dark:border-gray-700 #{@view_mode == 'list' ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-inner' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}", 
         title: "List View" do %>
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 sm:w-5 sm:h-5">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
         <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
       </svg>
-      <span class="ml-1 hidden sm:inline">List</span>
+      <span class="hidden sm:inline">List</span>
     <% end %>
   </div>
 </div>
@@ -127,24 +127,29 @@
               <% next if tasks.empty? %>
 
               <!-- Status Section -->
-              <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+              <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-lg">
                 <!-- Status Header -->
-                <div class="sticky top-0 z-10 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 px-4 py-3 border-b border-gray-200 dark:border-gray-600 rounded-t-lg">
+                <div class="sticky top-0 z-10 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-800 dark:via-gray-750 dark:to-gray-800 px-4 sm:px-6 py-4 border-b-2 border-blue-100 dark:border-gray-600">
                   <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                      <%= render partial: 'tasks/status_icon', locals: { status: status } %>
-                      <h2 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white capitalize">
+                    <div class="flex items-center gap-3 sm:gap-4">
+                      <div class="text-blue-600 dark:text-blue-400">
+                        <%= render partial: 'tasks/status_icon', locals: { status: status } %>
+                      </div>
+                      <h2 class="text-base sm:text-lg lg:text-xl font-bold text-gray-900 dark:text-white capitalize tracking-tight">
                         <%= status %>
                       </h2>
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                        <%= tasks.count %> <%= tasks.count == 1 ? 'task' : 'tasks' %>
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-600 text-white dark:bg-blue-500 shadow-sm">
+                        <%= tasks.count %>
                       </span>
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                      <%= tasks.count == 1 ? '1 task' : "#{tasks.count} tasks" %>
                     </div>
                   </div>
                 </div>
 
                 <!-- Status Tasks -->
-                <div class="divide-y divide-gray-100 dark:divide-gray-700">
+                <div class="divide-y divide-gray-100 dark:divide-gray-700/50">
                   <% tasks.each do |task| %>
                     <div class="px-2 py-1">
                       <%= render partial: 'tasks/list_item', locals: { task: task } %>
@@ -157,26 +162,31 @@
             <!-- Uncategorized Tasks Section -->
             <% uncategorized_tasks = uncategorized_statuses.values.flatten.compact %>
             <% if uncategorized_tasks.any? %>
-              <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+              <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-lg">
                 <!-- Status Header -->
-                <div class="sticky top-0 z-10 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 px-4 py-3 border-b border-gray-200 dark:border-gray-600 rounded-t-lg">
+                <div class="sticky top-0 z-10 bg-gradient-to-r from-gray-50 via-gray-100 to-gray-50 dark:from-gray-800 dark:via-gray-750 dark:to-gray-800 px-4 sm:px-6 py-4 border-b-2 border-gray-200 dark:border-gray-600">
                   <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 sm:w-6 sm:h-6">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.25-8.25-3.286Zm0 13.036h.008v.008H12v-.008Z" />
-                      </svg>
-                      <h2 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white capitalize">
+                    <div class="flex items-center gap-3 sm:gap-4">
+                      <div class="text-gray-600 dark:text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 sm:w-6 sm:h-6">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.25-8.25-3.286Zm0 13.036h.008v.008H12v-.008Z" />
+                        </svg>
+                      </div>
+                      <h2 class="text-base sm:text-lg lg:text-xl font-bold text-gray-900 dark:text-white capitalize tracking-tight">
                         Uncategorized
                       </h2>
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                        <%= uncategorized_tasks.count %> <%= uncategorized_tasks.count == 1 ? 'task' : 'tasks' %>
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gray-600 text-white dark:bg-gray-500 shadow-sm">
+                        <%= uncategorized_tasks.count %>
                       </span>
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                      <%= uncategorized_tasks.count == 1 ? '1 task' : "#{uncategorized_tasks.count} tasks" %>
                     </div>
                   </div>
                 </div>
 
                 <!-- Status Tasks -->
-                <div class="divide-y divide-gray-100 dark:divide-gray-700">
+                <div class="divide-y divide-gray-100 dark:divide-gray-700/50">
                   <% uncategorized_tasks.each do |task| %>
                     <div class="px-2 py-1">
                       <%= render partial: 'tasks/list_item', locals: { task: task } %>
