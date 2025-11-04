@@ -36,7 +36,7 @@
 
 /app/assets/builds/*
 !/app/assets/builds/.keep
-!/app/assets/builds/tailwind.css
+/app/assets/builds/tailwind.css
 node_modules
 .ruby-version
 /config/database.yml
