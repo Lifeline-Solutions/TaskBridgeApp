@@ -30,8 +30,9 @@
     </div>
 
     <!-- Assign Users Modal -->
-    <div class="hidden fixed inset-0 bg-gray-500 bg-opacity-50 overflow-y-auto h-full w-full z-50"
-         data-status-modal-target="modal">
+    <div class="hidden fixed inset-0 overflow-y-auto h-full w-full z-50"
+         data-status-modal-target="modal"
+         style="background-color: rgba(0, 0, 0, 0.5);">
       <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-medium">Assign Users Modal</h3>
@@ -51,7 +52,7 @@
             <% available_users = User.with_assigned_role.where.not(id: @ticket.users.pluck(:id)).where(id: @project.users.pluck(:id)).order(:first_name).distinct %>
             <% if available_users.any? %>
               <div class="relative space-y-2">
-                <input type="text" id="searchTicketAssignUser" class="mt-1 block w-full pl-3 pr-10 py-2 text-base dark:bg-gray-700 border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md" placeholder="Search User..." onkeyup="filterTicketAssignUserDropdown()">
+                <input type="text" id="searchTicketAssignUser" class="mt-1 block w-full pl-3 pr-10 py-2 text-base dark:bg-gray-700 border-2 border-blue-500 dark:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 sm:text-sm rounded-md" placeholder="Search User..." onkeyup="filterTicketAssignUserDropdown()">
 
                 <div id="ticketAssignUserDropdown" class="hidden absolute w-full bg-white dark:bg-gray-700 border rounded mt-1 shadow-md max-h-40 overflow-y-auto z-10">
                   <% available_users.each do |user| %>
