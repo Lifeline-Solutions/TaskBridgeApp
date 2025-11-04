@@ -1,16 +1,14 @@
 <%= turbo_frame_tag "modal" do %>
-<div class="fixed inset-0 z-50 overflow-hidden" data-controller="modal navigation">
-  <!-- Light opaque background overlay for left side only -->
-  <div class="absolute inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm transition-opacity duration-300"></div>
+<div class="fixed inset-0 z-50 overflow-hidden" data-controller="modal navigation" style="background-color: rgba(0, 0, 0, 0.5);">
   
   <!-- Modal container - right side panel -->
-  <div class="fixed top-0 right-0 bottom-0 bg-white shadow-2xl modal-narrow modal-transition flex flex-col h-screen max-h-screen overflow-hidden"
+  <div class="fixed top-0 right-0 bottom-0 bg-white dark:bg-gray-900 shadow-2xl modal-narrow modal-transition flex flex-col h-screen max-h-screen overflow-hidden"
        id="modal-container">
       <!-- Navigation Bar - Fixed header -->
-      <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 bg-white flex-shrink-0">
+      <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex-shrink-0">
         <div class="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-3 sm:gap-0">
           <div class="flex flex-col space-y-1 sm:space-y-2">
-            <h2 class="text-base sm:text-lg font-semibold text-gray-900 break-words">Issue ID <%= @ticket.unique_id %> Details</h2>
+            <h2 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white break-words">Issue ID <%= @ticket.unique_id %> Details</h2>
             <!-- SECTION 1: Ticket info - moved from content area -->
             <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 break-words">
               <span class="font-medium">Created by: </span> <%= @ticket.user.name %><br class="sm:hidden">
@@ -20,7 +18,7 @@
           </div>
           <div class="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
             <!-- Previous/Next Navigation Buttons -->
-            <button class="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            <button class="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 data-action="click->navigation#previous"
                 onclick="
                   const messagesPanel = document.getElementById('messages-panel');
@@ -41,7 +39,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
               </svg>
             </button>
-            <button class="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            <button class="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 data-action="click->navigation#next"
                 onclick="
                   const messagesPanel = document.getElementById('messages-panel');
@@ -62,7 +60,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
               </svg>
             </button>
-            <button class="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            <button class="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 aria-label="Close panel"
                 data-action="click->modal#close">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
