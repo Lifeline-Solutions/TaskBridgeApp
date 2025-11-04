@@ -4,15 +4,15 @@
   if end_date
     days_diff = (end_date - today).to_i
     if days_diff > 7
-      bg_class = 'bg-transparent hover:bg-gray-50 dark:hover:bg-gray-700/30'
+      bg_class = 'bg-transparent hover:bg-gray-50 dark:hover:bg-gray-700'
       border_class = ''
       date_class = 'text-gray-600 dark:text-gray-400'
     elsif days_diff > 3
-      bg_class = 'bg-yellow-50/50 hover:bg-yellow-50 dark:bg-yellow-900/10 dark:hover:bg-yellow-900/20'
+      bg_class = 'bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:hover:bg-yellow-900/30'
       border_class = 'border-l-4 border-yellow-400 dark:border-yellow-500'
       date_class = 'text-yellow-700 dark:text-yellow-400 font-medium'
     elsif today > end_date
-      bg_class = 'bg-red-50/50 hover:bg-red-50 dark:bg-red-900/10 dark:hover:bg-red-900/20'
+      bg_class = 'bg-red-50 hover:bg-red-300 dark:bg-red-900 dark:hover:bg-red-800/10'
       border_class = 'border-l-4 border-red-500 dark:border-red-600'
       date_class = 'text-red-700 dark:text-red-400 font-medium'
     end
@@ -24,7 +24,7 @@
     <div class="flex flex-col lg:flex-row lg:items-center gap-3 sm:gap-4">
       <!-- Task ID -->
       <div class="flex-shrink-0">
-        <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 shadow-sm">
+        <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-100 dark:bg-gray-700 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-gray-600 shadow-sm">
           <% if task.unique_task_id.present? %>
             <%= task.unique_task_id %>
           <% else %>
@@ -81,7 +81,7 @@
               <% if user.profile_picture.attached? %>
                 <%= image_tag user.profile_picture, class: 'object-cover h-9 w-9 rounded-full border-2 border-white dark:border-gray-800 shadow-sm group-hover:shadow-md transition-all', title: user.name %>
               <% elsif user.name_initials.present? %>
-                <div class="w-9 h-9 flex items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600 dark:from-blue-600 dark:to-blue-800 text-white capitalize border-2 border-white dark:border-gray-800 text-xs font-bold shadow-sm group-hover:shadow-md transition-all" title="<%= user.name %>">
+                <div class="w-9 h-9 flex items-center justify-center rounded-full bg-blue-500 dark:bg-blue-600 text-white capitalize border-2 border-white dark:border-gray-800 text-xs font-bold shadow-sm group-hover:shadow-md transition-all" title="<%= user.name %>">
                   <%= user.name_initials %>
                 </div>
               <% else %>
@@ -89,7 +89,7 @@
               <% end %>
             <% end %>
             <% if task.users.count > 3 %>
-              <div class="w-9 h-9 flex items-center justify-center rounded-full bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700 text-gray-700 dark:text-gray-200 border-2 border-white dark:border-gray-800 text-xs font-bold shadow-sm group-hover:shadow-md transition-all" title="<%= task.users.count - 3 %> more users">
+              <div class="w-9 h-9 flex items-center justify-center rounded-full bg-gray-400 dark:bg-gray-600 text-gray-700 dark:text-gray-200 border-2 border-white dark:border-gray-800 text-xs font-bold shadow-sm group-hover:shadow-md transition-all" title="<%= task.users.count - 3 %> more users">
                 +<%= task.users.count - 3 %>
               </div>
             <% end %>
@@ -108,7 +108,7 @@
       </div>
 
       <!-- Action Dropdown -->
-      <div class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onclick="event.stopPropagation()">
+      <div class="flex-shrink-0" onclick="event.stopPropagation()">
         <%= render partial: "tasks/action_dropdown", locals: { product: @product, task: task } %>
       </div>
 
