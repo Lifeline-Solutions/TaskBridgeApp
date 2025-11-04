@@ -1,7 +1,5 @@
 <%= turbo_frame_tag "modal" do %>
-<div class="fixed inset-0 z-50 overflow-hidden" data-controller="modal navigation">
-  <!-- Light opaque background overlay for left side only -->
-  <div class="absolute inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm transition-opacity duration-300"></div>
+<div class="fixed inset-0 z-50 overflow-hidden" data-controller="modal navigation" style="background-color: rgba(0, 0, 0, 0.5);">
   
   <!-- Modal container - right side panel -->
   <div class="fixed top-0 right-0 bottom-0 bg-white shadow-2xl modal-narrow modal-transition flex flex-col h-screen max-h-screen overflow-hidden"
