@@ -120,7 +120,7 @@ Rails.application.configure do
     authentication: 'plain',
     ssl: use_ssl,
     tls: use_tls,
-    enable_starttls_auto: true,
+    enable_starttls_auto: false,
     open_timeout: Integer(ENV.fetch('SMTP_OPEN_TIMEOUT', '30')),
     read_timeout: Integer(ENV.fetch('SMTP_READ_TIMEOUT', '30'))
   }.tap do |h|
