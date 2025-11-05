@@ -104,7 +104,7 @@ Rails.application.configure do
   config.action_mailer.perform_caching = false
   config.action_mailer.delivery_method = :smtp
   smtp_address = ENV.fetch('SMTP_ADDRESS', 'secure.emailsrvr.com')
-  smtp_port    = Integer(ENV.fetch('SMTP_PORT', '587'))
+  smtp_port    = Integer(ENV.fetch('SMTP_PORT', '465'))
   smtp_domain  = ENV.fetch('SMTP_DOMAIN', 'craftsilicon.com')
   smtp_user    = ENV['SMTP_USERNAME']
   smtp_pass    = ENV['SMTP_PASSWORD']
