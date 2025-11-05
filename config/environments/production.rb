@@ -105,7 +105,7 @@ Rails.application.configure do
   config.action_mailer.delivery_method = :smtp
   smtp_address = ENV.fetch('SMTP_ADDRESS', 'secure.emailsrvr.com')
   smtp_port    = Integer(ENV.fetch('SMTP_PORT', '465'))
-  smtp_domain  = ENV.fetch('SMTP_DOMAIN', 'taskbridge.craftsilicon.com')
+  smtp_domain  = ENV.fetch('SMTP_DOMAIN', 'craftsilicon.com')
   smtp_user    = ENV['SMTP_USERNAME']
   smtp_pass    = ENV['SMTP_PASSWORD']
   use_tls      = ENV.fetch('SMTP_USE_TLS', 'true') == 'true'
