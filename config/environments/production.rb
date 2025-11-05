@@ -97,32 +97,19 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions
 
+  # host should be the hostname only (no scheme or trailing slash); protocol set separately
   config.action_mailer.default_url_options = { host: 'taskbridge.craftsilicon.com', protocol: 'https' }
   config.action_controller.raise_on_missing_callback_actions = true
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.perform_caching = false
   config.action_mailer.delivery_method = :smtp
-
-  # SMTP settings: do not set both :tls and :enable_starttls_auto (they are mutually exclusive).
   smtp_address = ENV.fetch('SMTP_ADDRESS', 'secure.emailsrvr.com')
-  smtp_port    = Integer(ENV.fetch('SMTP_PORT', '465'))
+  smtp_port    = Integer(ENV.fetch('SMTP_PORT', '587'))
   smtp_domain  = ENV.fetch('SMTP_DOMAIN', 'craftsilicon.com')
-  smtp_user    = ENV.fetch('SMTP_USERNAME', 'cspm@craftsilicon.com')
-  # Avoid hardcoding passwords in repo; prefer passing SMTP_PASSWORD via environment or credentials
+  smtp_user    = ENV['SMTP_USERNAME']
   smtp_pass    = ENV['SMTP_PASSWORD']
-
-  # Determine implicit SSL (SMTPS, typically port 465) vs STARTTLS (typically port 587).
-  use_ssl = if ENV.key?('SMTP_USE_SSL')
-              ENV.fetch('SMTP_USE_SSL').to_s.downcase == 'true'
-            else
-              smtp_port == 465
-            end
-
-  enable_starttls_auto = if ENV.key?('SMTP_ENABLE_STARTTLS_AUTO')
-                            ENV.fetch('SMTP_ENABLE_STARTTLS_AUTO').to_s.downcase == 'true'
-                          else
-                            !use_ssl
-                          end
+  use_tls      = ENV.fetch('SMTP_USE_TLS', 'true') == 'true'
+  use_ssl      = ENV.fetch('SMTP_USE_SSL', 'false') == 'true'
 
   config.action_mailer.smtp_settings = {
     address: smtp_address,
@@ -130,11 +117,16 @@ Rails.application.configure do
     domain: smtp_domain,
     user_name: smtp_user,
     password: smtp_pass,
-    authentication: ENV.fetch('SMTP_AUTHENTICATION', 'plain'),
+    authentication: 'plain',
     ssl: use_ssl,
-    enable_starttls_auto: enable_starttls_auto,
-    openssl_verify_mode: ENV['SMTP_OPENSSL_VERIFY_MODE'] || 'none',
+    tls: use_tls,
+    enable_starttls_auto: true,
     open_timeout: Integer(ENV.fetch('SMTP_OPEN_TIMEOUT', '30')),
     read_timeout: Integer(ENV.fetch('SMTP_READ_TIMEOUT', '30'))
-  }
+  }.tap do |h|
+    # Only disable verification if explicitly asked
+    if ENV['SMTP_OPENSSL_VERIFY_MODE'].present?
+      h[:openssl_verify_mode] = ENV['SMTP_OPENSSL_VERIFY_MODE']
+    end
+  end
 end
