@@ -50,10 +50,11 @@ Rails.application.configure do
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
   config.force_ssl = true
+
   # Log to STDOUT by default
   config.logger = ActiveSupport::Logger.new(STDOUT)
-    .tap  { |logger| logger.formatter = ::Logger::Formatter.new }
-    .then { |logger| ActiveSupport::TaggedLogging.new(logger) }
+                                       .tap  { |logger| logger.formatter = ::Logger::Formatter.new }
+                                       .then { |logger| ActiveSupport::TaggedLogging.new(logger) }
 
   # Prepend all log lines with the following tags.
   config.log_tags = [ :request_id ]
@@ -96,36 +97,23 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions
 
-  # host should be the hostname only (no scheme or trailing slash); protocol set separately
-  config.action_mailer.default_url_options = { host: 'taskbridge.craftsilicon.com', protocol: 'https' }
+  config.action_mailer.default_url_options = { host: 'https://taskbridge.craftsilicon.com/', protocol: 'https' }
   config.action_controller.raise_on_missing_callback_actions = true
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.perform_caching = false
   config.action_mailer.delivery_method = :smtp
-  smtp_address = ENV.fetch('SMTP_ADDRESS', 'secure.emailsrvr.com')
-  smtp_port    = Integer(ENV.fetch('SMTP_PORT', '465'))
-  smtp_domain  = ENV.fetch('SMTP_DOMAIN', 'craftsilicon.com')
-  smtp_user    = ENV['SMTP_USERNAME']
-  smtp_pass    = ENV['SMTP_PASSWORD']
-  use_tls      = ENV.fetch('SMTP_USE_TLS', 'true') == 'true'
-  use_ssl      = ENV.fetch('SMTP_USE_SSL', 'false') == 'true'
-
   config.action_mailer.smtp_settings = {
-    address: smtp_address,
-    port: smtp_port,
-    domain: smtp_domain,
-    user_name: smtp_user,
-    password: smtp_pass,
-    authentication: 'plain',
-    ssl: use_ssl,
-    tls: use_tls,
-    enable_starttls_auto: true,
-    open_timeout: Integer(ENV.fetch('SMTP_OPEN_TIMEOUT', '30')),
-    read_timeout: Integer(ENV.fetch('SMTP_READ_TIMEOUT', '30'))
-  }.tap do |h|
-    # Only disable verification if explicitly asked
-    if ENV['SMTP_OPENSSL_VERIFY_MODE'].present?
-      h[:openssl_verify_mode] = ENV['SMTP_OPENSSL_VERIFY_MODE']
-    end
-  end
+    address: 'secure.emailsrvr.com',
+    port: 465, # Use 587 for STARTTLS or 465 for SSL/TLS
+    domain: 'craftsilicon.com', # Replace with your domain
+    user_name: 'cspm@craftsilicon.com', # Replace with your email
+    password: '#cspm@123#', # Replace with your email password
+    authentication: 'plain', # Can also be 'plain' or 'cram_md5'
+    ssl: true, # Use SSL encryption
+    tls: true, # Enforce TLS
+    enable_starttls_auto: true, # Automatically start TLS if available
+    openssl_verify_mode: 'none', # To avoid certificate verification issues (use cautiously)
+    open_timeout: 30, # Increase open timeout to 30 seconds
+    read_timeout: 30  # Increase read timeout to 30 seconds
+  }
 end
