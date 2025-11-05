@@ -97,23 +97,44 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions
 
-  config.action_mailer.default_url_options = { host: 'https://taskbridge.craftsilicon.com/', protocol: 'https' }
+  config.action_mailer.default_url_options = { host: 'taskbridge.craftsilicon.com', protocol: 'https' }
   config.action_controller.raise_on_missing_callback_actions = true
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.perform_caching = false
   config.action_mailer.delivery_method = :smtp
+
+  # SMTP settings: do not set both :tls and :enable_starttls_auto (they are mutually exclusive).
+  smtp_address = ENV.fetch('SMTP_ADDRESS', 'secure.emailsrvr.com')
+  smtp_port    = Integer(ENV.fetch('SMTP_PORT', '465'))
+  smtp_domain  = ENV.fetch('SMTP_DOMAIN', 'craftsilicon.com')
+  smtp_user    = ENV.fetch('SMTP_USERNAME', 'cspm@craftsilicon.com')
+  # Avoid hardcoding passwords in repo; prefer passing SMTP_PASSWORD via environment or credentials
+  smtp_pass    = ENV['SMTP_PASSWORD']
+
+  # Determine implicit SSL (SMTPS, typically port 465) vs STARTTLS (typically port 587).
+  use_ssl = if ENV.key?('SMTP_USE_SSL')
+              ENV.fetch('SMTP_USE_SSL').to_s.downcase == 'true'
+            else
+              smtp_port == 465
+            end
+
+  enable_starttls_auto = if ENV.key?('SMTP_ENABLE_STARTTLS_AUTO')
+                            ENV.fetch('SMTP_ENABLE_STARTTLS_AUTO').to_s.downcase == 'true'
+                          else
+                            !use_ssl
+                          end
+
   config.action_mailer.smtp_settings = {
-    address: 'secure.emailsrvr.com',
-    port: 465, # Use 587 for STARTTLS or 465 for SSL/TLS
-    domain: 'craftsilicon.com', # Replace with your domain
-    user_name: 'cspm@craftsilicon.com', # Replace with your email
-    password: '#cspm@123#', # Replace with your email password
-    authentication: 'plain', # Can also be 'plain' or 'cram_md5'
-    ssl: true, # Use SSL encryption
-    tls: true, # Enforce TLS
-    enable_starttls_auto: true, # Automatically start TLS if available
-    openssl_verify_mode: 'none', # To avoid certificate verification issues (use cautiously)
-    open_timeout: 30, # Increase open timeout to 30 seconds
-    read_timeout: 30  # Increase read timeout to 30 seconds
+    address: smtp_address,
+    port: smtp_port,
+    domain: smtp_domain,
+    user_name: smtp_user,
+    password: smtp_pass,
+    authentication: ENV.fetch('SMTP_AUTHENTICATION', 'plain'),
+    ssl: use_ssl,
+    enable_starttls_auto: enable_starttls_auto,
+    openssl_verify_mode: ENV['SMTP_OPENSSL_VERIFY_MODE'] || 'none',
+    open_timeout: Integer(ENV.fetch('SMTP_OPEN_TIMEOUT', '30')),
+    read_timeout: Integer(ENV.fetch('SMTP_READ_TIMEOUT', '30'))
   }
 end
