@@ -59,10 +59,36 @@ namespace :passenger do
       instance_entries = instance_entries.drop(2) if instance_entries.length > 2
       instance_count = instance_entries.count { |l| l.strip != '' }
 
+      # Parse available instance names (first column of each entry)
+      instance_names = instance_entries.map do |l|
+        parts = l.split
+        parts[0] if parts && parts.any?
+      end.compact.uniq
+
       # Allow user to explicitly set the instance via server property, ENV, or Capistrano variable
       # server-specific property (preferred): server 'host', passenger_instance: 'NAME'
       server_prop = host.properties[:passenger_instance] if host.respond_to?(:properties)
       chosen_instance = ENV['PASSENGER_INSTANCE'] || server_prop || fetch(:passenger_instance, nil)
+
+      # If a chosen instance was provided, validate it exists in the list (when we have any instances)
+      if chosen_instance && !chosen_instance.to_s.empty? && instance_names.any?
+        unless instance_names.include?(chosen_instance)
+          err = <<~MSG
+            The configured passenger instance '#{chosen_instance}' was not found on #{host}.
+            Available instances: #{instance_names.empty? ? '<none>' : instance_names.join(', ')}
+
+            Please pick one of the available instance names and set it via:
+              - PASSENGER_INSTANCE=<NAME> when running cap, or
+              - set :passenger_instance, '<NAME>' in your stage file, or
+              - set per-server: server 'host', user: 'deploy', roles: %w[app web db], passenger_instance: '<NAME>'
+
+            To inspect instances on the server run:
+              passenger-config list-instances
+
+          MSG
+          raise SSHKit::Command::Failed, err
+        end
+      end
 
       if (chosen_instance.nil? || chosen_instance.empty?) && passenger_version_number && instances_output && !instances_output.empty?
         # Try to find an instance whose Description contains the detected passenger version
@@ -131,6 +157,41 @@ namespace :passenger do
             - If needed, set PASSENGER_INSTANCE or server property :passenger_instance and re-run deploy.
         ERR
       end
+    end
+  end
+
+  desc 'Preview passenger-config instances and which instance would be selected (no restart)'
+  task :preview do
+    on roles(:app) do |host|
+      passenger_config_bin = begin
+        capture(:which, 'passenger-config').strip
+      rescue StandardError
+        '/usr/bin/passenger-config'
+      end
+
+      info "Previewing passenger instances on #{host}"
+
+      instances_output = ''
+      begin
+        instances_output = capture(:bash, '-lc', "#{passenger_config_bin} list-instances 2>&1").to_s
+      rescue StandardError => e
+        warn "Could not run '#{passenger_config_bin} list-instances' on #{host}: #{e}"
+      end
+
+      instance_lines = instances_output.to_s.lines.map(&:chomp)
+      instance_entries = instance_lines.drop_while { |l| l.strip == '' }
+      instance_entries = instance_entries.drop(2) if instance_entries.length > 2
+      instance_names = instance_entries.map { |l| l.split.first }.compact.uniq
+
+      server_prop = host.properties[:passenger_instance] if host.respond_to?(:properties)
+      chosen_instance = ENV['PASSENGER_INSTANCE'] || server_prop || fetch(:passenger_instance, nil)
+
+      info "passenger-config binary: #{passenger_config_bin}"
+      info "Available instances: #{instance_names.empty? ? '<none>' : instance_names.join(', ')}"
+      info "server property passenger_instance: #{server_prop.inspect}"
+      info "ENV PASSENGER_INSTANCE: #{ENV['PASSENGER_INSTANCE'].inspect}"
+      info ":passenger_instance Cap variable: #{fetch(:passenger_instance, nil).inspect}"
+      info "Instance that would be used: #{chosen_instance.inspect}"
     end
   end
 end
