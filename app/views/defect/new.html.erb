@@ -4,7 +4,7 @@
       data: { controller: "modal",
               product_id: params[:product_id],
               client_name: params[:client_name] } do %>
-  <div class="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-hidden bg-black/40 backdrop-blur-sm" data-action="click->modal#closeOnBackdrop">
+  <div class="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-hidden backdrop-blur-sm" data-action="click->modal#closeOnBackdrop" style="background-color: rgba(0, 0, 0, 0.4);">
     <!-- Dialog (90vh cap, internal scroll only in body) -->
     <div data-modal-target="dialog"
          class="w-full max-w-[80%] h-[95%] bg-white dark:bg-gray-800 rounded-lg shadow-xl flex flex-col overflow-hidden p-4"
