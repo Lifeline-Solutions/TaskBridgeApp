@@ -238,13 +238,13 @@
     </div>
 
     <!-- Save Dashboard Modal -->
-    <div id="saveDashboardModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div class="bg-white rounded-lg p-6 w-96">
-        <h3 class="text-lg font-bold mb-4">Save Current Report as Dashboard</h3>
+    <div id="saveDashboardModal" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.5);">
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-96">
+        <h3 class="text-lg font-bold mb-4 dark:text-white">Save Current Report as Dashboard</h3>
         <%= form_with url: save_report_dashboard_path, method: :post, local: true do |f| %>
           <div class="mb-4">
-            <%= label_tag 'defect_filter[name]', 'Dashboard Name', class: 'block font-medium mb-2' %>
-            <%= text_field_tag 'defect_filter[name]', '', class: 'w-full border p-2 rounded', required: true %>
+            <%= label_tag 'defect_filter[name]', 'Dashboard Name', class: 'block font-medium mb-2 dark:text-gray-300' %>
+            <%= text_field_tag 'defect_filter[name]', '', class: 'w-full border-2 border-blue-500 dark:border-blue-400 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 dark:bg-gray-700 dark:text-white', required: true %>
           </div>
 
           <% if @product_options.any? %>
