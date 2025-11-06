@@ -16,21 +16,21 @@
 
     <%= link_to 'Manage filters', defect_filters_path, class: 'ml-2 text-sm text-gray-600 hover:underline' %>
 
-    <div id="saveFilterModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div class="bg-white rounded-lg p-4 w-80">
-        <h3 class="font-bold mb-2">Save current filter</h3>
+    <div id="saveFilterModal" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.5);">
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-4 w-80">
+        <h3 class="font-bold mb-2 dark:text-white">Save current filter</h3>
         <%= form_with url: defect_filters_path, method: :post, local: true do |f| %>
           <div class="mb-2">
-            <%= label_tag 'defect_filter[name]', 'Filter name', class: 'block text-sm' %>
-            <%= text_field_tag 'defect_filter[name]', '', class: 'w-full border p-1' %>
+            <%= label_tag 'defect_filter[name]', 'Filter name', class: 'block text-sm dark:text-gray-300' %>
+            <%= text_field_tag 'defect_filter[name]', '', class: 'w-full border-2 border-blue-500 dark:border-blue-400 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 dark:bg-gray-700 dark:text-white' %>
           </div>
 
           <%= hidden_field_tag 'defect_filter[filters]', request.query_parameters.to_json %>
           <%= hidden_field_tag 'defect_filter[product_id]', params[:product_id] if params[:product_id].present? %>
 
           <div class="flex justify-end gap-2 mt-3">
-            <button type="button" id="cancelSaveFilter" class="px-3 py-1 border rounded">Cancel</button>
-            <%= submit_tag 'Save', class: 'px-3 py-1 bg-blue-600 text-white rounded' %>
+            <button type="button" id="cancelSaveFilter" class="px-3 py-1 border rounded dark:bg-gray-600 dark:text-gray-300 dark:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-500">Cancel</button>
+            <%= submit_tag 'Save', class: 'px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700' %>
           </div>
         <% end %>
       </div>

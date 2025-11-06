@@ -155,10 +155,11 @@
 
       const modal = document.createElement('div');
       modal.id = 'attachmentPreviewModal';
-      modal.className = 'hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4';
+      modal.className = 'hidden fixed inset-0 z-50 flex items-center justify-center p-4';
+      modal.style.backgroundColor = 'rgba(0, 0, 0, 0.75)';
       modal.innerHTML = `
         <div class="relative max-w-[90vw] max-h-[90vh] w-full">
-          <button id="attachmentPreviewClose" class="absolute top-2 right-2 z-50 text-white text-2xl leading-none rounded-md bg-black bg-opacity-30 px-2 py-1 hover:bg-opacity-50">×</button>
+          <button id="attachmentPreviewClose" class="absolute top-2 right-2 z-50 text-white text-2xl leading-none rounded-md px-2 py-1" style="background-color: rgba(0, 0, 0, 0.3);" onmouseover="this.style.backgroundColor='rgba(0, 0, 0, 0.5)'" onmouseout="this.style.backgroundColor='rgba(0, 0, 0, 0.3)'">×</button>
           <div id="attachmentPreviewContent" class="w-full h-full flex items-center justify-center overflow-auto rounded-lg"></div>
         </div>
       `;
