@@ -82,6 +82,7 @@ class Ability
 
     elsif user.has_role? :qa
       can :manage, DefectMessage, user_id: user.id
+      can :edit, Defect, user_id: user.id
       can %i[manage defects_download defects_download_excel], Defect
 
     else
