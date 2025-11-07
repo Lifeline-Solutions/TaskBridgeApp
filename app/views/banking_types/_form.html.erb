@@ -40,6 +40,6 @@
 
   <div class="flex items-center">
     <%= form.submit class: "px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer" %>
-    <%= link_to 'Cancel', banking_types_path(product_id: @product_id || params[:product_id]), class: "ml-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600" %>
+    <%= link_to 'Cancel', banking_types_path(product_id: params[:product_id], client_name: params[:client_name]), class: "ml-4 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600" %>
   </div>
 <% end %>

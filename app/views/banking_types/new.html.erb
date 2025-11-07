@@ -2,7 +2,7 @@
   <div class="fixed inset-0 flex justify-center items-center z-50" style="background-color: rgba(0, 0, 0, 0.5);">
     <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-2xl relative">
       <!-- Close Button -->
-      <%= link_to "X", banking_types_path(product_id: @product_id || params[:product_id]), data: { turbo_frame: "_top", action: "modal#close" },
+      <%= link_to "X", banking_types_path(product_id: params[:product_id], client_name: params[:client_name]), data: { turbo_frame: "_top", action: "modal#close" },
             class: "absolute top-3 right-3 text-xl font-bold text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100" %>
 
       <%= render 'form', banking_type: @banking_type %>
