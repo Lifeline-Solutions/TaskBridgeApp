@@ -202,6 +202,7 @@ class DashboardsController < ApplicationController
                        .where(users: { id: user_ids })
                        .where(statuses: { name: status_filter })
                        .where.not(statuses: { name: %w[Declined Closed Resolved] })
+                       .where('tickets.created_at >= ?', 30.days.ago)
                    else
                      Status.left_outer_joins(tickets: [:users])
                        .where(users: { id: user_ids })
@@ -218,6 +219,7 @@ class DashboardsController < ApplicationController
         # No additional filtering needed
       end
 
+      # Add ordering (latest first) and include a user team name (first team found) in the select
       @tickets = @tickets
         .joins(:taggings, :users)
         .joins('LEFT JOIN add_statuses ON add_statuses.ticket_id = tickets.id')
@@ -227,8 +229,10 @@ class DashboardsController < ApplicationController
           'tickets.id', 'tickets.unique_id', 'tickets.priority', 'tickets.project_id',
           'tickets.issue', 'tickets.subject', 'tickets.created_at',
           'users.first_name', 'users.last_name',
-          'statuses.name AS status_name'
+          'statuses.name AS status_name',
+          "(SELECT teams.name FROM teams INNER JOIN teams_users ON teams.id = teams_users.team_id WHERE teams_users.user_id = users.id LIMIT 1) AS user_team_name"
         )
+        .order('tickets.created_at DESC')
 
       render json: @tickets.map { |ticket|
         ticket.as_json
@@ -236,6 +240,7 @@ class DashboardsController < ApplicationController
             project_id: ticket.project_id,
             project_title: ticket.project&.title,
             user_name: "#{ticket.first_name} #{ticket.last_name}",
+            user_team: ticket.respond_to?(:user_team_name) ? ticket.user_team_name : nil,
             status_name: ticket.status_name
           )
       }
