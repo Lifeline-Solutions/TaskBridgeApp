@@ -555,7 +555,12 @@
 
               <div class="pt-2 flex justify-between">
                 <%= submit_tag 'Apply', class: 'px-3 py-1 text-sm bg-blue-600 rounded-r-lg border border-blue-600 hover:bg-blue-700 focus:outline-none text-white' %>
-                <%= link_to 'Reset', index_show_defect_index_path, class: 'px-3 py-1 text-sm bg-red-600 rounded-r-lg border border-red-600 hover:bg-red-700 focus:outline-none text-white' %>
+                <%= link_to 'Reset', 
+                    index_show_defect_index_path(
+                      product_id: params[:product_id],
+                      client_name: params[:client_name]
+                    ), 
+                    class: 'px-3 py-1 text-sm bg-red-600 rounded-r-lg border border-red-600 hover:bg-red-700 focus:outline-none text-white' %>
               </div>
             <% end %>
           </div>
@@ -699,12 +704,13 @@
         const target = this.dataset.target;
         const checkboxes = document.querySelectorAll(`.${target}-checkbox`);
         
+        // Update all individual checkboxes to match select-all state
         checkboxes.forEach(cb => {
-          if (cb !== e.target) {
-            cb.checked = e.target.checked;
-            cb.dispatchEvent(new Event('change', { bubbles: true }));
-          }
+          cb.checked = e.target.checked;
         });
+        
+        // Update button text after selecting all
+        updateButtonText(checkboxes[0]);
       });
     });
 
