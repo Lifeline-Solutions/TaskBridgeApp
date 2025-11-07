@@ -5,6 +5,7 @@ class DashboardsController < ApplicationController
     @teams = Team.all
     @stats = default_stats
     @ticket = Ticket.all
+    @selected_team = nil
   end
 
   def fetch_stats

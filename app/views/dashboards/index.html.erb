@@ -3,6 +3,7 @@
 <div class="mx-auto mb-6 p-6">
   <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4">
     <div class="relative w-full md:w-80">
+      <label for="search" class="sr-only">Search teams</label>
       <input type="text" id="search" class="w-full px-4 py-2 border rounded-md dark:bg-gray-700" placeholder="Search Teams..." autocomplete="new-password" onkeyup="filterDropdown()" onfocus="showDropdown()">
       <div id="dropdown" class="absolute w-full border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none bg-white dark:bg-gray-700 dark:border-gray-50 w-full hidden z-10">
         <% @teams.each do |team| %>
@@ -27,9 +28,12 @@
         <%= render 'dashboards/stat_card', title: "Total Open Tickets from Inceptions( Minus Closed, Resolved or Declined)", value: @stats[:tickets_from_inception], id: "tickets_from_inception_count"%>
         <div class="mt-2 text-sm" data-type="tickets_from_inception_by_status" id="tickets_from_inception_by_status">
           <% if @stats[:tickets_from_inception_by_status].present? %>
-            <% @stats[:tickets_from_inception_by_status].each do |status, count| %>
+            <%# Desired display order requested by user %>
+            <% desired_order = ['Assigned', 'Work in Progress', 'Under Development', 'QA Testing', 'Client Confirmation Pending', 'Reopened', 'On-Hold'] %>
+            <% ordered_statuses = desired_order.select { |s| @stats[:tickets_from_inception_by_status].key?(s) } + (@stats[:tickets_from_inception_by_status].keys - desired_order) %>
+            <% ordered_statuses.each do |status| %>
               <div class="text-lg font-bold mb-2">
-                <span class="text-lg font-bold mb-2"><%= status %>:</span> <%= count %>
+                <span class="text-lg font-bold mb-2"><%= status %>:</span> <%= @stats[:tickets_from_inception_by_status][status] %>
               </div>
             <% end %>
           <% else %>
@@ -278,11 +282,15 @@
         const statusData = data.tickets_from_inception_by_status;
 
         if (statusData && Object.keys(statusData).length > 0) {
-          const statuses = Object.keys(statusData);
-          const counts = Object.values(statusData);
+          // enforce the same desired order on the client
+          const desiredOrder = ['Assigned', 'Work in Progress', 'Under Development', 'QA Testing', 'Client Confirmation Pending', 'Reopened', 'On-Hold'];
+          const allStatuses = Object.keys(statusData);
+          const orderedStatuses = desiredOrder.filter(s => allStatuses.includes(s)).concat(allStatuses.filter(s => !desiredOrder.includes(s)));
+          const statuses = orderedStatuses;
+          const counts = statuses.map(s => statusData[s]);
 
           // Build a table where only the COUNT is a button
-          const html = `
+          container.innerHTML = `
           <table class="min-w-full border-separate border-spacing-2 text-center bg-white dark:bg-gray-700 rounded-lg">
             <thead>
               <tr>
@@ -319,7 +327,6 @@
             </tbody>
           </table>
         `;
-          container.innerHTML = html;
 
           // Attach click listeners to ONLY the count buttons
           container.querySelectorAll(".status-count").forEach((btn) => {
@@ -619,3 +626,4 @@
     });
   });
 </script>
+
