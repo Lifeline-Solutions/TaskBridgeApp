@@ -1,46 +1,73 @@
-<!-- Improved Topbar with Responsive Design -->
-<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-4">
-  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-    
-    <!-- Left Section: Back Button and Actions Menu -->
-    <div class="flex items-center gap-2 flex-wrap">
-      <%= button_to defect_index_path, method: :get, class: 'inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg font-medium transition-colors duration-200' do %>
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
-        </svg>
-        <span class="hidden sm:inline">Back</span>
-      <% end %>
+<!-- Improved Topbar with Clean, Intuitive Design -->
+<div class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+  <div class="max-w-full px-4 py-3">
+    <div class="flex items-center justify-between gap-4">
+      
+      <!-- Left Section: Back and Actions -->
+      <div class="flex items-center gap-3">
+        <%= button_to defect_index_path, method: :get, class: 'inline-flex items-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-all duration-200' do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+          </svg>
+          <span class="hidden sm:inline">Back</span>
+        <% end %>
 
-      <!-- Actions Menu Button -->
-      <button type="button" 
-              id="actionsMenuButton"
-              class="inline-flex items-center gap-2 px-4 py-2 bg-[#3F8CFF] hover:bg-[#3A81EB] text-white rounded-lg font-medium transition-colors duration-200 shadow-sm">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
-        </svg>
-        <span>Actions</span>
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-        </svg>
-      </button>
+        <div class="hidden sm:block w-px h-8 bg-gray-300 dark:bg-gray-600"></div>
 
-      <!-- Default Assignee Info (Desktop) -->
-      <div class="hidden lg:block">
-        <%= render 'default_defect_assignees/button' %>
+        <button type="button" 
+                id="actionsMenuButton"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
+          </svg>
+          <span>Actions</span>
+        </button>
       </div>
-    </div>
 
-    <!-- Right Section: Filter and View All -->
-    <div class="flex items-center gap-2 flex-wrap">
+      <!-- Right Section: Filters and Downloads -->
       <div class="flex items-center gap-2">
+        <% 
+          # Check if any filters are active
+          has_active_filters = params[:status].present? || 
+                               params[:priority].present? || 
+                               params[:user_id].present? || 
+                               params[:label_ids].present? || 
+                               params[:qa_module_id].present? || 
+                               params[:submodule_id].present? || 
+                               params[:banking_type_id].present? || 
+                               params[:start_date].present? || 
+                               params[:end_date].present? || 
+                               params[:query].present? || 
+                               params[:order].present?
+        %>
+        
+        <% if has_active_filters %>
+          <%= link_to index_show_defect_index_path(
+                product_id: params[:product_id],
+                client_name: params[:client_name]
+              ), 
+              class: "inline-flex items-center gap-2 px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg font-medium transition-all duration-200 border border-red-300 dark:border-red-700" do %>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span class="hidden md:inline">Clear Filters</span>
+          <% end %>
+        <% end %>
+
         <!-- Filter Button -->
         <div class="relative">
           <button id="filterDropdownButton" 
-                  class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium transition-colors duration-200">
+                  class="inline-flex items-center gap-2 px-4 py-2 <%= has_active_filters ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600' %> border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 font-medium transition-all duration-200">
             <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
             </svg>
-            <span class="hidden sm:inline">Filter</span>
+            <span class="hidden sm:inline">Filters</span>
+            <% if has_active_filters %>
+              <span class="flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-blue-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+              </span>
+            <% end %>
           </button>
 
           <!-- Filter Dropdown Menu -->
@@ -512,48 +539,28 @@
               </div>
 
               <div class="pt-2 flex justify-between">
-                <%= submit_tag 'Apply', class: 'px-3 py-1 text-sm bg-blue-600 rounded-r-lg border border-blue-600 hover:bg-blue-700 focus:outline-none text-white' %>
-                <%= link_to 'Reset', 
-                    index_show_defect_index_path(
-                      product_id: params[:product_id],
-                      client_name: params[:client_name]
-                    ), 
-                    class: 'px-3 py-1 text-sm bg-red-600 rounded-r-lg border border-red-600 hover:bg-red-700 focus:outline-none text-white' %>
+                <%= submit_tag 'Apply Filters', class: 'flex-1 px-4 py-2 text-sm bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none text-white font-medium transition-colors duration-200' %>
               </div>
             <% end %>
           </div>
         </div>
 
-        <%= render 'defect/saved_filters' %>
-
-        <!-- View All Button -->
-        <%= link_to index_show_defect_index_path(
-              product_id: params[:product_id],
-              client_name: params[:client_name]
-            ), class: "inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium transition-colors duration-200" do %>
-          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
-            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
-          </svg>
-          <span class="hidden sm:inline">View All</span>
-        <% end %>
-        
         <!-- Download Dropdown -->
-        <div class="relative" data-controller="dropdown">
+        <div class="relative">
           <button type="button" 
                   id="downloadDropdownButton"
-                  class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors duration-200">
+                  class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow">
             <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            <span class="hidden sm:inline">Download</span>
+            <span class="hidden sm:inline">Export</span>
             <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
           </button>
           
-          <div id="downloadDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-20">
-            <div class="py-2">
+          <div id="downloadDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-20">
+            <div class="py-1">
               <%= link_to defects_download_defect_index_path(
                     format: :csv,
                     product_id: params[:product_id],
@@ -569,12 +576,12 @@
                     banking_type_id: params[:banking_type_id],
                     status: params[:status],
                     label_ids: params[:label_ids]
-                  ), class: "flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700" do %>
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  ), class: "flex items-center gap-3 px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" do %>
+                <svg class="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z"/>
                   <path d="M3 8a2 2 0 012-2v10h8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/>
                 </svg>
-                Download CSV
+                <span>CSV Format</span>
               <% end %>
               
               <%= link_to defects_download_excel_defect_index_path(
@@ -591,11 +598,11 @@
                     banking_type_id: params[:banking_type_id],
                     status: params[:status],
                     label_ids: params[:label_ids]
-                  ), class: "flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700" do %>
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  ), class: "flex items-center gap-3 px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" do %>
+                <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586L7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"/>
                 </svg>
-                Download Excel
+                <span>Excel Format</span>
               <% end %>
             </div>
           </div>
@@ -603,79 +610,92 @@
       </div>
     </div>
   </div>
-
-  <!-- Default Assignee Info (Mobile) -->
-  <div class="lg:hidden border-t border-gray-200 dark:border-gray-700 pt-4">
-    <%= render 'default_defect_assignees/button' %>
-  </div>
 </div>
 
-<!-- Actions Modal -->
-<div id="actionsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
-    <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-      <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Quick Actions</h3>
+<!-- Actions Modal with Clear Background -->
+<div id="actionsModal" 
+     data-controller="actions-modal"
+     data-action="click->actions-modal#closeOnBackdrop"
+     class="hidden fixed inset-0 bg-gray-900/20 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity duration-200">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full transform transition-all duration-200 scale-95 opacity-0" 
+       id="actionsModalContent"
+       data-actions-modal-target="content">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Quick Actions</h3>
       <button type="button" 
               id="closeActionsModal"
-              class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+              data-action="click->actions-modal#close"
+              class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
     </div>
     
-    <div class="p-6 space-y-3">
+    <div class="p-6 space-y-2">
       <% if @product.present? %>
         <%= link_to new_defect_path(product_id: @product.id),
-              class: 'flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors duration-200 group' do %>
-          <div class="flex-shrink-0 w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              class: 'flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 group border border-transparent hover:border-blue-200 dark:hover:border-blue-800' do %>
+          <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
           </div>
           <div class="flex-1">
-            <h4 class="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">Create Defect</h4>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Add a new defect to the system</p>
+            <h4 class="font-medium text-gray-900 dark:text-white">Create Defect</h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Add a new defect</p>
           </div>
+          <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
         <% end %>
 
         <%= link_to qa_modules_path(product_id: @product.id),
-              class: 'flex items-center gap-3 p-4 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded-lg transition-colors duration-200 group' do %>
-          <div class="flex-shrink-0 w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              class: 'flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 group border border-transparent hover:border-purple-200 dark:hover:border-purple-800' do %>
+          <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
             </svg>
           </div>
           <div class="flex-1">
-            <h4 class="font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400">Manage Modules</h4>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Configure QA modules</p>
+            <h4 class="font-medium text-gray-900 dark:text-white">QA Modules</h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Configure modules</p>
           </div>
+          <svg class="w-5 h-5 text-gray-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
         <% end %>
 
         <%= link_to banking_types_path(product_id: @product.id),
-              class: 'flex items-center gap-3 p-4 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg transition-colors duration-200 group' do %>
-          <div class="flex-shrink-0 w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              class: 'flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 group border border-transparent hover:border-green-200 dark:hover:border-green-800' do %>
+          <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-sm">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
             </svg>
           </div>
           <div class="flex-1">
-            <h4 class="font-semibold text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400">Banking Types</h4>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Manage banking type categories</p>
+            <h4 class="font-medium text-gray-900 dark:text-white">Banking Types</h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Manage categories</p>
           </div>
+          <svg class="w-5 h-5 text-gray-400 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
         <% end %>
       <% elsif @products.present? && @products.size == 1 %>
         <%= link_to new_defect_path(product_id: @products.first.id),
-              class: 'flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors duration-200 group' do %>
-          <div class="flex-shrink-0 w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              class: 'flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 group border border-transparent hover:border-blue-200 dark:hover:border-blue-800' do %>
+          <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
           </div>
           <div class="flex-1">
-            <h4 class="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">Create Defect</h4>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Add a new defect to the system</p>
+            <h4 class="font-medium text-gray-900 dark:text-white">Create Defect</h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Add a new defect</p>
           </div>
+          <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
         <% end %>
 
         <%= link_to qa_modules_path(product_id: @products.first.id),
@@ -720,46 +740,34 @@
 
       <%= link_to new_default_defect_assignee_path,
             data: { turbo_frame: 'modal' },
-            class: 'flex items-center gap-3 p-4 bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/30 rounded-lg transition-colors duration-200 group' do %>
-        <div class="flex-shrink-0 w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
-          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            id: 'defaultAssigneeLink',
+            class: 'flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 group border border-transparent hover:border-orange-200 dark:hover:border-orange-800' do %>
+        <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center shadow-sm">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
         </div>
         <div class="flex-1">
-          <h4 class="font-semibold text-gray-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400">Default Assignee</h4>
-          <p class="text-sm text-gray-500 dark:text-gray-400">Set default defect assignee</p>
+          <h4 class="font-medium text-gray-900 dark:text-white">Default Assignee</h4>
+          <% if @default_defect_assignee&.user.present? %>
+            <p class="text-xs font-semibold text-orange-600 dark:text-orange-400">
+              <%= @default_defect_assignee.user.first_name %> <%= @default_defect_assignee.user.last_name %>
+            </p>
+          <% else %>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Set default user</p>
+          <% end %>
         </div>
+        <svg class="w-5 h-5 text-gray-400 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
       <% end %>
     </div>
   </div>
 </div>
 
 <script>
-  // ========== ACTIONS MODAL ==========
+  // ========== DOWNLOAD DROPDOWN ==========
   document.addEventListener("turbo:load", function () {
-    const actionsButton = document.getElementById("actionsMenuButton");
-    const actionsModal = document.getElementById("actionsModal");
-    const closeModalButton = document.getElementById("closeActionsModal");
-
-    if (actionsButton && actionsModal) {
-      actionsButton.addEventListener("click", function(e) {
-        e.stopPropagation();
-        actionsModal.classList.remove("hidden");
-      });
-
-      closeModalButton.addEventListener("click", function() {
-        actionsModal.classList.add("hidden");
-      });
-
-      actionsModal.addEventListener("click", function(e) {
-        if (e.target === actionsModal) {
-          actionsModal.classList.add("hidden");
-        }
-      });
-    }
-
-    // ========== DOWNLOAD DROPDOWN ==========
     const downloadButton = document.getElementById("downloadDropdownButton");
     const downloadDropdown = document.getElementById("downloadDropdown");
 
