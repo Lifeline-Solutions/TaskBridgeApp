@@ -379,7 +379,8 @@
                                               module_item.id,
                                               selected_modules.include?(module_item.id.to_s),
                                               id: "module_#{module_item.id}",
-                                              class: "mr-2 module-checkbox" %>
+                                              class: "mr-2 module-checkbox",
+                                              data: { "parent-id": module_item.id } %>
                             <%= label_tag "module_#{module_item.id}", module_item.name, class: "text-sm" %>
                           </div>
                         <% end %>
@@ -428,7 +429,8 @@
                         </div>
                         
                         <% @submodules.each do |submodule| %>
-                          <div class="flex items-center dropdown-item">
+                          <div class="flex items-center dropdown-item submodule-item" 
+                              data-parent-id="<%= submodule.parent_id %>">
                             <%= check_box_tag 'submodule_id[]',
                                               submodule.id,
                                               selected_submodules.include?(submodule.id.to_s),
@@ -649,6 +651,7 @@
     // Initialize the multi-select functionality for index_show
     initializeMultiSelectDropdowns();
     initializeSelectAllFunctionality();
+    initializeModuleSubmoduleFiltering();
     updateAllButtonTexts();
   });
 
@@ -794,6 +797,89 @@
     return textMap[filterType] || 'Filter...';
   }
 
+  // ========== MODULE AND SUBMODULE DYNAMIC FILTERING ==========
+  function initializeModuleSubmoduleFiltering() {
+    // Add event listeners to module checkboxes to update submodule visibility
+    document.querySelectorAll('.module-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        updateSubmoduleVisibility();
+      });
+    });
+
+    // Initialize submodule visibility on page load
+    updateSubmoduleVisibility();
+  }
+
+  function updateSubmoduleVisibility() {
+    const selectedModuleIds = getSelectedModuleIds();
+    const submoduleItems = document.querySelectorAll('.submodule-item');
+    
+    if (selectedModuleIds.length === 0) {
+      // If no modules are selected, show all submodules
+      submoduleItems.forEach(item => {
+        item.style.display = 'flex';
+      });
+    } else {
+      // Show only submodules that belong to selected modules
+      submoduleItems.forEach(item => {
+        const parentId = item.getAttribute('data-parent-id');
+        if (selectedModuleIds.includes(parentId)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    }
+    
+    // Update submodule button text to reflect filtered state
+    updateSubmoduleButtonText();
+  }
+
+  function getSelectedModuleIds() {
+    const selectedModules = [];
+    document.querySelectorAll('.module-checkbox:checked').forEach(checkbox => {
+      selectedModules.push(checkbox.getAttribute('data-parent-id'));
+    });
+    return selectedModules;
+  }
+
+  function updateSubmoduleButtonText() {
+    const selectedModuleIds = getSelectedModuleIds();
+    const submoduleButtonText = document.getElementById('submoduleButtonText');
+    const submoduleCheckboxes = document.querySelectorAll('.submodule-checkbox:not(.select-all-checkbox)');
+    
+    if (selectedModuleIds.length === 0) {
+      // No modules selected - show count of all submodules
+      const selectedSubmodules = Array.from(submoduleCheckboxes).filter(cb => cb.checked).length;
+      const totalSubmodules = submoduleCheckboxes.length;
+      
+      if (selectedSubmodules === 0) {
+        submoduleButtonText.textContent = 'Filter by Submodule';
+      } else if (selectedSubmodules === totalSubmodules) {
+        submoduleButtonText.textContent = 'Filter by Submodule (All)';
+      } else {
+        submoduleButtonText.textContent = `Filter by Submodule (${selectedSubmodules} selected)`;
+      }
+    } else {
+      // Modules selected - show count of visible (filtered) submodules
+      const visibleSubmodules = Array.from(submoduleCheckboxes).filter(cb => {
+        const parentId = cb.closest('.submodule-item').getAttribute('data-parent-id');
+        return selectedModuleIds.includes(parentId);
+      });
+      
+      const selectedVisibleSubmodules = visibleSubmodules.filter(cb => cb.checked).length;
+      const totalVisibleSubmodules = visibleSubmodules.length;
+      
+      if (selectedVisibleSubmodules === 0) {
+        submoduleButtonText.textContent = 'Filter by Submodule';
+      } else if (selectedVisibleSubmodules === totalVisibleSubmodules) {
+        submoduleButtonText.textContent = 'Filter by Submodule (All)';
+      } else {
+        submoduleButtonText.textContent = `Filter by Submodule (${selectedVisibleSubmodules} selected)`;
+      }
+    }
+  }
+
   // ========== LABELS FILTER MANAGEMENT ==========
   document.addEventListener("turbo:load", () => {
     const searchInput   = document.getElementById("label-search");
@@ -856,9 +942,6 @@
         }
       });
     }
-
-    // REMOVED: The auto-submit functionality for module checkboxes
-    // Module checkboxes will now only update the button text, not submit the form
 
     // Prevent form submission when only updating button text for all checkboxes
     document.querySelectorAll('[class$="-checkbox"]').forEach(checkbox => {
