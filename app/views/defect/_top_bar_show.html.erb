@@ -156,7 +156,7 @@
               <div>
                 <%= label_tag :order, 'Sort By', class: 'block font-medium mb-1 text-sm border-gray-300 dark:bg-gray-500' %>
                 <%= select_tag :order, options_for_select([['Latest First', 'desc'], ['Oldest First', 'asc']], params[:order]),
-                               class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
+                              class: "w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded" %>
               </div>
 
               <!-- Date Range -->
@@ -857,30 +857,16 @@
       });
     }
 
-    // Auto-submit form when module selection changes to load submodules
-    const moduleCheckboxes = document.querySelectorAll('.module-checkbox');
-    moduleCheckboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
-        // Store filter state before submitting
-        sessionStorage.setItem('filterDropdownOpen', 'true');
-        
-        // Small delay to allow multiple selections
-        setTimeout(() => {
-          document.getElementById('index-show-filter-form').requestSubmit();
-        }, 300);
-      });
-    });
+    // REMOVED: The auto-submit functionality for module checkboxes
+    // Module checkboxes will now only update the button text, not submit the form
 
-    // Prevent form submission when only updating button text
+    // Prevent form submission when only updating button text for all checkboxes
     document.querySelectorAll('[class$="-checkbox"]').forEach(checkbox => {
-      if (!checkbox.classList.contains('module-checkbox')) {
-        checkbox.addEventListener('change', function(e) {
-          // Only prevent default for non-module checkboxes to avoid unnecessary submissions
-          if (!e.target.classList.contains('module-checkbox')) {
-            e.stopPropagation();
-          }
-        });
-      }
+      checkbox.addEventListener('change', function(e) {
+        // Only prevent default to avoid unnecessary submissions
+        // The form will only submit when the "Apply" button is clicked
+        e.stopPropagation();
+      });
     });
 
     // Restore filter state on page load
@@ -893,7 +879,6 @@
         // Clear the stored state
         sessionStorage.removeItem('filterDropdownOpen');
       }
-      
     });
   });
 </script>

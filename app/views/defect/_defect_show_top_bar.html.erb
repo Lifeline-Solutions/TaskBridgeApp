@@ -31,7 +31,7 @@
           <% end %>
         </p>
 
-        <% if @defect.draft? %>
+        <% if @defect.draft? && can?(:publish, @defect) %>
           <%= button_to "Publish",
               publish_defect_path(@defect),
               method: :patch,
