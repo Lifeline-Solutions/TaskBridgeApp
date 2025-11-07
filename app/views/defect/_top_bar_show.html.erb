@@ -704,12 +704,13 @@
         const target = this.dataset.target;
         const checkboxes = document.querySelectorAll(`.${target}-checkbox`);
         
+        // Update all individual checkboxes to match select-all state
         checkboxes.forEach(cb => {
-          if (cb !== e.target) {
-            cb.checked = e.target.checked;
-            cb.dispatchEvent(new Event('change', { bubbles: true }));
-          }
+          cb.checked = e.target.checked;
         });
+        
+        // Update button text after selecting all
+        updateButtonText(checkboxes[0]);
       });
     });
 
