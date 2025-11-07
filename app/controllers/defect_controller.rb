@@ -456,6 +456,9 @@ class DefectController < ApplicationController
       .select(:id))
       .order(:name)
 
+    # Load default defect assignee
+    @default_defect_assignee = DefaultDefectAssignee.where(archive_status: false).first
+
     # Pagination
     @per_page = 20
     @page = (params[:page] || 1).to_i
