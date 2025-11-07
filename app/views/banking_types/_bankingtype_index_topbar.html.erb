@@ -1,6 +1,6 @@
 <div class="flex justify-between items-center pr-8 p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
   <div>
-    <%= link_to defect_index_path, class: 'no-underline' do %>
+    <%= link_to index_show_defect_index_path(product_id: params[:product_id], client_name: params[:client_name]), class: 'no-underline' do %>
       <button class="flex items-center space-x-1 bg-[#3F8CFF] hover:bg-[#3A81EB] px-4 py-2 rounded-lg font-bold text-slate-100">
         &#8656; Back
       </button>
