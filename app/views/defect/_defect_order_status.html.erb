@@ -31,8 +31,8 @@
             <%= defect.summary.truncate(50) %>
           <% end %>
         </td>
-        <td class="px-6 py-4">
-          <div class="flex items-center gap-2 flex-wrap">
+        <td class="px-6 py-4 whitespace-nowrap min-w-[160px]">
+          <div class="flex items-center gap-2">
             <%= render partial: 'defect/defect_statuses', locals: { defect: defect } %>
           </div>
         </td>
