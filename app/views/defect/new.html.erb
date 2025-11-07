@@ -15,7 +15,7 @@
       <div class="shrink-0 px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-start">
         <h2 id="new-defect-title" class="text-xl font-semibold text-gray-800 dark:text-white">New Defect</h2>
 
-        <%= link_to index_show_defect_index_path(product_id: params[:product_id]),
+        <%= link_to index_show_defect_index_path(product_id: params[:product_id], client_name: params[:client_name]),
             data: { turbo_frame: "_top" },
             class: "ml-auto text-xl font-bold text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded cursor-pointer",
             aria: { label: "Close modal" } do %>
