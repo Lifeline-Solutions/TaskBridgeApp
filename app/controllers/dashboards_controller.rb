@@ -230,7 +230,7 @@ class DashboardsController < ApplicationController
           'tickets.issue', 'tickets.subject', 'tickets.created_at',
           'users.first_name', 'users.last_name',
           'statuses.name AS status_name',
-          "(SELECT teams.name FROM teams INNER JOIN teams_users ON teams.id = teams_users.team_id WHERE teams_users.user_id = users.id LIMIT 1) AS user_team_name"
+          '(SELECT teams.name FROM teams INNER JOIN teams_users ON teams.id = teams_users.team_id WHERE teams_users.user_id = users.id LIMIT 1) AS user_team_name'
         )
         .order('tickets.created_at DESC')
 
