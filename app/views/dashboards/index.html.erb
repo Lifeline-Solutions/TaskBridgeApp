@@ -429,6 +429,9 @@
         container.innerHTML = "";
 
         if (Array.isArray(data) && data.length > 0) {
+          // Ensure tickets are displayed with latest (most recent created_at) first
+          data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
           let count = 0;
           data.forEach((ticket) => {
             count++;
@@ -509,7 +512,10 @@
               </p>
             </td>
             <td class="p-2">${escapeHtml(ticket.subject)}</td>
-            <td class="p-2">${escapeHtml(ticket.user_name)}</td>
+            <td class="p-2">
+              <div>${escapeHtml(ticket.user_name)}</div>
+              ${ticket.user_team || ticket.team || ticket.user_team_name ? `<div class="text-sm text-gray-500">${escapeHtml(ticket.user_team || ticket.team || ticket.user_team_name)}</div>` : ''}
+            </td>
             <td class="p-2">
               <p class="${statusClass} text-center font-semibold rounded p-1 border-r-2 border-b-4">
                 ${escapeHtml(ticket.status_name)}
