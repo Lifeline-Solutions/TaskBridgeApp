@@ -48,7 +48,7 @@
 
   <!-- Actions -->
   <div class="flex items-center justify-end space-x-3 mt-6">
-    <%= link_to "Cancel", qa_modules_path(product_id: @product_id || params[:product_id]), class: "px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded text-sm" %>
+    <%= link_to "Cancel", qa_modules_path(product_id: params[:product_id], client_name: params[:client_name]), class: "px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded text-sm" %>
     <%= f.submit "Save Module", class: "px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm cursor-pointer" %>
   </div>
 <% end %>
