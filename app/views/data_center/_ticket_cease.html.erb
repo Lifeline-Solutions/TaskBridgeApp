@@ -148,7 +148,11 @@
               <% end %>
             </td>
             <td class="border border-black px-2 sm:px-4 py-2"><%= ticket.user.name %></td>
-            <td class="border border-black px-2 sm:px-4 py-2 break-words overflow-hidden max-w-[200px] sm:max-w-none"><%= raw ticket.content.to_trix_html.gsub(/\[.*?\]/, '').strip.truncate(3000) %></td>
+            <td class="border border-black px-2 sm:px-4 py-2 break-words overflow-hidden max-w-[200px] sm:max-w-none">
+              <% if ticket.content.present? %>
+                <%= raw ticket.content.to_trix_html.gsub(/\[.*?\]/, '').strip.truncate(3000) %>
+              <% end %>
+            </td>
             <td class="border border-black px-2 sm:px-4 py-2"><%= ticket.created_at.strftime("%d/%b/%Y %I:%M:%S %p") %></td>
             <td class="border border-black px-2 sm:px-4 py-2"><%= ticket.add_statuses.order(updated_at: :desc).first&.updated_at&.strftime('%d/%b/%Y %I:%M:%S %p') || 'N/A' %></td>
             <td class="border border-black px-2 sm:px-4 py-2"><%= ticket.issues.order(updated_at: :desc).first&.updated_at&.strftime('%d/%b/%Y %I:%M:%S %p') || 'N/A' %></td>
