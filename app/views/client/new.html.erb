@@ -9,33 +9,33 @@
         <%= f.text_field :name, class: "border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 bg-gray-50 dark:bg-gray-700 dark:placeholder-gray-400", placeholder: 'Enter client name', required: true %>
       </div>
       <div>
-        <%= f.label :email, 'Email *', class: "block mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200" %>
-        <%= f.email_field :email, class: "border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 bg-gray-50 dark:bg-gray-700 dark:placeholder-gray-400", placeholder: 'Enter client email', required: true %>
+        <%= f.label :email, 'Email', class: "block mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200" %>
+        <%= f.email_field :email, class: "border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 bg-gray-50 dark:bg-gray-700 dark:placeholder-gray-400", placeholder: 'Enter client email' %>
       </div>
       <div>
-        <%= f.label :phone, 'Phone *', class: "block mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200" %>
-        <%= f.number_field :phone, class: "border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 bg-gray-50 dark:bg-gray-700 dark:placeholder-gray-400", placeholder: 'Enter phone number', required: true %>
+        <%= f.label :phone, 'Phone', class: "block mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200" %>
+        <%= f.number_field :phone, class: "border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 bg-gray-50 dark:bg-gray-700 dark:placeholder-gray-400", placeholder: 'Enter phone number' %>
       </div>
       <div>
-        <%= f.label :address, 'Address *', class: "block mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200" %>
-        <%= f.text_field :address, class: "border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 bg-gray-50 dark:bg-gray-700 dark:placeholder-gray-400", placeholder: 'Enter address', required: true %>
+        <%= f.label :address, 'Address', class: "block mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200" %>
+        <%= f.text_field :address, class: "border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 bg-gray-50 dark:bg-gray-700 dark:placeholder-gray-400", placeholder: 'Enter address' %>
       </div>
       <div>
-        <%= f.label :client_contact_person, 'C.E.O Name *', class: "block mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200" %>
-        <%= f.text_field :client_contact_person, class: "border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 bg-gray-50 dark:bg-gray-700 dark:placeholder-gray-400", placeholder: 'Enter CEO name', required: true %>
+        <%= f.label :client_contact_person, 'C.E.O Name', class: "block mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200" %>
+        <%= f.text_field :client_contact_person, class: "border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 bg-gray-50 dark:bg-gray-700 dark:placeholder-gray-400", placeholder: 'Enter CEO name' %>
       </div>
       <div>
-        <%= f.label :client_contact_phone_number, 'C.E.O Phone Number *', class: "block mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200" %>
-        <%= f.number_field :client_contact_phone_number, class: "border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 bg-gray-50 dark:bg-gray-700 dark:placeholder-gray-400", placeholder: 'Enter CEO phone', required: true %>
+        <%= f.label :client_contact_phone_number, 'C.E.O Phone Number', class: "block mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200" %>
+        <%= f.number_field :client_contact_phone_number, class: "border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 bg-gray-50 dark:bg-gray-700 dark:placeholder-gray-400", placeholder: 'Enter CEO phone' %>
       </div>
       <div>
-        <%= f.label :client_contact_person_email, 'C.E.O Email *', class: "block mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200" %>
-        <%= f.email_field :client_contact_person_email, class: "border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 bg-gray-50 dark:bg-gray-700 dark:placeholder-gray-400", placeholder: 'Enter CEO email', required: true %>
+        <%= f.label :client_contact_person_email, 'C.E.O Email', class: "block mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200" %>
+        <%= f.email_field :client_contact_person_email, class: "border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 bg-gray-50 dark:bg-gray-700 dark:placeholder-gray-400", placeholder: 'Enter CEO email' %>
       </div>
       <div>
-        <%= f.label :country_code, 'Country *', class: "block mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200" %>
+        <%= f.label :country_code, 'Country', class: "block mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200" %>
         <%= f.country_select :country_code, { prompt: 'Select a Country' },
-          class: "border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 bg-gray-50 dark:bg-gray-700 dark:placeholder-gray-400", required: true %>
+          class: "border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 bg-gray-50 dark:bg-gray-700 dark:placeholder-gray-400" %>
       </div>
     </div>
     <div class="mt-8 flex justify-center">
