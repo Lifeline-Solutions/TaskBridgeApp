@@ -33,35 +33,40 @@
           <div class="space-y-4">
             <!-- Project Category -->
             <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-              <div class="relative z-0 w-full mb-6 group">
-                <%= f.label :categories, ('Project Category*'), class: "capitalize block mb-2 text-sm font-medium text-gray-900 dark:text-white" %>
+              <div class="relative w-full mb-6 group"> <!-- removed z-0 -->
+                <label for="software-search-input" class="capitalize block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                  Project Category*
+                </label>
 
-                <!-- Selected Tags Display -->
                 <div id="selected-software-tags" class="flex flex-wrap gap-2 mb-2 min-h-[2rem]"></div>
 
-                <!-- Search Input -->
                 <div class="relative">
                   <input type="text"
-                         id="software-search-input"
-                         placeholder="Search and select categories..."
-                         autocomplete="off"
-                         class="border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 bg-white dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        id="software-search-input"
+                        aria-haspopup="listbox"
+                        aria-expanded="false"
+                        aria-controls="software-results"
+                        placeholder="Search and select categories..."
+                        autocomplete="off"
+                        class="border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 bg-white dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
 
-                  <!-- Dropdown Results -->
                   <div id="software-dropdown"
-                       class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden">
+                      class="absolute left-0 top-full mt-1 w-full z-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden"
+                      role="listbox"
+                      aria-labelledby="software-search-input">
                     <ul id="software-results" class="py-1"></ul>
                   </div>
                 </div>
 
-                <!-- Hidden Inputs for Form Submission -->
                 <div id="software-hidden-inputs"></div>
               </div>
             </div>
+          </div>
+
 
             <!-- Sub Category -->
             <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-              <div class="relative z-0 w-full mb-6 group">
+              <div class="relative w-full mb-6 group"> <!-- removed z-0 -->
                 <%= f.label :categories, ('Sub Category*'), class: "capitalize block mb-2 text-sm font-medium text-gray-900 dark:text-white" %>
 
                 <!-- Selected Tags Display -->
@@ -70,15 +75,15 @@
                 <!-- Search Input -->
                 <div class="relative">
                   <input type="text"
-                         id="groupware-search-input"
-                         placeholder="Select categories first..."
-                         autocomplete="off"
-                         disabled
-                         class="border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                        id="groupware-search-input"
+                        placeholder="Select categories first..."
+                        autocomplete="off"
+                        disabled
+                        class="border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 bg-white dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
 
                   <!-- Dropdown Results -->
                   <div id="groupware-dropdown"
-                       class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden">
+                      class="absolute left-0 top-full mt-1 w-full z-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden">
                     <ul id="groupware-results" class="py-1"></ul>
                   </div>
                 </div>
@@ -87,6 +92,7 @@
                 <div id="groupware-hidden-inputs"></div>
               </div>
             </div>
+
           </div>
 
 
