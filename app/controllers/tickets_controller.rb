@@ -399,24 +399,29 @@ class TicketsController < ApplicationController
     status = Status.find(params[:status_id])
     return redirect_to project_ticket_path(@project, @ticket), alert: 'Invalid status ID' if status.nil?
 
+    # Only allow status changes for tickets whose issue type is 'NEW FEATURE'
+
     @ticket.transaction do
       @ticket.statuses.clear
       @ticket.statuses << status
     end
 
-    # SLA updates...
-    if status.name == 'Client Confirmation Pending'
-      sla_ticket = SlaTicket.find_or_initialize_by(ticket_id: @ticket.id)
-      sla_ticket.update(sla_target_response_deadline: @ticket.sla_target_response_deadline)
+    # SLA updates... (skip SLA updates for NEW FEATURE tickets)
+    unless @ticket.issue == 'NEW FEATURE'
+      if status.name == 'Client Confirmation Pending'
+        sla_ticket = SlaTicket.find_or_initialize_by(ticket_id: @ticket.id)
+        sla_ticket.update(sla_target_response_deadline: @ticket.sla_target_response_deadline)
+      end
+
+      if status.name == 'Resolved'
+        sla_ticket = SlaTicket.find_by(ticket_id: @ticket.id)
+        sla_ticket&.update(
+          sla_resolution_deadline: @ticket.sla_resolution_deadline,
+          user_id: @ticket.users.first&.id
+        )
+      end
     end
 
-    if status.name == 'Resolved'
-      sla_ticket = SlaTicket.find_by(ticket_id: @ticket.id)
-      sla_ticket&.update(
-        sla_resolution_deadline: @ticket.sla_resolution_deadline,
-        user_id: @ticket.users.first&.id
-      )
-    end
     # Assigned Users added to the email
     assigned_user = User.find(params[:user_id]) if params[:user_id].present?
     assigned_user ||= @ticket.users.first || @project.user
@@ -435,14 +440,20 @@ class TicketsController < ApplicationController
     end
 
     # Emails + logs...
-    # Set SLA for the ticket
-    sla_ticket = SlaTicket.find_or_create_by!(ticket_id: @ticket.id) do |sla|
-      sla.sla_status = @ticket.sla_status
-    end
+    # Set SLA for the ticket (do not modify SLA for NEW FEATURE tickets)
+    if @ticket.issue == 'NEW FEATURE'
+      # For NEW FEATURE tickets, preserve existing SLA values (or use NO SLA if set elsewhere)
+      sla_target_response_deadline = SlaTicket.find_by(ticket_id: @ticket.id)&.sla_target_response_deadline || 'NO SLA'
+      sla_target_resolution_deadline = SlaTicket.find_by(ticket_id: @ticket.id)&.sla_resolution_deadline || 'NO SLA'
+    else
+      sla_ticket = SlaTicket.find_or_create_by!(ticket_id: @ticket.id) do |sla|
+        sla.sla_status = @ticket.sla_status
+      end
 
-    # Set default SLA target response deadline if blank
-    sla_target_response_deadline = sla_ticket.sla_target_response_deadline.presence || 'Not Breached'
-    sla_target_resolution_deadline = sla_ticket.sla_resolution_deadline.presence || 'Not Breached'
+      # Set default SLA target response deadline if blank
+      sla_target_response_deadline = sla_ticket.sla_target_response_deadline.presence || 'Not Breached'
+      sla_target_resolution_deadline = sla_ticket.sla_resolution_deadline.presence || 'Not Breached'
+    end
 
     log_event(@ticket, current_user, 'status_change',
               "Status was changed to #{status.name} currently assigned to #{assigned_user.name},
