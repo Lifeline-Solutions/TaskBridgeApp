@@ -125,7 +125,13 @@
   <div class="pagination">
     <% if @page > 1 %>
       <%= link_to 'Previous',
-                  index_show_defect_index_path(page: @page - 1, query: params[:query], status: params[:status]),
+                  index_show_defect_index_path(
+                    page: @page - 1,
+                    query: params[:query],
+                    status: params[:status],
+                    product_id: params[:product_id],
+                    client_name: params[:client_name]
+                  ),
                   class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
     <% end %>
 
@@ -133,7 +139,13 @@
 
     <% if @page < @total_pages %>
       <%= link_to 'Next',
-                  index_show_defect_index_path(page: @page + 1, query: params[:query], status: params[:status]),
+                  index_show_defect_index_path(
+                    page: @page + 1,
+                    query: params[:query],
+                    status: params[:status],
+                    product_id: params[:product_id],
+                    client_name: params[:client_name]
+                  ),
                   class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
     <% end %>
   </div>
