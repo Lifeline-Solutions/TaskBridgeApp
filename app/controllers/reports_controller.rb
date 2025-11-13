@@ -7,8 +7,8 @@ class ReportsController < ApplicationController
   def index
     authorize! :generate, :report
 
-    # Load saved report dashboards for the current user
-    @saved_dashboards = current_user.defect_filters.defect_filters.active.order(:name)
+    # Load saved report dashboards for the current user (filter_type: 'report')
+    @saved_dashboards = current_user.defect_filters.report_dashboards.active.order(:name)
 
     @products = Product.includes(:client, :groupwares, :statuses)
       .select do |product|
@@ -382,8 +382,8 @@ class ReportsController < ApplicationController
     clean_dashboard_id = dashboard_id.to_s.gsub('value+', '').strip
     return if clean_dashboard_id.blank?
 
-    # Use defect_filters scope since that's what you're loading
-    dashboard = current_user.defect_filters.defect_filters.active.find_by(id: clean_dashboard_id)
+    # Load report dashboards (filter_type: 'report')
+    dashboard = current_user.defect_filters.report_dashboards.active.find_by(id: clean_dashboard_id)
     return unless dashboard
 
     # Apply the saved filters to the current params
