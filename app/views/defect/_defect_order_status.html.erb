@@ -2,6 +2,7 @@
   <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
     <thead class="text-xs uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400 w-[100%]">
     <tr>
+      <th scope="col" class="px-6 py-3">#</th>
       <th scope="col" class="px-6 py-3">Defect ID</th>
       <th scope="col" class="px-6 py-3">Summary</th>
       <th scope="col" class="px-6 py-3">Status</th>
@@ -20,9 +21,13 @@
     </thead>
     <tbody>
     <% if @defects.present? %>
-      <% @defects.each do |defect| %>
+      <% @defects.each_with_index do |defect, index| %>
+      <% row_number = @start_count + index %>
       <!-- Your defect row rendering here, unchanged -->
       <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 h-12 text-left">
+        <td class="px-6 py-4 font-semibold text-gray-600 dark:text-gray-300">
+          <%= row_number %>
+        </td>
         <td class="px-6 py-4">
           <%= link_to defect.defect_unique, defect_path(defect.id), class: "text-blue-600 hover:underline" %>
         </td>
@@ -111,7 +116,7 @@
       <% end %>
     <% else %>
       <tr>
-        <td colspan="14" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+        <td colspan="15" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
           No defects found
         </td>
       </tr>
@@ -119,6 +124,13 @@
     </tbody>
   </table>
 </div>
+
+<!-- Results count display -->
+<% if @defects.present? && @total_count && @total_count > 0 %>
+  <div class="mt-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 rounded">
+    Showing <span class="font-semibold"><%= @start_count %></span> to <span class="font-semibold"><%= @end_count %></span> of <span class="font-semibold"><%= @total_count %></span> results
+  </div>
+<% end %>
 
 <div class="flex gap-10 mt-5">
   <!-- Pagination Controls -->
