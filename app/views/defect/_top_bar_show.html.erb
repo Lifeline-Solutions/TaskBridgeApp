@@ -88,16 +88,16 @@
               <% end %>
               <%= hidden_field_tag :client_name, params[:client_name] %>
 
-              <!-- Product Filter (Multi-Select) - Only show when multiple products exist -->
+              <!-- Project Filter (Multi-Select) - Only show when multiple projects exist -->
               <% if @products.present? && @products.size > 1 %>
                 <div>
-                  <%= label_tag 'product_id[]', 'Product', class: 'block font-medium mb-1 text-sm border-gray-300 dark:bg-gray-500' %>
+                  <%= label_tag 'product_id[]', 'Project', class: 'block font-medium mb-1 text-sm border-gray-300 dark:bg-gray-500' %>
                   <div class="relative inline-block text-left w-full multi-select-dropdown">
                     <button type="button"
                             id="productDropdownButton"
                             class="w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded text-left inline-flex justify-between items-center"
                             onclick="toggleDropdown('productDropdown')">
-                      <span id="productButtonText">Select Products...</span>
+                      <span id="productButtonText">Select Projects...</span>
                       <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                       </svg>
@@ -107,7 +107,7 @@
                       <div class="p-2 border-b">
                         <input type="text" 
                               id="productSearch" 
-                              placeholder="Search products..." 
+                              placeholder="Search projects..." 
                               class="w-full p-1 text-sm border rounded"
                               onkeyup="filterDropdownItems('productSearch', 'productItems')">
                       </div>
