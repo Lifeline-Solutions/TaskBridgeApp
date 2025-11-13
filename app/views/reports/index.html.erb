@@ -12,15 +12,15 @@
                       id: "dashboard_id" %>
       </div>
 
-      <!-- Multiple Product Selection with Checkboxes -->
+      <!-- Multiple Project Selection with Checkboxes -->
       <div class="dropdown-group">
-        <label class="font-semibold">Select Products:</label>
+        <label class="font-semibold">Select Projects:</label>
         <button type="button" id="productDropdownButton" class="border rounded p-2 ml-2 bg-white dark:bg-gray-800 min-w-48 text-left">
           <% selected_products = Array(params[:product_id]).reject(&:blank?) %>
           <% if selected_products.any? %>
-            <%= "#{selected_products.size} product(s) selected" %>
+            <%= "#{selected_products.size} project(s) selected" %>
           <% else %>
-            Select products...
+            Select projects...
           <% end %>
         </button>
         <div id="product-options" class="dropdown-options hidden">
@@ -314,26 +314,26 @@
     <% end %>
   </div>
 <% elsif params[:product_id].present? && params[:product_change].present? %>
-  <!-- Show metrics configuration message after product selection -->
+  <!-- Show metrics configuration message after project selection -->
   <div class="container p-4 text-center text-gray-500">
-    Products selected! Please configure your metrics and click <strong>"Apply"</strong> to generate the report.<br>
+    Projects selected! Please configure your metrics and click <strong>"Apply"</strong> to generate the report.<br>
     <span class="text-sm text-gray-400">
-      Note: The dropdowns only display items available for the selected product. 
-      For example, if you don't see all statuses, it means only those statuses exist among the current product's defects.
+      Note: The dropdowns only display items available for the selected project. 
+      For example, if you don't see all statuses, it means only those statuses exist among the current project's defects.
     </span>
   </div>
 <% elsif params[:product_id].present? %>
-  <!-- Show this when products are selected but no action taken yet -->
+  <!-- Show this when projects are selected but no action taken yet -->
   <div class="container p-4 text-center text-gray-500">
     Please configure your metrics and click <strong>"Apply"</strong> to generate the report.<br>
     <span class="text-sm text-gray-400">
-      Note: The dropdowns only display items available for the selected product. 
-      For example, if you don't see all statuses, it means only those statuses exist among the current product's defects.
+      Note: The dropdowns only display items available for the selected project. 
+      For example, if you don't see all statuses, it means only those statuses exist among the current project's defects.
     </span>
   </div>
 <% else %>
   <div class="container p-4 text-center text-gray-500">
-    Please select a product to view reports. <strong>Selecting the date-range is optional</strong>.
+    Please select a project to view reports. <strong>Selecting the date-range is optional</strong>.
   </div>
 <% end %>
 
