@@ -201,13 +201,10 @@
     </div>
 
     <!-- Hidden field to track if this is a product change (not Apply click) -->
-    <%= hidden_field_tag :product_change, value: params[:product_change] %>
-    
-    <!-- Hidden field to track if this is a dashboard load -->
-    <%= hidden_field_tag :dashboard_id, value: params[:dashboard_id] %>
+    <%= hidden_field_tag :product_change, value: params[:product_change], id: 'product_change' %>
 
     <!-- Hidden field for view type -->
-    <%= hidden_field_tag :view_type, params[:view_type] || 'graphical' %>
+    <%= hidden_field_tag :view_type, params[:view_type] || 'graphical', id: 'view_type' %>
   <% end %>
 
   <!-- Show reports ONLY when user clicks Apply or loads dashboard (not for product selection) -->
@@ -458,9 +455,11 @@
     });
 
     // Clear product_change flag when Apply is clicked (final report generation)
+    // Note: We should NOT clear dashboard_id here because the user may be applying
+    // a dashboard with custom date ranges or manually selecting products
     document.querySelector('input[type="submit"]')?.addEventListener('click', function() {
       document.getElementById('product_change').value = '';
-      document.getElementById('dashboard_id').value = '';
+      // Don't clear dashboard_id here - preserve it for the report generation
     });
 
     // Dashboard selection handling
@@ -479,7 +478,7 @@
       });
     }
 
-    // View toggle functionality - FIXED: Clear product_change when switching views
+    // View toggle functionality - FIXED: Clear product_change when switching views but preserve dashboard_id
     const graphicalViewBtn = document.getElementById('graphicalViewBtn');
     const tabularViewBtn = document.getElementById('tabularViewBtn');
     const viewTypeField = document.getElementById('view_type');
@@ -489,6 +488,8 @@
         viewTypeField.value = 'graphical';
         // Clear product_change when switching views so reports show
         document.getElementById('product_change').value = '';
+        // Preserve dashboard_id when switching views
+        // (dashboard_id is already in the form, no need to clear it)
         document.getElementById('reports-form').submit();
       });
 
@@ -496,6 +497,8 @@
         viewTypeField.value = 'tabular';
         // Clear product_change when switching views so reports show
         document.getElementById('product_change').value = '';
+        // Preserve dashboard_id when switching views
+        // (dashboard_id is already in the form, no need to clear it)
         document.getElementById('reports-form').submit();
       });
     }
