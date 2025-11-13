@@ -11,7 +11,7 @@
         <%= @defect.submodule&.name || 'Not specified' %>
       </span>
     </div>
-    <div class="mb-2.5 font-bold capitalize">Product:
+    <div class="mb-2.5 font-bold capitalize">Project:
       <span class="font-light">
         <%= @defect.product&.content&.to_plain_text&.truncate(30) || 'Not specified' %>
       </span>
