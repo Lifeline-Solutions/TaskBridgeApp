@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_11_06_082011) do
+ActiveRecord::Schema[7.2].define(version: 2025_11_13_103157) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -377,7 +377,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_06_082011) do
     t.integer "retest_count", default: 0, null: false
     t.index ["banking_type_id"], name: "index_defects_on_banking_type_id"
     t.index ["creator_id"], name: "index_defects_on_creator_id"
-    t.index ["defect_unique"], name: "index_defects_on_defect_unique", unique: true
+    t.index ["defect_unique"], name: "index_defects_on_defect_unique"
     t.index ["deleted_on"], name: "index_defects_on_deleted_on"
     t.index ["product_id"], name: "index_defects_on_product_id"
     t.index ["qa_module_id"], name: "index_defects_on_qa_module_id"
