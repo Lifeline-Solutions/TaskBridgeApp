@@ -25,14 +25,18 @@
         <table class="w-full border border-gray-200 rounded-lg overflow-hidden">
           <thead class="bg-gray-100 text-left">
             <tr>
+              <th class="px-3 py-2 font-medium">#</th>
               <th class="px-3 py-2 font-medium">Name</th>
               <th class="px-3 py-2 font-medium">Product</th>
               <th class="px-3 py-2 font-medium text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <% defect_filters.each do |f| %>
+            <% defect_filters.each_with_index do |f, index| %>
               <tr class="border-t hover:bg-gray-50">
+                <td class="px-3 py-2 text-gray-600 font-semibold">
+                  <%= index + 1 %>
+                </td>
                 <td class="px-3 py-2">
                   <%= form_with model: f, url: defect_filter_path(f), method: :patch, local: true, class: "flex items-center" do |form| %>
                     <%= form.text_field :name, value: f.name, class: 'border p-1 rounded w-full text-sm' %>
@@ -59,6 +63,9 @@
             <% end %>
           </tbody>
         </table>
+        <div class="mt-2 text-sm text-gray-600">
+          <span class="font-semibold"><%= defect_filters.count %></span> filter<%= defect_filters.count == 1 ? '' : 's' %> saved
+        </div>
       <% else %>
         <p class="text-gray-500 italic">No defect filters saved yet.</p>
       <% end %>
@@ -73,14 +80,18 @@
         <table class="w-full border border-gray-200 rounded-lg overflow-hidden">
           <thead class="bg-gray-100 text-left">
             <tr>
+              <th class="px-3 py-2 font-medium">#</th>
               <th class="px-3 py-2 font-medium">Name</th>
               <th class="px-3 py-2 font-medium">Product</th>
               <th class="px-3 py-2 font-medium text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <% report_dashboards.each do |d| %>
+            <% report_dashboards.each_with_index do |d, index| %>
               <tr class="border-t hover:bg-gray-50">
+                <td class="px-3 py-2 text-gray-600 font-semibold">
+                  <%= index + 1 %>
+                </td>
                 <td class="px-3 py-2">
                   <%= form_with model: d, url: defect_filter_path(d), method: :patch, local: true, class: "flex items-center" do |form| %>
                     <%= form.text_field :name, value: d.name, class: 'border p-1 rounded w-full text-sm' %>
@@ -108,6 +119,9 @@
             <% end %>
           </tbody>
         </table>
+        <div class="mt-2 text-sm text-gray-600">
+          <span class="font-semibold"><%= report_dashboards.count %></span> dashboard<%= report_dashboards.count == 1 ? '' : 's' %> saved
+        </div>
       <% else %>
         <p class="text-gray-500 italic">No report dashboards saved yet.</p>
       <% end %>
