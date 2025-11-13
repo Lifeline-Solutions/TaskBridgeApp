@@ -2,6 +2,7 @@
   <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
     <thead class="text-xs uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400 w-[100%]">
       <tr>
+        <th scope="col" class="px-6 py-3">#</th>
         <th scope="col" class="px-6 py-3">Name of the Client QA</th>
         <th scope="col" class="px-6 py-3">Status</th>
         <th scope="col" class="px-6 py-3">Number of Defects</th>
@@ -9,9 +10,13 @@
     </thead>
     <tbody>
     <% if @qa_products.present? %>
-      <% @qa_products.each do |product| %>
+      <% @qa_products.each_with_index do |product, index| %>
+        <% row_number = @start_count + index %>
         <!-- Product Row -->
         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 h-12 text-left">
+          <td class="px-6 py-3 font-semibold text-gray-600 dark:text-gray-300">
+            <%= row_number %>
+          </td>
           <td class="px-6 py-3 font-semibold text-left">
             <%= link_to "#{product.client&.name} #{product.groupwares&.first&.name}".truncate(30),
                         index_show_defect_index_path(client_name: product.client&.name, product_id: product.id),
@@ -27,14 +32,21 @@
       <% end %>
     <% else %>
       <tr>
-        <td class="px-6 py-4 text-center text-gray-500 dark:text-gray-400" colspan="3">
-          No products in QA status found
+        <td class="px-6 py-4 text-center text-gray-500 dark:text-gray-400" colspan="4">
+          No projects in QA status found
         </td>
       </tr>
     <% end %>
     </tbody>
   </table>
 </div>
+
+<!-- Results count display -->
+<% if @qa_products.present? && @total_count && @total_count > 0 %>
+  <div class="mt-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 rounded">
+    Showing <span class="font-semibold"><%= @start_count %></span> to <span class="font-semibold"><%= @end_count %></span> of <span class="font-semibold"><%= @total_count %></span> results
+  </div>
+<% end %>
 
 <% if @qa_products.present? %>
   <div class="flex gap-10 mt-5">
