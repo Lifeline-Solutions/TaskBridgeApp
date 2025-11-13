@@ -27,7 +27,7 @@
             <tr>
               <th class="px-3 py-2 font-medium">#</th>
               <th class="px-3 py-2 font-medium">Name</th>
-              <th class="px-3 py-2 font-medium">Product</th>
+              <th class="px-3 py-2 font-medium">Project</th>
               <th class="px-3 py-2 font-medium text-right">Actions</th>
             </tr>
           </thead>
@@ -44,7 +44,7 @@
                     <%= form.submit 'Rename', class: 'ml-2 px-2 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600' %>
                   <% end %>
                 </td>
-                <td class="px-3 py-2"><%= f.product&.document_name || 'All products' %></td>
+                <td class="px-3 py-2"><%= f.product&.document_name || 'All Projects' %></td>
                 <td class="px-3 py-2 text-right">
                   <%= link_to 'Apply',
                     index_show_defect_index_path(f.sanitized_filters_string_keys.merge('product_id' => f.product_id).compact),
@@ -82,7 +82,7 @@
             <tr>
               <th class="px-3 py-2 font-medium">#</th>
               <th class="px-3 py-2 font-medium">Name</th>
-              <th class="px-3 py-2 font-medium">Product</th>
+              <th class="px-3 py-2 font-medium">Project</th>
               <th class="px-3 py-2 font-medium text-right">Actions</th>
             </tr>
           </thead>
@@ -100,7 +100,7 @@
                     <%= form.submit 'Rename', class: 'ml-2 px-2 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600' %>
                   <% end %>
                 </td>
-                <td class="px-3 py-2"><%= d.product&.document_name || 'All products' %></td>
+                <td class="px-3 py-2"><%= d.product&.document_name || 'All Projects' %></td>
                 <td class="px-3 py-2 text-right">
                   <%= link_to 'Open Dashboard',
                     reports_path(d.to_report_params.merge(commit: 'Apply')),
