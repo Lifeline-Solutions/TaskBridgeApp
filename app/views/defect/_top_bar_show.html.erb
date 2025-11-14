@@ -973,7 +973,8 @@
     const items = document.getElementById(itemsContainerId).getElementsByClassName('dropdown-item');
     
     Array.from(items).forEach(item => {
-      const text = item.textContent.toLowerCase();
+
+      const text = item.textContent.toLowerCase().trim();
       item.style.display = text.includes(searchTerm) ? 'flex' : 'none';
     });
   }
