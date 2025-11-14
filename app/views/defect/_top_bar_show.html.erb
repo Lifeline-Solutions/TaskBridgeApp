@@ -969,11 +969,10 @@
   }
 
   function filterDropdownItems(searchInputId, itemsContainerId) {
-    const searchTerm = document.getElementById(searchInputId).value.toLowerCase();
+    const searchTerm = document.getElementById(searchInputId).value.toLowerCase().trim();
     const items = document.getElementById(itemsContainerId).getElementsByClassName('dropdown-item');
     
     Array.from(items).forEach(item => {
-
       const text = item.textContent.toLowerCase().trim();
       item.style.display = text.includes(searchTerm) ? 'flex' : 'none';
     });
