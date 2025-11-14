@@ -259,7 +259,7 @@
                         </div>
                         
                         <% priorities.each do |priority| %>
-                          <div class="flex items-center dropdown-item">
+                          <div class="flex items-center dropdown-item" data-name="<%= priority.downcase %>">
                             <%= check_box_tag 'priority[]',
                                               priority,
                                               selected_priorities.include?(priority),
@@ -1039,7 +1039,7 @@
   }
 
   function updateAllButtonTexts() {
-    const filterTypes = ['product', 'status', 'priority', 'assignee', 'module', 'submodule', 'banking-type'];
+    const filterTypes = ['product', 'status', 'priority', 'assignee', 'module', 'submodule', 'banking-type', 'labels'];
     
     filterTypes.forEach(type => {
       const buttonId = `${type}DropdownButton`;
@@ -1078,7 +1078,8 @@
       'assignee': 'Filter by Assignee',
       'module': 'Filter by Module',
       'submodule': 'Filter by Submodule',
-      'banking-type': 'Filter by Banking Type'
+      'banking-type': 'Filter by Banking Type',
+      'labels': 'Filter by Labels'
     };
     
     return textMap[filterType] || 'Filter...';
