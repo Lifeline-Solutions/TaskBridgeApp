@@ -222,6 +222,7 @@
               <!-- Priority Filter (Multi-Select) -->
               <div>
                 <%= label_tag 'priority[]', 'Priority', class: 'block text-sm border-gray-300 dark:bg-gray-500 font-medium mb-1' %>
+
                 <div class="relative inline-block text-left w-full multi-select-dropdown">
                   <button type="button"
                           id="priorityDropdownButton"
@@ -233,46 +234,79 @@
                     </svg>
                   </button>
 
-                  <div id="priorityDropdown" class="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg w-full hidden dropdown-content">
+                  <div id="priorityDropdown"
+                      class="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg w-full hidden dropdown-content">
+
+                    <!-- Search Input -->
                     <div class="p-2 border-b">
-                      <input type="text" 
-                            id="prioritySearch" 
-                            placeholder="Search priorities..." 
+                      <input type="text"
+                            id="prioritySearch"
+                            placeholder="Search priorities..."
                             class="w-full p-1 text-sm border rounded"
                             onkeyup="filterDropdownItems('prioritySearch', 'priorityItems')">
                     </div>
-                    
+
+                    <!-- Items -->
                     <div class="max-h-60 overflow-y-auto">
                       <div id="priorityItems" class="p-2 space-y-2">
+
                         <% selected_priorities = Array(params[:priority]) %>
                         <% priorities = ['SEVERITY 1', 'SEVERITY 2', 'SEVERITY 3', 'SEVERITY 4'] %>
-                        
-                        <!-- Select All Option -->
+
+                        <!-- Select All -->
                         <div class="flex items-center border-b pb-2 mb-2">
-                          <%= check_box_tag 'select_all_priority', 
-                                            'all', 
+                          <%= check_box_tag 'select_all_priority',
+                                            'all',
                                             selected_priorities.length == priorities.length,
                                             id: "select_all_priority",
                                             class: "mr-2 select-all-checkbox",
                                             data: { target: 'priority' } %>
                           <%= label_tag "select_all_priority", "Select All", class: "text-sm font-medium" %>
                         </div>
-                        
+
+                        <!-- Priority Items -->
                         <% priorities.each do |priority| %>
-                          <div class="flex items-center dropdown-item" data-name="<%= priority.downcase %>">
+                          <div class="flex items-center dropdown-item"
+                              data-name="<%= priority.downcase %>">
                             <%= check_box_tag 'priority[]',
                                               priority,
                                               selected_priorities.include?(priority),
                                               id: "priority_#{priority.parameterize}",
                                               class: "mr-2 priority-checkbox" %>
-                            <%= label_tag "priority_#{priority.parameterize}", priority, class: "text-sm" %>
+                            <%= label_tag "priority_#{priority.parameterize}",
+                                          priority,
+                                          class: "text-sm" %>
                           </div>
                         <% end %>
+
                       </div>
                     </div>
+
                   </div>
                 </div>
               </div>
+
+              <script>
+                // Case-insensitive filter function
+                function filterDropdownItems(searchInputId, itemsContainerId) {
+                  const input = document.getElementById(searchInputId).value.toLowerCase();
+                  const items = document
+                    .getElementById(itemsContainerId)
+                    .getElementsByClassName("dropdown-item");
+
+                  Array.from(items).forEach(item => {
+                    const name = item.getAttribute("data-name").toLowerCase();
+                    item.style.display = name.includes(input) ? "flex" : "none";
+                  });
+                }
+
+                // Toggle dropdown visibility
+                function toggleDropdown(id) {
+                  const dropdown = document.getElementById(id);
+                  dropdown.classList.toggle('hidden');
+                }
+              </script>
+
 
               <!-- Assignee Filter (Multi-Select) -->
               <div>
