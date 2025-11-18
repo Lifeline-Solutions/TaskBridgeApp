@@ -59,6 +59,11 @@ class QaModulesController < ApplicationController
       @parents = []
       @product_id = nil
     end
+
+    # Prefill parent_id if passed (when clicking "Add Child Module")
+    return unless params[:parent_id].present?
+
+    @qa_module.parent_id = params[:parent_id]
   end
 
   def create
