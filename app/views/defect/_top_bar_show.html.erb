@@ -917,23 +917,43 @@
   });
 
   // ========== DOWNLOAD DROPDOWN ==========
-  document.addEventListener("turbo:load", function () {
+  function initializeDownloadDropdown() {
     const downloadButton = document.getElementById("downloadDropdownButton");
     const downloadDropdown = document.getElementById("downloadDropdown");
 
     if (downloadButton && downloadDropdown) {
-      downloadButton.addEventListener("click", function(e) {
-        e.stopPropagation();
-        downloadDropdown.classList.toggle("hidden");
-      });
+      // Remove existing event listeners by cloning
+      const newButton = downloadButton.cloneNode(true);
+      downloadButton.parentNode.replaceChild(newButton, downloadButton);
+      
+      // Re-query the new button
+      const freshButton = document.getElementById("downloadDropdownButton");
+      const freshDropdown = document.getElementById("downloadDropdown");
+      
+      if (freshButton && freshDropdown) {
+        freshButton.addEventListener("click", function(e) {
+          e.stopPropagation();
+          freshDropdown.classList.toggle("hidden");
+        });
 
-      document.addEventListener("click", function(e) {
-        if (!e.target.closest('#downloadDropdownButton') && !e.target.closest('#downloadDropdown')) {
-          downloadDropdown.classList.add("hidden");
-        }
-      });
+        // Close dropdown when clicking outside
+        document.addEventListener("click", function(e) {
+          if (!e.target.closest('#downloadDropdownButton') && !e.target.closest('#downloadDropdown')) {
+            freshDropdown.classList.add("hidden");
+          }
+        });
+      }
     }
-  });
+  }
+
+  // Initialize on turbo:load
+  document.addEventListener("turbo:load", initializeDownloadDropdown);
+  
+  // Also initialize on turbo:render (for Turbo frame updates)
+  document.addEventListener("turbo:render", initializeDownloadDropdown);
+  
+  // Initialize on DOMContentLoaded as fallback
+  document.addEventListener("DOMContentLoaded", initializeDownloadDropdown);
 
   // ========== MAIN FILTER DROPDOWN TOGGLE ==========
   document.addEventListener("turbo:load", function () {
