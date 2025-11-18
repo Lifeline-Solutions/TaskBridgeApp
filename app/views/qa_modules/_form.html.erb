@@ -13,14 +13,27 @@
   <!-- Product select -->
   <div class="mb-4">
     <%= f.label :product_id, "Project *", class: "block mb-1 text-sm font-medium text-gray-700 dark:text-gray-300" %>
-    <%= f.select :product_id,
-          options_for_select(@products_and_clients_defects, @qa_module.product_id),
-          { prompt: "Select Project *" },
-          {
-            class: "w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600",
-            required: true,
-            onchange: "window.location.href='#{new_qa_module_path}?product_id=' + encodeURIComponent(this.value)"
-          } %>
+    <% if @qa_module.persisted? %>
+      <!-- For editing: show product as disabled (can't change product) -->
+      <%= f.select :product_id,
+            options_for_select(@products_and_clients_defects, @qa_module.product_id),
+            { prompt: "Select Project *" },
+            {
+              class: "w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 bg-gray-100 dark:bg-gray-900 cursor-not-allowed",
+              disabled: true
+            } %>
+      <%= f.hidden_field :product_id, value: @qa_module.product_id %>
+    <% else %>
+      <!-- For new: allow selecting and reload on change -->
+      <%= f.select :product_id,
+            options_for_select(@products_and_clients_defects, @qa_module.product_id),
+            { prompt: "Select Project *" },
+            {
+              class: "w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600",
+              required: true,
+              onchange: "window.location.href='#{new_qa_module_path}?product_id=' + encodeURIComponent(this.value)"
+            } %>
+    <% end %>
   </div>
 
   <!-- Module name -->
@@ -32,18 +45,31 @@
   </div>
 
   <!-- Parent module -->
-  <div class="mb-4">
+  <div class="mb-4"
+       data-controller="parent-module-select"
+       data-parent-module-select-submodules-url-value="<%= submodules_qa_module_path(':id') %>">
     <%= f.label :parent_id, "Parent Module (optional)", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
     <%= f.collection_select :parent_id,
           @parents,
           :id,
           :name,
           { include_blank: true, selected: @qa_module.parent_id },
-          { class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white" } %>
-  </div>
-
-  <div>
-    <%= f.hidden_field :product_id, value: @product_id || params[:product_id] %>
+          { 
+            class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white",
+            data: { 
+              action: "change->parent-module-select#loadSubmodules",
+              parent_module_select_target: "parentSelect"
+            }
+          } %>
+    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Select a parent module to make this a submodule</p>
+    
+    <!-- Submodule display area (if parent is selected) -->
+    <div data-parent-module-select-target="submodulesContainer" class="mt-3 hidden">
+      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Existing Submodules:</label>
+      <div data-parent-module-select-target="submodulesList" class="p-3 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
+        <!-- Submodules will be loaded here -->
+      </div>
+    </div>
   </div>
 
   <!-- Actions -->
