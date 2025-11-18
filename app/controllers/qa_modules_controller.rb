@@ -93,26 +93,46 @@ class QaModulesController < ApplicationController
   end
 
   def edit
-    @parents = QaModule.where(parent_id: nil)
+    # Load only parent modules from the same product for the dropdown
+    # Exclude the current module to prevent it from being its own parent
+    @parents = if @qa_module.product_id.present?
+                 QaModule.where(product_id: @qa_module.product_id, parent_id: nil)
+                   .where.not(id: @qa_module.id)
+                   .order(:name)
+               else
+                 QaModule.where(parent_id: nil)
+                   .where.not(id: @qa_module.id)
+                   .order(:name)
+               end
     # Preserve product_id for back navigation
     @product_id = params[:product_id] || @qa_module.product_id
   end
 
   def update
     audit_on_update(@qa_module)
-    parent_id = params[:qa_module][:parent_id].presence
 
-    if @qa_module.update(name: params[:qa_module][:name], parent_id: parent_id, product_id: params[:qa_module][:product_id])
+    # Use qa_module_params to ensure all permitted attributes are included
+    if @qa_module.update(qa_module_params)
       activity('user_activity')
         .caused_by(current_user)
         .performed_on(@qa_module)
         .event('qa_module.update')
-        .with_properties(parent_id: parent_id)
+        .with_properties(parent_id: @qa_module.parent_id)
         .log('QA Module updated')
       # FIXED: Preserve product_id in redirect to maintain project context
       redirect_to qa_modules_path(product_id: @qa_module.product_id), notice: 'Module was successfully updated.'
     else
-      @parents = QaModule.where.not(id: @qa_module.id)
+      # Reload parents for the error case, filtered by product
+      @parents = if @qa_module.product_id.present?
+                   QaModule.where(product_id: @qa_module.product_id, parent_id: nil)
+                     .where.not(id: @qa_module.id)
+                     .order(:name)
+                 else
+                   QaModule.where(parent_id: nil)
+                     .where.not(id: @qa_module.id)
+                     .order(:name)
+                 end
+      @product_id = @qa_module.product_id
       render :edit, status: :unprocessable_entity
     end
   end
