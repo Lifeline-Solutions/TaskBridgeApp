@@ -643,7 +643,14 @@ class DefectController < ApplicationController
 
   def edit
     @defect = Defect.find(params[:id])
-    @banking_types = BankingType.all
+
+    # Load banking types scoped to the defect's product
+    @banking_types = if @defect.product_id.present?
+                       BankingType.where(product_id: @defect.product_id).order(:name)
+                     else
+                       BankingType.all.order(:name)
+                     end
+
     @products = Product.with_quality_assurance_status
 
     # QA users (get their IDs)
