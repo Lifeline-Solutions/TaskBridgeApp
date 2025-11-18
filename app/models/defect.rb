@@ -114,14 +114,14 @@ class Defect < ApplicationRecord
   before_create :set_default_issue_type
   # after_create :defect_unique_id
 
-  # Validations
-  validates :summary, presence: true
-  validates :priority, presence: true
-  validates :issue_type, presence: true
-  validates :product_id, presence: true
+  # Validations - only required for published defects, not drafts
+  validates :summary, presence: true, unless: :draft?
+  validates :priority, presence: true, unless: :draft?
+  validates :issue_type, presence: true, unless: :draft?
+  validates :product_id, presence: true, unless: :draft?
   # validates :creator_id, presence: true
   # Add validation to ensure module belongs to selected project
-  validate :qa_module_belongs_to_product
+  validate :qa_module_belongs_to_product, unless: :draft?
 
   # Methods for linking defects
   def link_as_blocked_by(blocking_defect)
