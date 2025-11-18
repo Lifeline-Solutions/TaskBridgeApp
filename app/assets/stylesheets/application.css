@@ -214,6 +214,133 @@
 
 .ck-editor__editable {
   min-height: 300px;
+  padding: 1rem 1rem 1rem 2.5rem !important; /* Add left padding to prevent list markers from being cut off */
+}
+
+/* CKEditor 5 list styling - minimal interference with native behavior */
+.ck-editor__editable ul,
+.ck-editor__editable ol {
+  padding-left: 2rem;
+  margin: 1em 0;
+}
+
+.ck-editor__editable ul {
+  list-style-type: disc;
+}
+
+.ck-editor__editable ol {
+  list-style-type: decimal;
+}
+
+.ck-editor__editable li {
+  display: list-item;
+  margin: 0.5em 0;
+}
+
+/* Nested lists with different markers */
+.ck-editor__editable ul ul {
+  list-style-type: circle;
+  padding-left: 1.5em;
+}
+
+.ck-editor__editable ul ul ul {
+  list-style-type: square;
+}
+
+.ck-editor__editable ol ol {
+  list-style-type: lower-alpha;
+  padding-left: 1.5em;
+}
+
+.ck-editor__editable ol ol ol {
+  list-style-type: lower-roman;
+}
+
+/* Ensure markers are visible and properly colored */
+.ck-editor__editable li::marker {
+  color: currentColor;
+}
+
+/* Dark mode support */
+.dark .ck-editor__editable ul,
+.dark .ck-editor__editable ol {
+  color: inherit;
+}
+
+.dark .ck-editor__editable li::marker {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Content wrapper styles (for when content is rendered) */
+.ck-content ul,
+.ck-content ol {
+  padding-left: 2rem;
+  margin: 0.75rem 0;
+}
+
+.ck-content ul {
+  list-style-type: disc;
+}
+
+.ck-content ol {
+  list-style-type: decimal;
+}
+
+.ck-content li {
+  display: list-item;
+  margin-bottom: 0.5rem;
+  padding-left: 0.5rem;
+}
+
+/* Ensure the editor area has proper overflow */
+.ck.ck-editor__main {
+  overflow: visible;
+}
+
+.ck.ck-editor__editable_inline {
+  overflow-y: auto;
+  overflow-x: visible;
+}
+
+/* Font colors and backgrounds in CKEditor */
+.ck-editor__editable span[style*="color"],
+.ck-editor__editable span[style*="background-color"] {
+  display: inline;
+}
+
+/* Preserve inline styles in editor */
+.ck-editor__editable [style] {
+  display: inherit;
+}
+
+/* Font sizes in editor */
+.ck-editor__editable .text-tiny {
+  font-size: 0.7em;
+}
+
+.ck-editor__editable .text-small {
+  font-size: 0.85em;
+}
+
+.ck-editor__editable .text-big {
+  font-size: 1.4em;
+}
+
+.ck-editor__editable .text-huge {
+  font-size: 1.8em;
+}
+
+/* Alignment in editor */
+.ck-editor__editable .text-center {
+  text-align: center;
+}
+
+.ck-editor__editable .text-right {
+  text-align: right;
+}
+
+.ck-editor__editable .text-justify {
+  text-align: justify;
 }
 
 #ticketModal {

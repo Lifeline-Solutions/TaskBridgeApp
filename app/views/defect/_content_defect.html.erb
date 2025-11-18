@@ -193,6 +193,93 @@
     margin-bottom: 0.5rem;
   }
 
+  /* List styling for proper display */
+  .prose ul,
+  .prose ol {
+    padding-left: 2rem;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .prose ul {
+    list-style-type: disc;
+  }
+
+  .prose ol {
+    list-style-type: decimal;
+  }
+
+  .prose li {
+    margin-bottom: 0.25rem;
+    padding-left: 0.5rem;
+  }
+
+  /* Nested lists */
+  .prose ul ul {
+    list-style-type: circle;
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .prose ul ul ul {
+    list-style-type: square;
+  }
+
+  .prose ol ol {
+    list-style-type: lower-alpha;
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .prose ol ol ol {
+    list-style-type: lower-roman;
+  }
+
+  /* Dark mode list markers */
+  .dark .prose ul,
+  .dark .prose ol {
+    color: inherit;
+  }
+
+  /* Preserve inline styles (colors, backgrounds, font sizes) in prose */
+  .prose [style*="color"],
+  .prose [style*="background-color"],
+  .prose [style*="font-size"],
+  .prose [style*="font-family"],
+  .prose [style*="text-align"] {
+    display: inherit;
+  }
+
+  /* Font size classes */
+  .prose .text-tiny {
+    font-size: 0.7em;
+  }
+
+  .prose .text-small {
+    font-size: 0.85em;
+  }
+
+  .prose .text-big {
+    font-size: 1.4em;
+  }
+
+  .prose .text-huge {
+    font-size: 1.8em;
+  }
+
+  /* Alignment classes */
+  .prose .text-center {
+    text-align: center;
+  }
+
+  .prose .text-right {
+    text-align: right;
+  }
+
+  .prose .text-justify {
+    text-align: justify;
+  }
+
   #imageModal {
       transition: opacity 0.2s;
   }
