@@ -4,48 +4,149 @@
 
   const editorIds = ['defect_content', 'defect_content_edit'];
 
-  // CKEditor config (adjust as needed)
+  // CKEditor Superbuild config with enhanced features
   const CK_CONFIG = {
-    toolbar: [
-      'heading', '|',
-      'bold', 'italic', 'underline', 'strikethrough', 'link',
-      'fontColor', 'fontBackgroundColor',
-      'bulletedList', 'numberedList', // ✅ lists (numbered + bullet)
-      'outdent', 'indent', '|',
-      'insertTable', 'blockQuote', 'code',
-      'undo', 'redo', 'removeFormat'
-    ],
+    toolbar: {
+      items: [
+        'heading', '|',
+        'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', '|',
+        'bold', 'italic', 'underline', 'strikethrough', '|',
+        'link', 'bulletedList', 'numberedList', '|',
+        'alignment', 'outdent', 'indent', '|',
+        'insertTable', 'blockQuote', 'code', '|',
+        'undo', 'redo', 'removeFormat'
+      ],
+      shouldNotGroupWhenFull: true
+    },
+    fontSize: {
+      options: [
+        'tiny',
+        'small',
+        'default',
+        'big',
+        'huge'
+      ]
+    },
+    fontFamily: {
+      options: [
+        'default',
+        'Arial, Helvetica, sans-serif',
+        'Courier New, Courier, monospace',
+        'Georgia, serif',
+        'Lucida Sans Unicode, Lucida Grande, sans-serif',
+        'Tahoma, Geneva, sans-serif',
+        'Times New Roman, Times, serif',
+        'Trebuchet MS, Helvetica, sans-serif',
+        'Verdana, Geneva, sans-serif'
+      ]
+    },
+    fontColor: {
+      columns: 6,
+      colors: [
+        { color: '#000000', label: 'Black' },
+        { color: '#434343', label: 'Dark Grey' },
+        { color: '#666666', label: 'Grey' },
+        { color: '#999999', label: 'Light Grey' },
+        { color: '#CCCCCC', label: 'Very Light Grey' },
+        { color: '#FFFFFF', label: 'White', hasBorder: true },
+        
+        { color: '#E60000', label: 'Red' },
+        { color: '#FF9900', label: 'Orange' },
+        { color: '#FFFF00', label: 'Yellow' },
+        { color: '#00FF00', label: 'Light Green' },
+        { color: '#00FFFF', label: 'Cyan' },
+        { color: '#0000FF', label: 'Blue' },
+        
+        { color: '#9900FF', label: 'Purple' },
+        { color: '#FF00FF', label: 'Magenta' },
+        { color: '#B82E00', label: 'Dark Red' },
+        { color: '#006B00', label: 'Dark Green' },
+        { color: '#0080C0', label: 'Dark Blue' },
+        { color: '#5C00B8', label: 'Dark Purple' },
+        
+        { color: '#FFA6A6', label: 'Light Red' },
+        { color: '#FFD699', label: 'Light Orange' },
+        { color: '#FFFFCC', label: 'Light Yellow' },
+        { color: '#CCFFCC', label: 'Pale Green' },
+        { color: '#CCFFFF', label: 'Pale Cyan' },
+        { color: '#CCE5FF', label: 'Light Blue' }
+      ]
+    },
+    fontBackgroundColor: {
+      columns: 6,
+      colors: [
+        { color: 'transparent', label: 'None' },
+        { color: '#FFFFFF', label: 'White', hasBorder: true },
+        { color: '#FFFFE0', label: 'Light Yellow' },
+        { color: '#FFF0E0', label: 'Light Peach' },
+        { color: '#FFE0E0', label: 'Light Pink' },
+        { color: '#E0E0FF', label: 'Light Blue' },
+        
+        { color: '#FFFF00', label: 'Yellow Highlight' },
+        { color: '#FFD700', label: 'Gold' },
+        { color: '#FFA500', label: 'Orange' },
+        { color: '#FF6347', label: 'Tomato' },
+        { color: '#FF1493', label: 'Deep Pink' },
+        { color: '#FF69B4', label: 'Hot Pink' },
+        
+        { color: '#98FB98', label: 'Pale Green' },
+        { color: '#7FFFD4', label: 'Aquamarine' },
+        { color: '#87CEEB', label: 'Sky Blue' },
+        { color: '#DDA0DD', label: 'Plum' },
+        { color: '#FFB6C1', label: 'Light Pink' },
+        { color: '#CCCCCC', label: 'Light Grey' }
+      ]
+    },
     table: {
       contentToolbar: [
         'tableColumn', 'tableRow',
         'mergeTableCells', 'tableProperties', 'tableCellProperties'
-      ]
+      ],
+      tableProperties: {
+        borderColors: [
+          { color: '#000000', label: 'Black' },
+          { color: '#666666', label: 'Grey' },
+          { color: '#FFFFFF', label: 'White' },
+          { color: '#E60000', label: 'Red' },
+          { color: '#FF9900', label: 'Orange' },
+          { color: '#0000FF', label: 'Blue' }
+        ],
+        backgroundColors: [
+          { color: 'transparent', label: 'None' },
+          { color: '#FFFFFF', label: 'White' },
+          { color: '#F0F0F0', label: 'Light Grey' },
+          { color: '#FFFFCC', label: 'Light Yellow' },
+          { color: '#CCE5FF', label: 'Light Blue' }
+        ]
+      },
+      tableCellProperties: {
+        borderColors: [
+          { color: '#000000', label: 'Black' },
+          { color: '#666666', label: 'Grey' },
+          { color: '#FFFFFF', label: 'White' },
+          { color: '#E60000', label: 'Red' },
+          { color: '#FF9900', label: 'Orange' },
+          { color: '#0000FF', label: 'Blue' }
+        ],
+        backgroundColors: [
+          { color: 'transparent', label: 'None' },
+          { color: '#FFFFFF', label: 'White' },
+          { color: '#F0F0F0', label: 'Light Grey' },
+          { color: '#FFFFCC', label: 'Light Yellow' },
+          { color: '#CCE5FF', label: 'Light Blue' }
+        ]
+      }
     },
-    fontColor: {
-      colors: [
-        { color: 'hsl(0, 0%, 0%)', label: 'Black' },
-        { color: 'hsl(0, 0%, 30%)', label: 'Dim grey' },
-        { color: 'hsl(0, 0%, 60%)', label: 'Grey' },
-        { color: 'hsl(0, 0%, 90%)', label: 'Light grey' },
-        { color: 'hsl(0, 75%, 60%)', label: 'Red' },
-        { color: 'hsl(30, 75%, 60%)', label: 'Orange' },
-        { color: 'hsl(60, 75%, 60%)', label: 'Yellow' },
-        { color: 'hsl(120, 75%, 60%)', label: 'Green' },
-        { color: 'hsl(180, 75%, 60%)', label: 'Cyan' },
-        { color: 'hsl(240, 75%, 60%)', label: 'Blue' },
-        { color: 'hsl(300, 75%, 60%)', label: 'Purple' }
-      ]
+    alignment: {
+      options: ['left', 'center', 'right', 'justify']
     },
-    fontBackgroundColor: {
-      colors: [
-        { color: 'hsl(0, 0%, 100%)', label: 'White' },
-        { color: 'hsl(0, 75%, 60%)', label: 'Red' },
-        { color: 'hsl(30, 75%, 60%)', label: 'Orange' },
-        { color: 'hsl(60, 75%, 60%)', label: 'Yellow' },
-        { color: 'hsl(120, 75%, 60%)', label: 'Green' },
-        { color: 'hsl(180, 75%, 60%)', label: 'Cyan' },
-        { color: 'hsl(240, 75%, 60%)', label: 'Blue' },
-        { color: 'hsl(300, 75%, 60%)', label: 'Purple' }
+    heading: {
+      options: [
+        { model: 'paragraph', title: 'Paragraph', class: 'ck-heading_paragraph' },
+        { model: 'heading1', view: 'h1', title: 'Heading 1', class: 'ck-heading_heading1' },
+        { model: 'heading2', view: 'h2', title: 'Heading 2', class: 'ck-heading_heading2' },
+        { model: 'heading3', view: 'h3', title: 'Heading 3', class: 'ck-heading_heading3' },
+        { model: 'heading4', view: 'h4', title: 'Heading 4', class: 'ck-heading_heading4' }
       ]
     }
   };
@@ -108,7 +209,18 @@
     // mark initializing *before* creating to prevent double-create race
     markInitializing(el);
 
-    ClassicEditor.create(el, CK_CONFIG)
+    // Use CKEDITOR.ClassicEditor for superbuild, fallback to ClassicEditor for classic build
+    const EditorConstructor = (typeof CKEDITOR !== 'undefined' && CKEDITOR.ClassicEditor) 
+      ? CKEDITOR.ClassicEditor 
+      : (typeof ClassicEditor !== 'undefined' ? ClassicEditor : null);
+    
+    if (!EditorConstructor) {
+      console.error('CKEditor not loaded');
+      unmarkInitializing(el);
+      return;
+    }
+
+    EditorConstructor.create(el, CK_CONFIG)
       .then(editor => {
         // attach and expose for debug/use
         el._ckeditorInstance = editor;
