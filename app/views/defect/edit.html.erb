@@ -213,34 +213,38 @@
 
               <!-- QA Module Filter (parent modules) -->
               <div class="w-full">
-                <label for="qa_module_id" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+                <label for="defect_qa_module_id" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
                   Module *
                 </label>
 
-                <%= select_tag :qa_module_id,
+                <%= f.select :qa_module_id,
                       options_from_collection_for_select(@qa_modules, :id, :name, @defect.qa_module_id),
-                      include_blank: 'Select Module',
-                      id: 'qa_module_id',
-                      data: {
-                        'project-modules-target' => 'moduleSelect',
-                        'selected-module-id' => @defect.qa_module_id
-                      },
-                      class: 'w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 disabled:opacity-60',
-                      required: true %>
+                      { include_blank: 'Select Module' },
+                      {
+                        id: 'defect_qa_module_id',
+                        data: {
+                          'project-modules-target' => 'moduleSelect',
+                          'selected-module-id' => @defect.qa_module_id
+                        },
+                        class: 'w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 disabled:opacity-60',
+                        required: true
+                      } %>
               </div>
 
               <!-- Submodule Filter -->
               <div class="w-full">
-                <label for="submodule_id" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+                <label for="defect_submodule_id" class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
                   Sub Module
                 </label>
 
-                <%= select_tag :submodule_id,
+                <%= f.select :submodule_id,
                       options_from_collection_for_select(@submodules, :id, :name, @defect.submodule_id),
-                      include_blank: 'Select Sub-Module',
-                      id: 'submodule_id',
-                      data: { 'project-modules-target' => 'submoduleSelect', 'selected-submodule-id' => @defect.submodule_id },
-                      class: 'w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600' %>
+                      { include_blank: 'Select Sub-Module' },
+                      {
+                        id: 'defect_submodule_id',
+                        data: { 'project-modules-target' => 'submoduleSelect', 'selected-submodule-id' => @defect.submodule_id },
+                        class: 'w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600'
+                      } %>
               </div>
             </div>
           </div>
@@ -305,10 +309,8 @@
           data: { disable_with: "Updating..." },
                 class: "bg-[#3F8CFF] hover:bg-[#3A81EB] text-white font-medium rounded-lg px-6 py-2 shadow-md" %>
 
-          <%= f.submit "Save as Draft",
-            name: "commit",
-            value: "draft",
-            data: { disable_with: "Saving..." },
+          <%= link_to "Cancel", defect_path(@defect, product_id: params[:product_id]),
+            data: { turbo_frame: "_top" },
             class: "bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg px-6 py-2 shadow-md" %>
         </div>
       <% end %>

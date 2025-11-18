@@ -643,7 +643,14 @@ class DefectController < ApplicationController
 
   def edit
     @defect = Defect.find(params[:id])
-    @banking_types = BankingType.all
+
+    # Load banking types scoped to the defect's product
+    @banking_types = if @defect.product_id.present?
+                       BankingType.where(product_id: @defect.product_id).order(:name)
+                     else
+                       BankingType.all.order(:name)
+                     end
+
     @products = Product.with_quality_assurance_status
 
     # QA users (get their IDs)
@@ -680,10 +687,11 @@ class DefectController < ApplicationController
         ["#{client_name} - #{groupware_names}", product.id]
       end
 
+    # Load only parent modules (not submodules) for the Module dropdown
     @qa_modules = if @defect.product_id.present?
-                    QaModule.where(product_id: @defect.product_id)
+                    QaModule.where(product_id: @defect.product_id, parent_id: nil).order(:name)
                   else
-                    QaModule.all
+                    QaModule.where(parent_id: nil).order(:name)
                   end
 
     @submodules = if @defect.qa_module
@@ -1140,37 +1148,45 @@ class DefectController < ApplicationController
     selected_labels = Array(params[:label_ids]).reject(&:blank?)
     defects = defects.joins(:labels).where(labels: { id: selected_labels }) if selected_labels.any?
 
-    # Priority filter (case-insensitive)
-    defects = defects.where('LOWER(defects.priority) = ?', params[:priority].to_s.downcase) if params[:priority].present?
+    # Priority filter (multiple values - matches index_show)
+    selected_priorities = Array(params[:priority]).reject(&:blank?)
+    defects = defects.where(defects: { priority: selected_priorities }) if selected_priorities.any?
 
     # Assignee filter
     defects = defects.joins(:users).where(users: { id: params[:user_id] }) if params[:user_id].present?
 
-    # Module/Submodule filtering with sensible fallback similar to index_show
-    if params[:qa_module_id].present? && params[:submodule_id].present?
-      submodule_defects = defects.where(qa_module_id: params[:submodule_id])
+    # Module/Submodule filtering - matches index_show logic exactly
+    qa_module_ids = Array(params[:qa_module_id]).reject(&:blank?)
+    submodule_ids = Array(params[:submodule_id]).reject(&:blank?)
 
+    if qa_module_ids.any? && submodule_ids.any?
+      # Both parent modules and submodules selected
+      submodule_defects = defects.where(qa_module_id: submodule_ids)
+      
       if submodule_defects.exists?
         defects = submodule_defects
       else
-        parent_module_defects = defects.where(qa_module_id: params[:qa_module_id])
+        parent_module_defects = defects.where(qa_module_id: qa_module_ids)
         defects = parent_module_defects.exists? ? parent_module_defects : submodule_defects
       end
-    elsif params[:qa_module_id].present?
-      parent_module = QaModule.find_by(id: params[:qa_module_id])
-      if parent_module
-        submodule_ids = parent_module.children.pluck(:id)
-        all_module_ids = [parent_module.id] + submodule_ids
+    elsif qa_module_ids.any?
+      # Only parent modules selected - include all their submodules
+      parent_modules = QaModule.where(id: qa_module_ids)
+      if parent_modules.any?
+        submodule_ids_for_parents = QaModule.where(parent_id: qa_module_ids).pluck(:id)
+        all_module_ids = qa_module_ids + submodule_ids_for_parents
         defects = defects.where(qa_module_id: all_module_ids)
       else
-        defects = defects.where(qa_module_id: params[:qa_module_id])
+        defects = defects.where(qa_module_id: qa_module_ids)
       end
-    elsif params[:submodule_id].present?
-      defects = defects.where(qa_module_id: params[:submodule_id])
+    elsif submodule_ids.any?
+      # Only submodules selected without parent modules
+      defects = defects.where(qa_module_id: submodule_ids)
     end
 
-    # Banking type
-    defects = defects.where(banking_type_id: params[:banking_type_id]) if params[:banking_type_id].present?
+    # Banking type filter (multiple values)
+    banking_type_ids = Array(params[:banking_type_id]).reject(&:blank?)
+    defects = defects.where(banking_type_id: banking_type_ids) if banking_type_ids.any?
 
     # Date range filters (parse dates defensively)
     start_date = params[:start_date].presence
@@ -1275,16 +1291,45 @@ class DefectController < ApplicationController
     selected_labels = Array(params[:label_ids]).reject(&:blank?)
     defects = defects.joins(:labels).where(labels: { id: selected_labels }) if selected_labels.any?
 
-    # Priority filter (exact, case-insensitive)
-    defects = defects.where('LOWER(defects.priority) = ?', params[:priority].to_s.downcase) if params[:priority].present?
+    # Priority filter (multiple values - matches index_show)
+    selected_priorities = Array(params[:priority]).reject(&:blank?)
+    defects = defects.where(defects: { priority: selected_priorities }) if selected_priorities.any?
 
     # Assignee filter
     defects = defects.joins(:users).where(users: { id: params[:user_id] }) if params[:user_id].present?
 
-    # Module/Submodule/BankingType filters
-    defects = defects.where(qa_module_id: params[:qa_module_id]) if params[:qa_module_id].present?
-    defects = defects.where(submodule_id: params[:submodule_id]) if params[:submodule_id].present?
-    defects = defects.where(banking_type_id: params[:banking_type_id]) if params[:banking_type_id].present?
+    # Module/Submodule filtering - matches index_show logic exactly
+    qa_module_ids = Array(params[:qa_module_id]).reject(&:blank?)
+    submodule_ids = Array(params[:submodule_id]).reject(&:blank?)
+
+    if qa_module_ids.any? && submodule_ids.any?
+      # Both parent modules and submodules selected
+      submodule_defects = defects.where(qa_module_id: submodule_ids)
+      
+      if submodule_defects.exists?
+        defects = submodule_defects
+      else
+        parent_module_defects = defects.where(qa_module_id: qa_module_ids)
+        defects = parent_module_defects.exists? ? parent_module_defects : submodule_defects
+      end
+    elsif qa_module_ids.any?
+      # Only parent modules selected - include all their submodules
+      parent_modules = QaModule.where(id: qa_module_ids)
+      if parent_modules.any?
+        submodule_ids_for_parents = QaModule.where(parent_id: qa_module_ids).pluck(:id)
+        all_module_ids = qa_module_ids + submodule_ids_for_parents
+        defects = defects.where(qa_module_id: all_module_ids)
+      else
+        defects = defects.where(qa_module_id: qa_module_ids)
+      end
+    elsif submodule_ids.any?
+      # Only submodules selected without parent modules
+      defects = defects.where(qa_module_id: submodule_ids)
+    end
+
+    # Banking type filter (multiple values)
+    banking_type_ids = Array(params[:banking_type_id]).reject(&:blank?)
+    defects = defects.where(banking_type_id: banking_type_ids) if banking_type_ids.any?
 
     # Date range filters
     start_date = params[:start_date].presence
