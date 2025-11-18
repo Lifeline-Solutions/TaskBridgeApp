@@ -7,8 +7,8 @@ class ReportsController < ApplicationController
   def index
     authorize! :generate, :report
 
-    # Load saved report dashboards for the current user
-    @saved_dashboards = current_user.defect_filters.defect_filters.active.order(:name)
+    # Load saved report filters for the current user (both 'report' and 'defect' types can be used)
+    @saved_dashboards = current_user.defect_filters.active.order(:name)
 
     @products = Product.includes(:client, :groupwares, :statuses)
       .select do |product|
@@ -285,10 +285,10 @@ class ReportsController < ApplicationController
     @dashboard.modified_by = current_user
 
     if @dashboard.save
-      redirect_to reports_path, notice: 'Dashboard saved successfully!'
+      redirect_to reports_path, notice: 'Filter saved successfully!'
     else
       redirect_to reports_path(params.except(:defect_filter, :commit, :action, :controller)),
-                  alert: "Failed to save dashboard: #{@dashboard.errors.full_messages.join(', ')}"
+                  alert: "Failed to save filter: #{@dashboard.errors.full_messages.join(', ')}"
     end
   end
 
@@ -382,20 +382,25 @@ class ReportsController < ApplicationController
     clean_dashboard_id = dashboard_id.to_s.gsub('value+', '').strip
     return if clean_dashboard_id.blank?
 
-    # Use defect_filters scope since that's what you're loading
-    dashboard = current_user.defect_filters.defect_filters.active.find_by(id: clean_dashboard_id)
+    # Load saved dashboard/filter - could be either 'report' or 'defect' type
+    dashboard = current_user.defect_filters.active.find_by(id: clean_dashboard_id)
     return unless dashboard
 
-    # Apply the saved filters to the current params
-    # For defect filters, we need to convert them to report parameters
+    # Get the sanitized filters based on the filter type
     saved_filters = dashboard.sanitized_filters
 
-    # Convert defect filter parameters to report parameters
-    report_params = convert_defect_filters_to_report_params(saved_filters)
+    # Convert to report parameters based on filter type
+    report_params = if dashboard.report_filter?
+                      # For report filters, use the filters directly
+                      saved_filters
+                    else
+                      # For defect filters, convert to report parameters
+                      convert_defect_filters_to_report_params(saved_filters)
+                    end
 
     # Delete all existing params except the ones we want to keep
     params.keys.each do |key|
-      params.delete(key) unless %w[controller action].include?(key)
+      params.delete(key) unless %w[controller action dashboard_id].include?(key)
     end
 
     # Set the dashboard_id
@@ -406,8 +411,7 @@ class ReportsController < ApplicationController
       params[key] = value if value.present?
     end
 
-    # Clear commit and product_change to prevent form submission logic
-    params[:commit] = nil
+    # Clear product_change to allow metrics to be calculated
     params[:product_change] = nil
   end
 

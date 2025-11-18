@@ -578,8 +578,11 @@ class DefectController < ApplicationController
     # Clean user_ids coming from hidden field (will be [""] if none selected)
     selected_user_ids = Array(params[:defect][:user_ids]).reject(&:blank?)
 
-    # Fallback to global default assignee if no one selected
-    if selected_user_ids.blank?
+    # Explicitly set draft flag BEFORE assignment logic
+    @defect.draft = params[:commit] == 'draft'
+
+    # Fallback to global default assignee if no one selected (but NOT for drafts)
+    if selected_user_ids.blank? && !@defect.draft?
       default_assignee = DefaultDefectAssignee.where(archive_status: false)
         .order(created_at: :desc)
         .first
@@ -588,9 +591,6 @@ class DefectController < ApplicationController
 
     # Assign before saving
     @defect.user_ids = selected_user_ids
-
-    # Explicitly set draft flag
-    @defect.draft = params[:commit] == 'draft'
 
     if @defect.save
       if @defect.draft?
@@ -1162,7 +1162,7 @@ class DefectController < ApplicationController
     if qa_module_ids.any? && submodule_ids.any?
       # Both parent modules and submodules selected
       submodule_defects = defects.where(qa_module_id: submodule_ids)
-      
+
       if submodule_defects.exists?
         defects = submodule_defects
       else
@@ -1305,7 +1305,7 @@ class DefectController < ApplicationController
     if qa_module_ids.any? && submodule_ids.any?
       # Both parent modules and submodules selected
       submodule_defects = defects.where(qa_module_id: submodule_ids)
-      
+
       if submodule_defects.exists?
         defects = submodule_defects
       else

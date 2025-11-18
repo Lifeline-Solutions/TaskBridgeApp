@@ -1,26 +1,26 @@
 <div class="container justify-between p-4">
   <%= form_with url: reports_path, method: :get, local: true, id: 'reports-form' do %>
     <div class="flex flex-wrap gap-3 items-center">
-      <!-- Saved Dashboards Dropdown -->
+      <!-- Saved Filters Dropdown -->
       <div>
-        <label for="dashboard_id" class="font-semibold">Saved Dashboards:</label>
+        <label for="dashboard_id" class="font-semibold">Saved Filters:</label>
         <%= select_tag :dashboard_id,
-                      options_for_select([['Select a saved dashboard...', '']] + 
+                      options_for_select([['Select a saved filter...', '']] + 
                         @saved_dashboards.map { |df| [df.name, df.id] }, 
                         params[:dashboard_id]),
                       class: "border rounded p-2 ml-2 bg-white dark:bg-gray-800 min-w-48",
                       id: "dashboard_id" %>
       </div>
 
-      <!-- Multiple Product Selection with Checkboxes -->
+      <!-- Multiple Project Selection with Checkboxes -->
       <div class="dropdown-group">
-        <label class="font-semibold">Select Products:</label>
+        <label class="font-semibold">Select Projects:</label>
         <button type="button" id="productDropdownButton" class="border rounded p-2 ml-2 bg-white dark:bg-gray-800 min-w-48 text-left">
           <% selected_products = Array(params[:product_id]).reject(&:blank?) %>
           <% if selected_products.any? %>
-            <%= "#{selected_products.size} product(s) selected" %>
+            <%= "#{selected_products.size} project(s) selected" %>
           <% else %>
-            Select products...
+            Select projects...
           <% end %>
         </button>
         <div id="product-options" class="dropdown-options hidden">
@@ -39,7 +39,7 @@
         </div>
       </div>
 
-      <!-- Metrics Section - Show when products are selected (even if just product_change) -->
+      <!-- Metrics Section - Show when projects are selected (even if just product_change) -->
       <% if params[:product_id].present? %>
         <div>
           <label class="font-semibold">Date Range:</label>
@@ -192,7 +192,7 @@
           <% end %>
         </div>
 
-        <!-- Show Apply button only when products are selected -->
+        <!-- Show Apply button only when projects are selected -->
         <%= submit_tag "Apply", class: "ml-2 px-4 py-2 bg-blue-500 text-white rounded" %>
         <% if params[:commit].present? || params[:dashboard_id].present? %>
           <%= link_to "Clear", "javascript:void(0);", class: "ml-2 px-4 py-2 bg-gray-500 text-white rounded", onclick: "window.location.href='#{reports_path}';" %>
@@ -228,7 +228,7 @@
 
       <div class="flex items-center space-x-2">
         <button type="button" id="openSaveDashboardModal" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center">
-          <i class="fas fa-save mr-2"></i>Save as Dashboard
+          <i class="fas fa-save mr-2"></i>Save as Filter
         </button>
 
         <%= link_to download_report_reports_path(request.query_parameters), class: "bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center" do %>
@@ -240,42 +240,47 @@
     <!-- Save Dashboard Modal -->
     <div id="saveDashboardModal" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.5);">
       <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-96">
-        <h3 class="text-lg font-bold mb-4 dark:text-white">Save Current Report as Dashboard</h3>
+        <h3 class="text-lg font-bold mb-4 dark:text-white">Save Current Report as Filter</h3>
         <%= form_with url: save_report_dashboard_path, method: :post, local: true do |f| %>
           <div class="mb-4">
-            <%= label_tag 'defect_filter[name]', 'Dashboard Name', class: 'block font-medium mb-2 dark:text-gray-300' %>
+            <%= label_tag 'defect_filter[name]', 'Filter Name', class: 'block font-medium mb-2 dark:text-gray-300' %>
             <%= text_field_tag 'defect_filter[name]', '', class: 'w-full border-2 border-blue-500 dark:border-blue-400 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 dark:bg-gray-700 dark:text-white', required: true %>
           </div>
 
           <% if @product_options.any? %>
             <div class="mb-4">
-              <%= label_tag 'defect_filter[product_id]', 'Product (Optional)', class: 'block font-medium mb-2' %>
+              <%= label_tag 'defect_filter[product_id]', 'Project (Optional)', class: 'block font-medium mb-2 dark:text-gray-300' %>
               <%= select_tag 'defect_filter[product_id]', 
                     options_for_select(@product_options, Array(params[:product_id]).first),
-                    include_blank: 'Select product...',
-                    class: 'w-full border p-2 rounded' %>
+                    include_blank: 'Select project...',
+                    class: 'w-full border p-2 rounded dark:bg-gray-700 dark:text-white dark:border-gray-600' %>
             </div>
           <% end %>
 
           <!-- Store all current report filters -->
-          <%= hidden_field_tag 'defect_filter[filters]', {
-            metrics: params[:metrics] || [],
-            severities: params[:severities] || [],
-            reporters: params[:reporters] || [],
-            statuses: params[:statuses] || [],
-            assignees: params[:assignees] || [],
-            modules: params[:modules] || [],
-            submodules: params[:submodules] || [],
-            ageing_type: params[:ageing_type],
-            start_date: params[:start_date],
-            end_date: params[:end_date],
-            product_id: params[:product_id],
-            view_type: params[:view_type] || 'graphical'
-          }.to_json %>
+          <% 
+            # When saving filters, store actual selections or mark as "all"
+            # Empty arrays mean "all available" were selected
+            filter_data = {
+              metrics: params[:metrics] || [],
+              severities: @selected_severities.any? ? @selected_severities : @available_options[:severities] || [],
+              reporters: @selected_reporters.any? ? @selected_reporters : (@available_options[:reporters]&.map { |id, _| id.to_s } || []),
+              statuses: @selected_statuses.any? ? @selected_statuses : (@available_options[:statuses]&.map { |_, name| name } || []),
+              assignees: @selected_assignees.any? ? @selected_assignees : (@available_options[:assignees]&.map { |id, _| id.to_s } || []),
+              modules: @selected_modules.any? ? @selected_modules : (@available_options[:modules]&.map { |id, _| id.to_s } || []),
+              submodules: @selected_submodules.any? ? @selected_submodules : (@available_options[:submodules]&.map { |id, _, _| id.to_s } || []),
+              ageing_type: params[:ageing_type],
+              start_date: params[:start_date],
+              end_date: params[:end_date],
+              product_id: params[:product_id],
+              view_type: params[:view_type] || 'graphical'
+            }
+          %>
+          <%= hidden_field_tag 'defect_filter[filters]', filter_data.to_json %>
 
           <div class="flex justify-end gap-2">
             <button type="button" id="cancelSaveDashboard" class="px-4 py-2 border rounded hover:bg-gray-100">Cancel</button>
-            <%= submit_tag 'Save Dashboard', class: 'px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700' %>
+            <%= submit_tag 'Save Filter', class: 'px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700' %>
           </div>
         <% end %>
       </div>
@@ -323,17 +328,17 @@
     </span>
   </div>
 <% elsif params[:product_id].present? %>
-  <!-- Show this when products are selected but no action taken yet -->
+  <!-- Show this when projects are selected but no action taken yet -->
   <div class="container p-4 text-center text-gray-500">
-    Please configure your metrics and click <strong>"Apply"</strong> to generate the report.<br>
+    Projects selected! Please configure your metrics and click <strong>"Apply"</strong> to generate the report.<br>
     <span class="text-sm text-gray-400">
-      Note: The dropdowns only display items available for the selected product. 
-      For example, if you don't see all statuses, it means only those statuses exist among the current product's defects.
+      Note: The dropdowns only display items available for the selected project. 
+      For example, if you don't see all statuses, it means only those statuses exist among the current project's defects.
     </span>
   </div>
 <% else %>
   <div class="container p-4 text-center text-gray-500">
-    Please select a product to view reports. <strong>Selecting the date-range is optional</strong>.
+    Please select a project to view reports. <strong>Selecting the date-range is optional</strong>.
   </div>
 <% end %>
 
@@ -385,6 +390,17 @@
   .view-toggle-btn.active {
     background-color: #3b82f6;
     color: white;
+  }
+
+  /* Fix for scrolling issues at 100% zoom */
+  #results-container {
+    overflow-x: auto;
+    width: 100%;
+  }
+
+  /* Ensure container allows scrolling */
+  .container {
+    overflow: visible;
   }
 </style>
 
@@ -521,6 +537,25 @@
       modal.addEventListener('click', function(e) {
         if (e.target === modal) {
           modal.classList.add('hidden');
+        }
+      });
+    }
+
+    // Edit Filter button functionality
+    const editFilterBtn = document.getElementById('editFilterBtn');
+    if (editFilterBtn) {
+      editFilterBtn.addEventListener('click', function() {
+        // Scroll to the top of the form
+        const form = document.getElementById('reports-form');
+        if (form) {
+          form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          
+          // Highlight the form briefly to draw attention
+          form.style.transition = 'background-color 0.5s';
+          form.style.backgroundColor = '#EFF6FF'; // Light blue
+          setTimeout(() => {
+            form.style.backgroundColor = '';
+          }, 2000);
         }
       });
     }

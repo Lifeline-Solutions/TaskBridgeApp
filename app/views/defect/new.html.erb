@@ -695,4 +695,62 @@
 
   // Initialize when the frame is loaded (for modals)
   document.addEventListener('turbo:frame-load', initializeAll);
+
+  // Handle draft button to bypass HTML5 validation
+  document.addEventListener('turbo:load', function() {
+    // Find the defect form specifically
+    const form = document.querySelector('form[action*="defect"]');
+    if (!form) return;
+    
+    const draftButton = form.querySelector('input[type="submit"][value="draft"]');
+    const createButton = form.querySelector('input[type="submit"]:not([value="draft"])');
+    
+    if (draftButton) {
+      // When draft button is clicked, disable HTML5 validation
+      draftButton.addEventListener('click', function(e) {
+        console.log('Draft button clicked - disabling validation');
+        
+        // Disable HTML5 validation on the form
+        form.setAttribute('novalidate', 'novalidate');
+        
+        // Remove required attributes from all required fields
+        const requiredFields = form.querySelectorAll('[required]');
+        requiredFields.forEach(field => {
+          field.removeAttribute('required');
+          field.dataset.wasRequired = 'true';
+        });
+        
+        // Handle data-required fields (like CKEditor content)
+        const dataRequiredFields = form.querySelectorAll('[data-required="true"]');
+        dataRequiredFields.forEach(field => {
+          field.removeAttribute('data-required');
+          field.dataset.wasDataRequired = 'true';
+        });
+      });
+    }
+      
+    // When create button is clicked, restore validation
+    if (createButton) {
+      createButton.addEventListener('click', function(e) {
+        console.log('Create button clicked - enabling validation');
+        
+        // Enable HTML5 validation
+        form.removeAttribute('novalidate');
+        
+        // Restore required attributes
+        const fieldsToRestore = form.querySelectorAll('[data-was-required="true"]');
+        fieldsToRestore.forEach(field => {
+          field.setAttribute('required', 'required');
+          field.removeAttribute('data-was-required');
+        });
+        
+        // Restore data-required attributes
+        const dataFieldsToRestore = form.querySelectorAll('[data-was-data-required="true"]');
+        dataFieldsToRestore.forEach(field => {
+          field.setAttribute('data-required', 'true');
+          field.removeAttribute('data-was-data-required');
+        });
+      });
+    }
+  });
 </script>
