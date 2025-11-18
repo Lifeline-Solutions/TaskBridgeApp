@@ -680,10 +680,11 @@ class DefectController < ApplicationController
         ["#{client_name} - #{groupware_names}", product.id]
       end
 
+    # Load only parent modules (not submodules) for the Module dropdown
     @qa_modules = if @defect.product_id.present?
-                    QaModule.where(product_id: @defect.product_id)
+                    QaModule.where(product_id: @defect.product_id, parent_id: nil).order(:name)
                   else
-                    QaModule.all
+                    QaModule.where(parent_id: nil).order(:name)
                   end
 
     @submodules = if @defect.qa_module
