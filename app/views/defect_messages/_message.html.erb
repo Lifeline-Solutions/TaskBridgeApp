@@ -52,6 +52,85 @@
       <%= render "defect_messages/content_defect_message", message: message %>
     </div>
 
+    <!-- Comment-Level Attachments (from Jira import via has_many_attached) -->
+    <% if message.respond_to?(:attachments) && message.attachments.any? %>
+      <div class="mt-4 space-y-4">
+        <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          📎 Attachments (<%= message.attachments.count %>)
+        </div>
+        <% message.attachments.each do |file| %>
+          <div class="p-3 border rounded-lg bg-gray-50 dark:bg-gray-700">
+            <% if file.content_type&.start_with?('image/') %>
+              <!-- Clickable image -->
+              <div class="flex items-start justify-between gap-4">
+                <div>
+                  <%= image_tag file,
+                      class: "rounded max-h-64 w-auto cursor-pointer hover:opacity-90 transition",
+                      data: {
+                        attachment_preview: true,
+                        url: url_for(file),
+                        type: file.content_type
+                      },
+                      alt: file.filename.to_s %>
+                </div>
+                <div class="ml-4 flex-shrink-0 flex flex-col items-end space-y-2">
+                  <span class="text-sm text-gray-600 dark:text-gray-300"><%= file.filename.to_s %></span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400"><%= number_to_human_size(file.blob.byte_size) %></span>
+                  <%= link_to rails_blob_path(file, disposition: "attachment"),
+                              download: file.filename.to_s,
+                              class: "inline-flex items-center px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-sm rounded hover:bg-gray-200 dark:hover:bg-gray-700" do %>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l4-4m-4 4-4-4M21 12v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6" />
+                    </svg>
+                    Download
+                  <% end %>
+                </div>
+              </div>
+            <% elsif file.content_type&.start_with?('video/') %>
+              <!-- Video player -->
+              <div class="flex flex-col space-y-3">
+                <video controls class="rounded max-h-64 w-full">
+                  <source src="<%= url_for(file) %>" type="<%= file.content_type %>">
+                  Your browser does not support the video tag.
+                </video>
+                <div class="flex justify-between items-center">
+                  <div class="text-sm text-gray-700 dark:text-gray-300"><%= file.filename.to_s %></div>
+                  <div>
+                    <%= link_to rails_blob_path(file, disposition: "attachment"),
+                                download: file.filename.to_s,
+                                class: "inline-flex items-center px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-sm rounded hover:bg-gray-200 dark:hover:bg-gray-700" do %>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l4-4m-4 4-4-4M21 12v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6" />
+                      </svg>
+                      Download
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            <% else %>
+              <!-- Other files (PDF, text, etc.) -->
+              <div class="flex items-center justify-between">
+                <div>
+                  <%= link_to file.filename.to_s, url_for(file), class: "text-blue-600 dark:text-blue-400 underline", target: "_blank", rel: "noreferrer" %>
+                  <div class="text-xs text-gray-500 dark:text-gray-400"><%= number_to_human_size(file.blob.byte_size) %></div>
+                </div>
+                <div>
+                  <%= link_to rails_blob_path(file, disposition: "attachment"),
+                              download: file.filename.to_s,
+                              class: "inline-flex items-center px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-sm rounded hover:bg-gray-200 dark:hover:bg-gray-700" do %>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l4-4m-4 4-4-4M21 12v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6" />
+                    </svg>
+                    Download
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
     <!-- Attachments Preview (images clickable to open inline modal) -->
     <% if message.content.embeds.any? %>
       <div class="mt-4 space-y-4">

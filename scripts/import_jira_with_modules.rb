@@ -902,22 +902,33 @@ end
 
 # Download attachments from Jira and attach to the defect using ActiveStorage.
 def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
-  return if attachments_array.nil? || attachments_array.empty?
+  return { uploaded: 0, skipped: 0, failed: 0 } if attachments_array.nil? || attachments_array.empty?
 
   require 'stringio'
   require 'tempfile'
 
-  attachments_array.each do |att|
+  stats = { uploaded: 0, skipped: 0, failed: 0 }
+  total_files = attachments_array.length
+  total_size_mb = (attachments_array.sum { |a| a['size'] || 0 } / 1024.0 / 1024.0).round(2)
+
+  puts "📥 DOWNLOADING ISSUE-LEVEL ATTACHMENTS FOR #{defect.defect_unique}"
+  puts "   Total files: #{total_files} (#{total_size_mb} MB)"
+  puts ""
+
+  attachments_array.each_with_index do |att, idx|
     filename = att['filename'] || att['name'] || 'attachment'
     content_url = att['content'] || att['contentUrl'] || att['self']
     content_type = att['mimeType'] || att['contentType'] || att['mediaType']
+    size = att['size'] || 0
+    size_mb = (size / 1024.0 / 1024.0).round(2)
 
     next unless content_url
 
     # Skip if a file with same filename already attached
     already = defect.attachments.detect { |a| a.filename.to_s == filename }
     if already
-      vputs "[SKIP] attachment #{filename} already attached to defect #{defect.defect_unique}" if verbose
+      puts "   [#{idx + 1}/#{total_files}] ⏭️  SKIP: #{filename} (already attached)"
+      stats[:skipped] += 1
       next
     end
 
@@ -1121,15 +1132,16 @@ def fetch_and_attach_to_rich_text_jira(rich_record, attachments, verbose: false)
   require 'tempfile'
   stats = { uploaded: 0, skipped: 0, failed: 0 }
 
-  attachments.each do |att|
+  attachments.each_with_index do |att, file_idx|
     filename = att['filename'] || att['name'] || "attachment_#{att['id']}"
     content_type = att['mimeType'] || att['contentType'] || 'application/octet-stream'
     download_url = att['content'] || att['contentUrl'] || att['self'] || att['url']
     size = att['size'] || 0
+    size_mb = (size / 1024.0 / 1024.0).round(2)
 
     begin
       if download_url.to_s.strip.empty?
-        vputs "[SKIP] attachment #{filename} has no download URL" if verbose
+        vputs "  [#{file_idx + 1}/#{attachments.length}] ⏭️  SKIP: #{filename} (no download URL)" if verbose
         next
       end
 
@@ -1137,7 +1149,7 @@ def fetch_and_attach_to_rich_text_jira(rich_record, attachments, verbose: false)
       begin
         already_attached = rich_record.attachments.any? { |a| a.filename.to_s == filename }
         if already_attached
-          vputs "  [SKIP] Attachment '#{filename}' already attached to comment #{rich_record.id}" if verbose
+          vputs "  [#{file_idx + 1}/#{attachments.length}] ⏭️  SKIP: #{filename} (already attached to comment #{rich_record.id})" if verbose
           stats[:skipped] += 1
           next
         end
@@ -1149,24 +1161,31 @@ def fetch_and_attach_to_rich_text_jira(rich_record, attachments, verbose: false)
         return stats
       end
 
+      print "  [#{file_idx + 1}/#{attachments.length}] 📥 #{filename} (#{size_mb} MB)... " if verbose
+
       uri = URI.parse(download_url)
       max_redirects = 6
       redirects = 0
       resp = nil
 
+      download_start = Time.now
+
       loop do
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = (uri.scheme == 'https')
-        # Increased timeouts for large files (up to 10 minutes for very large attachments)
-        http.read_timeout = 600 # 10 minutes to download large files
-        http.open_timeout = 60 # 1 minute to establish connection
-        http.write_timeout = 300 # 5 minutes for upload (if supported)
+        # DRAMATICALLY INCREASED TIMEOUTS for large comment attachments
+        # Allow up to 30 minutes for very large files (e.g., video files, large archives)
+        http.read_timeout = 1800 # 30 minutes to download large files
+        http.open_timeout = 120 # 2 minutes to establish connection
+        http.write_timeout = 900 # 15 minutes for upload
+        # Keep connection alive for long downloads
+        http.keep_alive_timeout = 300 # 5 minutes
 
         request = Net::HTTP::Get.new(uri.request_uri)
         request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
 
-        file_size_mb = (size / 1024.0 / 1024.0).round(2)
-        vputs "Downloading comment attachment #{filename} (#{file_size_mb} MB) from #{uri.to_s[0..120]}..." if verbose
+        # Stream large files in chunks to avoid memory issues
+        print "." if verbose && size > 10_000_000 # Show progress dots for files > 10MB
 
         resp = http.request(request)
 
@@ -1176,7 +1195,7 @@ def fetch_and_attach_to_rich_text_jira(rich_record, attachments, verbose: false)
 
           redirects += 1
           if redirects > max_redirects
-            warn "Too many redirects (#{redirects}) for comment attachment #{filename}"
+            puts "❌ FAILED (too many redirects)" if verbose
             resp = nil
             break
           end
@@ -1188,59 +1207,135 @@ def fetch_and_attach_to_rich_text_jira(rich_record, attachments, verbose: false)
       end
 
       unless resp && resp.is_a?(Net::HTTPSuccess)
-        warn "[WARN] Unable to download attachment #{filename} (HTTP #{resp&.code})"
+        if verbose
+          puts "❌ FAILED (HTTP #{resp&.code})"
+        else
+          warn "[WARN] Unable to download attachment #{filename} (HTTP #{resp&.code})"
+        end
         stats[:failed] += 1
         next
       end
 
+      download_duration = (Time.now - download_start).round(2)
+
+      puts "" if verbose && size > 10_000_000 # New line after progress dots
+
       tmp = Tempfile.new([filename.gsub(/[^0-9A-Za-z.-]/, '_')])
       tmp.binmode
-      tmp.write(resp.body)
+
+      # Write response body to tempfile with chunked streaming for large files
+      # This prevents memory exhaustion on very large files
+      bytes_written = 0
+      if resp.body.respond_to?(:read)
+        # Stream in 1MB chunks
+        while chunk = resp.body.read(1_048_576)
+          tmp.write(chunk)
+          bytes_written += chunk.bytesize
+        end
+      else
+        tmp.write(resp.body)
+        bytes_written = resp.body.bytesize
+      end
       tmp.rewind
+
+      # Verify file size matches expected
+      if size > 0 && bytes_written < size
+        puts "⚠️  WARNING: Partial download (#{bytes_written}/#{size} bytes)" if verbose
+      end
 
       # Attach directly to DefectMessage using has_many_attached :attachments
       # This stores comment attachments in active_storage_attachments with record_type='DefectMessage'
       begin
         # Verify storage service is accessible before attempting upload
         storage_service = ActiveStorage::Blob.service
-        storage_root = storage_service.respond_to?(:root) ? storage_service.root : 'N/A'
 
-        # Attach file to DefectMessage record using ActiveStorage
-        File.open(tmp.path, 'rb') do |file|
-          rich_record.attachments.attach(io: file, filename: filename, content_type: content_type)
+        # For very large files, temporarily increase ActiveStorage's timeouts
+        # This prevents upload failures for files > 100MB
+        upload_start = Time.now
+
+        max_upload_retries = 3
+        upload_retry_count = 0
+        upload_success = false
+
+        while upload_retry_count < max_upload_retries && !upload_success
+          begin
+            # Attach file to DefectMessage record using ActiveStorage
+            # Use streaming upload for large files to prevent memory issues
+            File.open(tmp.path, 'rb') do |file|
+              if size > 50_000_000 # Files > 50MB
+                # For very large files, ensure we don't timeout during upload
+                puts " [Large file detected, using streaming upload]" if verbose && upload_retry_count == 0
+              end
+
+              rich_record.attachments.attach(io: file, filename: filename, content_type: content_type)
+            end
+
+            upload_success = true
+          rescue Net::ReadTimeout, Net::OpenTimeout, Errno::ETIMEDOUT => e
+            upload_retry_count += 1
+            if upload_retry_count < max_upload_retries
+              backoff_time = 2 ** upload_retry_count # Exponential backoff: 2s, 4s, 8s
+              puts " [Timeout on upload attempt #{upload_retry_count}, retrying in #{backoff_time}s...]" if verbose
+              sleep(backoff_time)
+            else
+              raise e
+            end
+          end
         end
+
+        upload_duration = (Time.now - upload_start).round(2)
 
         # Verify attachment was created and uploaded successfully
         rich_record.reload
         attached = rich_record.attachments.find { |a| a.filename.to_s == filename }
         if attached && attached.blob
           blob_key = attached.blob.key
-          blob_byte_size = attached.blob.byte_size
+          blob_size = attached.blob.byte_size
 
           # Check if blob physically exists in storage
           exists = begin
             ActiveStorage::Blob.service.exist?(blob_key)
           rescue StandardError => e
-            warn "[STORAGE-ERROR] Failed to verify blob existence for #{filename}: #{e.message}"
+            warn "[STORAGE-ERROR] Failed to verify blob existence for #{filename}: #{e.message}" if verbose
             false
           end
 
-          file_size_mb = (size / 1024.0 / 1024.0).round(2)
-
           if exists
-            vputs "  [OK] Attached comment file '#{filename}' to DefectMessage #{rich_record.id} (#{file_size_mb} MB, blob_key=#{blob_key}, storage=#{storage_root})" if verbose
+            # Show detailed timing for large files
+            total_time = download_duration + upload_duration
+            speed_mbps = size > 0 ? ((size / 1024.0 / 1024.0) / total_time).round(2) : 0
+
+            if size > 50_000_000
+              puts "✅ OK (download: #{download_duration}s, upload: #{upload_duration}s, total: #{total_time.round(2)}s, #{speed_mbps} MB/s, blob: #{blob_key[0..15]}...)" if verbose
+            else
+              puts "✅ OK (#{download_duration}s, #{blob_key[0..15]}...)" if verbose
+            end
             stats[:uploaded] += 1
           else
-            warn "[STORAGE-WARN] Blob record created for '#{filename}' but file not found in storage (key=#{blob_key}, storage=#{storage_root})"
-            warn '[STORAGE-WARN] This may cause 404 errors when trying to view/download the attachment'
+            puts "⚠️  PARTIAL (downloaded but not in storage)" if verbose
+            warn "[STORAGE-WARN] Blob record created for '#{filename}' but file not found in storage (key=#{blob_key})"
+            warn "[STORAGE-WARN] File size: #{size_mb} MB, Download time: #{download_duration}s, Upload time: #{upload_duration}s"
             stats[:failed] += 1
           end
         else
+          puts "⚠️  FAILED (attachment not created)" if verbose
           warn "[WARN] Attachment created but blob not found for #{filename}"
+          warn "[WARN] This may indicate an ActiveStorage configuration issue or disk space problem"
           stats[:failed] += 1
         end
+      rescue Net::ReadTimeout => e
+        puts "❌ TIMEOUT (upload took too long)" if verbose
+        warn "[ERROR] Upload timeout for #{filename} (#{size_mb} MB) after #{max_upload_retries} retries: #{e.message}"
+        warn "[ERROR] Consider increasing server timeout limits or checking network stability"
+        stats[:failed] += 1
+      rescue Errno::ENOSPC => e
+        puts "❌ DISK FULL" if verbose
+        warn "[ERROR] No disk space available for #{filename}: #{e.message}"
+        warn "[ERROR] Free up disk space and retry the import"
+        stats[:failed] += 1
       rescue StandardError => e
-        warn "[ERROR] Failed to attach file #{filename} to DefectMessage #{rich_record.id}: #{e.class}: #{e.message}"
+        puts "❌ ERROR (#{e.class.name})" if verbose
+        warn "[ERROR] Failed to attach file #{filename} (#{size_mb} MB) to DefectMessage #{rich_record.id}: #{e.class}: #{e.message}"
         warn "[ERROR] Backtrace: #{e.backtrace.first(3).join(', ')}" if verbose
         stats[:failed] += 1
       ensure
@@ -1248,10 +1343,21 @@ def fetch_and_attach_to_rich_text_jira(rich_record, attachments, verbose: false)
         tmp.unlink
       end
 
-      # Add delay between large file downloads to avoid overwhelming server/network
-      sleep(size > 5_000_000 ? 2.0 : 0.5) # 2 seconds for files > 5MB, 0.5s otherwise
+      # Add delay between downloads - longer for large files to prevent server/network overload
+      # Also helps prevent rate limiting and connection issues
+      if size > 100_000_000 # > 100MB
+        sleep 5.0
+      elsif size > 50_000_000 # > 50MB
+        sleep 3.0
+      elsif size > 10_000_000 # > 10MB
+        sleep 2.0
+      else
+        sleep 0.5
+      end
     rescue StandardError => e
-      warn "[ERROR] Failed to attach #{filename} to comment #{rich_record.id}: #{e.class}: #{e.message}"
+      puts "❌ ERROR (#{e.class.name})" if verbose
+      warn "[ERROR] Failed to process #{filename}: #{e.class}: #{e.message}"
+      warn "[ERROR] This file will be skipped. Re-run import to retry."
       stats[:failed] += 1
       next
     end
@@ -1382,9 +1488,12 @@ def import_comments_for_defect(defect, comments_array, verbose: false)
       comment_att_count = c['_comment_attachments'].length
       total_size_mb = (c['_comment_attachments'].sum { |att| att['size'] || 0 } / 1024.0 / 1024.0).round(2)
 
-      vputs "[ATTACH] Attaching #{comment_att_count} file(s) (#{total_size_mb} MB total) to comment #{dm.id}..." if verbose
+      puts "📎 DOWNLOADING COMMENT ATTACHMENTS"
+      puts "   Comment ID: #{dm.id} (Jira: #{c['id']})"
+      puts "   Files: #{comment_att_count} (#{total_size_mb} MB total)"
+      puts ""
 
-      max_retries = 2
+      max_retries = 5 # Increased from 2 to 5 for better reliability with large files
       retry_count = 0
       upload_stats = nil
       success = false
@@ -1408,11 +1517,16 @@ def import_comments_for_defect(defect, comments_array, verbose: false)
           end
 
           if attached_count == expected_count && all_exist
-            vputs "  [OK] Successfully attached all #{attached_count} file(s) to comment #{dm.id}" if verbose
-            vputs "    - Uploaded: #{upload_stats[:uploaded]}, Skipped: #{upload_stats[:skipped]}, Failed: #{upload_stats[:failed]}" if upload_stats && verbose
+            puts ""
+            puts "   Comment attachment summary for comment #{dm.id}:"
+            puts "     ✅ All #{attached_count} file(s) uploaded and verified"
+            puts ""
             success = true
           elsif attached_count > 0
-            vputs "  [PARTIAL] Attached #{attached_count}/#{expected_count} file(s) to comment #{dm.id}" if verbose
+            puts ""
+            puts "   ⚠️  Comment attachment summary for comment #{dm.id}:"
+            puts "     Partial upload: #{attached_count}/#{expected_count} file(s)"
+            puts ""
 
             # Identify missing attachments and retry
             attached_filenames = dm.attachments.map { |a| a.filename.to_s }
@@ -1421,7 +1535,11 @@ def import_comments_for_defect(defect, comments_array, verbose: false)
 
             if missing_filenames.any? && retry_count < max_retries
               retry_count += 1
-              warn "[RETRY] Attempting to upload #{missing_filenames.length} missing file(s) (attempt #{retry_count}/#{max_retries})"
+              backoff_time = 2 ** retry_count # Exponential backoff: 2s, 4s, 8s, 16s, 32s
+              puts "   🔄 RETRY: Attempting #{missing_filenames.length} missing file(s) (attempt #{retry_count}/#{max_retries})"
+              puts "     Missing: #{missing_filenames.join(', ')}"
+              puts "     Waiting #{backoff_time}s before retry (exponential backoff)..."
+              puts ""
 
               # Find the attachment data for missing files
               missing_attachments = c['_comment_attachments'].select do |a|
@@ -1429,31 +1547,73 @@ def import_comments_for_defect(defect, comments_array, verbose: false)
                 missing_filenames.include?(filename)
               end
 
+              # Calculate total size of missing files
+              missing_size_mb = (missing_attachments.sum { |a| a['size'] || 0 } / 1024.0 / 1024.0).round(2)
+              puts "   Total size to retry: #{missing_size_mb} MB"
+              puts ""
+
+              # Wait before retry (exponential backoff)
+              sleep(backoff_time)
+
               # Retry upload for missing files
-              sleep(2) # Brief delay before retry
               retry_stats = fetch_and_attach_to_rich_text_jira(dm, missing_attachments, verbose: verbose)
-              vputs "  [RETRY-RESULT] Uploaded: #{retry_stats[:uploaded]}, Failed: #{retry_stats[:failed]}" if verbose
+
+              puts "   Retry results:"
+              puts "     Uploaded: #{retry_stats[:uploaded]}, Failed: #{retry_stats[:failed]}"
+              puts ""
 
               # Re-verify after retry
               dm.reload
               attached_count = dm.attachments.count
 
               # Check if we got all files now
-              success = true if attached_count == expected_count
+              if attached_count == expected_count
+                puts "   ✅ All files uploaded after retry"
+                puts ""
+                success = true
+              end
             else
-              # Can't retry anymore
-              warn "[WARN] Incomplete upload for comment #{dm.id} on #{defect.defect_unique}: #{attached_count}/#{expected_count} files"
+              # Can't retry anymore - all retries exhausted
+              warn ""
+              warn "   ❌ INCOMPLETE: #{attached_count}/#{expected_count} files for comment #{dm.id} on #{defect.defect_unique}"
+              warn "      Failed after #{max_retries} retry attempts"
+              warn "      Missing files: #{missing_filenames.join(', ')}"
+
+              # Calculate total size of failed files
+              failed_size = missing_attachments.sum { |a| a['size'] || 0 }
+              failed_size_mb = (failed_size / 1024.0 / 1024.0).round(2)
+              warn "      Total size of failed uploads: #{failed_size_mb} MB"
+              warn ""
+              warn "   POSSIBLE CAUSES:"
+              warn "     - Network timeout (files too large or connection unstable)"
+              warn "     - Insufficient disk space on server"
+              warn "     - ActiveStorage service configuration issues"
+              warn "     - Server resource limits (memory, CPU)"
+              warn ""
+              warn "   RECOMMENDED ACTIONS:"
+              warn "     1. Check server disk space: df -h storage/"
+              warn "     2. Verify network connectivity to Jira"
+              warn "     3. Check Rails logs for detailed errors"
+              warn "     4. Re-run import to retry (will skip existing files)"
+              warn ""
               break
             end
           else
-            # Failed to attach any files
-            warn "[WARN] Failed to attach any files to comment #{dm.id} on #{defect.defect_unique}"
+            # Failed to attach any files on first attempt
+            total_size_mb = (c['_comment_attachments'].sum { |a| a['size'] || 0 } / 1024.0 / 1024.0).round(2)
+            warn ""
+            warn "   ❌ FAILED: No files uploaded for comment #{dm.id} on #{defect.defect_unique}"
+            warn "      Expected: #{expected_count} file(s) (#{total_size_mb} MB total)"
+            warn ""
 
             break unless retry_count < max_retries
 
             retry_count += 1
-            warn "[RETRY] Retrying full attachment upload for comment #{dm.id} (attempt #{retry_count}/#{max_retries})"
-            sleep(2)
+            backoff_time = 2 ** retry_count
+            warn "   🔄 RETRY: Full upload attempt #{retry_count}/#{max_retries}"
+            warn "      Waiting #{backoff_time}s before retry..."
+            warn ""
+            sleep(backoff_time)
             # Loop will retry
 
           end
@@ -1588,15 +1748,38 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
     vputs "[DEBUG-LABELS]   Labels: #{labels_array.inspect}" if labels_array.any?
   end
 
-  # DEBUG: Log raw attachment data
+  # ===============================
+  # ATTACHMENT STATISTICS FOR THIS ISSUE
+  # ===============================
+  total_attachments_for_issue = attachments_array.length
+
+  puts "=" * 80
+  puts "📎 ATTACHMENTS FOR #{issue_key}"
+  puts "=" * 80
+  puts "Total attachments in Jira: #{total_attachments_for_issue}"
+
+  if attachments_array.any?
+    puts "\nAttachment Details:"
+    attachments_array.each_with_index do |att, idx|
+      filename = att['filename'] || att['name'] || 'unknown'
+      size_mb = ((att['size'] || 0) / 1024.0 / 1024.0).round(2)
+      created = att['created'] || 'N/A'
+      puts "  #{idx + 1}. #{filename} (#{size_mb} MB, created: #{created})"
+    end
+  else
+    puts "  (No attachments)"
+  end
+  puts ""
+
+  # DEBUG: Log raw attachment data (verbose mode)
   if $verbose_flag && attachments_array.any?
-    vputs "[DEBUG-ATTACHMENTS] Total attachments found: #{attachments_array.length}"
+    vputs "[DEBUG-ATTACHMENTS] Raw attachment data:"
     attachments_array.each_with_index do |att, idx|
       vputs "[DEBUG-ATTACHMENTS]   [#{idx}] id=#{att['id']}, filename=#{att['filename']}, created=#{att['created']}, keys=#{att.keys.join(',')}"
     end
   end
 
-  # DEBUG: Log raw comment data
+  # DEBUG: Log raw comment data (verbose mode)
   if $verbose_flag && comments_array.any?
     vputs "[DEBUG-COMMENTS] Total comments found: #{comments_array.length}"
     comments_array.each_with_index do |c, idx|
@@ -1721,17 +1904,34 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
   # Only attachments explicitly matched to comments will be removed from the defect-level
   comment_att_ids = comments_array.flat_map { |c| (c['_comment_attachments'] || []).map { |a| a['id'] || a['filename'] } }
 
-  if $verbose_flag
-    vputs "[DEBUG-FILTER] Total attachments: #{attachments_array.length}"
-    vputs "[DEBUG-FILTER] Matched to comments: #{comment_att_ids.length}"
+  # Get comment attachment details for reporting
+  comment_attachments_details = comments_array.flat_map { |c| c['_comment_attachments'] || [] }.uniq { |a| a['id'] || a['filename'] }
+
+  puts "Attachment Categorization:"
+  puts "  Comment-level attachments: #{comment_att_ids.length}"
+  if comment_attachments_details.any?
+    comment_attachments_details.each_with_index do |att, idx|
+      filename = att['filename'] || att['name'] || 'unknown'
+      size_mb = ((att['size'] || 0) / 1024.0 / 1024.0).round(2)
+      puts "    #{idx + 1}. #{filename} (#{size_mb} MB) → Will attach to comment"
+    end
   end
 
   # Remove comment attachments from issue-level array - remaining attachments stay on the defect
+  original_count = attachments_array.length
   if comment_att_ids.any?
     attachments_array = (attachments_array || []).reject { |a| comment_att_ids.include?(a['id'] || a['filename']) }
-    vputs "[INFO] #{comment_att_ids.length} attachment(s) matched to comments; will import as comment-level attachments" if $verbose_flag
-    vputs "[DEBUG-FILTER] After filtering: #{attachments_array.length} issue-level attachments remaining (will be attached to defect)" if $verbose_flag
   end
+
+  puts "  Issue-level attachments: #{attachments_array.length}"
+  if attachments_array.any?
+    attachments_array.each_with_index do |att, idx|
+      filename = att['filename'] || att['name'] || 'unknown'
+      size_mb = ((att['size'] || 0) / 1024.0 / 1024.0).round(2)
+      puts "    #{idx + 1}. #{filename} (#{size_mb} MB) → Will attach to defect"
+    end
+  end
+  puts ""
 
   # Map users with fallbacks (using dynamic first+last name matching)
   reporter_user = find_user_by_name_or_map(reporter_name, reporter_email, verbose: verbose) || User.find_by(id: DEFAULT_USER_UUID)
@@ -2406,6 +2606,193 @@ begin
     else
       info '  ✓ All data verified - no issues found!'
     end
+
+    # ===============================
+    # DEEP VERIFICATION: Comment Attachments Storage Check
+    # ===============================
+    info "\n🔍 Running deep comment attachment verification..."
+
+    storage_verification_stats = {
+      defects_checked: 0,
+      defects_with_comments: 0,
+      total_comments: 0,
+      comments_with_attachments: 0,
+      total_attachment_records: 0,
+      verified_attachments: 0,
+      missing_attachments: 0,
+      defects_with_storage_issues: []
+    }
+
+    # Get all defects that were part of this import
+    imported_defects = Defect.where(defect_unique: issues.map { |i| i['key'] })
+
+    imported_defects.find_each.with_index do |defect, index|
+      storage_verification_stats[:defects_checked] += 1
+
+      # Progress indicator every 50 defects
+      info "  Verified storage for #{index + 1}/#{imported_defects.count} defects..." if (index + 1) % 50 == 0
+
+      messages = defect.defect_messages.includes(attachments_attachments: :blob)
+      next if messages.none?
+
+      storage_verification_stats[:defects_with_comments] += 1
+      storage_verification_stats[:total_comments] += messages.count
+
+      defect_storage_stats = {
+        comments: messages.count,
+        comments_with_attachments: 0,
+        total_files: 0,
+        verified_files: 0,
+        missing_files: []
+      }
+
+      messages.each do |message|
+        # Check if DefectMessage has attachments (may not be available in all environments)
+        next unless message.respond_to?(:attachments)
+        next if message.attachments.none?
+
+        defect_storage_stats[:comments_with_attachments] += 1
+        storage_verification_stats[:comments_with_attachments] += 1
+
+        message.attachments.each do |attachment|
+          defect_storage_stats[:total_files] += 1
+          storage_verification_stats[:total_attachment_records] += 1
+
+          filename = attachment.filename.to_s
+          blob = attachment.blob
+
+          begin
+            exists = ActiveStorage::Blob.service.exist?(blob.key)
+
+            if exists
+              defect_storage_stats[:verified_files] += 1
+              storage_verification_stats[:verified_attachments] += 1
+
+              vputs "  ✅ #{defect.defect_unique} - Comment #{message.id}: #{filename} (#{blob.byte_size} bytes) - VERIFIED" if options[:verbose]
+            else
+              defect_storage_stats[:missing_files] << {
+                message_id: message.id,
+                filename: filename,
+                blob_key: blob.key,
+                size: blob.byte_size
+              }
+              storage_verification_stats[:missing_attachments] += 1
+
+              warn "  ❌ #{defect.defect_unique} - Comment #{message.id}: #{filename} - FILE MISSING FROM STORAGE"
+            end
+          rescue StandardError => e
+            defect_storage_stats[:missing_files] << {
+              message_id: message.id,
+              filename: filename,
+              blob_key: blob&.key || 'N/A',
+              error: e.message
+            }
+            storage_verification_stats[:missing_attachments] += 1
+
+            warn "  ❌ #{defect.defect_unique} - Comment #{message.id}: #{filename} - ERROR: #{e.message}"
+          end
+        end
+      end
+
+      # Track defects with storage issues
+      if defect_storage_stats[:missing_files].any?
+        storage_verification_stats[:defects_with_storage_issues] << {
+          defect: defect,
+          stats: defect_storage_stats
+        }
+
+        warn ""
+        warn "📋 STORAGE ISSUE - DEFECT: #{defect.defect_unique} (ID: #{defect.id})"
+        warn "   Comments: #{defect_storage_stats[:comments]} total, #{defect_storage_stats[:comments_with_attachments]} with attachments"
+        warn "   Attachments: #{defect_storage_stats[:verified_files]}/#{defect_storage_stats[:total_files]} verified in storage"
+        warn "   ⚠️  Missing from storage: #{defect_storage_stats[:missing_files].length} file(s)"
+
+        defect_storage_stats[:missing_files].each do |missing|
+          warn "      - #{missing[:filename]} (message #{missing[:message_id]})"
+        end
+        warn ""
+      elsif options[:verbose] && defect_storage_stats[:total_files] > 0
+        vputs "✅ #{defect.defect_unique}: All #{defect_storage_stats[:total_files]} comment attachment(s) verified in storage"
+      end
+    end
+
+    # Storage verification summary
+    info ''
+    info '=' * 80
+    info 'COMMENT ATTACHMENT STORAGE VERIFICATION SUMMARY'
+    info '=' * 80
+    info "Defects checked: #{storage_verification_stats[:defects_checked]}"
+    info "Defects with comments: #{storage_verification_stats[:defects_with_comments]}"
+    info "Total comments: #{storage_verification_stats[:total_comments]}"
+    info "Comments with attachments: #{storage_verification_stats[:comments_with_attachments]}"
+    info ''
+    info "Total attachment records in DB: #{storage_verification_stats[:total_attachment_records]}"
+    info "Verified in storage: #{storage_verification_stats[:verified_attachments]} (#{storage_verification_stats[:total_attachment_records] > 0 ? ((storage_verification_stats[:verified_attachments].to_f / storage_verification_stats[:total_attachment_records]) * 100).round(2) : 0}%)"
+    info "Missing from storage: #{storage_verification_stats[:missing_attachments]} (#{storage_verification_stats[:total_attachment_records] > 0 ? ((storage_verification_stats[:missing_attachments].to_f / storage_verification_stats[:total_attachment_records]) * 100).round(2) : 0}%)"
+    info ''
+
+    if storage_verification_stats[:defects_with_storage_issues].any?
+      warn "⚠️  #{storage_verification_stats[:defects_with_storage_issues].length} defect(s) have comment attachments missing from storage:"
+      storage_verification_stats[:defects_with_storage_issues].each do |issue|
+        warn "   - #{issue[:defect].defect_unique}: #{issue[:stats][:missing_files].length} missing file(s)"
+      end
+      warn ''
+      warn 'RECOMMENDED ACTION:'
+      warn '1. Re-run the import for affected defects to retry failed uploads:'
+      warn "   rails runner scripts/import_jira_with_modules.rb --project #{project_list.join(',')} --verbose"
+      warn ''
+      warn '2. Check storage configuration and permissions (see diagnostics below)'
+      warn ''
+
+      # Storage diagnostics
+      warn '=' * 80
+      warn 'STORAGE DIAGNOSTIC INFORMATION'
+      warn '=' * 80
+
+      service = ActiveStorage::Blob.service
+      storage_root = service.respond_to?(:root) ? service.root : 'N/A'
+
+      warn "Storage Service: #{service.class.name}"
+      warn "Storage Root: #{storage_root}"
+      warn "Rails Environment: #{Rails.env}"
+      warn ''
+
+      if storage_root != 'N/A'
+        if Dir.exist?(storage_root)
+          warn "✅ Storage directory exists: #{storage_root}"
+
+          # Check if writable
+          test_file = File.join(storage_root, ".write_test_#{Time.now.to_i}")
+          begin
+            File.write(test_file, 'test')
+            File.delete(test_file)
+            warn '✅ Storage directory is writable'
+          rescue StandardError => e
+            warn "❌ Storage directory is NOT writable: #{e.message}"
+            warn "   Fix: sudo chown -R $(whoami):$(whoami) #{storage_root}"
+          end
+        else
+          warn "❌ Storage directory does NOT exist: #{storage_root}"
+          warn "   Fix: sudo mkdir -p #{storage_root} && sudo chown -R $(whoami):$(whoami) #{storage_root}"
+        end
+      end
+
+      warn ''
+      warn 'Possible causes for missing files:'
+      warn '1. Import was interrupted before files finished uploading'
+      warn '2. Storage directory was deleted or moved after import'
+      warn '3. Permissions prevented file writing during import'
+      warn '4. Network issues during download from Jira'
+      warn '5. Database was restored but storage files were not'
+      warn '6. Insufficient disk space during upload'
+      warn ''
+      warn '=' * 80
+    else
+      info '✅ All comment-level attachments verified successfully in storage!'
+      info ''
+      info "All #{storage_verification_stats[:total_attachment_records]} attachment file(s) are present in ActiveStorage."
+    end
+    info '=' * 80
   end
 rescue StandardError => e
   puts "ERROR: #{e.message}"

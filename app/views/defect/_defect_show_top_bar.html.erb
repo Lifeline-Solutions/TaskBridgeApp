@@ -20,7 +20,9 @@
           </span>
           /
           <span class="py-1 px-2 font-medium">
-            <%= @defect.creator.name %>
+            <% if @defect.creator.present? %>
+              <%= @defect.creator.name %>
+            <% end %>
           </span>
 
           <% if @defect.retest_count.to_i > 1 %>

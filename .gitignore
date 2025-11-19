@@ -44,3 +44,5 @@ node_modules
 /config/credentials/staging.key
 config/master.key
 config/credentials/
+config/jira_import.yml
+
