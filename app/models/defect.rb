@@ -112,7 +112,7 @@ class Defect < ApplicationRecord
 
   before_create :set_default_status
   before_create :set_default_issue_type
-  # after_create :defect_unique_id
+  after_create :defect_unique_id, unless: -> { defect_unique.present? }
 
   # Validations - only required for published defects, not drafts
   validates :summary, presence: true, unless: :draft?
