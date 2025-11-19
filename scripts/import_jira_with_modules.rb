@@ -1366,326 +1366,202 @@ def fetch_and_attach_to_rich_text_jira(rich_record, attachments, verbose: false)
   stats
 end
 
-# Import comments for a defect into DefectMessage (preserves author mapping and timestamps)
-# Returns hash with import statistics: { imported: n, skipped: n }
-def import_comments_for_defect(defect, comments_array, verbose: false)
-  return { imported: 0, skipped: 0 } if comments_array.nil? || comments_array.empty?
+# Reconcile: ensure all expected issue-level attachments are present on the Defect
+# - If a filename from Jira is missing on the defect, download & attach it
+# - If an attached blob is missing from storage, download again and attach
+# This is idempotent (matches by filename)
+def reconcile_issue_attachments(defect, expected_attachments, verbose: false)
+  return unless defect && expected_attachments && expected_attachments.any?
 
-  stats = { imported: 0, skipped: 0 }
+  # Build filename -> att map from Jira
+  expected_by_name = expected_attachments.each_with_object({}) do |att, h|
+    name = att['filename'] || att['name']
+    h[name] = att if name
+  end
 
-  comments_array.each do |c|
-    author = c['author'] || {}
-    author_name = author['displayName'].to_s.strip
-    author_email = author['emailAddress'].to_s.strip
+  # Verify existing attachments and collect missing
+  existing_names = defect.attachments.map { |a| a.filename.to_s }
+  missing_names = expected_by_name.keys - existing_names
 
-    user = find_user_by_name_or_map(author_name, author_email, verbose: verbose) || User.find_by(id: DEFAULT_USER_UUID)
-
-    body = extract_comment_body(c['body'] || c['content'] || c['body']).to_s.strip
-    jira_comment_id = c['id'].to_s.strip # Unique Jira comment identifier
-
-    # Check if this comment has attachments matched to it
-    has_attachments = c.is_a?(Hash) && c['_comment_attachments'].is_a?(Array) && c['_comment_attachments'].any?
-    is_synthetic = c['_synthetic'] == true
-
-    # Skip ONLY if both body and comment are completely empty (no content at all)
-    # This ensures all real Jira comments are imported
-    next if body.blank? && !has_attachments && !is_synthetic
-
-    created_at = try_parse_time(c['created'])
-    updated_at = try_parse_time(c['updated'])
-
-    # ROBUST DUPLICATE DETECTION - check multiple criteria for distinctness:
-    # 1. Jira comment ID (most reliable for non-synthetic comments)
-    # 2. Exact timestamp match (unix timestamp comparison)
-    # 3. User + timestamp + content match (for synthetic comments without Jira ID)
-
-    # First check: Query DB for comments with same timestamp (most efficient)
-    if created_at
-      existing_by_time = defect.defect_messages.where(created_at: created_at).to_a
-
-      if existing_by_time.any?
-        duplicate = existing_by_time.any? do |em|
-          # Extract plain text from ActionText for comparison
-          existing_body = if em.content.respond_to?(:to_plain_text)
-                            em.content.to_plain_text.strip
-                          else
-                            em.content.to_s.strip
-                          end
-
-          # Consider duplicate if:
-          # - Same timestamp AND same user AND same content (strong match)
-          # - OR for non-synthetic: same timestamp AND same content (Jira ensures uniqueness)
-          same_content = existing_body == body || existing_body == (has_attachments ? 'Attachment(s) uploaded' : '[Empty comment]')
-          same_user = em.user_id == user&.id
-
-          (same_user && same_content) || (!is_synthetic && same_content)
+  # Re-attach for blobs missing on disk
+  defect.attachments.each do |a|
+    begin
+      exists = ActiveStorage::Blob.service.exist?(a.blob.key)
+      next if exists
+      # Blob missing in storage; try re-download using expected map
+      att = expected_by_name[a.filename.to_s]
+      next unless att
+      tf = Tempfile.new(['jira_issue_repair', File.extname(a.filename.to_s)])
+      tf.binmode
+      # Reuse the direct downloader used for issue-level in this script
+      uri = URI.parse(att['content'] || att['contentUrl'] || att['self'])
+      redirects = 0
+      max_redirects = 6
+      resp = nil
+      loop do
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = (uri.scheme == 'https')
+        http.read_timeout = 600
+        http.open_timeout = 60
+        request = Net::HTTP::Get.new(uri.request_uri)
+        request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
+        resp = http.request(request)
+        if resp.is_a?(Net::HTTPRedirection)
+          location = resp['location']
+          break unless location
+          redirects += 1
+          break if redirects > max_redirects
+          uri = URI.parse(location)
+          next
         end
+        break
+      end
+      next unless resp && resp.is_a?(Net::HTTPSuccess)
+      tf.write(resp.body)
+      tf.rewind
+      File.open(tf.path, 'rb') do |f|
+        defect.attachments.attach(io: f, filename: a.filename.to_s, content_type: a.blob.content_type)
+      end
+      vputs "[REPAIR] Re-attached missing blob for issue-level file #{a.filename} on #{defect.defect_unique}" if verbose
+      tf.close!
+    rescue StandardError => e
+      warn "[REPAIR] Failed to re-attach #{a.filename} on #{defect.defect_unique}: #{e.message}"
+      next
+    end
+  end
 
-        if duplicate
-          stats[:skipped] += 1
-          vputs "[SKIP] Duplicate comment detected: #{jira_comment_id} by #{author_name} at #{created_at} on #{defect.defect_unique}" if verbose
+  # Attach fully missing files by filename
+  if missing_names.any?
+    to_add = missing_names.map { |n| expected_by_name[n] }.compact
+    begin
+      fetch_and_attach_attachments(defect, to_add, verbose: verbose)
+      vputs "[SYNC] Added #{to_add.length} missing issue-level attachment(s) on #{defect.defect_unique}" if verbose
+    rescue StandardError => e
+      warn "[SYNC] Failed to add missing issue-level attachments on #{defect.defect_unique}: #{e.message}"
+    end
+  end
+end
+
+# Helper: best-effort match a Jira comment to a DefectMessage
+# Prefers created_at exact match, then user + content prefix match
+def find_or_create_dm_for_jira_comment(defect, jira_comment)
+  created_at = try_parse_time(jira_comment['created'])
+  author = jira_comment['author'] || {}
+  author_name = author['displayName']
+  author_email = author['emailAddress']
+  user = find_user_by_name_or_map(author_name, author_email, verbose: false) || User.find_by(id: DEFAULT_USER_UUID)
+
+  if created_at
+    dm = defect.defect_messages.where(created_at: created_at).first
+    return dm if dm
+  end
+
+  # Fallback match by content snippet
+  body_field = jira_comment['body'] || jira_comment['content'] || jira_comment['body']
+  body_text = extract_comment_body(body_field).to_s
+  snippet = body_text.strip[0..50]
+  if snippet.present? && user
+    dm = defect.defect_messages.where(user_id: user.id).detect do |m|
+      begin
+        (m.content.try(:to_plain_text) || m.content.to_s).to_s.start_with?(snippet)
+      rescue StandardError
+        false
+      end
+    end
+    return dm if dm
+  end
+
+  # Create if still not found
+  dm = DefectMessage.new(defect: defect, user: user, modified_by: user)
+  dm.content = body_text.presence || '[Imported from Jira]'
+  dm.created_at = created_at if created_at
+  dm.updated_at = try_parse_time(jira_comment['updated']) || created_at
+  dm.save!
+  dm
+end
+
+# Reconcile comment-level attachments for each Jira comment
+# Ensures each Jira-mapped attachment exists on the matching DefectMessage
+# Repairs missing-on-disk blobs and adds fully missing attachments
+def reconcile_comment_attachments(defect, jira_comments, verbose: false)
+  return unless jira_comments && jira_comments.any?
+
+  jira_comments.each do |c|
+    next unless c.is_a?(Hash)
+    atts = (c['_comment_attachments'] || []).select { |a| a.is_a?(Hash) }
+    next if atts.empty?
+
+    dm = find_or_create_dm_for_jira_comment(defect, c)
+    next unless dm
+
+    expected_by_name = atts.each_with_object({}) do |att, h|
+      name = att['filename'] || att['name']
+      h[name] = att if name
+    end
+
+    present_names = dm.respond_to?(:attachments) ? dm.attachments.map { |a| a.filename.to_s } : []
+
+    # Repair missing-on-disk blobs
+    if dm.respond_to?(:attachments)
+      dm.attachments.each do |a|
+        begin
+          ok = ActiveStorage::Blob.service.exist?(a.blob.key)
+          next if ok
+          att = expected_by_name[a.filename.to_s]
+          next unless att
+          # Download and re-attach under same filename
+          uri = URI.parse(att['content'] || att['contentUrl'] || att['self'])
+          redirects = 0
+          max_redirects = 6
+          resp = nil
+          loop do
+            http = Net::HTTP.new(uri.host, uri.port)
+            http.use_ssl = (uri.scheme == 'https')
+            http.read_timeout = 900
+            http.open_timeout = 60
+            request = Net::HTTP::Get.new(uri.request_uri)
+            request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
+            resp = http.request(request)
+            if resp.is_a?(Net::HTTPRedirection)
+              location = resp['location']
+              break unless location
+              redirects += 1
+              break if redirects > max_redirects
+              uri = URI.parse(location)
+              next
+            end
+            break
+          end
+          next unless resp && resp.is_a?(Net::HTTPSuccess)
+          tmp = Tempfile.new(['jira_comment_repair', File.extname(a.filename.to_s)])
+          tmp.binmode
+          tmp.write(resp.body)
+          tmp.rewind
+          File.open(tmp.path, 'rb') do |f|
+            dm.attachments.attach(io: f, filename: a.filename.to_s, content_type: a.blob.content_type)
+          end
+          tmp.close!
+          vputs "[REPAIR] Re-attached missing blob for comment file #{a.filename} on message #{dm.id}" if verbose
+        rescue StandardError => e
+          warn "[REPAIR] Failed to re-attach #{a.filename} for message #{dm.id}: #{e.message}"
           next
         end
       end
     end
 
-    # Second check: For comments without timestamp, check by user + content
-    if created_at.nil? && body.present?
-      content_to_check = body
-      existing_by_content = defect.defect_messages.where(user_id: user&.id).to_a.select do |em|
-        existing_body = if em.content.respond_to?(:to_plain_text)
-                          em.content.to_plain_text.strip
-                        else
-                          em.content.to_s.strip
-                        end
-        existing_body == content_to_check
-      end
+    # Add fully missing files by filename
+    missing = expected_by_name.keys - present_names
+    next if missing.empty?
 
-      if existing_by_content.any?
-        stats[:skipped] += 1
-        vputs "[SKIP] Duplicate comment (by content) detected: #{jira_comment_id} by #{author_name} on #{defect.defect_unique}" if verbose
-        next
-      end
-    end
-
-    dm = DefectMessage.new(defect: defect, user: user, modified_by: user)
-    # ActionText will store rich text; assign plain text (or HTML if present)
-    # Only use placeholder text if body is empty - otherwise use actual comment content
-    dm.content = if body.present?
-                   body
-                 else
-                   (has_attachments ? 'Attachment(s) uploaded' : '[Empty comment]')
-                 end
-    dm.created_at = created_at if created_at
-    dm.updated_at = updated_at if updated_at
-
-    # Attempt to save with duplicate handling (in case of race conditions)
     begin
-      dm.save!
-    rescue ActiveRecord::RecordNotUnique => e
-      # If we hit a uniqueness violation (rare but possible in concurrent imports),
-      # skip this comment as it's already been imported
-      stats[:skipped] += 1
-      vputs "[SKIP] Duplicate comment detected during save (race condition): #{jira_comment_id} on #{defect.defect_unique}" if verbose
-      next
-    end
-
-    stats[:imported] += 1
-    comment_type = is_synthetic ? 'synthetic comment with attachment(s)' : 'comment'
-    vputs "[IMPORT] Added #{comment_type} by #{author_name} to #{defect.defect_unique} (id=#{dm.id})" if verbose
-
-    # IMPORTANT: Only attach files that were explicitly matched to THIS comment
-    # DO NOT attach unmatched attachments to comments that don't have them
-    # Each comment gets ONLY its own attachments (if any)
-    if has_attachments
-      # Check if DefectMessage supports attachments (may not be available in all environments)
-      unless dm.respond_to?(:attachments)
-        warn '[SKIP] DefectMessage model does not support attachments. Comment attachments will not be uploaded.'
-        warn "[SKIP] Please ensure 'has_many_attached :attachments' is defined in app/models/defect_message.rb"
-        next
+      to_add = atts.select { |x| missing.include?(x['filename'] || x['name']) }
+      if dm.respond_to?(:attachments)
+        stats = fetch_and_attach_to_rich_text_jira(dm, to_add, verbose: verbose)
+        vputs "[SYNC] Added #{stats[:uploaded]} missing comment attachment(s) to message #{dm.id}" if verbose
       end
-
-      comment_att_count = c['_comment_attachments'].length
-      total_size_mb = (c['_comment_attachments'].sum { |att| att['size'] || 0 } / 1024.0 / 1024.0).round(2)
-
-      puts "📎 DOWNLOADING COMMENT ATTACHMENTS"
-      puts "   Comment ID: #{dm.id} (Jira: #{c['id']})"
-      puts "   Files: #{comment_att_count} (#{total_size_mb} MB total)"
-      puts ""
-
-      max_retries = 5 # Increased from 2 to 5 for better reliability with large files
-      retry_count = 0
-      upload_stats = nil
-      success = false
-
-      while retry_count <= max_retries && !success
-        begin
-          # Attach comment attachments to the DefectMessage's ActionText content
-          # (attachments will display automatically in Trix editor without appending HTML)
-          upload_stats = fetch_and_attach_to_rich_text_jira(dm, c['_comment_attachments'], verbose: verbose)
-
-          # Verify attachments were uploaded successfully
-          dm.reload
-          attached_count = dm.attachments.count
-          expected_count = comment_att_count
-
-          # Check if all attachments were uploaded and physically exist in storage
-          all_exist = dm.attachments.all? do |att|
-            ActiveStorage::Blob.service.exist?(att.blob.key)
-          rescue StandardError
-            false
-          end
-
-          if attached_count == expected_count && all_exist
-            puts ""
-            puts "   Comment attachment summary for comment #{dm.id}:"
-            puts "     ✅ All #{attached_count} file(s) uploaded and verified"
-            puts ""
-            success = true
-          elsif attached_count > 0
-            puts ""
-            puts "   ⚠️  Comment attachment summary for comment #{dm.id}:"
-            puts "     Partial upload: #{attached_count}/#{expected_count} file(s)"
-            puts ""
-
-            # Identify missing attachments and retry
-            attached_filenames = dm.attachments.map { |a| a.filename.to_s }
-            expected_filenames = c['_comment_attachments'].map { |a| a['filename'] || a['name'] }
-            missing_filenames = expected_filenames - attached_filenames
-
-            if missing_filenames.any? && retry_count < max_retries
-              retry_count += 1
-              backoff_time = 2 ** retry_count # Exponential backoff: 2s, 4s, 8s, 16s, 32s
-              puts "   🔄 RETRY: Attempting #{missing_filenames.length} missing file(s) (attempt #{retry_count}/#{max_retries})"
-              puts "     Missing: #{missing_filenames.join(', ')}"
-              puts "     Waiting #{backoff_time}s before retry (exponential backoff)..."
-              puts ""
-
-              # Find the attachment data for missing files
-              missing_attachments = c['_comment_attachments'].select do |a|
-                filename = a['filename'] || a['name']
-                missing_filenames.include?(filename)
-              end
-
-              # Calculate total size of missing files
-              missing_size_mb = (missing_attachments.sum { |a| a['size'] || 0 } / 1024.0 / 1024.0).round(2)
-              puts "   Total size to retry: #{missing_size_mb} MB"
-              puts ""
-
-              # Wait before retry (exponential backoff)
-              sleep(backoff_time)
-
-              # Retry upload for missing files
-              retry_stats = fetch_and_attach_to_rich_text_jira(dm, missing_attachments, verbose: verbose)
-
-              puts "   Retry results:"
-              puts "     Uploaded: #{retry_stats[:uploaded]}, Failed: #{retry_stats[:failed]}"
-              puts ""
-
-              # Re-verify after retry
-              dm.reload
-              attached_count = dm.attachments.count
-
-              # Check if we got all files now
-              if attached_count == expected_count
-                puts "   ✅ All files uploaded after retry"
-                puts ""
-                success = true
-              end
-            else
-              # Can't retry anymore - all retries exhausted
-              warn ""
-              warn "   ❌ INCOMPLETE: #{attached_count}/#{expected_count} files for comment #{dm.id} on #{defect.defect_unique}"
-              warn "      Failed after #{max_retries} retry attempts"
-              warn "      Missing files: #{missing_filenames.join(', ')}"
-
-              # Calculate total size of failed files
-              failed_size = missing_attachments.sum { |a| a['size'] || 0 }
-              failed_size_mb = (failed_size / 1024.0 / 1024.0).round(2)
-              warn "      Total size of failed uploads: #{failed_size_mb} MB"
-              warn ""
-              warn "   POSSIBLE CAUSES:"
-              warn "     - Network timeout (files too large or connection unstable)"
-              warn "     - Insufficient disk space on server"
-              warn "     - ActiveStorage service configuration issues"
-              warn "     - Server resource limits (memory, CPU)"
-              warn ""
-              warn "   RECOMMENDED ACTIONS:"
-              warn "     1. Check server disk space: df -h storage/"
-              warn "     2. Verify network connectivity to Jira"
-              warn "     3. Check Rails logs for detailed errors"
-              warn "     4. Re-run import to retry (will skip existing files)"
-              warn ""
-              break
-            end
-          else
-            # Failed to attach any files on first attempt
-            total_size_mb = (c['_comment_attachments'].sum { |a| a['size'] || 0 } / 1024.0 / 1024.0).round(2)
-            warn ""
-            warn "   ❌ FAILED: No files uploaded for comment #{dm.id} on #{defect.defect_unique}"
-            warn "      Expected: #{expected_count} file(s) (#{total_size_mb} MB total)"
-            warn ""
-
-            break unless retry_count < max_retries
-
-            retry_count += 1
-            backoff_time = 2 ** retry_count
-            warn "   🔄 RETRY: Full upload attempt #{retry_count}/#{max_retries}"
-            warn "      Waiting #{backoff_time}s before retry..."
-            warn ""
-            sleep(backoff_time)
-            # Loop will retry
-
-          end
-        rescue StandardError => e
-          warn "[ERROR] Failed to attach #{comment_att_count} file(s) to comment #{dm.id} on #{defect.defect_unique}: #{e.class}: #{e.message}"
-
-          # Retry on error
-          break unless retry_count < max_retries
-
-          retry_count += 1
-          warn "[RETRY] Retrying after error (attempt #{retry_count}/#{max_retries})"
-          sleep(2)
-          # Loop will retry
-        end
-      end
-    end
-  rescue StandardError => e
-    vputs "[COMMENT-SKIP] Error importing comment for #{defect.defect_unique}: #{e.class}: #{e.message}" if verbose
-    next
-  end
-
-  vputs "[IMPORT] Comment import complete for #{defect.defect_unique}: #{stats[:imported]} imported, #{stats[:skipped]} duplicates skipped" if verbose && (stats[:imported] > 0 || stats[:skipped] > 0)
-  stats
-end
-
-# If a defect has issue-level attachments, make them visible in the comments
-# area by creating (if needed) a DefectMessage that contains the filenames and
-# attaches the same blobs to the ActionText-rich record. This helps ensure the
-# UI shows issue attachments alongside comments.
-def ensure_issue_attachments_visible_in_comments(defect, verbose: false)
-  return unless defect && defect.persisted?
-  return if defect.attachments.none?
-
-  begin
-    defect_blob_ids = defect.attachments.map(&:blob_id).compact.uniq
-    return if defect_blob_ids.empty?
-
-    # If any existing message already contains all these blobs, nothing to do
-    found = false
-    defect.defect_messages.each do |dm|
-      msg_blob_ids = dm.content&.body&.attachments&.map(&:blob_id) || []
-      next if msg_blob_ids.empty?
-
-      if (defect_blob_ids - msg_blob_ids).empty?
-        vputs "[INFO] Defect #{defect.defect_unique} already has a comment with issue attachments" if verbose
-        found = true
-        break
-      end
-    rescue StandardError
-      next
-    end
-    return if found
-
-    # Create a summary comment that lists the filenames
-    filenames = defect.attachments.map { |a| a.filename.to_s }
-    user = User.find_by(id: DEFAULT_USER_UUID)
-    dm = DefectMessage.create!(defect: defect, user: user, modified_by: user, content: "Jira issue attachments: #{filenames.join(', ')}")
-
-    # Attach existing blobs to the new message's ActionText rich text record
-    defect.attachments.each do |att|
-      blob = att.blob
-      next unless blob
-
-      ActiveStorage::Attachment.create!(name: 'body', record: dm.content, blob: blob)
     rescue StandardError => e
-      vputs "[WARN] Could not attach existing blob #{att&.filename} to comment #{dm.id}: #{e.class}: #{e.message}" if verbose
-      next
+      warn "[SYNC] Failed to add missing comment attachments for message #{dm.id}: #{e.message}"
     end
-
-    vputs "[INFO] Created comment #{dm.id} to surface #{filenames.length} issue-level attachment(s) for #{defect.defect_unique}" if verbose
-  rescue StandardError => e
-    warn "[ERROR] ensure_issue_attachments_visible_in_comments failed for #{defect.defect_unique}: #{e.class}: #{e.message}"
   end
 end
 
@@ -2161,6 +2037,25 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
     warn "[WARN] Failed to import comments for #{issue_key}: #{e.class}: #{e.message}"
   end
 
+  # Reconcile: ensure all expected issue-level attachments are present on the Defect
+  # - If a filename from Jira is missing on the defect, download & attach it
+  # - If an attached blob is missing from storage, download again and attach
+  # This is idempotent (matches by filename)
+  begin
+    reconcile_issue_attachments(saved_defect, attachments_array, verbose: verbose) if %i[created updated].include?(result) && attachments_array && attachments_array.any?
+  rescue StandardError => e
+    warn "[WARN] Failed to reconcile issue-level attachments for #{issue_key}: #{e.class}: #{e.message}"
+  end
+
+  # Reconcile comment-level attachments for each Jira comment
+  # Ensures each Jira-mapped attachment exists on the matching DefectMessage
+  # Repairs missing-on-disk blobs and adds fully missing attachments
+  begin
+    reconcile_comment_attachments(saved_defect, comments_array, verbose: verbose) if %i[created updated].include?(result) && comments_array && comments_array.any?
+  rescue StandardError => e
+    warn "[WARN] Failed to reconcile comment-level attachments for #{issue_key}: #{e.class}: #{e.message}"
+  end
+
   # Fetch and import issue changelog/history
   begin
     if %i[created updated].include?(result)
@@ -2254,7 +2149,7 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
       saved_defect.defect_messages.each do |dm|
         comment_level_stats[:total_comments] += 1
 
-        # Check if DefectMessage has attachments association (may not be available in older versions)
+        # Check if DefectMessage has attachments association (may not be available in all environments)
         next unless dm.respond_to?(:attachments)
 
         begin
@@ -2737,7 +2632,7 @@ begin
         warn "   - #{issue[:defect].defect_unique}: #{issue[:stats][:missing_files].length} missing file(s)"
       end
       warn ''
-      warn 'RECOMMENDED ACTION:'
+      warn 'RECOMMENDED ACTIONS:'
       warn '1. Re-run the import for affected defects to retry failed uploads:'
       warn "   rails runner scripts/import_jira_with_modules.rb --project #{project_list.join(',')} --verbose"
       warn ''
