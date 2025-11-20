@@ -528,6 +528,7 @@ class ReportsController < ApplicationController
     when 'severity 1', 's1', 'high' then 'Severity 1'
     when 'severity 2', 's2', 'medium' then 'Severity 2'
     when 'severity 3', 's3', 'low' then 'Severity 3'
+    when 'severity 4', 's4', 'very low' then 'Severity 4'
     when 'unknown', '' then 'Unknown'
     else k.titleize
     end
