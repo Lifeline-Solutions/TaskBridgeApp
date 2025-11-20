@@ -1,5 +1,6 @@
 require 'csv'
 require 'axlsx'
+require 'set'
 class ProfilesController < ApplicationController
   before_action :authenticate_user!
   def project_report
@@ -79,25 +80,19 @@ class ProfilesController < ApplicationController
       @user_total_assigned_tickets = Hash.new { |h, k| h[k] = Set.new }
       @user_name_to_id = {}
       assignment_events.each do |event|
-        assignee_name = parse_assignment_details(event.details.to_s)[:assigned_to]
-        next if assignee_name.blank?
-
-        normalized_name = assignee_name.to_s.strip.downcase
-        user = @all_users.find { |u| u.name.strip.downcase == normalized_name }
+        user = resolve_assigned_user(event, @all_users)
         next unless user
-
         @user_total_assigned_tickets[user.id] << event.ticket_id
-        @user_name_to_id[normalized_name] = user.id
+        # Map potential normalized names for later reverse lookup
+        @user_name_to_id[user.name.to_s.strip.downcase] = user.id
+        @user_name_to_id[[user.first_name, user.last_name].compact.join(' ').strip.downcase] = user.id if user.first_name.present? || user.last_name.present?
       end
       # Count unique ticket IDs per user
       @user_total_assigned_tickets = @user_total_assigned_tickets.transform_values(&:size)
 
       # Get all breached tickets from ALL tickets ever assigned (not just date-filtered ones)
       all_assigned_ticket_ids = @user_total_assigned_tickets.keys.flat_map do |user_id|
-        assignment_events.select do |e|
-          name = parse_assignment_details(e.details.to_s)[:assigned_to].to_s.strip.downcase
-          @user_name_to_id[name] == user_id
-        end.map(&:ticket_id)
+        assignment_events.select { |e| resolve_assigned_user(e, @all_users)&.id == user_id }.map(&:ticket_id)
       end.uniq
       breached_ticket_ids = Ticket.joins(:sla_tickets)
         .where(id: all_assigned_ticket_ids, sla_tickets: { sla_resolution_deadline: ['Breached'] })
@@ -106,16 +101,16 @@ class ProfilesController < ApplicationController
       # For each user, count UNIQUE breached tickets they were assigned to
       @user_breached_tickets = Hash.new { |h, k| h[k] = Set.new }
       assignment_events.where(ticket_id: breached_ticket_ids.to_a).each do |event|
-        assignee_name = parse_assignment_details(event.details.to_s)[:assigned_to]
-        user_id = @user_name_to_id[assignee_name.to_s.strip.downcase]
-        @user_breached_tickets[user_id] << event.ticket_id if user_id
+        user = resolve_assigned_user(event, @all_users)
+        next unless user
+        @user_breached_tickets[user.id] << event.ticket_id
       end
       # Convert sets to counts
       @user_breached_tickets = @user_breached_tickets.transform_values(&:size)
 
       # Calculate breach percentage for each user
       @user_breach_percentage = {}
-      @team_members.each do |user|
+      @all_users.each do |user|
         total_assigned = @user_total_assigned_tickets[user.id] || 0
         breached_count = @user_breached_tickets[user.id] || 0
         @user_breach_percentage[user.id] = total_assigned.positive? ? ((breached_count.to_f / total_assigned) * 100).round(2) : 0.0
@@ -385,6 +380,8 @@ class ProfilesController < ApplicationController
           @tickets = @tickets.joins(:statuses).where.not(statuses: { name: %w[Closed Resolved Declined] })
         when 'closed'
           @tickets = @tickets.joins(:statuses).where(statuses: { name: %w[Closed Resolved] })
+        else
+          # No filtering applied for unknown status parameter
         end
       end
     else
@@ -528,5 +525,31 @@ class ProfilesController < ApplicationController
     end
 
     times.compact.min
+  end
+
+  # Resolve the assigned user for an assignment event.
+  # 1. Use assigned_user_id if present.
+  # 2. Use parsed full name match against user.name.
+  # 3. Attempt first + last name combination match.
+  # 4. Fallback to first name only if unique.
+  def resolve_assigned_user(event, all_users)
+    return User.find_by(id: event.assigned_user_id) if event.respond_to?(:assigned_user_id) && event.assigned_user_id.present?
+    parsed_name = parse_assignment_details(event.details.to_s)[:assigned_to]
+    return nil if parsed_name.blank?
+    candidate = all_users.find { |u| u.name.to_s.strip.casecmp?(parsed_name.to_s.strip) }
+    return candidate if candidate
+    parts = parsed_name.to_s.strip.split(/\s+/)
+    if parts.size >= 2
+      first = parts.first.downcase
+      last = parts.last.downcase
+      candidate = all_users.find { |u| u.first_name.to_s.strip.downcase == first && u.last_name.to_s.strip.downcase == last }
+      return candidate if candidate
+    end
+    if parts.size == 1
+      first = parts.first.downcase
+      candidates = all_users.select { |u| u.first_name.to_s.strip.downcase == first }
+      return candidates.first if candidates.size == 1
+    end
+    nil
   end
 end
