@@ -309,17 +309,26 @@
         <!-- Footer (fixed) -->
         <div class="flex items-center justify-between pt-4 border-t">
           <div class="flex gap-3">
-            <%= f.submit "Update Defect",
-            data: { disable_with: "Updating..." },
-                  class: "bg-[#3F8CFF] hover:bg-[#3A81EB] text-white font-medium rounded-lg px-6 py-2 shadow-md" %>
-
             <% if @defect.draft? %>
+              <!-- Publish button for drafts (with validation) -->
+              <%= f.submit "Publish",
+                name: "commit",
+                value: "publish",
+                data: { disable_with: "Publishing..." },
+                class: "bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg px-6 py-2 shadow-md" %>
+              
+              <!-- Save as Draft button (no validation) -->
               <%= f.submit "Save as Draft",
                 name: "commit",
                 value: "draft",
                 data: { disable_with: "Saving..." },
                 formnovalidate: true,
                 class: "bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg px-6 py-2 shadow-md" %>
+            <% else %>
+              <!-- Update button for published defects -->
+              <%= f.submit "Update Defect",
+                data: { disable_with: "Updating..." },
+                class: "bg-[#3F8CFF] hover:bg-[#3A81EB] text-white font-medium rounded-lg px-6 py-2 shadow-md" %>
             <% end %>
           </div>
 

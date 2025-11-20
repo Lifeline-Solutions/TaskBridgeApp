@@ -673,11 +673,8 @@ class DefectController < ApplicationController
       .distinct
       .order(:first_name, :last_name)
 
-    @statuses = Status.where(name: [
-                               'To Do', 'In Progress', 'On hold', 'Awaiting client info',
-                               'Awaiting build', 'QA testing', 'Closed', 'Failed QA',
-                               'Blocked', 'Reopened'
-                             ])
+    # Use set_form_data to load statuses, modules, etc. consistently with new action
+    set_form_data
 
     # Dropdown options for product selection
     @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
@@ -691,7 +688,7 @@ class DefectController < ApplicationController
         ["#{client_name} - #{groupware_names}", product.id]
       end
 
-    # Load only parent modules (not submodules) for the Module dropdown
+    # Load parent modules for the Module dropdown (keep existing logic for edit)
     @qa_modules = if @defect.product_id.present?
                     QaModule.where(product_id: @defect.product_id, parent_id: nil).order(:name)
                   else
@@ -716,8 +713,14 @@ class DefectController < ApplicationController
 
     selected_user_ids = params[:defect][:user_ids]
     
-    # Check if this is a "Save as Draft" action
+    # Check if this is a "Save as Draft" or "Publish" action
     is_draft_save = params[:commit] == 'draft'
+    is_publish = params[:commit] == 'publish'
+
+    # If publishing a draft, set draft to false before update
+    if is_publish && @defect.draft?
+      @defect.draft = false
+    end
 
     if @defect.update(defect_params.except(:attachments))
       # Attach new files without removing old ones
@@ -745,9 +748,12 @@ class DefectController < ApplicationController
         .event('defect.update')
         .log("Updated Defect ##{@defect.id}")
 
-      # Handle redirects based on draft status
-      if is_draft_save || @defect.draft?
+      # Handle redirects based on action
+      if is_draft_save
         redirect_to index_show_defect_index_path(product_id: @defect.product_id), notice: 'Draft saved successfully.'
+      elsif is_publish
+        redirect_to @defect, notice: 'Defect was successfully published.'
+        UserMailer.edit_defect_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
       else
         redirect_to @defect, notice: 'Defect was successfully updated.'
         UserMailer.edit_defect_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
