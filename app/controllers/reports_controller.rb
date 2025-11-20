@@ -23,10 +23,11 @@ class ReportsController < ApplicationController
     end
 
     # Check if we're loading a saved dashboard
-    load_saved_dashboard(params[:dashboard_id]) if params[:dashboard_id].present?
+    dashboard_loaded = params[:dashboard_id].present?
+    load_saved_dashboard(params[:dashboard_id]) if dashboard_loaded
 
-    # Check if form was submitted via Apply button (not product change or dashboard load)
-    form_submitted = params[:commit].present? && params[:product_change].blank? && params[:dashboard_id].blank?
+    # Check if form was submitted via Apply button OR dashboard is loaded (not product change)
+    form_submitted = (params[:commit].present? || dashboard_loaded) && params[:product_change].blank?
 
     # Handle multiple product selection - convert to array if it's a string
     product_ids = if params[:product_id].is_a?(String)
@@ -126,7 +127,7 @@ class ReportsController < ApplicationController
     end
 
     # ONLY calculate metrics if form was submitted via Apply button OR dashboard is loaded AND products are selected
-    if (form_submitted || params[:dashboard_id].present?) && product_ids.any?
+    if form_submitted && product_ids.any?
       # NOW create the filtered scope for metric calculations
       defects_scope = base_scope_for_options
 
@@ -272,6 +273,9 @@ class ReportsController < ApplicationController
                   end
     product_id = product_ids.any? ? product_ids.first : nil
 
+    # Ensure product_id is saved in filters as well
+    filters_data['product_id'] = product_ids if product_ids.any?
+
     @dashboard = current_user.defect_filters.build(
       name: params[:defect_filter][:name],
       product_id: product_id,
@@ -398,6 +402,14 @@ class ReportsController < ApplicationController
                       convert_defect_filters_to_report_params(saved_filters)
                     end
 
+    # Ensure product_id from dashboard record is included (prioritize filters, then dashboard column)
+    if report_params['product_id'].blank? && dashboard.product_id.present?
+      report_params['product_id'] = [dashboard.product_id.to_s]
+    elsif report_params['product_id'].present? && !report_params['product_id'].is_a?(Array)
+      # Convert to array if it's not already
+      report_params['product_id'] = Array(report_params['product_id'])
+    end
+
     # Delete all existing params except the ones we want to keep
     params.keys.each do |key|
       params.delete(key) unless %w[controller action dashboard_id].include?(key)
@@ -408,11 +420,16 @@ class ReportsController < ApplicationController
 
     # Set all the parameters from the saved dashboard
     report_params.each do |key, value|
-      params[key] = value if value.present?
+      next unless value.present?
+
+      params[key] = value
     end
 
     # Clear product_change to allow metrics to be calculated
     params[:product_change] = nil
+
+    # Log for debugging (remove in production)
+    Rails.logger.info "Loaded dashboard #{clean_dashboard_id}: product_id = #{params[:product_id].inspect}"
   end
 
   def convert_defect_filters_to_report_params(defect_filters)
