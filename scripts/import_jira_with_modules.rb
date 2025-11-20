@@ -1442,6 +1442,223 @@ def reconcile_issue_attachments(defect, expected_attachments, verbose: false)
   end
 end
 
+# Import comments for a defect into DefectMessage (preserves author mapping and timestamps)
+# Returns hash with import statistics: { imported: n, skipped: n }
+def import_comments_for_defect(defect, comments_array, verbose: false)
+  return { imported: 0, skipped: 0 } if comments_array.nil? || comments_array.empty?
+
+  stats = { imported: 0, skipped: 0 }
+
+  comments_array.each do |c|
+    author = c['author'] || {}
+    author_name = author['displayName'].to_s.strip
+    author_email = author['emailAddress'].to_s.strip
+
+    user = find_user_by_name_or_map(author_name, author_email, verbose: verbose) || User.find_by(id: DEFAULT_USER_UUID)
+
+    body = extract_comment_body(c['body'] || c['content'] || c['body']).to_s.strip
+    jira_comment_id = c['id'].to_s.strip # Unique Jira comment identifier
+
+    # Check if this comment has attachments matched to it
+    has_attachments = c.is_a?(Hash) && c['_comment_attachments'].is_a?(Array) && c['_comment_attachments'].any?
+    is_synthetic = c['_synthetic'] == true
+
+    # Skip ONLY if both body and comment are completely empty (no content at all)
+    # This ensures all real Jira comments are imported
+    next if body.blank? && !has_attachments && !is_synthetic
+
+    created_at = try_parse_time(c['created'])
+    updated_at = try_parse_time(c['updated'])
+
+    # ROBUST DUPLICATE DETECTION - check multiple criteria for distinctness:
+    # 1. Jira comment ID (most reliable for non-synthetic comments)
+    # 2. Exact timestamp match (unix timestamp comparison)
+    # 3. User + timestamp + content match (for synthetic comments without Jira ID)
+
+    # First check: Query DB for comments with same timestamp (most efficient)
+    if created_at
+      existing_by_time = defect.defect_messages.where(created_at: created_at).to_a
+
+      if existing_by_time.any?
+        duplicate = existing_by_time.any? do |em|
+          # Extract plain text from ActionText for comparison
+          existing_body = if em.content.respond_to?(:to_plain_text)
+                            em.content.to_plain_text.strip
+                          else
+                            em.content.to_s.strip
+                          end
+
+          # Consider duplicate if:
+          # - Same timestamp AND same user AND same content (strong match)
+          # - OR for non-synthetic: same timestamp AND same content (Jira ensures uniqueness)
+          same_content = existing_body == body || existing_body == (has_attachments ? 'Attachment(s) uploaded' : '[Empty comment]')
+          same_user = em.user_id == user&.id
+
+          (same_user && same_content) || (!is_synthetic && same_content)
+        end
+
+        if duplicate
+          stats[:skipped] += 1
+          vputs "[SKIP] Duplicate comment detected: #{jira_comment_id} by #{author_name} at #{created_at} on #{defect.defect_unique}" if verbose
+          next
+        end
+      end
+    end
+
+    # Second check: For comments without timestamp, check by user + content
+    if created_at.nil? && body.present?
+      content_to_check = body
+      existing_by_content = defect.defect_messages.where(user_id: user&.id).to_a.select do |em|
+        existing_body = if em.content.respond_to?(:to_plain_text)
+                          em.content.to_plain_text.strip
+                        else
+                          em.content.to_s.strip
+                        end
+        existing_body == content_to_check
+      end
+
+      if existing_by_content.any?
+        stats[:skipped] += 1
+        vputs "[SKIP] Duplicate comment (by content) detected: #{jira_comment_id} by #{author_name} on #{defect.defect_unique}" if verbose
+        next
+      end
+    end
+
+    dm = DefectMessage.new(defect: defect, user: user, modified_by: user)
+    # ActionText will store rich text; assign plain text (or HTML if present)
+    # Only use placeholder text if body is empty - otherwise use actual comment content
+    dm.content = if body.present?
+                   body
+                 else
+                   (has_attachments ? 'Attachment(s) uploaded' : '[Empty comment]')
+                 end
+    dm.created_at = created_at if created_at
+    dm.updated_at = updated_at if updated_at
+
+    # Attempt to save with duplicate handling (in case of race conditions)
+    begin
+      dm.save!
+    rescue ActiveRecord::RecordNotUnique => e
+      # If we hit a uniqueness violation (rare but possible in concurrent imports),
+      # skip this comment as it's already been imported
+      stats[:skipped] += 1
+      vputs "[SKIP] Duplicate comment detected during save (race condition): #{jira_comment_id} on #{defect.defect_unique}" if verbose
+      next
+    end
+
+    stats[:imported] += 1
+    comment_type = is_synthetic ? 'synthetic comment with attachment(s)' : 'comment'
+    vputs "[IMPORT] Added #{comment_type} by #{author_name} to #{defect.defect_unique} (id=#{dm.id})" if verbose
+
+    # IMPORTANT: Only attach files that were explicitly matched to THIS comment
+    # DO NOT attach unmatched attachments to comments that don't have them
+    # Each comment gets ONLY its own attachments (if any)
+    if has_attachments
+      # Check if DefectMessage supports attachments (may not be available in all environments)
+      unless dm.respond_to?(:attachments)
+        warn '[SKIP] DefectMessage model does not support attachments. Comment attachments will not be uploaded.'
+        warn "[SKIP] Please ensure 'has_many_attached :attachments' is defined in app/models/defect_message.rb"
+        next
+      end
+
+      comment_att_count = c['_comment_attachments'].length
+      total_size_mb = (c['_comment_attachments'].sum { |att| att['size'] || 0 } / 1024.0 / 1024.0).round(2)
+
+      vputs "[ATTACH] Attaching #{comment_att_count} file(s) (#{total_size_mb} MB total) to comment #{dm.id}..." if verbose
+
+      max_retries = 2
+      retry_count = 0
+      upload_stats = nil
+      success = false
+
+      while retry_count <= max_retries && !success
+        begin
+          # Attach comment attachments to the DefectMessage's attachments
+          upload_stats = fetch_and_attach_to_rich_text_jira(dm, c['_comment_attachments'], verbose: verbose)
+
+          # Verify attachments were uploaded successfully
+          dm.reload
+          attached_count = dm.attachments.count
+          expected_count = comment_att_count
+
+          # Check if all attachments were uploaded and physically exist in storage
+          all_exist = dm.attachments.all? do |att|
+            ActiveStorage::Blob.service.exist?(att.blob.key)
+          rescue StandardError
+            false
+          end
+
+          if attached_count == expected_count && all_exist
+            vputs "  [OK] Successfully attached all #{attached_count} file(s) to comment #{dm.id}" if verbose
+            vputs "    - Uploaded: #{upload_stats[:uploaded]}, Skipped: #{upload_stats[:skipped]}, Failed: #{upload_stats[:failed]}" if upload_stats && verbose
+            success = true
+          elsif attached_count > 0
+            vputs "  [PARTIAL] Attached #{attached_count}/#{expected_count} file(s) to comment #{dm.id}" if verbose
+
+            # Identify missing attachments and retry
+            attached_filenames = dm.attachments.map { |a| a.filename.to_s }
+            expected_filenames = c['_comment_attachments'].map { |a| a['filename'] || a['name'] }
+            missing_filenames = expected_filenames - attached_filenames
+
+            if missing_filenames.any? && retry_count < max_retries
+              retry_count += 1
+              warn "[RETRY] Attempting to upload #{missing_filenames.length} missing file(s) (attempt #{retry_count}/#{max_retries})"
+
+              # Find the attachment data for missing files
+              missing_attachments = c['_comment_attachments'].select do |a|
+                filename = a['filename'] || a['name']
+                missing_filenames.include?(filename)
+              end
+
+              # Retry upload for missing files
+              sleep(2) # Brief delay before retry
+              retry_stats = fetch_and_attach_to_rich_text_jira(dm, missing_attachments, verbose: verbose)
+              vputs "  [RETRY-RESULT] Uploaded: #{retry_stats[:uploaded]}, Failed: #{retry_stats[:failed]}" if verbose
+
+              # Re-verify after retry
+              dm.reload
+              attached_count = dm.attachments.count
+
+              # Check if we got all files now
+              success = true if attached_count == expected_count
+            else
+              # Can't retry anymore
+              warn "[WARN] Incomplete upload for comment #{dm.id} on #{defect.defect_unique}: #{attached_count}/#{expected_count} files"
+              break
+            end
+          else
+            # Failed to attach any files
+            warn "[WARN] Failed to attach any files to comment #{dm.id} on #{defect.defect_unique}"
+
+            break unless retry_count < max_retries
+
+            retry_count += 1
+            warn "[RETRY] Retrying full attachment upload for comment #{dm.id} (attempt #{retry_count}/#{max_retries})"
+            sleep(2)
+            # Loop will retry
+          end
+        rescue StandardError => e
+          warn "[ERROR] Failed to attach #{comment_att_count} file(s) to comment #{dm.id} on #{defect.defect_unique}: #{e.class}: #{e.message}"
+
+          # Retry on error
+          break unless retry_count < max_retries
+
+          retry_count += 1
+          warn "[RETRY] Retrying after error (attempt #{retry_count}/#{max_retries})"
+          sleep(2)
+          # Loop will retry
+        end
+      end
+    end
+  rescue StandardError => e
+    vputs "[COMMENT-SKIP] Error importing comment for #{defect.defect_unique}: #{e.class}: #{e.message}" if verbose
+    next
+  end
+
+  vputs "[IMPORT] Comment import complete for #{defect.defect_unique}: #{stats[:imported]} imported, #{stats[:skipped]} duplicates skipped" if verbose && (stats[:imported] > 0 || stats[:skipped] > 0)
+  stats
+end
+
 # Helper: best-effort match a Jira comment to a DefectMessage
 # Prefers created_at exact match, then user + content prefix match
 def find_or_create_dm_for_jira_comment(defect, jira_comment)
