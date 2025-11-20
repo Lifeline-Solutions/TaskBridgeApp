@@ -2,14 +2,31 @@
   <%= form_with url: reports_path, method: :get, local: true, id: 'reports-form' do %>
     <div class="flex flex-wrap gap-3 items-center">
       <!-- Saved Filters Dropdown -->
-      <div>
+      <div class="flex items-center gap-2">
         <label for="dashboard_id" class="font-semibold">Saved Filters:</label>
         <%= select_tag :dashboard_id,
                       options_for_select([['Select a saved filter...', '']] + 
                         @saved_dashboards.map { |df| [df.name, df.id] }, 
                         params[:dashboard_id]),
-                      class: "border rounded p-2 ml-2 bg-white dark:bg-gray-800 min-w-48",
+                      class: "border rounded p-2 bg-white dark:bg-gray-800 min-w-48",
                       id: "dashboard_id" %>
+        
+        <!-- View Filter Details Button -->
+        <% if params[:dashboard_id].present? %>
+          <button type="button" id="viewFilterDetailsBtn" 
+                  class="px-3 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-1"
+                  title="View filter details">
+            <i class="fas fa-eye"></i>
+            <span class="hidden sm:inline">View Details</span>
+          </button>
+          
+          <button type="button" id="editFilterBtn" 
+                  class="px-3 py-2 bg-green-100 text-green-700 rounded hover:bg-green-200 flex items-center gap-1"
+                  title="Edit this filter">
+            <i class="fas fa-edit"></i>
+            <span class="hidden sm:inline">Edit Filter</span>
+          </button>
+        <% end %>
       </div>
 
       <!-- Multiple Project Selection with Checkboxes -->
@@ -194,7 +211,7 @@
 
         <!-- Show Apply button only when projects are selected -->
         <%= submit_tag "Apply", class: "ml-2 px-4 py-2 bg-blue-500 text-white rounded" %>
-        <% if params[:commit].present? || params[:dashboard_id].present? %>
+        <% if params[:commit].present? || params[:dashboard_id].present? || params[:view_type].present? %>
           <%= link_to "Clear", "javascript:void(0);", class: "ml-2 px-4 py-2 bg-gray-500 text-white rounded", onclick: "window.location.href='#{reports_path}';" %>
         <% end %>
       <% end %>
@@ -203,15 +220,14 @@
     <!-- Hidden field to track if this is a product change (not Apply click) -->
     <%= hidden_field_tag :product_change, value: params[:product_change] %>
     
-    <!-- Hidden field to track if this is a dashboard load -->
-    <%= hidden_field_tag :dashboard_id, value: params[:dashboard_id] %>
+    <!-- Note: dashboard_id is handled by the select dropdown above, no hidden field needed -->
 
     <!-- Hidden field for view type -->
     <%= hidden_field_tag :view_type, params[:view_type] || 'graphical' %>
   <% end %>
 
-  <!-- Show reports ONLY when user clicks Apply or loads dashboard (not for product selection) -->
-  <% if (params[:commit].present? || params[:dashboard_id].present?) && params[:product_id].present? && params[:product_change].blank? %>
+  <!-- Show reports ONLY when user clicks Apply or loads dashboard or switches view (not for product selection) -->
+  <% if (params[:commit].present? || params[:dashboard_id].present? || params[:view_type].present?) && params[:product_id].present? && params[:product_change].blank? %>
     <!-- View Toggle and Action Buttons -->
     <div class="mt-4 border-t pt-4 flex items-center justify-between">
       <div class="flex items-center space-x-4">
@@ -285,11 +301,29 @@
         <% end %>
       </div>
     </div>
+
+    <!-- View Filter Details Modal -->
+    <div id="viewFilterDetailsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.5);">
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-[600px] max-h-[80vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-bold dark:text-white">Filter Details</h3>
+          <button type="button" id="closeFilterDetailsModal" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+        </div>
+        
+        <div id="filterDetailsContent" class="space-y-4">
+          <!-- Content will be populated by JavaScript -->
+        </div>
+        
+        <div class="flex justify-end gap-2 mt-6">
+          <button type="button" id="closeFilterDetailsBtn" class="px-4 py-2 border rounded hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white">Close</button>
+        </div>
+      </div>
+    </div>
   <% end %>
 </div>
 
 <!-- Results Display Logic -->
-<% if (params[:commit].present? || params[:dashboard_id].present?) && params[:product_id].present? && params[:product_change].blank? %>
+<% if (params[:commit].present? || params[:dashboard_id].present? || params[:view_type].present?) && params[:product_id].present? && params[:product_change].blank? %>
   <!-- Results Display Area - Only show when NOT a product change -->
   <div id="results-container">
     <% if (params[:view_type] || 'graphical') == 'graphical' %>
@@ -430,10 +464,11 @@
       });
 
       // Apply product selection - Set product_change flag and submit
+      // Keep dashboard_id to maintain saved filter selection
       if (applyProductSelection) {
         applyProductSelection.addEventListener('click', function() {
           document.getElementById('product_change').value = 'true';
-          document.getElementById('dashboard_id').value = '';
+          // Don't clear dashboard_id - allow applying saved filter to different products
           document.getElementById('reports-form').submit();
         });
       }
@@ -466,17 +501,14 @@
       }
     });
 
-    // Clear dashboard_id when product is changed manually
-    document.querySelectorAll('.product-checkbox').forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
-        document.getElementById('dashboard_id').value = '';
-      });
-    });
-
+    // Don't clear dashboard_id when products change - allow using saved filter with different products
+    // This allows users to apply the same filter criteria to different projects
+    
     // Clear product_change flag when Apply is clicked (final report generation)
+    // Keep dashboard_id so the saved filter remains selected in the dropdown
     document.querySelector('input[type="submit"]')?.addEventListener('click', function() {
       document.getElementById('product_change').value = '';
-      document.getElementById('dashboard_id').value = '';
+      // Don't clear dashboard_id - keep saved filter active
     });
 
     // Dashboard selection handling
@@ -495,24 +527,64 @@
       });
     }
 
-    // View toggle functionality - FIXED: Clear product_change when switching views
+    // View toggle functionality - Preserve all filter data when switching views
     const graphicalViewBtn = document.getElementById('graphicalViewBtn');
     const tabularViewBtn = document.getElementById('tabularViewBtn');
     const viewTypeField = document.getElementById('view_type');
 
+    function preserveFiltersAndSubmit(viewType) {
+      const form = document.getElementById('reports-form');
+      viewTypeField.value = viewType;
+      document.getElementById('product_change').value = '';
+      
+      // Remove any previously created temporary hidden inputs
+      form.querySelectorAll('.temp-preserve-filter').forEach(input => input.remove());
+      
+      // Find all checked checkboxes in the entire form
+      const allCheckboxes = form.querySelectorAll('input[type="checkbox"]:checked');
+      
+      allCheckboxes.forEach(checkbox => {
+        // Check if this checkbox is inside a hidden dropdown
+        const parentDropdown = checkbox.closest('.dropdown-options');
+        if (parentDropdown && parentDropdown.classList.contains('hidden')) {
+          // Create a hidden input to preserve this value
+          const hiddenInput = document.createElement('input');
+          hiddenInput.type = 'hidden';
+          hiddenInput.name = checkbox.name;
+          hiddenInput.value = checkbox.value;
+          hiddenInput.className = 'temp-preserve-filter';
+          form.appendChild(hiddenInput);
+        }
+      });
+      
+      // Find all checked radio buttons in hidden dropdowns
+      const allRadios = form.querySelectorAll('input[type="radio"]:checked');
+      
+      allRadios.forEach(radio => {
+        // Check if this radio is inside a hidden dropdown
+        const parentDropdown = radio.closest('.dropdown-options');
+        if (parentDropdown && parentDropdown.classList.contains('hidden')) {
+          // Create a hidden input to preserve this value
+          const hiddenInput = document.createElement('input');
+          hiddenInput.type = 'hidden';
+          hiddenInput.name = radio.name;
+          hiddenInput.value = radio.value;
+          hiddenInput.className = 'temp-preserve-filter';
+          form.appendChild(hiddenInput);
+        }
+      });
+      
+      // Submit the form
+      form.submit();
+    }
+
     if (graphicalViewBtn && tabularViewBtn && viewTypeField) {
       graphicalViewBtn.addEventListener('click', function() {
-        viewTypeField.value = 'graphical';
-        // Clear product_change when switching views so reports show
-        document.getElementById('product_change').value = '';
-        document.getElementById('reports-form').submit();
+        preserveFiltersAndSubmit('graphical');
       });
 
       tabularViewBtn.addEventListener('click', function() {
-        viewTypeField.value = 'tabular';
-        // Clear product_change when switching views so reports show
-        document.getElementById('product_change').value = '';
-        document.getElementById('reports-form').submit();
+        preserveFiltersAndSubmit('tabular');
       });
     }
 
@@ -537,6 +609,109 @@
       modal.addEventListener('click', function(e) {
         if (e.target === modal) {
           modal.classList.add('hidden');
+        }
+      });
+    }
+
+    // View Filter Details Modal functionality
+    const viewFilterDetailsBtn = document.getElementById('viewFilterDetailsBtn');
+    const viewFilterDetailsModal = document.getElementById('viewFilterDetailsModal');
+    const closeFilterDetailsModal = document.getElementById('closeFilterDetailsModal');
+    const closeFilterDetailsBtn = document.getElementById('closeFilterDetailsBtn');
+    
+    if (viewFilterDetailsBtn) {
+      viewFilterDetailsBtn.addEventListener('click', function() {
+        // Get the selected dashboard
+        const selectedDashboardId = document.getElementById('dashboard_id').value;
+        if (!selectedDashboardId) return;
+        
+        // Find the dashboard data from @saved_dashboards
+        const savedDashboards = <%= raw @saved_dashboards.to_json(methods: [:sanitized_filters], include: { product: { only: [:id, :name], include: { client: { only: [:name] } } } }) %>;
+        const dashboard = savedDashboards.find(d => d.id === selectedDashboardId);
+        
+        if (!dashboard) return;
+        
+        // Build the filter details HTML
+        let detailsHTML = '<div class="space-y-3">';
+        
+        // Filter Name
+        detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">Filter Name:</strong> <span class="dark:text-white">${dashboard.name}</span></div>`;
+        
+        // Product/Project
+        if (dashboard.product) {
+          const clientName = dashboard.product.client?.name || 'No Client';
+          detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">Project:</strong> <span class="dark:text-white">${clientName} - ${dashboard.product.name || 'Unknown'}</span></div>`;
+        }
+        
+        // Filter Criteria
+        const filters = dashboard.sanitized_filters || {};
+        
+        if (filters.metrics && filters.metrics.length > 0) {
+          detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">Metrics:</strong> <span class="dark:text-white">${filters.metrics.join(', ')}</span></div>`;
+        }
+        
+        if (filters.severities && filters.severities.length > 0) {
+          detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">Severities:</strong> <span class="dark:text-white">${filters.severities.join(', ')}</span></div>`;
+        }
+        
+        if (filters.reporters && filters.reporters.length > 0) {
+          detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">Reporters:</strong> <span class="dark:text-white">${filters.reporters.length} selected</span></div>`;
+        }
+        
+        if (filters.statuses && filters.statuses.length > 0) {
+          detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">Statuses:</strong> <span class="dark:text-white">${filters.statuses.join(', ')}</span></div>`;
+        }
+        
+        if (filters.assignees && filters.assignees.length > 0) {
+          detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">Assignees:</strong> <span class="dark:text-white">${filters.assignees.length} selected</span></div>`;
+        }
+        
+        if (filters.modules && filters.modules.length > 0) {
+          detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">Modules:</strong> <span class="dark:text-white">${filters.modules.length} selected</span></div>`;
+        }
+        
+        if (filters.submodules && filters.submodules.length > 0) {
+          detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">Submodules:</strong> <span class="dark:text-white">${filters.submodules.length} selected</span></div>`;
+        }
+        
+        if (filters.ageing_type) {
+          detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">Ageing Type:</strong> <span class="dark:text-white">${filters.ageing_type}</span></div>`;
+        }
+        
+        if (filters.start_date) {
+          detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">Start Date:</strong> <span class="dark:text-white">${filters.start_date}</span></div>`;
+        }
+        
+        if (filters.end_date) {
+          detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">End Date:</strong> <span class="dark:text-white">${filters.end_date}</span></div>`;
+        }
+        
+        detailsHTML += '</div>';
+        
+        // Populate the modal
+        document.getElementById('filterDetailsContent').innerHTML = detailsHTML;
+        
+        // Show the modal
+        viewFilterDetailsModal.classList.remove('hidden');
+      });
+    }
+    
+    if (closeFilterDetailsModal) {
+      closeFilterDetailsModal.addEventListener('click', function() {
+        viewFilterDetailsModal.classList.add('hidden');
+      });
+    }
+    
+    if (closeFilterDetailsBtn) {
+      closeFilterDetailsBtn.addEventListener('click', function() {
+        viewFilterDetailsModal.classList.add('hidden');
+      });
+    }
+    
+    if (viewFilterDetailsModal) {
+      viewFilterDetailsModal.addEventListener('click', function(e) {
+        if (e.target === viewFilterDetailsModal) {
+          viewFilterDetailsModal.classList.add('hidden');
         }
       });
     }
