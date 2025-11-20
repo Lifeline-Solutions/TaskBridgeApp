@@ -222,32 +222,34 @@ class ProfilesController < ApplicationController
     from_time = start_date&.beginning_of_day
     to_time = end_date&.end_of_day
 
+    # Assignment events: either textual match or assigned_user_id
     assignment_events_scope = Event.where('events.details ILIKE ?', '%was assigned to the ticket%')
+    if @selected_user.present? && Event.column_names.include?('assigned_user_id')
+      assignment_events_scope = assignment_events_scope.or(Event.where(assigned_user_id: @selected_user.id))
+    end
 
     if @selected_user.present?
       display_name = [@selected_user.first_name, @selected_user.last_name].compact.join(' ').strip
       if display_name.present?
-        # Build a safe case-insensitive regex for Postgres (~*).
-        # - Escape regex metacharacters in the name
-        # - Replace spaces with \s+ so any whitespace (single/multiple/newline) matches
-        # - Allow optional whitespace between the name and 'was assigned'
         escaped_for_regex = Regexp.escape(display_name)
-        regex_name = escaped_for_regex.gsub(/\s+/, '\\\s+')
+        regex_name = escaped_for_regex.gsub(/\s+/, '\\s+')
         regex = "#{regex_name}\\s*was assigned to the ticket"
-
-        # Also try reversed name (last_name first) in case events store that
         reversed_name = [@selected_user.last_name, @selected_user.first_name].compact.join(' ').strip
         escaped_reversed = Regexp.escape(reversed_name)
-        regex_reversed = "#{escaped_reversed.gsub(/\s+/, '\\\s+')}\\s*was assigned to the ticket"
-
-        # Fallback: sanitized ILIKE substring search (also case-insensitive in Postgres)
+        regex_reversed = "#{escaped_reversed.gsub(/\s+/, '\\s+')}\\s*was assigned to the ticket"
         ilike_safe = ActiveRecord::Base.sanitize_sql_like(display_name)
-
-        # Use parameterized queries to avoid injection. ~* is case-insensitive regex match in Postgres.
-        assignment_events_scope = assignment_events_scope.where(
-          'events.details ~* ? OR events.details ~* ? OR events.details ILIKE ?',
-          regex, regex_reversed, "%#{ilike_safe}%"
-        )
+        # Add textual name filters (do NOT reduce existing assigned_user_id matches)
+        if Event.column_names.include?('assigned_user_id')
+          assignment_events_scope = assignment_events_scope.where(
+            'assigned_user_id = :uid OR events.details ~* :r1 OR events.details ~* :r2 OR events.details ILIKE :like',
+            uid: @selected_user.id, r1: regex, r2: regex_reversed, like: "%#{ilike_safe}%"
+          )
+        else
+          assignment_events_scope = assignment_events_scope.where(
+            'events.details ~* :r1 OR events.details ~* :r2 OR events.details ILIKE :like',
+            r1: regex, r2: regex_reversed, like: "%#{ilike_safe}%"
+          )
+        end
       end
     end
 
@@ -257,20 +259,44 @@ class ProfilesController < ApplicationController
       assignment_events_scope = assignment_events_scope.where(created_at: from_time..to_time)
     end
 
-    ticket_ids = assignment_events_scope.where.not(ticket_id: nil).distinct.pluck(:ticket_id)
-    @assignment_events = assignment_events_scope.includes(:ticket)
+    assignment_ticket_ids = assignment_events_scope.where.not(ticket_id: nil).pluck(:ticket_id)
+
+    # Tickets where user is tagged (assuming taggings join) and reported tickets by user
+    tagged_ticket_ids = if @selected_user
+                          Ticket.joins(:taggings).where(taggings: { user_id: @selected_user.id }).pluck(:id)
+                        else
+                          []
+                        end
+    reported_ticket_ids = @selected_user ? Ticket.where(user_id: @selected_user.id).pluck(:id) : []
+
+    # Union of all ticket ids
+    all_ticket_ids = (assignment_ticket_ids + tagged_ticket_ids + reported_ticket_ids).uniq
+
+    # Apply date window to tickets if provided
+    if from_time || to_time
+      scoped_ids = Ticket.where(id: all_ticket_ids)
+      scoped_ids = scoped_ids.where('tickets.created_at >= ?', from_time) if from_time
+      scoped_ids = scoped_ids.where('tickets.created_at <= ?', to_time) if to_time
+      all_ticket_ids = scoped_ids.pluck(:id)
+    end
+
+    @tickets = Ticket.where(id: all_ticket_ids)
+      .includes({ project: :client }, :events, :issues, :statuses, :sla_tickets)
+      .distinct
+
+    # All events for these tickets (not only assignments) within date window if given
+    all_events_scope = Event.where(ticket_id: all_ticket_ids)
+    all_events_scope = all_events_scope.where(created_at: from_time..to_time) if from_time || to_time
+    @all_ticket_events_by_ticket = all_events_scope
+      .select(:ticket_id, :details, :created_at, :id)
+      .order(:created_at)
+      .group_by(&:ticket_id)
+
+    # First assignment times per ticket for selected user
+    @assignment_events = assignment_events_scope.where(ticket_id: all_ticket_ids).includes(:ticket)
     @assigned_at_by_ticket_id = @assignment_events
       .group_by(&:ticket_id)
       .transform_values { |evs| evs.min_by(&:created_at)&.created_at }
-
-    @all_ticket_events_by_ticket = Event
-      .where(ticket_id: ticket_ids)
-      .select(:ticket_id, :details, :created_at)
-      .group_by(&:ticket_id)
-
-    @tickets = Ticket.where(id: ticket_ids)
-      .includes({ project: :client }, :events, :issues, :statuses, :sla_tickets)
-      .distinct
 
     filtered_tickets = @tickets
     @status_counts = filtered_tickets
@@ -282,10 +308,67 @@ class ProfilesController < ApplicationController
 
     @events = @assignment_events.to_a
 
-    @issues = Issue.where(ticket_id: ticket_ids)
+    @issues = Issue.where(ticket_id: all_ticket_ids)
     @issues = @issues.where(created_at: from_time..to_time) if from_time || to_time
     @issues = @issues.includes(:ticket).to_a
 
+    all_users_cache = User.all.to_a
+
+    # Enrich ALL events (not only assignments) for UI transparency
+    @enriched_events = all_events_scope.order(:created_at).map do |evt|
+      assigned_user = resolve_assigned_user(evt, all_users_cache)
+      parsed = parse_assignment_details(evt.details.to_s)
+      {
+        event_id: evt.id,
+        ticket_id: evt.ticket_id,
+        created_at: evt.created_at,
+        classification: classify_event(evt.details.to_s),
+        details: evt.details,
+        assigned_user_id: assigned_user&.id || (evt.respond_to?(:assigned_user_id) ? evt.assigned_user_id : nil),
+        assigned_user_name: assigned_user&.name,
+        parsed_assigned_to: parsed[:assigned_to],
+        parsed_sla_status: parsed[:sla_status],
+        parsed_target_deadline: parsed[:target_deadline]
+      }
+    end
+
+    # Preserve enriched assignment subset for compatibility
+    @enriched_assignment_events = @enriched_events.select { |h| h[:classification] == 'assignment' }
+
+    # Hold time calculations across all tickets regardless of status
+    @total_hold_times = {}
+    @ticket_hold_time_total_seconds = {}
+    if @selected_user
+      selected_name = [@selected_user.first_name, @selected_user.last_name].compact.join(' ').strip
+      @tickets.each do |ticket|
+        events = (@all_ticket_events_by_ticket[ticket.id] || []).sort_by(&:created_at)
+        assignment_like_events = events.select do |e|
+          (e.details.to_s.include?('was assigned to the ticket')) || (e.respond_to?(:assigned_user_id) && e.assigned_user_id.present?)
+        end
+        handovers = events.select { |e| e.details.to_s.include?('was handed over') }
+        hold_periods = []
+        # Filter assignments for selected user
+        user_assignments = assignment_like_events.select do |e|
+          (e.respond_to?(:assigned_user_id) && e.assigned_user_id == @selected_user.id) || parse_assignment_details(e.details)[:assigned_to].to_s.strip.casecmp?(selected_name)
+        end
+        user_handovers = handovers.select do |e|
+          e.details.to_s.include?(selected_name) || (e.respond_to?(:assigned_user_id) && e.assigned_user_id == @selected_user.id)
+        end
+        user_assignments.each do |assign_event|
+          assigned_at = assign_event.created_at
+          next_assignment = assignment_like_events.find { |a| a.created_at > assign_event.created_at }
+          next_handover = user_handovers.find { |h| h.created_at > assign_event.created_at }
+          terminal_time = terminal_state_time_for(ticket)
+          candidate_end_times = [next_assignment&.created_at, next_handover&.created_at, terminal_time].compact.select { |t| t > assigned_at }
+          end_time = candidate_end_times.min || Time.current
+          hold_periods << (end_time - assigned_at)
+        end
+        @total_hold_times[ticket.id] = hold_periods
+        @ticket_hold_time_total_seconds[ticket.id] = hold_periods.sum
+      end
+    end
+
+    # Average duration assignment->resolved
     durations = []
     @tickets.each do |t|
       a = assigned_at_for(t)
@@ -302,48 +385,9 @@ class ProfilesController < ApplicationController
       @avg_assignment_to_resolved_human = nil
     end
 
-    # Calculate total hold times
-    @total_hold_times = {}
-    @ticket_hold_time_total_seconds = {}
-    @tickets.each do |ticket|
-      hold_periods = []
-      events = Event.where(ticket_id: ticket.id).order(:created_at).to_a
-      assignments = events.select { |e| e.details&.include?('was assigned to the ticket') }
-      handovers = events.select { |e| e.details&.include?('was handed over') }
-
-      # Determine the display name for the selected user (to match event text)
-      selected_name = ([@selected_user.first_name, @selected_user.last_name].compact.join(' ').strip if @selected_user.present?)
-
-      # Only consider assignments where the selected user was assigned
-      if selected_name.present?
-        assignments_for_user = assignments.select do |e|
-          parse_assignment_details(e.details)[:assigned_to].to_s == selected_name
-        end
-        # Handovers explicitly involving the selected user (fallback to substring match)
-        handovers_for_user = handovers.select { |h| h.details.to_s.include?(selected_name) }
-
-        assignments_for_user.each do |assign_event|
-          assigned_at = assign_event.created_at
-          # Earliest of the next assignment (anyone), next handover involving selected user,
-          # or when the ticket entered a terminal state (Resolved/Closed/Declined)
-          next_assignment = assignments.find { |a| a.created_at > assign_event.created_at }
-          next_handover = handovers_for_user.find { |h| h.created_at > assign_event.created_at }
-          terminal_time = terminal_state_time_for(ticket)
-          candidate_end_times = [next_assignment&.created_at, next_handover&.created_at, terminal_time]
-            .compact
-            .select { |t| t > assigned_at }
-          end_time = candidate_end_times.min || Time.current
-          hold_periods << (end_time - assigned_at)
-        end
-      end
-
-      @total_hold_times[ticket.id] = hold_periods
-      @ticket_hold_time_total_seconds[ticket.id] = hold_periods.sum
-    end
-
     respond_to do |format|
       format.html
-      format.csv { send_data generate_user_csv(@users), filename: "#{@selected_user.first_name}_#{@selected_user.last_name}_#{Date.today}.csv" }
+      format.csv { send_data generate_user_csv(@users), filename: (@selected_user ? "#{@selected_user.first_name}_#{@selected_user.last_name}_#{Date.today}.csv" : "user_report_#{Date.today}.csv") }
     end
   end
 
@@ -551,5 +595,15 @@ class ProfilesController < ApplicationController
       return candidates.first if candidates.size == 1
     end
     nil
+  end
+
+  # Classify events for enriched display
+  def classify_event(details)
+    text = details.to_s.downcase
+    return 'assignment' if text.include?('was assigned to the ticket')
+    return 'handover' if text.include?('was handed over')
+    return 'status_change' if (text.include?('status') && (text.include?('changed') || text.include?('to ')))
+    return 'comment' if text.include?('commented') || text.include?('added comment')
+    'other'
   end
 end
