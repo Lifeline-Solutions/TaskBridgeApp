@@ -55,6 +55,10 @@ class DefectController < ApplicationController
       # Assignee filter - handle array parameter
       raw_defects = raw_defects.joins(:users).where(users: { id: Array(params[:user_id]) }) if params[:user_id].present?
 
+      # Reporter filter - handle array parameter
+      selected_reporters = Array(params[:reporter_id]).reject(&:blank?)
+      raw_defects = raw_defects.where(created_by: selected_reporters) if selected_reporters.any?
+
       # Labels filter - handle array parameter
       raw_defects = raw_defects.joins(:labels).where(labels: { id: Array(params[:label_ids]) }) if params[:label_ids].present?
 
@@ -249,6 +253,10 @@ class DefectController < ApplicationController
 
     # Assignee filter
     @defects = @defects.joins(:users).where(users: { id: params[:user_id] }) if params[:user_id].present?
+
+    # Reporter filter (creator_id/created_by)
+    selected_reporters = Array(params[:reporter_id]).reject(&:blank?)
+    @defects = @defects.where(created_by: selected_reporters) if selected_reporters.any?
 
     # Module/Submodule filtering - only apply if columns exist
     begin
