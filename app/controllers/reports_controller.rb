@@ -26,8 +26,11 @@ class ReportsController < ApplicationController
     dashboard_loaded = params[:dashboard_id].present?
     load_saved_dashboard(params[:dashboard_id]) if dashboard_loaded
 
-    # Check if form was submitted via Apply button OR dashboard is loaded (not product change)
-    form_submitted = (params[:commit].present? || dashboard_loaded) && params[:product_change].blank?
+    # Check if this is a view type change (graphical <-> tabular)
+    view_type_changed = params[:view_type].present? && params[:product_id].present?
+
+    # Check if form was submitted via Apply button OR dashboard is loaded OR view type changed (not product change)
+    form_submitted = (params[:commit].present? || dashboard_loaded || view_type_changed) && params[:product_change].blank?
 
     # Handle multiple product selection - convert to array if it's a string
     product_ids = if params[:product_id].is_a?(String)
@@ -402,6 +405,9 @@ class ReportsController < ApplicationController
                       convert_defect_filters_to_report_params(saved_filters)
                     end
 
+    # Store manually selected product_id before loading dashboard
+    manual_product_id = params[:product_id]
+
     # Ensure product_id from dashboard record is included (prioritize filters, then dashboard column)
     if report_params['product_id'].blank? && dashboard.product_id.present?
       report_params['product_id'] = [dashboard.product_id.to_s]
@@ -412,7 +418,7 @@ class ReportsController < ApplicationController
 
     # Delete all existing params except the ones we want to keep
     params.keys.each do |key|
-      params.delete(key) unless %w[controller action dashboard_id].include?(key)
+      params.delete(key) unless %w[controller action dashboard_id product_id].include?(key)
     end
 
     # Set the dashboard_id
@@ -422,8 +428,14 @@ class ReportsController < ApplicationController
     report_params.each do |key, value|
       next unless value.present?
 
+      # Skip product_id if manually selected products exist (allow user override)
+      next if key == 'product_id' && manual_product_id.present?
+
       params[key] = value
     end
+
+    # If manual product selection exists, use it instead of saved filter's products
+    params[:product_id] = manual_product_id if manual_product_id.present?
 
     # Clear product_change to allow metrics to be calculated
     params[:product_change] = nil
