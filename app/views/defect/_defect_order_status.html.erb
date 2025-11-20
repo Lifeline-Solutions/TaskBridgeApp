@@ -101,11 +101,15 @@
         </td>
 
         <td class="px-6 py-4">
-          <%= link_to(
-                "#{defect.product.client.name} #{defect.product.groupwares.first&.name}".truncate(30),
-                product_path(defect.product),
-                class: "text-blue-600 hover:underline"
-              ) %>
+          <% if defect.product.present? %>
+            <%= link_to(
+                  "#{defect.product.client&.name} #{defect.product.groupwares.first&.name}".truncate(30),
+                  product_path(defect.product),
+                  class: "text-blue-600 hover:underline"
+                ) %>
+          <% else %>
+            <span class="text-gray-400 italic">Not specified</span>
+          <% end %>
         </td>
         <td class="px-6 py-4 text-right" data-controller="dropdown" data-dropdown-ticket-id-value="<%= defect.id %>">
           <div class="relative w-full flex justify-start">

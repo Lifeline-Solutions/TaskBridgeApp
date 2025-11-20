@@ -308,9 +308,20 @@
         </div>
         <!-- Footer (fixed) -->
         <div class="flex items-center justify-between pt-4 border-t">
-          <%= f.submit "Update Defect",
-          data: { disable_with: "Updating..." },
-                class: "bg-[#3F8CFF] hover:bg-[#3A81EB] text-white font-medium rounded-lg px-6 py-2 shadow-md" %>
+          <div class="flex gap-3">
+            <%= f.submit "Update Defect",
+            data: { disable_with: "Updating..." },
+                  class: "bg-[#3F8CFF] hover:bg-[#3A81EB] text-white font-medium rounded-lg px-6 py-2 shadow-md" %>
+
+            <% if @defect.draft? %>
+              <%= f.submit "Save as Draft",
+                name: "commit",
+                value: "draft",
+                data: { disable_with: "Saving..." },
+                formnovalidate: true,
+                class: "bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg px-6 py-2 shadow-md" %>
+            <% end %>
+          </div>
 
           <%= link_to "Cancel", defect_path(@defect, product_id: params[:product_id]),
             data: { turbo_frame: "_top" },
@@ -709,4 +720,61 @@
 
   // Initialize when the frame is loaded (for modals)
   document.addEventListener('turbo:frame-load', initializeAll);
+
+  // Handle draft button to bypass HTML5 validation (for edit page)
+  document.addEventListener('turbo:load', function() {
+    const form = document.querySelector('form[action*="defect"]');
+    if (!form) return;
+    
+    const draftButton = form.querySelector('input[type="submit"][value="draft"]');
+    const updateButton = form.querySelector('input[type="submit"]:not([value="draft"])');
+    
+    if (draftButton) {
+      // When draft button is clicked, disable HTML5 validation
+      draftButton.addEventListener('click', function(e) {
+        console.log('Draft button clicked - disabling validation');
+        
+        // Disable HTML5 validation on the form
+        form.setAttribute('novalidate', 'novalidate');
+        
+        // Remove required attributes from all required fields
+        const requiredFields = form.querySelectorAll('[required]');
+        requiredFields.forEach(field => {
+          field.removeAttribute('required');
+          field.dataset.wasRequired = 'true';
+        });
+        
+        // Handle data-required fields (like CKEditor content)
+        const dataRequiredFields = form.querySelectorAll('[data-required="true"]');
+        dataRequiredFields.forEach(field => {
+          field.removeAttribute('data-required');
+          field.dataset.wasDataRequired = 'true';
+        });
+      });
+    }
+      
+    // When update button is clicked, restore validation
+    if (updateButton) {
+      updateButton.addEventListener('click', function(e) {
+        console.log('Update button clicked - enabling validation');
+        
+        // Enable HTML5 validation
+        form.removeAttribute('novalidate');
+        
+        // Restore required attributes
+        const fieldsToRestore = form.querySelectorAll('[data-was-required="true"]');
+        fieldsToRestore.forEach(field => {
+          field.setAttribute('required', 'required');
+          field.removeAttribute('data-was-required');
+        });
+        
+        // Restore data-required attributes
+        const dataFieldsToRestore = form.querySelectorAll('[data-was-data-required="true"]');
+        dataFieldsToRestore.forEach(field => {
+          field.setAttribute('data-required', 'true');
+          field.removeAttribute('data-was-data-required');
+        });
+      });
+    }
+  });
 </script>

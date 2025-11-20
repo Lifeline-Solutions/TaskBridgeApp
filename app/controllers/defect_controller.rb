@@ -489,10 +489,14 @@ class DefectController < ApplicationController
       .where(roles: { name: 'qa' })
       .pluck(:id)
 
-    product_user_ids = @defect.craftsilicon_users
-      .where.not(id: @defect.users.pluck(:id))
-      .where(id: @defect.product.users.pluck(:id))
-      .pluck(:id)
+    product_user_ids = if @defect.product.present?
+                         @defect.craftsilicon_users
+                           .where.not(id: @defect.users.pluck(:id))
+                           .where(id: @defect.product.users.pluck(:id))
+                           .pluck(:id)
+                       else
+                         []
+                       end
 
     @available_users = User.where(id: qa_user_ids + product_user_ids)
       .distinct
@@ -594,7 +598,7 @@ class DefectController < ApplicationController
 
     if @defect.save
       if @defect.draft?
-        redirect_to @defect, notice: 'Draft defect saved successfully.'
+        redirect_to edit_defect_path(@defect), notice: 'Draft defect saved successfully. Continue editing or publish when ready.'
       else
         activity('user_activity')
           .caused_by(current_user)
@@ -711,6 +715,9 @@ class DefectController < ApplicationController
     audit_on_update(@defect)
 
     selected_user_ids = params[:defect][:user_ids]
+    
+    # Check if this is a "Save as Draft" action
+    is_draft_save = params[:commit] == 'draft'
 
     if @defect.update(defect_params.except(:attachments))
       # Attach new files without removing old ones
@@ -722,13 +729,15 @@ class DefectController < ApplicationController
 
       @defect.user_ids = selected_user_ids
 
-      # Process mentions in updated defect content asynchronously
-      ProcessMentionsJob.perform_later(
-        @defect.content&.body&.to_html,
-        @defect.id,
-        current_user.id,
-        'defect_content'
-      )
+      # Process mentions in updated defect content asynchronously (only for published defects)
+      unless @defect.draft?
+        ProcessMentionsJob.perform_later(
+          @defect.content&.body&.to_html,
+          @defect.id,
+          current_user.id,
+          'defect_content'
+        )
+      end
 
       activity('user_activity')
         .caused_by(current_user)
@@ -736,8 +745,13 @@ class DefectController < ApplicationController
         .event('defect.update')
         .log("Updated Defect ##{@defect.id}")
 
-      redirect_to @defect, notice: 'Defect was successfully updated.'
-      UserMailer.edit_defect_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
+      # Handle redirects based on draft status
+      if is_draft_save || @defect.draft?
+        redirect_to edit_defect_path(@defect), notice: 'Draft saved successfully. Continue editing or publish when ready.'
+      else
+        redirect_to @defect, notice: 'Defect was successfully updated.'
+        UserMailer.edit_defect_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
+      end
 
     else
       render :edit, status: :unprocessable_entity
