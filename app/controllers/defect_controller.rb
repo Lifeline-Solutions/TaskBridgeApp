@@ -598,7 +598,7 @@ class DefectController < ApplicationController
 
     if @defect.save
       if @defect.draft?
-        redirect_to edit_defect_path(@defect), notice: 'Draft defect saved successfully. Continue editing or publish when ready.'
+        redirect_to index_show_defect_index_path(product_id: @defect.product_id), notice: 'Draft defect saved successfully.'
       else
         activity('user_activity')
           .caused_by(current_user)
@@ -747,7 +747,7 @@ class DefectController < ApplicationController
 
       # Handle redirects based on draft status
       if is_draft_save || @defect.draft?
-        redirect_to edit_defect_path(@defect), notice: 'Draft saved successfully. Continue editing or publish when ready.'
+        redirect_to index_show_defect_index_path(product_id: @defect.product_id), notice: 'Draft saved successfully.'
       else
         redirect_to @defect, notice: 'Defect was successfully updated.'
         UserMailer.edit_defect_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
