@@ -2,14 +2,31 @@
   <%= form_with url: reports_path, method: :get, local: true, id: 'reports-form' do %>
     <div class="flex flex-wrap gap-3 items-center">
       <!-- Saved Filters Dropdown -->
-      <div>
+      <div class="flex items-center gap-2">
         <label for="dashboard_id" class="font-semibold">Saved Filters:</label>
         <%= select_tag :dashboard_id,
                       options_for_select([['Select a saved filter...', '']] + 
                         @saved_dashboards.map { |df| [df.name, df.id] }, 
                         params[:dashboard_id]),
-                      class: "border rounded p-2 ml-2 bg-white dark:bg-gray-800 min-w-48",
+                      class: "border rounded p-2 bg-white dark:bg-gray-800 min-w-48",
                       id: "dashboard_id" %>
+        
+        <!-- View Filter Details Button -->
+        <% if params[:dashboard_id].present? %>
+          <button type="button" id="viewFilterDetailsBtn" 
+                  class="px-3 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-1"
+                  title="View filter details">
+            <i class="fas fa-eye"></i>
+            <span class="hidden sm:inline">View Details</span>
+          </button>
+          
+          <button type="button" id="editFilterBtn" 
+                  class="px-3 py-2 bg-green-100 text-green-700 rounded hover:bg-green-200 flex items-center gap-1"
+                  title="Edit this filter">
+            <i class="fas fa-edit"></i>
+            <span class="hidden sm:inline">Edit Filter</span>
+          </button>
+        <% end %>
       </div>
 
       <!-- Multiple Project Selection with Checkboxes -->
@@ -282,6 +299,24 @@
             <%= submit_tag 'Save Filter', class: 'px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700' %>
           </div>
         <% end %>
+      </div>
+    </div>
+
+    <!-- View Filter Details Modal -->
+    <div id="viewFilterDetailsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.5);">
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-[600px] max-h-[80vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-bold dark:text-white">Filter Details</h3>
+          <button type="button" id="closeFilterDetailsModal" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+        </div>
+        
+        <div id="filterDetailsContent" class="space-y-4">
+          <!-- Content will be populated by JavaScript -->
+        </div>
+        
+        <div class="flex justify-end gap-2 mt-6">
+          <button type="button" id="closeFilterDetailsBtn" class="px-4 py-2 border rounded hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white">Close</button>
+        </div>
       </div>
     </div>
   <% end %>
@@ -574,6 +609,109 @@
       modal.addEventListener('click', function(e) {
         if (e.target === modal) {
           modal.classList.add('hidden');
+        }
+      });
+    }
+
+    // View Filter Details Modal functionality
+    const viewFilterDetailsBtn = document.getElementById('viewFilterDetailsBtn');
+    const viewFilterDetailsModal = document.getElementById('viewFilterDetailsModal');
+    const closeFilterDetailsModal = document.getElementById('closeFilterDetailsModal');
+    const closeFilterDetailsBtn = document.getElementById('closeFilterDetailsBtn');
+    
+    if (viewFilterDetailsBtn) {
+      viewFilterDetailsBtn.addEventListener('click', function() {
+        // Get the selected dashboard
+        const selectedDashboardId = document.getElementById('dashboard_id').value;
+        if (!selectedDashboardId) return;
+        
+        // Find the dashboard data from @saved_dashboards
+        const savedDashboards = <%= raw @saved_dashboards.to_json(methods: [:sanitized_filters], include: { product: { only: [:id, :name], include: { client: { only: [:name] } } } }) %>;
+        const dashboard = savedDashboards.find(d => d.id === selectedDashboardId);
+        
+        if (!dashboard) return;
+        
+        // Build the filter details HTML
+        let detailsHTML = '<div class="space-y-3">';
+        
+        // Filter Name
+        detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">Filter Name:</strong> <span class="dark:text-white">${dashboard.name}</span></div>`;
+        
+        // Product/Project
+        if (dashboard.product) {
+          const clientName = dashboard.product.client?.name || 'No Client';
+          detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">Project:</strong> <span class="dark:text-white">${clientName} - ${dashboard.product.name || 'Unknown'}</span></div>`;
+        }
+        
+        // Filter Criteria
+        const filters = dashboard.sanitized_filters || {};
+        
+        if (filters.metrics && filters.metrics.length > 0) {
+          detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">Metrics:</strong> <span class="dark:text-white">${filters.metrics.join(', ')}</span></div>`;
+        }
+        
+        if (filters.severities && filters.severities.length > 0) {
+          detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">Severities:</strong> <span class="dark:text-white">${filters.severities.join(', ')}</span></div>`;
+        }
+        
+        if (filters.reporters && filters.reporters.length > 0) {
+          detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">Reporters:</strong> <span class="dark:text-white">${filters.reporters.length} selected</span></div>`;
+        }
+        
+        if (filters.statuses && filters.statuses.length > 0) {
+          detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">Statuses:</strong> <span class="dark:text-white">${filters.statuses.join(', ')}</span></div>`;
+        }
+        
+        if (filters.assignees && filters.assignees.length > 0) {
+          detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">Assignees:</strong> <span class="dark:text-white">${filters.assignees.length} selected</span></div>`;
+        }
+        
+        if (filters.modules && filters.modules.length > 0) {
+          detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">Modules:</strong> <span class="dark:text-white">${filters.modules.length} selected</span></div>`;
+        }
+        
+        if (filters.submodules && filters.submodules.length > 0) {
+          detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">Submodules:</strong> <span class="dark:text-white">${filters.submodules.length} selected</span></div>`;
+        }
+        
+        if (filters.ageing_type) {
+          detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">Ageing Type:</strong> <span class="dark:text-white">${filters.ageing_type}</span></div>`;
+        }
+        
+        if (filters.start_date) {
+          detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">Start Date:</strong> <span class="dark:text-white">${filters.start_date}</span></div>`;
+        }
+        
+        if (filters.end_date) {
+          detailsHTML += `<div class="border-b pb-2"><strong class="text-gray-700 dark:text-gray-300">End Date:</strong> <span class="dark:text-white">${filters.end_date}</span></div>`;
+        }
+        
+        detailsHTML += '</div>';
+        
+        // Populate the modal
+        document.getElementById('filterDetailsContent').innerHTML = detailsHTML;
+        
+        // Show the modal
+        viewFilterDetailsModal.classList.remove('hidden');
+      });
+    }
+    
+    if (closeFilterDetailsModal) {
+      closeFilterDetailsModal.addEventListener('click', function() {
+        viewFilterDetailsModal.classList.add('hidden');
+      });
+    }
+    
+    if (closeFilterDetailsBtn) {
+      closeFilterDetailsBtn.addEventListener('click', function() {
+        viewFilterDetailsModal.classList.add('hidden');
+      });
+    }
+    
+    if (viewFilterDetailsModal) {
+      viewFilterDetailsModal.addEventListener('click', function(e) {
+        if (e.target === viewFilterDetailsModal) {
+          viewFilterDetailsModal.classList.add('hidden');
         }
       });
     }
