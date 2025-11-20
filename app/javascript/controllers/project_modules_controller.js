@@ -41,7 +41,7 @@ export default class extends Controller {
 
       // If we reach here, there are no server-rendered module options:
       // load modules for the current project (if any)
-      const projectId = this.projectSelectTarget?.value
+      const projectId = this.hasProjectSelectTarget ? this.projectSelectTarget.value : null
       if (projectId) {
         this.loadModules()
       } else {
@@ -53,6 +53,8 @@ export default class extends Controller {
   }
 
   loadModules() {
+    if (!this.hasProjectSelectTarget) return
+
     const projectId = this.projectSelectTarget.value
     if (!projectId) {
       this.toggleModuleSelect(null)
@@ -151,7 +153,8 @@ export default class extends Controller {
 
       this.submoduleSelectTarget.innerHTML = options
 
-      if (this.currentSubmoduleIdValue) {
+      // Only pre-select if we are loading the module that matches the initial state
+      if (this.currentSubmoduleIdValue && String(moduleId) === String(this.currentModuleIdValue)) {
         this.submoduleSelectTarget.value = String(this.currentSubmoduleIdValue)
       }
     } catch (error) {
