@@ -203,8 +203,7 @@
     <!-- Hidden field to track if this is a product change (not Apply click) -->
     <%= hidden_field_tag :product_change, value: params[:product_change] %>
     
-    <!-- Hidden field to track if this is a dashboard load -->
-    <%= hidden_field_tag :dashboard_id, value: params[:dashboard_id] %>
+    <!-- Note: dashboard_id is handled by the select dropdown above, no hidden field needed -->
 
     <!-- Hidden field for view type -->
     <%= hidden_field_tag :view_type, params[:view_type] || 'graphical' %>
