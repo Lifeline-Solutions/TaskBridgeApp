@@ -2272,6 +2272,12 @@ begin
   # Track per-project stats
   project_stats = Hash.new { |h, k| h[k] = { created: 0, updated: 0 } }
 
+  # Collector for per-issue import/verification reports (used by repair pass)
+  $IMPORT_REPORTS = []
+
+  # Collector for per-issue import/verification reports (used by repair pass)
+  $IMPORT_REPORTS = []
+
   issues.each_with_index do |issue, index|
     stats[:total] += 1
     project_key = issue.dig('fields', 'project', 'key')
@@ -2386,309 +2392,333 @@ begin
       issue_key = issue['key']
       defect = Defect.find_by(defect_unique: issue_key)
 
-      next unless defect
-
-      info "  Verified #{index + 1}/#{issues.length} defects..." if (index + 1) % 100 == 0
-
-      fields = issue['fields'] || {}
-
-      # Verify comments
-      expected_comments = (fields.dig('comment', 'comments') || []).length
-      actual_comments = defect.defect_messages.count
-      if expected_comments > actual_comments
-        verification_stats[:missing_comments] += (expected_comments - actual_comments)
-        vputs "[VERIFY] #{issue_key}: Missing #{expected_comments - actual_comments} comment(s)" if options[:verbose]
-
-        # Re-import missing comments
-        begin
-          comments_array = fields.dig('comment', 'comments') || []
-          import_comments_for_defect(defect, comments_array, verbose: false) if comments_array.any?
-          new_count = defect.defect_messages.count
-          if new_count > actual_comments
-            verification_stats[:fixed_comments] += (new_count - actual_comments)
-            vputs "[FIX] #{issue_key}: Added #{new_count - actual_comments} missing comment(s)" if options[:verbose]
-          end
-        rescue StandardError => e
-          vputs "[ERROR] Failed to fix comments for #{issue_key}: #{e.message}" if options[:verbose]
-        end
-      end
-
-      # Verify attachments
-      expected_attachments = (fields['attachment'] || fields['attachments'] || []).length
-      actual_attachments = defect.attachments.count
-      if expected_attachments > actual_attachments
-        verification_stats[:missing_attachments] += (expected_attachments - actual_attachments)
-        vputs "[VERIFY] #{issue_key}: Missing #{expected_attachments - actual_attachments} attachment(s)" if options[:verbose]
-
-        # Re-import missing attachments
-        begin
-          attachments_array = (fields['attachment'] || fields['attachments'] || []).select { |a| a.is_a?(Hash) }
-          fetch_and_attach_attachments(defect, attachments_array, verbose: false) if attachments_array.any?
-          new_count = defect.attachments.count
-          if new_count > actual_attachments
-            verification_stats[:fixed_attachments] += (new_count - actual_attachments)
-            vputs "[FIX] #{issue_key}: Added #{new_count - actual_attachments} missing attachment(s)" if options[:verbose]
-          end
-        rescue StandardError => e
-          vputs "[ERROR] Failed to fix attachments for #{issue_key}: #{e.message}" if options[:verbose]
-        end
-      end
-
-      # Verify labels
-      expected_labels = (fields['labels'] || []).compact.length
-      actual_labels = defect.labels.count
-      if expected_labels > actual_labels
-        verification_stats[:missing_labels] += (expected_labels - actual_labels)
-        vputs "[VERIFY] #{issue_key}: Missing #{expected_labels - actual_labels} label(s)" if options[:verbose]
-
-        # Re-import missing labels
-        begin
-          labels_array = (fields['labels'] || []).compact.map(&:to_s).map(&:strip).reject(&:empty?)
-          reporter_user = find_user_by_name_or_map(fields.dig('reporter', 'displayName'), fields.dig('reporter', 'emailAddress'), verbose: false) || User.find_by(id: DEFAULT_USER_UUID)
-          created_by_uid = reporter_user&.id || DEFAULT_CREATED_BY || DEFAULT_USER_UUID
-          defect.reload
-          attach_labels_to_defect(defect, labels_array, created_by: created_by_uid, verbose: false) if labels_array.any?
-          new_count = defect.labels.count
-          if new_count > actual_labels
-            verification_stats[:fixed_labels] += (new_count - actual_labels)
-            vputs "[FIX] #{issue_key}: Added #{new_count - actual_labels} missing label(s)" if options[:verbose]
-          end
-        rescue StandardError => e
-          vputs "[ERROR] Failed to fix labels for #{issue_key}: #{e.message}" if options[:verbose]
-        end
-      end
-
-      # Verify history entries and re-import if missing
-      current_history_count = defect.defect_histories.count
-      next unless current_history_count == 0
-
-      verification_stats[:missing_history] += 1
-      vputs "[VERIFY] #{issue_key}: No history entries found, fetching from Jira..." if options[:verbose]
-
-      # Fetch and re-import history
-      begin
-        changelog = fetch_issue_changelog(issue_key, verbose: false)
-        if changelog && changelog.any?
-          # Parse all changelog entries
-          all_history_entries = changelog.flat_map do |history|
-            parse_changelog_entry(history, issue_key, verbose: false)
-          end
-
-          # Sort and import
-          all_history_entries.sort_by! { |h| h[:created_at] || Time.at(0) }
-
-          if all_history_entries.any?
-            import_histories_for_defect(defect, all_history_entries, verbose: false)
-            new_history_count = defect.defect_histories.count
-            if new_history_count > current_history_count
-              verification_stats[:fixed_history] += (new_history_count - current_history_count)
-              vputs "[FIX] #{issue_key}: Added #{new_history_count - current_history_count} history entries" if options[:verbose]
-            end
-          end
-        end
-      rescue StandardError => e
-        vputs "[ERROR] Failed to fix history for #{issue_key}: #{e.message}" if options[:verbose]
-      end
-    end
-
-    info '✅ Verification complete!'
-    if verification_stats[:missing_comments] > 0 || verification_stats[:missing_attachments] > 0 || verification_stats[:missing_labels] > 0 || verification_stats[:missing_history] > 0
-      info "\n⚠️  Issues Found and Fixed:"
-      info "  Missing comments: #{verification_stats[:missing_comments]} (fixed: #{verification_stats[:fixed_comments]})"
-      info "  Missing attachments: #{verification_stats[:missing_attachments]} (fixed: #{verification_stats[:fixed_attachments]})"
-      info "  Missing labels: #{verification_stats[:missing_labels]} (fixed: #{verification_stats[:fixed_labels]})"
-      info "  Missing history: #{verification_stats[:missing_history]} (fixed: #{verification_stats[:fixed_history]})"
-    else
-      info '  ✓ All data verified - no issues found!'
-    end
-
-    # ===============================
-    # DEEP VERIFICATION: Comment Attachments Storage Check
-    # ===============================
-    info "\n🔍 Running deep comment attachment verification..."
-
-    storage_verification_stats = {
-      defects_checked: 0,
-      defects_with_comments: 0,
-      total_comments: 0,
-      comments_with_attachments: 0,
-      total_attachment_records: 0,
-      verified_attachments: 0,
-      missing_attachments: 0,
-      defects_with_storage_issues: []
-    }
-
-    # Get all defects that were part of this import
-    imported_defects = Defect.where(defect_unique: issues.map { |i| i['key'] })
-
-    imported_defects.find_each.with_index do |defect, index|
-      storage_verification_stats[:defects_checked] += 1
-
-      # Progress indicator every 50 defects
-      info "  Verified storage for #{index + 1}/#{imported_defects.count} defects..." if (index + 1) % 50 == 0
-
-      messages = defect.defect_messages.includes(attachments_attachments: :blob)
-      next if messages.none?
-
-      storage_verification_stats[:defects_with_comments] += 1
-      storage_verification_stats[:total_comments] += messages.count
-
-      defect_storage_stats = {
-        comments: messages.count,
-        comments_with_attachments: 0,
-        total_files: 0,
-        verified_files: 0,
-        missing_files: []
+      # Build per-issue report entry
+      report = {
+        issue_key: issue_key,
+        status: defect ? 'imported' : 'missing_defect',
+        expected: {},
+        actual: {},
+        missing: {},
+        fields_status: {},
+        errors: []
       }
 
-      messages.each do |message|
-        # Check if DefectMessage has attachments (may not be available in all environments)
-        next unless message.respond_to?(:attachments)
-        next if message.attachments.none?
+      begin
+        fields = issue['fields'] || {}
 
-        defect_storage_stats[:comments_with_attachments] += 1
-        storage_verification_stats[:comments_with_attachments] += 1
+        # expected counts
+        expected_issue_files = (fields['attachment'] || fields['attachments'] || []).select { |a| a.is_a?(Hash) }.map { |a| (a['filename'] || a['name'] || a['id']).to_s }
+        expected_comment_files = (fields.dig('comment','comments') || []).flat_map { |c| (c['_comment_attachments'] || []).map { |a| (a['filename']||a['name']||a['id']).to_s } }
+        expected_comments = (fields.dig('comment','comments') || []).length
+        expected_labels = (fields['labels'] || []).compact.length
 
-        message.attachments.each do |attachment|
-          defect_storage_stats[:total_files] += 1
-          storage_verification_stats[:total_attachment_records] += 1
+        report[:expected][:issue_attachments] = expected_issue_files.length
+        report[:expected][:comment_attachments] = expected_comment_files.length
+        report[:expected][:comments] = expected_comments
+        report[:expected][:labels] = expected_labels
 
-          filename = attachment.filename.to_s
-          blob = attachment.blob
+        if defect
+          # actual counts
+          actual_issue_files = defect.attachments.map { |a| a.filename.to_s }
+          actual_comment_files = defect.defect_messages.flat_map { |dm| dm.respond_to?(:attachments) ? dm.attachments.map { |att| att.filename.to_s } : [] }
+          actual_comments = defect.defect_messages.count
+          actual_labels = defect.labels.count
 
-          begin
-            exists = ActiveStorage::Blob.service.exist?(blob.key)
+          report[:actual][:issue_attachments] = actual_issue_files.length
+          report[:actual][:comment_attachments] = actual_comment_files.length
+          report[:actual][:comments] = actual_comments
+          report[:actual][:labels] = actual_labels
 
-            if exists
-              defect_storage_stats[:verified_files] += 1
-              storage_verification_stats[:verified_attachments] += 1
+          # missing lists (expected - actual)
+          missing_issue = expected_issue_files - actual_issue_files
+          missing_comment = expected_comment_files - actual_comment_files
 
-              vputs "  ✅ #{defect.defect_unique} - Comment #{message.id}: #{filename} (#{blob.byte_size} bytes) - VERIFIED" if options[:verbose]
-            else
-              defect_storage_stats[:missing_files] << {
-                message_id: message.id,
-                filename: filename,
-                blob_key: blob.key,
-                size: blob.byte_size
-              }
-              storage_verification_stats[:missing_attachments] += 1
+          report[:missing][:issue_files] = missing_issue
+          report[:missing][:comment_files] = missing_comment
 
-              warn "  ❌ #{defect.defect_unique} - Comment #{message.id}: #{filename} - FILE MISSING FROM STORAGE"
-            end
-          rescue StandardError => e
-            defect_storage_stats[:missing_files] << {
-              message_id: message.id,
-              filename: filename,
-              blob_key: blob&.key || 'N/A',
-              error: e.message
-            }
-            storage_verification_stats[:missing_attachments] += 1
+          # field-wise status
+          report[:fields_status][:issue_attachments] = missing_issue.empty?
+          report[:fields_status][:comment_attachments] = missing_comment.empty?
+          report[:fields_status][:comments] = (expected_comments == actual_comments)
+          report[:fields_status][:labels] = (expected_labels == actual_labels)
 
-            warn "  ❌ #{defect.defect_unique} - Comment #{message.id}: #{filename} - ERROR: #{e.message}"
-          end
-        end
-      end
-
-      # Track defects with storage issues
-      if defect_storage_stats[:missing_files].any?
-        storage_verification_stats[:defects_with_storage_issues] << {
-          defect: defect,
-          stats: defect_storage_stats
-        }
-
-        warn ""
-        warn "📋 STORAGE ISSUE - DEFECT: #{defect.defect_unique} (ID: #{defect.id})"
-        warn "   Comments: #{defect_storage_stats[:comments]} total, #{defect_storage_stats[:comments_with_attachments]} with attachments"
-        warn "   Attachments: #{defect_storage_stats[:verified_files]}/#{defect_storage_stats[:total_files]} verified in storage"
-        warn "   ⚠️  Missing from storage: #{defect_storage_stats[:missing_files].length} file(s)"
-
-        defect_storage_stats[:missing_files].each do |missing|
-          warn "      - #{missing[:filename]} (message #{missing[:message_id]})"
-        end
-        warn ""
-      elsif options[:verbose] && defect_storage_stats[:total_files] > 0
-        vputs "✅ #{defect.defect_unique}: All #{defect_storage_stats[:total_files]} comment attachment(s) verified in storage"
-      end
-    end
-
-    # Storage verification summary
-    info ''
-    info '=' * 80
-    info 'COMMENT ATTACHMENT STORAGE VERIFICATION SUMMARY'
-    info '=' * 80
-    info "Defects checked: #{storage_verification_stats[:defects_checked]}"
-    info "Defects with comments: #{storage_verification_stats[:defects_with_comments]}"
-    info "Total comments: #{storage_verification_stats[:total_comments]}"
-    info "Comments with attachments: #{storage_verification_stats[:comments_with_attachments]}"
-    info ''
-    info "Total attachment records in DB: #{storage_verification_stats[:total_attachment_records]}"
-    info "Verified in storage: #{storage_verification_stats[:verified_attachments]} (#{storage_verification_stats[:total_attachment_records] > 0 ? ((storage_verification_stats[:verified_attachments].to_f / storage_verification_stats[:total_attachment_records]) * 100).round(2) : 0}%)"
-    info "Missing from storage: #{storage_verification_stats[:missing_attachments]} (#{storage_verification_stats[:total_attachment_records] > 0 ? ((storage_verification_stats[:missing_attachments].to_f / storage_verification_stats[:total_attachment_records]) * 100).round(2) : 0}%)"
-    info ''
-
-    if storage_verification_stats[:defects_with_storage_issues].any?
-      warn "⚠️  #{storage_verification_stats[:defects_with_storage_issues].length} defect(s) have comment attachments missing from storage:"
-      storage_verification_stats[:defects_with_storage_issues].each do |issue|
-        warn "   - #{issue[:defect].defect_unique}: #{issue[:stats][:missing_files].length} missing file(s)"
-      end
-      warn ''
-      warn 'RECOMMENDED ACTIONS:'
-      warn '1. Re-run the import for affected defects to retry failed uploads:'
-      warn "   rails runner scripts/import_jira_with_modules.rb --project #{project_list.join(',')} --verbose"
-      warn ''
-      warn '2. Check storage configuration and permissions (see diagnostics below)'
-      warn ''
-
-      # Storage diagnostics
-      warn '=' * 80
-      warn 'STORAGE DIAGNOSTIC INFORMATION'
-      warn '=' * 80
-
-      service = ActiveStorage::Blob.service
-      storage_root = service.respond_to?(:root) ? service.root : 'N/A'
-
-      warn "Storage Service: #{service.class.name}"
-      warn "Storage Root: #{storage_root}"
-      warn "Rails Environment: #{Rails.env}"
-      warn ''
-
-      if storage_root != 'N/A'
-        if Dir.exist?(storage_root)
-          warn "✅ Storage directory exists: #{storage_root}"
-
-          # Check if writable
-          test_file = File.join(storage_root, ".write_test_#{Time.now.to_i}")
-          begin
-            File.write(test_file, 'test')
-            File.delete(test_file)
-            warn '✅ Storage directory is writable'
-          rescue StandardError => e
-            warn "❌ Storage directory is NOT writable: #{e.message}"
-            warn "   Fix: sudo chown -R $(whoami):$(whoami) #{storage_root}"
-          end
         else
-          warn "❌ Storage directory does NOT exist: #{storage_root}"
-          warn "   Fix: sudo mkdir -p #{storage_root} && sudo chown -R $(whoami):$(whoami) #{storage_root}"
+          report[:errors] << 'Defect record missing in DB after import'
+          report[:actual][:issue_attachments] = 0
+          report[:actual][:comment_attachments] = 0
+          report[:actual][:comments] = 0
+          report[:actual][:labels] = 0
+          report[:missing][:issue_files] = expected_issue_files
+          report[:missing][:comment_files] = expected_comment_files
+          report[:fields_status][:issue_attachments] = false
+          report[:fields_status][:comment_attachments] = false
+          report[:fields_status][:comments] = false
+          report[:fields_status][:labels] = false
+        end
+
+        # Add history status
+        history_count = defect ? defect.defect_histories.count : 0
+        report[:expected][:history] = (fetch_issue_changelog(issue_key, verbose: false) || []).length
+        report[:actual][:history] = history_count
+        report[:fields_status][:history] = report[:actual][:history] >= report[:expected][:history]
+
+      rescue StandardError => e
+        report[:errors] << "Verification error: #{e.class}: #{e.message}"
+      ensure
+        $IMPORT_REPORTS << report
+      end
+    end
+
+  # Post-import diagnostics and reporting
+  info "\n🔍 Running post-import diagnostics..."
+
+  # Collector for missing issues/comments/attachments
+  missing_collector = {
+    issues: [],
+    comments: [],
+    attachments: [],
+    labels: [],
+    histories: []
+  }
+
+  # Reported issues from import
+  reported_issues = {}
+
+  # Iterate over each issue and compare expected vs actual data
+  $IMPORT_REPORTS.each do |report|
+    issue_key = report[:issue_key]
+    next if reported_issues[issue_key]
+
+    reported_issues[issue_key] = true
+
+    # Check for missing defect records
+    if report[:status] == 'missing_defect'
+      missing_collector[:issues] << issue_key
+      next
+    end
+
+    # Check for missing comments
+    if report[:expected][:comments].to_i > report[:actual][:comments].to_i
+      missing_count = report[:expected][:comments].to_i - report[:actual][:comments].to_i
+      missing_collector[:comments] << { issue: issue_key, count: missing_count }
+    end
+
+    # Check for missing attachments (issue-level)
+    if report[:expected][:issue_attachments].to_i > report[:actual][:issue_attachments].to_i
+      missing_count = report[:expected][:issue_attachments].to_i - report[:actual][:issue_attachments].to_i
+      missing_collector[:attachments] << { issue: issue_key, type: 'issue', count: missing_count }
+    end
+
+    # Check for missing attachments (comment-level)
+    if report[:expected][:comment_attachments].to_i > report[:actual][:comment_attachments].to_i
+      missing_count = report[:expected][:comment_attachments].to_i - report[:actual][:comment_attachments].to_i
+      missing_collector[:attachments] << { issue: issue_key, type: 'comment', count: missing_count }
+    end
+
+    # Check for missing labels
+    if report[:expected][:labels].to_i > report[:actual][:labels].to_i
+      missing_count = report[:expected][:labels].to_i - report[:actual][:labels].to_i
+      missing_collector[:labels] << { issue: issue_key, count: missing_count }
+    end
+
+    # Check for missing history entries
+    if report[:expected][:history].to_i > report[:actual][:history].to_i
+      missing_count = report[:expected][:history].to_i - report[:actual][:history].to_i
+      missing_collector[:histories] << { issue: issue_key, count: missing_count }
+    end
+  end
+
+  # Summary of missing items
+  info "Missing Items Summary:"
+  if missing_collector[:issues].any?
+    info "  Issues: #{missing_collector[:issues].length} defect(s) missing"
+  end
+  if missing_collector[:comments].any?
+    info "  Comments: #{missing_collector[:comments].length} comment(s) missing"
+  end
+  if missing_collector[:attachments].any?
+    info "  Attachments: #{missing_collector[:attachments].length} attachment(s) missing"
+  end
+  if missing_collector[:labels].any?
+    info "  Labels: #{missing_collector[:labels].length} label(s) missing"
+  end
+  if missing_collector[:histories].any?
+    info "  Histories: #{missing_collector[:histories].length} history entry(ies) missing"
+  end
+
+  # ===============================
+  # REPAIR PASS: Attempt to fix missing items
+  # ===============================
+  if missing_collector.values.flatten.any?
+    info "\n🔧 Running repair pass for missing items..."
+
+    # Retry logic for repairs
+    max_retries = 3
+    retry_delay = 5
+
+    # Helper to perform repairs with retries
+    perform_repair = lambda do |action, item, retries|
+      begin
+        action.call(item)
+        true
+      rescue StandardError => e
+        retries -= 1
+        if retries > 0
+          warn "  ⚠️  Error: #{e.message}. Retrying in #{retry_delay} seconds..."
+          sleep retry_delay
+          perform_repair.call(action, item, retries)
+        else
+          warn "  ❌ Failed to repair #{item[:issue]}: #{e.message}"
+          false
         end
       end
-
-      warn ''
-      warn 'Possible causes for missing files:'
-      warn '1. Import was interrupted before files finished uploading'
-      warn '2. Storage directory was deleted or moved after import'
-      warn '3. Permissions prevented file writing during import'
-      warn '4. Network issues during download from Jira'
-      warn '5. Database was restored but storage files were not'
-      warn '6. Insufficient disk space during upload'
-      warn ''
-      warn '=' * 80
-    else
-      info '✅ All comment-level attachments verified successfully in storage!'
-      info ''
-      info "All #{storage_verification_stats[:total_attachment_records]} attachment file(s) are present in ActiveStorage."
     end
-    info '=' * 80
+
+    # Repair missing defects
+    if missing_collector[:issues].any?
+      info "  Repairing missing defects..."
+      missing_collector[:issues].each do |issue_key|
+        perform_repair.call(->(key) { Defect.find_or_create_by!(defect_unique: key) }, { issue: issue_key }, max_retries)
+      end
+    end
+
+    # Repair missing comments
+    if missing_collector[:comments].any?
+      info "  Repairing missing comments..."
+      missing_collector[:comments].each do |entry|
+        issue_key = entry[:issue]
+        defect = Defect.find_by(defect_unique: issue_key)
+        next unless defect
+
+        # Re-fetch issue from Jira and extract comments
+        jira_issue = fetch_result[:issues].find { |i| i['key'] == issue_key }
+        next unless jira_issue
+
+        comments_array = jira_issue.dig('fields', 'comment', 'comments') || []
+        next if comments_array.empty?
+
+        # Import missing comments
+        import_comments_for_defect(defect, comments_array, verbose: false)
+      end
+    end
+
+    # Repair missing attachments (issue-level and comment-level)
+    if missing_collector[:attachments].any?
+      info "  Repairing missing attachments..."
+      missing_collector[:attachments].each do |entry|
+        issue_key = entry[:issue]
+        defect = Defect.find_by(defect_unique: issue_key)
+        next unless defect
+
+        # Re-fetch issue from Jira and extract attachments
+        jira_issue = fetch_result[:issues].find { |i| i['key'] == issue_key }
+        next unless jira_issue
+
+        attachments_array = (jira_issue['fields']['attachment'] || jira_issue['fields']['attachments'] || []).select { |a| a.is_a?(Hash) }
+        next if attachments_array.empty?
+
+        # Attach missing files
+        fetch_and_attach_attachments(defect, attachments_array, verbose: false)
+      end
+    end
+
+    # Repair missing labels
+    if missing_collector[:labels].any?
+      info "  Repairing missing labels..."
+      missing_collector[:labels].each do |entry|
+        issue_key = entry[:issue]
+        defect = Defect.find_by(defect_unique: issue_key)
+        next unless defect
+
+        # Re-fetch issue from Jira
+        jira_issue = fetch_result[:issues].find { |i| i['key'] == issue_key }
+        next unless jira_issue
+
+        labels_array = (jira_issue['fields']['labels'] || []).compact.map(&:to_s).map(&:strip).reject(&:empty?)
+        next if labels_array.empty?
+
+        # Attach missing labels
+        reporter_user = find_user_by_name_or_map(jira_issue.dig('fields', 'reporter', 'displayName'), jira_issue.dig('fields', 'reporter', 'emailAddress'), verbose: false) || User.find_by(id: DEFAULT_USER_UUID)
+        created_by_uid = reporter_user&.id || DEFAULT_CREATED_BY || DEFAULT_USER_UUID
+        attach_labels_to_defect(defect, labels_array, created_by: created_by_uid, verbose: false)
+      end
+    end
+
+    # Repair missing history entries
+    if missing_collector[:histories].any?
+      info "  Repairing missing history entries..."
+      missing_collector[:histories].each do |entry|
+        issue_key = entry[:issue]
+        defect = Defect.find_by(defect_unique: issue_key)
+        next unless defect
+
+        # Re-fetch issue changelog from Jira
+        changelog = fetch_issue_changelog(issue_key, verbose: false)
+        next if changelog.nil? || changelog.empty?
+
+        # Parse and import missing history entries
+        all_history_entries = changelog.flat_map do |history|
+          parse_changelog_entry(history, issue_key, verbose: false)
+        end
+
+        all_history_entries.sort_by! { |h| h[:created_at] || Time.at(0) }
+
+        import_histories_for_defect(defect, all_history_entries, verbose: false)
+      end
+    end
+
+    info "🔧 Repair pass complete!"
   end
+
+    # Final detailed per-issue report and overall success metrics
+    info "\n📋 DETAILED IMPORT VERIFICATION REPORT"
+  info '=' * 80
+
+  total_issues = $IMPORT_REPORTS.length
+  fields_monitored = %i[issue_attachments comment_attachments comments labels history]
+
+  overall_pass_count = 0
+  per_issue_failures = []
+
+  $IMPORT_REPORTS.each do |r|
+    issue = r[:issue_key]
+    # Determine if all monitored fields passed
+    passed = fields_monitored.all? { |f| r[:fields_status][f] }
+    overall_pass_count += 1 if passed
+
+    unless passed
+      # collect failing fields for this issue
+      failed_fields = fields_monitored.select { |f| !r[:fields_status][f] }
+      per_issue_failures << { issue: issue, failed: failed_fields, missing: r[:missing] }
+    end
+
+    # Print per-issue line
+    status_str = passed ? 'OK' : 'ISSUES'
+    info "#{issue.ljust(20)} -> #{status_str}    (comments: #{r[:actual][:comments]}/#{r[:expected][:comments]}, issue_atts: #{r[:actual][:issue_attachments]}/#{r[:expected][:issue_attachments]}, comment_atts: #{r[:actual][:comment_attachments]}/#{r[:expected][:comment_attachments]}, labels: #{r[:actual][:labels]}/#{r[:expected][:labels]}, history: #{r[:actual][:history]}/#{r[:expected][:history]})"
+  end
+
+  success_pct = total_issues > 0 ? ((overall_pass_count.to_f / total_issues) * 100).round(2) : 100.0
+  info '\nOverall Success Summary:'
+  info "  Issues fully OK: #{overall_pass_count}/#{total_issues} (#{success_pct}%)"
+  info "  Issues with problems: #{per_issue_failures.length}"
+
+  if per_issue_failures.any?
+    info '\nIssues with failures (details):'
+    per_issue_failures.each do |entry|
+      info " - #{entry[:issue]} -> failed fields: #{entry[:failed].join(', ')}"
+      missing = entry[:missing] || {}
+      if missing[:issue_files] && missing[:issue_files].any?
+        info "     Missing issue files: #{missing[:issue_files].join(', ')}"
+      end
+      if missing[:comment_files] && missing[:comment_files].any?
+        info "     Missing comment files: #{missing[:comment_files].join(', ')}"
+      end
+    end
+  end
+
+  info '\nEnd of import verification report.'
+  info '=' * 80
+  end  # Close unless options[:dry_run]
 rescue StandardError => e
   puts "ERROR: #{e.message}"
   puts e.backtrace.first(5).join("\n")
