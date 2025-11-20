@@ -1192,6 +1192,10 @@ class DefectController < ApplicationController
     # Assignee filter
     defects = defects.joins(:users).where(users: { id: params[:user_id] }) if params[:user_id].present?
 
+    # Reporter filter (creator_id/created_by)
+    selected_reporters = Array(params[:reporter_id]).reject(&:blank?)
+    defects = defects.where(created_by: selected_reporters) if selected_reporters.any?
+
     # Module/Submodule filtering - matches index_show logic exactly
     qa_module_ids = Array(params[:qa_module_id]).reject(&:blank?)
     submodule_ids = Array(params[:submodule_id]).reject(&:blank?)
@@ -1334,6 +1338,10 @@ class DefectController < ApplicationController
 
     # Assignee filter
     defects = defects.joins(:users).where(users: { id: params[:user_id] }) if params[:user_id].present?
+
+    # Reporter filter (creator_id/created_by)
+    selected_reporters = Array(params[:reporter_id]).reject(&:blank?)
+    defects = defects.where(created_by: selected_reporters) if selected_reporters.any?
 
     # Module/Submodule filtering - matches index_show logic exactly
     qa_module_ids = Array(params[:qa_module_id]).reject(&:blank?)
