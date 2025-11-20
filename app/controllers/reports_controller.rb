@@ -417,8 +417,9 @@ class ReportsController < ApplicationController
     end
 
     # Delete all existing params except the ones we want to keep
+    # Keep commit, view_type, and product_change to maintain proper form state
     params.keys.each do |key|
-      params.delete(key) unless %w[controller action dashboard_id product_id].include?(key)
+      params.delete(key) unless %w[controller action dashboard_id product_id commit view_type product_change].include?(key)
     end
 
     # Set the dashboard_id
