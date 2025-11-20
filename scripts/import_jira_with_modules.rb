@@ -906,6 +906,7 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
 
   require 'stringio'
   require 'tempfile'
+  require 'openssl'
 
   stats = { uploaded: 0, skipped: 0, failed: 0 }
   total_files = attachments_array.length
@@ -932,88 +933,203 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
       next
     end
 
-    uri = URI.parse(content_url)
-    max_redirects = 6
-    redirects = 0
-    resp = nil
+    puts "   [#{idx + 1}/#{total_files}] 📥 Downloading: #{filename} (#{size_mb} MB)"
 
-    begin
-      loop do
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = (uri.scheme == 'https')
-        http.read_timeout = 300
+    # Retry logic with exponential backoff
+    max_download_retries = 3
+    download_attempt = 0
+    download_success = false
+    tf = nil
 
-        request = Net::HTTP::Get.new(uri.request_uri)
-        # preserve auth for Jira-hosted redirects
-        request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
+    while download_attempt < max_download_retries && !download_success
+      download_attempt += 1
 
-        vputs "Downloading attachment #{filename} from #{uri.to_s[0..120]}..." if verbose
+      begin
+        uri = URI.parse(content_url)
+        max_redirects = 6
+        redirects = 0
+        resp = nil
 
-        resp = http.request(request)
+        loop do
+          http = Net::HTTP.new(uri.host, uri.port)
+          http.use_ssl = (uri.scheme == 'https')
 
-        # Follow redirects (303/302/301)
-        if resp.is_a?(Net::HTTPRedirection)
-          location = resp['location']
-          break unless location
-
-          redirects += 1
-          if redirects > max_redirects
-            warn "Too many redirects (#{redirects}) for attachment #{filename}"
-            resp = nil
-            break
+          # Enhanced SSL and timeout configuration for large files
+          if http.use_ssl?
+            http.ssl_version = :TLSv1_2
+            http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+            http.ca_file = nil  # Use system CA certs
+            # Set cipher suites for better compatibility
+            http.ciphers = 'HIGH:!aNULL:!eNULL:!EXPORT:!DES:!MD5:!PSK:!RC4'
+            http.ssl_timeout = 60
           end
-          uri = URI.parse(location)
+
+          # Generous timeouts for large files (31+ MB)
+          http.open_timeout = 60
+          http.read_timeout = 600  # 10 minutes for large files
+          http.write_timeout = 60 if http.respond_to?(:write_timeout=)
+          http.keep_alive_timeout = 30
+
+          request = Net::HTTP::Get.new(uri.request_uri)
+          # preserve auth for Jira-hosted redirects
+          request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
+
+          # Add headers for better connection handling
+          request['Connection'] = 'keep-alive'
+          request['Accept-Encoding'] = 'identity'  # Disable compression for stability
+
+          vputs "  Attempt #{download_attempt}/#{max_download_retries}: Downloading from #{uri.to_s[0..120]}..." if verbose
+
+          resp = http.request(request)
+
+          # Follow redirects (303/302/301)
+          if resp.is_a?(Net::HTTPRedirection)
+            location = resp['location']
+            break unless location
+
+            redirects += 1
+            if redirects > max_redirects
+              warn "  Too many redirects (#{redirects}) for attachment #{filename}"
+              resp = nil
+              break
+            end
+            uri = URI.parse(location)
+            vputs "  Following redirect #{redirects}/#{max_redirects} to: #{location[0..120]}..." if verbose
+            next
+          end
+
+          break
+        end
+
+        unless resp && resp.is_a?(Net::HTTPSuccess)
+          if resp
+            warn "  Failed to download (HTTP #{resp.code}): #{resp.message}"
+          else
+            warn "  Failed to download: no successful response"
+          end
+
+          # Exponential backoff before retry
+          if download_attempt < max_download_retries
+            wait_time = 2 ** download_attempt
+            puts "  ⏳ Waiting #{wait_time}s before retry..."
+            sleep wait_time
+          end
           next
         end
 
-        break
-      end
+        # Stream to tempfile to avoid large memory usage
+        tf = Tempfile.new(['jira_attach', File.extname(filename)])
+        tf.binmode
 
-      unless resp && resp.is_a?(Net::HTTPSuccess)
-        if resp
-          warn "Failed to download attachment #{filename}: #{resp.code} #{resp.message}"
-        else
-          warn "Failed to download attachment #{filename}: no successful response"
+        # Write response body in chunks for large files
+        bytes_written = 0
+        chunk_size = 1024 * 1024  # 1MB chunks
+
+        if resp.body
+          resp.body.each_char.each_slice(chunk_size) do |chunk|
+            tf.write(chunk.join)
+            bytes_written += chunk.length
+          end
         end
-        next
-      end
 
-      # Stream to tempfile to avoid large memory usage
-      tf = Tempfile.new(['jira_attach', File.extname(filename)])
-      tf.binmode
-      tf.write(resp.body)
-      tf.rewind
+        tf.rewind
 
-      # attach directly from tempfile (ActiveStorage will create blob and upload)
-      File.open(tf.path, 'rb') do |f|
-        defect.attachments.attach(io: f, filename: filename, content_type: content_type)
-      end
-      # find the blob we just attached and verify file exists in service (Disk)
-      attached_blob = defect.attachments.order(created_at: :desc).limit(1).first&.blob
-      exists = if attached_blob
-                 begin
-                   ActiveStorage::Blob.service.exist?(attached_blob.key)
-                 rescue StandardError
+        vputs "  ✅ Downloaded #{bytes_written} bytes successfully" if verbose
+
+        # attach directly from tempfile (ActiveStorage will create blob and upload)
+        File.open(tf.path, 'rb') do |f|
+          defect.attachments.attach(io: f, filename: filename, content_type: content_type)
+        end
+
+        # find the blob we just attached and verify file exists in service (Disk)
+        attached_blob = defect.attachments.order(created_at: :desc).limit(1).first&.blob
+        exists = if attached_blob
+                   begin
+                     ActiveStorage::Blob.service.exist?(attached_blob.key)
+                   rescue StandardError
+                     false
+                   end
+                 else
                    false
                  end
-               else
-                 false
-               end
-      vputs "Attached #{filename} to defect #{defect.defect_unique} (service_exists=#{exists})" if verbose
 
-      # cleanup tempfile
-      tf.close!
+        if exists
+          puts "   ✅ Successfully attached: #{filename} (verified in storage)"
+          stats[:uploaded] += 1
+          download_success = true
+        else
+          warn "   ⚠️  Attachment created but not verified in storage: #{filename}"
+          stats[:failed] += 1
+        end
 
-      # Pause between downloads to avoid overwhelming the server
-      sleep 0.5
-    rescue StandardError => e
-      warn "Error attaching file #{att.inspect} to #{defect.defect_unique}: #{e.class}: #{e.message}"
-      next
+        vputs "  Attached #{filename} to defect #{defect.defect_unique} (service_exists=#{exists})" if verbose
+
+      rescue OpenSSL::SSL::SSLError => e
+        warn "  SSL Error on attempt #{download_attempt}/#{max_download_retries}: #{e.message}"
+        warn "  Details: #{e.class}"
+
+        if download_attempt < max_download_retries
+          wait_time = 2 ** download_attempt
+          puts "  ⏳ Retrying in #{wait_time}s due to SSL error..."
+          sleep wait_time
+        else
+          warn "  ❌ FAILED after #{max_download_retries} attempts (SSL error)"
+          stats[:failed] += 1
+        end
+
+      rescue Errno::ECONNRESET, Errno::EPIPE, EOFError, Net::ReadTimeout, Net::OpenTimeout => e
+        warn "  Connection error on attempt #{download_attempt}/#{max_download_retries}: #{e.class} - #{e.message}"
+
+        if download_attempt < max_download_retries
+          wait_time = 2 ** download_attempt
+          puts "  ⏳ Retrying in #{wait_time}s due to connection error..."
+          sleep wait_time
+        else
+          warn "  ❌ FAILED after #{max_download_retries} attempts (connection error)"
+          stats[:failed] += 1
+        end
+
+      rescue StandardError => e
+        warn "  Error on attempt #{download_attempt}/#{max_download_retries}: #{e.class}: #{e.message}"
+        warn "  Backtrace: #{e.backtrace[0..2].join("\n           ")}" if verbose
+
+        if download_attempt < max_download_retries
+          wait_time = 2 ** download_attempt
+          puts "  ⏳ Retrying in #{wait_time}s..."
+          sleep wait_time
+        else
+          warn "  ❌ FAILED after #{max_download_retries} attempts"
+          stats[:failed] += 1
+        end
+
+      ensure
+        # cleanup tempfile
+        if tf
+          begin
+            tf.close!
+          rescue StandardError
+            # Ignore cleanup errors
+          end
+        end
+      end
     end
+
+    # Pause between downloads to avoid overwhelming the server
+    sleep 1.5 if download_success
+
   rescue StandardError => e
-    warn "Error attaching file #{att.inspect} to #{defect.defect_unique}: #{e.class}: #{e.message}"
-    next
+    warn "Outer error attaching file #{att.inspect} to #{defect.defect_unique}: #{e.class}: #{e.message}"
+    stats[:failed] += 1
   end
+
+  puts ""
+  puts "📊 Attachment Summary for #{defect.defect_unique}:"
+  puts "   ✅ Uploaded: #{stats[:uploaded]}"
+  puts "   ⏭️  Skipped: #{stats[:skipped]}"
+  puts "   ❌ Failed: #{stats[:failed]}"
+  puts ""
+
+  stats
 end
 
 # Download attachments and attach them to an ActionText-rich record (e.g. DefectMessage)
@@ -1021,106 +1137,165 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
   return if attachments_array.nil? || attachments_array.empty?
 
   require 'tempfile'
+  require 'openssl'
 
   attachments_array.each do |att|
     filename = att['filename'] || att['name'] || 'attachment'
     content_url = att['content'] || att['contentUrl'] || att['self']
     content_type = att['mimeType'] || att['contentType'] || att['mediaType']
+    size = att['size'] || 0
+    size_mb = (size / 1024.0 / 1024.0).round(2)
 
     next unless content_url
 
-    uri = URI.parse(content_url)
-    max_redirects = 6
-    redirects = 0
-    resp = nil
+    # Retry logic
+    max_download_retries = 3
+    download_attempt = 0
+    download_success = false
+    tf = nil
 
-    begin
-      loop do
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = (uri.scheme == 'https')
-        http.read_timeout = 300
+    while download_attempt < max_download_retries && !download_success
+      download_attempt += 1
 
-        request = Net::HTTP::Get.new(uri.request_uri)
-        request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
+      begin
+        uri = URI.parse(content_url)
+        max_redirects = 6
+        redirects = 0
+        resp = nil
 
-        vputs "Downloading comment attachment #{filename} from #{uri.to_s[0..120]}..." if verbose
+        loop do
+          http = Net::HTTP.new(uri.host, uri.port)
+          http.use_ssl = (uri.scheme == 'https')
 
-        resp = http.request(request)
-
-        if resp.is_a?(Net::HTTPRedirection)
-          location = resp['location']
-          break unless location
-
-          redirects += 1
-          if redirects > max_redirects
-            warn "Too many redirects (#{redirects}) for comment attachment #{filename}"
-            resp = nil
-            break
+          if http.use_ssl?
+            http.ssl_version = :TLSv1_2
+            http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+            http.ca_file = nil
+            http.ciphers = 'HIGH:!aNULL:!eNULL:!EXPORT:!DES:!MD5:!PSK:!RC4'
+            http.ssl_timeout = 60
           end
-          uri = URI.parse(location)
-          next
+
+          http.open_timeout = 60
+          http.read_timeout = 600
+          http.write_timeout = 60 if http.respond_to?(:write_timeout=)
+          http.keep_alive_timeout = 30
+
+          request = Net::HTTP::Get.new(uri.request_uri)
+          request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
+          request['Connection'] = 'keep-alive'
+          request['Accept-Encoding'] = 'identity'
+
+          vputs "  Attempt #{download_attempt}/#{max_download_retries}: Downloading comment attachment #{filename} (#{size_mb} MB)..." if verbose
+
+          resp = http.request(request)
+
+          if resp.is_a?(Net::HTTPRedirection)
+            location = resp['location']
+            break unless location
+
+            redirects += 1
+            if redirects > max_redirects
+              warn "  Too many redirects for comment attachment #{filename}"
+              resp = nil
+              break
+            end
+            uri = URI.parse(location)
+            vputs "  Following redirect #{redirects}/#{max_redirects}..." if verbose
+            next
+          end
+
+          download_success = true
+          break
         end
 
+      rescue OpenSSL::SSL::SSLError => e
+        download_success = false
+        if download_attempt < max_download_retries
+          wait_time = 2 ** download_attempt
+          warn "  SSL error, retrying in #{wait_time}s..."
+          sleep wait_time
+        else
+          warn "  SSL error after #{max_download_retries} attempts: #{e.message}"
+        end
+
+      rescue Errno::ECONNRESET, Errno::EPIPE, EOFError, Net::ReadTimeout, Net::OpenTimeout => e
+        download_success = false
+        if download_attempt < max_download_retries
+          wait_time = 2 ** download_attempt
+          warn "  Connection error, retrying in #{wait_time}s..."
+          sleep wait_time
+        else
+          warn "  Connection error after #{max_download_retries} attempts: #{e.class}"
+        end
+
+      rescue StandardError => e
+        download_success = false
+        warn "  Error downloading comment attachment: #{e.class}: #{e.message}"
         break
       end
+    end
 
-      unless resp && resp.is_a?(Net::HTTPSuccess)
-        if resp
-          warn "Failed to download comment attachment #{filename}: #{resp.code} #{resp.message}"
-        else
-          warn "Failed to download comment attachment #{filename}: no successful response"
-        end
-        next
-      end
+    # Skip if download failed
+    next unless resp && download_success && resp.is_a?(Net::HTTPSuccess)
 
+    # Process downloaded file
+    begin
       tf = Tempfile.new(['jira_comment_attach', File.extname(filename)])
       tf.binmode
-      tf.write(resp.body)
+
+      bytes_written = 0
+      chunk_size = 1024 * 1024
+      if resp.body
+        resp.body.each_char.each_slice(chunk_size) do |chunk|
+          tf.write(chunk.join)
+          bytes_written += chunk.length
+        end
+      end
       tf.rewind
 
-      # Ensure the rich text record exists (ActionText::RichText). We attach the
-      # uploaded blob to the RichText record so Trix/ActionText will show it as
-      # a comment-level attachment. Create an ActiveStorage::Blob and then an
-      # ActiveStorage::Attachment that points to the ActionText::RichText record.
+      vputs "  Downloaded #{bytes_written} bytes for comment attachment #{filename}" if verbose
+
       rich_text = rich_record.content
 
       unless rich_text && rich_text.persisted?
-        vputs "[WARN] Rich text not persisted for record id=#{rich_record.id}; reloading..." if verbose
+        vputs "  [WARN] Rich text not persisted, reloading..." if verbose
         begin
           rich_record.reload
           rich_text = rich_record.content
         rescue StandardError
-          # If reload fails, skip attaching to avoid orphaned blobs
-          warn "Could not reload record to attach comment file #{filename}; skipping"
-          tf.close!
+          warn "  Could not reload record to attach comment file #{filename}"
           next
+        ensure
+          tf.close! if tf
         end
       end
 
-      # Create and upload blob to the configured ActiveStorage service
-      begin
-        blob = ActiveStorage::Blob.create_and_upload!(io: tf, filename: filename, content_type: content_type)
+      blob = ActiveStorage::Blob.create_and_upload!(io: tf, filename: filename, content_type: content_type)
+      ActiveStorage::Attachment.create!(name: 'body', record: rich_text, blob: blob)
 
-        # Attach the blob to the ActionText::RichText record. The attachment name
-        # for ActionText rich text body is 'body' so that dm.content.body.attachments
-        # will include the uploaded blob.
-        ActiveStorage::Attachment.create!(name: 'body', record: rich_text, blob: blob)
-
-        exists = begin
-          ActiveStorage::Blob.service.exist?(blob.key)
-        rescue StandardError
-          false
-        end
-        vputs "Attached comment file #{filename} to rich text (blob_exists=#{exists})" if verbose
-      rescue StandardError => e
-        warn "Failed to create/upload blob for comment attachment #{filename}: #{e.class}: #{e.message}"
-      ensure
-        tf.close!
-        sleep 0.15
+      exists = begin
+        ActiveStorage::Blob.service.exist?(blob.key)
+      rescue StandardError
+        false
       end
+
+      if exists
+        vputs "  ✅ Successfully attached comment file #{filename}" if verbose
+      else
+        warn "  ⚠️  Comment attachment created but not verified: #{filename}"
+      end
+
     rescue StandardError => e
-      warn "Error attaching comment file #{att.inspect}: #{e.class}: #{e.message}"
-      next
+      warn "  Error creating/uploading comment attachment #{filename}: #{e.class}: #{e.message}"
+    ensure
+      if tf
+        begin
+          tf.close!
+        rescue StandardError
+          # Ignore cleanup errors
+        end
+      end
+      sleep 0.5
     end
   end
 end
@@ -1130,6 +1305,7 @@ def fetch_and_attach_to_rich_text_jira(rich_record, attachments, verbose: false)
   return { uploaded: 0, skipped: 0, failed: 0 } if attachments.nil? || attachments.empty?
 
   require 'tempfile'
+  require 'openssl'
   stats = { uploaded: 0, skipped: 0, failed: 0 }
 
   attachments.each_with_index do |att, file_idx|
@@ -1145,89 +1321,125 @@ def fetch_and_attach_to_rich_text_jira(rich_record, attachments, verbose: false)
         next
       end
 
-      # Check if this attachment is already attached to this comment
+      # Check if already attached
       begin
         already_attached = rich_record.attachments.any? { |a| a.filename.to_s == filename }
         if already_attached
-          vputs "  [#{file_idx + 1}/#{attachments.length}] ⏭️  SKIP: #{filename} (already attached to comment #{rich_record.id})" if verbose
+          vputs "  [#{file_idx + 1}/#{attachments.length}] ⏭️  SKIP: #{filename} (already attached)" if verbose
           stats[:skipped] += 1
           next
         end
       rescue NoMethodError => e
-        # DefectMessage may not have attachments association in older versions
         warn "[ERROR] DefectMessage does not support attachments: #{e.message}"
-        warn "[ERROR] Please add 'has_many_attached :attachments' to app/models/defect_message.rb"
         stats[:failed] += 1
         return stats
       end
 
       print "  [#{file_idx + 1}/#{attachments.length}] 📥 #{filename} (#{size_mb} MB)... " if verbose
 
-      uri = URI.parse(download_url)
-      max_redirects = 6
-      redirects = 0
+      # Retry logic
+      max_download_retries = 3
+      download_attempt = 0
+      download_success = false
       resp = nil
-
       download_start = Time.now
 
-      loop do
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = (uri.scheme == 'https')
-        # DRAMATICALLY INCREASED TIMEOUTS for large comment attachments
-        # Allow up to 30 minutes for very large files (e.g., video files, large archives)
-        http.read_timeout = 1800 # 30 minutes to download large files
-        http.open_timeout = 120 # 2 minutes to establish connection
-        http.write_timeout = 900 # 15 minutes for upload
-        # Keep connection alive for long downloads
-        http.keep_alive_timeout = 300 # 5 minutes
+      while download_attempt < max_download_retries && !download_success
+        download_attempt += 1
 
-        request = Net::HTTP::Get.new(uri.request_uri)
-        request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
+        begin
+          uri = URI.parse(download_url)
+          max_redirects = 6
+          redirects = 0
 
-        # Stream large files in chunks to avoid memory issues
-        print "." if verbose && size > 10_000_000 # Show progress dots for files > 10MB
+          loop do
+            http = Net::HTTP.new(uri.host, uri.port)
+            http.use_ssl = (uri.scheme == 'https')
 
-        resp = http.request(request)
+            if http.use_ssl?
+              http.ssl_version = :TLSv1_2
+              http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+              http.ca_file = nil
+              http.ciphers = 'HIGH:!aNULL:!eNULL:!EXPORT:!DES:!MD5:!PSK:!RC4'
+              http.ssl_timeout = 120
+            end
 
-        if resp.is_a?(Net::HTTPRedirection)
-          location = resp['location']
-          break unless location
+            http.read_timeout = 1800
+            http.open_timeout = 120
+            http.write_timeout = 900 if http.respond_to?(:write_timeout=)
+            http.keep_alive_timeout = 300
 
-          redirects += 1
-          if redirects > max_redirects
-            puts "❌ FAILED (too many redirects)" if verbose
-            resp = nil
+            request = Net::HTTP::Get.new(uri.request_uri)
+            request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
+            request['Connection'] = 'keep-alive'
+            request['Accept-Encoding'] = 'identity'
+
+            print "." if verbose && size > 10_000_000 && download_attempt == 1
+
+            resp = http.request(request)
+
+            if resp.is_a?(Net::HTTPRedirection)
+              location = resp['location']
+              break unless location
+
+              redirects += 1
+              if redirects > max_redirects
+                puts "❌ FAILED (too many redirects)" if verbose
+                resp = nil
+                break
+              end
+              uri = URI.parse(location)
+              print "→" if verbose
+              next
+            end
+
+            download_success = true
             break
           end
-          uri = URI.parse(location)
-          next
-        end
 
-        break
+        rescue OpenSSL::SSL::SSLError => e
+          download_success = false
+          if download_attempt < max_download_retries
+            wait_time = 2 ** download_attempt
+            print " [SSL retry in #{wait_time}s]" if verbose
+            sleep wait_time
+          else
+            puts "❌ SSL ERROR" if verbose
+            warn "[ERROR] SSL error downloading #{filename} after #{max_download_retries} attempts"
+            stats[:failed] += 1
+          end
+
+        rescue Errno::ECONNRESET, Errno::EPIPE, EOFError, Net::ReadTimeout, Net::OpenTimeout => e
+          download_success = false
+          if download_attempt < max_download_retries
+            wait_time = 2 ** download_attempt
+            print " [Connection retry in #{wait_time}s]" if verbose
+            sleep wait_time
+          else
+            puts "❌ CONNECTION ERROR" if verbose
+            warn "[ERROR] Connection error downloading #{filename} after #{max_download_retries} attempts"
+            stats[:failed] += 1
+          end
+        end
       end
 
-      unless resp && resp.is_a?(Net::HTTPSuccess)
-        if verbose
-          puts "❌ FAILED (HTTP #{resp&.code})"
-        else
-          warn "[WARN] Unable to download attachment #{filename} (HTTP #{resp&.code})"
-        end
+      # Skip if download failed
+      next unless resp && download_success
+
+      unless resp.is_a?(Net::HTTPSuccess)
+        puts "❌ FAILED (HTTP #{resp&.code})" if verbose
         stats[:failed] += 1
         next
       end
 
       download_duration = (Time.now - download_start).round(2)
-
-      puts "" if verbose && size > 10_000_000 # New line after progress dots
+      puts "" if verbose && size > 10_000_000
 
       tmp = Tempfile.new([filename.gsub(/[^0-9A-Za-z.-]/, '_')])
       tmp.binmode
 
-      # Write response body to tempfile with chunked streaming for large files
-      # This prevents memory exhaustion on very large files
       bytes_written = 0
       if resp.body.respond_to?(:read)
-        # Stream in 1MB chunks
         while chunk = resp.body.read(1_048_576)
           tmp.write(chunk)
           bytes_written += chunk.bytesize
@@ -1238,44 +1450,27 @@ def fetch_and_attach_to_rich_text_jira(rich_record, attachments, verbose: false)
       end
       tmp.rewind
 
-      # Verify file size matches expected
       if size > 0 && bytes_written < size
-        puts "⚠️  WARNING: Partial download (#{bytes_written}/#{size} bytes)" if verbose
+        puts "⚠️  PARTIAL (#{bytes_written}/#{size} bytes)" if verbose
       end
 
-      # Attach directly to DefectMessage using has_many_attached :attachments
-      # This stores comment attachments in active_storage_attachments with record_type='DefectMessage'
       begin
-        # Verify storage service is accessible before attempting upload
-        storage_service = ActiveStorage::Blob.service
-
-        # For very large files, temporarily increase ActiveStorage's timeouts
-        # This prevents upload failures for files > 100MB
         upload_start = Time.now
-
         max_upload_retries = 3
         upload_retry_count = 0
         upload_success = false
 
         while upload_retry_count < max_upload_retries && !upload_success
           begin
-            # Attach file to DefectMessage record using ActiveStorage
-            # Use streaming upload for large files to prevent memory issues
             File.open(tmp.path, 'rb') do |file|
-              if size > 50_000_000 # Files > 50MB
-                # For very large files, ensure we don't timeout during upload
-                puts " [Large file detected, using streaming upload]" if verbose && upload_retry_count == 0
-              end
-
               rich_record.attachments.attach(io: file, filename: filename, content_type: content_type)
             end
-
             upload_success = true
           rescue Net::ReadTimeout, Net::OpenTimeout, Errno::ETIMEDOUT => e
             upload_retry_count += 1
             if upload_retry_count < max_upload_retries
-              backoff_time = 2 ** upload_retry_count # Exponential backoff: 2s, 4s, 8s
-              puts " [Timeout on upload attempt #{upload_retry_count}, retrying in #{backoff_time}s...]" if verbose
+              backoff_time = 2 ** upload_retry_count
+              print " [Upload retry in #{backoff_time}s]" if verbose
               sleep(backoff_time)
             else
               raise e
@@ -1285,81 +1480,58 @@ def fetch_and_attach_to_rich_text_jira(rich_record, attachments, verbose: false)
 
         upload_duration = (Time.now - upload_start).round(2)
 
-        # Verify attachment was created and uploaded successfully
         rich_record.reload
         attached = rich_record.attachments.find { |a| a.filename.to_s == filename }
         if attached && attached.blob
-          blob_key = attached.blob.key
-          blob_size = attached.blob.byte_size
-
-          # Check if blob physically exists in storage
           exists = begin
-            ActiveStorage::Blob.service.exist?(blob_key)
-          rescue StandardError => e
-            warn "[STORAGE-ERROR] Failed to verify blob existence for #{filename}: #{e.message}" if verbose
+            ActiveStorage::Blob.service.exist?(attached.blob.key)
+          rescue StandardError
             false
           end
 
           if exists
-            # Show detailed timing for large files
             total_time = download_duration + upload_duration
             speed_mbps = size > 0 ? ((size / 1024.0 / 1024.0) / total_time).round(2) : 0
-
-            if size > 50_000_000
-              puts "✅ OK (download: #{download_duration}s, upload: #{upload_duration}s, total: #{total_time.round(2)}s, #{speed_mbps} MB/s, blob: #{blob_key[0..15]}...)" if verbose
-            else
-              puts "✅ OK (#{download_duration}s, #{blob_key[0..15]}...)" if verbose
-            end
+            puts "✅ OK (#{total_time.round(1)}s, #{speed_mbps} MB/s)" if verbose
             stats[:uploaded] += 1
           else
-            puts "⚠️  PARTIAL (downloaded but not in storage)" if verbose
-            warn "[STORAGE-WARN] Blob record created for '#{filename}' but file not found in storage (key=#{blob_key})"
-            warn "[STORAGE-WARN] File size: #{size_mb} MB, Download time: #{download_duration}s, Upload time: #{upload_duration}s"
+            puts "⚠️  PARTIAL (not in storage)" if verbose
             stats[:failed] += 1
           end
         else
-          puts "⚠️  FAILED (attachment not created)" if verbose
-          warn "[WARN] Attachment created but blob not found for #{filename}"
-          warn "[WARN] This may indicate an ActiveStorage configuration issue or disk space problem"
+          puts "⚠️  FAILED (not created)" if verbose
           stats[:failed] += 1
         end
       rescue Net::ReadTimeout => e
-        puts "❌ TIMEOUT (upload took too long)" if verbose
-        warn "[ERROR] Upload timeout for #{filename} (#{size_mb} MB) after #{max_upload_retries} retries: #{e.message}"
-        warn "[ERROR] Consider increasing server timeout limits or checking network stability"
+        puts "❌ TIMEOUT" if verbose
+        warn "[ERROR] Upload timeout for #{filename}"
         stats[:failed] += 1
       rescue Errno::ENOSPC => e
         puts "❌ DISK FULL" if verbose
-        warn "[ERROR] No disk space available for #{filename}: #{e.message}"
-        warn "[ERROR] Free up disk space and retry the import"
+        warn "[ERROR] No disk space for #{filename}"
         stats[:failed] += 1
       rescue StandardError => e
         puts "❌ ERROR (#{e.class.name})" if verbose
-        warn "[ERROR] Failed to attach file #{filename} (#{size_mb} MB) to DefectMessage #{rich_record.id}: #{e.class}: #{e.message}"
-        warn "[ERROR] Backtrace: #{e.backtrace.first(3).join(', ')}" if verbose
+        warn "[ERROR] Failed to attach #{filename}: #{e.message}"
         stats[:failed] += 1
       ensure
         tmp.close
         tmp.unlink
       end
 
-      # Add delay between downloads - longer for large files to prevent server/network overload
-      # Also helps prevent rate limiting and connection issues
-      if size > 100_000_000 # > 100MB
+      if size > 100_000_000
         sleep 5.0
-      elsif size > 50_000_000 # > 50MB
+      elsif size > 50_000_000
         sleep 3.0
-      elsif size > 10_000_000 # > 10MB
+      elsif size > 10_000_000
         sleep 2.0
       else
         sleep 0.5
       end
     rescue StandardError => e
       puts "❌ ERROR (#{e.class.name})" if verbose
-      warn "[ERROR] Failed to process #{filename}: #{e.class}: #{e.message}"
-      warn "[ERROR] This file will be skipped. Re-run import to retry."
+      warn "[ERROR] Failed to process #{filename}: #{e.message}"
       stats[:failed] += 1
-      next
     end
   end
 
