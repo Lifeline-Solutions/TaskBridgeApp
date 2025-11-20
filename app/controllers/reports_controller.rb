@@ -303,6 +303,9 @@ class ReportsController < ApplicationController
     require 'csv'
     authorize! :generate, :report
 
+    # Load saved dashboard if dashboard_id is present
+    load_saved_dashboard(params[:dashboard_id]) if params[:dashboard_id].present?
+
     product_ids = if params[:product_id].is_a?(String)
                     params[:product_id].split(',')
                   else
