@@ -41,12 +41,22 @@ class DashboardDataGenerator
     active_params = dashboard.active_filter_parameters
     charts = {}
 
+    # Debug logging
+    Rails.logger.debug "=== CHART GENERATION DEBUG ==="
+    Rails.logger.debug "Active Params: #{active_params.inspect}"
+    Rails.logger.debug "Priority present? #{active_params['priority'].present?}"
+    Rails.logger.debug "Status present? #{active_params['status'].present?}"
+    Rails.logger.debug "Reporter ID present? #{active_params['reporter_id'].present?}"
+    Rails.logger.debug "Reporters present? #{active_params['reporters'].present?}"
+    Rails.logger.debug "=============================="
+
     # Generate chart for each active filter parameter
     charts['Priority Distribution'] = generate_priority_chart(relation) if should_show_priority_chart?(active_params)
     charts['Status Distribution'] = generate_status_chart(relation) if should_show_status_chart?(active_params)
     charts['Module Distribution'] = generate_module_chart(relation) if should_show_module_chart?(active_params)
     charts['Banking Type Distribution'] = generate_banking_type_chart(relation) if should_show_banking_type_chart?(active_params)
     charts['Assignee Distribution'] = generate_assignee_chart(relation) if should_show_assignee_chart?(active_params)
+    charts['Reporter Distribution'] = generate_reporter_chart(relation) if should_show_reporter_chart?(active_params)
     charts['Creation Timeline'] = generate_timeline_chart(relation) if should_show_timeline_chart?(active_params)
 
     charts.compact
@@ -75,6 +85,13 @@ class DashboardDataGenerator
   # Determine if we should show assignee chart
   def should_show_assignee_chart?(active_params)
     active_params['user_id'].present?
+  end
+
+  # Determine if we should show reporter chart
+  def should_show_reporter_chart?(active_params)
+    # For report filters, check for 'reporters' parameter
+    # For defect filters, check for 'reporter_id' parameter
+    active_params['reporters'].present? || active_params['reporter_id'].present?
   end
 
   # Determine if we should show timeline chart
@@ -133,6 +150,21 @@ class DashboardDataGenerator
       .joins('INNER JOIN defects_users ON defects_users.defect_id = defects.id')
       .joins('INNER JOIN users AS assignees ON assignees.id = defects_users.user_id')
       .group('assignees.id', 'assignees.first_name', 'assignees.last_name')
+      .count
+
+    formatted = {}
+    results.each do |(_user_id, first_name, last_name), count|
+      formatted["#{first_name} #{last_name}"] = count
+    end
+    formatted
+  end
+
+  # Generate reporter distribution chart
+  def generate_reporter_chart(relation)
+    results = relation
+      .reorder(nil)
+      .joins('INNER JOIN users AS reporters ON reporters.id = defects.created_by')
+      .group('reporters.id', 'reporters.first_name', 'reporters.last_name')
       .count
 
     formatted = {}

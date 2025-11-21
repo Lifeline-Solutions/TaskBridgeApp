@@ -50,8 +50,8 @@ class DefectFilter < ApplicationRecord
   # Whitelist of allowed keys that may be saved/applied (update when you add new filter inputs)
   ALLOWED_FILTER_KEYS = %w[
     client_name product_id query order start_date end_date priority user_id
-    qa_module_id submodule_id banking_type_id label_ids status page
-    filter_open select_all_module select_all_submodule
+    qa_module_id submodule_id banking_type_id label_ids status page reporter_id
+    filter_open select_all_module select_all_submodule select_all_reporter
   ].freeze
 
   # Report-specific allowed keys
