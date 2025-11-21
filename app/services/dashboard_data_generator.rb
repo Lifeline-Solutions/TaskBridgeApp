@@ -25,8 +25,8 @@ class DashboardDataGenerator
   # Main entry point - generates dashboard data with multiple charts
   def generate
     defects = dashboard.filtered_defects
-                      .includes(:users, :statuses, :qa_module, :banking_type, :labels, :creator)
-    
+      .includes(:users, :statuses, :qa_module, :banking_type, :labels, :creator)
+
     {
       defects: defects,
       charts: generate_all_charts(defects),
@@ -42,13 +42,13 @@ class DashboardDataGenerator
     charts = {}
 
     # Debug logging
-    Rails.logger.debug "=== CHART GENERATION DEBUG ==="
+    Rails.logger.debug '=== CHART GENERATION DEBUG ==='
     Rails.logger.debug "Active Params: #{active_params.inspect}"
     Rails.logger.debug "Priority present? #{active_params['priority'].present?}"
     Rails.logger.debug "Status present? #{active_params['status'].present?}"
     Rails.logger.debug "Reporter ID present? #{active_params['reporter_id'].present?}"
     Rails.logger.debug "Reporters present? #{active_params['reporters'].present?}"
-    Rails.logger.debug "=============================="
+    Rails.logger.debug '=============================='
 
     # Generate chart for each active filter parameter
     charts['Priority Distribution'] = generate_priority_chart(relation) if should_show_priority_chart?(active_params)
@@ -102,14 +102,14 @@ class DashboardDataGenerator
   # Generate priority distribution chart (only showing selected priorities)
   def generate_priority_chart(relation)
     raw_counts = relation.reorder(nil).group(:priority).count
-    
+
     # Normalize priority strings
     normalized = {}
     raw_counts.each do |priority, count|
       normalized_priority = normalize_priority(priority)
       normalized[normalized_priority] = (normalized[normalized_priority] || 0) + count
     end
-    
+
     # Sort by severity
     normalized.sort_by { |k, _v| priority_sort_order(k) }.to_h
   end
@@ -224,4 +224,3 @@ class DashboardDataGenerator
     end
   end
 end
-

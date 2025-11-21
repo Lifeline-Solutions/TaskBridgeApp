@@ -34,15 +34,15 @@ class QaDashboardsController < ApplicationController
     @charts = result[:charts]
     @total_count = result[:total_count]
     @filter_params = @dashboard.defect_filter.sanitized_filters
-    
+
     # Debug: Log active parameters
-    Rails.logger.debug "=== DASHBOARD DEBUG ==="
+    Rails.logger.debug '=== DASHBOARD DEBUG ==='
     Rails.logger.debug "Filter ID: #{@dashboard.defect_filter.id}"
     Rails.logger.debug "Active Filter Parameters: #{@dashboard.active_filter_parameters.inspect}"
     Rails.logger.debug "Sanitized Filters: #{@filter_params.inspect}"
     Rails.logger.debug "Charts Generated: #{@charts.keys.inspect}"
-    Rails.logger.debug "======================="
-    
+    Rails.logger.debug '======================='
+
     # Legacy widget data (if widgets exist)
     @widget_data = {}
     @dashboard.widgets.each_with_index do |_widget, index|

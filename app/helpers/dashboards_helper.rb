@@ -48,7 +48,7 @@ module DashboardsHelper
     ids = Array(value)
     users = User.where(id: ids).pluck(:first_name, :last_name)
     return value if users.empty?
-    
+
     users.map { |first, last| "#{first} #{last}".strip }.join(', ')
   end
 
@@ -56,7 +56,7 @@ module DashboardsHelper
     ids = Array(value)
     reporters = User.where(id: ids).pluck(:first_name, :last_name)
     return value if reporters.empty?
-    
+
     reporters.map { |first, last| "#{first} #{last}".strip }.join(', ')
   end
 
