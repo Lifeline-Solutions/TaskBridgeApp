@@ -1619,9 +1619,11 @@ end
 def import_comments_for_defect(defect, comments_array, verbose: false)
   return { imported: 0, skipped: 0 } if comments_array.nil? || comments_array.empty?
 
-  stats = { imported: 0, skipped: 0 }
+  stats = { imported: 0, skipped: 0, dropped: 0 }
 
-  comments_array.each do |c|
+  vputs "[COMMENTS-DEBUG] Total comments received from Jira: #{comments_array.length}" if verbose
+
+  comments_array.each_with_index do |c, comment_idx|
     author = c['author'] || {}
     author_name = author['displayName'].to_s.strip
     author_email = author['emailAddress'].to_s.strip
@@ -1635,9 +1637,15 @@ def import_comments_for_defect(defect, comments_array, verbose: false)
     has_attachments = c.is_a?(Hash) && c['_comment_attachments'].is_a?(Array) && c['_comment_attachments'].any?
     is_synthetic = c['_synthetic'] == true
 
+    vputs "[COMMENTS-DEBUG] [#{comment_idx + 1}/#{comments_array.length}] Processing comment ID #{jira_comment_id} by #{author_name}, body_length=#{body.length}, has_attachments=#{has_attachments}, synthetic=#{is_synthetic}" if verbose
+
     # Skip ONLY if both body and comment are completely empty (no content at all)
     # This ensures all real Jira comments are imported
-    next if body.blank? && !has_attachments && !is_synthetic
+    if body.blank? && !has_attachments && !is_synthetic
+      vputs "[COMMENTS-DEBUG] [#{comment_idx + 1}/#{comments_array.length}] DROPPED: Comment #{jira_comment_id} - empty body, no attachments, not synthetic" if verbose
+      stats[:dropped] += 1
+      next
+    end
 
     created_at = try_parse_time(c['created'])
     updated_at = try_parse_time(c['updated'])
@@ -1827,7 +1835,7 @@ def import_comments_for_defect(defect, comments_array, verbose: false)
     next
   end
 
-  vputs "[IMPORT] Comment import complete for #{defect.defect_unique}: #{stats[:imported]} imported, #{stats[:skipped]} duplicates skipped" if verbose && (stats[:imported] > 0 || stats[:skipped] > 0)
+  vputs "[IMPORT] Comment import complete for #{defect.defect_unique}: #{stats[:imported]} imported, #{stats[:skipped]} duplicates skipped, #{stats[:dropped]} dropped (empty)" if verbose && (stats[:imported] > 0 || stats[:skipped] > 0 || stats[:dropped] > 0)
   stats
 end
 
@@ -2798,7 +2806,17 @@ begin
         # expected counts
         expected_issue_files = (fields['attachment'] || fields['attachments'] || []).select { |a| a.is_a?(Hash) }.map { |a| (a['filename'] || a['name'] || a['id']).to_s }
         expected_comment_files = (fields.dig('comment','comments') || []).flat_map { |c| (c['_comment_attachments'] || []).map { |a| (a['filename']||a['name']||a['id']).to_s } }
-        expected_comments = (fields.dig('comment','comments') || []).length
+
+        # Count only non-empty comments (matching import logic)
+        all_comments = fields.dig('comment','comments') || []
+        expected_comments = all_comments.count do |c|
+          body = extract_comment_body(c['body'] || c['content']).to_s.strip
+          has_attachments = c.is_a?(Hash) && c['_comment_attachments'].is_a?(Array) && c['_comment_attachments'].any?
+          is_synthetic = c['_synthetic'] == true
+          # Count comment if it has body OR attachments OR is synthetic
+          body.present? || has_attachments || is_synthetic
+        end
+
         expected_labels = (fields['labels'] || []).compact.length
 
         report[:expected][:issue_attachments] = expected_issue_files.length

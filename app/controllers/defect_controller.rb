@@ -47,19 +47,23 @@ class DefectController < ApplicationController
       raw_defects = apply_defect_filters(raw_defects)
 
       # Status filter (defect status) - handle array parameter
-      raw_defects = raw_defects.joins(:statuses).where(statuses: { name: Array(params[:status]) }) if params[:status].present?
+      raw_defects = raw_defects.joins(:statuses).where(statuses: { name: Array(params[:status]) }).distinct if params[:status].present?
 
       # Priority filter - handle array parameter
       raw_defects = raw_defects.where(priority: Array(params[:priority])) if params[:priority].present?
 
       # Assignee filter - handle array parameter
-      raw_defects = raw_defects.joins(:users).where(users: { id: Array(params[:user_id]) }) if params[:user_id].present?
+      raw_defects = raw_defects.joins(:users).where(users: { id: Array(params[:user_id]) }).distinct if params[:user_id].present?
+
+      # Reporter filter - handle array parameter
+      selected_reporters = Array(params[:reporter_id]).reject(&:blank?)
+      raw_defects = raw_defects.where(created_by: selected_reporters) if selected_reporters.any?
 
       # Labels filter - handle array parameter
-      raw_defects = raw_defects.joins(:labels).where(labels: { id: Array(params[:label_ids]) }) if params[:label_ids].present?
+      raw_defects = raw_defects.joins(:labels).where(labels: { id: Array(params[:label_ids]) }).distinct if params[:label_ids].present?
 
       # Get defect counts FIRST - before any grouping/ordering issues
-      @qa_product_defect_counts = raw_defects.except(:order).group(:product_id).count
+      @qa_product_defect_counts = raw_defects.except(:order, :distinct).distinct.group(:product_id).count
 
       # For grouping defects by product, remove ordering to avoid PG grouping error
       defects_for_grouping = raw_defects.except(:order)
@@ -192,6 +196,17 @@ class DefectController < ApplicationController
   end
 
   def index_show
+    # Debug logging to see what filters are being sent
+    Rails.logger.info '===== DEFECT FILTERS DEBUG ====='
+    Rails.logger.info "Status: #{params[:status].inspect}"
+    Rails.logger.info "Priority: #{params[:priority].inspect}"
+    Rails.logger.info "Assignee (user_id): #{params[:user_id].inspect}"
+    Rails.logger.info "Reporter (reporter_id): #{params[:reporter_id].inspect}"
+    Rails.logger.info "Labels: #{params[:label_ids].inspect}"
+    Rails.logger.info "Module: #{params[:qa_module_id].inspect}"
+    Rails.logger.info "Submodule: #{params[:submodule_id].inspect}"
+    Rails.logger.info '================================='
+
     # Base scope - use safe includes that won't break if columns don't exist
     @defects = Defect.published
       .includes(:users, :labels, :statuses, product: %i[client groupwares])
@@ -235,20 +250,40 @@ class DefectController < ApplicationController
     selected_statuses = Array(params[:status]).reject(&:blank?)
     if selected_statuses.any?
       downcased = selected_statuses.map { |s| s.to_s.downcase }
-      @defects = @defects.joins(:statuses)
-        .where('LOWER(statuses.name) IN (?)', downcased)
+      @defects = @defects.joins(:statuses).where('LOWER(statuses.name) IN (?)', downcased)
+      Rails.logger.info "After status filter: #{@defects.except(:distinct).distinct.count} defects"
     end
 
     # FIXED: Priority filter (multiple checkboxes -> priority[])
     selected_priorities = Array(params[:priority]).reject(&:blank?)
-    @defects = @defects.where(defects: { priority: selected_priorities }) if selected_priorities.any?
+    if selected_priorities.any?
+      @defects = @defects.where(defects: { priority: selected_priorities })
+      Rails.logger.info "After priority filter: #{@defects.except(:distinct).distinct.count} defects"
+    end
 
     # Labels filter (multiple check_boxes -> labels_ids[])
     selected_labels = Array(params[:label_ids]).reject(&:blank?)
-    @defects = @defects.joins(:labels).where(labels: { id: selected_labels }) if selected_labels.any?
+    if selected_labels.any?
+      @defects = @defects.joins(:labels).where(labels: { id: selected_labels })
+      Rails.logger.info "After labels filter: #{@defects.except(:distinct).distinct.count} defects"
+    end
 
     # Assignee filter
-    @defects = @defects.joins(:users).where(users: { id: params[:user_id] }) if params[:user_id].present?
+    if params[:user_id].present?
+      @defects = @defects.joins(:users).where(users: { id: params[:user_id] })
+      Rails.logger.info "After assignee filter: #{@defects.except(:distinct).distinct.count} defects"
+    end
+
+    # Reporter filter (creator_id/created_by)
+    selected_reporters = Array(params[:reporter_id]).reject(&:blank?)
+    if selected_reporters.any?
+      @defects = @defects.where(created_by: selected_reporters)
+      Rails.logger.info "After reporter filter: #{@defects.except(:distinct).distinct.count} defects"
+    end
+
+    # Log count after all main filters
+    Rails.logger.info "Defects after all main filters (before distinct): #{@defects.except(:distinct).distinct.count}"
+    Rails.logger.info "SQL: #{@defects.to_sql}"
 
     # Module/Submodule filtering - only apply if columns exist
     begin
@@ -351,9 +386,11 @@ class DefectController < ApplicationController
         # Skip if banking_types association not available
       end
 
-      @defects = @defects.left_joins(:users, product: %i[client groupwares]).where(
+      # Use left_joins only if not already joined
+      @defects = @defects.left_joins(:users) unless @defects.to_sql.include?('INNER JOIN "users"')
+      @defects = @defects.left_joins(product: %i[client groupwares]).where(
         search_conditions.join(' OR '), q: q
-      )
+      ).distinct
     end
 
     # Ordering
@@ -1175,6 +1212,10 @@ class DefectController < ApplicationController
     # Assignee filter
     defects = defects.joins(:users).where(users: { id: params[:user_id] }) if params[:user_id].present?
 
+    # Reporter filter (creator_id/created_by)
+    selected_reporters = Array(params[:reporter_id]).reject(&:blank?)
+    defects = defects.where(created_by: selected_reporters) if selected_reporters.any?
+
     # Module/Submodule filtering - matches index_show logic exactly
     qa_module_ids = Array(params[:qa_module_id]).reject(&:blank?)
     submodule_ids = Array(params[:submodule_id]).reject(&:blank?)
@@ -1317,6 +1358,10 @@ class DefectController < ApplicationController
 
     # Assignee filter
     defects = defects.joins(:users).where(users: { id: params[:user_id] }) if params[:user_id].present?
+
+    # Reporter filter (creator_id/created_by)
+    selected_reporters = Array(params[:reporter_id]).reject(&:blank?)
+    defects = defects.where(created_by: selected_reporters) if selected_reporters.any?
 
     # Module/Submodule filtering - matches index_show logic exactly
     qa_module_ids = Array(params[:qa_module_id]).reject(&:blank?)

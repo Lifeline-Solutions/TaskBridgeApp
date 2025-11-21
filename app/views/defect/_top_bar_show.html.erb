@@ -371,6 +371,61 @@
                 </div>
               </div>
 
+              <!-- Reporter Filter (Multi-Select) -->
+              <div>
+                <%= label_tag 'reporter_id[]', 'Reporter', class: 'block text-xs font-medium mb-1' %>
+                <div class="relative inline-block text-left w-full multi-select-dropdown">
+                  <button type="button"
+                          id="reporterDropdownButton"
+                          class="w-full p-1 text-sm border-gray-300 dark:bg-gray-500 rounded text-left inline-flex justify-between items-center"
+                          onclick="toggleDropdown('reporterDropdown')">
+                    <span id="reporterButtonText">Filter by Reporter</span>
+                    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                  </button>
+
+                  <div id="reporterDropdown" class="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg w-full hidden dropdown-content">
+                    <div class="p-2 border-b">
+                      <input type="text" 
+                            id="reporterSearch" 
+                            placeholder="Search reporters..." 
+                            class="w-full p-1 text-sm border rounded"
+                            onkeyup="filterDropdownItems('reporterSearch', 'reporterItems')">
+                    </div>
+                    
+                    <div class="max-h-60 overflow-y-auto">
+                      <div id="reporterItems" class="p-2 space-y-2">
+                        <% selected_reporters = Array(params[:reporter_id]) %>
+                        <% reporters_for_filter = User.where(id: @defects.except(:select, :order, :limit, :offset, :distinct).select('DISTINCT defects.created_by')).order(:first_name, :last_name) %>
+                        
+                        <!-- Select All Option -->
+                        <div class="flex items-center border-b pb-2 mb-2">
+                          <%= check_box_tag 'select_all_reporter', 
+                                            'all', 
+                                            selected_reporters.any? && selected_reporters.length == reporters_for_filter.length,
+                                            id: "select_all_reporter",
+                                            class: "mr-2 select-all-checkbox",
+                                            data: { target: 'reporter' } %>
+                          <%= label_tag "select_all_reporter", "Select All", class: "text-sm font-medium" %>
+                        </div>
+                        
+                        <% reporters_for_filter.each do |reporter| %>
+                          <div class="flex items-center dropdown-item">
+                            <%= check_box_tag 'reporter_id[]',
+                                              reporter.id,
+                                              selected_reporters.include?(reporter.id.to_s),
+                                              id: "reporter_#{reporter.id}",
+                                              class: "mr-2 reporter-checkbox" %>
+                            <%= label_tag "reporter_#{reporter.id}", "#{reporter.first_name} #{reporter.last_name}", class: "text-sm" %>
+                          </div>
+                        <% end %>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- QA Module Filter (Multi-Select) -->
               <div>
                 <%= label_tag 'qa_module_id[]', 'Module', class: 'block text-xs font-medium mb-1' %>
@@ -622,6 +677,7 @@
                     end_date: params[:end_date],
                     priority: params[:priority],
                     user_id: params[:user_id],
+                    reporter_id: params[:reporter_id],
                     qa_module_id: params[:qa_module_id],
                     submodule_id: params[:submodule_id],
                     banking_type_id: params[:banking_type_id],
@@ -644,6 +700,7 @@
                     end_date: params[:end_date],
                     priority: params[:priority],
                     user_id: params[:user_id],
+                    reporter_id: params[:reporter_id],
                     qa_module_id: params[:qa_module_id],
                     submodule_id: params[:submodule_id],
                     banking_type_id: params[:banking_type_id],
@@ -1101,7 +1158,7 @@
   }
 
   function updateAllButtonTexts() {
-    const filterTypes = ['product', 'status', 'priority', 'assignee', 'module', 'submodule', 'banking-type', 'labels'];
+    const filterTypes = ['product', 'status', 'priority', 'assignee', 'reporter', 'module', 'submodule', 'banking-type', 'labels'];
     
     filterTypes.forEach(type => {
       const buttonId = `${type}DropdownButton`;
@@ -1138,6 +1195,7 @@
       'status': 'Filter by Status',
       'priority': 'Filter by Priority',
       'assignee': 'Filter by Assignee',
+      'reporter': 'Filter by Reporter',
       'module': 'Filter by Module',
       'submodule': 'Filter by Submodule',
       'banking-type': 'Filter by Banking Type',

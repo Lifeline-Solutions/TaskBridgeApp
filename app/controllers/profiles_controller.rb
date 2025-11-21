@@ -217,8 +217,20 @@ class ProfilesController < ApplicationController
     @users = User.where(id: params[:user_id], first_login: true, active: true)
     @selected_user = @users.first
 
-    start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : nil
-    end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
+    # Robust date parsing
+    if params[:start_date].present? && params[:end_date].present?
+      begin
+        start_date = Date.parse(params[:start_date])
+        end_date = Date.parse(params[:end_date])
+      rescue ArgumentError
+        start_date = nil
+        end_date = nil
+      end
+    else
+      start_date = params[:start_date].present? ? (Date.parse(params[:start_date]) rescue nil) : nil
+      end_date = params[:end_date].present? ? (Date.parse(params[:end_date]) rescue nil) : nil
+    end
+
     from_time = start_date&.beginning_of_day
     to_time = end_date&.end_of_day
 
@@ -272,6 +284,17 @@ class ProfilesController < ApplicationController
     # Union of all ticket ids
     all_ticket_ids = (assignment_ticket_ids + tagged_ticket_ids + reported_ticket_ids).uniq
 
+    # SAFETY CAP: limit to most recent N tickets unless explicitly overridden
+    cap = params[:limit].to_i.positive? ? params[:limit].to_i : 300
+    if all_ticket_ids.size > cap && !ActiveModel::Type::Boolean.new.cast(params[:all])
+      capped_ids = Ticket.where(id: all_ticket_ids)
+                         .order(created_at: :desc)
+                         .limit(cap)
+                         .pluck(:id)
+      all_ticket_ids = capped_ids
+      flash.now[:notice] = "Showing latest #{cap} tickets for performance. Pass all=true to load everything."
+    end
+
     # Apply date window to tickets if provided
     if from_time || to_time
       scoped_ids = Ticket.where(id: all_ticket_ids)
@@ -288,7 +311,7 @@ class ProfilesController < ApplicationController
     all_events_scope = Event.where(ticket_id: all_ticket_ids)
     all_events_scope = all_events_scope.where(created_at: from_time..to_time) if from_time || to_time
     @all_ticket_events_by_ticket = all_events_scope
-      .select(:ticket_id, :details, :created_at, :id)
+      .select(:ticket_id, :details, :created_at, :id, (:assigned_user_id if Event.column_names.include?('assigned_user_id')))
       .order(:created_at)
       .group_by(&:ticket_id)
 
