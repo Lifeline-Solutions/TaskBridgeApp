@@ -121,8 +121,8 @@ Rails.application.configure do
     ssl: use_ssl,
     tls: use_tls,
     enable_starttls_auto: false,
-    open_timeout: Integer(ENV.fetch('SMTP_OPEN_TIMEOUT', '30')),
-    read_timeout: Integer(ENV.fetch('SMTP_READ_TIMEOUT', '30'))
+    #open_timeout: Integer(ENV.fetch('SMTP_OPEN_TIMEOUT', '30')),
+    #read_timeout: Integer(ENV.fetch('SMTP_READ_TIMEOUT', '30'))
   }.tap do |h|
     # Only disable verification if explicitly asked
     if ENV['SMTP_OPENSSL_VERIFY_MODE'].present?
