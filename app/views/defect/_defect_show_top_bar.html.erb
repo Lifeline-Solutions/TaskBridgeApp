@@ -1,50 +1,75 @@
-<div class="grid grid-cols-2 mb-2 ">
-  <div class="col-span-1 flex">
-    <div class="flex flex-wrap gap-1">
+<div class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 rounded-lg mb-4">
+  <div class="px-4 py-3">
+    <!-- Top row: Back button and Action buttons -->
+    <div class="flex items-center justify-between mb-3">
+      <!-- Back button -->
       <%= link_to @return_path, 
           data: { turbo: false }, 
-          class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] p-2 rounded font-bold rounded-md text-slate-100 inline-block', 
-          id: 'button' do %>
-        &#8656; Back
+          class: 'inline-flex items-center gap-2 px-4 py-2 bg-[#3F8CFF] hover:bg-[#3A81EB] text-white rounded-lg font-medium transition-all duration-200' do %>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+        </svg>
+        <span>Back</span>
+      <% end %>
+
+      <!-- Draft action buttons (right side) -->
+      <% if @defect.draft? %>
+        <div class="flex items-center gap-3">
+          <!-- Draft badge -->
+          <span class="px-3 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
+            📝 DRAFT
+          </span>
+          
+          <%= link_to edit_defect_path(@defect),
+              class: "inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 shadow-sm" do %>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+            </svg>
+            <span>Edit Draft</span>
+          <% end %>
+
+          <% if can?(:publish, @defect) %>
+            <%= button_to publish_defect_path(@defect),
+                method: :patch,
+                class: "inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-all duration-200 shadow-sm" do %>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+              <span>Publish</span>
+            <% end %>
+          <% end %>
+        </div>
       <% end %>
     </div>
-    <div class="flex items-center gap-3 sm:gap-4">
-      <div class="flex flex-col">
-        <p class="text-xs sm:text-sm md:text-base pl-4">
-          <span class="font-medium uppercase">
-            Bug ID: <%= @defect.defect_unique %>
-          </span>
-          /
-          <span class="px-2 py-1 text-xs font-medium rounded <%= priority_badge_class(@defect.priority) %>">
-            <%= @defect.priority %>
-          </span>
-          /
-          <span class="py-1 px-2 font-medium">
-            <% if @defect.creator.present? %>
-              <%= @defect.creator.name %>
-            <% end %>
-          </span>
 
-          <% if @defect.retest_count.to_i > 1 %>
-            /
-            <span class="px-2 py-1 text-xs font-medium rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100">
-              Retries: <%= @defect.retest_count %>
-            </span>
-          <% end %>
-        </p>
-
-        <% if @defect.draft? %>
-          <div class="flex gap-2 mt-2">
-            <%= link_to "Edit Draft",
-                edit_defect_path(@defect),
-                class: "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded inline-block" %>
-            <% if can?(:publish, @defect) %>
-              <%= button_to "Publish",
-                  publish_defect_path(@defect),
-                  method: :patch,
-                  class: "bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded" %>
-            <% end %>
+    <!-- Bottom row: Bug info -->
+    <div class="flex items-center gap-3 border-t border-gray-100 dark:border-gray-700 pt-3">
+      <div class="flex flex-wrap items-center gap-2 text-sm">
+        <span class="font-semibold text-gray-900 dark:text-white">
+          BUG ID: <%= @defect.defect_unique %>
+        </span>
+        
+        <span class="text-gray-400">/</span>
+        
+        <span class="px-2 py-1 text-xs font-medium rounded <%= priority_badge_class(@defect.priority) %>">
+          <%= @defect.priority %>
+        </span>
+        
+        <% if @defect.creator.present? %>
+          <span class="text-gray-400">/</span>
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 flex items-center justify-center rounded-full text-xs font-medium bg-blue-600 text-white">
+              <%= @defect.creator.name.split.map { |n| n[0] }.join.upcase %>
+            </div>
+            <span class="text-gray-700 dark:text-gray-300"><%= @defect.creator.name %></span>
           </div>
+        <% end %>
+
+        <% if @defect.retest_count.to_i > 1 %>
+          <span class="text-gray-400">/</span>
+          <span class="px-2 py-1 text-xs font-medium rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100">
+            🔄 Retries: <%= @defect.retest_count %>
+          </span>
         <% end %>
       </div>
     </div>

@@ -260,7 +260,9 @@
               </label>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <% @defect.attachments.each do |attachment| %>
-                  <div class="border border-gray-200 rounded-lg p-3 dark:border-gray-700">
+                  <div class="border border-gray-200 rounded-lg p-3 dark:border-gray-700" 
+                       data-controller="attachment"
+                       data-attachment-url-value="<%= defect_attachment_path(@defect, attachment_id: attachment.id) %>">
                     <% if attachment.image? || attachment.previewable? %>
                       <%= image_tag attachment, class: "w-full h-24 object-cover mb-2 rounded" %>
                     <% elsif attachment.video? %>
@@ -278,10 +280,11 @@
                     <div class="flex justify-between items-center">
                       <%= link_to attachment.filename, rails_blob_path(attachment, disposition: "attachment"),
                           class: "text-xs font-medium text-blue-600 dark:text-blue-500 hover:underline truncate" %>
-                      <%= link_to 'Delete',
-                          defect_attachment_path(@defect, attachment_id: attachment.id),
-                          data: { turbo_method: :delete, turbo_confirm: 'Are you sure?' },
-                          class: "text-red-600 dark:text-red-500 hover:text-red-900 dark:hover:text-red-700 text-xs" %>
+                      <button type="button"
+                              data-action="click->attachment#remove"
+                              class="text-red-600 dark:text-red-500 hover:text-red-900 dark:hover:text-red-700 text-xs bg-transparent border-0 p-0 cursor-pointer">
+                        Delete
+                      </button>
                     </div>
                   </div>
                 <% end %>

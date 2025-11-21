@@ -772,15 +772,15 @@ class DefectController < ApplicationController
         .event('defect.soft_delete')
         .log("Soft-deleted Defect ##{@defect.id}")
       UserMailer.defect_deleted_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
-      redirect_to defect_url, notice: 'Defect was successfully deleted.'
+      redirect_to index_show_defect_index_path(product_id: @defect.product_id), notice: 'Defect was successfully deleted.'
     else
       @defect.destroy
       activity('user_activity')
         .caused_by(current_user)
         .performed_on(@defect)
-        .event('defect.destroy')
-        .log("Destroyed Defect ##{@defect.id}")
-      redirect_to defect_url, notice: 'Defect was successfully destroyed.'
+        .event('defect.hard_delete')
+        .log("Hard-deleted Defect ##{@defect.id}")
+      redirect_to index_show_defect_index_path(product_id: @defect.product_id), notice: 'Defect was successfully deleted.'
     end
   end
 
@@ -1510,14 +1510,25 @@ class DefectController < ApplicationController
 
   def remove_attachment
     attachment = @defect.attachments.find(params[:attachment_id])
+    attachment_id = attachment.id
     filename = attachment.blob.filename.to_s
     attachment.purge
 
     log_event(@defect, current_user, 'remove_attachment', "Removed attachment #{filename}")
 
-    redirect_to defect_path(@defect), notice: 'File was successfully removed.'
+    respond_to do |format|
+      format.json { head :no_content }
+      format.turbo_stream { render turbo_stream: turbo_stream.remove("attachment_#{attachment_id}") }
+      format.js { render js: "document.getElementById('attachment_#{attachment_id}').remove();" }
+      format.html { redirect_to defect_path(@defect), notice: 'File was successfully removed.' }
+    end
   rescue ActiveRecord::RecordNotFound
-    redirect_to defects_path, alert: 'File or defect not found.'
+    respond_to do |format|
+      format.json { render json: { error: 'File or defect not found' }, status: :not_found }
+      format.turbo_stream { render turbo_stream: turbo_stream.replace("flash", partial: "layouts/flash", locals: { alert: 'File or defect not found.' }) }
+      format.js { render js: "alert('File or defect not found.');" }
+      format.html { redirect_to defects_path, alert: 'File or defect not found.' }
+    end
   end
 
   def add_label
