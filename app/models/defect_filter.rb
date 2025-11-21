@@ -2,6 +2,9 @@ class DefectFilter < ApplicationRecord
   belongs_to :user
   belongs_to :product, optional: true
 
+  # Dashboard widget association
+  has_many :dashboard_widgets, dependent: :nullify
+
   # Audit associations
   belongs_to :created_by, class_name: 'User', foreign_key: 'created_by_id', optional: true
   belongs_to :modified_by, class_name: 'User', foreign_key: 'modified_by_id', optional: true
@@ -39,7 +42,7 @@ class DefectFilter < ApplicationRecord
   # Convert legacy filters to new format (for migration purposes)
   def migrate_to_filter_rules!
     return if filter_rules.present? || filters.blank?
-    
+
     self.filter_rules = FilterAugmentor.legacy_to_new_format(filters)
     save
   end

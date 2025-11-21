@@ -1,0 +1,74 @@
+<div class="max-w-5xl mx-auto px-4 py-6">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+      <%= dashboard.persisted? ? 'Edit Dashboard' : 'Create Dashboard' %>
+    </h1>
+  </div>
+
+  <%= form_with model: dashboard, url: dashboard.persisted? ? qa_dashboard_path(dashboard) : qa_dashboards_path, class: "space-y-6" do |f| %>
+    <% if dashboard.errors.any? %>
+      <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+        <h3 class="text-red-800 dark:text-red-200 font-medium mb-2">
+          <%= pluralize(dashboard.errors.count, "error") %> prohibited this dashboard from being saved:
+        </h3>
+        <ul class="list-disc list-inside text-red-700 dark:text-red-300 text-sm">
+          <% dashboard.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <!-- Dashboard Name -->
+    <div>
+      <%= f.label :name, "Dashboard Name", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" %>
+      <%= f.text_field :name, 
+          class: "w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white",
+          placeholder: "e.g., QA Overview Dashboard",
+          required: true %>
+    </div>
+
+    <!-- Description -->
+    <div>
+      <%= f.label :description, "Description (Optional)", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" %>
+      <%= f.text_area :description,
+          rows: 3,
+          class: "w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white",
+          placeholder: "Brief description of this dashboard" %>
+    </div>
+
+    <!-- Saved Filter (Data Source) -->
+    <div>
+      <%= f.label :defect_filter_id, "Data Source (Saved Filter)", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" %>
+      <%= f.collection_select :defect_filter_id, 
+          @saved_filters,
+          :id,
+          :name,
+          { prompt: "Select a saved filter..." },
+          class: "w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white",
+          required: true %>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        The dashboard will display data based on this filter's criteria.
+      </p>
+    </div>
+
+    <!-- Auto-Refresh -->
+    <div>
+      <%= f.label :auto_refresh_interval, "Auto-Refresh Interval (seconds)", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" %>
+      <%= f.number_field :auto_refresh_interval,
+          class: "w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white",
+          placeholder: "e.g., 300 (5 minutes)",
+          min: 0 %>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        Leave empty to disable auto-refresh. Recommended: 300 seconds (5 minutes) or more.
+      </p>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+      <%= link_to "Cancel", qa_dashboards_path, class: "px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" %>
+      <%= f.submit dashboard.persisted? ? "Update Dashboard" : "Create Dashboard",
+          class: "px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium" %>
+    </div>
+  <% end %>
+</div>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_11_21_083909) do
+ActiveRecord::Schema[7.2].define(version: 2025_11_21_145337) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -217,9 +217,43 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_21_083909) do
     t.index ["user_id"], name: "index_commonly_selected_clients_on_user_id"
   end
 
-  create_table "dashboards_and_widgets", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+  create_table "dashboard_widgets", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name", limit: 200, null: false
+    t.uuid "user_id", null: false
+    t.uuid "defect_filter_id", null: false
+    t.jsonb "chart_config", default: {}
+    t.integer "refresh_interval"
+    t.uuid "created_by"
+    t.uuid "modified_by"
+    t.uuid "deleted_by"
+    t.boolean "archive_status", default: false
+    t.datetime "deleted_on"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["chart_config"], name: "index_dashboard_widgets_on_chart_config", using: :gin
+    t.index ["defect_filter_id"], name: "index_dashboard_widgets_on_defect_filter_id"
+    t.index ["user_id", "archive_status", "deleted_on"], name: "idx_on_user_id_archive_status_deleted_on_97247c3f73"
+    t.index ["user_id"], name: "index_dashboard_widgets_on_user_id"
+  end
+
+  create_table "dashboards", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name", limit: 200, null: false
+    t.text "description"
+    t.uuid "user_id", null: false
+    t.uuid "defect_filter_id", null: false
+    t.integer "auto_refresh_interval"
+    t.jsonb "widgets", default: []
+    t.uuid "created_by"
+    t.uuid "modified_by"
+    t.uuid "deleted_by"
+    t.boolean "archive_status", default: false
+    t.datetime "deleted_on"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["defect_filter_id"], name: "index_dashboards_on_defect_filter_id"
+    t.index ["user_id", "deleted_on"], name: "index_dashboards_on_user_id_and_deleted_on"
+    t.index ["user_id"], name: "index_dashboards_on_user_id"
+    t.index ["widgets"], name: "index_dashboards_on_widgets", using: :gin
   end
 
   create_table "default_defect_assignees", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1113,6 +1147,16 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_21_083909) do
   add_foreign_key "comments", "users"
   add_foreign_key "commonly_selected_clients", "clients"
   add_foreign_key "commonly_selected_clients", "users"
+  add_foreign_key "dashboard_widgets", "defect_filters"
+  add_foreign_key "dashboard_widgets", "users"
+  add_foreign_key "dashboard_widgets", "users", column: "created_by"
+  add_foreign_key "dashboard_widgets", "users", column: "deleted_by"
+  add_foreign_key "dashboard_widgets", "users", column: "modified_by"
+  add_foreign_key "dashboards", "defect_filters"
+  add_foreign_key "dashboards", "users"
+  add_foreign_key "dashboards", "users", column: "created_by"
+  add_foreign_key "dashboards", "users", column: "deleted_by"
+  add_foreign_key "dashboards", "users", column: "modified_by"
   add_foreign_key "default_defect_assignees", "users"
   add_foreign_key "default_defect_assignees", "users", column: "created_by_id"
   add_foreign_key "default_defect_assignees", "users", column: "deleted_by_id"

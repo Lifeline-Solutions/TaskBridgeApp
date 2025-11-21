@@ -251,4 +251,17 @@ Rails.application.routes.draw do
       get :download_report
     end
   end
+
+  # QA Dashboards - visualizations based on saved filters
+  resources :qa_dashboards, path: 'qa/dashboards'
+
+  # Dashboard widgets for personalized user dashboards
+  resources :dashboard_widgets do
+    member do
+      post :refresh
+    end
+    collection do
+      post :reorder
+    end
+  end
 end

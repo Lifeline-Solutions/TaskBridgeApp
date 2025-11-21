@@ -77,6 +77,7 @@ class User < ApplicationRecord
 
   has_many :defect_messages, dependent: :destroy
   has_many :defect_filters, dependent: :destroy
+  has_many :dashboard_widgets, dependent: :destroy
   has_many :dashboards, dependent: :destroy
 
   has_many :softwares
