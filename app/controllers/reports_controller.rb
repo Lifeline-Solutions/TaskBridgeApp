@@ -80,8 +80,8 @@ class ReportsController < ApplicationController
       # Available reporters
       if @selected_metrics.include?('reporter')
         @available_options[:reporters] = base_scope_for_options
-          .joins(:creator)
-          .select('users.id, users.first_name, users.last_name')
+          .joins('INNER JOIN users AS creators ON creators.id = defects.created_by')
+          .select('creators.id, creators.first_name, creators.last_name')
           .distinct
           .map { |u| [u.id, "#{u.first_name} #{u.last_name}"] }
       end
@@ -99,8 +99,9 @@ class ReportsController < ApplicationController
       # Available assignees
       if @selected_metrics.include?('assignee')
         @available_options[:assignees] = base_scope_for_options
-          .joins(:users)
-          .select('users.id, users.first_name, users.last_name')
+          .joins('INNER JOIN defects_users ON defects_users.defect_id = defects.id')
+          .joins('INNER JOIN users AS assignees ON assignees.id = defects_users.user_id')
+          .select('assignees.id, assignees.first_name, assignees.last_name')
           .distinct
           .map { |u| [u.id, "#{u.first_name} #{u.last_name}"] }
       end
@@ -160,7 +161,12 @@ class ReportsController < ApplicationController
       end
 
       # Filter: Assignee
-      defects_scope = defects_scope.joins(:users).where(users: { id: @selected_assignees }) if @selected_assignees.any?
+      if @selected_assignees.any?
+        defects_scope = defects_scope
+          .joins('INNER JOIN defects_users ON defects_users.defect_id = defects.id')
+          .joins('INNER JOIN users AS assignees ON assignees.id = defects_users.user_id')
+          .where('assignees.id IN (?)', @selected_assignees)
+      end
 
       # Filter: Module
       defects_scope = defects_scope.where(qa_module_id: @selected_modules) if @selected_modules.any?
@@ -170,19 +176,23 @@ class ReportsController < ApplicationController
 
       # NOW calculate the metrics with the filtered data
       @defects_per_creator = if @selected_metrics.include?('reporter')
+                               # Use explicit join with alias to avoid confusion with assignee users join
                                defects_scope
-                                 .joins(:creator)
-                                 .group('users.id', 'users.first_name', 'users.last_name')
-                                 .count
+                                 .joins('INNER JOIN users AS creators ON creators.id = defects.created_by')
+                                 .group('creators.id', 'creators.first_name', 'creators.last_name')
+                                 .distinct
+                                 .count('defects.id')
                              else
                                {}
                              end
 
       @defects_per_status = if @selected_metrics.include?('status')
+                              # Use distinct to avoid double-counting when status filter is applied
                               defects_scope
                                 .joins(:statuses)
                                 .group('statuses.id', 'statuses.name')
-                                .count
+                                .distinct
+                                .count('defects.id')
                             else
                               {}
                             end
@@ -195,28 +205,35 @@ class ReportsController < ApplicationController
                               end
 
       @defects_per_assignee = if @selected_metrics.include?('assignee')
+                                # Use explicit join with alias to ensure we're counting assignees correctly
                                 defects_scope
-                                  .joins(:users)
-                                  .group('users.id', 'users.first_name', 'users.last_name')
-                                  .count
+                                  .joins('INNER JOIN defects_users ON defects_users.defect_id = defects.id')
+                                  .joins('INNER JOIN users AS assignees ON assignees.id = defects_users.user_id')
+                                  .group('assignees.id', 'assignees.first_name', 'assignees.last_name')
+                                  .distinct
+                                  .count('defects.id')
                               else
                                 {}
                               end
 
       @defects_per_module = if @selected_metrics.include?('modules')
+                              # Use distinct to avoid double-counting when filters cause joins
                               defects_scope
                                 .joins(:qa_module)
                                 .group('qa_modules.id', 'qa_modules.name')
-                                .count
+                                .distinct
+                                .count('defects.id')
                             else
                               {}
                             end
 
       @defects_per_submodule = if @selected_metrics.include?('submodules')
+                                 # Use distinct to avoid double-counting when filters cause joins
                                  defects_scope
                                    .joins('LEFT JOIN qa_modules submods ON submods.id = defects.submodule_id')
                                    .group('submods.id', 'submods.name')
-                                   .count
+                                   .distinct
+                                   .count('defects.id')
                                    .reject { |(id, name), _| id.nil? || name.nil? }
                                else
                                  {}
@@ -302,6 +319,9 @@ class ReportsController < ApplicationController
   def download_report
     require 'csv'
     authorize! :generate, :report
+
+    # Load saved dashboard if dashboard_id is present
+    load_saved_dashboard(params[:dashboard_id]) if params[:dashboard_id].present?
 
     product_ids = if params[:product_id].is_a?(String)
                     params[:product_id].split(',')
@@ -508,6 +528,7 @@ class ReportsController < ApplicationController
     when 'severity 1', 's1', 'high' then 'Severity 1'
     when 'severity 2', 's2', 'medium' then 'Severity 2'
     when 'severity 3', 's3', 'low' then 'Severity 3'
+    when 'severity 4', 's4', 'very low' then 'Severity 4'
     when 'unknown', '' then 'Unknown'
     else k.titleize
     end

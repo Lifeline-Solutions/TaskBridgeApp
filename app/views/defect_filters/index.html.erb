@@ -100,7 +100,7 @@
                     <%= form.submit 'Rename', class: 'ml-2 px-2 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600' %>
                   <% end %>
                 </td>
-                <td class="px-3 py-2"><%= d.product&.document_name || 'All Projects' %></td>
+                <td class="px-3 py-2"><%= d.product_names %></td>
                 <td class="px-3 py-2 text-right">
                   <%= link_to 'Open Dashboard',
                     reports_path(d.to_report_params.merge(commit: 'Apply')),

@@ -78,9 +78,13 @@
                 <span>Based on Severity</span>
               </label>
               <div id="severity-options" class="dropdown-options hidden">
+                <label class="block pl-6 font-semibold border-b pb-1 mb-1">
+                  <%= check_box_tag 'select_all_severities', '1', false, class: 'select-all-checkbox', data: { target: 'severities' } %>
+                  <span>Select All</span>
+                </label>
                 <% @available_options[:severities].each do |severity| %>
                   <label class="block pl-6">
-                    <%= check_box_tag 'severities[]', severity, @selected_severities.include?(severity) || @selected_severities.empty? %>
+                    <%= check_box_tag 'severities[]', severity, @selected_severities.include?(severity), class: 'severities-checkbox' %>
                     <span><%= severity %></span>
                   </label>
                 <% end %>
@@ -98,9 +102,13 @@
                 <span>Based on Reporter</span>
               </label>
               <div id="reporter-options" class="dropdown-options hidden">
+                <label class="block pl-6 font-semibold border-b pb-1 mb-1">
+                  <%= check_box_tag 'select_all_reporters', '1', false, class: 'select-all-checkbox', data: { target: 'reporters' } %>
+                  <span>Select All</span>
+                </label>
                 <% @available_options[:reporters].each do |id, name| %>
                   <label class="block pl-6">
-                    <%= check_box_tag 'reporters[]', id, @selected_reporters.include?(id.to_s) || @selected_reporters.empty? %>
+                    <%= check_box_tag 'reporters[]', id, @selected_reporters.include?(id.to_s), class: 'reporters-checkbox' %>
                     <span><%= name %></span>
                   </label>
                 <% end %>
@@ -118,9 +126,13 @@
                 <span>Based on Status</span>
               </label>
               <div id="status-options" class="dropdown-options hidden">
+                <label class="block pl-6 font-semibold border-b pb-1 mb-1">
+                  <%= check_box_tag 'select_all_statuses', '1', false, class: 'select-all-checkbox', data: { target: 'statuses' } %>
+                  <span>Select All</span>
+                </label>
                 <% @available_options[:statuses].each do |id, name| %>
                   <label class="block pl-6">
-                    <%= check_box_tag 'statuses[]', name, @selected_statuses.include?(name) || @selected_statuses.empty? %>
+                    <%= check_box_tag 'statuses[]', name, @selected_statuses.include?(name), class: 'statuses-checkbox' %>
                     <span><%= name %></span>
                   </label>
                 <% end %>
@@ -138,9 +150,13 @@
                 <span>Based on Assignee</span>
               </label>
               <div id="assignee-options" class="dropdown-options hidden">
+                <label class="block pl-6 font-semibold border-b pb-1 mb-1">
+                  <%= check_box_tag 'select_all_assignees', '1', false, class: 'select-all-checkbox', data: { target: 'assignees' } %>
+                  <span>Select All</span>
+                </label>
                 <% @available_options[:assignees].each do |id, name| %>
                   <label class="block pl-6">
-                    <%= check_box_tag 'assignees[]', id, @selected_assignees.include?(id.to_s) || @selected_assignees.empty? %>
+                    <%= check_box_tag 'assignees[]', id, @selected_assignees.include?(id.to_s), class: 'assignees-checkbox' %>
                     <span><%= name %></span>
                   </label>
                 <% end %>
@@ -158,9 +174,13 @@
                 <span>Based on Modules</span>
               </label>
               <div id="modules-options" class="dropdown-options hidden">
+                <label class="block pl-6 font-semibold border-b pb-1 mb-1">
+                  <%= check_box_tag 'select_all_modules', '1', false, class: 'select-all-checkbox', data: { target: 'modules' } %>
+                  <span>Select All</span>
+                </label>
                 <% @available_options[:modules].each do |id, name| %>
                   <label class="block pl-6">
-                    <%= check_box_tag 'modules[]', id, @selected_modules.include?(id.to_s) || @selected_modules.empty? %>
+                    <%= check_box_tag 'modules[]', id, @selected_modules.include?(id.to_s), class: 'modules-checkbox' %>
                     <span><%= name %></span>
                   </label>
                 <% end %>
@@ -178,9 +198,13 @@
                 <span>Based on Sub Modules</span>
               </label>
               <div id="submodules-options" class="dropdown-options hidden">
+                <label class="block pl-6 font-semibold border-b pb-1 mb-1">
+                  <%= check_box_tag 'select_all_submodules', '1', false, class: 'select-all-checkbox', data: { target: 'submodules' } %>
+                  <span>Select All</span>
+                </label>
                 <% @available_options[:submodules].each do |id, name, parent_id| %>
                   <label class="block pl-6">
-                    <%= check_box_tag 'submodules[]', id, @selected_submodules.include?(id.to_s) || @selected_submodules.empty? %>
+                    <%= check_box_tag 'submodules[]', id, @selected_submodules.include?(id.to_s), class: 'submodules-checkbox' %>
                     <span><%= name %></span>
                   </label>
                 <% end %>
@@ -440,9 +464,27 @@
 
 <script>
   document.addEventListener('turbo:load', function() {
-    // Close all dropdowns by default
-    document.querySelectorAll('.dropdown-options').forEach(dropdown => {
-      dropdown.classList.add('hidden');
+    // Initialize dropdowns - keep open if they have selected values
+    const dropdownGroups = [
+      { id: 'severity-options', checkboxClass: 'severities-checkbox' },
+      { id: 'reporter-options', checkboxClass: 'reporters-checkbox' },
+      { id: 'status-options', checkboxClass: 'statuses-checkbox' },
+      { id: 'assignee-options', checkboxClass: 'assignees-checkbox' },
+      { id: 'modules-options', checkboxClass: 'modules-checkbox' },
+      { id: 'submodules-options', checkboxClass: 'submodules-checkbox' }
+    ];
+
+    dropdownGroups.forEach(group => {
+      const dropdown = document.getElementById(group.id);
+      if (dropdown) {
+        const checkboxes = dropdown.querySelectorAll('.' + group.checkboxClass);
+        const hasSelectedValues = Array.from(checkboxes).some(cb => cb.checked);
+        
+        // Close dropdown by default, but keep open if it has selected values
+        if (!hasSelectedValues) {
+          dropdown.classList.add('hidden');
+        }
+      }
     });
 
     // Product dropdown functionality
@@ -490,6 +532,45 @@
           });
         }
       });
+    });
+
+    // Select All functionality for checkbox groups
+    document.querySelectorAll('.select-all-checkbox').forEach(selectAllCheckbox => {
+      selectAllCheckbox.addEventListener('change', function() {
+        const targetGroup = this.dataset.target;
+        const groupCheckboxes = document.querySelectorAll('.' + targetGroup + '-checkbox');
+        const isChecked = this.checked;
+        
+        groupCheckboxes.forEach(checkbox => {
+          checkbox.checked = isChecked;
+        });
+      });
+    });
+
+    // Update Select All checkbox state when individual checkboxes change
+    function updateSelectAllState(groupName) {
+      const groupCheckboxes = document.querySelectorAll('.' + groupName + '-checkbox');
+      const selectAllCheckbox = document.querySelector('.select-all-checkbox[data-target="' + groupName + '"]');
+      
+      if (selectAllCheckbox && groupCheckboxes.length > 0) {
+        const allChecked = Array.from(groupCheckboxes).every(cb => cb.checked);
+        const someChecked = Array.from(groupCheckboxes).some(cb => cb.checked);
+        
+        selectAllCheckbox.checked = allChecked;
+        selectAllCheckbox.indeterminate = someChecked && !allChecked;
+      }
+    }
+
+    // Add change listeners to all group checkboxes
+    ['severities', 'reporters', 'statuses', 'assignees', 'modules', 'submodules'].forEach(groupName => {
+      document.querySelectorAll('.' + groupName + '-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+          updateSelectAllState(groupName);
+        });
+      });
+      
+      // Initialize select all state on page load
+      updateSelectAllState(groupName);
     });
 
     // Close dropdowns when clicking outside
@@ -731,6 +812,32 @@
           setTimeout(() => {
             form.style.backgroundColor = '';
           }, 2000);
+
+          // Open dropdowns that have selected values
+          const dropdownGroups = [
+            { id: 'severity-options', checkboxClass: 'severities-checkbox', metricName: 'severity' },
+            { id: 'reporter-options', checkboxClass: 'reporters-checkbox', metricName: 'reporter' },
+            { id: 'status-options', checkboxClass: 'statuses-checkbox', metricName: 'status' },
+            { id: 'assignee-options', checkboxClass: 'assignees-checkbox', metricName: 'assignee' },
+            { id: 'modules-options', checkboxClass: 'modules-checkbox', metricName: 'modules' },
+            { id: 'submodules-options', checkboxClass: 'submodules-checkbox', metricName: 'submodules' }
+          ];
+
+          dropdownGroups.forEach(group => {
+            const dropdown = document.getElementById(group.id);
+            const checkboxes = document.querySelectorAll('.' + group.checkboxClass);
+            const hasSelectedValues = Array.from(checkboxes).some(cb => cb.checked);
+            
+            // If this dropdown has selected values, ensure the metric checkbox is checked
+            // and show the dropdown
+            if (hasSelectedValues && dropdown) {
+              const metricCheckbox = document.querySelector(`.metric-checkbox[data-target="${group.id}"]`);
+              if (metricCheckbox && !metricCheckbox.checked) {
+                metricCheckbox.checked = true;
+              }
+              dropdown.classList.remove('hidden');
+            }
+          });
         }
       });
     }

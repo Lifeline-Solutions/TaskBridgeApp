@@ -111,6 +111,35 @@ class DefectFilter < ApplicationRecord
     params
   end
 
+  # Get product names from filters
+  def product_names
+    # Get product_id from filters (works for both report and defect filters)
+    product_ids = sanitized_filters['product_id']
+
+    # Handle various formats: string, array, or single value
+    product_ids = if product_ids.is_a?(String)
+                    product_ids.split(',').map(&:strip)
+                  else
+                    Array(product_ids)
+                  end.reject(&:blank?)
+
+    return 'All Projects' if product_ids.empty?
+
+    # Fetch product names
+    products = Product.where(id: product_ids).includes(:client, :groupwares)
+
+    if products.empty?
+      # Fallback to the single product association if filters don't have product_id
+      product&.document_name || 'All Projects'
+    elsif products.count == 1
+      # Single product - show full name
+      products.first.document_name
+    else
+      # Multiple products - show count
+      "#{products.count} projects"
+    end
+  end
+
   private
 
   def filters_must_be_hash
