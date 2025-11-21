@@ -2,7 +2,7 @@ require_relative "boot"
 
 require "rails/all"
 require 'paper_trail'
-#require_relative '../app/middleware/error_notifier_middleware'
+require_relative '../app/middleware/error_notifier_middleware'
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
