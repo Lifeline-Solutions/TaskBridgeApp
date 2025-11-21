@@ -16,16 +16,20 @@
 #   # }
 #
 class DashboardDataGenerator
-  attr_reader :dashboard
+  attr_reader :dashboard, :product_ids
 
-  def initialize(dashboard)
+  def initialize(dashboard, options = {})
     @dashboard = dashboard
+    @product_ids = Array(options[:product_ids]).reject(&:blank?)
   end
 
   # Main entry point - generates dashboard data with multiple charts
   def generate
     defects = dashboard.filtered_defects
-      .includes(:users, :statuses, :qa_module, :banking_type, :labels, :creator)
+      .includes(:users, :statuses, :qa_module, :banking_type, :labels, :creator, :product)
+    
+    # Apply product filter if specified (supports multiple products)
+    defects = defects.where(product_id: product_ids) if product_ids.any?
 
     {
       defects: defects,
@@ -48,11 +52,13 @@ class DashboardDataGenerator
     Rails.logger.debug "Status present? #{active_params['status'].present?}"
     Rails.logger.debug "Reporter ID present? #{active_params['reporter_id'].present?}"
     Rails.logger.debug "Reporters present? #{active_params['reporters'].present?}"
+    Rails.logger.debug "Product IDs param: #{product_ids.inspect}"
     Rails.logger.debug '=============================='
 
     # Generate chart for each active filter parameter
     charts['Priority Distribution'] = generate_priority_chart(relation) if should_show_priority_chart?(active_params)
     charts['Status Distribution'] = generate_status_chart(relation) if should_show_status_chart?(active_params)
+    charts['Product Distribution'] = generate_product_chart(relation) if should_show_product_chart?(active_params)
     charts['Module Distribution'] = generate_module_chart(relation) if should_show_module_chart?(active_params)
     charts['Banking Type Distribution'] = generate_banking_type_chart(relation) if should_show_banking_type_chart?(active_params)
     charts['Assignee Distribution'] = generate_assignee_chart(relation) if should_show_assignee_chart?(active_params)
@@ -75,6 +81,19 @@ class DashboardDataGenerator
   # Determine if we should show module chart
   def should_show_module_chart?(active_params)
     active_params['qa_module_id'].present?
+  end
+  
+  # Determine if we should show product chart
+  def should_show_product_chart?(active_params)
+    # Show product chart if multiple products are selected
+    product_id_params = active_params['product_id']
+    return false if product_id_params.blank?
+    
+    # If multiple products selected via params, show the chart
+    return true if product_ids.size > 1
+    
+    # If product_ids in params is array with multiple items
+    product_id_params.is_a?(Array) && product_id_params.size > 1
   end
 
   # Determine if we should show banking type chart
@@ -131,6 +150,16 @@ class DashboardDataGenerator
       .group('qa_modules.id', 'qa_modules.name')
       .count
       .transform_keys { |(_id, name)| name }
+  end
+  
+  # Generate product distribution chart
+  def generate_product_chart(relation)
+    relation
+      .reorder(nil)
+      .joins(:product)
+      .group('products.id', 'products.document_name')
+      .count
+      .transform_keys { |(_id, name)| name.presence || 'Unnamed Project' }
   end
 
   # Generate banking type distribution chart

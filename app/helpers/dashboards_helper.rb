@@ -62,8 +62,10 @@ module DashboardsHelper
 
   def format_product_ids(value)
     ids = Array(value)
-    products = Product.where(id: ids).pluck(:name)
-    products.any? ? products.join(', ') : value
+    products = Product.where(id: ids).pluck(:document_name)
+    return value if products.empty?
+    
+    products.map { |name| name.presence || 'Unnamed Project' }.join(', ')
   end
 
   def format_banking_type_ids(value)
