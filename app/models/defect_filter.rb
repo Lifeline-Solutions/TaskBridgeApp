@@ -18,7 +18,31 @@ class DefectFilter < ApplicationRecord
 
   # Default values
   attribute :filters, :jsonb, default: -> { {} }
+  attribute :filter_rules, :jsonb, default: -> { {} }
   attribute :chart_config, :jsonb, default: -> { {} }
+
+  # Returns the active filter configuration (prefers new filter_rules over legacy filters)
+  def active_rules
+    filter_rules.present? ? filter_rules : filters
+  end
+
+  # Check if using new condition-based format
+  def uses_condition_format?
+    filter_rules.present? && (filter_rules['conditions'] || filter_rules[:conditions])
+  end
+
+  # Apply this filter to a base relation
+  def apply_to(base_relation)
+    DefectQueryBuilder.new(base_relation).apply_rules(active_rules)
+  end
+
+  # Convert legacy filters to new format (for migration purposes)
+  def migrate_to_filter_rules!
+    return if filter_rules.present? || filters.blank?
+    
+    self.filter_rules = FilterAugmentor.legacy_to_new_format(filters)
+    save
+  end
 
   # Whitelist of allowed keys that may be saved/applied (update when you add new filter inputs)
   ALLOWED_FILTER_KEYS = %w[

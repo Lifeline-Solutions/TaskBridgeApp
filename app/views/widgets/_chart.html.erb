@@ -1,0 +1,91 @@
+<%# Chart Widget %>
+<div class="bg-white rounded-lg shadow-sm p-6 h-full flex flex-col">
+  <%# Widget Header %>
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-lg font-semibold text-gray-900"><%= widget.title %></h3>
+    
+    <div class="flex items-center space-x-2">
+      <%= link_to defect_dashboard_widget_data_path(@dashboard || widget.dashboard, widget),
+            data: { turbo_frame: dom_id(widget) },
+            class: "text-gray-400 hover:text-gray-600",
+            title: "Refresh" do %>
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      <% end %>
+      
+      <%= link_to edit_defect_dashboard_widget_path(@dashboard || widget.dashboard, widget),
+            class: "text-gray-400 hover:text-gray-600",
+            title: "Edit" do %>
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Chart Canvas %>
+  <div class="flex-1 flex items-center justify-center">
+    <% if data.present? && data.is_a?(Hash) %>
+      <canvas id="chart-<%= widget.id %>" 
+              data-controller="chart"
+              data-chart-type-value="<%= widget.chart_config[:chart_type] || 'bar' %>"
+              data-chart-labels-value="<%= data.keys.to_json %>"
+              data-chart-data-value="<%= data.values.to_json %>"
+              class="max-h-80">
+      </canvas>
+    <% else %>
+      <%# Simple text-based chart for now (fallback if Chart.js not available) %>
+      <div class="w-full space-y-2">
+        <% if data.is_a?(Hash) && data.present? %>
+          <% max_value = data.values.max.to_f %>
+          <% data.each do |label, value| %>
+            <div>
+              <div class="flex items-center justify-between text-sm mb-1">
+                <span class="text-gray-700"><%= label %></span>
+                <span class="font-semibold text-gray-900"><%= value %></span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-indigo-600 h-2 rounded-full" 
+                     style="width: <%= (value / max_value * 100).round(2) %>%"></div>
+              </div>
+            </div>
+          <% end %>
+        <% else %>
+          <div class="text-center py-8 text-gray-500">
+            No data available
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<%# Note: For full Chart.js integration, add a Stimulus controller %>
+<!-- Stimulus controller example:
+<script>
+import { Controller } from "@hotwired/stimulus"
+import Chart from "chart.js/auto"
+
+export default class extends Controller {
+  static values = {
+    type: String,
+    labels: Array,
+    data: Array
+  }
+
+  connect() {
+    new Chart(this.element, {
+      type: this.typeValue,
+      data: {
+        labels: this.labelsValue,
+        datasets: [{
+          data: this.dataValue,
+          backgroundColor: ['#4F46E5', '#10B981', '#F59E0B', '#EF4444']
+        }]
+      }
+    })
+  }
+}
+</script>
+-->
