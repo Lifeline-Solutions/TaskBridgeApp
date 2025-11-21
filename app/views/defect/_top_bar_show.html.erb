@@ -917,6 +917,10 @@
         <%= hidden_field_tag 'defect_filter[filters][user_id][]', user_id %>
       <% end %>
       
+      <% Array(params[:reporter_id]).each do |reporter_id| %>
+        <%= hidden_field_tag 'defect_filter[filters][reporter_id][]', reporter_id %>
+      <% end %>
+      
       <% Array(params[:label_ids]).each do |label_id| %>
         <%= hidden_field_tag 'defect_filter[filters][label_ids][]', label_id %>
       <% end %>
@@ -990,7 +994,7 @@
         
         <!-- Assignee Filters -->
         <% Array(params[:user_id]).each do |user_id| %>
-          <% if user = @assignees&.find { |u| u.id.to_s == user_id.to_s } %>
+          <% if user = User.find_by(id: user_id) %>
             <%= render_filter_chip("Assignee", user_display_name(user), 
                 remove_filter_path(:user_id, user_id), filter_type: :assignee) %>
           <% end %>
