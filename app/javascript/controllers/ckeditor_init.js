@@ -49,21 +49,21 @@
         { color: '#999999', label: 'Light Grey' },
         { color: '#CCCCCC', label: 'Very Light Grey' },
         { color: '#FFFFFF', label: 'White', hasBorder: true },
-        
+
         { color: '#E60000', label: 'Red' },
         { color: '#FF9900', label: 'Orange' },
         { color: '#FFFF00', label: 'Yellow' },
         { color: '#00FF00', label: 'Light Green' },
         { color: '#00FFFF', label: 'Cyan' },
         { color: '#0000FF', label: 'Blue' },
-        
+
         { color: '#9900FF', label: 'Purple' },
         { color: '#FF00FF', label: 'Magenta' },
         { color: '#B82E00', label: 'Dark Red' },
         { color: '#006B00', label: 'Dark Green' },
         { color: '#0080C0', label: 'Dark Blue' },
         { color: '#5C00B8', label: 'Dark Purple' },
-        
+
         { color: '#FFA6A6', label: 'Light Red' },
         { color: '#FFD699', label: 'Light Orange' },
         { color: '#FFFFCC', label: 'Light Yellow' },
@@ -81,14 +81,14 @@
         { color: '#FFF0E0', label: 'Light Peach' },
         { color: '#FFE0E0', label: 'Light Pink' },
         { color: '#E0E0FF', label: 'Light Blue' },
-        
+
         { color: '#FFFF00', label: 'Yellow Highlight' },
         { color: '#FFD700', label: 'Gold' },
         { color: '#FFA500', label: 'Orange' },
         { color: '#FF6347', label: 'Tomato' },
         { color: '#FF1493', label: 'Deep Pink' },
         { color: '#FF69B4', label: 'Hot Pink' },
-        
+
         { color: '#98FB98', label: 'Pale Green' },
         { color: '#7FFFD4', label: 'Aquamarine' },
         { color: '#87CEEB', label: 'Sky Blue' },
@@ -210,10 +210,10 @@
     markInitializing(el);
 
     // Use CKEDITOR.ClassicEditor for superbuild, fallback to ClassicEditor for classic build
-    const EditorConstructor = (typeof CKEDITOR !== 'undefined' && CKEDITOR.ClassicEditor) 
-      ? CKEDITOR.ClassicEditor 
+    const EditorConstructor = (typeof CKEDITOR !== 'undefined' && CKEDITOR.ClassicEditor)
+      ? CKEDITOR.ClassicEditor
       : (typeof ClassicEditor !== 'undefined' ? ClassicEditor : null);
-    
+
     if (!EditorConstructor) {
       console.error('CKEditor not loaded');
       unmarkInitializing(el);
@@ -237,7 +237,22 @@
           if (!form._ckeditorSubmitAttached) {
             form.addEventListener('submit', (e) => {
               try {
+                // Check if draft button was clicked (has formnovalidate attribute)
+                const submitter = e.submitter;
+                const isDraftButton = submitter && (
+                  submitter.hasAttribute('formnovalidate') ||
+                  submitter.value === 'draft'
+                );
+
                 el.value = editor.getData();
+
+                // Skip validation if saving as draft
+                if (isDraftButton) {
+                  if (errorEl) errorEl.classList.add('hidden');
+                  return;
+                }
+
+                // Normal validation for Create/Update buttons
                 const textContent = editor.getData().replace(/<[^>]*>/g, '').trim();
                 if (!textContent) {
                   e.preventDefault();
@@ -275,7 +290,7 @@
       if (el) {
         const editor = el._ckeditorInstance;
         if (editor) {
-          editor.destroy().catch(() => {});
+          editor.destroy().catch(() => { });
           delete el._ckeditorInstance;
         }
         unmarkInitialized(el);
@@ -291,7 +306,7 @@
   );
 
   // Expose helpers for debugging
-  window.__CK_destroyAll = async function() {
+  window.__CK_destroyAll = async function () {
     for (const id of editorIds) {
       const el = document.getElementById(id);
       if (el) await destroyEditorForElement(el);

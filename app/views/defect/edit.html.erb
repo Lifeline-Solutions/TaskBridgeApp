@@ -40,6 +40,8 @@
           <!-- Project -->
           <div data-controller="project-modules"
                data-project-modules-modules-url-value="<%= modules_by_product_defect_index_path %>"
+               data-project-modules-current-module-id-value="<%= @defect.qa_module_id %>"
+               data-project-modules-current-submodule-id-value="<%= @defect.submodule_id %>"
                class="space-y-3">
             <div class="relative w-full">
               <label for="project-search"
@@ -224,6 +226,7 @@
                         id: 'defect_qa_module_id',
                         data: {
                           'project-modules-target' => 'moduleSelect',
+                          'action' => 'change->project-modules#loadSubmodules',
                           'selected-module-id' => @defect.qa_module_id
                         },
                         class: 'w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 disabled:opacity-60',
@@ -257,7 +260,9 @@
               </label>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <% @defect.attachments.each do |attachment| %>
-                  <div class="border border-gray-200 rounded-lg p-3 dark:border-gray-700">
+                  <div class="border border-gray-200 rounded-lg p-3 dark:border-gray-700" 
+                       data-controller="attachment"
+                       data-attachment-url-value="<%= defect_attachment_path(@defect, attachment_id: attachment.id) %>">
                     <% if attachment.image? || attachment.previewable? %>
                       <%= image_tag attachment, class: "w-full h-24 object-cover mb-2 rounded" %>
                     <% elsif attachment.video? %>
@@ -275,10 +280,11 @@
                     <div class="flex justify-between items-center">
                       <%= link_to attachment.filename, rails_blob_path(attachment, disposition: "attachment"),
                           class: "text-xs font-medium text-blue-600 dark:text-blue-500 hover:underline truncate" %>
-                      <%= link_to 'Delete',
-                          defect_attachment_path(@defect, attachment_id: attachment.id),
-                          data: { turbo_method: :delete, turbo_confirm: 'Are you sure?' },
-                          class: "text-red-600 dark:text-red-500 hover:text-red-900 dark:hover:text-red-700 text-xs" %>
+                      <button type="button"
+                              data-action="click->attachment#remove"
+                              class="text-red-600 dark:text-red-500 hover:text-red-900 dark:hover:text-red-700 text-xs bg-transparent border-0 p-0 cursor-pointer">
+                        Delete
+                      </button>
                     </div>
                   </div>
                 <% end %>
@@ -305,9 +311,29 @@
         </div>
         <!-- Footer (fixed) -->
         <div class="flex items-center justify-between pt-4 border-t">
-          <%= f.submit "Update Defect",
-          data: { disable_with: "Updating..." },
+          <div class="flex gap-3">
+            <% if @defect.draft? %>
+              <!-- Publish button for drafts (with validation) -->
+              <%= f.submit "Publish",
+                name: "commit",
+                value: "publish",
+                data: { disable_with: "Publishing..." },
+                class: "bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg px-6 py-2 shadow-md" %>
+              
+              <!-- Save as Draft button (no validation) -->
+              <%= f.submit "Save as Draft",
+                name: "commit",
+                value: "draft",
+                data: { disable_with: "Saving..." },
+                formnovalidate: true,
+                class: "bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg px-6 py-2 shadow-md" %>
+            <% else %>
+              <!-- Update button for published defects -->
+              <%= f.submit "Update Defect",
+                data: { disable_with: "Updating..." },
                 class: "bg-[#3F8CFF] hover:bg-[#3A81EB] text-white font-medium rounded-lg px-6 py-2 shadow-md" %>
+            <% end %>
+          </div>
 
           <%= link_to "Cancel", defect_path(@defect, product_id: params[:product_id]),
             data: { turbo_frame: "_top" },
@@ -664,45 +690,7 @@
     }
   }
 
-  function initModuleSubmoduleLoading() {
-    // ===== Dynamic module/submodule loading =====
-    const modSelect = document.querySelector('[data-project-modules-target="moduleSelect"]');
-    const submodSelect = document.querySelector('[data-project-modules-target="submoduleSelect"]');
-    
-    if (modSelect) {
-      modSelect.addEventListener('change', function () {
-        const moduleId = this.value;
-        if (submodSelect) {
-          submodSelect.innerHTML = '<option value="">Select Sub-Module</option>';
-          if (moduleId) {
-            fetch(`/qa_modules/${moduleId}/submodules`)
-              .then(r => r.json())
-              .then(submodules => {
-                submodules.forEach(sm => {
-                  const opt = document.createElement('option');
-                  opt.value = sm.id;
-                  opt.textContent = sm.name;
-                  // Select the current defect's submodule if it matches
-                  if (sm.id == '<%= @defect.submodule_id %>') {
-                    opt.selected = true;
-                  }
-                  submodSelect.appendChild(opt);
-                });
-              })
-              .catch(error => {
-                console.error('Error loading submodules:', error);
-              });
-          }
-        }
-      });
-    }
 
-    // Also trigger change event if module is already selected on page load
-    if (modSelect && modSelect.value) {
-      const event = new Event('change');
-      modSelect.dispatchEvent(event);
-    }
-  }
 
   function initStatusDropdown() {
     const statusDropdown = document.querySelector("select[name='defect[status_id]']");
@@ -733,7 +721,6 @@
   // Initialize everything
   function initializeAll() {
     initSearchableDropdowns();
-    initModuleSubmoduleLoading();
     initStatusDropdown();
   }
 
@@ -745,4 +732,61 @@
 
   // Initialize when the frame is loaded (for modals)
   document.addEventListener('turbo:frame-load', initializeAll);
+
+  // Handle draft button to bypass HTML5 validation (for edit page)
+  document.addEventListener('turbo:load', function() {
+    const form = document.querySelector('form[action*="defect"]');
+    if (!form) return;
+    
+    const draftButton = form.querySelector('input[type="submit"][value="draft"]');
+    const updateButton = form.querySelector('input[type="submit"]:not([value="draft"])');
+    
+    if (draftButton) {
+      // When draft button is clicked, disable HTML5 validation
+      draftButton.addEventListener('click', function(e) {
+        console.log('Draft button clicked - disabling validation');
+        
+        // Disable HTML5 validation on the form
+        form.setAttribute('novalidate', 'novalidate');
+        
+        // Remove required attributes from all required fields
+        const requiredFields = form.querySelectorAll('[required]');
+        requiredFields.forEach(field => {
+          field.removeAttribute('required');
+          field.dataset.wasRequired = 'true';
+        });
+        
+        // Handle data-required fields (like CKEditor content)
+        const dataRequiredFields = form.querySelectorAll('[data-required="true"]');
+        dataRequiredFields.forEach(field => {
+          field.removeAttribute('data-required');
+          field.dataset.wasDataRequired = 'true';
+        });
+      });
+    }
+      
+    // When update button is clicked, restore validation
+    if (updateButton) {
+      updateButton.addEventListener('click', function(e) {
+        console.log('Update button clicked - enabling validation');
+        
+        // Enable HTML5 validation
+        form.removeAttribute('novalidate');
+        
+        // Restore required attributes
+        const fieldsToRestore = form.querySelectorAll('[data-was-required="true"]');
+        fieldsToRestore.forEach(field => {
+          field.setAttribute('required', 'required');
+          field.removeAttribute('data-was-required');
+        });
+        
+        // Restore data-required attributes
+        const dataFieldsToRestore = form.querySelectorAll('[data-was-data-required="true"]');
+        dataFieldsToRestore.forEach(field => {
+          field.setAttribute('data-required', 'true');
+          field.removeAttribute('data-was-data-required');
+        });
+      });
+    }
+  });
 </script>

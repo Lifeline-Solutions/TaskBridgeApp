@@ -526,10 +526,14 @@ class DefectController < ApplicationController
       .where(roles: { name: 'qa' })
       .pluck(:id)
 
-    product_user_ids = @defect.craftsilicon_users
-      .where.not(id: @defect.users.pluck(:id))
-      .where(id: @defect.product.users.pluck(:id))
-      .pluck(:id)
+    product_user_ids = if @defect.product.present?
+                         @defect.craftsilicon_users
+                           .where.not(id: @defect.users.pluck(:id))
+                           .where(id: @defect.product.users.pluck(:id))
+                           .pluck(:id)
+                       else
+                         []
+                       end
 
     @available_users = User.where(id: qa_user_ids + product_user_ids)
       .distinct
@@ -631,7 +635,7 @@ class DefectController < ApplicationController
 
     if @defect.save
       if @defect.draft?
-        redirect_to @defect, notice: 'Draft defect saved successfully.'
+        redirect_to index_show_defect_index_path(product_id: @defect.product_id), notice: 'Draft defect saved successfully.'
       else
         activity('user_activity')
           .caused_by(current_user)
@@ -706,11 +710,8 @@ class DefectController < ApplicationController
       .distinct
       .order(:first_name, :last_name)
 
-    @statuses = Status.where(name: [
-                               'To Do', 'In Progress', 'On hold', 'Awaiting client info',
-                               'Awaiting build', 'QA testing', 'Closed', 'Failed QA',
-                               'Blocked', 'Reopened'
-                             ])
+    # Use set_form_data to load statuses, modules, etc. consistently with new action
+    set_form_data
 
     # Dropdown options for product selection
     @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
@@ -724,7 +725,7 @@ class DefectController < ApplicationController
         ["#{client_name} - #{groupware_names}", product.id]
       end
 
-    # Load only parent modules (not submodules) for the Module dropdown
+    # Load parent modules for the Module dropdown (keep existing logic for edit)
     @qa_modules = if @defect.product_id.present?
                     QaModule.where(product_id: @defect.product_id, parent_id: nil).order(:name)
                   else
@@ -748,6 +749,15 @@ class DefectController < ApplicationController
     audit_on_update(@defect)
 
     selected_user_ids = params[:defect][:user_ids]
+    
+    # Check if this is a "Save as Draft" or "Publish" action
+    is_draft_save = params[:commit] == 'draft'
+    is_publish = params[:commit] == 'publish'
+
+    # If publishing a draft, set draft to false before update
+    if is_publish && @defect.draft?
+      @defect.draft = false
+    end
 
     if @defect.update(defect_params.except(:attachments))
       # Attach new files without removing old ones
@@ -759,13 +769,15 @@ class DefectController < ApplicationController
 
       @defect.user_ids = selected_user_ids
 
-      # Process mentions in updated defect content asynchronously
-      ProcessMentionsJob.perform_later(
-        @defect.content&.body&.to_html,
-        @defect.id,
-        current_user.id,
-        'defect_content'
-      )
+      # Process mentions in updated defect content asynchronously (only for published defects)
+      unless @defect.draft?
+        ProcessMentionsJob.perform_later(
+          @defect.content&.body&.to_html,
+          @defect.id,
+          current_user.id,
+          'defect_content'
+        )
+      end
 
       activity('user_activity')
         .caused_by(current_user)
@@ -773,8 +785,16 @@ class DefectController < ApplicationController
         .event('defect.update')
         .log("Updated Defect ##{@defect.id}")
 
-      redirect_to @defect, notice: 'Defect was successfully updated.'
-      UserMailer.edit_defect_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
+      # Handle redirects based on action
+      if is_draft_save
+        redirect_to index_show_defect_index_path(product_id: @defect.product_id), notice: 'Draft saved successfully.'
+      elsif is_publish
+        redirect_to @defect, notice: 'Defect was successfully published.'
+        UserMailer.edit_defect_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
+      else
+        redirect_to @defect, notice: 'Defect was successfully updated.'
+        UserMailer.edit_defect_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
+      end
 
     else
       render :edit, status: :unprocessable_entity
@@ -789,15 +809,15 @@ class DefectController < ApplicationController
         .event('defect.soft_delete')
         .log("Soft-deleted Defect ##{@defect.id}")
       UserMailer.defect_deleted_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
-      redirect_to defect_url, notice: 'Defect was successfully deleted.'
+      redirect_to index_show_defect_index_path(product_id: @defect.product_id), notice: 'Defect was successfully deleted.'
     else
       @defect.destroy
       activity('user_activity')
         .caused_by(current_user)
         .performed_on(@defect)
-        .event('defect.destroy')
-        .log("Destroyed Defect ##{@defect.id}")
-      redirect_to defect_url, notice: 'Defect was successfully destroyed.'
+        .event('defect.hard_delete')
+        .log("Hard-deleted Defect ##{@defect.id}")
+      redirect_to index_show_defect_index_path(product_id: @defect.product_id), notice: 'Defect was successfully deleted.'
     end
   end
 
@@ -1535,14 +1555,25 @@ class DefectController < ApplicationController
 
   def remove_attachment
     attachment = @defect.attachments.find(params[:attachment_id])
+    attachment_id = attachment.id
     filename = attachment.blob.filename.to_s
     attachment.purge
 
     log_event(@defect, current_user, 'remove_attachment', "Removed attachment #{filename}")
 
-    redirect_to defect_path(@defect), notice: 'File was successfully removed.'
+    respond_to do |format|
+      format.json { head :no_content }
+      format.turbo_stream { render turbo_stream: turbo_stream.remove("attachment_#{attachment_id}") }
+      format.js { render js: "document.getElementById('attachment_#{attachment_id}').remove();" }
+      format.html { redirect_to defect_path(@defect), notice: 'File was successfully removed.' }
+    end
   rescue ActiveRecord::RecordNotFound
-    redirect_to defects_path, alert: 'File or defect not found.'
+    respond_to do |format|
+      format.json { render json: { error: 'File or defect not found' }, status: :not_found }
+      format.turbo_stream { render turbo_stream: turbo_stream.replace("flash", partial: "layouts/flash", locals: { alert: 'File or defect not found.' }) }
+      format.js { render js: "alert('File or defect not found.');" }
+      format.html { redirect_to defects_path, alert: 'File or defect not found.' }
+    end
   end
 
   def add_label
