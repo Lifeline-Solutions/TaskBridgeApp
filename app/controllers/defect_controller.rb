@@ -165,7 +165,7 @@ class DefectController < ApplicationController
 
         # If we get here, the column exists - load banking types
         @banking_types = if @selected_product_ids.any?
-                           BankingType.where(product_id: @selected_product_ids)
+                           BankingType.for_product(@selected_product_ids)
                              .distinct
                              .order(:name)
                          else
@@ -476,7 +476,7 @@ class DefectController < ApplicationController
 
     # FIXED: Scope banking types directly to selected products for consistency
     @banking_types = if product_ids.any?
-                       BankingType.where(product_id: product_ids)
+                       BankingType.for_product(product_ids)
                          .distinct
                          .order(:name)
                      else
@@ -1637,7 +1637,7 @@ class DefectController < ApplicationController
 
     # banking types scoped to selected product (so UI can show only product banking types)
     @banking_types = if @selected_product
-                       BankingType.where(product_id: @selected_product.id).order(:name)
+                       @selected_product.banking_types.order(:name)
                      else
                        []
                      end
