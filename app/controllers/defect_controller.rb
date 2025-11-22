@@ -1628,7 +1628,12 @@ class DefectController < ApplicationController
 
   def set_form_data
     # selected product if provided in params (used to scope modules/banking types)
-    @selected_product = (Product.find_by(id: params[:product_id]) if params[:product_id].present?)
+    # Also use @defect.product if we're editing a defect
+    @selected_product = if params[:product_id].present?
+                          Product.find_by(id: params[:product_id])
+                        elsif defined?(@defect) && @defect&.product_id.present?
+                          @defect.product
+                        end
 
     # QA modules (parent modules) - scoped to selected product if present
     @qa_modules = if @selected_product
