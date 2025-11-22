@@ -51,10 +51,16 @@ class QaDashboardsController < ApplicationController
                     Array(params[:product_id]).reject(&:blank?)
                   end
     
-    # If no products selected from params, use from saved filter
+    # If no products selected from params, default to the filter's associated project
     if product_ids.empty?
-      saved_product_ids = @dashboard.defect_filter.sanitized_filters['product_id']
-      product_ids = Array(saved_product_ids).reject(&:blank?) if saved_product_ids.present?
+      # First, check if the filter has a direct product association (belongs_to :product)
+      if @dashboard.defect_filter.product_id.present?
+        product_ids = [@dashboard.defect_filter.product_id.to_s]
+      else
+        # Fall back to product_id in the filter's parameters (if any)
+        saved_product_ids = @dashboard.defect_filter.sanitized_filters['product_id']
+        product_ids = Array(saved_product_ids).reject(&:blank?) if saved_product_ids.present?
+      end
     end
     
     @selected_product_ids = product_ids
