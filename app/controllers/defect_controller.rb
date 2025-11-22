@@ -685,13 +685,6 @@ class DefectController < ApplicationController
   def edit
     @defect = Defect.find(params[:id])
 
-    # Load banking types scoped to the defect's product
-    @banking_types = if @defect.product_id.present?
-                       BankingType.where(product_id: @defect.product_id).order(:name)
-                     else
-                       BankingType.all.order(:name)
-                     end
-
     @products = Product.with_quality_assurance_status
 
     # QA users (get their IDs)
@@ -710,7 +703,7 @@ class DefectController < ApplicationController
       .distinct
       .order(:first_name, :last_name)
 
-    # Use set_form_data to load statuses, modules, etc. consistently with new action
+    # Use set_form_data to load statuses, modules, banking types, etc. consistently with new action
     set_form_data
 
     # Dropdown options for product selection
