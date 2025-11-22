@@ -3,7 +3,10 @@ class FixDashboardWidgetsTables < ActiveRecord::Migration[7.2]
     # Drop the incorrectly named table
     drop_table :dashboard_widgets_tables if table_exists?(:dashboard_widgets_tables)
     
-    # Create the correct dashboard_widgets table
+    # Create the correct dashboard_widgets table only if it doesn't exist
+    # (In production it may already exist from the previous migration)
+    return if table_exists?(:dashboard_widgets)
+    
     create_table :dashboard_widgets, id: :uuid, default: -> { "gen_random_uuid()" } do |t|
       t.string :name, null: false, limit: 200
       t.uuid :user_id, null: false
