@@ -483,6 +483,12 @@
     { name: name, id: id }
   }.to_json %>;
 
+  // Debug logging
+  console.log('=== EDIT FORM DEBUG ===');
+  console.log('Banking Types Data:', window.bankingTypesData);
+  console.log('Banking Types Count:', window.bankingTypesData ? window.bankingTypesData.length : 0);
+  console.log('======================');
+
   function initSearchableDropdowns() {
     // ===== Projects ====
     const projectInput = document.getElementById("project-search");
