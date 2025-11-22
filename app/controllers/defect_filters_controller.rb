@@ -116,7 +116,7 @@ class DefectFiltersController < ApplicationController
     raw = raw_hash.to_h.with_indifferent_access.slice(*DefectFilter::ALLOWED_FILTER_KEYS)
 
     # Normalize array parameters
-    array_keys = %w[product_id user_id qa_module_id submodule_id label_ids status]
+    array_keys = %w[product_id user_id reporter_id qa_module_id submodule_id label_ids status]
     array_keys.each do |key|
       raw[key] = Array(raw_hash[key]).reject(&:blank?) if raw_hash.key?(key)
     end
@@ -125,6 +125,7 @@ class DefectFiltersController < ApplicationController
     raw['filter_open'] = raw_hash['filter_open'] if raw_hash.key?('filter_open')
     raw['select_all_module'] = raw_hash['select_all_module'] if raw_hash.key?('select_all_module')
     raw['select_all_submodule'] = raw_hash['select_all_submodule'] if raw_hash.key?('select_all_submodule')
+    raw['select_all_reporter'] = raw_hash['select_all_reporter'] if raw_hash.key?('select_all_reporter')
 
     raw
   end

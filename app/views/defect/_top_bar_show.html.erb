@@ -917,6 +917,10 @@
         <%= hidden_field_tag 'defect_filter[filters][user_id][]', user_id %>
       <% end %>
       
+      <% Array(params[:reporter_id]).each do |reporter_id| %>
+        <%= hidden_field_tag 'defect_filter[filters][reporter_id][]', reporter_id %>
+      <% end %>
+      
       <% Array(params[:label_ids]).each do |label_id| %>
         <%= hidden_field_tag 'defect_filter[filters][label_ids][]', label_id %>
       <% end %>
@@ -946,6 +950,116 @@
     <% end %>
   </div>
 </div>
+
+<!-- Active Filters Display (Jira-style) -->
+<% if filter_params_present? %>
+  <div class="container px-4 pb-4">
+    <div class="bg-gray-50 dark:bg-gray-800 px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+          </svg>
+          Active Filters
+        </h3>
+        <%= link_to index_show_defect_index_path, 
+            class: "text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium transition-colors duration-150 flex items-center gap-1" do %>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          Clear All
+        <% end %>
+      </div>
+      
+      <div class="flex flex-wrap gap-2">
+        <!-- Product Filters -->
+        <% Array(params[:product_id]).each do |product_id| %>
+          <% if product = @qa_products&.find { |p| p.id.to_s == product_id.to_s } %>
+            <%= render_filter_chip("Product", product_display_name(product), 
+                remove_filter_path(:product_id, product_id), filter_type: :product) %>
+          <% end %>
+        <% end %>
+        
+        <!-- Status Filters -->
+        <% Array(params[:status]).each do |status| %>
+          <%= render_filter_chip("Status", status.capitalize, 
+              remove_filter_path(:status, status), filter_type: :status) %>
+        <% end %>
+        
+        <!-- Priority Filters -->
+        <% Array(params[:priority]).each do |priority| %>
+          <%= render_filter_chip("Priority", priority, 
+              remove_filter_path(:priority, priority), filter_type: :priority) %>
+        <% end %>
+        
+        <!-- Assignee Filters -->
+        <% Array(params[:user_id]).each do |user_id| %>
+          <% if user = User.find_by(id: user_id) %>
+            <%= render_filter_chip("Assignee", user_display_name(user), 
+                remove_filter_path(:user_id, user_id), filter_type: :assignee) %>
+          <% end %>
+        <% end %>
+        
+        <!-- Reporter Filters -->
+        <% Array(params[:reporter_id]).each do |reporter_id| %>
+          <% if reporter = User.find_by(id: reporter_id) %>
+            <%= render_filter_chip("Reporter", user_display_name(reporter), 
+                remove_filter_path(:reporter_id, reporter_id), filter_type: :reporter) %>
+          <% end %>
+        <% end %>
+        
+        <!-- Module Filters -->
+        <% Array(params[:qa_module_id]).each do |module_id| %>
+          <% if qa_module = @qa_modules&.find { |m| m.id.to_s == module_id.to_s } %>
+            <%= render_filter_chip("Module", qa_module.name, 
+                remove_filter_path(:qa_module_id, module_id), filter_type: :module) %>
+          <% end %>
+        <% end %>
+        
+        <!-- Submodule Filters -->
+        <% Array(params[:submodule_id]).each do |submodule_id| %>
+          <% if submodule = @submodules&.find { |s| s.id.to_s == submodule_id.to_s } %>
+            <%= render_filter_chip("Submodule", submodule.name, 
+                remove_filter_path(:submodule_id, submodule_id), filter_type: :submodule) %>
+          <% end %>
+        <% end %>
+        
+        <!-- Banking Type Filters -->
+        <% Array(params[:banking_type_id]).each do |banking_type_id| %>
+          <% if banking_type = @banking_types&.find { |bt| bt.id.to_s == banking_type_id.to_s } %>
+            <%= render_filter_chip("Banking Type", banking_type.name, 
+                remove_filter_path(:banking_type_id, banking_type_id), filter_type: :banking_type) %>
+          <% end %>
+        <% end %>
+        
+        <!-- Label Filters -->
+        <% Array(params[:label_ids]).each do |label_id| %>
+          <% if label = @labels&.find { |l| l.id.to_s == label_id.to_s } %>
+            <%= render_filter_chip("Label", label.name, 
+                remove_filter_path(:label_ids, label_id), filter_type: :label) %>
+          <% end %>
+        <% end %>
+        
+        <!-- Date Range Filter -->
+        <% if params[:start_date].present? || params[:end_date].present? %>
+          <% date_text = [] %>
+          <% date_text << "From: #{params[:start_date]}" if params[:start_date].present? %>
+          <% date_text << "To: #{params[:end_date]}" if params[:end_date].present? %>
+          <%= render_filter_chip("Date Range", date_text.join(' | '), 
+              remove_filter_path(:start_date).gsub(/end_date=[^&]*&?/, '').gsub(/&$/, ''), 
+              filter_type: :date) %>
+        <% end %>
+        
+        <!-- Sort Order Filter -->
+        <% if params[:order].present? && params[:order] != 'desc' %>
+          <% order_text = params[:order] == 'asc' ? 'Oldest First' : 'Custom Order' %>
+          <%= render_filter_chip("Sort", order_text, 
+              remove_filter_path(:order), filter_type: :order) %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>
 
 <script>
   // ========== SAVE FILTERS MODAL ==========

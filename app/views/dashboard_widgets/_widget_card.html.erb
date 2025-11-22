@@ -1,0 +1,159 @@
+<!-- Widget Card Partial -->
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700"
+     data-widget-id="<%= widget.id %>">
+  <!-- Widget Header -->
+  <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-800">
+    <div>
+      <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
+        <%= widget.name %>
+      </h3>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        <i class="fas fa-filter mr-1"></i>
+        <%= widget.defect_filter.name %>
+      </p>
+    </div>
+    
+    <!-- Widget Actions -->
+    <div class="flex gap-2">
+      <%= link_to edit_dashboard_widget_path(widget), 
+          class: "text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300",
+          title: "Edit widget" do %>
+        <i class="fas fa-edit"></i>
+      <% end %>
+
+      <%= link_to refresh_dashboard_widget_path(widget), 
+          method: :post,
+          class: "text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300",
+          title: "Refresh data" do %>
+        <i class="fas fa-sync-alt"></i>
+      <% end %>
+
+      <%= link_to dashboard_widget_path(widget), 
+          method: :delete,
+          data: { confirm: 'Are you sure you want to remove this widget?' },
+          class: "text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300",
+          title: "Remove widget" do %>
+        <i class="fas fa-trash"></i>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Widget Body - Chart -->
+  <div class="p-6 chart-container">
+    <% if data && !data[:error] %>
+      <% case widget.visualization_type %>
+      <% when 'pie_chart' %>
+        <%= pie_chart data, 
+            library: { 
+              legend: { position: 'bottom' },
+              colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'],
+              animation: { duration: 1000 }
+            },
+            donut: true,
+            download: true %>
+      
+      <% when 'bar_chart' %>
+        <%= bar_chart data,
+            library: { 
+              legend: { position: 'none' },
+              colors: ['#3b82f6'],
+              animation: { duration: 1000 },
+              vAxis: { title: 'Count' },
+              hAxis: { title: widget.group_by_field.titleize }
+            },
+            download: true %>
+      
+      <% when 'line_chart' %>
+        <%= line_chart data,
+            library: { 
+              colors: ['#3b82f6'],
+              animation: { duration: 1000 },
+              pointSize: 5
+            },
+            download: true %>
+      
+      <% when 'count' %>
+        <div class="flex flex-col items-center justify-center h-full">
+          <div class="text-6xl font-bold text-blue-600 dark:text-blue-400">
+            <%= data.values.sum %>
+          </div>
+          <div class="text-lg text-gray-600 dark:text-gray-400 mt-2">
+            Total Items
+          </div>
+        </div>
+      
+      <% when 'table' %>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead class="bg-gray-50 dark:bg-gray-900">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <%= widget.group_by_field.titleize %>
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Count
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              <% data.sort_by { |_k, v| -v }.each do |label, count| %>
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                    <%= label %>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 dark:text-blue-400">
+                    <%= count %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% end %>
+
+      <!-- Drill-down links (only for pie/bar charts) -->
+      <% if ['pie_chart', 'bar_chart'].include?(widget.visualization_type) && data.any? %>
+        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">
+            <i class="fas fa-info-circle mr-1"></i>
+            Click a segment to view detailed defects
+          </p>
+          <div class="grid grid-cols-2 gap-2">
+            <% data.each do |label, count| %>
+              <%= link_to widget.drill_down_url(label), 
+                  class: "text-xs px-3 py-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-200 rounded transition-colors" do %>
+                <%= truncate(label, length: 20) %>: <span class="font-semibold"><%= count %></span>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <!-- Error State -->
+      <div class="flex items-center justify-center h-full text-red-600 dark:text-red-400">
+        <div class="text-center">
+          <i class="fas fa-exclamation-triangle text-4xl mb-2"></i>
+          <p><%= data[:error] || 'Failed to load widget data' %></p>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Widget Footer - Metadata -->
+  <div class="px-6 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+    <div class="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
+      <span>
+        <i class="fas fa-cube mr-1"></i>
+        <%= widget.visualization_type.humanize %>
+      </span>
+      <span>
+        <i class="fas fa-tags mr-1"></i>
+        Group by: <%= widget.group_by_field.titleize %>
+      </span>
+      <span>
+        <i class="far fa-clock mr-1"></i>
+        Updated: <%= time_ago_in_words(widget.updated_at) %> ago
+      </span>
+    </div>
+  </div>
+</div>

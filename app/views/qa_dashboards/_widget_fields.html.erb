@@ -1,0 +1,42 @@
+<div class="widget-field-group bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+  <div class="flex items-start justify-between mb-3">
+    <h3 class="text-sm font-medium text-gray-900 dark:text-white">Widget Configuration</h3>
+    <button type="button" class="remove-widget-btn text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <!-- Widget Name -->
+    <div>
+      <%= f.label :name, "Widget Name", class: "block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+      <%= f.text_field :name,
+          class: "w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white",
+          placeholder: "e.g., By Priority",
+          required: true %>
+    </div>
+
+    <!-- Data Source (Group By Field) -->
+    <div>
+      <%= f.label :group_by_field, "Data Source", class: "block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+      <%= f.select :group_by_field,
+          options_for_select(Dashboard::GROUPABLE_FIELDS.map { |field| [field.titleize, field] }, f.object.try(:[], 'group_by_field')),
+          { prompt: "Select field..." },
+          class: "w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white",
+          required: true %>
+    </div>
+
+    <!-- Visualization Type -->
+    <div>
+      <%= f.label :visualization_type, "Visualization", class: "block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+      <%= f.select :visualization_type,
+          options_for_select(Dashboard::VISUALIZATION_TYPES.map { |k, v| [k.to_s.titleize, v] }, f.object.try(:[], 'visualization_type')),
+          { prompt: "Select type..." },
+          class: "w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white",
+          required: true %>
+    </div>
+  </div>
+
+  <!-- Hidden Position Field -->
+  <%= f.hidden_field :position, value: f.object.try(:[], 'position') || 0 %>
+</div>

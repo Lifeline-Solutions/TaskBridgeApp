@@ -149,18 +149,18 @@
             <% end %>
 
             <%= link_to defect_filters_path do %>
-              <li class="group hover:bg-blue-50 dark:hover:bg-blue-100 rounded-lg <%= 'bg-blue-50 dark:bg-blue-100' if request.path.start_with?('/defect') %>">
+              <li class="group hover:bg-blue-50 dark:hover:bg-blue-100 rounded-lg <%= 'bg-blue-50 dark:bg-blue-100' if request.path.start_with?('/defect_filters') %>">
                 <div class="flex items-center p-2">
                   <!-- Default outline icon -->
-                  <svg class="w-5 h-6 text-gray-700 transition duration-75 dark:text-gray-600 group-hover:text-blue-700 dark:group-hover:text-blue-800 <%= 'text-blue-700 dark:text-blue-800' if request.path.start_with?('/defect') %> <%= 'hidden' if request.path.start_with?('/defect') %> group-hover:hidden" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg class="w-5 h-6 text-gray-700 transition duration-75 dark:text-gray-600 group-hover:text-blue-700 dark:group-hover:text-blue-800 <%= 'text-blue-700 dark:text-blue-800' if request.path.start_with?('/defect_filters') %> <%= 'hidden' if request.path.start_with?('/defect_filters') %> group-hover:hidden" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 16a9.065 9.065 0 0 1-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
                   </svg>
                   <!-- Solid icon for hover/active -->
-                  <svg class="w-5 h-6 text-blue-700 transition duration-75 dark:text-blue-800 <%= 'block' if request.path.start_with?('/defect') %> <%= 'hidden' unless request.path.start_with?('/defect') %> group-hover:block" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-5 h-6 text-blue-700 transition duration-75 dark:text-blue-800 <%= 'block' if request.path.start_with?('/defect_filters') %> <%= 'hidden' unless request.path.start_with?('/defect_filters') %> group-hover:block" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
                     <path fill-rule="evenodd" d="M8.478 1.6a.75.75 0 0 1 .273 1.026 3.72 3.72 0 0 0-.425 1.121c.058.058.118.114.18.168A4.491 4.491 0 0 1 12 2.25c1.413 0 2.673.651 3.497 1.668.06-.054.12-.11.178-.167a3.717 3.717 0 0 0-.426-1.125.75.75 0 1 1 1.298-.752 5.22 5.22 0 0 1 .671 2.046.75.75 0 0 1-.187.582c-.241.27-.505.52-.787.749a4.494 4.494 0 0 1 .216 2.1c-.106.792-.753 1.295-1.417 1.403-.182.03-.364.057-.547.081.152.227.273.476.359.742a23.122 23.122 0 0 0 3.832-.803 23.241 23.241 0 0 0-.345-2.634.75.75 0 0 1 1.474-.28c.21 1.115.348 2.256.404 3.418a.75.75 0 0 1-.516.75c-1.527.499-3.119.854-4.76 1.049-.074.38-.22.735-.423 1.05 2.066.209 4.058.672 5.943 1.358a.75.75 0 0 1 .492.75 24.665 24.665 0 0 1-1.189 6.25.75.75 0 0 1-1.425-.47 23.14 23.14 0 0 0 1.077-5.306c-.5-.169-1.009-.32-1.524-.455.068.234.104.484.104.746 0 3.956-2.521 7.5-6 7.5-3.478 0-6-3.544-6-7.5 0-.262.037-.511.104-.746-.514.135-1.022.286-1.522.455.154 1.838.52 3.616 1.077 5.307a.75.75 0 1 1-1.425.468 24.662 24.662 0 0 1-1.19-6.25.75.75 0 0 1 .493-.749 24.586 24.586 0 0 1 4.964-1.24h.01c.321-.046.644-.085.969-.118a2.983 2.983 0 0 1-.424-1.05 24.614 24.614 0 0 1-4.76-1.05.75.75 0 0 1-.516-.75c.057-1.16.194-2.302.405-3.417a.75.75 0 0 1 1.474.28c-.164.862-.28 1.74-.345 2.634 1.237.371 2.517.642 3.832.803.085-.266.207-.515.359-.742a18.698 18.698 0 0 1-.547-.08c-.664-.11-1.311-.612-1.417-1.404a4.535 4.535 0 0 1 .217-2.103 6.788 6.788 0 0 1-.788-.751.75.75 0 0 1-.187-.583 5.22 5.22 0 0 1 .67-2.04.75.75 0 0 1 1.026-.273Z" clip-rule="evenodd" />
                   </svg>
 
-                <span class="flex-1 ms-3 whitespace-nowrap group-hover:text-blue-700 dark:group-hover:text-blue-800 <%= 'text-blue-700 dark:text-blue-800 font-medium' if request.path.start_with?('/defect') %>">Saved Filters (QA)</span>
+                <span class="flex-1 ms-3 whitespace-nowrap group-hover:text-blue-700 dark:group-hover:text-blue-800 <%= 'text-blue-700 dark:text-blue-800 font-medium' if request.path.start_with?('/defect_filters') %>">Saved Filters (QA)</span>
                 <span class="inline-flex items-center justify-center w-3 h-3 p-4 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300">
                   <% if current_user.defects.exists?  %>
                     <%= current_user.defect_filters.count %>
@@ -169,6 +169,28 @@
                   <% else %>
                     0
                   <% end %>
+                </span>
+                </div>
+              </li>
+            <% end %>
+
+            <%= link_to qa_dashboards_path do %>
+              <li class="group hover:bg-blue-50 dark:hover:bg-blue-100 rounded-lg <%= 'bg-blue-50 dark:bg-blue-100' if request.path.start_with?('/qa/dashboards') %>">
+                <div class="flex items-center p-2">
+                  <!-- Default outline icon - Chart/Dashboard -->
+                  <svg class="w-5 h-6 text-gray-700 transition duration-75 dark:text-gray-600 group-hover:text-blue-700 dark:group-hover:text-blue-800 <%= 'text-blue-700 dark:text-blue-800' if request.path.start_with?('/qa/dashboards') %> <%= 'hidden' if request.path.start_with?('/qa/dashboards') %> group-hover:hidden" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
+                  </svg>
+                  <!-- Solid icon for hover/active -->
+                  <svg class="w-5 h-6 text-blue-700 transition duration-75 dark:text-blue-800 <%= 'block' if request.path.start_with?('/qa/dashboards') %> <%= 'hidden' unless request.path.start_with?('/qa/dashboards') %> group-hover:block" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M16.975 11H10V4.025a1 1 0 0 0-1.066-.998 8.5 8.5 0 1 0 9.039 9.039.999.999 0 0 0-1-1.066h.002Z"/>
+                    <path d="M12.5 0c-.157 0-.311.01-.565.027A1 1 0 0 0 11 1.02V10h8.975a1 1 0 0 0 1-.935c.013-.188.028-.374.028-.565A8.51 8.51 0 0 0 12.5 0Z"/>
+                  </svg>
+
+                <span class="flex-1 ms-3 whitespace-nowrap group-hover:text-blue-700 dark:group-hover:text-blue-800 <%= 'text-blue-700 dark:text-blue-800 font-medium' if request.path.start_with?('/qa/dashboards') %>">QA Dashboard</span>
+                <span class="inline-flex items-center justify-center w-3 h-3 p-4 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300">
+                  <%= current_user.dashboards.active.count %>
                 </span>
                 </div>
               </li>
@@ -487,12 +509,18 @@
               <% end %>
               <% if current_user.has_role? :agent or current_user.has_role? :admin or current_user.has_role? :observer or current_user.has_role?('project manager') %>
                 <%= link_to reports_path do %>
-                  <li>
-                    <div class="flex items-center p-2 rounded-lg hover:bg-transparent dark:hover:bg-gray-700 group">
-                      <svg class="w-4 h-5 text-[#fff] transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M6 6h12v12H6V6zm1 1v10h10V7H7zm3 3h4v4h-4v-4z" />
+                  <li class="group/item hover:bg-blue-50 dark:hover:bg-blue-100 rounded-lg <%= 'bg-blue-50 dark:bg-blue-100' if request.path == reports_path %>">
+                    <div class="flex items-center p-3">
+                      <!-- Clipboard outline icon -->
+                      <svg class="w-5 h-5 text-gray-700 transition duration-75 dark:text-gray-600 group-hover/item:text-blue-700 dark:group-hover/item:text-blue-800 <%= 'text-blue-700 dark:text-blue-800' if request.path == reports_path %> <%= 'hidden' if request.path == reports_path %> group-hover/item:hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
                       </svg>
-                      <span class="flex-1 hover:text-[#3F8CFF] ms-3 whitespace-nowrap">QA Report</span>
+                      <!-- Clipboard solid icon -->
+                      <svg class="w-5 h-5 text-blue-700 transition duration-75 dark:text-blue-800 <%= 'block' if request.path == reports_path %> <%= 'hidden' unless request.path == reports_path %> group-hover/item:block" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                        <path fill-rule="evenodd" d="M7.502 6h7.128A3.375 3.375 0 0 1 18 9.375v9.375a3 3 0 0 0 3-3V6.108c0-1.505-1.125-2.811-2.664-2.94a48.972 48.972 0 0 0-.673-.05A3 3 0 0 0 15 1.5h-1.5a3 3 0 0 0-2.663 1.618c-.225.015-.45.032-.673.05C8.662 3.295 7.554 4.542 7.502 6ZM13.5 3A1.5 1.5 0 0 0 12 4.5h4.5A1.5 1.5 0 0 0 15 3h-1.5Z" clip-rule="evenodd" />
+                        <path fill-rule="evenodd" d="M3 9.375C3 8.339 3.84 7.5 4.875 7.5h9.75c1.036 0 1.875.84 1.875 1.875v11.25c0 1.035-.84 1.875-1.875 1.875h-9.75A1.875 1.875 0 0 1 3 20.625V9.375ZM6 12a.75.75 0 0 1 .75-.75h.008a.75.75 0 0 1 .75.75v.008a.75.75 0 0 1-.75.75H6.75a.75.75 0 0 1-.75-.75V12Zm2.25 0a.75.75 0 0 1 .75-.75h3.75a.75.75 0 0 1 0 1.5H9a.75.75 0 0 1-.75-.75ZM6 15a.75.75 0 0 1 .75-.75h.008a.75.75 0 0 1 .75.75v.008a.75.75 0 0 1-.75.75H6.75a.75.75 0 0 1-.75-.75V15Zm2.25 0a.75.75 0 0 1 .75-.75h3.75a.75.75 0 0 1 0 1.5H9a.75.75 0 0 1-.75-.75ZM6 18a.75.75 0 0 1 .75-.75h.008a.75.75 0 0 1 .75.75v.008a.75.75 0 0 1-.75.75H6.75a.75.75 0 0 1-.75-.75V18Zm2.25 0a.75.75 0 0 1 .75-.75h3.75a.75.75 0 0 1 0 1.5H9a.75.75 0 0 1-.75-.75Z" clip-rule="evenodd" />
+                      </svg>
+                      <span class="flex-1 ms-3 whitespace-nowrap group-hover/item:text-blue-700 dark:group-hover/item:text-blue-800 <%= 'text-blue-700 dark:text-blue-800 font-medium' if request.path == reports_path %>">QA Report</span>
                     </div>
                   </li>
                 <% end %>
