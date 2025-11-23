@@ -13,6 +13,14 @@
   <%= stylesheet_link_tag "application", "mobile_responsive", "data-turbo-track": "reload" %>
   <%= javascript_include_tag 'controllers/ckeditor_init' %>
   <%= javascript_importmap_tags %>
+  
+  <style>
+    /* Hide CKEditor security warning banner */
+    .cke_notification_warning,
+    .cke_notifications_area {
+      display: none !important;
+    }
+  </style>
   <% if defined?(Sentry) && ENV["SENTRY_DSN"].present? %>
     <%= Sentry.get_trace_propagation_meta.html_safe %>
   <% end %>
