@@ -108,13 +108,31 @@
   <% end %>
 </main>
 
-<!-- Additional scripts from dev branch (if any) -->
-<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js" crossorigin="anonymous"></script>
+<!-- CKEditor 4 with color support built-in -->
+<script src="https://cdn.ckeditor.com/4.22.1/full/ckeditor.js"></script>
 <script>
   document.addEventListener("turbo:load", function () {
     document.querySelectorAll('textarea.rich').forEach(function (el) {
       if (!el.dataset.ckeditorInstantiated) {
-        ClassicEditor.create(el).catch(e => console.error(e));
+        // CKEditor 4 initialization with color buttons
+        CKEDITOR.replace(el, {
+          toolbar: [
+            { name: 'styles', items: ['Format'] },
+            { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike'] },
+            { name: 'colors', items: ['TextColor', 'BGColor'] },
+            { name: 'paragraph', items: ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent'] },
+            { name: 'links', items: ['Link', 'Unlink'] },
+            { name: 'insert', items: ['Table', 'HorizontalRule'] },
+            { name: 'tools', items: ['Maximize'] },
+            { name: 'editing', items: ['Undo', 'Redo'] }
+          ],
+          height: 200,
+          removeButtons: '',
+          colorButton_colors: 'E60000,FF9900,FFFF00,00FF00,00FFFF,0000FF,9900FF,FF00FF,' +
+            '000000,434343,666666,999999,CCCCCC,FFFFFF,' +
+            'B82E00,006B00,0080C0,5C00B8',
+          colorButton_enableMore: true
+        });
         el.dataset.ckeditorInstantiated = true;
       }
     });
