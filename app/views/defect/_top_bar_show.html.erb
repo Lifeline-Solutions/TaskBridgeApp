@@ -774,7 +774,7 @@
           </svg>
         <% end %>
 
-        <%= link_to banking_types_path(product_id: @product.id),
+        <%= link_to product_banking_types_path(@product),
               class: 'flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 group border border-transparent hover:border-green-200 dark:hover:border-green-800' do %>
           <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center shadow-sm">
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -819,7 +819,7 @@
           </div>
         <% end %>
 
-        <%= link_to banking_types_path(product_id: @products.first.id),
+        <%= link_to product_banking_types_path(@products.first),
               class: 'flex items-center gap-3 p-4 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg transition-colors duration-200 group' do %>
           <div class="flex-shrink-0 w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
