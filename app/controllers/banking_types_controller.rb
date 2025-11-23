@@ -1,123 +1,177 @@
 class BankingTypesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_banking_type, only: %i[show edit update destroy]
-  before_action :set_products_and_clients_defects, only: %i[new create edit update]
+  before_action :set_product
+  before_action :set_banking_type, only: %i[show edit update destroy remove]
 
-  # GET /banking_types
+  # GET /products/:product_id/banking_types
   def index
-    @banking_types = if params[:product_id].present?
-                       BankingType.where(product_id: params[:product_id]).order(:name)
-                     else
-                       BankingType.all.order(:name)
-                     end
+    # Banking types already assigned to this product
+    @assigned_banking_types = @product.banking_types.active.order(:name)
+    
+    # Banking types available to add (not yet in this product)
+    @available_banking_types = BankingType.active.not_in_product(@product.id).order(:name)
+    
+    # All banking types for type-ahead search (active only)
+    @all_banking_types = BankingType.active.order(:name)
   end
 
-  # GET /banking_types/1
+  # GET /products/:product_id/banking_types/1
   def show
-    # Preserve product_id for back navigation
-    @product_id = params[:product_id] || @banking_type.product_id
   end
 
-  # GET /banking_types/new
+  # GET /products/:product_id/banking_types/new
   def new
     @banking_type = BankingType.new
-
-    if params[:product_id].present?
-      # Pre-select the product on the new form
-      @banking_type.product_id = params[:product_id]
-      @product_id = params[:product_id]
-    else
-      @product_id = nil
-    end
+    
+    # Get all existing banking types for type-ahead
+    @existing_banking_types = BankingType.active.order(:name)
   end
 
-  # GET /banking_types/1/edit
+  # GET /products/:product_id/banking_types/1/edit  
   def edit
-    # Preserve product_id for back navigation
-    @product_id = params[:product_id] || @banking_type.product_id
   end
 
-  # POST /banking_types
+  # POST /products/:product_id/banking_types
   def create
-    @banking_type = BankingType.new(banking_type_params)
-    audit_on_create(@banking_type)
-
-    respond_to do |format|
+    banking_type_name = banking_type_params[:name]&.strip
+    
+    # Check if banking type already exists (case-insensitive)
+    @banking_type = BankingType.find_by('LOWER(name) = ?', banking_type_name.downcase)
+    
+    if @banking_type
+      # Banking type exists - add it to the product if not already added
+      if @product.banking_types.include?(@banking_type)
+        redirect_to product_banking_types_path(@product), 
+                    alert: "#{@banking_type.name} is already added to this project."
+      else
+        @product.banking_types << @banking_type
+        
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@banking_type)
+          .event('banking_type.add_to_project')
+          .log("Added existing banking type to project #{@product.id}")
+        
+        redirect_to product_banking_types_path(@product), 
+                    notice: "#{@banking_type.name} has been added to this project."
+      end
+    else
+      # Create new banking type and add to product
+      @banking_type = BankingType.new(name: banking_type_name)
+      audit_on_create(@banking_type)
+      
       if @banking_type.save
+        # Add to current product
+        @product.banking_types << @banking_type
+        
         activity('user_activity')
           .caused_by(current_user)
           .performed_on(@banking_type)
           .event('banking_type.create')
-          .log('BankingType created')
-        format.html { redirect_to banking_types_path(product_id: @banking_type.product_id), notice: 'Banking type was successfully created.' }
-        format.json { render :show, status: :created, location: @banking_type }
+          .log("Created new banking type and added to project #{@product.id}")
+        
+        redirect_to product_banking_types_path(@product), 
+                    notice: 'New banking type created and added to this project.'
       else
-        format.html { render :new, status: :unprocessable_entity }
-        format.json { render json: @banking_type.errors, status: :unprocessable_entity }
+        @existing_banking_types = BankingType.active.order(:name)
+        render :new, status: :unprocessable_entity
       end
     end
   end
 
-  # PATCH/PUT /banking_types/1
+  # POST /products/:product_id/banking_types/add_existing
+  def add_existing
+    banking_type = BankingType.find(params[:banking_type_id])
+    
+    unless @product.banking_types.include?(banking_type)
+      @product.banking_types << banking_type
+      
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(banking_type)
+        .event('banking_type.add_to_project')
+        .log("Added banking type #{banking_type.name} to project #{@product.id}")
+      
+      flash[:notice] = "#{banking_type.name} added to project."
+    else
+      flash[:alert] = "#{banking_type.name} is already in this project."
+    end
+    
+    redirect_to product_banking_types_path(@product)
+  end
+
+  # PATCH/PUT /products/:product_id/banking_types/1
   def update
     audit_on_update(@banking_type)
-    respond_to do |format|
-      if @banking_type.update(banking_type_params)
-        activity('user_activity')
-          .caused_by(current_user)
-          .performed_on(@banking_type)
-          .event('banking_type.update')
-          .log('BankingType updated')
-        # FIXED: Preserve product_id in redirect to maintain project context
-        format.html { redirect_to banking_types_path(product_id: @banking_type.product_id), notice: 'Banking type was successfully updated.' }
-        format.json { render :show, status: :ok, location: @banking_type }
-      else
-        format.html { render :edit, status: :unprocessable_entity }
-        format.json { render json: @banking_type.errors, status: :unprocessable_entity }
-      end
+    
+    if @banking_type.update(banking_type_params)
+      activity('user_activity')
+        .caused_by(current_user)
+        .performed_on(@banking_type)
+        .event('banking_type.update')
+        .log('Banking type updated')
+      
+      redirect_to product_banking_types_path(@product), 
+                  notice: 'Banking type was successfully updated.'
+    else
+      render :edit, status: :unprocessable_entity
     end
   end
 
-  # DELETE /banking_types/1
-  def destroy
-    product_id = @banking_type.product_id # Store product_id before deletion
-    if audit_soft_delete(@banking_type)
-      notice_message = 'Banking type was successfully deleted.'
-    else
-      @banking_type.destroy
-      notice_message = 'Banking type was successfully destroyed.'
-    end
-
+  # DELETE /products/:product_id/banking_types/1/remove
+  def remove
+    # Remove banking type from this product (doesn't delete the banking type)
+    @product.banking_types.delete(@banking_type)
+    
     activity('user_activity')
       .caused_by(current_user)
       .performed_on(@banking_type)
-      .event('banking_type.destroy')
-      .log('BankingType removed')
+      .event('banking_type.remove_from_project')
+      .log("Removed banking type #{@banking_type.name} from project #{@product.id}")
+    
+    redirect_to product_banking_types_path(@product), 
+                notice: "#{@banking_type.name} removed from this project."
+  end
 
-    # FIXED: Preserve product_id in redirect to maintain project context
-    redirect_to banking_types_path(product_id: product_id), notice: notice_message
+  # DELETE /products/:product_id/banking_types/1
+  def destroy
+    # Only soft delete if no other products are using this banking type
+    if @banking_type.products.count <= 1
+      if audit_soft_delete(@banking_type)
+        # Also remove from this product
+        @product.banking_types.delete(@banking_type)
+        
+        activity('user_activity')
+          .caused_by(current_user)
+          .performed_on(@banking_type)
+          .event('banking_type.destroy')
+          .log('Banking type deleted')
+        
+        redirect_to product_banking_types_path(@product), 
+                    notice: 'Banking type was successfully deleted.'
+      else
+        redirect_to product_banking_types_path(@product), 
+                    alert: 'Unable to delete banking type.'
+      end
+    else
+      # Banking type is used by other projects, just remove from this one
+      @product.banking_types.delete(@banking_type)
+      redirect_to product_banking_types_path(@product), 
+                  notice: "Banking type removed from this project. It's still available in other projects."
+    end
   end
 
   private
 
-  def set_products_and_clients_defects
-    @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
-      .select do |product|
-        product.statuses.any? { |status| ['Pre Quality Assurance', 'End Of Quality Assurance'].include?(status.name) }
-      end.map do |product|
-        client_name = product.client&.name || 'No Client'
-        groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
-        ["#{client_name} - #{groupware_names}", product.id]
-      end
+  def set_product
+    @product = Product.find(params[:product_id])
   end
 
-  # Use callbacks to share common setup or constraints between actions.
   def set_banking_type
     @banking_type = BankingType.find(params[:id])
   end
 
-  # Only allow a list of trusted parameters through.
   def banking_type_params
-    params.require(:banking_type).permit(:name, :product_id)
+    params.require(:banking_type).permit(:name)
   end
 end

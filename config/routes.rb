@@ -1,5 +1,4 @@
 Rails.application.routes.draw do
-  resources :banking_types
   resources :sales, only: [:index]
 
   get 'users/active', to: 'users#active', as: 'active_users'
@@ -106,6 +105,17 @@ Rails.application.routes.draw do
       patch :toggle_paid
       get :download_tasks_csv
     end
+    
+    # Nested banking types for many-to-many management
+    resources :banking_types do
+      collection do
+        post :add_existing
+      end
+      member do
+        delete :remove
+      end
+    end
+    
     resources :tasks do
       member do
         post :assign_user
