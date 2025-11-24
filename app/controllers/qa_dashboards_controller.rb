@@ -28,51 +28,16 @@ class QaDashboardsController < ApplicationController
   end
 
   def show
-    # Get QA products (same logic as reports controller)
-    # Only products with 'Pre Quality Assurance' or 'End Of Quality Assurance' status
-    # and that have published defects
-    @products = Product.includes(:client, :groupwares, :statuses)
-      .select do |product|
-      product.statuses.any? { |status| ['Pre Quality Assurance', 'End Of Quality Assurance'].include?(status.name) } &&
-        Defect.published.where(product_id: product.id).exists?
-    end
-
-    # Format product options for display (same as reports)
-    @product_options = @products.map do |product|
-      client_name = product.client&.name || 'No Client Assigned'
-      groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
-      ["#{client_name} - #{groupware_names}", product.id]
-    end
-    
-    # Handle multiple product selection - convert to array if it's a string
-    product_ids = if params[:product_id].is_a?(String)
-                    params[:product_id].split(',')
-                  else
-                    Array(params[:product_id]).reject(&:blank?)
-                  end
-    
-    # If no products selected from params, use from saved filter
-    if product_ids.empty?
-      saved_product_ids = @dashboard.defect_filter.sanitized_filters['product_id']
-      product_ids = Array(saved_product_ids).reject(&:blank?) if saved_product_ids.present?
-    end
-    
-    @selected_product_ids = product_ids
-    
     # Generate automatic charts for active filter parameters
-    result = DashboardDataGenerator.new(@dashboard, product_ids: product_ids).generate
+    result = DashboardDataGenerator.new(@dashboard).generate
     @defects = result[:defects]
     @charts = result[:charts]
     @total_count = result[:total_count]
     @filter_params = @dashboard.defect_filter.sanitized_filters
-    
-    # Add product_id to filter params if selected
-    @filter_params['product_id'] = product_ids if product_ids.any?
 
     # Debug: Log active parameters
     Rails.logger.debug '=== DASHBOARD DEBUG ==='
     Rails.logger.debug "Filter ID: #{@dashboard.defect_filter.id}"
-    Rails.logger.debug "Selected Product IDs: #{product_ids.inspect}"
     Rails.logger.debug "Active Filter Parameters: #{@dashboard.active_filter_parameters.inspect}"
     Rails.logger.debug "Sanitized Filters: #{@filter_params.inspect}"
     Rails.logger.debug "Charts Generated: #{@charts.keys.inspect}"

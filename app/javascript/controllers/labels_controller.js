@@ -48,6 +48,8 @@ export default class extends Controller {
   }
 
   remove(event) {
+    event.preventDefault()
+    event.stopPropagation()
     const id = event.currentTarget.dataset.id
     let option = Array.from(this.selectTarget.options).find(opt => opt.value == id)
     if (option) option.selected = false

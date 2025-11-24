@@ -165,7 +165,7 @@ class DefectController < ApplicationController
 
         # If we get here, the column exists - load banking types
         @banking_types = if @selected_product_ids.any?
-                           BankingType.where(product_id: @selected_product_ids)
+                           BankingType.for_product(@selected_product_ids)
                              .distinct
                              .order(:name)
                          else
@@ -476,7 +476,7 @@ class DefectController < ApplicationController
 
     # FIXED: Scope banking types directly to selected products for consistency
     @banking_types = if product_ids.any?
-                       BankingType.where(product_id: product_ids)
+                       BankingType.for_product(product_ids)
                          .distinct
                          .order(:name)
                      else
@@ -685,13 +685,6 @@ class DefectController < ApplicationController
   def edit
     @defect = Defect.find(params[:id])
 
-    # Load banking types scoped to the defect's product
-    @banking_types = if @defect.product_id.present?
-                       BankingType.where(product_id: @defect.product_id).order(:name)
-                     else
-                       BankingType.all.order(:name)
-                     end
-
     @products = Product.with_quality_assurance_status
 
     # QA users (get their IDs)
@@ -710,8 +703,10 @@ class DefectController < ApplicationController
       .distinct
       .order(:first_name, :last_name)
 
-    # Use set_form_data to load statuses, modules, etc. consistently with new action
+    # Use set_form_data to load statuses, modules, banking types, etc. consistently with new action
     set_form_data
+    
+
 
     # Dropdown options for product selection
     @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)
@@ -1628,7 +1623,12 @@ class DefectController < ApplicationController
 
   def set_form_data
     # selected product if provided in params (used to scope modules/banking types)
-    @selected_product = (Product.find_by(id: params[:product_id]) if params[:product_id].present?)
+    # Also use @defect.product if we're editing a defect
+    @selected_product = if params[:product_id].present?
+                          Product.find_by(id: params[:product_id])
+                        elsif defined?(@defect) && @defect&.product_id.present?
+                          @defect.product
+                        end
 
     # QA modules (parent modules) - scoped to selected product if present
     @qa_modules = if @selected_product
@@ -1639,7 +1639,7 @@ class DefectController < ApplicationController
 
     # banking types scoped to selected product (so UI can show only product banking types)
     @banking_types = if @selected_product
-                       BankingType.where(product_id: @selected_product.id).order(:name)
+                       @selected_product.banking_types.order(:name)
                      else
                        []
                      end
