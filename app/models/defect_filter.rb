@@ -2,6 +2,9 @@ class DefectFilter < ApplicationRecord
   belongs_to :user
   belongs_to :product, optional: true
 
+  # Dashboard widget association
+  has_many :dashboard_widgets, dependent: :nullify
+
   # Audit associations
   belongs_to :created_by, class_name: 'User', foreign_key: 'created_by_id', optional: true
   belongs_to :modified_by, class_name: 'User', foreign_key: 'modified_by_id', optional: true
@@ -18,13 +21,37 @@ class DefectFilter < ApplicationRecord
 
   # Default values
   attribute :filters, :jsonb, default: -> { {} }
+  attribute :filter_rules, :jsonb, default: -> { {} }
   attribute :chart_config, :jsonb, default: -> { {} }
+
+  # Returns the active filter configuration (prefers new filter_rules over legacy filters)
+  def active_rules
+    filter_rules.present? ? filter_rules : filters
+  end
+
+  # Check if using new condition-based format
+  def uses_condition_format?
+    filter_rules.present? && (filter_rules['conditions'] || filter_rules[:conditions])
+  end
+
+  # Apply this filter to a base relation
+  def apply_to(base_relation)
+    DefectQueryBuilder.new(base_relation).apply_rules(active_rules)
+  end
+
+  # Convert legacy filters to new format (for migration purposes)
+  def migrate_to_filter_rules!
+    return if filter_rules.present? || filters.blank?
+
+    self.filter_rules = FilterAugmentor.legacy_to_new_format(filters)
+    save
+  end
 
   # Whitelist of allowed keys that may be saved/applied (update when you add new filter inputs)
   ALLOWED_FILTER_KEYS = %w[
     client_name product_id query order start_date end_date priority user_id
-    qa_module_id submodule_id banking_type_id label_ids status page
-    filter_open select_all_module select_all_submodule
+    qa_module_id submodule_id banking_type_id label_ids status page reporter_id
+    filter_open select_all_module select_all_submodule select_all_reporter
   ].freeze
 
   # Report-specific allowed keys

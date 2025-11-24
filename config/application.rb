@@ -2,7 +2,6 @@ require_relative "boot"
 
 require "rails/all"
 require 'paper_trail'
-require_relative '../app/middleware/error_notifier_middleware'
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -21,7 +20,6 @@ module Cspm
     config.active_record.default_timezone = :utc
     config.autoload_paths  << Rails.root.join('app', 'middleware')
     config.eager_load_paths << Rails.root.join('app', 'middleware')
-    config.middleware.insert_before 0, ErrorNotifierMiddleware
 
     # Configuration for the application, engines, and railties goes here.
     #

@@ -225,7 +225,16 @@ Rails.application.routes.draw do
 
   resources :defect_filters, only: [:index, :create, :update, :destroy] do
     collection do
-      get :manage
+      get :filter_modal_form
+    end
+  end
+
+  # Defect Dashboards and Widgets (lazy-loading)
+  resources :defect_dashboards do
+    resources :widgets do
+      member do
+        get :data  # For refreshing widget data
+      end
     end
   end
 
@@ -241,6 +250,19 @@ Rails.application.routes.draw do
     collection do
       get :export_csv
       get :download_report
+    end
+  end
+
+  # QA Dashboards - visualizations based on saved filters
+  resources :qa_dashboards, path: 'qa/dashboards'
+
+  # Dashboard widgets for personalized user dashboards
+  resources :dashboard_widgets do
+    member do
+      post :refresh
+    end
+    collection do
+      post :reorder
     end
   end
 end
