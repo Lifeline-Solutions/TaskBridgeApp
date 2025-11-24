@@ -51,6 +51,7 @@ Rails.application.routes.draw do
   get 'profiles_show', to: 'profiles#profiles_show', as: 'profiles_show'
   get 'profiles_show_user', to: 'profiles#profiles_show_user', as: 'profiles_show_user'
   get 'workload_project_tickets', to: 'profiles#workload_project_tickets', as: 'workload_project_tickets'
+  get 'team_report_breach', to: 'profiles#team_report_breach', as: 'team_report_breach'
 
 
 
