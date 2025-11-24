@@ -464,6 +464,140 @@ class ProfilesController < ApplicationController
     end
   end
 
+  def team_report_breach
+    authorize! :generate, :report
+
+    if params[:team_id].present?
+      @team = Team.find(params[:team_id])
+      @team_members = @team.users
+      team_member_ids = @team_members.pluck(:id)
+
+      # Handle custom date range or default to last 6 months
+      if params[:start_date].present? && params[:end_date].present?
+        start_date = Date.parse(params[:start_date])
+        end_date = Date.parse(params[:end_date])
+      else
+        start_date = 6.months.ago.to_date
+        end_date = Date.today
+      end
+
+      # Get all tickets that were assigned to team members (past or current) via events.assigned_user_id
+      # Filter by ticket creation date
+      assigned_ticket_ids = Event.where(assigned_user_id: team_member_ids)
+                                  .where.not(ticket_id: nil)
+                                  .pluck(:ticket_id)
+                                  .uniq
+
+      @tickets = Ticket.where(id: assigned_ticket_ids)
+                       .where('tickets.created_at >= ? AND tickets.created_at <= ?', start_date.beginning_of_day, end_date.end_of_day)
+                       .includes(:statuses, :sla_tickets, :events)
+
+      # Group tickets by status
+      @tickets_by_status = @tickets.joins(:statuses)
+                                   .group('statuses.name')
+                                   .count
+
+      # Get total ticket count
+      @total_tickets = @tickets.count
+
+      # Get breached tickets (SLA resolution deadline breached)
+      breached_ticket_ids = @tickets.joins(:sla_tickets)
+                                    .where(sla_tickets: { sla_resolution_deadline: 'Breached' })
+                                    .distinct
+                                    .pluck(:id)
+
+      @breached_count = breached_ticket_ids.count
+
+      # Calculate breach percentage
+      # 100% = zero breached (perfect)
+      # Lower percentage = more breaches
+      if @total_tickets > 0
+        breach_rate = (@breached_count.to_f / @total_tickets) * 100
+        @breach_percentage = (100 - breach_rate).round(2)
+      else
+        @breach_percentage = 100.0
+      end
+
+      # Get breached tickets count by status
+      @breached_by_status = Ticket.where(id: breached_ticket_ids)
+                                   .joins(:statuses)
+                                   .group('statuses.name')
+                                   .count
+
+      # Build table data: status, count, breached count, breach %
+      @status_table_data = []
+      @tickets_by_status.each do |status_name, count|
+        breached_in_status = @breached_by_status[status_name] || 0
+        status_breach_rate = count > 0 ? ((count - breached_in_status).to_f / count * 100).round(2) : 100.0
+
+        @status_table_data << {
+          status: status_name,
+          total: count,
+          breached: breached_in_status,
+          non_breached: count - breached_in_status,
+          breach_percentage: status_breach_rate
+        }
+      end
+
+      # Sort by breach percentage (lowest first = most breached)
+      @status_table_data.sort_by! { |row| row[:breach_percentage] }
+
+      # Per-user breach analysis (team members who were assigned tickets)
+      @user_breach_data = []
+      @team_members.each do |user|
+        # Tickets assigned to this user (via events)
+        user_ticket_ids = Event.where(assigned_user_id: user.id, ticket_id: assigned_ticket_ids)
+                               .pluck(:ticket_id)
+                               .uniq
+
+        user_tickets = @tickets.where(id: user_ticket_ids)
+        user_total = user_tickets.count
+
+        next if user_total.zero?
+
+        user_breached = user_tickets.joins(:sla_tickets)
+                                    .where(sla_tickets: { sla_resolution_deadline: 'Breached' })
+                                    .distinct
+                                    .count
+
+        user_breach_rate = user_total > 0 ? ((user_total - user_breached).to_f / user_total * 100).round(2) : 100.0
+
+        @user_breach_data << {
+          user: user,
+          total: user_total,
+          breached: user_breached,
+          non_breached: user_total - user_breached,
+          breach_percentage: user_breach_rate
+        }
+      end
+
+      # Sort by breach percentage (lowest first = most breached)
+      @user_breach_data.sort_by! { |row| row[:breach_percentage] }
+
+      respond_to do |format|
+        format.html
+        format.csv do
+          start_str = start_date.strftime('%d-%m-%Y')
+          end_str = end_date.strftime('%d-%m-%Y')
+          time_str = Time.now.strftime('%I %M %p')
+          filename = "Team Breach Report for #{@team.name}_#{start_str}_to_#{end_str}_at_#{time_str}.csv"
+          send_data generate_team_breach_csv, filename: filename
+        end
+      end
+    else
+      @team = nil
+      @team_members = []
+      @tickets = Ticket.none
+      @status_table_data = []
+      @user_breach_data = []
+      @total_tickets = 0
+      @breached_count = 0
+      @breach_percentage = 100.0
+      flash[:alert] = 'Please select a team and date range.'
+      respond_to(&:html)
+    end
+  end
+
   private
 
   def generate_project_report_csv(tickets)
@@ -634,5 +768,43 @@ class ProfilesController < ApplicationController
     return 'status_change' if (text.include?('status') && (text.include?('changed') || text.include?('to ')))
     return 'comment' if text.include?('commented') || text.include?('added comment')
     'other'
+  end
+
+  # Generate CSV for team breach report
+  def generate_team_breach_csv
+    CSV.generate(headers: true) do |csv|
+      # Header
+      csv << ['Team Breach Report']
+      csv << ['Team', @team&.name || 'N/A']
+      csv << ['Total Tickets', @total_tickets]
+      csv << ['Total Breached', @breached_count]
+      csv << ['Overall Performance %', @breach_percentage]
+      csv << []
+
+      # Status breakdown
+      csv << ['Status', 'Total Tickets', 'Non-Breached', 'Breached', 'Performance %']
+      @status_table_data.each do |row|
+        csv << [
+          row[:status],
+          row[:total],
+          row[:non_breached],
+          row[:breached],
+          row[:breach_percentage]
+        ]
+      end
+      csv << []
+
+      # User breakdown
+      csv << ['User', 'Total Tickets', 'Non-Breached', 'Breached', 'Performance %']
+      @user_breach_data.each do |row|
+        csv << [
+          row[:user].name,
+          row[:total],
+          row[:non_breached],
+          row[:breached],
+          row[:breach_percentage]
+        ]
+      end
+    end
   end
 end
