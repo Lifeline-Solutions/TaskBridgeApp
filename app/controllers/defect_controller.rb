@@ -705,6 +705,8 @@ class DefectController < ApplicationController
 
     # Use set_form_data to load statuses, modules, banking types, etc. consistently with new action
     set_form_data
+    
+
 
     # Dropdown options for product selection
     @products_and_clients_defects = Product.includes(:client, :groupwares, :statuses)

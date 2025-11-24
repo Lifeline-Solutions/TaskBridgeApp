@@ -521,7 +521,7 @@
 
             // Trigger Stimulus action (project-modules#loadModules)
             // projectHidden.dispatchEvent(new Event("change"));
-            window.location.href = `/defect/new?product_id=${encodeURIComponent(p.id)}`;
+            window.location.href = `/defect/<%= @defect.id %>/edit?product_id=${encodeURIComponent(p.id)}`;
           });
           projectResults.appendChild(li);
         });
@@ -724,9 +724,46 @@
     }
   }
 
+  function initModuleSubmoduleLoading() {
+    // ===== Dynamic module/submodule loading =====
+    const modSelect = document.querySelector('[data-project-modules-target="moduleSelect"]');
+    const submodSelect = document.querySelector('[data-project-modules-target="submoduleSelect"]');
+    
+    if (modSelect) {
+      modSelect.addEventListener('change', function () {
+        const moduleId = this.value;
+        if (submodSelect) {
+          submodSelect.innerHTML = '<option value="">Select Sub-Module</option>';
+          if (moduleId) {
+            fetch(`/qa_modules/${moduleId}/submodules`)
+              .then(r => r.json())
+              .then(submodules => {
+                submodules.forEach(sm => {
+                  const opt = document.createElement('option');
+                  opt.value = sm.id;
+                  opt.textContent = sm.name;
+                  submodSelect.appendChild(opt);
+                });
+              })
+              .catch(error => {
+                console.error('Error loading submodules:', error);
+              });
+          }
+        }
+      });
+    }
+
+    // Also trigger change event if module is already selected on page load
+    if (modSelect && modSelect.value) {
+      const event = new Event('change');
+      modSelect.dispatchEvent(event);
+    }
+  }
+
   // Initialize everything
   function initializeAll() {
     initSearchableDropdowns();
+    initModuleSubmoduleLoading();
     initStatusDropdown();
   }
 
