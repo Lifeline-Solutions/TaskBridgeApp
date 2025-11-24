@@ -10,19 +10,15 @@ Rails.application.configure do
 
   # Do not eager load code on boot.
   config.eager_load = false
-
   # Show full error reports.
   config.consider_all_requests_local = true
-
   # Enable server timing
   config.server_timing = true
-
   # Enable/disable caching. By default caching is disabled.
   # Run rails dev:cache to toggle caching.
   if Rails.root.join("tmp/caching-dev.txt").exist?
     config.action_controller.perform_caching = true
     config.action_controller.enable_fragment_cache_logging = true
-
     config.cache_store = :memory_store
     config.public_file_server.headers = {
       "Cache-Control" => "public, max-age=#{2.days.to_i}"
@@ -77,59 +73,22 @@ Rails.application.configure do
   # config.action_cable.disable_request_forgery_protection = true
 
   # Raise error when a before_action's only/except options reference missing actions
-
-  config.action_mailer.default_url_options = { host: ENV.fetch('APP_HOST', '172.16.2.15'), protocol: ENV.fetch('APP_PROTOCOL', 'http') }
+  config.action_mailer.default_url_options = { host: 'http://172.16.2.15', protocol: 'http' }
   config.action_controller.raise_on_missing_callback_actions = true
   config.active_storage.variant_processor = :mini_magick
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.perform_caching = false
   config.action_mailer.delivery_method = :smtp
-  
-  smtp_address = ENV.fetch('SMTP_ADDRESS', 'secure.emailsrvr.com')
-  smtp_port    = Integer(ENV.fetch('SMTP_PORT', '465'))
-  smtp_domain  = ENV.fetch('SMTP_DOMAIN', 'craftsilicon.com')
-  smtp_user    = ENV.fetch('SMTP_USERNAME', 'taskbridgestaging@craftsilicon.com')
-  smtp_pass    = ENV['SMTP_PASSWORD']  # Must be set in environment
-  
-  # Port 465 uses implicit SSL (ssl: true, tls: false)
-  # Port 587 uses explicit TLS (ssl: false, tls: true, enable_starttls_auto: true)
-  
-  if smtp_port == 465
-    # Implicit SSL for port 465
-    use_ssl = true
-    use_tls = false
-    enable_starttls = false
-  elsif smtp_port == 587
-    # Explicit TLS/STARTTLS for port 587
-    use_ssl = false
-    use_tls = true
-    enable_starttls = true
-  else
-    # Custom configuration via ENV vars
-    use_ssl = ENV.fetch('SMTP_USE_SSL', 'false') == 'true'
-    use_tls = ENV.fetch('SMTP_USE_TLS', 'true') == 'true'
-    enable_starttls = ENV.fetch('SMTP_ENABLE_STARTTLS_AUTO', 'false') == 'true'
-  end
-  
   config.action_mailer.smtp_settings = {
-    address: smtp_address,
-    port: smtp_port,
-    domain: smtp_domain,
-    user_name: smtp_user,
-    password: smtp_pass,
-    authentication: :plain,
-    ssl: use_ssl,
-    tls: use_tls,
-    enable_starttls_auto: enable_starttls,
-    open_timeout: Integer(ENV.fetch('SMTP_OPEN_TIMEOUT', '10')),
-    read_timeout: Integer(ENV.fetch('SMTP_READ_TIMEOUT', '10'))
-  }.tap do |h|
-    # Only disable verification if explicitly asked (not recommended)
-    if ENV['SMTP_OPENSSL_VERIFY_MODE'].present?
-      h[:openssl_verify_mode] = ENV['SMTP_OPENSSL_VERIFY_MODE']
-    end
-    
-    # Log SMTP settings (excluding password) for debugging
-    Rails.logger.info("STAGING SMTP Configuration: address=#{smtp_address}, port=#{smtp_port}, user=#{smtp_user.present? ? '[SET]' : '[MISSING]'}, password=#{smtp_pass.present? ? '[SET]' : '[MISSING]'}, ssl=#{use_ssl}, tls=#{use_tls}")
-  end
+    address: 'secure.emailsrvr.com',
+    port: 465, # Use 587 for STARTTLS or 465 for SSL/TLS
+    domain: 'http://172.16.2.15', # Replace with your domain
+    user_name: 'taskbridgestaging@craftsilicon.com', # Replace with your email
+    password: 'Taskbridge***', # Replace with your email password
+    authentication: 'plain', # Can also be 'plain' or 'cram_md5'
+    ssl: true, # Use SSL encryption
+    tls: true, # Enforce TLS
+    enable_starttls_auto: false, # Automatically start TLS if available
+    openssl_verify_mode: 'none' # To avoid certificate verification issues (use cautiously)
+  }
 end

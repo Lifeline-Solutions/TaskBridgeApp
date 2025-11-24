@@ -3,14 +3,12 @@ class CustomDeviseMailer < Devise::Mailer
   include Devise::Controllers::UrlHelpers
 
   default template_path: 'devise/mailer'
-
   def invitation_instructions(record, token, opts = {})
     # Never send to deactivated users
     return if record.respond_to?(:active) && record.active == false
 
     @token = token
     @resource = record
-
     if record.has_role?(:ceo)
       opts[:from] = 'fokwaro@craftsilicon.com'
       opts[:subject] = 'Your Support Portal Access (TaskBridge)'
