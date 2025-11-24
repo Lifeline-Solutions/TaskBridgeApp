@@ -500,41 +500,83 @@ class ProfilesController < ApplicationController
       # Get total ticket count
       @total_tickets = @tickets.count
 
-      # Get breached tickets (SLA resolution deadline breached)
-      breached_ticket_ids = @tickets.joins(:sla_tickets)
-                                    .where(sla_tickets: { sla_resolution_deadline: 'Breached' })
-                                    .distinct
-                                    .pluck(:id)
+      # Get all three types of breached tickets
+      sla_status_breached_ids = @tickets.joins(:sla_tickets)
+                                        .where(sla_tickets: { sla_status: 'Breached' })
+                                        .distinct
+                                        .pluck(:id)
 
-      @breached_count = breached_ticket_ids.count
+      response_deadline_breached_ids = @tickets.joins(:sla_tickets)
+                                               .where(sla_tickets: { sla_target_response_deadline: 'Breached' })
+                                               .distinct
+                                               .pluck(:id)
 
-      # Calculate breach percentage
-      # 100% = zero breached (perfect)
-      # Lower percentage = more breaches
+      resolution_deadline_breached_ids = @tickets.joins(:sla_tickets)
+                                                 .where(sla_tickets: { sla_resolution_deadline: 'Breached' })
+                                                 .distinct
+                                                 .pluck(:id)
+
+      # Any ticket breached in at least one category
+      all_breached_ids = (sla_status_breached_ids + response_deadline_breached_ids + resolution_deadline_breached_ids).uniq
+
+      # Calculate overall breach counts
+      @sla_status_breached_count = sla_status_breached_ids.count
+      @response_deadline_breached_count = response_deadline_breached_ids.count
+      @resolution_deadline_breached_count = resolution_deadline_breached_ids.count
+      @total_breached_count = all_breached_ids.count
+
+      # Calculate breach percentages (100% = perfect, 0% = all breached)
       if @total_tickets > 0
-        breach_rate = (@breached_count.to_f / @total_tickets) * 100
-        @breach_percentage = (100 - breach_rate).round(2)
+        @sla_status_breach_percentage = (100 - (@sla_status_breached_count.to_f / @total_tickets * 100)).round(2)
+        @response_deadline_breach_percentage = (100 - (@response_deadline_breached_count.to_f / @total_tickets * 100)).round(2)
+        @resolution_deadline_breach_percentage = (100 - (@resolution_deadline_breached_count.to_f / @total_tickets * 100)).round(2)
+        @overall_breach_percentage = (100 - (@total_breached_count.to_f / @total_tickets * 100)).round(2)
       else
-        @breach_percentage = 100.0
+        @sla_status_breach_percentage = 100.0
+        @response_deadline_breach_percentage = 100.0
+        @resolution_deadline_breach_percentage = 100.0
+        @overall_breach_percentage = 100.0
       end
 
-      # Get breached tickets count by status
-      @breached_by_status = Ticket.where(id: breached_ticket_ids)
-                                   .joins(:statuses)
-                                   .group('statuses.name')
-                                   .count
+      # Get breached tickets count by status for each breach type
+      @sla_status_breached_by_status = Ticket.where(id: sla_status_breached_ids)
+                                              .joins(:statuses)
+                                              .group('statuses.name')
+                                              .count
 
-      # Build table data: status, count, breached count, breach %
+      @response_deadline_breached_by_status = Ticket.where(id: response_deadline_breached_ids)
+                                                     .joins(:statuses)
+                                                     .group('statuses.name')
+                                                     .count
+
+      @resolution_deadline_breached_by_status = Ticket.where(id: resolution_deadline_breached_ids)
+                                                       .joins(:statuses)
+                                                       .group('statuses.name')
+                                                       .count
+
+      @all_breached_by_status = Ticket.where(id: all_breached_ids)
+                                       .joins(:statuses)
+                                       .group('statuses.name')
+                                       .count
+
+      # Build table data: status, count, breached counts for each type, breach %
       @status_table_data = []
       @tickets_by_status.each do |status_name, count|
-        breached_in_status = @breached_by_status[status_name] || 0
-        status_breach_rate = count > 0 ? ((count - breached_in_status).to_f / count * 100).round(2) : 100.0
+        sla_status_breached = @sla_status_breached_by_status[status_name] || 0
+        response_breached = @response_deadline_breached_by_status[status_name] || 0
+        resolution_breached = @resolution_deadline_breached_by_status[status_name] || 0
+        any_breached = @all_breached_by_status[status_name] || 0
+
+        status_breach_rate = count > 0 ? (100 - (any_breached.to_f / count * 100)).round(2) : 100.0
 
         @status_table_data << {
           status: status_name,
           total: count,
-          breached: breached_in_status,
-          non_breached: count - breached_in_status,
+          sla_status_breached: sla_status_breached,
+          response_deadline_breached: response_breached,
+          resolution_deadline_breached: resolution_breached,
+          any_breached: any_breached,
+          non_breached: count - any_breached,
           breach_percentage: status_breach_rate
         }
       end
@@ -542,10 +584,10 @@ class ProfilesController < ApplicationController
       # Sort by breach percentage (lowest first = most breached)
       @status_table_data.sort_by! { |row| row[:breach_percentage] }
 
-      # Per-user breach analysis (team members who were assigned tickets)
+      # Per-user breach analysis (team members who touched tickets - assigned at least once)
       @user_breach_data = []
       @team_members.each do |user|
-        # Tickets assigned to this user (via events)
+        # Tickets that this user touched (via events.assigned_user_id)
         user_ticket_ids = Event.where(assigned_user_id: user.id, ticket_id: assigned_ticket_ids)
                                .pluck(:ticket_id)
                                .uniq
@@ -555,18 +597,37 @@ class ProfilesController < ApplicationController
 
         next if user_total.zero?
 
-        user_breached = user_tickets.joins(:sla_tickets)
-                                    .where(sla_tickets: { sla_resolution_deadline: 'Breached' })
-                                    .distinct
-                                    .count
+        # Count breaches for each type for this user's tickets
+        user_sla_status_breached = user_tickets.joins(:sla_tickets)
+                                               .where(sla_tickets: { sla_status: 'Breached' })
+                                               .distinct
+                                               .count
 
-        user_breach_rate = user_total > 0 ? ((user_total - user_breached).to_f / user_total * 100).round(2) : 100.0
+        user_response_deadline_breached = user_tickets.joins(:sla_tickets)
+                                                      .where(sla_tickets: { sla_target_response_deadline: 'Breached' })
+                                                      .distinct
+                                                      .count
+
+        user_resolution_deadline_breached = user_tickets.joins(:sla_tickets)
+                                                        .where(sla_tickets: { sla_resolution_deadline: 'Breached' })
+                                                        .distinct
+                                                        .count
+
+        # Tickets with any breach
+        user_any_breached_ids = user_ticket_ids & all_breached_ids
+        user_any_breached = user_any_breached_ids.count
+
+        # Calculate user breach percentage (100% = perfect)
+        user_breach_rate = user_total > 0 ? (100 - (user_any_breached.to_f / user_total * 100)).round(2) : 100.0
 
         @user_breach_data << {
           user: user,
           total: user_total,
-          breached: user_breached,
-          non_breached: user_total - user_breached,
+          sla_status_breached: user_sla_status_breached,
+          response_deadline_breached: user_response_deadline_breached,
+          resolution_deadline_breached: user_resolution_deadline_breached,
+          any_breached: user_any_breached,
+          non_breached: user_total - user_any_breached,
           breach_percentage: user_breach_rate
         }
       end
@@ -591,8 +652,14 @@ class ProfilesController < ApplicationController
       @status_table_data = []
       @user_breach_data = []
       @total_tickets = 0
-      @breached_count = 0
-      @breach_percentage = 100.0
+      @sla_status_breached_count = 0
+      @response_deadline_breached_count = 0
+      @resolution_deadline_breached_count = 0
+      @total_breached_count = 0
+      @sla_status_breach_percentage = 100.0
+      @response_deadline_breach_percentage = 100.0
+      @resolution_deadline_breach_percentage = 100.0
+      @overall_breach_percentage = 100.0
       flash[:alert] = 'Please select a team and date range.'
       respond_to(&:html)
     end
@@ -777,31 +844,43 @@ class ProfilesController < ApplicationController
       csv << ['Team Breach Report']
       csv << ['Team', @team&.name || 'N/A']
       csv << ['Total Tickets', @total_tickets]
-      csv << ['Total Breached', @breached_count]
-      csv << ['Overall Performance %', @breach_percentage]
+      csv << []
+
+      # Overall breach summary
+      csv << ['Breach Type', 'Total Breached', 'Performance %']
+      csv << ['SLA Status Breached', @sla_status_breached_count, @sla_status_breach_percentage]
+      csv << ['Response Deadline Breached', @response_deadline_breached_count, @response_deadline_breach_percentage]
+      csv << ['Resolution Deadline Breached', @resolution_deadline_breached_count, @resolution_deadline_breach_percentage]
+      csv << ['Any Breach (Overall)', @total_breached_count, @overall_breach_percentage]
       csv << []
 
       # Status breakdown
-      csv << ['Status', 'Total Tickets', 'Non-Breached', 'Breached', 'Performance %']
+      csv << ['Status', 'Total Tickets', 'Non-Breached', 'SLA Status Breach', 'Response Deadline Breach', 'Resolution Deadline Breach', 'Any Breach', 'Performance %']
       @status_table_data.each do |row|
         csv << [
           row[:status],
           row[:total],
           row[:non_breached],
-          row[:breached],
+          row[:sla_status_breached],
+          row[:response_deadline_breached],
+          row[:resolution_deadline_breached],
+          row[:any_breached],
           row[:breach_percentage]
         ]
       end
       csv << []
 
       # User breakdown
-      csv << ['User', 'Total Tickets', 'Non-Breached', 'Breached', 'Performance %']
+      csv << ['User', 'Total Tickets', 'Non-Breached', 'SLA Status Breach', 'Response Deadline Breach', 'Resolution Deadline Breach', 'Any Breach', 'Performance %']
       @user_breach_data.each do |row|
         csv << [
           row[:user].name,
           row[:total],
           row[:non_breached],
-          row[:breached],
+          row[:sla_status_breached],
+          row[:response_deadline_breached],
+          row[:resolution_deadline_breached],
+          row[:any_breached],
           row[:breach_percentage]
         ]
       end
