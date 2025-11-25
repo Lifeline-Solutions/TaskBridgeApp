@@ -134,8 +134,16 @@ Rails.application.configure do
     elsif ENV['SMTP_OPENSSL_VERIFY_MODE'].present?
       h[:openssl_verify_mode] = ENV['SMTP_OPENSSL_VERIFY_MODE']
     end
+  end
 
-    Rails.logger.info("SMTP Configuration: address=#{smtp_address}, port=#{smtp_port}, user=#{smtp_user.present? ? '[SET]' : '[MISSING]'}, password=#{smtp_pass.present? ? '[SET]' : '[MISSING]'}, open_timeout=#{open_timeout}, read_timeout=#{read_timeout}")
+  # Log SMTP configuration after the framework has initialized
+  config.after_initialize do
+    msg = "SMTP Configuration: address=#{smtp_address}, port=#{smtp_port}, user=#{smtp_user.present? ? '[SET]' : '[MISSING]'}, password=#{smtp_pass.present? ? '[SET]' : '[MISSING]'}, open_timeout=#{open_timeout}, read_timeout=#{read_timeout}"
+    if defined?(Rails.logger) && Rails.logger.respond_to?(:info)
+      Rails.logger.info(msg)
+    else
+      STDOUT.puts(msg)
+    end
   end
 
 end
