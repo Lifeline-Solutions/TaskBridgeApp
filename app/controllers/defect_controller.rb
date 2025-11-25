@@ -1639,7 +1639,7 @@ class DefectController < ApplicationController
 
     # banking types scoped to selected product (so UI can show only product banking types)
     @banking_types = if @selected_product
-                       @selected_product.banking_types.order(:name)
+                       BankingType.for_product(@selected_product.id)
                      else
                        []
                      end

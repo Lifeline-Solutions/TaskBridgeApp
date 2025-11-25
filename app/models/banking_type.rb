@@ -16,12 +16,18 @@ class BankingType < ApplicationRecord
   
   # Scope to get banking types for a specific product (or multiple products)
   scope :for_product, ->(product_ids) {
-    joins(:products).where(products: { id: Array(product_ids) }).distinct.order(:name)
+    left_joins(:products)
+      .where("banking_types_products.product_id IN (:pids) OR banking_types.product_id IN (:pids)", pids: Array(product_ids))
+      .distinct
+      .order(:name)
   }
   
   # Scope to get banking types NOT yet assigned to a product
   scope :not_in_product, ->(product_id) {
-    where.not(id: joins(:products).where(products: { id: product_id }).select(:id)).order(:name)
+    where.not(id: left_joins(:products)
+      .where("banking_types_products.product_id = :pid OR banking_types.product_id = :pid", pid: product_id)
+      .select(:id))
+      .order(:name)
   }
   
   # Scope for active (non-deleted) banking types
