@@ -3,6 +3,11 @@
 # Defines a single server with a list of roles and multiple properties.
 # You can define all roles on a single server, or split them:
 
+
+set :stage, :production
+set :rails_env, 'production'                    # <- makes rake tasks use staging
+set :branch, ENV.fetch('BRANCH', 'main-prod')
+
 server "172.17.40.11", user: "deploy", roles: %w{app db web}
 
 # server "example.com", user: "deploy", roles: %w{web}, other_property: :other_value
