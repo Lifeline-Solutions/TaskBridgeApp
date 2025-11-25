@@ -547,7 +547,15 @@ class DefectController < ApplicationController
     # Attachment paginations
     @attachments_per_page = 6
     @attachments_page = (params[:attachments_page] || 1).to_i
-    all_attachments = @defect.all_attachments.sort_by(&:created_at).reverse
+    all_attachments = @defect.all_attachments.sort_by do |a|
+      if a.respond_to?(:created_at)
+        a.created_at
+      elsif a.respond_to?(:attachable) && a.attachable&.respond_to?(:created_at)
+        a.attachable.created_at
+      else
+        Time.current
+      end
+    end.reverse
     @attachments_total = all_attachments.size
     @attachments_total_pages = (@attachments_total / @attachments_per_page.to_f).ceil
 
