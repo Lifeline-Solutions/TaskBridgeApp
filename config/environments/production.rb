@@ -102,34 +102,18 @@ Rails.application.configure do
   config.action_controller.raise_on_missing_callback_actions = true
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.perform_caching = false
-  config.action_mailer.delivery_method = :smtp
 
+  # ruby
+  # Add / update this block in `config/environments/production.rb`
   smtp_address = ENV.fetch('SMTP_ADDRESS', 'secure.emailsrvr.com')
   smtp_port    = Integer(ENV.fetch('SMTP_PORT', '465'))
   smtp_domain  = ENV.fetch('SMTP_DOMAIN', 'craftsilicon.com')
   smtp_user    = ENV['SMTP_USERNAME']
   smtp_pass    = ENV['SMTP_PASSWORD']
 
-  # Port 465 uses implicit SSL (ssl: true, tls: false)
-  # Port 587 uses explicit TLS (ssl: false, tls: true, enable_starttls_auto: true)
-  # Port 25 typically uses no encryption or opportunistic TLS
-
-  if smtp_port == 465
-    # Implicit SSL for port 465
-    use_ssl = true
-    use_tls = false
-    enable_starttls = false
-  elsif smtp_port == 587
-    # Explicit TLS/STARTTLS for port 587
-    use_ssl = false
-    use_tls = true
-    enable_starttls = true
-  else
-    # Custom configuration via ENV vars
-    use_ssl = ENV.fetch('SMTP_USE_SSL', 'false') == 'true'
-    use_tls = ENV.fetch('SMTP_USE_TLS', 'true') == 'true'
-    enable_starttls = ENV.fetch('SMTP_ENABLE_STARTTLS_AUTO', 'false') == 'true'
-  end
+  # increase timeouts — use larger values in staging/production where needed
+  open_timeout = Integer(ENV.fetch('SMTP_OPEN_TIMEOUT', '30'))
+  read_timeout = Integer(ENV.fetch('SMTP_READ_TIMEOUT', '30'))
 
   config.action_mailer.smtp_settings = {
     address: smtp_address,
@@ -138,18 +122,20 @@ Rails.application.configure do
     user_name: smtp_user,
     password: smtp_pass,
     authentication: :plain,
-    ssl: use_ssl,
-    tls: use_tls,
-    enable_starttls_auto: enable_starttls,
-    open_timeout: Integer(ENV.fetch('SMTP_OPEN_TIMEOUT', '10')),
-    read_timeout: Integer(ENV.fetch('SMTP_READ_TIMEOUT', '10'))
+    ssl: (smtp_port == 465),
+    tls: (smtp_port == 587), # explicit TLS flag kept for compatibility
+    enable_starttls_auto: (smtp_port == 587),
+    open_timeout: open_timeout,
+    read_timeout: read_timeout
   }.tap do |h|
-    # Only disable verification if explicitly asked (not recommended for production)
-    if ENV['SMTP_OPENSSL_VERIFY_MODE'].present?
+    # temporary debug: relax verification only if explicitly enabled (NOT recommended long-term)
+    if ENV['SMTP_DEBUG'] == 'true'
+      h[:openssl_verify_mode] = 'none'
+    elsif ENV['SMTP_OPENSSL_VERIFY_MODE'].present?
       h[:openssl_verify_mode] = ENV['SMTP_OPENSSL_VERIFY_MODE']
     end
 
-    # Log SMTP settings (excluding password) for debugging
-    Rails.logger.info("SMTP Configuration: address=#{smtp_address}, port=#{smtp_port}, user=#{smtp_user.present? ? '[SET]' : '[MISSING]'}, password=#{smtp_pass.present? ? '[SET]' : '[MISSING]'}, ssl=#{use_ssl}, tls=#{use_tls}")
+    Rails.logger.info("SMTP Configuration: address=#{smtp_address}, port=#{smtp_port}, user=#{smtp_user.present? ? '[SET]' : '[MISSING]'}, password=#{smtp_pass.present? ? '[SET]' : '[MISSING]'}, open_timeout=#{open_timeout}, read_timeout=#{read_timeout}")
   end
+
 end
