@@ -100,50 +100,20 @@ Rails.application.configure do
   # host should be the hostname only (no scheme or trailing slash); protocol set separately
   config.action_mailer.default_url_options = { host: 'taskbridge.craftsilicon.com', protocol: 'https' }
   config.action_controller.raise_on_missing_callback_actions = true
+  config.active_storage.variant_processor = :mini_magick
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.perform_caching = false
-
-  # ruby
-  # Add / update this block in `config/environments/production.rb`
-  smtp_address = ENV.fetch('SMTP_ADDRESS', 'secure.emailsrvr.com')
-  smtp_port    = Integer(ENV.fetch('SMTP_PORT', '465'))
-  smtp_domain  = ENV.fetch('SMTP_DOMAIN', 'craftsilicon.com')
-  smtp_user    = ENV['SMTP_USERNAME']
-  smtp_pass    = ENV['SMTP_PASSWORD']
-
-  # increase timeouts — use larger values in staging/production where needed
-  open_timeout = Integer(ENV.fetch('SMTP_OPEN_TIMEOUT', '30'))
-  read_timeout = Integer(ENV.fetch('SMTP_READ_TIMEOUT', '30'))
-
+  config.action_mailer.delivery_method = :smtp
   config.action_mailer.smtp_settings = {
-    address: smtp_address,
-    port: smtp_port,
-    domain: smtp_domain,
-    user_name: smtp_user,
-    password: smtp_pass,
-    authentication: :plain,
-    ssl: (smtp_port == 465),
-    tls: (smtp_port == 587), # explicit TLS flag kept for compatibility
-    enable_starttls_auto: (smtp_port == 587),
-    open_timeout: open_timeout,
-    read_timeout: read_timeout
-  }.tap do |h|
-    # temporary debug: relax verification only if explicitly enabled (NOT recommended long-term)
-    if ENV['SMTP_DEBUG'] == 'true'
-      h[:openssl_verify_mode] = 'none'
-    elsif ENV['SMTP_OPENSSL_VERIFY_MODE'].present?
-      h[:openssl_verify_mode] = ENV['SMTP_OPENSSL_VERIFY_MODE']
-    end
-  end
-
-  # Log SMTP configuration after the framework has initialized
-  config.after_initialize do
-    msg = "SMTP Configuration: address=#{smtp_address}, port=#{smtp_port}, user=#{smtp_user.present? ? '[SET]' : '[MISSING]'}, password=#{smtp_pass.present? ? '[SET]' : '[MISSING]'}, open_timeout=#{open_timeout}, read_timeout=#{read_timeout}"
-    if defined?(Rails.logger) && Rails.logger.respond_to?(:info)
-      Rails.logger.info(msg)
-    else
-      STDOUT.puts(msg)
-    end
-  end
-
+    address: 'secure.emailsrvr.com',
+    port: 465, # Use 587 for STARTTLS or 465 for SSL/TLS
+    domain: 'craftsilicon.com', # Replace with your domain
+    user_name: 'cspm@craftsilicon.com', # Replace with your email
+    password: '#cspm@123#', # Replace with your email password
+    authentication: 'plain', # Can also be 'plain' or 'cram_md5'
+    ssl: true, # Use SSL encryption
+    tls: true, # Enforce TLS
+    enable_starttls_auto: false, # Automatically start TLS if available
+    openssl_verify_mode: 'none' # To avoid certificate verification issues (use cautiously)
+  }
 end
