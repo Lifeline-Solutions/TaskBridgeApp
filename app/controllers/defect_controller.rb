@@ -1638,11 +1638,14 @@ class DefectController < ApplicationController
                   end
 
     # banking types scoped to selected product (so UI can show only product banking types)
-    @banking_types = if @selected_product
-                       BankingType.for_product(@selected_product.id)
-                     else
-                       []
-                     end
+  @banking_types = if @selected_product
+                     types = BankingType.for_product(@selected_product.id)
+                     Rails.logger.info "DEBUG: set_form_data product_id=#{@selected_product.id} banking_types_count=#{types.count}"
+                     types
+                   else
+                     Rails.logger.info "DEBUG: set_form_data NO PRODUCT SELECTED"
+                     []
+                   end
 
     # If a module was selected (e.g. via params), preload its submodules for the view
     if params[:qa_module_id].present?
