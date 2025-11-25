@@ -4,28 +4,28 @@
 
   const editorIds = ['defect_content', 'defect_content_edit'];
 
-  // CKEditor 5 config
-  const CK5_CONFIG = {
-    toolbar: {
-      items: [
-        'heading', '|',
-        'bold', 'italic', 'underline', 'strikethrough', '|',
-        'fontColor', 'fontBackgroundColor', '|',
-        'bulletedList', 'numberedList', 'outdent', 'indent', 'blockQuote', '|',
-        'link', 'insertTable', 'horizontalLine', '|',
-        'undo', 'redo', '|',
-        'removeFormat'
-      ],
-      shouldNotGroupWhenFull: true
-    },
-    removePlugins: [
-      // Disable features we don't want or that require extra config
-      'CKBox', 'CKFinder', 'EasyImage', 'RealTimeCollaborativeComments',
-      'RealTimeCollaborativeTrackChanges', 'RealTimeCollaborativeRevisionHistory',
-      'PresenceList', 'Comments', 'TrackChanges', 'TrackChangesData', 'RevisionHistory',
-      'Pagination', 'WProofreader', 'MathType', 'SlashCommand', 'Template', 'DocumentOutline',
-      'FormatPainter', 'TableOfContents', 'PasteFromOfficeEnhanced'
-    ]
+  // CKEditor 4 config with color support
+  const CK4_CONFIG = {
+    toolbar: [
+      { name: 'styles', items: ['Format', 'Font', 'FontSize'] },
+      { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike'] },
+      { name: 'colors', items: ['TextColor', 'BGColor'] },
+      { name: 'paragraph', items: ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'Blockquote'] },
+      { name: 'links', items: ['Link', 'Unlink'] },
+      { name: 'insert', items: ['Table', 'HorizontalRule', 'SpecialChar'] },
+      { name: 'tools', items: ['Maximize'] },
+      { name: 'editing', items: ['Undo', 'Redo'] }
+    ],
+    height: 250,
+    // Color palette with the same colors as Trix
+    colorButton_colors: 'E60000,FF9900,FFFF00,00FF00,00FFFF,0000FF,9900FF,FF00FF,' +
+      '000000,434343,666666,999999,CCCCCC,FFFFFF,' +
+      'B82E00,006B00,0080C0,5C00B8,' +
+      'FFA6A6,FFD699,FFFFCC,CCFFCC,CCFFFF,CCE5FF',
+    colorButton_enableMore: true,
+    colorButton_enableAutomatic: true,
+    removePlugins: 'elementspath',
+    resize_enabled: false
   };
 
   function isInitializing(el) {
@@ -57,8 +57,8 @@
     const editor = el._ckeditorInstance;
     if (!editor) return;
     try {
-      // CKEditor 5 uses destroy() which returns a promise
-      await editor.destroy();
+      // CKEditor 4 uses destroy() method
+      editor.destroy();
     } catch (err) {
       console.warn('Error destroying CKEditor instance', err);
     } finally {
@@ -71,7 +71,7 @@
     }
   }
 
-  async function initEditorFor(el, id) {
+  function initEditorFor(el, id) {
     if (!el) return;
     // If already initialized, nothing to do
     if (isInitialized(el)) {
@@ -85,15 +85,15 @@
     // mark initializing *before* creating to prevent double-create race
     markInitializing(el);
 
-    // CKEditor 5 check
-    if (typeof CKEDITOR === 'undefined' || !CKEDITOR.ClassicEditor) {
-      console.error('CKEditor 5 not loaded');
+    // CKEditor 4 uses CKEDITOR.replace()
+    if (typeof CKEDITOR === 'undefined') {
+      console.error('CKEditor 4 not loaded');
       unmarkInitializing(el);
       return;
     }
 
     try {
-      const editor = await CKEDITOR.ClassicEditor.create(el, CK5_CONFIG);
+      const editor = CKEDITOR.replace(el, CK4_CONFIG);
 
       // attach and expose for debug/use
       el._ckeditorInstance = editor;
@@ -116,8 +116,7 @@
             );
 
             // Update the textarea value
-            const data = editor.getData();
-            el.value = data;
+            el.value = editor.getData();
 
             // Skip validation if saving as draft
             if (isDraftButton) {
@@ -126,12 +125,11 @@
             }
 
             // Normal validation for Create/Update buttons
-            const textContent = data.replace(/<[^>]*>/g, '').trim();
+            const textContent = editor.getData().replace(/<[^>]*>/g, '').trim();
             if (!textContent) {
               e.preventDefault();
               if (errorEl) errorEl.classList.remove('hidden');
-              // Focus editor
-              editor.editing.view.focus();
+              editor.focus();
             } else if (errorEl) {
               errorEl.classList.add('hidden');
             }
@@ -143,7 +141,7 @@
       }
     } catch (err) {
       unmarkInitializing(el);
-      console.error('CKEditor 5 init failed for', id, err);
+      console.error('CKEditor 4 init failed for', id, err);
     }
   }
 
