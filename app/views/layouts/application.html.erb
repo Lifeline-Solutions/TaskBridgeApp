@@ -119,5 +119,227 @@
 <!-- CKEditor 4 (Local) -->
 <script src="/ckeditor/ckeditor.js"></script>
 
+<!-- Global Turbo Frame Load Handler for Edit Forms -->
+<script>
+  // Define the dropdown initialization function globally
+  window.initSearchableDropdowns = function() {
+    console.log('Initializing searchable dropdowns...');
+    
+    // ===== Projects ====
+    const projectInput = document.getElementById("project-search");
+    const projectResults = document.getElementById("project-results");
+    const projectHidden = document.getElementById("project-id-field");
+
+    if (projectInput && projectResults && window.projectsData) {
+      // Preselect from server-side values
+      const preselectedId = projectHidden ? projectHidden.value : null;
+      if (preselectedId) {
+        const match = window.projectsData.find(p => String(p.id) === String(preselectedId));
+        if (match) {
+          projectInput.value = match.name;
+          if (projectHidden) projectHidden.value = match.id;
+        }
+      }
+
+      function renderProjects(projects) {
+        projectResults.innerHTML = "";
+        if (projects.length > 0) {
+          projectResults.classList.remove("hidden");
+          projects.forEach(p => {
+            const li = document.createElement("li");
+            li.textContent = p.name;
+            li.className = "px-3 py-2 hover:bg-blue-500 hover:text-white cursor-pointer";
+            li.addEventListener("click", function () {
+              projectInput.value = p.name;
+              if (projectHidden) projectHidden.value = p.id;
+              projectResults.classList.add("hidden");
+              // Reload edit page with new product
+              const defectId = window.location.pathname.match(/\/defect\/([^\/]+)\/edit/)[1];
+              window.location.href = `/defect/${defectId}/edit?product_id=${encodeURIComponent(p.id)}`;
+            });
+            projectResults.appendChild(li);
+          });
+        } else {
+          projectResults.classList.add("hidden");
+        }
+      }
+
+      projectInput.addEventListener("input", function () {
+        const query = this.value.toLowerCase();
+        if (query.length === 0) {
+          projectResults.classList.add("hidden");
+          return;
+        }
+        const matches = window.projectsData.filter(p => p.name.toLowerCase().includes(query));
+        renderProjects(matches);
+      });
+
+      projectInput.addEventListener("focus", function () {
+        renderProjects(window.projectsData);
+      });
+
+      document.addEventListener("click", function (e) {
+        if (projectResults && !projectResults.contains(e.target) && e.target !== projectInput) {
+          projectResults.classList.add("hidden");
+        }
+      });
+    }
+      
+    // ===== Banking Type Search =====
+    const bankingTypeInput = document.getElementById("banking-type-search");
+    const bankingTypeResults = document.getElementById("banking-type-results");
+    const bankingTypeHidden = document.getElementById("banking-type-id-field");
+
+    // Preselect banking type
+    const preselectedBankingTypeId = bankingTypeHidden ? bankingTypeHidden.value : null;
+    if (preselectedBankingTypeId && window.bankingTypesData) {
+      const match = window.bankingTypesData.find(bt => String(bt.id) === String(preselectedBankingTypeId));
+      if (match && bankingTypeInput) {
+        bankingTypeInput.value = match.name;
+        bankingTypeHidden.value = match.id;
+      }
+    }
+
+    if (bankingTypeInput && bankingTypeResults && window.bankingTypesData) {
+      function renderBankingTypes(list) {
+        bankingTypeResults.innerHTML = "";
+        if (list.length > 0) {
+          bankingTypeResults.classList.remove("hidden");
+          list.forEach(bt => {
+            const li = document.createElement("li");
+            li.textContent = bt.name;
+            li.className = "px-3 py-2 hover:bg-blue-500 hover:text-white cursor-pointer";
+            li.addEventListener("click", function () {
+              bankingTypeInput.value = bt.name;
+              if (bankingTypeHidden) bankingTypeHidden.value = bt.id;
+              bankingTypeResults.classList.add("hidden");
+            });
+            bankingTypeResults.appendChild(li);
+          });
+        } else {
+          bankingTypeResults.classList.add("hidden");
+        }
+      }
+
+      bankingTypeInput.addEventListener("input", function () {
+        const query = this.value.toLowerCase();
+        if (query.length === 0) {
+          bankingTypeResults.classList.add("hidden");
+          return;
+        }
+        const matches = window.bankingTypesData.filter(bt => bt.name.toLowerCase().includes(query));
+        renderBankingTypes(matches);
+      });
+
+      bankingTypeInput.addEventListener("focus", function () {
+        console.log('Banking type input focused, showing:', window.bankingTypesData.length, 'items');
+        renderBankingTypes(window.bankingTypesData);
+      });
+
+      document.addEventListener("click", function (e) {
+        if (bankingTypeResults && !bankingTypeResults.contains(e.target) && e.target !== bankingTypeInput) {
+          bankingTypeResults.classList.add("hidden");
+        }
+      });
+      
+      console.log('Banking type dropdown initialized with', window.bankingTypesData.length, 'items');
+    }
+
+    // ===== Assignee Search =====
+    const assigneeInput = document.getElementById("assignee-search");
+    const assigneeResults = document.getElementById("assignee-results");
+    const assigneeHidden = document.getElementById("assignee-id-field");
+
+    const preselectedAssigneeId = assigneeHidden ? assigneeHidden.value : null;
+    if (preselectedAssigneeId && window.assigneeUsersData) {
+      const match = window.assigneeUsersData.find(user => String(user.id) === String(preselectedAssigneeId));
+      if (match && assigneeInput) {
+        assigneeInput.value = match.name;
+        assigneeHidden.value = match.id;
+      }
+    }
+
+    if (assigneeInput && assigneeResults && window.assigneeUsersData) {
+      function renderAssignees(list) {
+        assigneeResults.innerHTML = "";
+        if (list.length > 0) {
+          assigneeResults.classList.remove("hidden");
+          list.forEach(user => {
+            const li = document.createElement("li");
+            li.textContent = user.name;
+            li.className = "px-3 py-2 hover:bg-blue-500 hover:text-white cursor-pointer";
+            li.addEventListener("click", function () {
+              assigneeInput.value = user.name;
+              if (assigneeHidden) assigneeHidden.value = user.id;
+              assigneeResults.classList.add("hidden");
+            });
+            assigneeResults.appendChild(li);
+          });
+        } else {
+          assigneeResults.classList.add("hidden");
+        }
+      }
+
+      assigneeInput.addEventListener("input", function () {
+        const query = this.value.toLowerCase();
+        if (assigneeHidden) assigneeHidden.value = "";
+        if (query.length === 0) {
+          assigneeResults.classList.add("hidden");
+          return;
+        }
+        const matches = window.assigneeUsersData.filter(user => user.name.toLowerCase().includes(query));
+        renderAssignees(matches);
+      });
+
+      assigneeInput.addEventListener("focus", function () {
+        renderAssignees(window.assigneeUsersData);
+      });
+
+      document.addEventListener("click", function (e) {
+        if (assigneeResults && !assigneeResults.contains(e.target) && e.target !== assigneeInput) {
+          assigneeResults.classList.add("hidden");
+        }
+      });
+    }
+    
+    console.log('All dropdowns initialized successfully');
+  };
+
+  // Listen for Turbo Frame loads
+  document.addEventListener('turbo:frame-load', function(event) {
+    console.log('=== TURBO FRAME LOADED ===');
+    
+    const bankingTypeContainer = document.querySelector('[data-banking-types]');
+    
+    if (!bankingTypeContainer) {
+      console.log('No banking type container found in this frame');
+      return;
+    }
+    
+    console.log('Banking type container found! Loading data...');
+    
+    try {
+      window.bankingTypesData = JSON.parse(bankingTypeContainer.dataset.bankingTypes || '[]');
+      window.assigneeUsersData = JSON.parse(bankingTypeContainer.dataset.assigneeUsers || '[]');
+      window.projectsData = JSON.parse(bankingTypeContainer.dataset.projects || '[]');
+      
+      console.log('=== DATA LOADED FROM TURBO FRAME ===');
+      console.log('Banking Types:', window.bankingTypesData);
+      console.log('Banking Types Count:', window.bankingTypesData.length);
+      console.log('===================================');
+      
+      // Initialize the dropdowns
+      if (typeof window.initSearchableDropdowns === 'function') {
+        window.initSearchableDropdowns();
+        console.log('Dropdowns initialized');
+      } else {
+        console.error('initSearchableDropdowns function not found');
+      }
+    } catch (e) {
+      console.error('Error loading data from frame:', e);
+    }
+  });
+</script>
+
 </body>
 </html>
