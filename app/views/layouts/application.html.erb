@@ -123,7 +123,6 @@
 <script>
   // Define the dropdown initialization function globally
   window.initSearchableDropdowns = function() {
-    console.log('Initializing searchable dropdowns...');
     
     // ===== Projects ====
     const projectInput = document.getElementById("project-search");
@@ -232,7 +231,6 @@
       });
 
       bankingTypeInput.addEventListener("focus", function () {
-        console.log('Banking type input focused, showing:', window.bankingTypesData.length, 'items');
         renderBankingTypes(window.bankingTypesData);
       });
 
@@ -242,7 +240,6 @@
         }
       });
       
-      console.log('Banking type dropdown initialized with', window.bankingTypesData.length, 'items');
     }
 
     // ===== Assignee Search =====
@@ -302,41 +299,34 @@
       });
     }
     
-    console.log('All dropdowns initialized successfully');
   };
 
   // Listen for Turbo Frame loads
   document.addEventListener('turbo:frame-load', function(event) {
-    console.log('=== TURBO FRAME LOADED ===');
     
     const bankingTypeContainer = document.querySelector('[data-banking-types]');
     
     if (!bankingTypeContainer) {
-      console.log('No banking type container found in this frame');
+      
       return;
     }
     
-    console.log('Banking type container found! Loading data...');
     
     try {
       window.bankingTypesData = JSON.parse(bankingTypeContainer.dataset.bankingTypes || '[]');
       window.assigneeUsersData = JSON.parse(bankingTypeContainer.dataset.assigneeUsers || '[]');
       window.projectsData = JSON.parse(bankingTypeContainer.dataset.projects || '[]');
       
-      console.log('=== DATA LOADED FROM TURBO FRAME ===');
-      console.log('Banking Types:', window.bankingTypesData);
-      console.log('Banking Types Count:', window.bankingTypesData.length);
-      console.log('===================================');
+      
+      
       
       // Initialize the dropdowns
       if (typeof window.initSearchableDropdowns === 'function') {
         window.initSearchableDropdowns();
-        console.log('Dropdowns initialized');
-      } else {
-        console.error('initSearchableDropdowns function not found');
+        
       }
     } catch (e) {
-      console.error('Error loading data from frame:', e);
+      // Silently handle errors
     }
   });
 </script>

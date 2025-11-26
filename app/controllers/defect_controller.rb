@@ -752,21 +752,13 @@ class DefectController < ApplicationController
                        BankingType.all.order(:name)
                      end
 
-    # DEBUG: Log banking types information
-    Rails.logger.debug "=== EDIT ACTION DEBUG ==="
-    Rails.logger.debug "Defect ID: #{@defect.id}"
-    Rails.logger.debug "Defect Product ID: #{@defect.product_id}"
-    Rails.logger.debug "Selected Product: #{@selected_product&.id}"
-    Rails.logger.debug "Banking Types Count: #{@banking_types.count}"
-    Rails.logger.debug "Banking Types: #{@banking_types.map { |bt| {id: bt.id, name: bt.name} }.inspect}"
-    Rails.logger.debug "======================="
-
     @submodules = if @defect.qa_module
                     # Select only id + name and make the result distinct (and ordered)
                     @defect.qa_module.submodules.select(:id, :name).distinct.order(:name)
                   else
                     QaModule.none
                   end
+
 
     respond_to do |format|
       format.html

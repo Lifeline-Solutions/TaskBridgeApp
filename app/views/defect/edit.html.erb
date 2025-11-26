@@ -481,13 +481,10 @@
 
   // CRITICAL: Read data from HTML data attributes (works in Turbo Frames)
   (function() {
-    console.log('=== EDIT FORM SCRIPT EXECUTING ===');
-    
     // Find the container with data attributes
     const bankingTypeContainer = document.querySelector('[data-banking-types]');
     
     if (!bankingTypeContainer) {
-      console.error('ERROR: Banking type container not found!');
       return;
     }
     
@@ -497,20 +494,12 @@
       window.assigneeUsersData = JSON.parse(bankingTypeContainer.dataset.assigneeUsers || '[]');
       window.projectsData = JSON.parse(bankingTypeContainer.dataset.projects || '[]');
     } catch (e) {
-      console.error('ERROR parsing data attributes:', e);
       window.bankingTypesData = [];
       window.assigneeUsersData = [];
       window.projectsData = [];
     }
-
-    // Debug logging
-    console.log('=== EDIT FORM DATA LOADED FROM DATA ATTRIBUTES ===');
-    console.log('Banking Types Data:', window.bankingTypesData);
-    console.log('Banking Types Count:', window.bankingTypesData ? window.bankingTypesData.length : 0);
-    console.log('Assignee Users Count:', window.assigneeUsersData ? window.assigneeUsersData.length : 0);
-    console.log('Projects Count:', window.projectsData ? window.projectsData.length : 0);
-    console.log('==================================================');
   })();
+
 
   // Make function global so it can be called from turbo:frame-load event
   window.initSearchableDropdowns = function() {
@@ -740,9 +729,9 @@
           })
           .then(resp => resp.json())
           .then(data => {
-            console.log("Status updated:", data);
+
           })
-          .catch(err => console.error("Status update failed:", err));
+
         }
       });
     }
@@ -770,7 +759,7 @@
                 });
               })
               .catch(error => {
-                console.error('Error loading submodules:', error);
+
               });
           }
         }
@@ -786,50 +775,34 @@
 
   // Initialize everything - fresh on every load
   window.initializeAll = function() {
-    console.log('=== INITIALIZING EDIT FORM ===');
-    console.log('Banking Types Data:', window.bankingTypesData);
-    console.log('Banking Types Count:', window.bankingTypesData ? window.bankingTypesData.length : 'undefined');
-    
     // Validate data is available
     if (!window.bankingTypesData) {
-      console.error('ERROR: window.bankingTypesData is not defined!');
-      console.error('This means @banking_types is empty in the controller');
       return;
     }
-    
     if (!window.assigneeUsersData) {
-      console.error('ERROR: window.assigneeUsersData is not defined!');
       return;
     }
-    
     if (!window.projectsData) {
-      console.error('ERROR: window.projectsData is not defined!');
       return;
     }
     
-    console.log('All data validated, initializing dropdowns...');
     initSearchableDropdowns();
     initModuleSubmoduleLoading();
     initStatusDropdown();
-    
-    console.log('=== INITIALIZATION COMPLETE ===');
   }; // End of initializeAll
 
   // Initialize on turbo:load (when navigating to this page)
   document.addEventListener('turbo:load', function() {
-    console.log('Turbo:load event fired');
     initializeAll();
   });
   
   // Initialize on turbo:frame-load (when modal/frame loads)
   document.addEventListener('turbo:frame-load', function(event) {
-    console.log('Turbo:frame-load event fired');
     initializeAll();
   });
   
   // Initialize on DOMContentLoaded as fallback
   document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOMContentLoaded event fired');
     initializeAll();
   });
 
@@ -844,7 +817,7 @@
     if (draftButton) {
       // When draft button is clicked, disable HTML5 validation
       draftButton.addEventListener('click', function(e) {
-        console.log('Draft button clicked - disabling validation');
+
         
         // Disable HTML5 validation on the form
         form.setAttribute('novalidate', 'novalidate');
@@ -869,7 +842,7 @@
     // When update button is clicked, restore validation
     if (updateButton) {
       updateButton.addEventListener('click', function(e) {
-        console.log('Update button clicked - enabling validation');
+
         
         // Enable HTML5 validation
         form.removeAttribute('novalidate');
