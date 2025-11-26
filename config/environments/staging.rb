@@ -73,22 +73,55 @@ Rails.application.configure do
   # config.action_cable.disable_request_forgery_protection = true
 
   # Raise error when a before_action's only/except options reference missing actions
-  config.action_mailer.default_url_options = { host: 'http://172.16.2.15', protocol: 'http' }
+  config.action_mailer.default_url_options = { host: ENV.fetch('APP_HOST', '172.16.2.15'), protocol: 'http' }
   config.action_controller.raise_on_missing_callback_actions = true
   config.active_storage.variant_processor = :mini_magick
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.perform_caching = false
   config.action_mailer.delivery_method = :smtp
+
+  # SMTP settings -- prefer environment variables; fall back to previous values
+  smtp_addr = ENV.fetch('SMTP_ADDRESS', 'secure.emailsrvr.com')
+  smtp_port = Integer(ENV.fetch('SMTP_PORT', '465'))
+  smtp_domain = ENV.fetch('SMTP_DOMAIN', '172.16.2.15')
+  smtp_user = ENV.fetch('SMTP_USERNAME', 'taskbridgestaging@craftsilicon.com')
+  smtp_pass = ENV.fetch('SMTP_PASSWORD', 'Taskbridge***')
+
+  # OpenSSL verify mode: prefer explicit OpenSSL constants when debugging
+  openssl_verify_mode = nil
+  if ENV['SMTP_DEBUG'] == 'true'
+    begin
+      require 'openssl'
+      openssl_verify_mode = OpenSSL::SSL::VERIFY_NONE
+    rescue LoadError
+      openssl_verify_mode = 0
+    end
+  elsif ENV['SMTP_OPENSSL_VERIFY_MODE'].present?
+    val = ENV['SMTP_OPENSSL_VERIFY_MODE'].to_s.downcase.strip
+    begin
+      require 'openssl'
+      openssl_verify_mode = case val
+                            when 'none' then OpenSSL::SSL::VERIFY_NONE
+                            when 'peer' then OpenSSL::SSL::VERIFY_PEER
+                            else Integer(ENV['SMTP_OPENSSL_VERIFY_MODE'])
+                            end
+    rescue Exception
+      openssl_verify_mode = nil
+    end
+  end
+
   config.action_mailer.smtp_settings = {
-    address: 'secure.emailsrvr.com',
-    port: 465, # Use 587 for STARTTLS or 465 for SSL/TLS
-    domain: 'http://172.16.2.15', # Replace with your domain
-    user_name: 'taskbridgestaging@craftsilicon.com', # Replace with your email
-    password: 'Taskbridge***', # Replace with your email password
-    authentication: 'plain', # Can also be 'plain' or 'cram_md5'
-    ssl: true, # Use SSL encryption
-    tls: true, # Enforce TLS
-    enable_starttls_auto: false, # Automatically start TLS if available
-    openssl_verify_mode: 'none' # To avoid certificate verification issues (use cautiously)
-  }
+    address: smtp_addr,
+    port: smtp_port,
+    domain: smtp_domain, # do NOT include http://
+    user_name: smtp_user,
+    password: smtp_pass,
+    authentication: :plain, # use symbol
+    ssl: (smtp_port == 465),
+    enable_starttls_auto: (smtp_port == 587),
+    open_timeout: Integer(ENV.fetch('SMTP_OPEN_TIMEOUT', '30')),
+    read_timeout: Integer(ENV.fetch('SMTP_READ_TIMEOUT', '30'))
+  }.tap do |h|
+    h[:openssl_verify_mode] = openssl_verify_mode if openssl_verify_mode
+  end
 end

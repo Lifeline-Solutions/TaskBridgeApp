@@ -111,7 +111,7 @@ Rails.application.configure do
     user_name: 'cspm@craftsilicon.com', # Replace with your email
     password: '#cspm@123#', # Replace with your email password
     authentication: 'plain', # Can also be 'plain' or 'cram_md5'
-    ssl: true, # Use SSL encryption
+    ssl: false, # Use SSL encryption
     tls: true, # Enforce TLS
     enable_starttls_auto: false, # Automatically start TLS if available
     openssl_verify_mode: 'none' # To avoid certificate verification issues (use cautiously)
