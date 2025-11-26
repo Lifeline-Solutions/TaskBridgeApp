@@ -100,70 +100,22 @@ Rails.application.configure do
   # Action Mailer configuration
   config.action_mailer.default_url_options = { host: 'taskbridge.craftsilicon.com', protocol: 'https' }
   config.action_controller.raise_on_missing_callback_actions = true
+  config.active_storage.variant_processor = :mini_magick
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.perform_caching = false
   config.action_mailer.delivery_method = :smtp
-
-  # === SMTP Configuration ===
-  # Read from environment variables with sensible defaults
-  smtp_address = ENV.fetch('SMTP_ADDRESS', 'secure.emailsrvr.com')
-  smtp_port    = Integer(ENV.fetch('SMTP_PORT', '465'))
-  smtp_domain  = ENV.fetch('SMTP_DOMAIN', 'craftsilicon.com')
-  smtp_user    = ENV['SMTP_USERNAME']
-  smtp_pass    = ENV['SMTP_PASSWORD']
-  smtp_auth_method = ENV.fetch('SMTP_AUTH_METHOD', 'plain')
-
-  # Decide TLS/SSL/STARTTLS behavior based on port (can be overridden by ENV flags)
-  # Port 465 => implicit SSL (SMTPS), Port 587 => STARTTLS
-  use_ssl = if ENV.key?('SMTP_USE_SSL')
-              ENV['SMTP_USE_SSL'] == 'true'
-            else
-              smtp_port == 465
-            end
-
-  enable_starttls_auto = if ENV.key?('SMTP_ENABLE_STARTTLS_AUTO')
-                            ENV['SMTP_ENABLE_STARTTLS_AUTO'] == 'true'
-                          else
-                            smtp_port == 587
-                          end
-
-  open_timeout = Integer(ENV.fetch('SMTP_OPEN_TIMEOUT', '30')) rescue 30
-  read_timeout = Integer(ENV.fetch('SMTP_READ_TIMEOUT', '30')) rescue 30
-
-  # Build SMTP settings hash
-  smtp_settings = {
-    address: smtp_address,
-    port: smtp_port,
-    domain: smtp_domain,
-    user_name: smtp_user,
-    password: smtp_pass,
-    authentication: smtp_auth_method,
-    enable_starttls_auto: enable_starttls_auto,
-    open_timeout: open_timeout,
-    read_timeout: read_timeout,
-    # Retry logic: retry up to 1 time on connection failures
-    retry_count: Integer(ENV.fetch('SMTP_RETRY_COUNT', '1')),
-    # Allow delivery errors to be caught and logged
-    raise_delivery_errors: true
+  config.action_mailer.smtp_settings = {
+    address: 'secure.emailsrvr.com',
+    port: 465, # Use 587 for STARTTLS or 465 for SSL/TLS
+    domain: 'craftsilicon.com', # Replace with your domain
+    user_name: 'cspm@craftsilicon.com', # Replace with your email
+    password: '#cspm@123#', # Replace with your email password
+    authentication: 'plain', # Can also be 'plain' or 'cram_md5'
+    ssl: true, # Use SSL encryption
+    tls: true, # Enforce TLS
+    enable_starttls_auto: false, # Automatically start TLS if available
+    openssl_verify_mode: 'none' # To avoid certificate verification issues (use cautiously)
   }
 
-  # Use :ssl for implicit SSL (port 465) — do NOT set unsupported :tls key
-  smtp_settings[:ssl] = true if use_ssl
-
-  # Optional: OpenSSL verify mode (default: peer for production safety)
-  # Set to 'none' only for debugging with self-signed certs
-  if ENV['SMTP_OPENSSL_VERIFY_MODE'].present?
-    smtp_settings[:openssl_verify_mode] = ENV['SMTP_OPENSSL_VERIFY_MODE']
-  end
-
-  # Log the effective SMTP settings (no passwords logged)
-  mail_logger = (defined?(config) && config.respond_to?(:logger) && config.logger) || (defined?(Rails) && Rails.logger) || Logger.new(STDOUT)
-  begin
-    mode_str = "#{use_ssl ? 'SSL' : ''}#{enable_starttls_auto ? 'STARTTLS' : ''}".presence || 'PLAIN'
-    mail_logger.info "SMTP initialized: address=#{smtp_settings[:address]}:#{smtp_settings[:port]}, mode=#{mode_str}, auth=#{smtp_settings[:authentication]}, username=#{smtp_settings[:user_name].present? ? '[SET]' : '[MISSING]'}"
-  rescue => _e
-    STDOUT.puts "SMTP config logging skipped"
-  end
-
-  config.action_mailer.smtp_settings = smtp_settings
 end
+
