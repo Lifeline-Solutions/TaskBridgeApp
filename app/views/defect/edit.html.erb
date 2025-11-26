@@ -760,21 +760,58 @@
     }
   }
 
-  // Initialize everything
+  // Initialize everything with guard to prevent multiple initializations
+  let isInitialized = false;
+  
   function initializeAll() {
+    console.log('=== INITIALIZING EDIT FORM ===');
+    console.log('Banking Types Data:', window.bankingTypesData);
+    console.log('Banking Types Count:', window.bankingTypesData ? window.bankingTypesData.length : 'undefined');
+    
+    // Guard against multiple initializations
+    if (isInitialized) {
+      console.log('Already initialized, skipping...');
+      return;
+    }
+    
+    // Validate data is available
+    if (!window.bankingTypesData) {
+      console.error('ERROR: window.bankingTypesData is not defined!');
+      return;
+    }
+    
+    if (!window.assigneeUsersData) {
+      console.error('ERROR: window.assigneeUsersData is not defined!');
+      return;
+    }
+    
+    if (!window.projectsData) {
+      console.error('ERROR: window.projectsData is not defined!');
+      return;
+    }
+    
     initSearchableDropdowns();
     initModuleSubmoduleLoading();
     initStatusDropdown();
+    
+    isInitialized = true;
+    console.log('=== INITIALIZATION COMPLETE ===');
   }
 
-  // Initialize when DOM is loaded
-  document.addEventListener('turbo:load', initializeAll);
-
-  // Also initialize when Turbo loads the content
-  document.addEventListener('turbo:load', initializeAll);
-
-  // Initialize when the frame is loaded (for modals)
-  document.addEventListener('turbo:frame-load', initializeAll);
+  // Single initialization point - run after DOM and data are ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeAll);
+  } else {
+    // DOM already loaded, initialize immediately
+    initializeAll();
+  }
+  
+  // Also handle Turbo events for modal/frame loads
+  document.addEventListener('turbo:frame-load', function(event) {
+    console.log('Turbo frame loaded, resetting initialization flag');
+    isInitialized = false;
+    initializeAll();
+  });
 
   // Handle draft button to bypass HTML5 validation (for edit page)
   document.addEventListener('turbo:load', function() {
@@ -798,6 +835,7 @@
           field.removeAttribute('required');
           field.dataset.wasRequired = 'true';
         });
+
         
         // Handle data-required fields (like CKEditor content)
         const dataRequiredFields = form.querySelectorAll('[data-required="true"]');

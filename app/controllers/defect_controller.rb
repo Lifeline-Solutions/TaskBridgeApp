@@ -711,6 +711,16 @@ class DefectController < ApplicationController
       .distinct
       .order(:first_name, :last_name)
 
+    # Set selected product from defect (same pattern as new action)
+    # This ensures banking types are loaded correctly
+    @selected_product = if params[:product_id].present?
+                          Product.find_by(id: params[:product_id])
+                        elsif @defect.product_id.present?
+                          @defect.product
+                        else
+                          nil
+                        end
+
     # Use set_form_data to load statuses, modules, banking types, etc. consistently with new action
     set_form_data
     
@@ -734,6 +744,22 @@ class DefectController < ApplicationController
                   else
                     QaModule.where(parent_id: nil).order(:name)
                   end
+
+    # Explicitly load banking types for the defect's product (fixes missing banking types in edit form)
+    @banking_types = if @defect.product_id.present?
+                       BankingType.for_product(@defect.product_id).order(:name)
+                     else
+                       BankingType.all.order(:name)
+                     end
+
+    # DEBUG: Log banking types information
+    Rails.logger.debug "=== EDIT ACTION DEBUG ==="
+    Rails.logger.debug "Defect ID: #{@defect.id}"
+    Rails.logger.debug "Defect Product ID: #{@defect.product_id}"
+    Rails.logger.debug "Selected Product: #{@selected_product&.id}"
+    Rails.logger.debug "Banking Types Count: #{@banking_types.count}"
+    Rails.logger.debug "Banking Types: #{@banking_types.map { |bt| {id: bt.id, name: bt.name} }.inspect}"
+    Rails.logger.debug "======================="
 
     @submodules = if @defect.qa_module
                     # Select only id + name and make the result distinct (and ordered)
@@ -1630,13 +1656,13 @@ class DefectController < ApplicationController
   end
 
   def set_form_data
-    # selected product if provided in params (used to scope modules/banking types)
-    # Also use @defect.product if we're editing a defect
-    @selected_product = if params[:product_id].present?
-                          Product.find_by(id: params[:product_id])
-                        elsif defined?(@defect) && @defect&.product_id.present?
-                          @defect.product
-                        end
+  # selected product if provided in params (used to scope modules/banking types)
+  # Also use @defect.product if we're editing a defect
+  @selected_product = if params[:product_id].present?
+                        Product.find_by(id: params[:product_id])
+                      elsif defined?(@defect) && @defect&.product_id.present?
+                        @defect.product
+                      end
 
     # QA modules (parent modules) - scoped to selected product if present
     @qa_modules = if @selected_product
@@ -1647,11 +1673,8 @@ class DefectController < ApplicationController
 
     # banking types scoped to selected product (so UI can show only product banking types)
   @banking_types = if @selected_product
-                     types = BankingType.for_product(@selected_product.id)
-                     Rails.logger.info "DEBUG: set_form_data product_id=#{@selected_product.id} banking_types_count=#{types.count}"
-                     types
+                     BankingType.for_product(@selected_product.id)
                    else
-                     Rails.logger.info "DEBUG: set_form_data NO PRODUCT SELECTED"
                      []
                    end
 
