@@ -547,7 +547,15 @@ class DefectController < ApplicationController
     # Attachment paginations
     @attachments_per_page = 6
     @attachments_page = (params[:attachments_page] || 1).to_i
-    all_attachments = @defect.all_attachments.sort_by(&:created_at).reverse
+    all_attachments = @defect.all_attachments.sort_by do |a|
+      if a.respond_to?(:created_at)
+        a.created_at
+      elsif a.respond_to?(:attachable) && a.attachable&.respond_to?(:created_at)
+        a.attachable.created_at
+      else
+        Time.current
+      end
+    end.reverse
     @attachments_total = all_attachments.size
     @attachments_total_pages = (@attachments_total / @attachments_per_page.to_f).ceil
 
@@ -703,6 +711,16 @@ class DefectController < ApplicationController
       .distinct
       .order(:first_name, :last_name)
 
+    # Set selected product from defect (same pattern as new action)
+    # This ensures banking types are loaded correctly
+    @selected_product = if params[:product_id].present?
+                          Product.find_by(id: params[:product_id])
+                        elsif @defect.product_id.present?
+                          @defect.product
+                        else
+                          nil
+                        end
+
     # Use set_form_data to load statuses, modules, banking types, etc. consistently with new action
     set_form_data
     
@@ -727,12 +745,20 @@ class DefectController < ApplicationController
                     QaModule.where(parent_id: nil).order(:name)
                   end
 
+    # Explicitly load banking types for the defect's product (fixes missing banking types in edit form)
+    @banking_types = if @defect.product_id.present?
+                       BankingType.for_product(@defect.product_id).order(:name)
+                     else
+                       BankingType.all.order(:name)
+                     end
+
     @submodules = if @defect.qa_module
                     # Select only id + name and make the result distinct (and ordered)
                     @defect.qa_module.submodules.select(:id, :name).distinct.order(:name)
                   else
                     QaModule.none
                   end
+
 
     respond_to do |format|
       format.html
@@ -1622,13 +1648,13 @@ class DefectController < ApplicationController
   end
 
   def set_form_data
-    # selected product if provided in params (used to scope modules/banking types)
-    # Also use @defect.product if we're editing a defect
-    @selected_product = if params[:product_id].present?
-                          Product.find_by(id: params[:product_id])
-                        elsif defined?(@defect) && @defect&.product_id.present?
-                          @defect.product
-                        end
+  # selected product if provided in params (used to scope modules/banking types)
+  # Also use @defect.product if we're editing a defect
+  @selected_product = if params[:product_id].present?
+                        Product.find_by(id: params[:product_id])
+                      elsif defined?(@defect) && @defect&.product_id.present?
+                        @defect.product
+                      end
 
     # QA modules (parent modules) - scoped to selected product if present
     @qa_modules = if @selected_product
@@ -1638,11 +1664,11 @@ class DefectController < ApplicationController
                   end
 
     # banking types scoped to selected product (so UI can show only product banking types)
-    @banking_types = if @selected_product
-                       BankingType.for_product(@selected_product.id)
-                     else
-                       []
-                     end
+  @banking_types = if @selected_product
+                     BankingType.for_product(@selected_product.id)
+                   else
+                     []
+                   end
 
     # If a module was selected (e.g. via params), preload its submodules for the view
     if params[:qa_module_id].present?

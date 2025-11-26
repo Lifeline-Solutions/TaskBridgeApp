@@ -31,15 +31,24 @@
           <tr class="bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg">
             <!-- Icon + Filename -->
             <td class="py-3 px-4 flex items-center space-x-2">
-              <% if attachment.image? %>
-                <%= image_tag attachment,
+              <% 
+                 # Safe URL generation for both ActiveStorage::Attachment and ActionText::Attachment
+                 blob = attachment.respond_to?(:blob) ? attachment.blob : attachment
+                 safe_url = begin
+                              rails_blob_url(blob, disposition: "attachment")
+                            rescue => e
+                              nil
+                            end
+              %>
+              <% if safe_url && attachment.content_type.to_s.start_with?('image/') %>
+                <%= image_tag safe_url,
                               class: "w-6 h-6 rounded cursor-pointer hover:opacity-80",
-                              data: { action: "click->preview#open", url: url_for(attachment), type: attachment.content_type } %>
-              <% elsif attachment.video? %>
+                              data: { action: "click->preview#open", url: safe_url, type: attachment.content_type } %>
+              <% elsif safe_url && attachment.content_type.to_s.start_with?('video/') %>
                 <svg class="w-6 h-6 text-gray-400 cursor-pointer hover:text-gray-600"
                      fill="currentColor" viewBox="0 0 24 24"
                      data-action="click->preview#open"
-                     data-url="<%= url_for(attachment) %>"
+                     data-url="<%= safe_url %>"
                      data-type="<%= attachment.content_type %>">
                   <path d="M17 10.5V7c0-1.1-.9-2-2-2H5C3.9 5 3 5.9 3 7v10c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-3.5l4 4v-11l-4 4z"/>
                 </svg>
@@ -47,31 +56,59 @@
                 <svg class="w-6 h-6 text-gray-400 cursor-pointer hover:text-gray-600"
                      fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
                      data-action="click->preview#open"
-                     data-url="<%= url_for(attachment) %>"
+                     data-url="<%= safe_url %>"
                      data-type="<%= attachment.content_type %>">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.4a1 1 0 00-.3-.7L13.3 3.3A1 1 0 0012.6 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                 </svg>
               <% end %>
 
-              <%= link_to attachment.filename,
-                          rails_blob_path(attachment, disposition: "attachment"),
+              <%
+                 # Safe filename and byte_size access
+                 filename = if attachment.respond_to?(:filename)
+                              attachment.filename
+                            elsif attachment.respond_to?(:blob)
+                              attachment.blob.filename
+                            else
+                              "Unknown File"
+                            end
+
+                 byte_size = if attachment.respond_to?(:byte_size)
+                               attachment.byte_size
+                             elsif attachment.respond_to?(:blob)
+                               attachment.blob.byte_size
+                             else
+                               0
+                             end
+              %>
+
+              <%= link_to filename,
+                          safe_url,
                           class: "font-medium text-blue-600 dark:text-blue-400 hover:underline truncate max-w-xs",
-                          title: attachment.filename.to_s %>
+                          title: filename.to_s %>
             </td>
 
             <!-- Size -->
             <td class="py-3 px-4 whitespace-nowrap">
-              <%= number_to_human_size(attachment.byte_size) %>
+              <%= number_to_human_size(byte_size) %>
             </td>
 
             <!-- Date Added -->
             <td class="py-3 px-4 whitespace-nowrap">
-              <%= l(attachment.created_at, format: :short) %>
+              <% 
+                 created_at = if attachment.respond_to?(:created_at)
+                                attachment.created_at
+                              elsif attachment.respond_to?(:attachable) && attachment.attachable&.respond_to?(:created_at)
+                                attachment.attachable.created_at
+                              else
+                                Time.current
+                              end
+              %>
+              <%= l(created_at, format: :short) %>
             </td>
 
             <!-- Actions -->
             <td class="py-3 px-4 flex space-x-3">
-              <%= link_to rails_blob_path(attachment, disposition: "attachment"),
+              <%= link_to safe_url,
                           class: "text-blue-600 dark:text-blue-500 hover:text-blue-800" do %>
                 <svg xmlns="http://www.w3.org/2000/svg"
                      width="20" height="20" viewBox="0 0 24 24"

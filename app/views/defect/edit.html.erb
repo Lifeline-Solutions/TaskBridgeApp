@@ -182,30 +182,33 @@
               </div>
 
               <!-- Banking Type -->
-              <div class="relative w-full">
-                <label for="banking-type-search"
-                  class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
-                    Banking Type *
-                </label>
-                <!-- Search input wrapper -->
-                <div class="relative">
-                  <input type="text"
-                        id="banking-type-search"
-                        placeholder="Type to search banking types..."
-                        value="<%= @defect.banking_type&.name %>"
-                        class="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 text-sm focus:outline-none
-                                focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
+          <div class="relative w-full" 
+               data-banking-types='<%= raw (@banking_types || []).map { |bt| { id: bt.id, name: bt.name } }.to_json %>'
+               data-assignee-users='<%= raw @users.map { |u| { id: u.id, name: u.name } }.to_json %>'
+               data-projects='<%= raw @products_and_clients_defects.map { |name, id| { name: name, id: id } }.to_json %>'>
+            <label for="banking-type-search"
+              class="block mb-1 text-xs font-medium text-gray-700 dark:text-gray-300 tracking-wide uppercase">
+                Banking Type *
+            </label>
+            <!-- Search input wrapper -->
+            <div class="relative">
+              <input type="text"
+                    id="banking-type-search"
+                    placeholder="Type to search banking types..."
+                    value="<%= @defect.banking_type&.name %>"
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 text-sm focus:outline-none
+                            focus:ring-2 focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600" />
 
-                  <!-- Dropdown caret icon -->
-                  <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                  </div>
-                </div>
+              <!-- Dropdown caret icon -->
+              <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+            </div>
 
-                <!-- Hidden field for selected banking_type_id -->
-                <%= f.hidden_field :banking_type_id, id: "banking-type-id-field", value: @defect.banking_type_id %>
+            <!-- Hidden field for selected banking_type_id -->
+            <%= f.hidden_field :banking_type_id, id: "banking-type-id-field", value: @defect.banking_type_id %>
 
                 <!-- Results dropdown -->
                 <ul id="banking-type-results"
@@ -476,20 +479,30 @@
     }
   });
 
-  // Store the data in global variables so they're accessible
-  window.bankingTypesData = <%= raw (@banking_types || []).map { |bt| { id: bt.id, name: bt.name } }.to_json %>;
-  window.assigneeUsersData = <%= raw @users.map { |u| { id: u.id, name: u.name } }.to_json %>;
-  window.projectsData = <%= raw @products_and_clients_defects.map { |name, id|
-    { name: name, id: id }
-  }.to_json %>;
+  // CRITICAL: Read data from HTML data attributes (works in Turbo Frames)
+  (function() {
+    // Find the container with data attributes
+    const bankingTypeContainer = document.querySelector('[data-banking-types]');
+    
+    if (!bankingTypeContainer) {
+      return;
+    }
+    
+    // Read data from HTML data attributes (this works even in Turbo Frames)
+    try {
+      window.bankingTypesData = JSON.parse(bankingTypeContainer.dataset.bankingTypes || '[]');
+      window.assigneeUsersData = JSON.parse(bankingTypeContainer.dataset.assigneeUsers || '[]');
+      window.projectsData = JSON.parse(bankingTypeContainer.dataset.projects || '[]');
+    } catch (e) {
+      window.bankingTypesData = [];
+      window.assigneeUsersData = [];
+      window.projectsData = [];
+    }
+  })();
 
-  // Debug logging
-  console.log('=== EDIT FORM DEBUG ===');
-  console.log('Banking Types Data:', window.bankingTypesData);
-  console.log('Banking Types Count:', window.bankingTypesData ? window.bankingTypesData.length : 0);
-  console.log('======================');
 
-  function initSearchableDropdowns() {
+  // Make function global so it can be called from turbo:frame-load event
+  window.initSearchableDropdowns = function() {
     // ===== Projects ====
     const projectInput = document.getElementById("project-search");
     const projectResults = document.getElementById("project-results");
@@ -716,15 +729,15 @@
           })
           .then(resp => resp.json())
           .then(data => {
-            console.log("Status updated:", data);
+
           })
-          .catch(err => console.error("Status update failed:", err));
+
         }
       });
     }
-  }
+  }; // End of initSearchableDropdowns
 
-  function initModuleSubmoduleLoading() {
+  window.initModuleSubmoduleLoading = function() {
     // ===== Dynamic module/submodule loading =====
     const modSelect = document.querySelector('[data-project-modules-target="moduleSelect"]');
     const submodSelect = document.querySelector('[data-project-modules-target="submoduleSelect"]');
@@ -746,7 +759,7 @@
                 });
               })
               .catch(error => {
-                console.error('Error loading submodules:', error);
+
               });
           }
         }
@@ -758,23 +771,40 @@
       const event = new Event('change');
       modSelect.dispatchEvent(event);
     }
-  }
+  }; // End of initModuleSubmoduleLoading
 
-  // Initialize everything
-  function initializeAll() {
+  // Initialize everything - fresh on every load
+  window.initializeAll = function() {
+    // Validate data is available
+    if (!window.bankingTypesData) {
+      return;
+    }
+    if (!window.assigneeUsersData) {
+      return;
+    }
+    if (!window.projectsData) {
+      return;
+    }
+    
     initSearchableDropdowns();
     initModuleSubmoduleLoading();
     initStatusDropdown();
-  }
+  }; // End of initializeAll
 
-  // Initialize when DOM is loaded
-  document.addEventListener('turbo:load', initializeAll);
-
-  // Also initialize when Turbo loads the content
-  document.addEventListener('turbo:load', initializeAll);
-
-  // Initialize when the frame is loaded (for modals)
-  document.addEventListener('turbo:frame-load', initializeAll);
+  // Initialize on turbo:load (when navigating to this page)
+  document.addEventListener('turbo:load', function() {
+    initializeAll();
+  });
+  
+  // Initialize on turbo:frame-load (when modal/frame loads)
+  document.addEventListener('turbo:frame-load', function(event) {
+    initializeAll();
+  });
+  
+  // Initialize on DOMContentLoaded as fallback
+  document.addEventListener('DOMContentLoaded', function() {
+    initializeAll();
+  });
 
   // Handle draft button to bypass HTML5 validation (for edit page)
   document.addEventListener('turbo:load', function() {
@@ -787,7 +817,7 @@
     if (draftButton) {
       // When draft button is clicked, disable HTML5 validation
       draftButton.addEventListener('click', function(e) {
-        console.log('Draft button clicked - disabling validation');
+
         
         // Disable HTML5 validation on the form
         form.setAttribute('novalidate', 'novalidate');
@@ -798,6 +828,7 @@
           field.removeAttribute('required');
           field.dataset.wasRequired = 'true';
         });
+
         
         // Handle data-required fields (like CKEditor content)
         const dataRequiredFields = form.querySelectorAll('[data-required="true"]');
@@ -811,7 +842,7 @@
     // When update button is clicked, restore validation
     if (updateButton) {
       updateButton.addEventListener('click', function(e) {
-        console.log('Update button clicked - enabling validation');
+
         
         // Enable HTML5 validation
         form.removeAttribute('novalidate');
