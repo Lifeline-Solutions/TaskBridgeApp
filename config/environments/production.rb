@@ -97,10 +97,8 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions
 
-  # Action Mailer configuration
-  config.action_mailer.default_url_options = { host: 'taskbridge.craftsilicon.com', protocol: 'https' }
+  config.action_mailer.default_url_options = { host: 'https://taskbridge.craftsilicon.com/', protocol: 'https' }
   config.action_controller.raise_on_missing_callback_actions = true
-  config.active_storage.variant_processor = :mini_magick
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.perform_caching = false
   config.action_mailer.delivery_method = :smtp
@@ -113,9 +111,9 @@ Rails.application.configure do
     authentication: 'plain', # Can also be 'plain' or 'cram_md5'
     ssl: true, # Use SSL encryption
     tls: true, # Enforce TLS
-    enable_starttls_auto: false, # Automatically start TLS if available
-    openssl_verify_mode: 'none' # To avoid certificate verification issues (use cautiously)
+    enable_starttls_auto: true, # Automatically start TLS if available
+    openssl_verify_mode: 'none', # To avoid certificate verification issues (use cautiously)
+    open_timeout: 30, # Increase open timeout to 30 seconds
+    read_timeout: 30  # Increase read timeout to 30 seconds
   }
-
 end
-
