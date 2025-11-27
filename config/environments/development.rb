@@ -86,14 +86,15 @@ Rails.application.configure do
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.smtp_settings = {
     address: 'secure.emailsrvr.com',
-    port: 465, # Use 587 for STARTTLS or 465 for SSL/TLS
-    domain: 'craftsilicon.com', # Replace with your domain
-    user_name: 'cspm@craftsilicon.com', # Replace with your email
-    password: '#cspm@123#', # Replace with your email password
-    authentication: 'plain', # Can also be 'plain' or 'cram_md5'
-    ssl: true, # Use SSL encryption
-    tls: true, # Enforce TLS
-    enable_starttls_auto: false, # Automatically start TLS if available
-    openssl_verify_mode: 'none' # To avoid certificate verification issues (use cautiously)
+    port: 465, # Port 465 uses implicit SSL/TLS (SMTPS)
+    domain: 'craftsilicon.com',
+    user_name: 'cspm@craftsilicon.com',
+    password: '#cspm@123#',
+    authentication: :plain,
+    ssl: true, # Use implicit SSL for port 465 (SMTPS)
+    # NOTE: Do NOT set enable_starttls_auto with ssl: true - they are mutually exclusive
+    # Port 465 = implicit SSL (use ssl: true)
+    # Port 587 = explicit STARTTLS (use enable_starttls_auto: true)
+    openssl_verify_mode: 'none'
   }
 end
