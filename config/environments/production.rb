@@ -107,15 +107,15 @@ Rails.application.configure do
   
   config.action_mailer.smtp_settings = {
     address: 'secure.emailsrvr.com',
-    port: 587, 
+    port: 465, 
     domain: 'craftsilicon.com',
     user_name: 'cspm@craftsilicon.com',
     password: '#cspm@123#',
-    authentication: :login,
+    authentication: :plain,
     
     # === THE FIX STARTS HERE ===
-    tls: false,                  # Implicit SSL for Port 465 (replaces ssl: true)
-    enable_starttls_auto: true, # MUST be false when tls is true
+    tls: true,                  # Implicit SSL for Port 465 (replaces ssl: true)
+    enable_starttls_auto: false, # MUST be false when tls is true
     # === THE FIX ENDS HERE ===
 
     openssl_verify_mode: 'none', 
