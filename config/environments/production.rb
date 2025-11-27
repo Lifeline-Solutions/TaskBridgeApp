@@ -102,19 +102,23 @@ Rails.application.configure do
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.perform_caching = false
   config.action_mailer.delivery_method = :smtp
+
+  # SMTP Configuration with improved reliability
+  # If server refuses connections (554 error), Sidekiq will automatically retry with exponential backoff
   config.action_mailer.smtp_settings = {
-    address: 'secure.emailsrvr.com',
-    port: 465, # Port 465 uses implicit SSL/TLS (SMTPS)
-    domain: 'craftsilicon.com',
-    user_name: 'cspm@craftsilicon.com',
-    password: '#cspm@123#',
+    address: ENV.fetch('SMTP_ADDRESS', 'secure.emailsrvr.com'),
+    port: ENV.fetch('SMTP_PORT', '465').to_i,
+    domain: ENV.fetch('SMTP_DOMAIN', 'craftsilicon.com'),
+    user_name: ENV.fetch('SMTP_USERNAME', 'cspm@craftsilicon.com'),
+    password: ENV.fetch('SMTP_PASSWORD', '#cspm@123#'),
     authentication: :plain,
     ssl: true, # Use implicit SSL for port 465 (SMTPS)
     # NOTE: Do NOT set enable_starttls_auto with ssl: true - they are mutually exclusive
     # Port 465 = implicit SSL (use ssl: true)
     # Port 587 = explicit STARTTLS (use enable_starttls_auto: true)
-    openssl_verify_mode: 'none', # To avoid certificate verification issues
-    open_timeout: 30,
-    read_timeout: 30
+    openssl_verify_mode: 'none',
+    # Increased timeouts to handle slow/busy mail servers
+    open_timeout: 60,  # Increased from 30 to 60 seconds
+    read_timeout: 60   # Increased from 30 to 60 seconds
   }
 end
