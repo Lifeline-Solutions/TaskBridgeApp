@@ -80,6 +80,24 @@ end
 
 $verbose_flag = options[:verbose]
 
+# Global tracking for user match statistics
+$USER_STATS = {
+  total_lookups: 0,
+  email_matches: 0,
+  full_name_matches: 0,
+  first_last_matches: 0,
+  partial_matches: 0,
+  config_map_matches: 0,
+  created_users: 0,
+  fallback_users: 0,
+  matched_users: Set.new,      # Set of user IDs successfully matched
+  fallback_users_set: Set.new,  # Set of user IDs that fell back to default
+  not_found_names: Hash.new(0), # Names that couldn't be matched
+  parsed_names: {},             # Track parsed names for reporting
+  reporter_matches: {},         # Track reporter matches per issue
+  assignee_matches: {}          # Track assignee matches per issue
+}
+
 project_list = options[:projects].map(&:strip).reject(&:empty?)
 
 # Debug output to verify projects are parsed correctly
@@ -275,7 +293,73 @@ def try_parse_time(val)
   end
 end
 
+# ===============================
+# ENHANCED NAME PARSING HELPERS
+# ===============================
+# Parse Jira displayName into first_name and last_name components
+# Handles formats like:
+#   "Eva Karimi Njagi" -> first: "Eva", last: "Karimi" (use first 2 parts)
+#   "archana.verma" -> first: "archana", last: "verma" (split by dot)
+#   "John Smith" -> first: "John", last: "Smith" (standard split)
+def parse_jira_name(full_name)
+  return { first_name: nil, last_name: nil } if full_name.blank?
+
+  name_str = full_name.to_s.strip
+
+  # STRATEGY 1: Check for dot-separated format (e.g., "archana.verma")
+  if name_str.include?('.')
+    parts = name_str.split('.')
+    if parts.length >= 2
+      first = parts[0].strip.presence
+      last = parts[1].strip.presence
+      if first && last
+        $USER_STATS[:parsed_names][name_str] = { strategy: 'dot-separated', first_name: first, last_name: last }
+        return { first_name: first, last_name: last }
+      end
+    end
+  end
+
+  # STRATEGY 2: Check for multi-part name (3+ parts) - use first 2 parts
+  # Example: "Eva Karimi Njagi" -> first: "Eva", last: "Karimi"
+  # This handles cases where the 2nd part is actually the surname
+  parts = name_str.split(/\s+/).reject(&:empty?)
+
+  if parts.length >= 3
+    # For multi-part names, try to match first+second against database first
+    # This handles cases like "Eva Karimi Njagi" where "Eva Karimi" exists in DB
+    first_two = [parts[0], parts[1]].map(&:strip).reject(&:empty?)
+    if first_two.length == 2
+      $USER_STATS[:parsed_names][name_str] = { strategy: 'multi-part-first-two', first_name: first_two[0], last_name: first_two[1] }
+      return { first_name: first_two[0], last_name: first_two[1] }
+    end
+  end
+
+  # STRATEGY 3: Standard split (2 parts or less)
+  if parts.length >= 2
+    first = parts[0].strip.presence
+    last = parts[1..-1].map(&:strip).join(' ').presence
+    if first && last
+      $USER_STATS[:parsed_names][name_str] = { strategy: 'standard-split', first_name: first, last_name: last }
+      return { first_name: first, last_name: last }
+    end
+  end
+
+  # STRATEGY 4: Single part - treat as first name only
+  if parts.length == 1
+    first = parts[0].strip.presence
+    if first
+      $USER_STATS[:parsed_names][name_str] = { strategy: 'single-part', first_name: first, last_name: nil }
+      return { first_name: first, last_name: nil }
+    end
+  end
+
+  $USER_STATS[:parsed_names][name_str] = { strategy: 'failed-parse', first_name: nil, last_name: nil }
+  { first_name: nil, last_name: nil }
+end
+
 def find_user_by_name_or_map(name, email = nil, verbose: false)
+  $USER_STATS[:total_lookups] += 1
+
   name_str = name.to_s.strip
   email_str = email.to_s.strip
 
@@ -285,13 +369,65 @@ def find_user_by_name_or_map(name, email = nil, verbose: false)
   if email_str.present? && email_str.downcase != 'restricted'
     user = User.where(deleted_on: nil).find_by('lower(email) = ?', email_str.downcase)
     if user
+      $USER_STATS[:email_matches] += 1
+      $USER_STATS[:matched_users] << user.id
       vputs "[USER-MATCH] Matched '#{name_str}' by email: #{email_str} -> #{user.id}" if verbose
       return user
     end
   end
 
-  # PRIORITY 2: Dynamic first_name + last_name matching from Jira displayName
-  # This replaces hardcoded user_map with intelligent name comparison
+  # PRIORITY 2: Parse name using enhanced parsing (handles dot-separated and multi-part)
+  parsed = parse_jira_name(name_str)
+  parsed_first = parsed[:first_name]
+  parsed_last = parsed[:last_name]
+
+  if parsed_first && parsed_last
+    # Try exact first + last name match (case-insensitive)
+    user = User.where(deleted_on: nil)
+      .where('lower(first_name) = ? AND lower(last_name) = ?', parsed_first.downcase, parsed_last.downcase)
+      .first
+    if user
+      $USER_STATS[:first_last_matches] += 1
+      $USER_STATS[:matched_users] << user.id
+      vputs "[USER-MATCH] Matched '#{name_str}' by parsed first+last: #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
+      return user
+    end
+
+    # Try partial match: first name exact, last name prefix
+    user = User.where(deleted_on: nil)
+      .where('lower(first_name) = ? AND lower(last_name) LIKE ?', parsed_first.downcase, "#{parsed_last.downcase}%")
+      .first
+    if user
+      $USER_STATS[:partial_matches] += 1
+      $USER_STATS[:matched_users] << user.id
+      vputs "[USER-MATCH] Matched '#{name_str}' by partial last: #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
+      return user
+    end
+
+    # Try reverse: last name exact, first name prefix
+    user = User.where(deleted_on: nil)
+      .where('lower(last_name) = ? AND lower(first_name) LIKE ?', parsed_last.downcase, "#{parsed_first.downcase}%")
+      .first
+    if user
+      $USER_STATS[:partial_matches] += 1
+      $USER_STATS[:matched_users] << user.id
+      vputs "[USER-MATCH] Matched '#{name_str}' by partial first: #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
+      return user
+    end
+  elsif parsed_first
+    # Only first name available - try single name match
+    user = User.where(deleted_on: nil)
+      .where('lower(first_name) = ? OR lower(last_name) = ?', parsed_first.downcase, parsed_first.downcase)
+      .first
+    if user
+      $USER_STATS[:partial_matches] += 1
+      $USER_STATS[:matched_users] << user.id
+      vputs "[USER-MATCH] Matched '#{name_str}' by single name: #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
+      return user
+    end
+  end
+
+  # PRIORITY 3: Try dynamic first_name + last_name matching from Jira displayName (backward compat)
   if name_str.present?
     # Try exact full name match (case-insensitive)
     normalized = name_str.downcase
@@ -299,6 +435,8 @@ def find_user_by_name_or_map(name, email = nil, verbose: false)
       .where("lower(coalesce(first_name,'') || ' ' || coalesce(last_name,'')) = ?", normalized)
       .first
     if user
+      $USER_STATS[:full_name_matches] += 1
+      $USER_STATS[:matched_users] << user.id
       vputs "[USER-MATCH] Matched '#{name_str}' by full name: #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
       return user
     end
@@ -314,6 +452,8 @@ def find_user_by_name_or_map(name, email = nil, verbose: false)
         .where('lower(first_name) = ? AND lower(last_name) = ?', first.downcase, last.downcase)
         .first
       if user
+        $USER_STATS[:first_last_matches] += 1
+        $USER_STATS[:matched_users] << user.id
         vputs "[USER-MATCH] Matched '#{name_str}' by first+last name: #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
         return user
       end
@@ -323,6 +463,8 @@ def find_user_by_name_or_map(name, email = nil, verbose: false)
         .where('lower(first_name) = ? AND lower(last_name) LIKE ?', first.downcase, "#{last.downcase}%")
         .first
       if user
+        $USER_STATS[:partial_matches] += 1
+        $USER_STATS[:matched_users] << user.id
         vputs "[USER-MATCH] Matched '#{name_str}' by partial last name: #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
         return user
       end
@@ -332,6 +474,8 @@ def find_user_by_name_or_map(name, email = nil, verbose: false)
         .where('lower(last_name) = ? AND lower(first_name) LIKE ?', last.downcase, "#{first.downcase}%")
         .first
       if user
+        $USER_STATS[:partial_matches] += 1
+        $USER_STATS[:matched_users] << user.id
         vputs "[USER-MATCH] Matched '#{name_str}' by partial first name: #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
         return user
       end
@@ -342,18 +486,21 @@ def find_user_by_name_or_map(name, email = nil, verbose: false)
         .where('lower(first_name) = ? OR lower(last_name) = ?', single, single)
         .first
       if user
+        $USER_STATS[:partial_matches] += 1
+        $USER_STATS[:matched_users] << user.id
         vputs "[USER-MATCH] Matched '#{name_str}' by single name: #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
         return user
       end
     end
   end
 
-  # PRIORITY 3: Fallback to explicit config map (optional override)
-  # This allows manual overrides for edge cases where automatic matching fails
+  # PRIORITY 4: Fallback to explicit config map (optional override)
   if USER_UUID_MAP[name_str]
     uid = USER_UUID_MAP[name_str]
     user = User.find_by(id: uid)
     if user
+      $USER_STATS[:config_map_matches] += 1
+      $USER_STATS[:matched_users] << user.id
       vputs "[USER-MATCH] Matched '#{name_str}' by config map -> #{user.id}" if verbose
       return user
     end
@@ -364,29 +511,46 @@ def find_user_by_name_or_map(name, email = nil, verbose: false)
     uid = USER_UUID_MAP[name_str.downcase]
     user = User.find_by(id: uid)
     if user
+      $USER_STATS[:config_map_matches] += 1
+      $USER_STATS[:matched_users] << user.id
       vputs "[USER-MATCH] Matched '#{name_str}' by config map (lowercase) -> #{user.id}" if verbose
       return user
     end
   end
 
-  # PRIORITY 4: Optionally create new user if allowed
+  # PRIORITY 5: Optionally create new user if allowed
   if CREATE_MISSING_USERS && email_str.present? && email_str.downcase != 'restricted'
+    # Use parsed names if available, otherwise fall back to simple split
+    if parsed_first
+      first_name = parsed_first
+      last_name = parsed_last || 'User'
+    else
+      parts = name_str.split(' ')
+      first_name = parts.first || 'Imported'
+      last_name = parts[1..]&.join(' ') || 'User'
+    end
+
     attrs = {
       email: email_str.downcase,
-      first_name: name_str.split(' ').first || 'Imported',
-      last_name: name_str.split(' ')[1..]&.join(' ') || 'User',
+      first_name: first_name,
+      last_name: last_name,
       created_by: DEFAULT_CREATED_BY,
       modified_by: DEFAULT_CREATED_BY
     }
     created = User.create(attrs)
     if created.persisted?
-      vputs "[USER-CREATE] Created new user '#{name_str}' (#{email_str}) -> #{created.id}" if verbose
+      $USER_STATS[:created_users] += 1
+      $USER_STATS[:matched_users] << created.id
+      vputs "[USER-CREATE] Created new user '#{name_str}' (#{email_str}) with first='#{first_name}', last='#{last_name}' -> #{created.id}" if verbose
       return created
     end
   end
 
-  # PRIORITY 5: Final fallback to default user
+  # PRIORITY 6: Final fallback to default user
   default_user = User.find_by(id: DEFAULT_USER_UUID)
+  $USER_STATS[:fallback_users] += 1
+  $USER_STATS[:fallback_users_set] << DEFAULT_USER_UUID if default_user
+  $USER_STATS[:not_found_names][name_str] += 1
   vputs "[USER-FALLBACK] Using default user for '#{name_str}' -> #{DEFAULT_USER_UUID}" if verbose
   default_user
 end
@@ -2237,8 +2401,37 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
   puts ""
 
   # Map users with fallbacks (using dynamic first+last name matching)
-  reporter_user = find_user_by_name_or_map(reporter_name, reporter_email, verbose: verbose) || User.find_by(id: DEFAULT_USER_UUID)
-  assignee_user = find_user_by_name_or_map(assignee_name, assignee_email, verbose: verbose) || User.find_by(id: DEFAULT_USER_UUID)
+  # Track reporter match
+  reporter_user = find_user_by_name_or_map(reporter_name, reporter_email, verbose: verbose)
+  if reporter_user.nil?
+    reporter_user = User.find_by(id: DEFAULT_USER_UUID)
+    reporter_match_status = 'fallback'
+  else
+    reporter_match_status = 'matched'
+  end
+  $USER_STATS[:reporter_matches][issue_key] = {
+    name: reporter_name,
+    email: reporter_email,
+    user_id: reporter_user&.id,
+    status: reporter_match_status,
+    match_type: 'reporter'
+  }
+
+  # Track assignee match
+  assignee_user = find_user_by_name_or_map(assignee_name, assignee_email, verbose: verbose)
+  if assignee_user.nil?
+    assignee_user = User.find_by(id: DEFAULT_USER_UUID)
+    assignee_match_status = 'fallback'
+  else
+    assignee_match_status = 'matched'
+  end
+  $USER_STATS[:assignee_matches][issue_key] = {
+    name: assignee_name,
+    email: assignee_email,
+    user_id: assignee_user&.id,
+    status: assignee_match_status,
+    match_type: 'assignee'
+  }
 
   # ID used for created_by/modified_by when creating related records
   created_by_uid = reporter_user&.id || DEFAULT_CREATED_BY || DEFAULT_USER_UUID
@@ -3156,6 +3349,108 @@ begin
   info '\nEnd of import verification report.'
   info '=' * 80
   end  # Close unless options[:dry_run]
+
+  # ===============================
+  # USER MATCH STATISTICS REPORT
+  # ===============================
+  unless options[:dry_run]
+    info "\n" + "=" * 80
+    info "👤 USER MATCH STATISTICS REPORT"
+    info "=" * 80
+
+    total_lookups = $USER_STATS[:total_lookups]
+    info "\nTotal user lookups performed: #{total_lookups}"
+    info ""
+    info "Match breakdown:"
+    info "  ✅ Email matches:          #{$USER_STATS[:email_matches]} (#{total_lookups > 0 ? (($USER_STATS[:email_matches].to_f / total_lookups) * 100).round(2) : 0}%)"
+    info "  ✅ Full name matches:      #{$USER_STATS[:full_name_matches]} (#{total_lookups > 0 ? (($USER_STATS[:full_name_matches].to_f / total_lookups) * 100).round(2) : 0}%)"
+    info "  ✅ First+Last matches:     #{$USER_STATS[:first_last_matches]} (#{total_lookups > 0 ? (($USER_STATS[:first_last_matches].to_f / total_lookups) * 100).round(2) : 0}%)"
+    info "  ✅ Partial matches:        #{$USER_STATS[:partial_matches]} (#{total_lookups > 0 ? (($USER_STATS[:partial_matches].to_f / total_lookups) * 100).round(2) : 0}%)"
+    info "  ✅ Config map matches:     #{$USER_STATS[:config_map_matches]}"
+    info "  🆕 Created users:          #{$USER_STATS[:created_users]}"
+    info "  ⚠️  Fallback to default:    #{$USER_STATS[:fallback_users]}"
+    info ""
+
+    total_matched = $USER_STATS[:matched_users].length
+    info "Summary:"
+    info "  Total unique matched users: #{total_matched}"
+    info "  Total unique fallback uses: #{$USER_STATS[:fallback_users_set].length}"
+    info ""
+
+    # Reporter/Assignee specific report
+    info "Reporter/Assignee Matching:"
+    reporter_matched = $USER_STATS[:reporter_matches].values.count { |v| v[:status] == 'matched' }
+    reporter_fallback = $USER_STATS[:reporter_matches].length - reporter_matched
+
+    assignee_matched = $USER_STATS[:assignee_matches].values.count { |v| v[:status] == 'matched' }
+    assignee_fallback = $USER_STATS[:assignee_matches].length - assignee_matched
+
+    info "  Reporters: #{reporter_matched} matched, #{reporter_fallback} fallback to default"
+    info "  Assignees: #{assignee_matched} matched, #{assignee_fallback} fallback to default"
+    info ""
+
+    # Name parsing strategies report
+    if $USER_STATS[:parsed_names].any?
+      info "Name Parsing Strategies Used:"
+      strategies = $USER_STATS[:parsed_names].values.group_by { |v| v[:strategy] }
+      strategies.each do |strategy, entries|
+        info "  #{strategy}: #{entries.length} name(s)"
+      end
+      info ""
+
+      # Show details of dot-separated names parsed
+      dot_separated = $USER_STATS[:parsed_names].select { |_, v| v[:strategy] == 'dot-separated' }
+      if dot_separated.any?
+        info "  Dot-separated names parsed:"
+        dot_separated.each do |name, parsed|
+          info "    - '#{name}' → first: '#{parsed[:first_name]}', last: '#{parsed[:last_name]}'"
+        end
+        info ""
+      end
+
+      # Show details of multi-part names
+      multi_part = $USER_STATS[:parsed_names].select { |_, v| v[:strategy] == 'multi-part-first-two' }
+      if multi_part.any?
+        info "  Multi-part names (using first 2 parts):"
+        multi_part.each do |name, parsed|
+          info "    - '#{name}' → first: '#{parsed[:first_name]}', last: '#{parsed[:last_name]}'"
+        end
+        info ""
+      end
+    end
+
+    # Not found names
+    if $USER_STATS[:not_found_names].any?
+      info "Names that could not be matched (fell back to default user):"
+      $USER_STATS[:not_found_names].sort_by { |_, count| -count }.each do |name, count|
+        info "  - '#{name}' (#{count} occurrence#{'s' if count > 1})"
+      end
+      info ""
+    end
+
+    # Issues with reporter/assignee fallback to default
+    reporter_fallback_issues = $USER_STATS[:reporter_matches].select { |_, v| v[:status] == 'fallback' }
+    assignee_fallback_issues = $USER_STATS[:assignee_matches].select { |_, v| v[:status] == 'fallback' }
+
+    if reporter_fallback_issues.any?
+      info "Issues where reporter fell back to default user:"
+      reporter_fallback_issues.each do |issue_key, data|
+        info "  - #{issue_key}: '#{data[:name]}' (#{data[:email]})"
+      end
+      info ""
+    end
+
+    if assignee_fallback_issues.any?
+      info "Issues where assignee fell back to default user:"
+      assignee_fallback_issues.each do |issue_key, data|
+        info "  - #{issue_key}: '#{data[:name]}' (#{data[:email]})"
+      end
+      info ""
+    end
+
+    info "=" * 80
+  end
+
 rescue StandardError => e
   puts "ERROR: #{e.message}"
   puts e.backtrace.first(5).join("\n")
