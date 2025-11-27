@@ -935,8 +935,8 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
 
     puts "   [#{idx + 1}/#{total_files}] 📥 Downloading: #{filename} (#{size_mb} MB)"
 
-    # Retry logic with exponential backoff
-    max_download_retries = 3
+    # Retry logic with exponential backoff - increased retries for large files
+    max_download_retries = size_mb > 20 ? 5 : 3
     download_attempt = 0
     download_success = false
     tf = nil
@@ -961,14 +961,15 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
             http.ca_file = nil  # Use system CA certs
             # Set cipher suites for better compatibility
             http.ciphers = 'HIGH:!aNULL:!eNULL:!EXPORT:!DES:!MD5:!PSK:!RC4'
-            http.ssl_timeout = 60
+            http.ssl_timeout = 90
           end
 
-          # Generous timeouts for large files (31+ MB)
-          http.open_timeout = 60
-          http.read_timeout = 600  # 10 minutes for large files
-          http.write_timeout = 60 if http.respond_to?(:write_timeout=)
-          http.keep_alive_timeout = 30
+          # Generous timeouts for large files (31+ MB) - increased based on file size
+          timeout_multiplier = size_mb > 30 ? 2 : 1
+          http.open_timeout = 90 * timeout_multiplier
+          http.read_timeout = 900 * timeout_multiplier  # Up to 30 minutes for very large files
+          http.write_timeout = 90 * timeout_multiplier if http.respond_to?(:write_timeout=)
+          http.keep_alive_timeout = 60
 
           request = Net::HTTP::Get.new(uri.request_uri)
           # preserve auth for Jira-hosted redirects
@@ -977,6 +978,7 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
           # Add headers for better connection handling
           request['Connection'] = 'keep-alive'
           request['Accept-Encoding'] = 'identity'  # Disable compression for stability
+          request['User-Agent'] = 'JiraImporter/1.0'
 
           vputs "  Attempt #{download_attempt}/#{max_download_retries}: Downloading from #{uri.to_s[0..120]}..." if verbose
 
@@ -1010,8 +1012,8 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
 
           # Exponential backoff before retry
           if download_attempt < max_download_retries
-            wait_time = 2 ** download_attempt
-            puts "  ⏳ Waiting #{wait_time}s before retry..."
+            wait_time = [2 ** download_attempt, 30].min  # Cap at 30 seconds
+            puts "  ⏳ Waiting #{wait_time}s before retry (attempt #{download_attempt}/#{max_download_retries})..."
             sleep wait_time
           end
           next
@@ -1029,6 +1031,12 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
           resp.body.each_char.each_slice(chunk_size) do |chunk|
             tf.write(chunk.join)
             bytes_written += chunk.length
+
+            # Progress indicator for large files
+            if size_mb > 10 && bytes_written % (10 * 1024 * 1024) == 0
+              progress_mb = (bytes_written / 1024.0 / 1024.0).round(1)
+              vputs "  📊 Downloaded #{progress_mb}/#{size_mb} MB..." if verbose
+            end
           end
         end
 
@@ -1059,7 +1067,15 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
           download_success = true
         else
           warn "   ⚠️  Attachment created but not verified in storage: #{filename}"
-          stats[:failed] += 1
+
+          # Retry if verification failed but we haven't exhausted retries
+          if download_attempt < max_download_retries
+            wait_time = 2 ** download_attempt
+            puts "  ⏳ Storage verification failed, retrying in #{wait_time}s..."
+            sleep wait_time
+          else
+            stats[:failed] += 1
+          end
         end
 
         vputs "  Attached #{filename} to defect #{defect.defect_unique} (service_exists=#{exists})" if verbose
@@ -1069,7 +1085,7 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
         warn "  Details: #{e.class}"
 
         if download_attempt < max_download_retries
-          wait_time = 2 ** download_attempt
+          wait_time = [2 ** download_attempt, 30].min
           puts "  ⏳ Retrying in #{wait_time}s due to SSL error..."
           sleep wait_time
         else
@@ -1077,11 +1093,11 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
           stats[:failed] += 1
         end
 
-      rescue Errno::ECONNRESET, Errno::EPIPE, EOFError, Net::ReadTimeout, Net::OpenTimeout => e
+      rescue Errno::ECONNRESET, Errno::EPIPE, EOFError, Net::ReadTimeout, Net::OpenTimeout, SocketError => e
         warn "  Connection error on attempt #{download_attempt}/#{max_download_retries}: #{e.class} - #{e.message}"
 
         if download_attempt < max_download_retries
-          wait_time = 2 ** download_attempt
+          wait_time = [2 ** download_attempt, 30].min
           puts "  ⏳ Retrying in #{wait_time}s due to connection error..."
           sleep wait_time
         else
@@ -1094,7 +1110,7 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
         warn "  Backtrace: #{e.backtrace[0..2].join("\n           ")}" if verbose
 
         if download_attempt < max_download_retries
-          wait_time = 2 ** download_attempt
+          wait_time = [2 ** download_attempt, 15].min
           puts "  ⏳ Retrying in #{wait_time}s..."
           sleep wait_time
         else
@@ -1149,7 +1165,7 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
     next unless content_url
 
     # Retry logic
-    max_download_retries = 3
+    max_download_retries = size_mb > 20 ? 5 : 3
     download_attempt = 0
     download_success = false
     tf = nil
@@ -1172,18 +1188,20 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
             http.verify_mode = OpenSSL::SSL::VERIFY_PEER
             http.ca_file = nil
             http.ciphers = 'HIGH:!aNULL:!eNULL:!EXPORT:!DES:!MD5:!PSK:!RC4'
-            http.ssl_timeout = 60
+            http.ssl_timeout = 90
           end
 
-          http.open_timeout = 60
-          http.read_timeout = 600
-          http.write_timeout = 60 if http.respond_to?(:write_timeout=)
-          http.keep_alive_timeout = 30
+          timeout_multiplier = size_mb > 30 ? 2 : 1
+          http.open_timeout = 90 * timeout_multiplier
+          http.read_timeout = 900 * timeout_multiplier
+          http.write_timeout = 90 * timeout_multiplier if http.respond_to?(:write_timeout=)
+          http.keep_alive_timeout = 60
 
           request = Net::HTTP::Get.new(uri.request_uri)
           request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
           request['Connection'] = 'keep-alive'
           request['Accept-Encoding'] = 'identity'
+          request['User-Agent'] = 'JiraImporter/1.0'
 
           vputs "  Attempt #{download_attempt}/#{max_download_retries}: Downloading comment attachment #{filename} (#{size_mb} MB)..." if verbose
 
@@ -1211,18 +1229,18 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
       rescue OpenSSL::SSL::SSLError => e
         download_success = false
         if download_attempt < max_download_retries
-          wait_time = 2 ** download_attempt
-          warn "  SSL error, retrying in #{wait_time}s..."
+          wait_time = [2 ** download_attempt, 30].min
+          warn "  SSL error on attempt #{download_attempt}, retrying in #{wait_time}s..."
           sleep wait_time
         else
           warn "  SSL error after #{max_download_retries} attempts: #{e.message}"
         end
 
-      rescue Errno::ECONNRESET, Errno::EPIPE, EOFError, Net::ReadTimeout, Net::OpenTimeout => e
+      rescue Errno::ECONNRESET, Errno::EPIPE, EOFError, Net::ReadTimeout, Net::OpenTimeout, SocketError => e
         download_success = false
         if download_attempt < max_download_retries
-          wait_time = 2 ** download_attempt
-          warn "  Connection error, retrying in #{wait_time}s..."
+          wait_time = [2 ** download_attempt, 30].min
+          warn "  Connection error (#{e.class}), retrying in #{wait_time}s..."
           sleep wait_time
         else
           warn "  Connection error after #{max_download_retries} attempts: #{e.class}"
@@ -1231,7 +1249,13 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
       rescue StandardError => e
         download_success = false
         warn "  Error downloading comment attachment: #{e.class}: #{e.message}"
-        break
+        if download_attempt < max_download_retries
+          wait_time = [2 ** download_attempt, 15].min
+          warn "  Retrying in #{wait_time}s..."
+          sleep wait_time
+        else
+          break
+        end
       end
     end
 
@@ -1249,6 +1273,12 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
         resp.body.each_char.each_slice(chunk_size) do |chunk|
           tf.write(chunk.join)
           bytes_written += chunk.length
+
+          # Progress for large files
+          if size_mb > 10 && bytes_written % (10 * 1024 * 1024) == 0
+            progress_mb = (bytes_written / 1024.0 / 1024.0).round(1)
+            vputs "  📊 Downloaded #{progress_mb}/#{size_mb} MB..." if verbose
+          end
         end
       end
       tf.rewind
