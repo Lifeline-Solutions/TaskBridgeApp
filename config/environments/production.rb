@@ -97,23 +97,28 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions
 
-  config.action_mailer.default_url_options = { host: 'https://taskbridge.craftsilicon.com/', protocol: 'https' }
+  # FIX: Removed 'https://' from host (protocol handles that)
+  config.action_mailer.default_url_options = { host: 'taskbridge.craftsilicon.com', protocol: 'https' }
+  
   config.action_controller.raise_on_missing_callback_actions = true
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.perform_caching = false
   config.action_mailer.delivery_method = :smtp
+  
   config.action_mailer.smtp_settings = {
     address: 'secure.emailsrvr.com',
-    port: 465, # Port 465 uses implicit SSL/TLS (SMTPS)
+    port: 465, 
     domain: 'craftsilicon.com',
     user_name: 'cspm@craftsilicon.com',
     password: '#cspm@123#',
     authentication: :plain,
-    ssl: true, # Use implicit SSL for port 465 (SMTPS)
-    # NOTE: Do NOT set enable_starttls_auto with ssl: true - they are mutually exclusive
-    # Port 465 = implicit SSL (use ssl: true)
-    # Port 587 = explicit STARTTLS (use enable_starttls_auto: true)
-    openssl_verify_mode: 'none', # To avoid certificate verification issues
+    
+    # === THE FIX STARTS HERE ===
+    tls: true,                  # Implicit SSL for Port 465 (replaces ssl: true)
+    enable_starttls_auto: false, # MUST be false when tls is true
+    # === THE FIX ENDS HERE ===
+
+    openssl_verify_mode: 'none', 
     open_timeout: 30,
     read_timeout: 30
   }
