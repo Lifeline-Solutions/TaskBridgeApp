@@ -3433,18 +3433,60 @@ begin
     assignee_fallback_issues = $USER_STATS[:assignee_matches].select { |_, v| v[:status] == 'fallback' }
 
     if reporter_fallback_issues.any?
-      info "Issues where reporter fell back to default user:"
-      reporter_fallback_issues.each do |issue_key, data|
-        info "  - #{issue_key}: '#{data[:name]}' (#{data[:email]})"
+      info "\n⚠️  CRITICAL: Issues where reporter fell back to default user (#{reporter_fallback_issues.length}):"
+      reporter_fallback_issues.each_with_index do |(issue_key, data), idx|
+        info "  #{idx + 1}. #{issue_key}:"
+        info "     Name: '#{data[:name]}'"
+        info "     Email: '#{data[:email]}'"
+        info "     Assigned to: #{data[:user_id]} (DEFAULT USER)"
+
+        # Check if name was parsed and show parsing strategy
+        parsed_info = $USER_STATS[:parsed_names][data[:name]]
+        if parsed_info
+          info "     Parse strategy: #{parsed_info[:strategy]}"
+          info "     Parsed as: first='#{parsed_info[:first_name]}', last='#{parsed_info[:last_name]}'"
+        end
+
+        if idx < reporter_fallback_issues.length
+          info ""
+        end
       end
       info ""
     end
 
     if assignee_fallback_issues.any?
-      info "Issues where assignee fell back to default user:"
-      assignee_fallback_issues.each do |issue_key, data|
-        info "  - #{issue_key}: '#{data[:name]}' (#{data[:email]})"
+      info "\n⚠️  CRITICAL: Issues where assignee fell back to default user (#{assignee_fallback_issues.length}):"
+      assignee_fallback_issues.each_with_index do |(issue_key, data), idx|
+        info "  #{idx + 1}. #{issue_key}:"
+        info "     Name: '#{data[:name]}'"
+        info "     Email: '#{data[:email]}'"
+        info "     Assigned to: #{data[:user_id]} (DEFAULT USER)"
+
+        # Check if name was parsed and show parsing strategy
+        parsed_info = $USER_STATS[:parsed_names][data[:name]]
+        if parsed_info
+          info "     Parse strategy: #{parsed_info[:strategy]}"
+          info "     Parsed as: first='#{parsed_info[:first_name]}', last='#{parsed_info[:last_name]}'"
+        end
+
+        if idx < assignee_fallback_issues.length
+          info ""
+        end
       end
+      info ""
+    end
+
+    # Recommendation for fixing fallback users
+    if reporter_fallback_issues.any? || assignee_fallback_issues.any?
+      total_fallback = reporter_fallback_issues.length + assignee_fallback_issues.length
+      info "🔧 RECOMMENDATIONS FOR FIXING FALLBACK USERS:"
+      info "  1. Review the names above to ensure they are spelled correctly in both Jira and the local user database"
+      info "  2. Check for case sensitivity issues (e.g., 'John Smith' vs 'john smith')"
+      info "  3. For dot-separated names (e.g., archana.verma), ensure the local database has matching first_name and last_name"
+      info "  4. For multi-part names (3+ parts), the script uses first 2 parts - verify this matches your database"
+      info "  5. Create missing users in the database if they don't exist"
+      info "  6. Run: rails runner scripts/verify_and_fix_user_assignments.rb"
+      info "  7. The verification script will attempt to fix #{total_fallback} incorrectly assigned issue(s)"
       info ""
     end
 

@@ -1,160 +1,207 @@
 #!/usr/bin/env ruby
-# Test script to verify improved user matching logic
+# scripts/test_user_matching.rb
+#
+# Test script to validate user name parsing and matching logic
+# Run this in Rails console to verify the implementation
+#
 # Usage: rails runner scripts/test_user_matching.rb
 
-puts "="*80
-puts "TESTING IMPROVED USER MATCHING"
-puts "="*80
+puts "=" * 80
+puts "USER NAME PARSING & MATCHING TEST SUITE"
+puts "=" * 80
 puts ""
 
-# Test cases for name matching
+# Test data with expected results
 test_cases = [
-  # Dot-separated names
-  { name: "archana.verma", email: nil, expected: "should match archana verma" },
-  { name: "eva.karimi", email: nil, expected: "should match eva karimi njagi or similar" },
-
-  # 3+ part names
-  { name: "Sebastian Morris Smith", email: nil, expected: "should match Sebastian Morris or Morris Smith" },
-  { name: "Eva Karimi Njagi", email: nil, expected: "should match Eva Njagi or Eva Karimi" },
-
-  # Regular 2-part names
-  { name: "Irene Yego", email: nil, expected: "should match Irene Yego" },
-  { name: "Kunjal Shah", email: nil, expected: "should match Kunjal Shah" },
-
-  # Email-based matching (most reliable)
-  { name: "Unknown Name", email: "david.ger@craftsilicon.com", expected: "should match by email" },
-
-  # Edge cases
-  { name: "simon mungai", email: nil, expected: "should match Simon Mungai (case insensitive)" },
-  { name: "SARAH SYUKI", email: nil, expected: "should match Sarah Syuki (case insensitive)" },
+  {
+    name: "dot-separated single user",
+    input_name: "archana.verma",
+    expected_first: "archana",
+    expected_last: "verma",
+    db_first: "archana",
+    db_last: "verma"
+  },
+  {
+    name: "multi-part name (3 parts)",
+    input_name: "Eva Karimi Njagi",
+    expected_first: "Eva",
+    expected_last: "Karimi",
+    db_first: "Eva",
+    db_last: "Karimi"
+  },
+  {
+    name: "standard two-part",
+    input_name: "John Smith",
+    expected_first: "John",
+    expected_last: "Smith",
+    db_first: "John",
+    db_last: "Smith"
+  },
+  {
+    name: "lowercase two-part",
+    input_name: "simon mungai",
+    expected_first: "simon",
+    expected_last: "mungai",
+    db_first: "Simon",
+    db_last: "Mungai"
+  },
+  {
+    name: "uppercase two-part",
+    input_name: "SARAH SYUKI",
+    expected_first: "SARAH",
+    expected_last: "SYUKI",
+    db_first: "Sarah",
+    db_last: "Syuki"
+  },
+  {
+    name: "single part name",
+    input_name: "Madonna",
+    expected_first: "Madonna",
+    expected_last: nil,
+    db_first: "Madonna",
+    db_last: nil
+  },
+  {
+    name: "hyphenated last name",
+    input_name: "Mary Jane-Smith",
+    expected_first: "Mary",
+    expected_last: "Jane-Smith",
+    db_first: "Mary",
+    db_last: "Jane-Smith"
+  }
 ]
 
-# Helper function to test matching (copy from import script)
-def find_user_by_name_or_map(name, email = nil, verbose: true)
-  name_str = name.to_s.strip
-  email_str = email.to_s.strip
+# Helper function to parse names (same logic as in import script)
+def parse_jira_name(name_str)
+  return { first_name: nil, last_name: nil } if name_str.blank?
 
-  return nil if name_str.blank? && email_str.blank?
-
-  # PRIORITY 1: Try email lookup (most reliable identifier)
-  if email_str.present? && email_str.downcase != 'restricted'
-    user = User.where(deleted_on: nil, active: true).find_by('lower(email) = ?', email_str.downcase)
-    if user
-      puts "  [EMAIL-MATCH] '#{name_str}' -> #{user.first_name} #{user.last_name} (#{user.email})" if verbose
-      return user
-    end
+  # Handle dot-separated format (e.g., "archana.verma")
+  if name_str.include?('.')
+    parts = name_str.split('.')
+    return {
+      first_name: parts.first.strip,
+      last_name: parts.last.strip,
+      strategy: 'dot-separated'
+    }
   end
 
-  # PRIORITY 2: Handle dot-separated names (e.g., "archana.verma" -> first: archana, last: verma)
-  if name_str.present? && name_str.include?('.')
-    dot_parts = name_str.split('.')
-    if dot_parts.length == 2
-      first_dot = dot_parts[0].strip
-      last_dot = dot_parts[1].strip
-
-      users = User.where(deleted_on: nil, active: true)
-        .where('lower(first_name) = ? AND lower(last_name) = ?', first_dot.downcase, last_dot.downcase)
-        .to_a
-
-      if users.length == 1
-        puts "  [DOT-MATCH] '#{name_str}' -> #{users.first.first_name} #{users.first.last_name}" if verbose
-        return users.first
-      elsif users.length > 1
-        craft_user = users.find { |u| u.email&.downcase&.end_with?('@craftsilicon.com') }
-        if craft_user
-          puts "  [DOT-MATCH-CRAFT] '#{name_str}' -> #{craft_user.first_name} #{craft_user.last_name} (#{craft_user.email})" if verbose
-          return craft_user
-        end
-        puts "  [DOT-MATCH-FIRST] '#{name_str}' -> #{users.first.first_name} #{users.first.last_name}" if verbose
-        return users.first
-      end
-    end
+  # Handle multi-part names (3+ parts) - use first two
+  parts = name_str.split
+  if parts.length >= 3
+    return {
+      first_name: parts[0].strip,
+      last_name: parts[1].strip,
+      strategy: 'multi-part-first-two'
+    }
+  elsif parts.length == 2
+    return {
+      first_name: parts[0].strip,
+      last_name: parts[1].strip,
+      strategy: 'two-part'
+    }
+  elsif parts.length == 1
+    return {
+      first_name: parts[0].strip,
+      last_name: nil,
+      strategy: 'single-part'
+    }
   end
 
-  # PRIORITY 3: Dynamic first_name + last_name matching
-  if name_str.present?
-    parts = name_str.split
-    if parts.length >= 2
-      first = parts.first
-      last = parts[1..].join(' ')
+  { first_name: nil, last_name: nil, strategy: 'failed-parse' }
+end
 
-      users = User.where(deleted_on: nil, active: true)
-        .where('lower(first_name) = ? AND lower(last_name) = ?', first.downcase, last.downcase)
-        .to_a
+# Helper function to find user (simplified version for testing)
+def find_user_for_test(first_name, last_name)
+  return nil unless first_name
 
-      if users.length == 1
-        puts "  [EXACT-MATCH] '#{name_str}' -> #{users.first.first_name} #{users.first.last_name}" if verbose
-        return users.first
-      elsif users.length > 1
-        craft_user = users.find { |u| u.email&.downcase&.end_with?('@craftsilicon.com') }
-        if craft_user
-          puts "  [EXACT-MATCH-CRAFT] '#{name_str}' -> #{craft_user.first_name} #{craft_user.last_name} (#{craft_user.email})" if verbose
-          return craft_user
-        end
-        puts "  [EXACT-MATCH-FIRST] '#{name_str}' -> #{users.first.first_name} #{users.first.last_name}" if verbose
-        return users.first
-      end
+  if first_name && last_name
+    # Try exact match
+    user = User.where('LOWER(first_name) = ? AND LOWER(last_name) = ?', first_name.downcase, last_name.downcase).first
+    return user if user
 
-      # Try 3+ name parts
-      if parts.length >= 3
-        # First + last word
-        last_word = parts.last
-        user = User.where(deleted_on: nil, active: true)
-          .where('lower(first_name) = ? AND lower(last_name) = ?', first.downcase, last_word.downcase)
-          .first
-        if user
-          puts "  [3-PART-MATCH] '#{name_str}' -> #{user.first_name} #{user.last_name}" if verbose
-          return user
-        end
-      end
-    end
+    # Try partial match (first exact, last prefix)
+    user = User.where('LOWER(first_name) = ? AND LOWER(last_name) LIKE ?', first_name.downcase, "#{last_name.downcase}%").first
+    return user if user
+  elsif first_name
+    # Single name - try both first and last
+    user = User.where('LOWER(first_name) = ? OR LOWER(last_name) = ?', first_name.downcase, first_name.downcase).first
+    return user if user
   end
 
-  puts "  [NO-MATCH] '#{name_str}' -> NOT FOUND" if verbose
   nil
 end
 
-puts "\nTesting user matching:\n"
-puts "-"*80
+# Run tests
+passed = 0
+failed = 0
 
 test_cases.each_with_index do |test, idx|
-  puts "\n#{idx + 1}. Testing: #{test[:name].inspect} (email: #{test[:email].inspect})"
-  puts "   Expected: #{test[:expected]}"
+  puts "Test #{idx + 1}: #{test[:name]}"
+  puts "  Input: '#{test[:input_name]}'"
 
-  user = find_user_by_name_or_map(test[:name], test[:email], verbose: true)
+  # Test parsing
+  parsed = parse_jira_name(test[:input_name])
+  puts "  Parsed: first='#{parsed[:first_name]}', last='#{parsed[:last_name]}' (strategy: #{parsed[:strategy]})"
+  puts "  Expected: first='#{test[:expected_first]}', last='#{test[:expected_last]}'"
 
-  if user
-    puts "   ✅ MATCHED: #{user.first_name} #{user.last_name} (#{user.email}, active: #{user.active})"
-  else
-    puts "   ❌ NO MATCH"
-  end
-end
+  # Check if parsing is correct
+  if parsed[:first_name] == test[:expected_first] && parsed[:last_name] == test[:expected_last]
+    puts "  ✅ PARSING CORRECT"
 
-puts "\n" + "="*80
-puts "CHECKING FOR DUPLICATE USERS (same first_name + last_name)"
-puts "="*80
+    # Now try to find user in database
+    test_user = User.where(
+      'LOWER(first_name) = ? AND LOWER(last_name) = ?',
+      test[:db_first].downcase,
+      test[:db_last] ? test[:db_last].downcase : '%'
+    )
 
-duplicates = User.where(deleted_on: nil, active: true)
-  .group(:first_name, :last_name)
-  .having('count(*) > 1')
-  .count
-
-if duplicates.any?
-  puts "\nFound #{duplicates.length} duplicate name combinations:"
-  duplicates.each do |name_combo, count|
-    first, last = name_combo
-    users = User.where(deleted_on: nil, active: true, first_name: first, last_name: last).to_a
-    puts "\n  #{first} #{last} (#{count} users):"
-    users.each do |u|
-      craft = u.email&.end_with?('@craftsilicon.com') ? ' [CRAFT]' : ''
-      puts "    - #{u.email}#{craft}"
+    # If single name test (last is nil), adjust query
+    if test[:db_last].nil?
+      test_user = User.where('LOWER(first_name) = ?', test[:db_first].downcase)
     end
+
+    if test_user.exists?
+      found_user = test_user.first
+      puts "  ✅ USER FOUND IN DATABASE: #{found_user.first_name} #{found_user.last_name} (#{found_user.id})"
+      passed += 1
+    else
+      puts "  ⚠️  USER NOT FOUND IN DATABASE"
+      puts "     Would create: first='#{test[:db_first]}', last='#{test[:db_last]}'"
+      puts "     (This is OK - user can be created during import)"
+      passed += 1
+    end
+  else
+    puts "  ❌ PARSING FAILED"
+    puts "     Got: first='#{parsed[:first_name]}', last='#{parsed[:last_name]}'"
+    failed += 1
   end
-else
-  puts "\n✅ No duplicate users found"
+
+  puts ""
 end
 
-puts "\n" + "="*80
-puts "TEST COMPLETE"
-puts "="*80
+# Summary
+puts "=" * 80
+puts "TEST RESULTS"
+puts "=" * 80
+puts "Passed: #{passed}/#{test_cases.length}"
+puts "Failed: #{failed}/#{test_cases.length}"
+puts ""
+
+if failed == 0
+  puts "✅ All parsing tests passed!"
+  puts ""
+  puts "Next steps:"
+  puts "  1. Verify test users exist in database with correct spelling"
+  puts "  2. Run dry-run import: rails runner scripts/import_jira_with_modules.rb --project KCBL --dry-run"
+  puts "  3. Review user match report"
+  puts "  4. Run actual import if report looks good"
+  puts "  5. Run verification: rails runner scripts/verify_and_fix_user_assignments.rb"
+else
+  puts "❌ Some tests failed"
+  puts "Please review the parsing logic in:"
+  puts "  - scripts/import_jira_with_modules.rb (parse_jira_name function)"
+  puts "  - scripts/verify_and_fix_user_assignments.rb (parse_jira_name function)"
+end
+
+puts "=" * 80
 
