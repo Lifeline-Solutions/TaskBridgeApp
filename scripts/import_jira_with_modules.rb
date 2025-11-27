@@ -319,19 +319,30 @@ def parse_jira_name(full_name)
     end
   end
 
-  # STRATEGY 2: Check for multi-part name (3+ parts) - use first 2 parts
-  # Example: "Eva Karimi Njagi" -> first: "Eva", last: "Karimi"
-  # This handles cases where the 2nd part is actually the surname
+  # STRATEGY 2: Check for multi-part name (3+ parts) - generate multiple parsing strategies
+  # Example: "Eva Karimi Njagi" -> try first: "Eva", last: "Karimi"
+  # Then try "Eva" + "Njagi", then "Karimi" + "Njagi", etc.
   parts = name_str.split(/\s+/).reject(&:empty?)
 
   if parts.length >= 3
-    # For multi-part names, try to match first+second against database first
-    # This handles cases like "Eva Karimi Njagi" where "Eva Karimi" exists in DB
-    first_two = [parts[0], parts[1]].map(&:strip).reject(&:empty?)
-    if first_two.length == 2
-      $USER_STATS[:parsed_names][name_str] = { strategy: 'multi-part-first-two', first_name: first_two[0], last_name: first_two[1] }
-      return { first_name: first_two[0], last_name: first_two[1] }
-    end
+    # Generate list of name combinations to try, in priority order:
+    # 1. First + Second (original strategy)
+    # 2. First + Third (if 3+ parts)
+    # 3. Second + Last (if 3+ parts)
+    # 4. First + Last (if 4+ parts)
+    combinations = [
+      [parts[0], parts[1]],  # First + Second
+      parts.length >= 3 ? [parts[0], parts[2]] : nil,  # First + Third
+      parts.length >= 3 ? [parts[1], parts[-1]] : nil,  # Second + Last
+      parts.length >= 4 ? [parts[0], parts[-1]] : nil,  # First + Last
+    ].compact
+
+    # Return all combinations as a special marker for later use
+    $USER_STATS[:parsed_names][name_str] = {
+      strategy: 'multi-part-combinations',
+      combinations: combinations.map { |combo| { first_name: combo[0], last_name: combo[1] } }
+    }
+    return { first_name: parts[0], last_name: parts[1], combinations: combinations }
   end
 
   # STRATEGY 3: Standard split (2 parts or less)
@@ -357,6 +368,32 @@ def parse_jira_name(full_name)
   { first_name: nil, last_name: nil }
 end
 
+# Helper function to try matching a first+last name combination
+# Tries exact match, then partial matches (first exact + last prefix, or vice versa)
+def try_match_user_combination(first_name, last_name)
+  return nil if first_name.blank? || last_name.blank?
+
+  # Try exact first + last name match (case-insensitive)
+  user = User.where(deleted_on: nil)
+    .where('lower(first_name) = ? AND lower(last_name) = ?', first_name.downcase, last_name.downcase)
+    .first
+  return user if user
+
+  # Try partial match: first name exact, last name prefix
+  user = User.where(deleted_on: nil)
+    .where('lower(first_name) = ? AND lower(last_name) LIKE ?', first_name.downcase, "#{last_name.downcase}%")
+    .first
+  return user if user
+
+  # Try reverse: last name exact, first name prefix
+  user = User.where(deleted_on: nil)
+    .where('lower(last_name) = ? AND lower(first_name) LIKE ?', last_name.downcase, "#{first_name.downcase}%")
+    .first
+  return user if user
+
+  nil
+end
+
 def find_user_by_name_or_map(name, email = nil, verbose: false)
   $USER_STATS[:total_lookups] += 1
 
@@ -380,38 +417,29 @@ def find_user_by_name_or_map(name, email = nil, verbose: false)
   parsed = parse_jira_name(name_str)
   parsed_first = parsed[:first_name]
   parsed_last = parsed[:last_name]
+  combinations = parsed[:combinations]  # For multi-part names, this contains multiple name combinations to try
 
-  if parsed_first && parsed_last
-    # Try exact first + last name match (case-insensitive)
-    user = User.where(deleted_on: nil)
-      .where('lower(first_name) = ? AND lower(last_name) = ?', parsed_first.downcase, parsed_last.downcase)
-      .first
+  # For multi-part names with combinations, try each combination in priority order
+  if combinations.present?
+    combinations.each do |combo|
+      combo_first = combo[0].strip
+      combo_last = combo[1].strip
+      user = try_match_user_combination(combo_first, combo_last)
+      if user
+        $USER_STATS[:first_last_matches] += 1
+        $USER_STATS[:matched_users] << user.id
+        strategy_desc = "#{combo_first}+#{combo_last}"
+        vputs "[USER-MATCH] Matched '#{name_str}' by parsed first+last (#{strategy_desc}): #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
+        return user
+      end
+    end
+  elsif parsed_first && parsed_last
+    # Standard two-part name matching
+    user = try_match_user_combination(parsed_first, parsed_last)
     if user
       $USER_STATS[:first_last_matches] += 1
       $USER_STATS[:matched_users] << user.id
       vputs "[USER-MATCH] Matched '#{name_str}' by parsed first+last: #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
-      return user
-    end
-
-    # Try partial match: first name exact, last name prefix
-    user = User.where(deleted_on: nil)
-      .where('lower(first_name) = ? AND lower(last_name) LIKE ?', parsed_first.downcase, "#{parsed_last.downcase}%")
-      .first
-    if user
-      $USER_STATS[:partial_matches] += 1
-      $USER_STATS[:matched_users] << user.id
-      vputs "[USER-MATCH] Matched '#{name_str}' by partial last: #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
-      return user
-    end
-
-    # Try reverse: last name exact, first name prefix
-    user = User.where(deleted_on: nil)
-      .where('lower(last_name) = ? AND lower(first_name) LIKE ?', parsed_last.downcase, "#{parsed_first.downcase}%")
-      .first
-    if user
-      $USER_STATS[:partial_matches] += 1
-      $USER_STATS[:matched_users] << user.id
-      vputs "[USER-MATCH] Matched '#{name_str}' by partial first: #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
       return user
     end
   elsif parsed_first
@@ -1355,11 +1383,10 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
             http.ssl_timeout = 90
           end
 
-          timeout_multiplier = size_mb > 30 ? 2 : 1
-          http.open_timeout = 90 * timeout_multiplier
-          http.read_timeout = 900 * timeout_multiplier
-          http.write_timeout = 90 * timeout_multiplier if http.respond_to?(:write_timeout=)
-          http.keep_alive_timeout = 60
+          http.read_timeout = 1800
+          http.open_timeout = 120
+          http.write_timeout = 900 if http.respond_to?(:write_timeout=)
+          http.keep_alive_timeout = 300
 
           request = Net::HTTP::Get.new(uri.request_uri)
           request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
@@ -1400,7 +1427,7 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
           warn "  SSL error after #{max_download_retries} attempts: #{e.message}"
         end
 
-      rescue Errno::ECONNRESET, Errno::EPIPE, EOFError, Net::ReadTimeout, Net::OpenTimeout, SocketError => e
+      rescue Errno::ECONNRESET, Errno::EPIPE, EOFError, Net::ReadTimeout, Net::OpenTimeout => e
         download_success = false
         if download_attempt < max_download_retries
           wait_time = [2 ** download_attempt, 30].min
@@ -2495,12 +2522,12 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
     vputs "      comments: #{comments_array.length}"
     vputs "      attachments (issue-level): #{issue_att_count}"
     if issue_att_count > 0
-      issue_names = (attachments_array || []).map { |a| a['filename'] || a['name'] || a['id'] }
+      issue_names = (attachments_array || []).map { |a| a['filename'] || a['name'] }
       vputs "        - #{issue_names.join(', ')}"
     end
     vputs "      attachments (comment-level): #{comment_att_count}"
     if comment_att_count > 0
-      comment_names = comments_array.flat_map { |c| (c['_comment_attachments'] || []).map { |a| a['filename'] || a['name'] || a['id'] } }
+      comment_names = comments_array.flat_map { |c| (c['_comment_attachments'] || []).map { |a| a['filename'] || a['name'] } }
       vputs "        - #{comment_names.join(', ')}"
     end
     return :ok
@@ -2892,8 +2919,6 @@ begin
   # Track per-project stats
   project_stats = Hash.new { |h, k| h[k] = { created: 0, updated: 0 } }
 
-  # Collector for per-issue import/verification reports (used by repair pass)
-  $IMPORT_REPORTS = []
 
   # Collector for per-issue import/verification reports (used by repair pass)
   $IMPORT_REPORTS = []
