@@ -28,6 +28,17 @@ class QaDashboardsController < ApplicationController
   end
 
   def show
+    # Initialize product filter variables
+    @selected_product_ids = params[:product_id] || []
+    
+    # Load products with QA statuses (similar to reports_controller approach)
+    products = Product.qa_projects.active.includes(:client, :groupwares)
+    @product_options = products.map do |product|
+      client_name = product.client&.name || 'No Client Assigned'
+      groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
+      ["#{client_name} - #{groupware_names}", product.id]
+    end
+    
     # Generate automatic charts for active filter parameters
     result = DashboardDataGenerator.new(@dashboard).generate
     @defects = result[:defects]
