@@ -1950,6 +1950,167 @@ def repair_descriptions_for_defects(issues, verbose: false)
 end
 
 # ===============================
+# IMPORT LOGIC - MAIN FUNCTION
+# ===============================
+# Import or update a Jira issue as a Defect record
+def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: false)
+  fields = issue['fields'] || {}
+  issue_key = issue['key'].to_s.strip
+
+  jira_project_name = fields.dig('project', 'name').to_s
+  jira_project_key = fields.dig('project', 'key').to_s
+  product_id = PROJECT_UUID_MAP[jira_project_key] || PROJECT_UUID_MAP[jira_project_name] || DEFAULT_PRODUCT_UUID
+
+  unless product_id
+    vputs "[SKIP] #{issue_key}: no product mapping for project #{jira_project_key}/#{jira_project_name}" if verbose
+    return :skipped
+  end
+
+  summary = fields['summary'].to_s.strip
+  description = extract_description(fields['description']) || ''
+  jira_status_name = (fields.dig('status', 'name') || '').to_s.strip
+  jira_priority = (fields.dig('priority', 'name') || DEFAULT_PRIORITY).to_s.strip.presence || DEFAULT_PRIORITY
+  issue_type = (fields.dig('issuetype', 'name') || 'Bug').to_s.strip.presence || 'Bug'
+
+  reporter_data = fields['reporter'] || {}
+  reporter_name = (reporter_data['displayName'] || '').to_s.strip
+  reporter_email = (reporter_data['emailAddress'] || '').to_s.strip
+
+  assignee_data = fields['assignee'] || {}
+  assignee_name = (assignee_data['displayName'] || '').to_s.strip
+  assignee_email = (assignee_data['emailAddress'] || '').to_s.strip
+
+  created_at = try_parse_time(fields['created'])
+  updated_at = try_parse_time(fields['updated'])
+
+  module_name = extract_custom_field_value(fields[custom_fields[:module_field]] || '') if custom_fields[:module_field]
+  submodule_name = extract_custom_field_value(fields[custom_fields[:submodule_field]] || '') if custom_fields[:submodule_field]
+  banking_type_name = extract_custom_field_value(fields[custom_fields[:banking_type_field]] || '') if custom_fields[:banking_type_field]
+
+  module_name = jira_project_name if module_name.blank?
+  banking_type_name = jira_project_key if banking_type_name.blank?
+
+  comments_container = fields.dig('comment') || {}
+  comments_array = (comments_container['comments'] || []).select { |c| c.is_a?(Hash) }
+  attachments_array = (fields['attachment'] || fields['attachments'] || []).select { |a| a.is_a?(Hash) }
+  labels_array = (fields['labels'] || []).compact.map(&:to_s).map(&:strip).reject(&:empty?)
+
+  vputs "[DEBUG-LABELS] Total labels found for #{issue_key}: #{labels_array.length}" if $verbose_flag && labels_array.any?
+
+  # Map users
+  reporter_user = find_user_by_name_or_map(reporter_name, reporter_email, verbose: verbose) || User.find_by(id: DEFAULT_USER_UUID)
+  assignee_user = find_user_by_name_or_map(assignee_name, assignee_email, verbose: verbose) || User.find_by(id: DEFAULT_USER_UUID)
+
+  created_by_uid = reporter_user&.id || DEFAULT_CREATED_BY || DEFAULT_USER_UUID
+
+  # DRY RUN
+  if dry_run
+    vputs "[DRY] Would process Defect #{issue_key}: summary=#{summary.inspect}" if verbose
+    return :ok
+  end
+
+  # ACTUAL IMPORT
+  saved_defect = nil
+  result = nil
+
+  begin
+    ActiveRecord::Base.transaction do
+      defect = Defect.find_or_initialize_by(defect_unique: issue_key)
+      created_flag = defect.new_record?
+
+      defect.product_id = product_id
+      defect.summary = summary if summary.present?
+      defect.content = description if description.present?
+      defect.priority = jira_priority if jira_priority.present?
+      defect.issue_type = issue_type if issue_type.present?
+
+      # Find or create status
+      status = find_or_create_status(jira_status_name, created_by: created_by_uid, verbose: verbose) if jira_status_name.present?
+
+      # Find or create modules
+      parent_module, child_module = find_or_create_modules(
+        module_name: module_name,
+        submodule_name: submodule_name,
+        product_id: product_id,
+        created_by: created_by_uid
+      )
+
+      defect.qa_module_id = parent_module&.id || FALLBACK_QA_MODULE_ID
+      defect.submodule_id = child_module&.id || FALLBACK_SUBMODULE_ID
+
+      # Banking type
+      banking = find_or_create_banking_type(banking_type_name, product_id: product_id, created_by: created_by_uid, verbose: verbose) if banking_type_name.present?
+      defect.banking_type_id = banking&.id || FALLBACK_BANKING_TYPE_ID
+
+      if created_flag
+        defect.creator_id = reporter_user&.id if defect.respond_to?(:creator_id) && reporter_user
+        defect.created_by = reporter_user&.id if defect.respond_to?(:created_by) && reporter_user
+        defect.created_at = created_at if created_at
+      end
+
+      defect.modified_by = reporter_user&.id if defect.respond_to?(:modified_by) && reporter_user
+      defect.updated_at = updated_at if updated_at
+      defect.draft = false if defect.respond_to?(:draft)
+
+      defect.save!
+
+      # Update assignee
+      defect.user_ids = [assignee_user.id] if assignee_user
+
+      # Update status
+      defect.status_ids = [status.id] if status
+
+      saved_defect = defect
+      result = created_flag ? :created : :updated
+    end
+
+    # After transaction: attach files
+    begin
+      fetch_and_attach_attachments(saved_defect, attachments_array, verbose: verbose) if %i[created updated].include?(result) && attachments_array && attachments_array.any?
+    rescue StandardError => e
+      warn "[WARN] Failed to attach files for #{issue_key}: #{e.class}: #{e.message}"
+    end
+
+    # Attach labels
+    begin
+      if %i[created updated].include?(result) && labels_array && labels_array.any?
+        saved_defect.reload
+        attach_labels_to_defect(saved_defect, labels_array, created_by: created_by_uid, verbose: verbose)
+      end
+    rescue StandardError => e
+      warn "[WARN] Failed to attach labels for #{issue_key}: #{e.class}: #{e.message}"
+    end
+
+    # Import comments
+    begin
+      if %i[created updated].include?(result) && comments_array && comments_array.any?
+        vputs "[COMMENTS] Importing #{comments_array.length} comment(s) for #{issue_key}..." if verbose
+        import_comments_for_defect(saved_defect, comments_array, verbose: verbose)
+      end
+    rescue StandardError => e
+      warn "[WARN] Failed to import comments for #{issue_key}: #{e.class}: #{e.message}"
+    end
+
+    # Validate and update description
+    begin
+      if %i[created updated].include?(result)
+        validate_and_update_description(saved_defect, fields['description'], issue_key, verbose: verbose)
+      end
+    rescue StandardError => e
+      warn "[WARN] Failed to validate description for #{issue_key}: #{e.class}: #{e.message}"
+    end
+
+    result
+  rescue ActiveRecord::RecordInvalid => e
+    warn "[ERROR] Failed to save defect #{issue_key}: #{e.record.errors.full_messages.join(', ')}"
+    :error
+  rescue StandardError => e
+    warn "[EXCEPTION] issue=#{issue_key} #{e.class}: #{e.message}"
+    :error
+  end
+end
+
+# ===============================
 # MAIN EXECUTION
 # ===============================
 begin
