@@ -196,17 +196,6 @@ class DefectController < ApplicationController
   end
 
   def index_show
-    # Debug logging to see what filters are being sent
-    Rails.logger.info '===== DEFECT FILTERS DEBUG ====='
-    Rails.logger.info "Status: #{params[:status].inspect}"
-    Rails.logger.info "Priority: #{params[:priority].inspect}"
-    Rails.logger.info "Assignee (user_id): #{params[:user_id].inspect}"
-    Rails.logger.info "Reporter (reporter_id): #{params[:reporter_id].inspect}"
-    Rails.logger.info "Labels: #{params[:label_ids].inspect}"
-    Rails.logger.info "Module: #{params[:qa_module_id].inspect}"
-    Rails.logger.info "Submodule: #{params[:submodule_id].inspect}"
-    Rails.logger.info '================================='
-
     # Base scope - use safe includes that won't break if columns don't exist
     @defects = Defect.published
       .includes(:users, :labels, :statuses, product: %i[client groupwares])
@@ -254,10 +243,16 @@ class DefectController < ApplicationController
       Rails.logger.info "After status filter: #{@defects.except(:distinct).distinct.count} defects"
     end
 
-    # FIXED: Priority filter (multiple checkboxes -> priority[])
+    # Priority filter (multiple checkboxes -> priority[]) - CASE INSENSITIVE
     selected_priorities = Array(params[:priority]).reject(&:blank?)
     if selected_priorities.any?
-      @defects = @defects.where(defects: { priority: selected_priorities })
+      # Build case-insensitive conditions for each priority
+      priority_conditions = selected_priorities.map do |priority|
+        "LOWER(defects.priority) = LOWER(?)"
+      end
+      
+      # Use OR conditions to match any of the selected priorities
+      @defects = @defects.where(priority_conditions.join(' OR '), *selected_priorities)
       Rails.logger.info "After priority filter: #{@defects.except(:distinct).distinct.count} defects"
     end
 
@@ -427,7 +422,7 @@ class DefectController < ApplicationController
       .select(:id))
       .order(:name)
 
-    # FIXED: Scope QA modules directly to selected products for consistency
+    # Scope QA modules directly to selected products for consistency
     @qa_modules = if product_ids.any?
                     QaModule.where(product_id: product_ids, parent_id: nil)
                       .distinct
@@ -465,27 +460,27 @@ class DefectController < ApplicationController
                       .pluck(:id)
 
                     submodule_ids_from_modules = if available_module_ids.any?
-                                                   QaModule.where(parent_id: available_module_ids).pluck(:id)
-                                                 else
-                                                   []
-                                                 end
+                                                  QaModule.where(parent_id: available_module_ids).pluck(:id)
+                                                else
+                                                  []
+                                                end
 
                     all_submodule_ids = (submodule_ids_from_defects + submodule_ids_from_modules).uniq
                     QaModule.where(id: all_submodule_ids).order(:name)
                   end
 
-    # FIXED: Scope banking types directly to selected products for consistency
+    # Scope banking types directly to selected products for consistency
     @banking_types = if product_ids.any?
-                       BankingType.for_product(product_ids)
-                         .distinct
-                         .order(:name)
-                     else
-                       BankingType.where(id: BankingType.joins(:defects)
-                         .where(defects: { id: filtered_ids })
-                         .distinct
-                         .select(:id))
-                         .order(:name)
-                     end
+                      BankingType.for_product(product_ids)
+                        .distinct
+                        .order(:name)
+                    else
+                      BankingType.where(id: BankingType.joins(:defects)
+                        .where(defects: { id: filtered_ids })
+                        .distinct
+                        .select(:id))
+                        .order(:name)
+                    end
 
     @labels = Label.where(id: Label.joins(:defects)
       .where(defects: { id: filtered_ids })
