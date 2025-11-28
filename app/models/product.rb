@@ -37,6 +37,10 @@ class Product < ApplicationRecord
     joins(:statuses).where(statuses: { name: 'Quality Assurance' }).distinct
   }
 
+  scope :qa_projects, lambda {
+    joins(:statuses).where(statuses: { name: ['Pre Quality Assurance', 'Post Quality Assurance'] }).distinct
+  }
+
   scope :active, -> { where(archive_status: false) }
 
   validate :end_date_after_start_date
