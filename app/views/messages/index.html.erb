@@ -1,67 +1,132 @@
 <% if flash[:notice] %>
-  <div class="bg-[#1a237e] border border-[#4caf50] text-white px-4 py-3 rounded mb-4 shadow-md">
+  <div class="bg-green-50 border-l-4 border-green-500 text-green-800 px-4 py-3 rounded mb-4">
     <p><%= flash[:notice] %></p>
   </div>
 <% elsif flash[:alert] %>
-  <div class="bg-red-600 border border-red-400 text-white px-4 py-3 rounded mb-4 shadow-md">
+  <div class="bg-red-50 border-l-4 border-red-500 text-red-800 px-4 py-3 rounded mb-4">
     <p><%= flash[:alert] %></p>
   </div>
 <% end %>
 
-<h2 class="text-xl font-bold text-gray-800">Messages</h2>
+<!-- Header -->
+<div class="mb-6">
+  <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Communication Center</h2>
+  <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage public comments and internal notes</p>
+</div>
 
+<!-- Filter Tabs -->
+<div class="border-b border-gray-200 dark:border-gray-700 mb-6">
+  <nav class="flex space-x-8" aria-label="Tabs">
+    <button onclick="filterMessages('all')" id="tab-all" class="tab-button border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 pb-3 px-1 font-semibold text-sm">
+      All (<%= @task.messages.count %>)
+    </button>
+    <button onclick="filterMessages('external')" id="tab-external" class="tab-button border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 pb-3 px-1 font-medium text-sm">
+      Public (<%= @task.messages.where(message_type: 'external').count %>)
+    </button>
+    <button onclick="filterMessages('internal')" id="tab-internal" class="tab-button border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 pb-3 px-1 font-medium text-sm">
+      Internal (<%= @task.messages.where(message_type: 'internal').count %>)
+    </button>
+  </nav>
+</div>
 
+<!-- Messages List -->
 <% if @task.messages.any? %>
-  <% @task.messages.order(created_at: :desc).each do |message| %>
-    <div class="p-4 rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-800 mt-4">
-      <div class="flex justify-between items-start">
-        <div>
-          <p class="text-sm font-medium text-gray-800 dark:text-gray-100">
-            <%= message.author&.first_name || "Unknown User" %>
-            (<%= message.message_type&.capitalize || "Unknown Visibility" %>)
-          </p>
-          <p class="text-xs text-gray-500">
-            <%= message.created_at&.strftime("%d %b %Y, %H:%M") || "Unknown Date" %>
-          </p>
-        </div>
+  <div class="space-y-4">
+    <% @task.messages.order(created_at: :desc).each do |message| %>
+      <div class="message-item message-<%= message.message_type %> <%= message.message_type == 'internal' ? 'bg-amber-50 border-l-4 border-amber-500 dark:bg-amber-900/20 dark:border-amber-600' : 'bg-white border-l-4 border-blue-500 dark:bg-gray-800 dark:border-blue-600' %> rounded-lg shadow-sm p-5">
+        <div class="flex justify-between items-start mb-3">
+          <div class="flex items-start space-x-3">
+            <!-- Avatar -->
+            <div class="<%= message.message_type == 'internal' ? 'bg-amber-500' : 'bg-blue-500' %> rounded-full w-10 h-10 flex items-center justify-center text-white font-bold text-sm">
+              <%= message.author&.first_name&.first&.upcase || "?" %>
+            </div>
+            
+            <div>
+              <div class="flex items-center gap-2">
+                <p class="font-semibold text-gray-900 dark:text-gray-100">
+                  <%= message.author&.first_name || "Unknown User" %> <%= message.author&.last_name %>
+                </p>
+                <% if message.message_type == 'internal' %>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-200 text-amber-900 dark:bg-amber-800 dark:text-amber-100">
+                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                    </svg>
+                    Internal
+                  </span>
+                <% else %>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
+                    Public
+                  </span>
+                <% end %>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <%= message.created_at&.strftime("%d %b %Y at %H:%M") || "Unknown Date" %>
+              </p>
+            </div>
+          </div>
 
-        <div class="flex space-x-2">
-          <%= link_to 'Edit',
-                      edit_task_message_path(@task, message),
-                      class: "bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded text-sm" %>
-
-          <%= button_to 'Delete',
-                        task_message_path(@task, message),
-                        method: :delete,
-                        data: { confirm: 'Are you sure?' },
-                        class: "bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded text-sm" %>
-        </div>
-      </div>
-
-      <div class="mt-2 text-sm text-gray-700 dark:text-gray-300">
-        <% if message.content.present? %>
-          <span class="break-words overflow-hidden">
-            <%= sanitize raw (message.content.to_trix_html.gsub(/\[.*?\]/, '').strip) %>
-            <% if message.content.body.attachments.any? %>
-              <% message.content.body.attachments.each do |attachment| %>
-                <!-- existing attachment rendering -->
-              <% end %>
+          <div class="flex space-x-2">
+            <%= link_to edit_task_message_path(@task, message), class: "text-blue-600 hover:text-blue-800 dark:text-blue-400 text-sm font-medium" do %>
+              Edit
             <% end %>
-          </span>
+            <%= button_to task_message_path(@task, message), method: :delete, data: { confirm: 'Are you sure?' }, class: "text-red-600 hover:text-red-800 dark:text-red-400 text-sm font-medium" do %>
+              Delete
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Content -->
+        <div class="ml-13 mt-3 text-sm text-gray-700 dark:text-gray-300">
+          <% if message.content.present? %>
+            <div class="prose prose-sm max-w-none dark:prose-invert">
+              <%= sanitize raw (message.content.to_trix_html.gsub(/\[.*?\]/, '').strip) %>
+            </div>
+          <% end %>
+
+          <%= render 'messages/show_user', message: message %>
+        </div>
+
+        <!-- Attachments -->
+        <% if message.attachments.attached? %>
+          <div class="ml-13 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+            <p class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Attachments:</p>
+            <div class="space-y-1">
+              <% message.attachments.each do |attachment| %>
+                <%= link_to attachment.filename, url_for(attachment), target: "_blank", class: "text-xs text-blue-600 hover:underline dark:text-blue-400 block" %>
+              <% end %>
+            </div>
+          </div>
         <% end %>
-
-        <%= render 'messages/show_user', message: message %>
       </div>
-
-      <% if message.attachments.attached? %>
-        <!-- existing attachments list -->
-      <% else %>
-        <div class="mt-3 text-sm text-gray-500">No attachments.</div>
-      <% end %>
-    </div>
-  <% end %>
+    <% end %>
+  </div>
 <% else %>
-  <div class="mt-4 text-gray-600 dark:text-gray-400">
-    No messages found.
+  <div class="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
+    <p class="text-gray-600 dark:text-gray-400">No messages yet. Start the conversation!</p>
   </div>
 <% end %>
+
+<script>
+  function filterMessages(type) {
+    const tabs = document.querySelectorAll('.tab-button');
+    tabs.forEach(tab => {
+      tab.classList.remove('border-blue-600', 'text-blue-600', 'dark:text-blue-400', 'font-semibold');
+      tab.classList.add('border-transparent', 'text-gray-500', 'font-medium');
+    });
+    
+    const activeTab = document.getElementById(`tab-${type}`);
+    activeTab.classList.remove('border-transparent', 'text-gray-500', 'font-medium');
+    activeTab.classList.add('border-blue-600', 'text-blue-600', 'dark:text-blue-400', 'font-semibold');
+    
+    const messages = document.querySelectorAll('.message-item');
+    messages.forEach(message => {
+      if (type === 'all') {
+        message.style.display = 'block';
+      } else if (message.classList.contains(`message-${type}`)) {
+        message.style.display = 'block';
+      } else {
+        message.style.display = 'none';
+      }
+    });
+  }
+</script>
