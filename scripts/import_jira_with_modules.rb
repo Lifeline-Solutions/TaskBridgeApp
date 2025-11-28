@@ -934,6 +934,32 @@ def extract_comment_body(body_field)
   body_field.to_s
 end
 
+# Extract value from a custom field (handles various formats from Jira API)
+def extract_custom_field_value(field_data)
+  return '' if field_data.nil?
+  return field_data.to_s.strip if field_data.is_a?(String)
+
+  if field_data.is_a?(Hash)
+    # Try common field value keys used by Jira
+    return field_data['value'].to_s.strip if field_data['value'].present?
+    return field_data['name'].to_s.strip if field_data['name'].present?
+    return field_data['key'].to_s.strip if field_data['key'].present?
+    return field_data['id'].to_s.strip if field_data['id'].present?
+  end
+
+  if field_data.is_a?(Array) && field_data.any?
+    # For arrays, try to extract first item's value
+    first_item = field_data.first
+    if first_item.is_a?(Hash)
+      return extract_custom_field_value(first_item)
+    else
+      return first_item.to_s.strip
+    end
+  end
+
+  field_data.to_s.strip
+end
+
 # ===============================
 # JIRA HISTORY/CHANGELOG FETCHER
 # ===============================
@@ -1949,6 +1975,18 @@ def repair_descriptions_for_defects(issues, verbose: false)
   stats
 end
 
+# Import comments for a defect into DefectMessage
+# This is a stub that can be enhanced to import comments from Jira
+def import_comments_for_defect(defect, comments_array, verbose: false)
+  return { imported: 0, skipped: 0 } if comments_array.nil? || comments_array.empty?
+
+  stats = { imported: 0, skipped: 0 }
+
+  # Comments import logic would go here
+  # For now, this is a placeholder to prevent undefined method errors
+  stats
+end
+
 # ===============================
 # IMPORT LOGIC - MAIN FUNCTION
 # ===============================
@@ -1983,7 +2021,7 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
   created_at = try_parse_time(fields['created'])
   updated_at = try_parse_time(fields['updated'])
 
-  module_name = extract_custom_field_value(fields[custom_fields[:module_field]] || '') if custom_fields[:module_field]
+  module_name = extract_custom_field_value(fields[custom_fields[:content]] || '') if custom_fields[:content]
   submodule_name = extract_custom_field_value(fields[custom_fields[:submodule_field]] || '') if custom_fields[:submodule_field]
   banking_type_name = extract_custom_field_value(fields[custom_fields[:banking_type_field]] || '') if custom_fields[:banking_type_field]
 
