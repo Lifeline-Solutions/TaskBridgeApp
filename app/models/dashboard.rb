@@ -75,14 +75,7 @@ class Dashboard < ApplicationRecord
 
   # Get filtered defects based on the saved filter
   def filtered_defects
-    base_query = Defect.published
-    
-    # Apply product_id filter if the defect_filter has an associated product
-    # This ensures dashboards show data only from the filter's specific project
-    base_query = base_query.where(product_id: defect_filter.product_id) if defect_filter.product_id.present?
-    
-    # Then apply other filter rules (priority, status, etc.) from filters JSON
-    defect_filter.apply_to(base_query)
+    defect_filter.apply_to(Defect.published)
   end
 
   # Get active parameters from the filter for display
