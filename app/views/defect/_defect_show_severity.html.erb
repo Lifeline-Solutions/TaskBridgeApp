@@ -12,8 +12,17 @@
                   remote: true,
                   html: { id: "priorityForm" } do |f| %>
       <div class="relative flex-1">
+        <% 
+          # Define all possible severity options
+          severity_options = ['SEVERITY 1', 'SEVERITY 2', 'SEVERITY 3', 'SEVERITY 4']
+          
+          # Find the matching option case-insensitively
+          current_priority = @defect.priority
+          selected_option = severity_options.find { |option| option.casecmp?(current_priority) } || current_priority
+        %>
+        
         <%= f.select :priority, 
-                    options_for_select(['SEVERITY 1', 'SEVERITY 2', 'SEVERITY 3', 'SEVERITY 4'], @defect.priority), 
+                    options_for_select(severity_options, selected_option), 
                     {}, 
                     class: "block min-w-[220px] max-w-[280px] border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500",
                     required: true,
