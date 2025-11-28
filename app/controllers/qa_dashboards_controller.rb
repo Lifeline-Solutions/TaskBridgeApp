@@ -28,8 +28,31 @@ class QaDashboardsController < ApplicationController
   end
 
   def show
-    # Generate automatic charts for active filter parameters
-    result = DashboardDataGenerator.new(@dashboard).generate
+    # Initialize product filter variables
+    @selected_product_ids = params[:product_id] || []
+    
+    # Load products with QA statuses (similar to reports_controller approach)
+    products = Product.qa_projects.active.includes(:client, :groupwares)
+    @product_options = products.map do |product|
+      client_name = product.client&.name || 'No Client Assigned'
+      groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
+      ["#{client_name} - #{groupware_names}", product.id]
+    end
+    
+    # Determine which products to filter by:
+    # 1. If user selected products via dropdown, use those
+    # 2. Otherwise, use the filter's associated product_id (default view)
+    # 3. If neither exists, show all products (legacy behavior)
+    product_ids_to_filter = if @selected_product_ids.any?
+                              @selected_product_ids
+                            elsif @dashboard.defect_filter.product_id.present?
+                              [@dashboard.defect_filter.product_id]
+                            else
+                              []
+                            end
+    
+    # Generate automatic charts for active filter parameters with product filtering
+    result = DashboardDataGenerator.new(@dashboard, product_ids: product_ids_to_filter).generate
     @defects = result[:defects]
     @charts = result[:charts]
     @total_count = result[:total_count]
@@ -38,6 +61,9 @@ class QaDashboardsController < ApplicationController
     # Debug: Log active parameters
     Rails.logger.debug '=== DASHBOARD DEBUG ==='
     Rails.logger.debug "Filter ID: #{@dashboard.defect_filter.id}"
+    Rails.logger.debug "Filter's product_id: #{@dashboard.defect_filter.product_id}"
+    Rails.logger.debug "Selected product IDs from UI: #{@selected_product_ids.inspect}"
+    Rails.logger.debug "Product IDs used for filtering: #{product_ids_to_filter.inspect}"
     Rails.logger.debug "Active Filter Parameters: #{@dashboard.active_filter_parameters.inspect}"
     Rails.logger.debug "Sanitized Filters: #{@filter_params.inspect}"
     Rails.logger.debug "Charts Generated: #{@charts.keys.inspect}"
