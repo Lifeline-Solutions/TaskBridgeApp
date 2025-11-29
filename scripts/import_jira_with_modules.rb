@@ -8,6 +8,7 @@ require 'time'
 require 'optparse'
 require 'yaml'
 require 'base64'
+require 'cgi'
 
 APP_ROOT = Rails.root
 
@@ -776,16 +777,201 @@ def find_or_create_modules(module_name:, submodule_name:, product_id:, created_b
   [parent, child]
 end
 
+# Extract Jira description and convert to rich HTML for ActionText storage
+# Handles both plain text and Jira ADF (Atlassian Document Format) content
 def extract_description(field)
   return '' if field.nil?
   return field if field.is_a?(String)
 
   if field.is_a?(Hash)
-    text_parts = []
-    process_adf_content(field['content'] || [], text_parts)
-    return text_parts.join("\n").strip
+    # Jira description is in ADF format - convert to HTML
+    html = convert_adf_to_html(field['content'] || [])
+    return html.present? ? html : ''
   end
   field.to_s
+end
+
+# Convert Jira ADF (Atlassian Document Format) to HTML for ActionText
+# This preserves formatting like tables, lists, headings, etc.
+def convert_adf_to_html(content_array)
+  return '' if content_array.nil? || !content_array.is_a?(Array)
+
+  html_parts = []
+  content_array.each do |block|
+    next unless block.is_a?(Hash)
+
+    block_html = convert_adf_block_to_html(block)
+    html_parts << block_html if block_html.present?
+  end
+
+  html_parts.join("\n")
+end
+
+# Convert a single ADF block to HTML
+def convert_adf_block_to_html(block)
+  return '' if block.nil? || !block.is_a?(Hash)
+
+  block_type = block['type']&.to_s&.downcase
+  content = block['content'] || []
+
+  case block_type
+  when 'paragraph'
+    inner_html = convert_adf_inline_to_html(content)
+    inner_html.present? ? "<p>#{inner_html}</p>" : ''
+
+  when 'heading'
+    inner_html = convert_adf_inline_to_html(content)
+    level = block.dig('attrs', 'level') || 1
+    inner_html.present? ? "<h#{level}>#{inner_html}</h#{level}>" : ''
+
+  when 'bulletlist', 'bullet_list'
+    list_html = convert_adf_list_to_html(content, 'ul')
+    list_html.present? ? "<ul>#{list_html}</ul>" : ''
+
+  when 'orderedlist', 'ordered_list'
+    list_html = convert_adf_list_to_html(content, 'ol')
+    list_html.present? ? "<ol>#{list_html}</ol>" : ''
+
+  when 'table'
+    convert_adf_table_to_html(block)
+
+  when 'codeblock', 'code_block'
+    code_text = convert_adf_inline_to_html(content)
+    if code_text.present?
+      lang = block.dig('attrs', 'language') || 'plaintext'
+      "<pre><code class=\"language-#{lang}\">#{CGI.escapeHTML(code_text)}</code></pre>"
+    else
+      ''
+    end
+
+  when 'blockquote'
+    inner_html = convert_adf_inline_to_html(content)
+    inner_html.present? ? "<blockquote>#{inner_html}</blockquote>" : ''
+
+  when 'horizontalrule', 'horizontal_rule', 'hr'
+    '<hr>'
+
+  when 'image'
+    src = block.dig('attrs', 'src')
+    alt = block.dig('attrs', 'alt') || 'image'
+    src.present? ? "<img src=\"#{CGI.escapeHTML(src)}\" alt=\"#{CGI.escapeHTML(alt)}\">" : ''
+
+  else
+    # For unknown types with content, try to process nested content
+    convert_adf_to_html(content) if content.is_a?(Array)
+  end
+end
+
+# Convert ADF inline content (text, mentions, etc) to HTML
+def convert_adf_inline_to_html(content_array)
+  return '' if content_array.nil? || !content_array.is_a?(Array)
+
+  html_parts = []
+  content_array.each do |item|
+    next unless item.is_a?(Hash)
+
+    item_type = item['type']&.to_s&.downcase
+
+    case item_type
+    when 'text'
+      text = item['text'].to_s
+      # Apply marks (bold, italic, code, etc)
+      marks = item['marks'] || []
+      marked_text = text
+      marks.each do |mark|
+        mark_type = mark['type']&.to_s&.downcase
+        case mark_type
+        when 'bold', 'strong'
+          marked_text = "<strong>#{marked_text}</strong>"
+        when 'italic', 'em'
+          marked_text = "<em>#{marked_text}</em>"
+        when 'code'
+          marked_text = "<code>#{CGI.escapeHTML(marked_text)}</code>"
+        when 'underline'
+          marked_text = "<u>#{marked_text}</u>"
+        when 'strikethrough'
+          marked_text = "<s>#{marked_text}</s>"
+        when 'link'
+          href = mark.dig('attrs', 'href') || '#'
+          marked_text = "<a href=\"#{CGI.escapeHTML(href)}\">#{marked_text}</a>"
+        end
+      end
+      html_parts << marked_text if marked_text.present?
+
+    when 'mention'
+      mention_text = item.dig('attrs', 'text') || '@user'
+      html_parts << "<span class=\"mention\">#{CGI.escapeHTML(mention_text)}</span>"
+
+    when 'hardbreak'
+      html_parts << '<br>'
+
+    when 'emoji'
+      emoji_text = item.dig('attrs', 'text') || '😊'
+      html_parts << emoji_text
+
+    when 'inlinecard', 'card'
+      url = item.dig('attrs', 'url')
+      title = item.dig('attrs', 'title') || url
+      url.present? ? html_parts << "<a href=\"#{CGI.escapeHTML(url)}\">#{CGI.escapeHTML(title)}</a>" : nil
+
+    else
+      # Recursively handle nested content
+      if item['content'].is_a?(Array)
+        nested_html = convert_adf_inline_to_html(item['content'])
+        html_parts << nested_html if nested_html.present?
+      end
+    end
+  end
+
+  html_parts.join('')
+end
+
+# Convert ADF list to HTML
+def convert_adf_list_to_html(items, tag)
+  return '' if items.nil? || !items.is_a?(Array)
+
+  list_items = []
+  items.each do |item|
+    next unless item.is_a?(Hash) && item['type'] == 'listitem'
+
+    item_content = item['content'] || []
+    item_html = convert_adf_to_html(item_content)
+    # Extract text if it's wrapped in <p> tags
+    item_html = item_html.gsub(/<p>(.*?)<\/p>/, '\1')
+    list_items << "<li>#{item_html}</li>" if item_html.present?
+  end
+
+  list_items.join("\n")
+end
+
+# Convert ADF table to HTML
+def convert_adf_table_to_html(table_block)
+  return '' if table_block.nil?
+
+  table_rows = table_block['content'] || []
+  return '' if table_rows.empty?
+
+  rows_html = []
+  table_rows.each do |row|
+    next unless row.is_a?(Hash) && row['type'] == 'tablerow'
+
+    cells = row['content'] || []
+    cells_html = []
+    cells.each do |cell|
+      next unless cell.is_a?(Hash)
+
+      cell_type = cell['type'] == 'tablehead' ? 'th' : 'td'
+      cell_content = cell['content'] || []
+      cell_html = convert_adf_to_html(cell_content)
+      # Remove wrapping p tags
+      cell_html = cell_html.gsub(/<p>(.*?)<\/p>/, '\1')
+      cells_html << "<#{cell_type}>#{cell_html}</#{cell_type}>"
+    end
+
+    rows_html << "<tr>#{cells_html.join('')}</tr>" if cells_html.any?
+  end
+
+  rows_html.any? ? "<table>#{rows_html.join("\n")}</table>" : ''
 end
 
 # Process Jira ADF (Atlassian Document Format) content recursively
@@ -2021,7 +2207,7 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
   created_at = try_parse_time(fields['created'])
   updated_at = try_parse_time(fields['updated'])
 
-  module_name = extract_custom_field_value(fields[custom_fields[:content]] || '') if custom_fields[:content]
+  module_name = extract_custom_field_value(fields[custom_fields[:module_field]] || '') if custom_fields[:module_field]
   submodule_name = extract_custom_field_value(fields[custom_fields[:submodule_field]] || '') if custom_fields[:submodule_field]
   banking_type_name = extract_custom_field_value(fields[custom_fields[:banking_type_field]] || '') if custom_fields[:banking_type_field]
 
@@ -2058,7 +2244,12 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
 
       defect.product_id = product_id
       defect.summary = summary if summary.present?
-      defect.content = description if description.present?
+      # Assign description as rich HTML content for ActionText storage
+      if description.present?
+        # ActionText will automatically create/update the rich text record
+        # when we assign HTML string to the rich_text attribute
+        defect.content = description
+      end
       defect.priority = jira_priority if jira_priority.present?
       defect.issue_type = issue_type if issue_type.present?
 
