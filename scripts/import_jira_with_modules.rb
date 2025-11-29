@@ -2194,15 +2194,33 @@ def import_comments_for_defect(defect, comments_array, verbose: false)
     # Find the user who made the comment
     user = find_user_by_name_or_map(author_name, author_email, verbose: verbose) || User.find_by(id: DEFAULT_USER_UUID)
 
-    # Extract comment body as rich HTML content (preserves formatting like lists, tables, etc)
+    # Extract comment body as rich HTML content (preserves formatting like lists, tables, colors, etc)
     # The extract_comment_body handles both plain text and ADF format
     body_field = c['body'] || c['content']
 
     # For ADF format, convert to HTML; for plain text, return as-is
     if body_field.is_a?(Hash)
-      # Jira ADF format - convert to HTML
+      # Jira ADF format - convert to HTML with full rich text support
       body_html = convert_adf_to_html(body_field['content'] || [])
       body = body_html.present? ? body_html : ''
+      
+      # Log rich text conversion if verbose
+      if verbose && body_html.present?
+        has_table = body_html.include?('<table>')
+        has_list = body_html.include?('<ul>') || body_html.include?('<ol>')
+        has_color = body_html.include?('style=')
+        has_image = body_html.include?('<img')
+        
+        features = []
+        features << 'table' if has_table
+        features << 'list' if has_list
+        features << 'color' if has_color
+        features << 'image' if has_image
+        
+        if features.any?
+          vputs "[RICH-TEXT] Comment #{comment_idx + 1} contains: #{features.join(', ')}" if verbose
+        end
+      end
     elsif body_field.is_a?(String)
       # Plain text - keep as-is
       body = body_field.strip
@@ -2224,7 +2242,10 @@ def import_comments_for_defect(defect, comments_array, verbose: false)
     if created_at
       existing = defect.defect_messages.where(created_at: created_at, user_id: user&.id).detect do |dm|
         existing_body = dm.content.respond_to?(:to_plain_text) ? dm.content.to_plain_text.strip : dm.content.to_s.strip
-        existing_body == body
+        # Normalize for comparison
+        existing_normalized = existing_body.gsub(/\s+/, ' ').strip.downcase
+        body_normalized = body.gsub(/\s+/, ' ').strip.downcase
+        existing_normalized == body_normalized
       end
 
       if existing
@@ -2238,13 +2259,14 @@ def import_comments_for_defect(defect, comments_array, verbose: false)
     begin
       dm = DefectMessage.new(defect: defect, user: user, modified_by: user)
       # Assign to content attribute which is ActionText and accepts HTML
+      # This will automatically create the rich_text record with proper formatting
       dm.content = body
       dm.created_at = created_at if created_at
       dm.updated_at = updated_at || created_at || Time.current
 
       dm.save!
       stats[:imported] += 1
-      vputs "[IMPORT] Added comment by #{author_name} to #{defect.defect_unique} (id=#{dm.id})" if verbose
+      vputs "[IMPORT] Added rich text comment by #{author_name} to #{defect.defect_unique} (id=#{dm.id}, length=#{body.length})" if verbose
     rescue StandardError => e
       warn "[ERROR] Failed to save comment for #{defect.defect_unique}: #{e.class}: #{e.message}"
       stats[:dropped] += 1
