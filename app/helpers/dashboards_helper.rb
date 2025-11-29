@@ -86,7 +86,7 @@ module DashboardsHelper
     ids = Array(value)
     products = Product.includes(:client, :groupwares).where(id: ids)
     return value if products.empty?
-    
+
     products.map do |product|
       client_name = product.client&.name || 'No Client Assigned'
       groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'

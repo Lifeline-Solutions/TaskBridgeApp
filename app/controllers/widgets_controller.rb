@@ -1,18 +1,16 @@
-# frozen_string_literal: true
-
 class WidgetsController < ApplicationController
   before_action :authenticate_user!
   before_action :set_dashboard
-  before_action :set_widget, only: [:show, :edit, :update, :destroy, :data]
+  before_action :set_widget, only: %i[show edit update destroy data]
 
   # GET /defect_dashboards/:dashboard_id/widgets/:id
   # This is called by Turbo Frame lazy loading
   def show
     @data = @widget.cached_data
-    
+
     respond_to do |format|
       format.html do
-        render partial: "widgets/#{@widget.widget_type}", 
+        render partial: "widgets/#{@widget.widget_type}",
                locals: { widget: @widget, data: @data }
       end
       format.json { render json: @data }
@@ -33,7 +31,7 @@ class WidgetsController < ApplicationController
   # POST /defect_dashboards/:dashboard_id/widgets
   def create
     @widget = @dashboard.widgets.build(widget_params)
-    
+
     if @widget.save
       redirect_to defect_dashboard_path(@dashboard), notice: 'Widget was successfully created.'
     else
@@ -56,7 +54,7 @@ class WidgetsController < ApplicationController
   # DELETE /defect_dashboards/:dashboard_id/widgets/:id
   def destroy
     @widget.destroy
-    
+
     respond_to do |format|
       format.html { redirect_to defect_dashboard_path(@dashboard), notice: 'Widget was successfully deleted.' }
       format.turbo_stream { render turbo_stream: turbo_stream.remove(@widget) }
@@ -68,7 +66,7 @@ class WidgetsController < ApplicationController
   def data
     @data = @widget.fetch_widget_data
     @widget.clear_cache
-    
+
     respond_to do |format|
       format.json { render json: @data }
       format.turbo_stream do
@@ -97,7 +95,7 @@ class WidgetsController < ApplicationController
 
   def widget_params
     params.require(:widget).permit(
-      :defect_filter_id, :widget_type, :title, :position, 
+      :defect_filter_id, :widget_type, :title, :position,
       :width, :height, config: {}
     )
   end

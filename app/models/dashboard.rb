@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # Dashboard - Represents a dashboard with multiple widgets based on a saved filter
 # Each dashboard contains widgets that visualize defect data in different ways
 #

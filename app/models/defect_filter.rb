@@ -158,7 +158,7 @@ class DefectFilter < ApplicationRecord
     if products.empty?
       # Fallback to the single product association if filters don't have product_id
       product&.document_name || 'All Projects'
-    elsif products.count == 1
+    elsif products.one?
       # Single product - show full name
       products.first.document_name
     else

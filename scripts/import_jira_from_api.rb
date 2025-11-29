@@ -128,7 +128,7 @@ def fetch_jira_issues(project_key:, max_results: 100, days_back: 2000)
     request['Accept'] = 'application/json'
     request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
 
-    vputs "Page #{page_count}: Requesting with nextPageToken=#{next_page_token.present? ? next_page_token[0..20] + '...' : 'nil'}" if $verbose_flag
+    vputs "Page #{page_count}: Requesting with nextPageToken=#{next_page_token.present? ? "#{next_page_token[0..20]}..." : 'nil'}" if $verbose_flag
 
     response = http.request(request)
 
@@ -177,7 +177,7 @@ def fetch_jira_issues(project_key:, max_results: 100, days_back: 2000)
 
   info "📊 Total issues fetched from Jira: #{issues.length} (across #{page_count} pages)"
   issues
-end # ===============================
+end
 
 # HELPER METHODS
 # ===============================
@@ -239,8 +239,8 @@ def find_user_by_name_or_map(name, email = nil)
   if CREATE_MISSING_USERS && email_str.present? && email_str.downcase != 'restricted'
     attrs = {
       email: email_str.downcase,
-      first_name: name_str.split(' ').first || 'Imported',
-      last_name: name_str.split(' ')[1..]&.join(' ') || 'User',
+      first_name: name_str.split.first || 'Imported',
+      last_name: name_str.split[1..]&.join(' ') || 'User',
       created_by: DEFAULT_CREATED_BY,
       modified_by: DEFAULT_CREATED_BY
     }
@@ -405,7 +405,7 @@ def import_issue(issue, dry_run: true, verbose: false)
   parent_key = fields.dig('parent', 'key') || ''
   banking_type_name = jira_project_key
 
-  comments_container = fields.dig('comment') || {}
+  comments_container = fields['comment'] || {}
   comments_array = comments_container['comments'] || []
 
   # Map users with fallbacks for missing data
@@ -446,9 +446,9 @@ def import_issue(issue, dry_run: true, verbose: false)
     vputs "      assignee: #{assignee_name.presence || 'MISSING'} -> #{assignee_user&.id}"
     vputs "      status: #{jira_status_name} -> #{status&.id}"
     vputs "      priority: #{jira_priority}"
-    vputs "      module: #{module_name} -> #{parent_module&.id || ('FALLBACK:' + FALLBACK_QA_MODULE_ID.to_s)}"
-    vputs "      submodule: #{submodule_name} -> #{child_module&.id || ('FALLBACK:' + FALLBACK_SUBMODULE_ID.to_s)}"
-    vputs "      banking: #{banking_type_name} -> #{banking&.id || ('FALLBACK:' + FALLBACK_BANKING_TYPE_ID.to_s)}"
+    vputs "      module: #{module_name} -> #{parent_module&.id || "FALLBACK:#{FALLBACK_QA_MODULE_ID}"}"
+    vputs "      submodule: #{submodule_name} -> #{child_module&.id || "FALLBACK:#{FALLBACK_SUBMODULE_ID}"}"
+    vputs "      banking: #{banking_type_name} -> #{banking&.id || "FALLBACK:#{FALLBACK_BANKING_TYPE_ID}"}"
     vputs "      comments: #{comments_array.length}"
     return :ok
   end
