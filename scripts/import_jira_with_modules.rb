@@ -2161,15 +2161,80 @@ def repair_descriptions_for_defects(issues, verbose: false)
   stats
 end
 
-# Import comments for a defect into DefectMessage
-# This is a stub that can be enhanced to import comments from Jira
+# Import comments for a defect into DefectMessage (with rich text support)
+# Each comment body is converted to HTML/rich text format and stored as ActionText
 def import_comments_for_defect(defect, comments_array, verbose: false)
-  return { imported: 0, skipped: 0 } if comments_array.nil? || comments_array.empty?
+  return { imported: 0, skipped: 0, dropped: 0 } if comments_array.nil? || comments_array.empty?
 
-  stats = { imported: 0, skipped: 0 }
+  stats = { imported: 0, skipped: 0, dropped: 0 }
 
-  # Comments import logic would go here
-  # For now, this is a placeholder to prevent undefined method errors
+  comments_array.each_with_index do |c, comment_idx|
+    next unless c.is_a?(Hash)
+
+    author = c['author'] || {}
+    author_name = author['displayName'].to_s.strip
+    author_email = author['emailAddress'].to_s.strip
+
+    # Find the user who made the comment
+    user = find_user_by_name_or_map(author_name, author_email, verbose: verbose) || User.find_by(id: DEFAULT_USER_UUID)
+
+    # Extract comment body as rich HTML content (preserves formatting like lists, tables, etc)
+    # The extract_comment_body handles both plain text and ADF format
+    body_field = c['body'] || c['content']
+
+    # For ADF format, convert to HTML; for plain text, return as-is
+    if body_field.is_a?(Hash)
+      # Jira ADF format - convert to HTML
+      body_html = convert_adf_to_html(body_field['content'] || [])
+      body = body_html.present? ? body_html : ''
+    elsif body_field.is_a?(String)
+      # Plain text - keep as-is
+      body = body_field.strip
+    else
+      body = body_field.to_s.strip
+    end
+
+    # Skip empty comments (unless they have attachments)
+    if body.blank?
+      stats[:dropped] += 1
+      vputs "[SKIP] Empty comment at index #{comment_idx} for #{defect.defect_unique}" if verbose
+      next
+    end
+
+    created_at = try_parse_time(c['created'])
+    updated_at = try_parse_time(c['updated'])
+
+    # Check for duplicate comments (by timestamp, user, and content)
+    if created_at
+      existing = defect.defect_messages.where(created_at: created_at, user_id: user&.id).detect do |dm|
+        existing_body = dm.content.respond_to?(:to_plain_text) ? dm.content.to_plain_text.strip : dm.content.to_s.strip
+        existing_body == body
+      end
+
+      if existing
+        stats[:skipped] += 1
+        vputs "[SKIP] Duplicate comment for #{defect.defect_unique}: already exists" if verbose
+        next
+      end
+    end
+
+    # Create DefectMessage with rich text content
+    begin
+      dm = DefectMessage.new(defect: defect, user: user, modified_by: user)
+      # Assign to content attribute which is ActionText and accepts HTML
+      dm.content = body
+      dm.created_at = created_at if created_at
+      dm.updated_at = updated_at || created_at || Time.current
+
+      dm.save!
+      stats[:imported] += 1
+      vputs "[IMPORT] Added comment by #{author_name} to #{defect.defect_unique} (id=#{dm.id})" if verbose
+    rescue StandardError => e
+      warn "[ERROR] Failed to save comment for #{defect.defect_unique}: #{e.class}: #{e.message}"
+      stats[:dropped] += 1
+    end
+  end
+
   stats
 end
 

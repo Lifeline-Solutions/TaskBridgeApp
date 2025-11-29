@@ -1,9 +1,12 @@
-# ErrorNotifierMiddleware auto-loaded via Zeitwerk
-# No need for explicit require - Rails 7.2 handles this automatically
-# begin
-#   require_relative '../../app/middleware/error_notifier_middleware'
-#   Rails.application.config.middleware.use ErrorNotifierMiddleware
-# rescue LoadError => e
-#   Rails.logger&.warn("ErrorNotifierMiddleware could not be loaded: #{e.message}")
-# end
+begin
+  # ErrorNotifierMiddleware is auto-loaded by Rails from app/middleware directory
+  # Only add it if the class is available
+  if defined?(ErrorNotifierMiddleware)
+    Rails.application.config.middleware.use ErrorNotifierMiddleware
+  else
+    Rails.logger.warn("ErrorNotifierMiddleware class not yet loaded, skipping middleware registration")
+  end
+rescue StandardError => e
+  Rails.logger.warn("Error initializing ErrorNotifierMiddleware: #{e.class} - #{e.message}")
+end
 
