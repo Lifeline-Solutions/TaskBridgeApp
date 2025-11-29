@@ -81,7 +81,7 @@ begin
 
   puts "DefectMessage attachments in database: #{defect_message_attachments}"
 
-  if defect_message_attachments > 0
+  if defect_message_attachments.positive?
     puts "✅ Found #{defect_message_attachments} DefectMessage attachment(s) in database"
 
     # Sample a few

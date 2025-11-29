@@ -36,12 +36,12 @@ end
 CONFIG = begin
   cfg_path = Rails.root.join('config', 'jira_import.yml')
   File.exist?(cfg_path) ? YAML.load_file(cfg_path).with_indifferent_access : {}
-rescue
+rescue StandardError
   {}
 end
 
-JIRA_BASE_URL  = ENV.fetch('JIRA_BASE_URL', CONFIG[:jira_base_url] || 'https://craftsilicon.atlassian.net')
-JIRA_API_USER  = ENV.fetch('JIRA_API_USER', CONFIG[:jira_api_user] || '')
+JIRA_BASE_URL = ENV.fetch('JIRA_BASE_URL', CONFIG[:jira_base_url] || 'https://craftsilicon.atlassian.net')
+JIRA_API_USER = ENV.fetch('JIRA_API_USER', CONFIG[:jira_api_user] || '')
 JIRA_API_TOKEN = ENV['JIRA_API_TOKEN'] || CONFIG[:jira_api_token]
 DEFAULT_USER_UUID = CONFIG[:default_user_uuid] || User.first&.id
 
@@ -54,7 +54,12 @@ end
 
 def try_parse_time(val)
   return nil if val.nil? || val.to_s.strip.empty?
-  Time.parse(val) rescue nil
+
+  begin
+    Time.parse(val)
+  rescue StandardError
+    nil
+  end
 end
 
 # Find user via email or displayName (case-insensitive); fallback to default user
@@ -68,8 +73,8 @@ def find_user_by_name_or_email(name, email)
   name_str = name.to_s.strip.downcase
   if name_str.present?
     u = User.where(deleted_on: nil)
-            .where("lower(coalesce(first_name,'') || ' ' || coalesce(last_name,'')) = ?", name_str)
-            .first
+      .where("lower(coalesce(first_name,'') || ' ' || coalesce(last_name,'')) = ?", name_str)
+      .first
     return u if u
   end
   User.find_by(id: DEFAULT_USER_UUID) || User.first
@@ -94,8 +99,9 @@ def jira_get_issue(issue_key)
 
   resp = http.request(req)
   raise "Jira error #{resp.code} #{resp.message}" unless resp.is_a?(Net::HTTPSuccess)
+
   JSON.parse(resp.body)
-rescue => e
+rescue StandardError => e
   warn "[JIRA] Failed to fetch #{issue_key}: #{e.message}"
   nil
 end
@@ -108,7 +114,7 @@ def map_comment_attachments(jira_issue)
   comments = (fields.dig('comment', 'comments') || []).select { |c| c.is_a?(Hash) }
 
   # Build result: { jira_comment_id => [attachments] }
-  mapping = Hash.new { |h,k| h[k] = [] }
+  mapping = Hash.new { |h, k| h[k] = [] }
 
   comments.each do |c|
     c_created = try_parse_time(c['created'])
@@ -124,6 +130,7 @@ def map_comment_attachments(jira_issue)
     all_atts.each do |att|
       a_created = try_parse_time(att['created'])
       next unless a_created
+
       diff = (a_created - c_created).abs
       mapping[c['id']] << att if diff < 300 # 5 minutes
     end
@@ -161,18 +168,20 @@ def download_jira_attachment(att)
     if resp.is_a?(Net::HTTPRedirection)
       loc = resp['location']
       break unless loc
+
       redirects += 1
       raise 'Too many redirects' if redirects > max_redirects
+
       uri = URI.parse(loc)
       next
     end
     break
   end
 
-  return nil unless resp && resp.is_a?(Net::HTTPSuccess)
+  return nil unless resp.is_a?(Net::HTTPSuccess)
 
   [resp.body, filename, mime]
-rescue => e
+rescue StandardError => e
   warn "[JIRA] Download failed for #{filename}: #{e.message}"
   nil
 end
@@ -183,16 +192,16 @@ def ensure_issue_attachment(defect, att)
   fname = att['filename'] || att['name']
   return 0 unless fname
   # Skip if already attached by filename
-  if defect.attachments.any? { |a| a.filename.to_s == fname }
-    return 0
-  end
+  return 0 if defect.attachments.any? { |a| a.filename.to_s == fname }
+
   data = download_jira_attachment(att)
   return 0 unless data
+
   body, filename, mime = data
   io = StringIO.new(body)
   defect.attachments.attach(io: io, filename: filename, content_type: mime)
   1
-rescue => e
+rescue StandardError => e
   warn "[FIX] Failed to attach issue file #{fname} to #{defect.defect_unique}: #{e.message}"
   0
 end
@@ -222,17 +231,15 @@ def ensure_comment_record(defect, jira_comment)
     else
       raw.to_s
     end
-  rescue
+  rescue StandardError
     ''
   end
   snippet = body_text.to_s.strip[0..60]
   if user && snippet.present?
     dm = defect.defect_messages.where(user_id: user.id).detect do |m|
-      begin
-        (m.content.try(:to_plain_text) || m.content.to_s).to_s.start_with?(snippet)
-      rescue
-        false
-      end
+      (m.content.try(:to_plain_text) || m.content.to_s).to_s.start_with?(snippet)
+    rescue StandardError
+      false
     end
     return dm if dm
   end
@@ -252,16 +259,16 @@ def ensure_comment_attachment(dm, att)
   fname = att['filename'] || att['name']
   return 0 unless fname
   # Skip if already attached by filename
-  if dm.respond_to?(:attachments) && dm.attachments.any? { |a| a.filename.to_s == fname }
-    return 0
-  end
+  return 0 if dm.respond_to?(:attachments) && dm.attachments.any? { |a| a.filename.to_s == fname }
+
   data = download_jira_attachment(att)
   return 0 unless data
+
   body, filename, mime = data
   io = StringIO.new(body)
   dm.attachments.attach(io: io, filename: filename, content_type: mime)
   1
-rescue => e
+rescue StandardError => e
   warn "[FIX] Failed to attach comment file #{fname} to message #{dm.id}: #{e.message}"
   0
 end
@@ -383,7 +390,7 @@ defects.find_each do |defect|
       puts "      - #{missing[:filename]} (message #{missing[:message_id]})"
     end
     puts ''
-  elsif options[:verbose] && defect_stats[:total_files] > 0
+  elsif options[:verbose] && defect_stats[:total_files].positive?
     puts "✅ #{defect.defect_unique}: All #{defect_stats[:total_files]} attachment(s) verified"
   end
 end
@@ -399,8 +406,8 @@ puts "Total comments: #{overall_stats[:total_comments]}"
 puts "Comments with attachments: #{overall_stats[:comments_with_attachments]}"
 puts ''
 puts "Total attachment records: #{overall_stats[:total_attachment_records]}"
-puts "Verified in storage: #{overall_stats[:verified_attachments]} (#{overall_stats[:total_attachment_records] > 0 ? ((overall_stats[:verified_attachments].to_f / overall_stats[:total_attachment_records]) * 100).round(2) : 0}%)"
-puts "Missing from storage: #{overall_stats[:missing_attachments]} (#{overall_stats[:total_attachment_records] > 0 ? ((overall_stats[:missing_attachments].to_f / overall_stats[:total_attachment_records]) * 100).round(2) : 0}%)"
+puts "Verified in storage: #{overall_stats[:verified_attachments]} (#{overall_stats[:total_attachment_records].positive? ? ((overall_stats[:verified_attachments].to_f / overall_stats[:total_attachment_records]) * 100).round(2) : 0}%)"
+puts "Missing from storage: #{overall_stats[:missing_attachments]} (#{overall_stats[:total_attachment_records].positive? ? ((overall_stats[:missing_attachments].to_f / overall_stats[:total_attachment_records]) * 100).round(2) : 0}%)"
 puts ''
 
 if overall_stats[:defects_with_issues].any?
@@ -427,7 +434,7 @@ if overall_stats[:defects_with_issues].any?
 
       jira_issue = jira_get_issue(defect.defect_unique)
       if jira_issue.nil?
-        puts "   ❌ Could not fetch Jira issue data; skipping"
+        puts '   ❌ Could not fetch Jira issue data; skipping'
         failed_total += missing.length
         next
       end
@@ -452,9 +459,7 @@ if overall_stats[:defects_with_issues].any?
         # Find attachment data from Jira for this comment
         jira_comment = (fields.dig('comment', 'comments') || []).find { |c| c['id'].to_s == message_id.to_s }
         att = nil
-        if jira_comment && mapping[jira_comment['id']]
-          att = mapping[jira_comment['id']].find { |a| (a['filename'] || a['name']).to_s == filename.to_s }
-        end
+        att = mapping[jira_comment['id']].find { |a| (a['filename'] || a['name']).to_s == filename.to_s } if jira_comment && mapping[jira_comment['id']]
         # Fallback: search all issue atts by filename
         att ||= all_jira_atts.find { |a| (a['filename'] || a['name']).to_s == filename.to_s }
 
@@ -465,7 +470,7 @@ if overall_stats[:defects_with_issues].any?
         end
 
         added = ensure_comment_attachment(dm, att)
-        if added > 0
+        if added.positive?
           puts "   ✅ Re-attached #{filename} to comment #{dm.id}"
           fixed_for_defect += 1
         else
@@ -477,15 +482,13 @@ if overall_stats[:defects_with_issues].any?
       # Verify after fix
       dm_after = defect.defect_messages.includes(attachments_attachments: :blob)
       newly_verified = 0
-      missing_after = 0
       dm_after.each do |m|
         next unless m.respond_to?(:attachments)
+
         m.attachments.each do |a|
-          begin
-            newly_verified += 1 if ActiveStorage::Blob.service.exist?(a.blob.key)
-          rescue
-            next
-          end
+          newly_verified += 1 if ActiveStorage::Blob.service.exist?(a.blob.key)
+        rescue StandardError
+          next
         end
       end
 
@@ -516,7 +519,7 @@ end
 puts '=' * 80
 
 # Additional diagnostics
-if overall_stats[:missing_attachments] > 0
+if overall_stats[:missing_attachments].positive?
   puts ''
   puts 'DIAGNOSTIC INFORMATION'
   puts '=' * 80

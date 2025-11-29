@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # WidgetDataGenerator - Generates chart data for Dashboard Widgets
 #
 # CRITICAL: Uses SQL GROUP BY for performance - does NOT load defects into memory

@@ -1,6 +1,4 @@
 #!/usr/bin/env ruby
-# frozen_string_literal: true
-
 # Verification script to check banking types, labels, comments, and history in database
 
 require_relative '../config/environment'
@@ -10,7 +8,7 @@ puts 'DATABASE VERIFICATION REPORT'
 puts '=' * 80
 
 # Banking Types
-puts "\n" + ('=' * 80)
+puts "\n#{'=' * 80}"
 puts 'BANKING TYPES'
 puts '=' * 80
 
@@ -31,7 +29,7 @@ defects_with_banking = Defect.where.not(banking_type_id: nil)
 puts "\nDefects with banking_type_id: #{defects_with_banking.count}"
 
 # Labels
-puts "\n" + ('=' * 80)
+puts "\n#{'=' * 80}"
 puts 'LABELS'
 puts '=' * 80
 
@@ -58,14 +56,14 @@ total_defects = Defect.count
 puts "\nDefects with labels: #{defects_with_labels} out of #{total_defects}"
 
 # Comments (DefectMessage)
-puts "\n" + ('=' * 80)
+puts "\n#{'=' * 80}"
 puts 'COMMENTS (DefectMessage)'
 puts '=' * 80
 
 comments_count = DefectMessage.count
 puts "\nTotal DefectMessage Records: #{comments_count}"
 
-if comments_count > 0
+if comments_count.positive?
   defects_with_comments = Defect.joins(:defect_messages).distinct.count
   puts "Defects with comments: #{defects_with_comments} out of #{total_defects}"
 
@@ -95,14 +93,14 @@ else
 end
 
 # History (DefectHistory)
-puts "\n" + ('=' * 80)
+puts "\n#{'=' * 80}"
 puts 'DEFECT HISTORY'
 puts '=' * 80
 
 history_count = DefectHistory.count
 puts "\nTotal DefectHistory Records: #{history_count}"
 
-if history_count > 0
+if history_count.positive?
   puts "\nHistory Types Distribution:"
   history_types = DefectHistory.group(:history_type).count.sort_by { |_k, v| -v }
   history_types.take(10).each do |type, count|
@@ -125,7 +123,7 @@ else
 end
 
 # Summary
-puts "\n" + ('=' * 80)
+puts "\n#{'=' * 80}"
 puts 'SUMMARY'
 puts '=' * 80
 puts "Total Defects: #{total_defects}"
