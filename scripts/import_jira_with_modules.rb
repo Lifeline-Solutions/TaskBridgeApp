@@ -894,6 +894,22 @@ def convert_adf_inline_to_html(content_array)
         when 'link'
           href = mark.dig('attrs', 'href') || '#'
           marked_text = "<a href=\"#{CGI.escapeHTML(href)}\">#{marked_text}</a>"
+        when 'textcolor', 'textColor'
+          # Support for text color formatting
+          color = mark.dig('attrs', 'color') || '#000000'
+          marked_text = "<span style=\"color: #{CGI.escapeHTML(color)}\">#{marked_text}</span>"
+        when 'backgroundcolor', 'backgroundColor'
+          # Support for background color formatting
+          color = mark.dig('attrs', 'color') || '#ffffff'
+          marked_text = "<span style=\"background-color: #{CGI.escapeHTML(color)}\">#{marked_text}</span>"
+        when 'subsup'
+          # Support for superscript/subscript
+          type = mark.dig('attrs', 'type')
+          if type == 'sub'
+            marked_text = "<sub>#{marked_text}</sub>"
+          elsif type == 'sup'
+            marked_text = "<sup>#{marked_text}</sup>"
+          end
         end
       end
       html_parts << marked_text if marked_text.present?
