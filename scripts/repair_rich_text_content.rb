@@ -403,6 +403,26 @@ def extract_issue_description_html(jira_issue, debug: false)
     if rendered_desc.include?('<!-- ADF macro')
       puts "    [Rendered HTML has ADF macros - using ADF conversion instead]" if debug
       jira_description_field = jira_issue.dig('fields', 'description')
+
+      # Debug: Show what we're getting from Jira
+      if debug || DEBUG_MODE
+        if jira_description_field.nil?
+          puts "    [ERROR: No description field in Jira response!]"
+        elsif jira_description_field.is_a?(String) && jira_description_field.blank?
+          puts "    [ERROR: Description field is empty string]"
+        elsif jira_description_field.is_a?(Hash)
+          content = jira_description_field['content']
+          if content.nil?
+            puts "    [ERROR: Description has no 'content' key]"
+            puts "    [Description keys: #{jira_description_field.keys.join(', ')}]"
+          elsif content.is_a?(Array) && content.empty?
+            puts "    [WARNING: Description content array is empty]"
+          elsif content.is_a?(Array)
+            puts "    [ADF has #{content.length} block(s)]"
+          end
+        end
+      end
+
       return extract_description(jira_description_field, debug: debug)
     end
 
@@ -411,8 +431,15 @@ def extract_issue_description_html(jira_issue, debug: false)
   end
 
   # Fall back to raw field and ADF conversion
-  puts "    [Using ADF conversion]" if debug
+  puts "    [No rendered HTML available - using ADF conversion]" if debug
   jira_description_field = jira_issue.dig('fields', 'description')
+
+  if debug || DEBUG_MODE
+    if jira_description_field.nil?
+      puts "    [ERROR: No description field found in Jira response]"
+    end
+  end
+
   extract_description(jira_description_field, debug: debug)
 end
 
@@ -504,6 +531,15 @@ def repair_defect_content(defect, debug: false)
     puts "❌ FAILED (could not fetch from Jira)"
     $STATS[:defect_content_failed] += 1
     return false
+  end
+
+  # For single issue mode, save the response for inspection
+  if SINGLE_ISSUE.present?
+    require 'fileutils'
+    FileUtils.mkdir_p('tmp')
+    filename = "tmp/jira_response_#{issue_key.gsub('-', '_')}.json"
+    File.write(filename, JSON.pretty_generate(jira_issue))
+    puts "\n    [Saved full Jira response to: #{filename}]"
   end
 
   puts "" if debug
