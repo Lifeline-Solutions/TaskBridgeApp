@@ -286,13 +286,20 @@ def convert_adf_table_to_html(table_block)
 end
 
 # Extract description from Jira field
-def extract_description(field)
+def extract_description(field, debug: false)
   return '' if field.nil?
   return field if field.is_a?(String)
 
   if field.is_a?(Hash)
     # Jira description is in ADF format - convert to HTML
-    html = convert_adf_to_html(field['content'] || [])
+    content_blocks = field['content'] || []
+
+    if debug && content_blocks.any?
+      block_types = content_blocks.map { |b| b['type'] }.compact
+      puts "    [ADF blocks: #{block_types.join(', ')}]"
+    end
+
+    html = convert_adf_to_html(content_blocks)
     return html.present? ? html : ''
   end
   field.to_s
@@ -309,7 +316,7 @@ def extract_issue_description_html(jira_issue, debug: false)
     if rendered_desc.include?('<!-- ADF macro')
       puts "    [Rendered HTML has ADF macros - using ADF conversion instead]" if debug
       jira_description_field = jira_issue.dig('fields', 'description')
-      return extract_description(jira_description_field)
+      return extract_description(jira_description_field, debug: debug)
     end
 
     puts "    [Using rendered HTML]" if debug
@@ -319,7 +326,7 @@ def extract_issue_description_html(jira_issue, debug: false)
   # Fall back to raw field and ADF conversion
   puts "    [Using ADF conversion]" if debug
   jira_description_field = jira_issue.dig('fields', 'description')
-  extract_description(jira_description_field)
+  extract_description(jira_description_field, debug: debug)
 end
 
 # ===============================
