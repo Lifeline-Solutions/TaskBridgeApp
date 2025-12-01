@@ -31,11 +31,13 @@ unless JIRA_API_TOKEN
   exit 1
 end
 
-# Accept project key filter (e.g., KCBL)
-PROJECT_KEY = (ENV['PROJECT'] || ENV['JIRA_PROJECT'] || ARGV[0]).to_s.strip.upcase
+# Accept project key filter (e.g., KCBL) or specific issue (e.g., PSP-9)
+INPUT_ARG = (ENV['PROJECT'] || ENV['JIRA_PROJECT'] || ARGV[0]).to_s.strip.upcase
+SINGLE_ISSUE = INPUT_ARG =~ /^[A-Z]+-\d+$/ ? INPUT_ARG : nil
+PROJECT_KEY = SINGLE_ISSUE ? nil : INPUT_ARG
 
 # Enable debug mode to see detailed HTML extraction info
-DEBUG_MODE = ENV['DEBUG'].to_s.downcase == 'true' || ENV['DEBUG'] == '1'
+DEBUG_MODE = ENV['DEBUG'].to_s.downcase == 'true' || ENV['DEBUG'] == '1' || SINGLE_ISSUE.present?
 
 # Statistics tracking
 $STATS = {
@@ -54,14 +56,18 @@ puts "=" * 80
 puts "🔧 JIRA RICH TEXT CONTENT REPAIR SCRIPT"
 puts "=" * 80
 puts ""
-if PROJECT_KEY.present?
+if SINGLE_ISSUE.present?
+  puts "Target: Single issue #{SINGLE_ISSUE}"
+  puts "Debug mode: ENABLED (auto-enabled for single issue)"
+elsif PROJECT_KEY.present?
   puts "Target project: #{PROJECT_KEY}"
+  puts "Debug mode: #{DEBUG_MODE ? 'ENABLED' : 'disabled'}"
 else
   puts "Target project: (all projects)"
+  puts "Debug mode: #{DEBUG_MODE ? 'ENABLED' : 'disabled'}"
   puts "Tip: Run for a single project: rails runner scripts/repair_rich_text_content.rb KCBL"
 end
-puts "Debug mode: #{DEBUG_MODE ? 'ENABLED' : 'disabled'}"
-puts "Tip: Enable debug mode with DEBUG=true rails runner scripts/repair_rich_text_content.rb KCBL"
+puts "Tip: Run for a single issue: rails runner scripts/repair_rich_text_content.rb PSP-9"
 puts ""
 
 # ===============================
@@ -672,16 +678,30 @@ end
 # ===============================
 
 puts "🔍 Finding all defects with Jira keys..."
-if PROJECT_KEY.present?
+if SINGLE_ISSUE.present?
+  # Process a single specific issue
+  defects = Defect.where(defect_unique: SINGLE_ISSUE).where(deleted_on: nil)
+elsif PROJECT_KEY.present?
   # Constrain to a single project key like KCBL
   # Using ~ for regex and anchoring at start to the project key
   defects = Defect.where("defect_unique ~ ?", "^#{Regexp.escape(PROJECT_KEY)}-[0-9]+$").where(deleted_on: nil).order(:defect_unique)
 else
+  # All projects
   defects = Defect.where("defect_unique ~ '^[A-Z]+-[0-9]+$'").where(deleted_on: nil).order(:defect_unique)
 end
 $STATS[:total_defects] = defects.count
 
-puts "   Found #{$STATS[:total_defects]} defect(s) with Jira keys"
+if SINGLE_ISSUE.present?
+  if $STATS[:total_defects] == 0
+    puts "   ❌ Issue #{SINGLE_ISSUE} not found in database"
+    puts "   Tip: Check if the issue has been imported from Jira"
+    exit 1
+  else
+    puts "   ✅ Found issue #{SINGLE_ISSUE}"
+  end
+else
+  puts "   Found #{$STATS[:total_defects]} defect(s) with Jira keys"
+end
 puts ""
 
 if $STATS[:total_defects] == 0
@@ -699,8 +719,44 @@ defects.each_with_index do |defect, idx|
 
   puts "[#{idx + 1}/#{$STATS[:total_defects]}] Processing #{defect.defect_unique}"
 
+  # For single issue, show current content
+  if SINGLE_ISSUE.present?
+    puts ""
+    puts "=" * 80
+    puts "CURRENT CONTENT IN DATABASE"
+    puts "=" * 80
+    current_content = defect.content.to_s
+    puts "Length: #{current_content.length} characters"
+    puts "Has <table>: #{current_content.include?('<table')}"
+    puts "Has <ul> or <ol>: #{current_content.include?('<ul>') || current_content.include?('<ol>')}"
+    puts ""
+    puts "Content preview (first 1000 chars):"
+    puts "-" * 80
+    puts current_content[0..1000]
+    puts "-" * 80
+    puts ""
+  end
+
   # Repair defect description
-  repair_defect_content(defect, debug: DEBUG_MODE)
+  description_updated = repair_defect_content(defect, debug: DEBUG_MODE)
+
+  # For single issue, show updated content
+  if SINGLE_ISSUE.present? && description_updated
+    puts ""
+    puts "=" * 80
+    puts "UPDATED CONTENT FROM JIRA"
+    puts "=" * 80
+    updated_content = defect.reload.content.to_s
+    puts "Length: #{updated_content.length} characters"
+    puts "Has <table>: #{updated_content.include?('<table')}"
+    puts "Has <ul> or <ol>: #{updated_content.include?('<ul>') || updated_content.include?('<ol>')}"
+    puts ""
+    puts "Full updated content:"
+    puts "-" * 80
+    puts updated_content
+    puts "-" * 80
+    puts ""
+  end
 
   # Repair defect comments
   comment_stats = repair_defect_messages(defect, debug: DEBUG_MODE)
@@ -708,8 +764,8 @@ defects.each_with_index do |defect, idx|
 
   puts ""
 
-  # Small delay to avoid overwhelming Jira API
-  sleep 0.5
+  # Small delay to avoid overwhelming Jira API (skip for single issue)
+  sleep 0.5 unless SINGLE_ISSUE.present?
 end
 
 # ===============================
