@@ -39,6 +39,48 @@ PROJECT_KEY = SINGLE_ISSUE ? nil : INPUT_ARG
 # Enable debug mode to see detailed HTML extraction info
 DEBUG_MODE = ENV['DEBUG'].to_s.downcase == 'true' || ENV['DEBUG'] == '1' || SINGLE_ISSUE.present?
 
+# ===============================
+# BACKGROUND EXECUTION SUPPORT
+# ===============================
+ALLOW_BACKGROUND = ENV.fetch('ALLOW_BACKGROUND', 'true').downcase == 'true'
+BACKGROUND_LOGDIR = Rails.root.join('log', 'repairs').to_s
+BACKGROUND_PIDFILE = File.join(BACKGROUND_LOGDIR, "repair_#{Time.now.strftime('%Y%m%d_%H%M%S')}.pid")
+BACKGROUND_LOGFILE = File.join(BACKGROUND_LOGDIR, "repair_#{Time.now.strftime('%Y%m%d_%H%M%S')}.log")
+
+# Ensure log directory exists
+FileUtils.mkdir_p(BACKGROUND_LOGDIR) unless File.exist?(BACKGROUND_LOGDIR)
+
+# Write PID file for process tracking
+File.write(BACKGROUND_PIDFILE, Process.pid.to_s)
+
+# Redirect output to both console and log file
+def setup_logging(logfile)
+  File.open(logfile, 'a') do |f|
+    def $stdout.write(str)
+      File.open(BACKGROUND_LOGFILE, 'a') { |f| f.write(str) }
+      super(str) rescue nil
+    end
+  end
+end
+
+# Handle graceful shutdown on signals
+$shutdown_requested = false
+$current_issue_key = nil
+$repair_start_time = Time.now
+
+Signal.trap('TERM') do
+  puts "\n\n⚠️  Received SIGTERM - will finish current issue then exit gracefully"
+  $shutdown_requested = true
+end
+
+Signal.trap('INT') do
+  puts "\n\n⚠️  Received SIGINT - will finish current issue then exit gracefully"
+  $shutdown_requested = true
+end
+
+# Setup logging if running in background
+setup_logging(BACKGROUND_LOGFILE) if ALLOW_BACKGROUND
+
 # Statistics tracking
 $STATS = {
   total_defects: 0,
@@ -55,6 +97,11 @@ $STATS = {
 puts "=" * 80
 puts "🔧 JIRA RICH TEXT CONTENT REPAIR SCRIPT"
 puts "=" * 80
+puts ""
+puts "Time: #{Time.now}"
+puts "PID: #{Process.pid}"
+puts "Log: #{BACKGROUND_LOGFILE}"
+puts "Background Mode: #{ALLOW_BACKGROUND ? 'ENABLED' : 'DISABLED'}"
 puts ""
 if SINGLE_ISSUE.present?
   puts "Target: Single issue #{SINGLE_ISSUE}"
@@ -751,9 +798,16 @@ puts "=" * 80
 puts ""
 
 defects.each_with_index do |defect, idx|
-  $STATS[:defects_checked] += 1
+  # Check for shutdown signal - complete current issue then exit
+  if $shutdown_requested
+    puts "\n⏹️  Shutdown signal received - completing current issue then exiting..."
+    puts "Processed #{$STATS[:defects_checked]} of #{$STATS[:total_defects]} defects before shutdown"
+    break
+  end
 
-  puts "[#{idx + 1}/#{$STATS[:total_defects]}] Processing #{defect.defect_unique}"
+  $STATS[:defects_checked] += 1
+  issue_key = defect.defect_unique
+  $current_issue_key = issue_key  puts "[#{idx + 1}/#{$STATS[:total_defects]}] Processing #{defect.defect_unique}"
 
   # For single issue, show current content
   if SINGLE_ISSUE.present?
@@ -846,3 +900,29 @@ end
 
 puts ""
 puts "=" * 80
+
+# ===============================
+# CLEANUP & FINAL SUMMARY
+# ===============================
+puts "\n" + "=" * 80
+puts "✅ REPAIR PROCESS COMPLETED"
+puts "=" * 80
+puts "Completion Time: #{Time.now}"
+puts "Total Runtime: #{(Time.now - $repair_start_time).round(2)} seconds"
+puts ""
+puts "Summary:"
+puts "  Process ID: #{Process.pid}"
+puts "  Log File: #{BACKGROUND_LOGFILE}"
+puts "  PID File: #{BACKGROUND_PIDFILE}"
+puts ""
+
+# Mark as complete
+completion_file = File.join(BACKGROUND_LOGDIR, "repair_#{Time.now.strftime('%Y%m%d_%H%M%S')}.complete")
+File.write(completion_file, "Completed at #{Time.now}\nTotal defects: #{$STATS[:total_defects]}\nSuccessful: #{$STATS[:defect_content_updated]}\nErrors: #{$STATS[:defect_content_failed]}")
+
+puts "✅ Repair process finished successfully!"
+puts "=" * 80
+
+# Clean up PID file
+File.delete(BACKGROUND_PIDFILE) if File.exist?(BACKGROUND_PIDFILE)
+
