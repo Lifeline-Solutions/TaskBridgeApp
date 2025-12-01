@@ -304,6 +304,14 @@ def extract_issue_description_html(jira_issue, debug: false)
   rendered_desc = jira_issue.dig('renderedFields', 'description') || jira_issue.dig('fields', 'renderedFields', 'description')
 
   if rendered_desc.present?
+    # Check if rendered HTML contains ADF macro placeholders instead of actual content
+    # These appear as <!-- ADF macro (type = 'table') --> or similar
+    if rendered_desc.include?('<!-- ADF macro')
+      puts "    [Rendered HTML has ADF macros - using ADF conversion instead]" if debug
+      jira_description_field = jira_issue.dig('fields', 'description')
+      return extract_description(jira_description_field)
+    end
+
     puts "    [Using rendered HTML]" if debug
     return rendered_desc.to_s
   end
@@ -467,11 +475,17 @@ def repair_defect_messages(defect, debug: false)
     # Prefer rendered HTML body
     jira_body_html = jira_comment['renderedBody']
 
-    if debug && jira_body_html.present?
+    # Check if rendered HTML contains ADF macro placeholders
+    if jira_body_html.present? && jira_body_html.include?('<!-- ADF macro')
+      if debug
+        puts "    [Comment #{idx + 1}: Rendered HTML has ADF macros - using ADF conversion instead]"
+      end
+      jira_body_html = nil  # Force fallback to ADF conversion
+    elsif debug && jira_body_html.present?
       puts "    [Comment #{idx + 1}: Using rendered HTML]"
     end
 
-    # Fall back to ADF body -> HTML if rendered not available
+    # Fall back to ADF body -> HTML if rendered not available or has macros
     if jira_body_html.blank?
       puts "    [Comment #{idx + 1}: Using ADF conversion]" if debug
       body_field = jira_comment['body']
