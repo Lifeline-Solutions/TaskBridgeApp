@@ -128,6 +128,21 @@ end
 # Setup logging if running in background
 setup_logging(BACKGROUND_LOGFILE) if ALLOW_BACKGROUND
 
+$import_start_time = Time.now
+
+# Parse and validate project list
+project_list = options[:projects].map(&:strip).reject(&:empty?)
+
+# Debug output to verify projects are parsed correctly
+puts "DEBUG: Parsed projects from command line: #{options[:projects].inspect}"
+puts "DEBUG: Cleaned project list: #{project_list.inspect}"
+
+if project_list.empty?
+  puts 'ERROR: No valid projects found after parsing. Check your --project argument.'
+  puts "  Received: #{options[:projects].inspect}"
+  exit 1
+end
+
 info "=" * 80
 info "🚀 JIRA IMPORT STARTED"
 info "=" * 80
