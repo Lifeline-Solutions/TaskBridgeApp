@@ -81,37 +81,62 @@ end
 
 $verbose_flag = options[:verbose]
 
-# Global tracking for user match statistics
-$USER_STATS = {
-  total_lookups: 0,
-  email_matches: 0,
-  full_name_matches: 0,
-  first_last_matches: 0,
-  partial_matches: 0,
-  config_map_matches: 0,
-  created_users: 0,
-  fallback_users: 0,
-  matched_users: Set.new,      # Set of user IDs successfully matched
-  fallback_users_set: Set.new,  # Set of user IDs that fell back to default
-  not_found_names: Hash.new(0), # Names that couldn't be matched
-  parsed_names: {},             # Track parsed names for reporting
-  reporter_matches: {},         # Track reporter matches per issue
-  assignee_matches: {}          # Track assignee matches per issue
-}
+# ===============================
+# BACKGROUND EXECUTION SUPPORT
+# ===============================
+# Enable background execution: script continues even if terminal closes
+# Signal handling: gracefully stop on SIGTERM/SIGINT, but complete current item
+ALLOW_BACKGROUND = ENV.fetch('ALLOW_BACKGROUND', 'true').downcase == 'true'
+BACKGROUND_LOGDIR = Rails.root.join('log', 'imports').to_s
+BACKGROUND_PIDFILE = File.join(BACKGROUND_LOGDIR, "import_#{Time.now.strftime('%Y%m%d_%H%M%S')}.pid")
+BACKGROUND_LOGFILE = File.join(BACKGROUND_LOGDIR, "import_#{Time.now.strftime('%Y%m%d_%H%M%S')}.log")
 
-project_list = options[:projects].map(&:strip).reject(&:empty?)
+# Ensure log directory exists
+FileUtils.mkdir_p(BACKGROUND_LOGDIR) unless File.exist?(BACKGROUND_LOGDIR)
 
-# Debug output to verify projects are parsed correctly
-puts "DEBUG: Parsed projects from command line: #{options[:projects].inspect}"
-puts "DEBUG: Cleaned project list: #{project_list.inspect}"
+# Write PID file for process tracking
+File.write(BACKGROUND_PIDFILE, Process.pid.to_s)
 
-if project_list.empty?
-  puts 'ERROR: No valid projects found after parsing. Check your --project argument.'
-  puts "  Received: #{options[:projects].inspect}"
-  exit 1
+# Redirect output to both console and log file
+def setup_logging(logfile)
+  File.open(logfile, 'a') do |f|
+    # Create a custom logger that writes to both stdout and file
+    def $stdout.write(str)
+      # Write to file
+      File.open(BACKGROUND_LOGFILE, 'a') { |f| f.write(str) }
+      # Write to actual stdout (if terminal still open)
+      super(str) rescue nil
+    end
+  end
 end
 
-info "Starting direct Jira import with modules for project(s): #{project_list.join(', ')} (dry_run: #{options[:dry_run]})"
+# Handle graceful shutdown on signals
+$shutdown_requested = false
+$current_issue_key = nil
+$import_start_time = Time.now
+
+Signal.trap('TERM') do
+  puts "\n\n⚠️  Received SIGTERM - will finish current issue then exit gracefully"
+  $shutdown_requested = true
+end
+
+Signal.trap('INT') do
+  puts "\n\n⚠️  Received SIGINT - will finish current issue then exit gracefully"
+  $shutdown_requested = true
+end
+
+# Setup logging if running in background
+setup_logging(BACKGROUND_LOGFILE) if ALLOW_BACKGROUND
+
+info "=" * 80
+info "🚀 JIRA IMPORT STARTED"
+info "=" * 80
+info "Time: #{Time.now}"
+info "PID: #{Process.pid}"
+info "Log: #{BACKGROUND_LOGFILE}"
+info "Background Mode: #{ALLOW_BACKGROUND ? 'ENABLED' : 'DISABLED'}"
+info "=" * 80
+info ""
 
 # ===============================
 # CUSTOM FIELD DISCOVERY
@@ -1759,7 +1784,7 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
             http.verify_mode = OpenSSL::SSL::VERIFY_PEER
             http.ca_file = nil
             http.ciphers = 'HIGH:!aNULL:!eNULL:!EXPORT:!DES:!MD5:!PSK:!RC4'
-            http.ssl_timeout = 90
+            http.ssl_timeout = 120
           end
 
           http.read_timeout = 1800
@@ -1838,17 +1863,14 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
 
       bytes_written = 0
       chunk_size = 1024 * 1024
-      if resp.body
-        resp.body.each_char.each_slice(chunk_size) do |chunk|
-          tf.write(chunk.join)
-          bytes_written += chunk.length
-
-          # Progress for large files
-          if size_mb > 10 && bytes_written % (10 * 1024 * 1024) == 0
-            progress_mb = (bytes_written / 1024.0 / 1024.0).round(1)
-            vputs "  📊 Downloaded #{progress_mb}/#{size_mb} MB..." if verbose
-          end
+      if resp.body.respond_to?(:read)
+        while chunk = resp.body.read(1_048_576)
+          tf.write(chunk)
+          bytes_written += chunk.bytesize
         end
+      else
+        tf.write(resp.body)
+        bytes_written = resp.body.bytesize
       end
       tf.rewind
 
@@ -2137,188 +2159,6 @@ def fetch_and_attach_to_rich_text_jira(rich_record, attachments, verbose: false)
   stats
 end
 
-# Repair and update defect description from Jira data
-# - Checks if existing description is different from current Jira data
-# - Updates only if necessary
-# - Returns true if updated, false if no changes needed
-def validate_and_update_description(defect, jira_description_field, issue_key, verbose: false)
-  return false unless defect && jira_description_field
-
-  # Extract full formatted description from Jira field
-  new_description = extract_description(jira_description_field).to_s.strip
-  existing_description = (defect.content.to_s.strip if defect.respond_to?(:content)) || ''
-
-  vputs "[DESCRIPTION-VALIDATE] #{issue_key}: new_len=#{new_description.length}, existing_len=#{existing_description.length}" if verbose
-
-  # Compare descriptions (normalize whitespace for comparison)
-  new_normalized = new_description.gsub(/\s+/, ' ').downcase
-  existing_normalized = existing_description.gsub(/\s+/, ' ').downcase
-
-  if new_normalized == existing_normalized
-    vputs "[DESCRIPTION-SKIP] #{issue_key}: Description unchanged" if verbose
-    return false
-  end
-
-  # Description differs - update it
-  begin
-    defect.content = new_description
-    defect.save!
-
-    vputs "[DESCRIPTION-UPDATE] #{issue_key}: Updated description (#{new_description.length} chars)" if verbose
-
-    # Log what was changed
-    if verbose && existing_description.present?
-      vputs "  Previous: #{existing_description[0..100]}..." if existing_description.length > 100
-      vputs "  Updated: #{new_description[0..100]}..." if new_description.length > 100
-    end
-
-    return true
-  rescue StandardError => e
-    warn "[DESCRIPTION-ERROR] #{issue_key}: Failed to update description: #{e.class}: #{e.message}"
-    return false
-  end
-end
-
-# Repair and validate descriptions for all defects
-def repair_descriptions_for_defects(issues, verbose: false)
-  return { total: 0, updated: 0, skipped: 0, errors: 0 } if issues.nil? || issues.empty?
-
-  stats = { total: 0, updated: 0, skipped: 0, errors: 0 }
-
-  issues.each do |issue|
-    issue_key = issue['key']
-    fields = issue['fields'] || {}
-    jira_description_field = fields['description']
-
-    stats[:total] += 1
-
-    begin
-      defect = Defect.find_by(defect_unique: issue_key)
-
-      unless defect
-        vputs "[REPAIR-SKIP] #{issue_key}: Defect not found in database" if verbose
-        stats[:skipped] += 1
-        next
-      end
-
-      # Validate and update description if changed
-      was_updated = validate_and_update_description(defect, jira_description_field, issue_key, verbose: verbose)
-
-      if was_updated
-        stats[:updated] += 1
-        info "[DESCRIPTION-REPAIRED] #{issue_key}: Description updated from Jira"
-      else
-        stats[:skipped] += 1
-      end
-
-    rescue StandardError => e
-      stats[:errors] += 1
-      warn "[REPAIR-ERROR] #{issue_key}: Failed to repair description: #{e.class}: #{e.message}"
-    end
-  end
-
-  stats
-end
-
-# Import comments for a defect into DefectMessage (with rich text support)
-# Each comment body is converted to HTML/rich text format and stored as ActionText
-def import_comments_for_defect(defect, comments_array, verbose: false)
-  return { imported: 0, skipped: 0, dropped: 0 } if comments_array.nil? || comments_array.empty?
-
-  stats = { imported: 0, skipped: 0, dropped: 0 }
-
-  comments_array.each_with_index do |c, comment_idx|
-    next unless c.is_a?(Hash)
-
-    author = c['author'] || {}
-    author_name = author['displayName'].to_s.strip
-    author_email = author['emailAddress'].to_s.strip
-
-    # Find the user who made the comment
-    user = find_user_by_name_or_map(author_name, author_email, verbose: verbose) || User.find_by(id: DEFAULT_USER_UUID)
-
-    # Extract comment body as rich HTML content (preserves formatting like lists, tables, colors, etc)
-    # The extract_comment_body handles both plain text and ADF format
-    body_field = c['body'] || c['content']
-
-    # For ADF format, convert to HTML; for plain text, return as-is
-    if body_field.is_a?(Hash)
-      # Jira ADF format - convert to HTML with full rich text support
-      body_html = convert_adf_to_html(body_field['content'] || [])
-      body = body_html.present? ? body_html : ''
-      
-      # Log rich text conversion if verbose
-      if verbose && body_html.present?
-        has_table = body_html.include?('<table>')
-        has_list = body_html.include?('<ul>') || body_html.include?('<ol>')
-        has_color = body_html.include?('style=')
-        has_image = body_html.include?('<img')
-        
-        features = []
-        features << 'table' if has_table
-        features << 'list' if has_list
-        features << 'color' if has_color
-        features << 'image' if has_image
-        
-        if features.any?
-          vputs "[RICH-TEXT] Comment #{comment_idx + 1} contains: #{features.join(', ')}" if verbose
-        end
-      end
-    elsif body_field.is_a?(String)
-      # Plain text - keep as-is
-      body = body_field.strip
-    else
-      body = body_field.to_s.strip
-    end
-
-    # Skip empty comments (unless they have attachments)
-    if body.blank?
-      stats[:dropped] += 1
-      vputs "[SKIP] Empty comment at index #{comment_idx} for #{defect.defect_unique}" if verbose
-      next
-    end
-
-    created_at = try_parse_time(c['created'])
-    updated_at = try_parse_time(c['updated'])
-
-    # Check for duplicate comments (by timestamp, user, and content)
-    if created_at
-      existing = defect.defect_messages.where(created_at: created_at, user_id: user&.id).detect do |dm|
-        existing_body = dm.content.respond_to?(:to_plain_text) ? dm.content.to_plain_text.strip : dm.content.to_s.strip
-        # Normalize for comparison
-        existing_normalized = existing_body.gsub(/\s+/, ' ').strip.downcase
-        body_normalized = body.gsub(/\s+/, ' ').strip.downcase
-        existing_normalized == body_normalized
-      end
-
-      if existing
-        stats[:skipped] += 1
-        vputs "[SKIP] Duplicate comment for #{defect.defect_unique}: already exists" if verbose
-        next
-      end
-    end
-
-    # Create DefectMessage with rich text content
-    begin
-      dm = DefectMessage.new(defect: defect, user: user, modified_by: user)
-      # Assign to content attribute which is ActionText and accepts HTML
-      # This will automatically create the rich_text record with proper formatting
-      dm.content = body
-      dm.created_at = created_at if created_at
-      dm.updated_at = updated_at || created_at || Time.current
-
-      dm.save!
-      stats[:imported] += 1
-      vputs "[IMPORT] Added rich text comment by #{author_name} to #{defect.defect_unique} (id=#{dm.id}, length=#{body.length})" if verbose
-    rescue StandardError => e
-      warn "[ERROR] Failed to save comment for #{defect.defect_unique}: #{e.class}: #{e.message}"
-      stats[:dropped] += 1
-    end
-  end
-
-  stats
-end
-
 # ===============================
 # IMPORT LOGIC - MAIN FUNCTION
 # ===============================
@@ -2550,25 +2390,45 @@ begin
   $IMPORT_REPORTS = []
 
   issues.each_with_index do |issue, index|
+    # Check for shutdown signal - complete current issue then exit
+    if $shutdown_requested
+      info "\n⏹️  Shutdown signal received - completing current issue then exiting..."
+      info "Processed #{stats[:ok]} of #{issues.length} issues before shutdown"
+      break
+    end
+
     stats[:total] += 1
     project_key = issue.dig('fields', 'project', 'key')
-    info "Processing issue #{index + 1}/#{issues.length}: #{issue['key']}" if options[:verbose]
+    issue_key = issue['key']
+    $current_issue_key = issue_key
 
-    result = import_issue_with_modules(issue, custom_fields, dry_run: options[:dry_run], verbose: options[:verbose])
+    info "Processing issue #{index + 1}/#{issues.length}: #{issue_key}" if options[:verbose]
 
-    case result
-    when :created
-      stats[:ok] += 1
-      stats[:created] += 1
-      project_stats[project_key][:created] += 1 if project_key
-    when :updated
-      stats[:ok] += 1
-      stats[:updated] += 1
-      project_stats[project_key][:updated] += 1 if project_key
-    when :skipped
-      stats[:skipped] += 1
-    when :error
+    begin
+      result = import_issue_with_modules(issue, custom_fields, dry_run: options[:dry_run], verbose: options[:verbose])
+
+      case result
+      when :created
+        stats[:ok] += 1
+        stats[:created] += 1
+        project_stats[project_key][:created] += 1 if project_key
+      when :updated
+        stats[:ok] += 1
+        stats[:updated] += 1
+        project_stats[project_key][:updated] += 1 if project_key
+      when :skipped
+        stats[:skipped] += 1
+      when :error
+        stats[:errors] += 1
+      end
+    rescue StandardError => e
+      warn "⚠️  Error processing #{issue_key}: #{e.class}: #{e.message}"
+      warn "Backtrace: #{e.backtrace.first(5).join("\n")}"
       stats[:errors] += 1
+      # Continue to next issue instead of failing completely
+      next
+    ensure
+      $current_issue_key = nil
     end
   end
 
@@ -3144,3 +3004,28 @@ begin
     info "=" * 80
   end
 end
+
+# ===============================
+# CLEANUP & FINAL SUMMARY
+# ===============================
+info "\n" + "=" * 80
+info "✅ IMPORT PROCESS COMPLETED"
+info "=" * 80
+info "Completion Time: #{Time.now}"
+info "Total Runtime: #{(Time.now - $import_start_time).round(2)} seconds"
+info ""
+info "Summary:"
+info "  Process ID: #{Process.pid}"
+info "  Log File: #{BACKGROUND_LOGFILE}"
+info "  PID File: #{BACKGROUND_PIDFILE}"
+info ""
+
+# Mark as complete
+completion_file = File.join(BACKGROUND_LOGDIR, "import_#{Time.now.strftime('%Y%m%d_%H%M%S')}.complete")
+File.write(completion_file, "Completed at #{Time.now}\nTotal issues: #{stats[:total]}\nSuccessful: #{stats[:ok]}\nErrors: #{stats[:errors]}")
+
+info "✅ Import process finished successfully!"
+info "=" * 80
+
+# Clean up PID file
+File.delete(BACKGROUND_PIDFILE) if File.exist?(BACKGROUND_PIDFILE)
