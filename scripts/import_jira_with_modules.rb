@@ -2204,6 +2204,110 @@ def fetch_and_attach_to_rich_text_jira(rich_record, attachments, verbose: false)
 end
 
 # ===============================
+# JIRA COMMENTS & DESCRIPTION HELPERS
+# ===============================
+
+# Fetch comments for an issue directly from Jira API
+def fetch_jira_comments(issue_key)
+  return [] unless issue_key.present?
+
+  uri = URI.parse("#{JIRA_BASE_URL}/rest/api/3/issue/#{issue_key}/comments")
+  http = Net::HTTP.new(uri.host, uri.port)
+  http.use_ssl = true
+  http.read_timeout = 30
+  http.open_timeout = 10
+
+  request = Net::HTTP::Get.new(uri.request_uri)
+  request['Accept'] = 'application/json'
+  request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
+
+  begin
+    response = http.request(request)
+    unless response.is_a?(Net::HTTPSuccess)
+      vputs "  [WARN] Failed to fetch comments for #{issue_key}: #{response.code} #{response.message}" if $verbose_flag
+      return []
+    end
+
+    data = JSON.parse(response.body)
+    comments = data['comments'] || []
+    return comments
+  rescue StandardError => e
+    vputs "  [WARN] Error fetching comments for #{issue_key}: #{e.message}" if $verbose_flag
+    return []
+  end
+end
+
+# Import comments array into DefectMessage records
+def import_comments_for_defect(defect, comments_array, verbose: false)
+  return 0 if comments_array.nil? || comments_array.empty?
+  return 0 unless defect.persisted?
+
+  imported_count = 0
+
+  comments_array.each do |comment|
+    begin
+      # Extract comment data
+      comment_id = comment['id'].to_s.strip
+      comment_author = comment['author'] || {}
+      author_name = (comment_author['displayName'] || '').to_s.strip
+      author_email = (comment_author['emailAddress'] || '').to_s.strip
+
+      comment_body = extract_comment_body(comment['body'])
+      created_at = try_parse_time(comment['created'])
+      updated_at = try_parse_time(comment['updated'])
+
+      next if comment_body.blank?
+
+      # Find or use default user
+      author_user = find_user_by_name_or_map(author_name, author_email, verbose: verbose) || User.find_by(id: DEFAULT_USER_UUID)
+
+      # Create DefectMessage record with rich text content
+      message = defect.defect_messages.build(
+        user_id: author_user&.id || DEFAULT_USER_UUID,
+        created_at: created_at,
+        updated_at: updated_at
+      )
+
+      # Set the created_by and modified_by if user exists
+      message.created_by_id = author_user&.id if author_user
+      message.modified_by_id = author_user&.id if author_user
+
+      # Save the message first so we have an ID for the rich text
+      message.save!
+
+      # Add the rich text content via ActionText
+      message.content = comment_body
+      message.save!
+
+      imported_count += 1
+      vputs "    [IMPORT] Comment #{comment_id} imported from #{author_name}" if verbose
+    rescue StandardError => e
+      vputs "    [ERROR] Failed to import comment: #{e.message}" if verbose
+    end
+  end
+
+  vputs "  [COMMENTS] Successfully imported #{imported_count} comments for #{defect.defect_unique}" if verbose && imported_count > 0
+  imported_count
+end
+
+# Validate and update the description field
+def validate_and_update_description(defect, description_field, issue_key, verbose: false)
+  return unless defect.persisted?
+
+  # Extract the description text
+  description_text = extract_description(description_field)
+
+  if description_text.present?
+    # Update the rich text content
+    defect.content = description_text
+    defect.save!
+    vputs "  [DESCRIPTION] Updated description for #{issue_key}" if verbose
+  else
+    vputs "  [DESCRIPTION] No description found for #{issue_key}" if verbose
+  end
+end
+
+# ===============================
 # IMPORT LOGIC WITH MODULES
 # ===============================
 # Import or update a Jira issue as a Defect record
