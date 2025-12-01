@@ -34,6 +34,9 @@ end
 # Accept project key filter (e.g., KCBL)
 PROJECT_KEY = (ENV['PROJECT'] || ENV['JIRA_PROJECT'] || ARGV[0]).to_s.strip.upcase
 
+# Enable debug mode to see detailed HTML extraction info
+DEBUG_MODE = ENV['DEBUG'].to_s.downcase == 'true' || ENV['DEBUG'] == '1'
+
 # Statistics tracking
 $STATS = {
   total_defects: 0,
@@ -57,6 +60,8 @@ else
   puts "Target project: (all projects)"
   puts "Tip: Run for a single project: rails runner scripts/repair_rich_text_content.rb KCBL"
 end
+puts "Debug mode: #{DEBUG_MODE ? 'ENABLED' : 'disabled'}"
+puts "Tip: Enable debug mode with DEBUG=true rails runner scripts/repair_rich_text_content.rb KCBL"
 puts ""
 
 # ===============================
@@ -250,25 +255,34 @@ def convert_adf_table_to_html(table_block)
 
   rows_html = []
   table_rows.each do |row|
-    next unless row.is_a?(Hash) && row['type'] == 'tablerow'
+    next unless row.is_a?(Hash)
+
+    # Handle both 'tablerow' and 'tableRow' (case variations)
+    row_type = row['type']&.to_s&.downcase
+    next unless row_type == 'tablerow'
 
     cells = row['content'] || []
     cells_html = []
     cells.each do |cell|
       next unless cell.is_a?(Hash)
 
-      cell_type = cell['type'] == 'tablehead' ? 'th' : 'td'
+      # Handle tableHeader, tableCell, tablehead variations
+      cell_type_raw = cell['type']&.to_s&.downcase
+      cell_type = (cell_type_raw == 'tableheader' || cell_type_raw == 'tablehead') ? 'th' : 'td'
+
       cell_content = cell['content'] || []
       cell_html = convert_adf_to_html(cell_content)
-      # Remove wrapping p tags
-      cell_html = cell_html.gsub(/<p>(.*?)<\/p>/, '\1')
+
+      # Remove wrapping p tags but preserve other formatting
+      cell_html = cell_html.gsub(%r{<p>(.*?)</p>}m, '\1')
+
       cells_html << "<#{cell_type}>#{cell_html}</#{cell_type}>"
     end
 
     rows_html << "<tr>#{cells_html.join('')}</tr>" if cells_html.any?
   end
 
-  rows_html.any? ? "<table>#{rows_html.join("\n")}</table>" : ''
+  rows_html.any? ? "<table border=\"1\" cellpadding=\"4\" cellspacing=\"0\">#{rows_html.join("\n")}</table>" : ''
 end
 
 # Extract description from Jira field
@@ -285,12 +299,17 @@ def extract_description(field)
 end
 
 # Prefer rendered HTML description if present
-def extract_issue_description_html(jira_issue)
+def extract_issue_description_html(jira_issue, debug: false)
   # Jira Cloud provides renderedFields when requested via expand
   rendered_desc = jira_issue.dig('renderedFields', 'description') || jira_issue.dig('fields', 'renderedFields', 'description')
-  return rendered_desc.to_s if rendered_desc.present?
+
+  if rendered_desc.present?
+    puts "    [Using rendered HTML]" if debug
+    return rendered_desc.to_s
+  end
 
   # Fall back to raw field and ADF conversion
+  puts "    [Using ADF conversion]" if debug
   jira_description_field = jira_issue.dig('fields', 'description')
   extract_description(jira_description_field)
 end
@@ -372,7 +391,7 @@ def normalize_html(html)
 end
 
 # Compare and update defect description
-def repair_defect_content(defect)
+def repair_defect_content(defect, debug: false)
   issue_key = defect.defect_unique
 
   print "  📄 Checking #{issue_key} description... "
@@ -385,8 +404,10 @@ def repair_defect_content(defect)
     return false
   end
 
+  puts "" if debug
+
   # Extract description from Jira (prefer rendered HTML)
-  jira_description_html = extract_issue_description_html(jira_issue)
+  jira_description_html = extract_issue_description_html(jira_issue, debug: debug)
 
   # Get current description from database
   current_description = defect.content.to_s.strip
@@ -416,7 +437,7 @@ def repair_defect_content(defect)
 end
 
 # Compare and update defect messages (comments)
-def repair_defect_messages(defect)
+def repair_defect_messages(defect, debug: false)
   issue_key = defect.defect_unique
 
   print "  💬 Checking #{issue_key} comments... "
@@ -446,8 +467,13 @@ def repair_defect_messages(defect)
     # Prefer rendered HTML body
     jira_body_html = jira_comment['renderedBody']
 
+    if debug && jira_body_html.present?
+      puts "    [Comment #{idx + 1}: Using rendered HTML]"
+    end
+
     # Fall back to ADF body -> HTML if rendered not available
     if jira_body_html.blank?
+      puts "    [Comment #{idx + 1}: Using ADF conversion]" if debug
       body_field = jira_comment['body']
       if body_field.is_a?(Hash)
         jira_body_html = convert_adf_to_html(body_field['content'] || [])
@@ -572,10 +598,10 @@ defects.each_with_index do |defect, idx|
   puts "[#{idx + 1}/#{$STATS[:total_defects]}] Processing #{defect.defect_unique}"
 
   # Repair defect description
-  repair_defect_content(defect)
+  repair_defect_content(defect, debug: DEBUG_MODE)
 
   # Repair defect comments
-  comment_stats = repair_defect_messages(defect)
+  comment_stats = repair_defect_messages(defect, debug: DEBUG_MODE)
   $STATS[:total_comments] += comment_stats[:updated] + comment_stats[:failed]
 
   puts ""
