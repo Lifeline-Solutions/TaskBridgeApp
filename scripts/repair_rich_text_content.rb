@@ -69,14 +69,14 @@ puts ""
 # ===============================
 
 # Convert Jira ADF (Atlassian Document Format) to HTML for ActionText
-def convert_adf_to_html(content_array)
+def convert_adf_to_html(content_array, debug: false)
   return '' if content_array.nil? || !content_array.is_a?(Array)
 
   html_parts = []
   content_array.each do |block|
     next unless block.is_a?(Hash)
 
-    block_html = convert_adf_block_to_html(block)
+    block_html = convert_adf_block_to_html(block, debug: debug)
     html_parts << block_html if block_html.present?
   end
 
@@ -84,72 +84,102 @@ def convert_adf_to_html(content_array)
 end
 
 # Convert a single ADF block to HTML
-def convert_adf_block_to_html(block)
+def convert_adf_block_to_html(block, debug: false)
   return '' if block.nil? || !block.is_a?(Hash)
 
   block_type = block['type']&.to_s&.downcase
   content = block['content'] || []
+  attrs = block['attrs'] || {}
 
   case block_type
   when 'paragraph'
-    inner_html = convert_adf_inline_to_html(content)
+    inner_html = convert_adf_inline_to_html(content, debug: debug)
     inner_html.present? ? "<p>#{inner_html}</p>" : ''
 
   when 'heading'
-    inner_html = convert_adf_inline_to_html(content)
-    level = block.dig('attrs', 'level') || 1
+    inner_html = convert_adf_inline_to_html(content, debug: debug)
+    level = attrs['level'] || block.dig('attrs', 'level') || 1
     inner_html.present? ? "<h#{level}>#{inner_html}</h#{level}>" : ''
 
   when 'bulletlist', 'bullet_list'
-    list_html = convert_adf_list_to_html(content, 'ul')
+    list_html = convert_adf_list_to_html(content, 'ul', debug: debug)
     list_html.present? ? "<ul>#{list_html}</ul>" : ''
 
   when 'orderedlist', 'ordered_list'
-    list_html = convert_adf_list_to_html(content, 'ol')
+    list_html = convert_adf_list_to_html(content, 'ol', debug: debug)
     list_html.present? ? "<ol>#{list_html}</ol>" : ''
 
   when 'table'
-    convert_adf_table_to_html(block)
+    convert_adf_table_to_html(block, debug: debug)
 
   when 'codeblock', 'code_block'
-    code_text = convert_adf_inline_to_html(content)
+    code_text = convert_adf_inline_to_html(content, debug: debug)
     if code_text.present?
-      lang = block.dig('attrs', 'language') || 'plaintext'
+      lang = attrs['language'] || block.dig('attrs', 'language') || 'plaintext'
       "<pre><code class=\"language-#{lang}\">#{CGI.escapeHTML(code_text)}</code></pre>"
     else
       ''
     end
 
   when 'blockquote'
-    inner_html = convert_adf_inline_to_html(content)
+    inner_html = convert_adf_inline_to_html(content, debug: debug)
     inner_html.present? ? "<blockquote>#{inner_html}</blockquote>" : ''
 
-  when 'horizontalrule', 'horizontal_rule', 'hr'
+  when 'horizontalrule', 'horizontal_rule', 'rule', 'hr'
     '<hr>'
 
+  when 'mediasingle', 'media'
+    # Handle images/media embedded in content
+    if content.is_a?(Array) && content[0]
+      media = content[0]
+      if media['type'] == 'media' && media['attrs']
+        src = media['attrs']['url'] || media['attrs']['src']
+        alt = media['attrs']['alt'] || 'image'
+        return "<img src=\"#{CGI.escapeHTML(src)}\" alt=\"#{CGI.escapeHTML(alt)}\">" if src.present?
+      end
+    end
+    ''
+
   when 'image'
-    src = block.dig('attrs', 'src')
-    alt = block.dig('attrs', 'alt') || 'image'
+    src = attrs['src'] || block.dig('attrs', 'src')
+    alt = attrs['alt'] || block.dig('attrs', 'alt') || 'image'
     src.present? ? "<img src=\"#{CGI.escapeHTML(src)}\" alt=\"#{CGI.escapeHTML(alt)}\">" : ''
 
   when 'panel'
     # Jira panels (info, warning, error, success, note)
-    panel_type = block.dig('attrs', 'panelType') || 'info'
-    inner_html = convert_adf_to_html(content)
+    panel_type = attrs['panelType'] || block.dig('attrs', 'panelType') || 'info'
+    inner_html = convert_adf_to_html(content, debug: debug)
     if inner_html.present?
       "<div class=\"panel panel-#{panel_type}\">#{inner_html}</div>"
     else
       ''
     end
 
+  when 'expand'
+    # Jira expand/collapse sections
+    title = attrs['title'] || block.dig('attrs', 'title') || 'Details'
+    inner_html = convert_adf_to_html(content, debug: debug)
+    if inner_html.present?
+      "<details><summary>#{CGI.escapeHTML(title)}</summary>#{inner_html}</details>"
+    else
+      ''
+    end
+
   else
     # For unknown types with content, try to process nested content
-    convert_adf_to_html(content) if content.is_a?(Array)
+    if content.is_a?(Array) && content.any?
+      if debug || DEBUG_MODE
+        puts "      [Unknown block type: #{block_type}, processing nested content]"
+      end
+      convert_adf_to_html(content, debug: debug)
+    else
+      ''
+    end
   end
 end
 
 # Convert ADF inline content (text, mentions, etc) to HTML
-def convert_adf_inline_to_html(content_array)
+def convert_adf_inline_to_html(content_array, debug: false)
   return '' if content_array.nil? || !content_array.is_a?(Array)
 
   html_parts = []
@@ -163,7 +193,7 @@ def convert_adf_inline_to_html(content_array)
       text = item['text'].to_s
       # Apply marks (bold, italic, code, colors, etc)
       marks = item['marks'] || []
-      marked_text = text
+      marked_text = CGI.escapeHTML(text)
       marks.each do |mark|
         mark_type = mark['type']&.to_s&.downcase
         case mark_type
@@ -172,24 +202,21 @@ def convert_adf_inline_to_html(content_array)
         when 'italic', 'em'
           marked_text = "<em>#{marked_text}</em>"
         when 'code'
-          marked_text = "<code>#{CGI.escapeHTML(marked_text)}</code>"
+          marked_text = "<code>#{marked_text}</code>"
         when 'underline'
           marked_text = "<u>#{marked_text}</u>"
-        when 'strikethrough'
+        when 'strike', 'strikethrough'
           marked_text = "<s>#{marked_text}</s>"
         when 'link'
           href = mark.dig('attrs', 'href') || '#'
           marked_text = "<a href=\"#{CGI.escapeHTML(href)}\">#{marked_text}</a>"
         when 'textcolor', 'textColor'
-          # Support for text color formatting
           color = mark.dig('attrs', 'color') || '#000000'
           marked_text = "<span style=\"color: #{CGI.escapeHTML(color)}\">#{marked_text}</span>"
         when 'backgroundcolor', 'backgroundColor'
-          # Support for background color formatting
           color = mark.dig('attrs', 'color') || '#ffffff'
           marked_text = "<span style=\"background-color: #{CGI.escapeHTML(color)}\">#{marked_text}</span>"
         when 'subsup'
-          # Support for superscript/subscript
           type = mark.dig('attrs', 'type')
           if type == 'sub'
             marked_text = "<sub>#{marked_text}</sub>"
@@ -202,13 +229,14 @@ def convert_adf_inline_to_html(content_array)
 
     when 'mention'
       mention_text = item.dig('attrs', 'text') || '@user'
-      html_parts << "<span class=\"mention\">#{CGI.escapeHTML(mention_text)}</span>"
+      mention_id = item.dig('attrs', 'id')
+      html_parts << "<span class=\"mention\" data-mention-id=\"#{CGI.escapeHTML(mention_id || '')}\">#{CGI.escapeHTML(mention_text)}</span>"
 
-    when 'hardbreak'
+    when 'hardbreak', 'hard_break'
       html_parts << '<br>'
 
     when 'emoji'
-      emoji_text = item.dig('attrs', 'text') || '😊'
+      emoji_text = item.dig('attrs', 'text') || item.dig('attrs', 'shortName') || '😊'
       html_parts << emoji_text
 
     when 'inlinecard', 'card'
@@ -216,11 +244,25 @@ def convert_adf_inline_to_html(content_array)
       title = item.dig('attrs', 'title') || url
       url.present? ? html_parts << "<a href=\"#{CGI.escapeHTML(url)}\">#{CGI.escapeHTML(title)}</a>" : nil
 
+    when 'date'
+      timestamp = item.dig('attrs', 'timestamp')
+      if timestamp
+        date = Time.at(timestamp / 1000).strftime('%Y-%m-%d') rescue timestamp.to_s
+        html_parts << "<time datetime=\"#{date}\">#{date}</time>"
+      end
+
+    when 'status'
+      text = item.dig('attrs', 'text') || 'Status'
+      color = item.dig('attrs', 'color') || 'neutral'
+      html_parts << "<span class=\"status status-#{color}\">#{CGI.escapeHTML(text)}</span>"
+
     else
       # Recursively handle nested content
       if item['content'].is_a?(Array)
-        nested_html = convert_adf_inline_to_html(item['content'])
+        nested_html = convert_adf_inline_to_html(item['content'], debug: debug)
         html_parts << nested_html if nested_html.present?
+      elsif debug || DEBUG_MODE
+        puts "      [Unknown inline type: #{item_type}]"
       end
     end
   end
@@ -229,7 +271,7 @@ def convert_adf_inline_to_html(content_array)
 end
 
 # Convert ADF list to HTML
-def convert_adf_list_to_html(items, tag)
+def convert_adf_list_to_html(items, tag, debug: false)
   return '' if items.nil? || !items.is_a?(Array)
 
   list_items = []
@@ -237,7 +279,7 @@ def convert_adf_list_to_html(items, tag)
     next unless item.is_a?(Hash) && item['type'] == 'listitem'
 
     item_content = item['content'] || []
-    item_html = convert_adf_to_html(item_content)
+    item_html = convert_adf_to_html(item_content, debug: debug)
     # Extract text if it's wrapped in <p> tags
     item_html = item_html.gsub(/<p>(.*?)<\/p>/, '\1')
     list_items << "<li>#{item_html}</li>" if item_html.present?
@@ -246,15 +288,24 @@ def convert_adf_list_to_html(items, tag)
   list_items.join("\n")
 end
 
-# Convert ADF table to HTML
-def convert_adf_table_to_html(table_block)
+# Convert ADF table to HTML (Enhanced)
+def convert_adf_table_to_html(table_block, debug: false)
   return '' if table_block.nil?
 
   table_rows = table_block['content'] || []
-  return '' if table_rows.empty?
+
+  if table_rows.empty?
+    # Table block exists but has no rows - this means data is missing
+    if debug || DEBUG_MODE
+      puts "      [WARNING: Table block found but has no content]"
+    end
+    return ''
+  end
 
   rows_html = []
-  table_rows.each do |row|
+  has_header = false
+
+  table_rows.each_with_index do |row, row_idx|
     next unless row.is_a?(Hash)
 
     # Handle both 'tablerow' and 'tableRow' (case variations)
@@ -263,26 +314,56 @@ def convert_adf_table_to_html(table_block)
 
     cells = row['content'] || []
     cells_html = []
+
     cells.each do |cell|
       next unless cell.is_a?(Hash)
 
-      # Handle tableHeader, tableCell, tablehead variations
+      # Handle tableHeader, tableCell, tablehead, tableHead variations
       cell_type_raw = cell['type']&.to_s&.downcase
-      cell_type = (cell_type_raw == 'tableheader' || cell_type_raw == 'tablehead') ? 'th' : 'td'
+      is_header = (cell_type_raw == 'tableheader' || cell_type_raw == 'tablehead')
+      has_header = true if is_header && row_idx == 0
+
+      cell_tag = is_header ? 'th' : 'td'
 
       cell_content = cell['content'] || []
       cell_html = convert_adf_to_html(cell_content)
 
-      # Remove wrapping p tags but preserve other formatting
-      cell_html = cell_html.gsub(%r{<p>(.*?)</p>}m, '\1')
+      # Remove wrapping p tags but preserve other formatting (lists, etc)
+      cell_html = cell_html.gsub(%r{<p>(.*?)</p>}m, '\1').strip
 
-      cells_html << "<#{cell_type}>#{cell_html}</#{cell_type}>"
+      # Handle empty cells
+      cell_html = '&nbsp;' if cell_html.blank?
+
+      # Handle cell attributes (colspan, rowspan, background color)
+      attrs_str = ''
+      if cell['attrs']
+        colspan = cell['attrs']['colspan']
+        rowspan = cell['attrs']['rowspan']
+        bg_color = cell['attrs']['background']
+
+        attrs_str += " colspan=\"#{colspan}\"" if colspan && colspan > 1
+        attrs_str += " rowspan=\"#{rowspan}\"" if rowspan && rowspan > 1
+        attrs_str += " style=\"background-color: #{CGI.escapeHTML(bg_color)}\"" if bg_color
+      end
+
+      cells_html << "<#{cell_tag}#{attrs_str}>#{cell_html}</#{cell_tag}>"
     end
 
     rows_html << "<tr>#{cells_html.join('')}</tr>" if cells_html.any?
   end
 
-  rows_html.any? ? "<table border=\"1\" cellpadding=\"4\" cellspacing=\"0\">#{rows_html.join("\n")}</table>" : ''
+  if rows_html.any?
+    # Wrap header rows in thead if present for better semantic HTML
+    if has_header && rows_html.length > 1
+      thead = "<thead>#{rows_html[0]}</thead>"
+      tbody = "<tbody>#{rows_html[1..-1].join("\n")}</tbody>"
+      "<table border=\"1\" cellpadding=\"4\" cellspacing=\"0\">#{thead}#{tbody}</table>"
+    else
+      "<table border=\"1\" cellpadding=\"4\" cellspacing=\"0\">#{rows_html.join("\n")}</table>"
+    end
+  else
+    ''
+  end
 end
 
 # Extract description from Jira field
@@ -497,7 +578,7 @@ def repair_defect_messages(defect, debug: false)
       puts "    [Comment #{idx + 1}: Using ADF conversion]" if debug
       body_field = jira_comment['body']
       if body_field.is_a?(Hash)
-        jira_body_html = convert_adf_to_html(body_field['content'] || [])
+        jira_body_html = convert_adf_to_html(body_field['content'] || [], debug: debug)
       elsif body_field.is_a?(String)
         jira_body_html = body_field.strip
       else

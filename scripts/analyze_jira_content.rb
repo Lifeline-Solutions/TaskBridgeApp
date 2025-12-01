@@ -15,6 +15,7 @@ JIRA_API_USER = ENV.fetch('JIRA_API_USER', CONFIG[:jira_api_user] || 'boniface.n
 JIRA_API_TOKEN = ENV.fetch('JIRA_API_TOKEN') { CONFIG[:jira_api_token] }
 
 TEST_ISSUE_KEY = ARGV[0] || 'PSP-9'
+SAVE_TO_FILE = ENV['SAVE_RESPONSE'].to_s.downcase == 'true'
 
 puts "=" * 100
 puts "COMPREHENSIVE JIRA CONTENT ANALYSIS FOR: #{TEST_ISSUE_KEY}"
@@ -48,6 +49,14 @@ end
 data = JSON.parse(response.body)
 
 puts "✅ Successfully fetched issue"
+
+# Save complete response to file if requested
+if SAVE_TO_FILE
+  filename = "tmp/jira_response_#{TEST_ISSUE_KEY.gsub('-', '_')}.json"
+  File.write(filename, JSON.pretty_generate(data))
+  puts "💾 Complete response saved to: #{filename}"
+end
+
 puts ""
 
 # 1. RENDERED HTML
