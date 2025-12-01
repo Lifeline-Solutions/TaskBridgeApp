@@ -153,6 +153,24 @@ info "Background Mode: #{ALLOW_BACKGROUND ? 'ENABLED' : 'DISABLED'}"
 info "=" * 80
 info ""
 
+# Global tracking for user match statistics
+$USER_STATS = {
+  total_lookups: 0,
+  email_matches: 0,
+  full_name_matches: 0,
+  first_last_matches: 0,
+  partial_matches: 0,
+  config_map_matches: 0,
+  created_users: 0,
+  fallback_users: 0,
+  matched_users: Set.new,      # Set of user IDs successfully matched
+  fallback_users_set: Set.new,  # Set of user IDs that fell back to default
+  not_found_names: Hash.new(0), # Names that couldn't be matched
+  parsed_names: {},             # Track parsed names for reporting
+  reporter_matches: {},         # Track reporter matches per issue
+  assignee_matches: {}          # Track assignee matches per issue
+}
+
 # ===============================
 # CUSTOM FIELD DISCOVERY
 # ===============================
@@ -254,7 +272,8 @@ def fetch_jira_issues_with_modules(project_keys:, max_results: 100, days_back: 2
     query_params = {
       jql: jql_query,
       maxResults: max_results,
-      fields: fields_to_fetch.join(',')
+      fields: fields_to_fetch.join(','),
+      expand: 'changelog,versionedRepresentations'
     }
 
     query_params[:nextPageToken] = next_page_token if next_page_token.present?
@@ -2174,9 +2193,112 @@ def fetch_and_attach_to_rich_text_jira(rich_record, attachments, verbose: false)
   stats
 end
 
-# ===============================
-# IMPORT LOGIC - MAIN FUNCTION
-# ===============================
+# Fetch all comments for a specific issue from Jira API
+def fetch_jira_comments(issue_key)
+  url = "#{JIRA_BASE_URL}/rest/api/3/issue/#{issue_key}/comment"
+  uri = URI.parse(url)
+
+  # Request with expand to get rendered body
+  uri.query = URI.encode_www_form({
+    expand: 'renderedBody',
+    maxResults: 1000
+  })
+
+  http = Net::HTTP.new(uri.host, uri.port)
+  http.use_ssl = true
+  http.read_timeout = 120
+  http.open_timeout = 30
+
+  request = Net::HTTP::Get.new(uri.request_uri)
+  request['Accept'] = 'application/json'
+  request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
+
+  response = http.request(request)
+
+  unless response.is_a?(Net::HTTPSuccess)
+    vputs "[WARN] Failed to fetch comments for #{issue_key}: #{response.code} #{response.message}"
+    return []
+  end
+
+  data = JSON.parse(response.body)
+  data['comments'] || []
+rescue StandardError => e
+  vputs "[ERROR] Exception fetching comments for #{issue_key}: #{e.class}: #{e.message}"
+  []
+end
+
+# ...existing code...
+
+def import_comments_for_defect(defect, comments_array, verbose: false)
+  return if comments_array.nil? || comments_array.empty?
+
+  vputs "[COMMENTS] Processing #{comments_array.length} comment(s) for #{defect.defect_unique}..." if verbose
+
+  comments_array.each_with_index do |jira_comment, idx|
+    begin
+      author_name = jira_comment.dig('author', 'displayName').to_s.strip
+      author_email = jira_comment.dig('author', 'emailAddress').to_s.strip
+      created_at_str = jira_comment['created'].to_s.strip
+      created_at = try_parse_time(created_at_str)
+
+      # Prefer rendered body (HTML), fallback to ADF body, then plain text
+      comment_body = jira_comment['renderedBody']
+
+      if comment_body.blank?
+        # Try ADF body format
+        body_field = jira_comment['body']
+        if body_field.is_a?(Hash)
+          comment_body = convert_adf_to_html(body_field['content'] || [])
+        elsif body_field.is_a?(String)
+          comment_body = body_field.strip
+        else
+          comment_body = body_field.to_s.strip
+        end
+      end
+
+      # Skip empty comments
+      next if comment_body.blank?
+
+      # Find user
+      user = find_user_by_name_or_map(author_name, author_email, verbose: verbose) || User.find_by(id: DEFAULT_USER_UUID)
+      next unless user
+
+      # Check if comment already exists to avoid duplicates
+      existing = defect.defect_messages.find do |dm|
+        dm.created_at && created_at && (dm.created_at - created_at).abs < 2
+      end
+
+      if existing
+        vputs "[COMMENTS] Comment already exists for #{defect.defect_unique} at #{created_at}" if verbose
+        next
+      end
+
+      # Create comment record
+      dm = DefectMessage.new(
+        defect: defect,
+        user: user,
+        modified_by: user,
+        created_at: created_at || Time.current,
+        updated_at: created_at || Time.current
+      )
+      dm.content = comment_body
+      dm.save!(validate: false)
+
+      vputs "[COMMENTS] Created comment #{idx + 1}/#{comments_array.length} for #{defect.defect_unique}" if verbose
+    rescue StandardError => e
+      vputs "[ERROR] Failed to import comment #{idx + 1} for #{defect.defect_unique}: #{e.class}: #{e.message}" if verbose
+      next
+    end
+  end
+end
+
+
+# Validate and update defect description
+def validate_and_update_description(defect, jira_description_field, issue_key, verbose: false)
+  # Placeholder function for description validation
+  # Actual implementation would compare Jira description with local copy
+  vputs "[VALIDATE] Description validation skipped for #{issue_key}" if verbose
+end
 # Import or update a Jira issue as a Defect record
 def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: false)
   fields = issue['fields'] || {}
@@ -2321,11 +2443,19 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
       warn "[WARN] Failed to attach labels for #{issue_key}: #{e.class}: #{e.message}"
     end
 
-    # Import comments
+    # Import comments - fetch separately from Jira API to ensure all comments are captured
     begin
-      if %i[created updated].include?(result) && comments_array && comments_array.any?
-        vputs "[COMMENTS] Importing #{comments_array.length} comment(s) for #{issue_key}..." if verbose
-        import_comments_for_defect(saved_defect, comments_array, verbose: verbose)
+      if %i[created updated].include?(result)
+        # Fetch fresh comments from Jira API (may contain more than search results)
+        fresh_comments = fetch_jira_comments(issue_key)
+        if fresh_comments && fresh_comments.any?
+          vputs "[COMMENTS] Importing #{fresh_comments.length} comment(s) for #{issue_key}..." if verbose
+          import_comments_for_defect(saved_defect, fresh_comments, verbose: verbose)
+        elsif comments_array && comments_array.any?
+          # Fallback to comments from search results if API fetch returns empty
+          vputs "[COMMENTS] Importing #{comments_array.length} comment(s) from search results for #{issue_key}..." if verbose
+          import_comments_for_defect(saved_defect, comments_array, verbose: verbose)
+        end
       end
     rescue StandardError => e
       warn "[WARN] Failed to import comments for #{issue_key}: #{e.class}: #{e.message}"
