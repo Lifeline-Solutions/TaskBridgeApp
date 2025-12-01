@@ -31,6 +31,9 @@ unless JIRA_API_TOKEN
   exit 1
 end
 
+# Accept project key filter (e.g., KCBL)
+PROJECT_KEY = (ENV['PROJECT'] || ENV['JIRA_PROJECT'] || ARGV[0]).to_s.strip.upcase
+
 # Statistics tracking
 $STATS = {
   total_defects: 0,
@@ -47,6 +50,13 @@ $STATS = {
 puts "=" * 80
 puts "🔧 JIRA RICH TEXT CONTENT REPAIR SCRIPT"
 puts "=" * 80
+puts ""
+if PROJECT_KEY.present?
+  puts "Target project: #{PROJECT_KEY}"
+else
+  puts "Target project: (all projects)"
+  puts "Tip: Run for a single project: rails runner scripts/repair_rich_text_content.rb KCBL"
+end
 puts ""
 
 # ===============================
@@ -274,6 +284,17 @@ def extract_description(field)
   field.to_s
 end
 
+# Prefer rendered HTML description if present
+def extract_issue_description_html(jira_issue)
+  # Jira Cloud provides renderedFields when requested via expand
+  rendered_desc = jira_issue.dig('renderedFields', 'description') || jira_issue.dig('fields', 'renderedFields', 'description')
+  return rendered_desc.to_s if rendered_desc.present?
+
+  # Fall back to raw field and ADF conversion
+  jira_description_field = jira_issue.dig('fields', 'description')
+  extract_description(jira_description_field)
+end
+
 # ===============================
 # JIRA API FUNCTIONS
 # ===============================
@@ -310,10 +331,13 @@ rescue StandardError => e
   nil
 end
 
-# Fetch comments for an issue
+# Fetch comments for an issue (prefer rendered HTML)
 def fetch_jira_comments(issue_key)
   url = "#{JIRA_BASE_URL}/rest/api/3/issue/#{issue_key}/comment"
   uri = URI.parse(url)
+
+  # Ask Jira to include renderedBody for comments
+  uri.query = URI.encode_www_form({ expand: 'renderedBody' })
 
   http = Net::HTTP.new(uri.host, uri.port)
   http.use_ssl = true
@@ -361,9 +385,8 @@ def repair_defect_content(defect)
     return false
   end
 
-  # Extract description from Jira
-  jira_description_field = jira_issue.dig('fields', 'description')
-  jira_description_html = extract_description(jira_description_field)
+  # Extract description from Jira (prefer rendered HTML)
+  jira_description_html = extract_issue_description_html(jira_issue)
 
   # Get current description from database
   current_description = defect.content.to_s.strip
@@ -420,14 +443,19 @@ def repair_defect_messages(defect)
     created_at_str = jira_comment['created']
     created_at = Time.parse(created_at_str) rescue nil
 
-    # Convert ADF body to HTML
-    body_field = jira_comment['body']
-    if body_field.is_a?(Hash)
-      jira_body_html = convert_adf_to_html(body_field['content'] || [])
-    elsif body_field.is_a?(String)
-      jira_body_html = body_field.strip
-    else
-      jira_body_html = body_field.to_s.strip
+    # Prefer rendered HTML body
+    jira_body_html = jira_comment['renderedBody']
+
+    # Fall back to ADF body -> HTML if rendered not available
+    if jira_body_html.blank?
+      body_field = jira_comment['body']
+      if body_field.is_a?(Hash)
+        jira_body_html = convert_adf_to_html(body_field['content'] || [])
+      elsif body_field.is_a?(String)
+        jira_body_html = body_field.strip
+      else
+        jira_body_html = body_field.to_s.strip
+      end
     end
 
     # Skip empty comments
@@ -516,7 +544,13 @@ end
 # ===============================
 
 puts "🔍 Finding all defects with Jira keys..."
-defects = Defect.where("defect_unique ~ '^[A-Z]+-[0-9]+$'").where(deleted_on: nil).order(:defect_unique)
+if PROJECT_KEY.present?
+  # Constrain to a single project key like KCBL
+  # Using ~ for regex and anchoring at start to the project key
+  defects = Defect.where("defect_unique ~ ?", "^#{Regexp.escape(PROJECT_KEY)}-[0-9]+$").where(deleted_on: nil).order(:defect_unique)
+else
+  defects = Defect.where("defect_unique ~ '^[A-Z]+-[0-9]+$'").where(deleted_on: nil).order(:defect_unique)
+end
 $STATS[:total_defects] = defects.count
 
 puts "   Found #{$STATS[:total_defects]} defect(s) with Jira keys"
