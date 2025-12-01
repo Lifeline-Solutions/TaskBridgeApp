@@ -130,7 +130,18 @@ def convert_adf_to_html(content_array, debug: false)
     next unless block.is_a?(Hash)
 
     block_html = convert_adf_block_to_html(block, debug: debug)
-    html_parts << block_html if block_html.present?
+
+    # Ensure we capture the content - don't skip if we get a result
+    if block_html.present?
+      html_parts << block_html
+    elsif debug || DEBUG_MODE
+      # Log blocks that returned empty
+      block_type = block['type']&.to_s&.downcase
+      if block_type == 'table'
+        puts "      [WARNING: Table block returned empty HTML - checking content]"
+        puts "      [Block structure: #{block.keys.join(', ')}]"
+      end
+    end
   end
 
   html_parts.join("\n")
@@ -163,7 +174,17 @@ def convert_adf_block_to_html(block, debug: false)
     list_html.present? ? "<ol>#{list_html}</ol>" : ''
 
   when 'table'
-    convert_adf_table_to_html(block, debug: debug)
+    table_html = convert_adf_table_to_html(block, debug: debug)
+    if debug || DEBUG_MODE
+      if table_html.present?
+        puts "      [Table converted successfully: #{table_html.length} chars]"
+      else
+        puts "      [WARNING: Table block found but conversion returned empty]"
+        puts "      [Table keys: #{block.keys.join(', ')}]"
+        puts "      [Table content count: #{(block['content'] || []).length}]"
+      end
+    end
+    table_html
 
   when 'codeblock', 'code_block'
     code_text = convert_adf_inline_to_html(content, debug: debug)
@@ -341,22 +362,31 @@ def convert_adf_list_to_html(items, tag, debug: false)
   list_items.join("\n")
 end
 
-# Convert ADF table to HTML (Enhanced)
+# Convert ADF table to HTML (Enhanced with CSS styling)
 def convert_adf_table_to_html(table_block, debug: false)
   return '' if table_block.nil?
 
   table_rows = table_block['content'] || []
 
   if table_rows.empty?
-    # Table block exists but has no rows - this means data is missing
+    # Table block exists but has no rows
     if debug || DEBUG_MODE
       puts "      [WARNING: Table block found but has no content]"
+      puts "      [Checking table block structure...]"
+      puts "      [Table block keys: #{table_block.keys.join(', ')}]"
     end
     return ''
   end
 
   rows_html = []
   has_header = false
+  total_cells = 0
+
+  # CSS styling for the table wrapper and elements
+  table_wrapper_style = 'width: 100%; border-collapse: collapse; margin: 10px 0; display: table;'
+  table_style = 'border: 1px solid #ccc; border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 14px;'
+  header_style = 'border: 1px solid #ccc; padding: 10px; background-color: #e8e8e8; font-weight: bold; text-align: left; vertical-align: top;'
+  cell_style = 'border: 1px solid #ccc; padding: 10px; text-align: left; vertical-align: top;'
 
   table_rows.each_with_index do |row, row_idx|
     next unless row.is_a?(Hash)
@@ -377,26 +407,45 @@ def convert_adf_table_to_html(table_block, debug: false)
       has_header = true if is_header && row_idx == 0
 
       cell_tag = is_header ? 'th' : 'td'
+      cell_inline_style = is_header ? header_style : cell_style
 
       cell_content = cell['content'] || []
-      cell_html = convert_adf_to_html(cell_content)
 
-      # Remove wrapping p tags but preserve other formatting (lists, etc)
+      # Recursively convert cell content to HTML
+      cell_html = if cell_content.any?
+        convert_adf_to_html(cell_content, debug: debug)
+      else
+        '&nbsp;'
+      end
+
+      # Remove wrapping p tags but preserve other formatting (lists, tables within cells, etc)
       cell_html = cell_html.gsub(%r{<p>(.*?)</p>}m, '\1').strip
 
-      # Handle empty cells
+      # Preserve HTML content without extra escaping
       cell_html = '&nbsp;' if cell_html.blank?
 
+      total_cells += 1
+
+      # Build cell attributes string
+      attrs_str = " style=\"#{cell_inline_style}"
+
       # Handle cell attributes (colspan, rowspan, background color)
-      attrs_str = ''
       if cell['attrs']
         colspan = cell['attrs']['colspan']
         rowspan = cell['attrs']['rowspan']
         bg_color = cell['attrs']['background']
 
+        attrs_str += " background-color: #{CGI.escapeHTML(bg_color)};" if bg_color
+      end
+
+      attrs_str += '"'
+
+      # Add colspan and rowspan attributes
+      if cell['attrs']
+        colspan = cell['attrs']['colspan']
+        rowspan = cell['attrs']['rowspan']
         attrs_str += " colspan=\"#{colspan}\"" if colspan && colspan > 1
         attrs_str += " rowspan=\"#{rowspan}\"" if rowspan && rowspan > 1
-        attrs_str += " style=\"background-color: #{CGI.escapeHTML(bg_color)}\"" if bg_color
       end
 
       cells_html << "<#{cell_tag}#{attrs_str}>#{cell_html}</#{cell_tag}>"
@@ -405,15 +454,28 @@ def convert_adf_table_to_html(table_block, debug: false)
     rows_html << "<tr>#{cells_html.join('')}</tr>" if cells_html.any?
   end
 
+  if debug || DEBUG_MODE
+    puts "      [Table: #{table_rows.length} rows, #{total_cells} total cells, #{rows_html.length} rendered rows]"
+  end
+
   if rows_html.any?
-    # Wrap header rows in thead if present for better semantic HTML
-    if has_header && rows_html.length > 1
+    # Build complete table with proper styling
+    table_content = if has_header && rows_html.length > 1
       thead = "<thead>#{rows_html[0]}</thead>"
       tbody = "<tbody>#{rows_html[1..-1].join("\n")}</tbody>"
-      "<table border=\"1\" cellpadding=\"4\" cellspacing=\"0\">#{thead}#{tbody}</table>"
+      "#{thead}#{tbody}"
     else
-      "<table border=\"1\" cellpadding=\"4\" cellspacing=\"0\">#{rows_html.join("\n")}</table>"
+      "<tbody>#{rows_html.join("\n")}</tbody>"
     end
+
+    # Wrap table with comprehensive styling for rich text display
+    table_html = "<div style=\"#{table_wrapper_style}\"><table style=\"#{table_style}\">#{table_content}</table></div>"
+
+    if debug || DEBUG_MODE
+      puts "      [Table HTML generated: #{table_html.length} chars]"
+    end
+
+    table_html
   else
     ''
   end
