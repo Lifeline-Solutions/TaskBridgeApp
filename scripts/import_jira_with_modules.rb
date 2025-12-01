@@ -1555,12 +1555,12 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
 
     next unless content_url
 
-    # Skip if a file with same filename already attached
+    # Check if a file with same filename already exists - SKIP IMMEDIATELY WITHOUT DOWNLOAD
     already = defect.attachments.detect { |a| a.filename.to_s == filename }
     if already
       puts "   [#{idx + 1}/#{total_files}] ⏭️  SKIP: #{filename} (already attached)"
       stats[:skipped] += 1
-      next
+      next  # Continue to next attachment without any download attempt
     end
 
     puts "   [#{idx + 1}/#{total_files}] 📥 Downloading: #{filename} (#{size_mb} MB)"
@@ -1793,6 +1793,17 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
     size_mb = (size / 1024.0 / 1024.0).round(2)
 
     next unless content_url
+
+    # Check if already attached - SKIP WITHOUT DOWNLOAD
+    begin
+      already_attached = rich_record.attachments.any? { |a| a.filename.to_s == filename }
+      if already_attached
+        vputs "  [SKIP] #{filename} (already attached)" if verbose
+        next
+      end
+    rescue StandardError => e
+      vputs "  [WARN] Could not check if #{filename} is attached: #{e.message}" if verbose
+    end
 
     # Retry logic
     max_download_retries = size_mb > 20 ? 5 : 3
