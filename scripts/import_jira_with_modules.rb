@@ -748,6 +748,7 @@ def find_or_create_modules(module_name:, submodule_name:, product_id:, created_b
   parent = nil
   child = nil
 
+  # Step 1: Find or create parent module (must have no parent_id)
   if module_name.present?
     parent = QaModule.where('lower(name) = ? AND parent_id IS NULL AND product_id = ?', module_name.strip.downcase, product_id).first
     if parent.nil? && CREATE_MISSING_MODULES
@@ -756,20 +757,35 @@ def find_or_create_modules(module_name:, submodule_name:, product_id:, created_b
     end
   end
 
+  # Step 2: Find or create child module (submodule)
   if submodule_name.present?
+    # Case A: Parent exists - create child with parent_id
     if parent
       child = QaModule.where('lower(name) = ? AND parent_id = ? AND product_id = ?', submodule_name.strip.downcase, parent.id, product_id).first
       if child.nil? && CREATE_MISSING_MODULES
         child = QaModule.create!(name: submodule_name.strip, parent_id: parent.id, product_id: product_id)
         child.update_columns(created_by: created_by, modified_by: created_by) if child.respond_to?(:created_by)
       end
+    # Case B: No parent - look for existing submodule and extract parent relationship
     else
-      child = QaModule.where('lower(name) = ? AND product_id = ?', submodule_name.strip.downcase, product_id).first
+      # First, try to find existing submodule with a parent
+      child = QaModule.where('lower(name) = ? AND parent_id IS NOT NULL AND product_id = ?', submodule_name.strip.downcase, product_id).first
       if child && child.parent_id.present?
+        # Found submodule with parent - use that parent
         parent = QaModule.find_by(id: child.parent_id)
-      elsif child.nil? && CREATE_MISSING_MODULES
-        child = QaModule.create!(name: submodule_name.strip, product_id: product_id)
-        child.update_columns(created_by: created_by, modified_by: created_by) if child.respond_to?(:created_by)
+      else
+        # Submodule exists without parent or doesn't exist - check for unparented version
+        child = QaModule.where('lower(name) = ? AND parent_id IS NULL AND product_id = ?', submodule_name.strip.downcase, product_id).first
+
+        if child && !parent
+          # Submodule found without parent, and we don't have a parent module
+          # This is an orphaned child - keep as-is but don't set a parent
+          # (it might be intended as a standalone module)
+        elsif child.nil? && CREATE_MISSING_MODULES
+          # Submodule doesn't exist - create as standalone (no parent_id)
+          child = QaModule.create!(name: submodule_name.strip, product_id: product_id)
+          child.update_columns(created_by: created_by, modified_by: created_by) if child.respond_to?(:created_by)
+        end
       end
     end
   end
@@ -1160,6 +1176,33 @@ def extract_custom_field_value(field_data)
   end
 
   field_data.to_s.strip
+end
+
+# Helper: parse module/submodule from a single string like "Parent - Child"
+# - If submodule is already provided, return both as-is
+# - If only module_name is provided and contains a hyphen, split on the FIRST hyphen ("-", "–", or "—")
+#   and treat the left as parent module and the right side (including further hyphens) as submodule
+# - Preserves all characters after the hyphen without truncation
+# - Trims surrounding whitespace only
+def parse_module_and_submodule(module_name_str, submodule_name_str)
+  mod = module_name_str.to_s.strip
+  sub = submodule_name_str.to_s.strip
+
+  return [mod, sub] if sub.present?
+
+  return [mod, sub] if mod.blank?
+
+  # Only derive submodule when no explicit submodule is provided
+  # Split on the first hyphen-like character (minus, en dash, em dash) with optional spaces around
+  # Example: "Core Banking - Accounts - Savings" => ["Core Banking", "Accounts - Savings"]
+  parts = mod.split(/\s*[\-\u2013\u2014]\s*/, 2) # - (U+002D), en dash (U+2013), em dash (U+2014)
+  if parts.length == 2
+    derived_mod = parts[0].strip
+    derived_sub = parts[1].strip
+    return [derived_mod, derived_sub]
+  end
+
+  [mod, sub]
 end
 
 # ===============================
@@ -2313,6 +2356,16 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
   module_name = extract_custom_field_value(fields[custom_fields[:module_field]] || '') if custom_fields[:module_field]
   submodule_name = extract_custom_field_value(fields[custom_fields[:submodule_field]] || '') if custom_fields[:submodule_field]
   banking_type_name = extract_custom_field_value(fields[custom_fields[:banking_type_field]] || '') if custom_fields[:banking_type_field]
+
+  # Parse module/submodule: if module contains hyphen and no explicit submodule, split on first hyphen
+  # This preserves all text after the hyphen as the submodule name
+  if module_name.present? && submodule_name.to_s.strip.empty?
+    original_module = module_name.dup
+    module_name, submodule_name = parse_module_and_submodule(module_name, submodule_name)
+    if submodule_name.present?
+      vputs "[MODULE-PARSE] Derived module/submodule from '#{original_module}' => module='#{module_name}', submodule='#{submodule_name}'" if verbose
+    end
+  end
 
   module_name = jira_project_name if module_name.blank?
   banking_type_name = jira_project_key if banking_type_name.blank?
