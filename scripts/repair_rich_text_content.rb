@@ -473,6 +473,7 @@ def convert_adf_table_to_html(table_block, debug: false)
 
     if debug || DEBUG_MODE
       puts "      [Table HTML generated: #{table_html.length} chars]"
+      puts "      [Starts with: #{table_html[0..80]}...]"
     end
 
     table_html
@@ -659,6 +660,15 @@ def repair_defect_content(defect, debug: false)
   # Get current description from database
   current_description = defect.content.to_s.strip
 
+  # Debug: show what we're getting
+  if debug || DEBUG_MODE
+    puts "    [Current DB content: #{current_description.length} chars]"
+    puts "    [Jira content: #{jira_description_html.length} chars]"
+    if jira_description_html.include?('<table')
+      puts "    [✅ Jira has table content]"
+    end
+  end
+
   # Normalize for comparison
   jira_normalized = normalize_html(jira_description_html)
   current_normalized = normalize_html(current_description)
@@ -670,6 +680,12 @@ def repair_defect_content(defect, debug: false)
 
   # Content differs - update it
   begin
+    # Ensure we're not saving empty content
+    if jira_description_html.blank? && current_description.present?
+      puts "⚠️  SKIPPED (Jira returned empty, keeping current content)"
+      return false
+    end
+
     defect.content = jira_description_html
     defect.save!(validate: false)
 
@@ -869,7 +885,9 @@ defects.each_with_index do |defect, idx|
 
   $STATS[:defects_checked] += 1
   issue_key = defect.defect_unique
-  $current_issue_key = issue_key  puts "[#{idx + 1}/#{$STATS[:total_defects]}] Processing #{defect.defect_unique}"
+  $current_issue_key = issue_key
+
+  puts "[#{idx + 1}/#{$STATS[:total_defects]}] Processing #{defect.defect_unique}"
 
   # For single issue, show current content
   if SINGLE_ISSUE.present?
