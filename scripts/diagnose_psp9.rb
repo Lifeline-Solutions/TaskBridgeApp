@@ -4,10 +4,15 @@
 require 'net/http'
 require 'uri'
 require 'json'
+require 'yaml'
 
-JIRA_BASE_URL = "https://craftsilicon.atlassian.net"
-JIRA_API_USER = "boniface.nemwel@craftsilicon.com"
-JIRA_API_TOKEN = "ATATT3xFfGF0Mq4A6TnDi9Qx205Dg3eFCNL1xTshkyiEvP6ude7eWLp4GxEc3hmAxAuLCpJaECc44tLuwXJU_qDV_6ePLw5b1v635T_INXO7kLvTOQN9S9CYuNFeNFP7GSQp0PJdOf6ps69Ix_wR3TMb6YqpYwMqUdDawxHyz8k1a6Mr1CGE2co=48AA9ABC"
+# Load configuration from jira_import.yml
+config_path = File.join(__dir__, '..', 'config', 'jira_import.yml')
+CONFIG = YAML.load_file(config_path).transform_keys(&:to_sym)
+
+JIRA_BASE_URL = ENV.fetch('JIRA_BASE_URL', CONFIG[:jira_base_url] || 'https://craftsilicon.atlassian.net')
+JIRA_API_USER = ENV.fetch('JIRA_API_USER', CONFIG[:jira_api_user] || 'boniface.nemwel@craftsilicon.com')
+JIRA_API_TOKEN = ENV.fetch('JIRA_API_TOKEN') { CONFIG[:jira_api_token] }
 
 issue_key = "PSP-9"
 
@@ -15,9 +20,9 @@ url = "#{JIRA_BASE_URL}/rest/api/3/issue/#{issue_key}"
 uri = URI.parse(url)
 
 uri.query = URI.encode_www_form({
-  expand: 'renderedFields',
-  fields: 'description,summary'
-})
+                                  expand: 'renderedFields',
+                                  fields: 'description,summary'
+                                })
 
 http = Net::HTTP.new(uri.host, uri.port)
 http.use_ssl = true
