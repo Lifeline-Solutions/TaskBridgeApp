@@ -101,8 +101,8 @@ Rails.application.configure do
     address: ENV.fetch('SMTP_ADDRESS', 'secure.emailsrvr.com'),
     port: ENV.fetch('SMTP_PORT', '465').to_i,
     domain: ENV.fetch('SMTP_DOMAIN', 'craftsilicon.com'),
-    user_name: ENV.fetch('SMTP_USERNAME', 'cspm@craftsilicon.com'),
-    password: ENV.fetch('SMTP_PASSWORD', 'Cspm@2025!'),
+    user_name: 'cspm@craftsilicon.com',
+    password: 'Cspm@2025!',
     authentication: :plain,
     ssl: true, # Use implicit SSL for port 465 (SMTPS)
     # NOTE: Do NOT set enable_starttls_auto with ssl: true - they are mutually exclusive
