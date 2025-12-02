@@ -48,7 +48,7 @@
       <!-- Project Category -->
       <div>
         <label for="software-search-input" class="block mb-2 text-lg font-semibold text-gray-700 dark:text-gray-200">
-          Product Categories *
+          Product Categories
         </label>
 
         <div id="selected-software-tags" class="flex flex-wrap gap-2 mb-2 min-h-[2rem]"></div>
@@ -72,7 +72,7 @@
       <!-- Sub Category -->
       <div>
         <label for="groupware-search-input" class="block mb-2 text-lg font-semibold text-gray-700 dark:text-gray-200">
-          Sub Categories *
+          Sub Categories
         </label>
 
         <div id="selected-groupware-tags" class="flex flex-wrap gap-2 mb-2 min-h-[2rem]"></div>
@@ -145,16 +145,16 @@
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div>
-        <%= f.label :start_date, 'Start Date*', class: "block mb-2 text-lg font-semibold text-gray-700 dark:text-gray-200" %>
+        <%= f.label :start_date, 'Start Date', class: "block mb-2 text-lg font-semibold text-gray-700 dark:text-gray-200" %>
         <%= f.date_field :start_date, required: true, class: "border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-4 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 mb-4" %>
       </div>
       <div>
-        <%= f.label :end_date, 'End Date*', class: "block mb-2 text-lg font-semibold text-gray-700 dark:text-gray-200" %>
+        <%= f.label :end_date, 'End Date', class: "block mb-2 text-lg font-semibold text-gray-700 dark:text-gray-200" %>
         <%= f.date_field :end_date, required: true, class: "border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-4 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 mb-4" %>
       </div>
     </div>
     <div>
-      <%= f.label :content, 'Subject*', class: "block mb-2 text-lg font-semibold text-gray-700 dark:text-gray-200" %>
+      <%= f.label :content, 'Subject', class: "block mb-2 text-lg font-semibold text-gray-700 dark:text-gray-200" %>
       <div data-controller="text-limit" data-text-limit-limit-value="3000">
         <p id="char-count">0/3000</p>
         <%= f.rich_text_area :content, id: "content", data: { text_limit_target: "content" }, class: 'min-h-[300px]' %>
@@ -297,6 +297,7 @@
   document.addEventListener('turbo:frame-load', initProjectForm);
 
   function initProjectForm() {
+    console.log('initProjectForm called');
     // Initialize BOTH multi-selects - groupware first to set up the global reference
     initGroupwareMultiSelect();
     initSoftwareMultiSelect();
@@ -304,19 +305,24 @@
 
   // ---------- Groupware Multi-Select with Search (Initialize FIRST) ----------
   function initGroupwareMultiSelect() {
+    console.log('initGroupwareMultiSelect called');
     const searchInput = document.getElementById('groupware-search-input');
     const dropdown = document.getElementById('groupware-dropdown');
     const resultsContainer = document.getElementById('groupware-results');
     const tagsContainer = document.getElementById('selected-groupware-tags');
     const hiddenInputsContainer = document.getElementById('groupware-hidden-inputs');
 
-    if (!searchInput || !dropdown || !resultsContainer) return;
+    if (!searchInput || !dropdown || !resultsContainer) {
+      console.error('Groupware elements not found', { searchInput, dropdown, resultsContainer });
+      return;
+    }
 
     // All groupware data with their software_id mapping
     const allGroupware = <%= raw Groupware.all.map { |g| { id: g.id, name: g.name, software_id: g.software_id } }.to_json %>;
     
     // Pre-populate selected groupware
     const existingGroupware = <%= raw @product.groupwares.map { |g| { id: g.id, name: g.name, software_id: g.software_id } }.to_json %>;
+    console.log('Existing Groupware:', existingGroupware);
     let selectedGroupware = existingGroupware || [];
     
     let availableGroupware = [];
@@ -329,20 +335,23 @@
         searchInput.placeholder = 'Select categories first...';
 
         // Clear selections when no software is selected
-        selectedGroupware = [];
+        // selectedGroupware = []; // DISABLED AUTO-CLEAR
         renderTags();
         renderHiddenInputs();
       } else {
         availableGroupware = allGroupware.filter(gw =>
           softwareIds.includes(gw.software_id)
         );
+        
         searchInput.disabled = false;
         searchInput.placeholder = 'Search and select sub-categories...';
 
         // Remove groupware that no longer belongs to selected software
-        selectedGroupware = selectedGroupware.filter(gw =>
-          availableGroupware.some(ag => ag.id === gw.id)
-        );
+        // DISABLED AUTO-FILTERING to preserve existing data
+        // selectedGroupware = selectedGroupware.filter(gw =>
+        //   availableGroupware.some(ag => ag.id === gw.id)
+        // );
+        
         renderTags();
         renderHiddenInputs();
       }
