@@ -518,6 +518,8 @@ def extract_issue_description_html(jira_issue, debug: false)
       if debug || DEBUG_MODE
         if jira_description_field.nil?
           puts "    [ERROR: No description field in Jira response!]"
+          puts "    [The rendered HTML contains ADF macro placeholders but raw description is missing]"
+          puts "    [This is a Jira API issue - the field should exist even if empty]"
         elsif jira_description_field.is_a?(String) && jira_description_field.blank?
           puts "    [ERROR: Description field is empty string]"
         elsif jira_description_field.is_a?(Hash)
@@ -529,8 +531,22 @@ def extract_issue_description_html(jira_issue, debug: false)
             puts "    [WARNING: Description content array is empty]"
           elsif content.is_a?(Array)
             puts "    [ADF has #{content.length} block(s)]"
+            # Show block types for tables
+            content.each_with_index do |block, i|
+              block_type = block['type']
+              puts "      Block #{i}: #{block_type}"
+              if block_type == 'table' && block['content']
+                puts "        → Table with #{block['content'].length} rows"
+              end
+            end
           end
         end
+      end
+
+      # If description field is nil, we can't extract it - return empty or try the rendered version
+      if jira_description_field.nil?
+        puts "    [WARNING: Falling back to rendered HTML despite ADF macros]" if debug
+        return rendered_desc.to_s  # Use the rendered version even with macros as fallback
       end
 
       return extract_description(jira_description_field, debug: debug)
@@ -547,8 +563,13 @@ def extract_issue_description_html(jira_issue, debug: false)
   if debug || DEBUG_MODE
     if jira_description_field.nil?
       puts "    [ERROR: No description field found in Jira response]"
+      puts "    [This might mean the description is truly empty in Jira, or there's an API issue]"
+      puts "    [You can check the saved JSON file for details]"
     end
   end
+
+  # If description is nil, return empty string rather than failing
+  return '' if jira_description_field.nil?
 
   extract_description(jira_description_field, debug: debug)
 end
@@ -650,6 +671,47 @@ def repair_defect_content(defect, debug: false)
     filename = "tmp/jira_response_#{issue_key.gsub('-', '_')}.json"
     File.write(filename, JSON.pretty_generate(jira_issue))
     puts "\n    [Saved full Jira response to: #{filename}]"
+
+    # Show structure info
+    puts "    [Top-level keys: #{jira_issue.keys.join(', ')}]"
+    if jira_issue['fields']
+      puts "    [Fields available: #{jira_issue['fields'].keys.length} fields]"
+      desc_present = jira_issue['fields'].key?('description')
+      puts "    [Description field present: #{desc_present}]"
+      if desc_present
+        desc_val = jira_issue['fields']['description']
+        puts "    [Description type: #{desc_val.class}]"
+        if desc_val.is_a?(Hash)
+          puts "    [Description keys: #{desc_val.keys.join(', ')}]"
+          if desc_val['content']
+            puts "    [Description has #{desc_val['content'].length} content blocks]"
+            # Save just the description for easier manual processing
+            desc_file = "tmp/jira_#{issue_key.gsub('-', '_')}_description.json"
+            File.write(desc_file, JSON.pretty_generate(desc_val))
+            puts "    [Saved description to: #{desc_file}]"
+          end
+        elsif desc_val.nil?
+          puts "    [Description value: nil]"
+        end
+      else
+        puts "    [WARNING: Description field not in response - API may have failed]"
+        puts "    [Available fields: #{jira_issue['fields'].keys.sort.first(20).join(', ')}...]"
+      end
+    end
+    if jira_issue['renderedFields']
+      puts "    [renderedFields keys: #{jira_issue['renderedFields'].keys.join(', ')}]"
+      if jira_issue['renderedFields']['description']
+        rendered_desc = jira_issue['renderedFields']['description']
+        puts "    [Rendered description length: #{rendered_desc.length} chars]"
+        puts "    [Has <table> tag: #{rendered_desc.include?('<table')}]"
+        puts "    [Has ADF macro: #{rendered_desc.include?('<!-- ADF macro')}]"
+
+        # Save rendered HTML too
+        rendered_file = "tmp/jira_#{issue_key.gsub('-', '_')}_rendered.html"
+        File.write(rendered_file, rendered_desc)
+        puts "    [Saved rendered HTML to: #{rendered_file}]"
+      end
+    end
   end
 
   puts "" if debug
