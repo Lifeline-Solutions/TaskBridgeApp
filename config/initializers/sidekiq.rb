@@ -11,5 +11,5 @@ end
 
 
 ENV['SMTP_USERNAME'] ||= 'cspm@craftsilicon.com'
-ENV['SMTP_PASSWORD'] ||= '#cspm@123#'
+ENV['SMTP_PASSWORD'] ||= 'Cspm@2025!'
 
