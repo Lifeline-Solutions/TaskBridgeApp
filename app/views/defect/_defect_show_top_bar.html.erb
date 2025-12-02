@@ -61,21 +61,18 @@
             <div class="w-6 h-6 flex items-center justify-center rounded-full text-xs font-medium bg-blue-600 text-white">
               <%= @defect.creator.name.split.map { |n| n[0] }.join.upcase %>
             </div>
-            <span class="text-gray-700 dark:text-gray-300"><%= @defect.creator.name %></span>
+            <span class="font-semibold text-gray-900 dark:text-white"><%= @defect.creator.name %></span>
           </div>
         <% end %>
         <span class="text-gray-400">/</span>
 
+        <span class="text-gray-400">/</span>
 
-        <p>
-          Created at:
-          <span class="text-sm font-light">
-            <%= @defect.created_at.strftime("%b %d, %Y %I:%M %p") %>
-          </span>
-        </p>
+        <span class="font-semibold text-gray-900 dark:text-white">
+          Created at: <%= defect.created_at.strftime('%d-%m-%Y') %>
+        </span>
 
-
-          <% if @defect.retest_count.to_i > 1 %>
+        <% if @defect.retest_count.to_i > 1 %>
           <span class="text-gray-400">/</span>
           <span class="px-2 py-1 text-xs font-medium rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100">
             🔄 Retries: <%= @defect.retest_count %>

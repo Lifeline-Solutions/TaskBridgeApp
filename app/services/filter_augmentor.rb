@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # FilterAugmentor - Merges saved filters with temporary dashboard/page filters
 #
 # Usage:
@@ -66,7 +64,7 @@ class FilterAugmentor
       next if value.blank?
 
       condition = case key.to_s
-                  when 'status', 'priority', 'user_id', 'assignee_id', 'label_ids', 
+                  when 'status', 'priority', 'user_id', 'assignee_id', 'label_ids',
                        'qa_module_id', 'submodule_id', 'banking_type_id', 'product_id'
                     {
                       'field' => key.to_s,

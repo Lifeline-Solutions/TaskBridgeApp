@@ -28,18 +28,21 @@
     %>
     <%= raw(styled_html) %>
   </span>
-  <% if message.updated_at > (message.created_at + 5.seconds) %>
-    <div class="mt-3 text-xs italic text-gray-500 dark:text-gray-400 flex items-center gap-1">
-      <% if message.modified_by.present? %>
-        Edited by <%= message.modified_by.first_name %> <%= message.modified_by.last_name %>
-      <% else %>
-        Edited
-      <% end %>
+  <% hideeditedat = true %>
+  <% unless hideeditedat %>
+    <% if message.updated_at > (message.created_at + 5.seconds) %>
+      <div class="mt-3 text-xs italic text-gray-500 dark:text-gray-400 flex items-center gap-1">
+        <% if message.modified_by.present? %>
+          Edited by <%= message.modified_by.first_name %> <%= message.modified_by.last_name %>
+        <% else %>
+          Edited
+        <% end %>
 
-      <span class="ml-1">
-        <%= time_ago_in_words(message.updated_at) %> ago
-        (<%= message.updated_at.strftime("%b %d, %Y %I:%M %p") %>)
-      </span>
-    </div>
+        <span class="ml-1">
+          <%= time_ago_in_words(message.updated_at) %> ago
+          (<%= message.updated_at.strftime("%b %d, %Y %I:%M %p") %>)
+        </span>
+      </div>
+    <% end %>
   <% end %>
 <% end %>

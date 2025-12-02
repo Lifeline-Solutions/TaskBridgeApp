@@ -3,7 +3,7 @@ import { Controller } from '@hotwired/stimulus';
 export default class extends Controller {
   static values = { ticketId: String }
 
-  static targets = ['menu']
+  static targets = ['menu', 'button']
 
   connect() {
     this.boundClose = this.close.bind(this);
@@ -23,8 +23,11 @@ export default class extends Controller {
       document.addEventListener('click', this.boundClose);
     }
 
-    const svg = this.buttonTarget.querySelector('svg');
-    svg.classList.toggle('rotate-180');
+    // Only rotate SVG if buttonTarget exists
+    if (this.hasButtonTarget) {
+      const svg = this.buttonTarget.querySelector('svg');
+      if (svg) svg.classList.toggle('rotate-180');
+    }
   }
 
   close(event) {
@@ -40,8 +43,11 @@ export default class extends Controller {
   hide(event) {
     if (!this.element.contains(event.target) && !this.menuTarget.classList.contains('hidden')) {
       this.menuTarget.classList.add('hidden');
-      const svg = this.buttonTarget.querySelector('svg');
-      svg.classList.remove('rotate-180');
+      // Only rotate SVG if buttonTarget exists
+      if (this.hasButtonTarget) {
+        const svg = this.buttonTarget.querySelector('svg');
+        if (svg) svg.classList.remove('rotate-180');
+      }
     }
   }
 }

@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # QA Dashboards Controller - Manages dashboards with embedded widgets
 class QaDashboardsController < ApplicationController
   before_action :authenticate_user!
@@ -28,51 +26,42 @@ class QaDashboardsController < ApplicationController
   end
 
   def show
-    # Get QA products (same logic as reports controller)
-    # Only products with 'Pre Quality Assurance' or 'End Of Quality Assurance' status
-    # and that have published defects
-    @products = Product.includes(:client, :groupwares, :statuses)
-      .select do |product|
-      product.statuses.any? { |status| ['Pre Quality Assurance', 'End Of Quality Assurance'].include?(status.name) } &&
-        Defect.published.where(product_id: product.id).exists?
-    end
+    # Initialize product filter variables
+    @selected_product_ids = params[:product_id] || []
 
-    # Format product options for display (same as reports)
-    @product_options = @products.map do |product|
+    # Load products with QA statuses (similar to reports_controller approach)
+    products = Product.qa_projects.active.includes(:client, :groupwares)
+    @product_options = products.map do |product|
       client_name = product.client&.name || 'No Client Assigned'
       groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
       ["#{client_name} - #{groupware_names}", product.id]
     end
-    
-    # Handle multiple product selection - convert to array if it's a string
-    product_ids = if params[:product_id].is_a?(String)
-                    params[:product_id].split(',')
-                  else
-                    Array(params[:product_id]).reject(&:blank?)
-                  end
-    
-    # If no products selected from params, use from saved filter
-    if product_ids.empty?
-      saved_product_ids = @dashboard.defect_filter.sanitized_filters['product_id']
-      product_ids = Array(saved_product_ids).reject(&:blank?) if saved_product_ids.present?
-    end
-    
-    @selected_product_ids = product_ids
-    
-    # Generate automatic charts for active filter parameters
-    result = DashboardDataGenerator.new(@dashboard, product_ids: product_ids).generate
+
+    # Determine which products to filter by:
+    # 1. If user selected products via dropdown, use those
+    # 2. Otherwise, use the filter's associated product_id (default view)
+    # 3. If neither exists, show all products (legacy behavior)
+    product_ids_to_filter = if @selected_product_ids.any?
+                              @selected_product_ids
+                            elsif @dashboard.defect_filter.product_id.present?
+                              [@dashboard.defect_filter.product_id]
+                            else
+                              []
+                            end
+
+    # Generate automatic charts for active filter parameters with product filtering
+    result = DashboardDataGenerator.new(@dashboard, product_ids: product_ids_to_filter).generate
     @defects = result[:defects]
     @charts = result[:charts]
     @total_count = result[:total_count]
     @filter_params = @dashboard.defect_filter.sanitized_filters
-    
-    # Add product_id to filter params if selected
-    @filter_params['product_id'] = product_ids if product_ids.any?
 
     # Debug: Log active parameters
     Rails.logger.debug '=== DASHBOARD DEBUG ==='
     Rails.logger.debug "Filter ID: #{@dashboard.defect_filter.id}"
-    Rails.logger.debug "Selected Product IDs: #{product_ids.inspect}"
+    Rails.logger.debug "Filter's product_id: #{@dashboard.defect_filter.product_id}"
+    Rails.logger.debug "Selected product IDs from UI: #{@selected_product_ids.inspect}"
+    Rails.logger.debug "Product IDs used for filtering: #{product_ids_to_filter.inspect}"
     Rails.logger.debug "Active Filter Parameters: #{@dashboard.active_filter_parameters.inspect}"
     Rails.logger.debug "Sanitized Filters: #{@filter_params.inspect}"
     Rails.logger.debug "Charts Generated: #{@charts.keys.inspect}"
