@@ -89,7 +89,7 @@ Rails.application.configure do
     port: 465, # Port 465 uses implicit SSL/TLS (SMTPS)
     domain: 'craftsilicon.com',
     user_name: 'cspm@craftsilicon.com',
-    password: '#cspm@123#',
+    password: 'Cspm@2025!',
     authentication: :plain,
     ssl: true, # Use implicit SSL for port 465 (SMTPS)
     # NOTE: Do NOT set enable_starttls_auto with ssl: true - they are mutually exclusive
