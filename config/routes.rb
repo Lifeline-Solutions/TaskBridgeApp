@@ -9,6 +9,11 @@ Rails.application.routes.draw do
   get '/health', to: 'health#index'
 
   devise_for :users, controllers: { invitations: 'invitations' }
+  
+  # Global search routes
+  get '/search', to: 'search#index', as: 'global_search'
+  get '/search/autocomplete', to: 'search#autocomplete', as: 'search_autocomplete'
+  
   resources :users do
     collection do
       get :search

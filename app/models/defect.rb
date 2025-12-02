@@ -110,6 +110,48 @@ class Defect < ApplicationRecord
   scope :drafts, -> { where(draft: true) }
   scope :published, -> { where(draft: false) }
 
+  # Search scopes for global search
+  scope :search_by_query, ->(query) {
+    return none if query.blank?
+    
+    sanitized_query = "%#{query}%"
+    
+    left_joins(:rich_text_content)
+      .where(
+        'defects.defect_unique ILIKE :q
+         OR defects.summary ILIKE :q
+         OR defects.priority ILIKE :q
+         OR defects.issue_type ILIKE :q
+         OR action_text_rich_texts.body ILIKE :q',
+        q: sanitized_query
+      )
+      .where(draft: false) # Only search published defects
+      .where(deleted_on: nil) # Exclude soft-deleted defects
+      .distinct
+  }
+
+  scope :accessible_by_user, ->(user) {
+    return none unless user
+    
+    # Admin can see all defects
+    return where(draft: false, deleted_on: nil) if user.has_role?(:admin)
+    
+    # QA Admin can see all QA defects
+    return where(draft: false, deleted_on: nil) if user.has_role?('qa admin')
+    
+    # QA Agent can only see defects they created or are assigned to
+    if user.has_role?('qa agent')
+      where(draft: false, deleted_on: nil)
+        .where('defects.created_by = :user_id OR defects.id IN (
+          SELECT defect_id FROM defects_users WHERE user_id = :user_id
+        )', user_id: user.id)
+        .distinct
+    else
+      # Non-QA users cannot see defects in search
+      none
+    end
+  }
+
   before_create :set_default_status
   before_create :set_default_issue_type
   after_create :defect_unique_id, unless: -> { defect_unique.present? }
