@@ -97,20 +97,51 @@ Rails.application.configure do
 
   # SMTP Configuration with improved reliability
   # If server refuses connections (554 error), Sidekiq will automatically retry with exponential backoff
+  # NOTE: Credentials MUST NOT be stored in source. Rotate the exposed account password immediately
+  # and place secrets into environment variables or Rails credentials.
+  # Prefer using port 587 (STARTTLS) where possible. If you must use port 465 (implicit SSL), set
+  # SMTP_PORT=465 and SMTP_USE_SSL=true in your environment and the settings will adapt.
+  smtp_use_ssl = ENV.fetch('SMTP_USE_SSL', 'false').downcase == 'true'
+
+  # Recommended: use STARTTLS (port 587) with enable_starttls_auto: true
+  # Fallback: implicit SSL (port 465) when SMTP_USE_SSL=true
+  # Load credentials from ENV first, then Rails encrypted credentials as a fallback
+  smtp_address = ENV.fetch('SMTP_ADDRESS', Rails.application.credentials.dig(:smtp, :address) || 'secure.emailsrvr.com')
+  smtp_port = ENV.fetch('SMTP_PORT', (smtp_use_ssl ? '465' : '587')).to_i
+  smtp_domain = ENV.fetch('SMTP_DOMAIN', Rails.application.credentials.dig(:smtp, :domain) || 'craftsilicon.com')
+  smtp_username = ENV['SMTP_USERNAME'].presence || Rails.application.credentials.dig(:smtp, :user) || 'cspm@craftsilicon.com'
+  smtp_password = ENV['SMTP_PASSWORD'].presence || Rails.application.credentials.dig(:smtp, :password)
+  smtp_auth_method = (ENV['SMTP_AUTH_METHOD'] || Rails.application.credentials.dig(:smtp, :auth_method) || 'login').to_s
+
+  if smtp_password.blank?
+    # Raise a runtime warning so deploy/ops teams notice immediately in logs
+    warn "[SMTP-WARN] SMTP_PASSWORD is not set in ENV and no credentials found. Mail delivery will fail with authentication errors."
+  end
+
+  # Convert to symbol safely
+  begin
+    auth_sym = smtp_auth_method.to_sym
+  rescue StandardError
+    auth_sym = :login
+  end
+
   config.action_mailer.smtp_settings = {
-    address: ENV.fetch('SMTP_ADDRESS', 'secure.emailsrvr.com'),
-    port: ENV.fetch('SMTP_PORT', '465').to_i,
-    domain: ENV.fetch('SMTP_DOMAIN', 'craftsilicon.com'),
-    user_name: 'cspm@craftsilicon.com',
-    password: 'Cspm@2025!',
-    authentication: :plain,
-    ssl: true, # Use implicit SSL for port 465 (SMTPS)
-    # NOTE: Do NOT set enable_starttls_auto with ssl: true - they are mutually exclusive
-    # Port 465 = implicit SSL (use ssl: true)
-    # Port 587 = explicit STARTTLS (use enable_starttls_auto: true)
-    openssl_verify_mode: 'none',
-    # Increased timeouts to handle slow/busy mail servers
-    open_timeout: 60,  # Increased from 30 to 60 seconds
-    read_timeout: 60   # Increased from 30 to 60 seconds
+    address: smtp_address,
+    port: smtp_port,
+    domain: smtp_domain,
+    user_name: smtp_username,
+    password: smtp_password,
+    authentication: auth_sym,
+    enable_starttls_auto: !smtp_use_ssl, # use STARTTLS when not using implicit SSL
+    ssl: smtp_use_ssl,
+    # It's unsafe to disable certificate verification in production. If your provider/reason
+    # requires skipping verification temporarily, set SMTP_OPENSSL_VERIFY_MODE in the env.
+    openssl_verify_mode: ENV.fetch('SMTP_OPENSSL_VERIFY_MODE', 'peer'),
+    open_timeout: ENV.fetch('SMTP_OPEN_TIMEOUT', '60').to_i,
+    read_timeout: ENV.fetch('SMTP_READ_TIMEOUT', '60').to_i
   }
+
+  # Quick runtime validation (does not send email) - enable in console for testing only:
+  # ruby -r net/smtp -e "puts Net::SMTP.start(ENV['SMTP_ADDRESS'], ENV['SMTP_PORT'].to_i) { |smtp| smtp.start(ENV['SMTP_DOMAIN'], ENV['SMTP_USERNAME'], ENV['SMTP_PASSWORD'], ENV['SMTP_AUTH_METHOD'] || 'login'); puts 'OK' }"
+  # IMPORTANT: If you have leaked the SMTP password in git, rotate it with the provider immediately.
 end
