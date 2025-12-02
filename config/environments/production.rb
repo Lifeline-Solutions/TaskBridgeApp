@@ -91,7 +91,7 @@ Rails.application.configure do
 
   config.action_mailer.default_url_options = { host: 'https://taskbridge.craftsilicon.com/', protocol: 'https' }
   config.action_controller.raise_on_missing_callback_actions = true
-  config.action_mailer.default_url_options = { host: '172.17.40.11', port: 3000 }
+  #config.action_mailer.default_url_options = { host: '172.17.40.11', port: 3000 }
   config.active_storage.variant_processor = :mini_magick
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.perform_caching = false
