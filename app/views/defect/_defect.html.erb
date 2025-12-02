@@ -18,7 +18,7 @@
             <%= row_number %>
           </td>
           <td class="px-6 py-3 font-semibold text-left">
-            <%= link_to "#{product.client&.name} #{product.groupwares&.first&.name}".truncate(30),
+            <%= link_to (product.proxy_name.present? ? product.proxy_name : "#{product.client&.name} #{product.groupwares&.first&.name}".truncate(30)),
                         index_show_defect_index_path(client_name: product.client&.name, product_id: product.id),
                         class: "text-blue-700 hover:underline" %>
           </td>
