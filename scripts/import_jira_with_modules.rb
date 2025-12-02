@@ -1759,7 +1759,7 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
             http.verify_mode = OpenSSL::SSL::VERIFY_PEER
             http.ca_file = nil
             http.ciphers = 'HIGH:!aNULL:!eNULL:!EXPORT:!DES:!MD5:!PSK:!RC4'
-            http.ssl_timeout = 90
+            http.ssl_timeout = 120
           end
 
           http.read_timeout = 1800
@@ -1838,17 +1838,14 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
 
       bytes_written = 0
       chunk_size = 1024 * 1024
-      if resp.body
-        resp.body.each_char.each_slice(chunk_size) do |chunk|
-          tf.write(chunk.join)
-          bytes_written += chunk.length
-
-          # Progress for large files
-          if size_mb > 10 && bytes_written % (10 * 1024 * 1024) == 0
-            progress_mb = (bytes_written / 1024.0 / 1024.0).round(1)
-            vputs "  📊 Downloaded #{progress_mb}/#{size_mb} MB..." if verbose
-          end
+      if resp.body.respond_to?(:read)
+        while chunk = resp.body.read(1_048_576)
+          tf.write(chunk)
+          bytes_written += chunk.bytesize
         end
+      else
+        tf.write(resp.body)
+        bytes_written = resp.body.bytesize
       end
       tf.rewind
 
@@ -2701,7 +2698,14 @@ begin
         if defect
           # actual counts
           actual_issue_files = defect.attachments.map { |a| a.filename.to_s }
-          actual_comment_files = defect.defect_messages.flat_map { |dm| dm.respond_to?(:attachments) ? dm.attachments.map { |att| att.filename.to_s } : [] }
+          # For comment-level attachments, gather per-DefectMessage attachments
+          actual_comment_files = defect.defect_messages.flat_map do |dm|
+            if dm.respond_to?(:attachments)
+              dm.attachments.map { |att| att.filename.to_s }
+            else
+              []
+            end
+          end
           actual_comments = defect.defect_messages.count
           actual_labels = defect.labels.count
 
@@ -2722,6 +2726,70 @@ begin
           report[:fields_status][:comment_attachments] = missing_comment.empty?
           report[:fields_status][:comments] = (expected_comments == actual_comments)
           report[:fields_status][:labels] = (expected_labels == actual_labels)
+
+          # --- New: per-attachment verification details ---
+          report[:attachment_details] ||= { issue_level: [], comment_level: [] }
+
+          # Verify issue-level attachments: check ActiveStorage blob presence where possible
+          defect.attachments.each do |attach_record|
+            begin
+              blob = attach_record.blob
+              in_storage = false
+              if blob && blob.respond_to?(:key)
+                begin
+                  in_storage = ActiveStorage::Blob.service.exist?(blob.key)
+                rescue StandardError => e
+                  in_storage = false
+                  vputs "  [VERIFY-WARN] Could not verify storage for blob #{blob&.key}: #{e.class}: #{e.message}" if verbose
+                end
+              end
+
+              report[:attachment_details][:issue_level] << {
+                filename: attach_record.filename.to_s,
+                attachment_id: attach_record.id,
+                blob_key: blob&.key,
+                in_storage: in_storage
+              }
+            rescue StandardError => e
+              report[:attachment_details][:issue_level] << { filename: attach_record.filename.to_s, error: "#{e.class}: #{e.message}" }
+            end
+          end
+
+          # Verify comment-level attachments per DefectMessage
+          defect.defect_messages.each do |dm|
+            next unless dm.respond_to?(:attachments)
+            dm.attachments.each do |att|
+              begin
+                blob = att.blob
+                in_storage = false
+                if blob && blob.respond_to?(:key)
+                  begin
+                    in_storage = ActiveStorage::Blob.service.exist?(blob.key)
+                  rescue StandardError => e
+                    in_storage = false
+                    vputs "  [VERIFY-WARN] Could not verify comment blob #{blob&.key}: #{e.class}: #{e.message}" if verbose
+                  end
+                end
+
+                report[:attachment_details][:comment_level] << {
+                  filename: att.filename.to_s,
+                  attachment_id: att.id,
+                  defect_message_id: dm.id,
+                  blob_key: blob&.key,
+                  in_storage: in_storage
+                }
+              rescue StandardError => e
+                report[:attachment_details][:comment_level] << { filename: att.filename.to_s, error: "#{e.class}: #{e.message}" }
+              end
+            end
+          end
+
+          # Record unverified attachments lists (attached in DB but blob not found)
+          unverified_issue_files = report[:attachment_details][:issue_level].select { |d| d[:in_storage] == false }.map { |d| d[:filename] }
+          unverified_comment_files = report[:attachment_details][:comment_level].select { |d| d[:in_storage] == false }.map { |d| d[:filename] }
+
+          report[:missing][:unverified_issue_files] = unverified_issue_files
+          report[:missing][:unverified_comment_files] = unverified_comment_files
 
         else
           report[:errors] << 'Defect record missing in DB after import'
@@ -2975,8 +3043,22 @@ begin
 
     # Print per-issue line
     status_str = passed ? 'OK' : 'ISSUES'
-    info "#{issue.ljust(20)} -> #{status_str}    (comments: #{r[:actual][:comments]}/#{r[:expected][:comments]}, issue_atts: #{r[:actual][:issue_attachments]}/#{r[:expected][:issue_attachments]}, comment_atts: #{r[:actual][:comment_attachments]}/#{r[:expected][:comment_attachments]}, labels: #{r[:actual][:labels]}/#{r[:expected][:labels]}, history: #{r[:actual][:history]}/#{r[:expected][:history]})"
-  end
+    # Compute verified counts for printing
+    verified_issue = (r.dig(:attachment_details, :issue_level) || []).count { |d| d[:in_storage] }
+    total_issue_attached = r[:actual][:issue_attachments] || 0
+    verified_comment = (r.dig(:attachment_details, :comment_level) || []).count { |d| d[:in_storage] }
+    total_comment_attached = r[:actual][:comment_attachments] || 0
+
+    info "#{issue.ljust(20)} -> #{status_str}    (comments: #{r[:actual][:comments]}/#{r[:expected][:comments]}, issue_atts: #{total_issue_attached}/#{r[:expected][:issue_attachments]} (verified: #{verified_issue}), comment_atts: #{total_comment_attached}/#{r[:expected][:comment_attachments]} (verified: #{verified_comment}), labels: #{r[:actual][:labels]}/#{r[:expected][:labels]}, history: #{r[:actual][:history]}/#{r[:expected][:history]})"
+
+    # If there are unverified attachments, print details for quick triage
+    if (r.dig(:missing, :unverified_issue_files) || []).any?
+      info "    Unverified issue-level attachments: #{(r[:missing][:unverified_issue_files]).join(', ')}"
+    end
+    if (r.dig(:missing, :unverified_comment_files) || []).any?
+      info "    Unverified comment-level attachments: #{(r[:missing][:unverified_comment_files]).join(', ')}"
+    end
+   end
 
   success_pct = total_issues > 0 ? ((overall_pass_count.to_f / total_issues) * 100).round(2) : 100.0
   info '\nOverall Success Summary:'
