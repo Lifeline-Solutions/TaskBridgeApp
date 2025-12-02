@@ -29,17 +29,21 @@ class CustomDeviseMailer < Devise::Mailer
     return if record.respond_to?(:active) && record.active == false
 
     # Use Messaging::EmailSender to persist the email
+    @resource = record
+    @token = token
+    
+    email_body = render_to_string(
+      template: 'devise/mailer/reset_password_instructions',
+      layout: 'mailer'
+    )
+
     sender = Messaging::EmailSender.send_email(
       opts[:subject] || 'Reset password instructions',
       to: record.email,
       from: opts[:from] || ENV.fetch('MAIL_FROM', 'cspm@craftsilicon.com'),
+      body: email_body,
       type: 'reset_password',
       actor: record
-    )
-
-    sender.use_template(
-      view: 'devise/mailer/reset_password_instructions',
-      assigns: { resource: record, token: token }
     )
 
     sender.send
