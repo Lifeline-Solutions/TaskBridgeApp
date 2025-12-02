@@ -23,4 +23,29 @@ class CustomDeviseMailer < Devise::Mailer
       super if record.respond_to?(:email) && record.email.present?
     end
   end
+
+  def reset_password_instructions(record, token, opts = {})
+    # Never send to deactivated users
+    return if record.respond_to?(:active) && record.active == false
+
+    # Use Messaging::EmailSender to persist the email
+    sender = Messaging::EmailSender.send_email(
+      opts[:subject] || 'Reset password instructions',
+      to: record.email,
+      from: opts[:from] || ENV.fetch('MAIL_FROM', 'cspm@craftsilicon.com'),
+      type: 'reset_password',
+      actor: record
+    )
+
+    sender.use_template(
+      view: 'devise/mailer/reset_password_instructions',
+      assigns: { resource: record, token: token }
+    )
+
+    sender.send
+
+    # Return a dummy object that satisfies Devise's expectation of a mail object
+    # that responds to deliver_now/deliver_later
+    OpenStruct.new(deliver: true, deliver_now: true, deliver_later: true)
+  end
 end
