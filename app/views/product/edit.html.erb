@@ -26,6 +26,12 @@
         <%= f.label :client_id, 'Client Available*', class: "block mb-2 text-lg font-semibold text-gray-700 dark:text-gray-200" %>
         <%= f.collection_select :client_id, Client.all, :id, :name, { prompt: "Select Client" }, class: "border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-4 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" %>
       </div>
+      <% if current_user.has_role?(:admin) %>
+        <div>
+          <%= f.label :proxy_name, 'Project Proxy Name (Alias)', class: "block mb-2 text-lg font-semibold text-gray-700 dark:text-gray-200" %>
+          <%= f.text_field :proxy_name, class: "border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-4 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500", placeholder: "Enter alias name" %>
+        </div>
+      <% end %>
       <div>
         <%= f.label :image, 'Product Image', class: "block mb-2 text-lg font-semibold text-gray-700 dark:text-gray-200" %>
         <%= f.file_field :image, class: "border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-4 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500" %>
