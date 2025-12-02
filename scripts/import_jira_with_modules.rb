@@ -8,6 +8,7 @@ require 'time'
 require 'optparse'
 require 'yaml'
 require 'base64'
+require 'cgi'
 
 APP_ROOT = Rails.root
 
@@ -79,6 +80,24 @@ def vputs(msg)
 end
 
 $verbose_flag = options[:verbose]
+
+# Global tracking for user match statistics
+$USER_STATS = {
+  total_lookups: 0,
+  email_matches: 0,
+  full_name_matches: 0,
+  first_last_matches: 0,
+  partial_matches: 0,
+  config_map_matches: 0,
+  created_users: 0,
+  fallback_users: 0,
+  matched_users: Set.new,      # Set of user IDs successfully matched
+  fallback_users_set: Set.new,  # Set of user IDs that fell back to default
+  not_found_names: Hash.new(0), # Names that couldn't be matched
+  parsed_names: {},             # Track parsed names for reporting
+  reporter_matches: {},         # Track reporter matches per issue
+  assignee_matches: {}          # Track assignee matches per issue
+}
 
 project_list = options[:projects].map(&:strip).reject(&:empty?)
 
@@ -275,7 +294,110 @@ def try_parse_time(val)
   end
 end
 
+# ===============================
+# ENHANCED NAME PARSING HELPERS
+# ===============================
+# Parse Jira displayName into first_name and last_name components
+# Handles formats like:
+#   "Eva Karimi Njagi" -> first: "Eva", last: "Karimi" (use first 2 parts)
+#   "archana.verma" -> first: "archana", last: "verma" (split by dot)
+#   "John Smith" -> first: "John", last: "Smith" (standard split)
+def parse_jira_name(full_name)
+  return { first_name: nil, last_name: nil } if full_name.blank?
+
+  name_str = full_name.to_s.strip
+
+  # STRATEGY 1: Check for dot-separated format (e.g., "archana.verma")
+  if name_str.include?('.')
+    parts = name_str.split('.')
+    if parts.length >= 2
+      first = parts[0].strip.presence
+      last = parts[1].strip.presence
+      if first && last
+        $USER_STATS[:parsed_names][name_str] = { strategy: 'dot-separated', first_name: first, last_name: last }
+        return { first_name: first, last_name: last }
+      end
+    end
+  end
+
+  # STRATEGY 2: Check for multi-part name (3+ parts) - generate multiple parsing strategies
+  # Example: "Eva Karimi Njagi" -> try first: "Eva", last: "Karimi"
+  # Then try "Eva" + "Njagi", then "Karimi" + "Njagi", etc.
+  parts = name_str.split(/\s+/).reject(&:empty?)
+
+  if parts.length >= 3
+    # Generate list of name combinations to try, in priority order:
+    # 1. First + Second (original strategy)
+    # 2. First + Third (if 3+ parts)
+    # 3. Second + Last (if 3+ parts)
+    # 4. First + Last (if 4+ parts)
+    combinations = [
+      [parts[0], parts[1]],  # First + Second
+      parts.length >= 3 ? [parts[0], parts[2]] : nil,  # First + Third
+      parts.length >= 3 ? [parts[1], parts[-1]] : nil,  # Second + Last
+      parts.length >= 4 ? [parts[0], parts[-1]] : nil,  # First + Last
+    ].compact
+
+    # Return all combinations as a special marker for later use
+    $USER_STATS[:parsed_names][name_str] = {
+      strategy: 'multi-part-combinations',
+      combinations: combinations.map { |combo| { first_name: combo[0], last_name: combo[1] } }
+    }
+    return { first_name: parts[0], last_name: parts[1], combinations: combinations }
+  end
+
+  # STRATEGY 3: Standard split (2 parts or less)
+  if parts.length >= 2
+    first = parts[0].strip.presence
+    last = parts[1..-1].map(&:strip).join(' ').presence
+    if first && last
+      $USER_STATS[:parsed_names][name_str] = { strategy: 'standard-split', first_name: first, last_name: last }
+      return { first_name: first, last_name: last }
+    end
+  end
+
+  # STRATEGY 4: Single part - treat as first name only
+  if parts.length == 1
+    first = parts[0].strip.presence
+    if first
+      $USER_STATS[:parsed_names][name_str] = { strategy: 'single-part', first_name: first, last_name: nil }
+      return { first_name: first, last_name: nil }
+    end
+  end
+
+  $USER_STATS[:parsed_names][name_str] = { strategy: 'failed-parse', first_name: nil, last_name: nil }
+  { first_name: nil, last_name: nil }
+end
+
+# Helper function to try matching a first+last name combination
+# Tries exact match, then partial matches (first exact + last prefix, or vice versa)
+def try_match_user_combination(first_name, last_name)
+  return nil if first_name.blank? || last_name.blank?
+
+  # Try exact first + last name match (case-insensitive)
+  user = User.where(deleted_on: nil)
+    .where('lower(first_name) = ? AND lower(last_name) = ?', first_name.downcase, last_name.downcase)
+    .first
+  return user if user
+
+  # Try partial match: first name exact, last name prefix
+  user = User.where(deleted_on: nil)
+    .where('lower(first_name) = ? AND lower(last_name) LIKE ?', first_name.downcase, "#{last_name.downcase}%")
+    .first
+  return user if user
+
+  # Try reverse: last name exact, first name prefix
+  user = User.where(deleted_on: nil)
+    .where('lower(last_name) = ? AND lower(first_name) LIKE ?', last_name.downcase, "#{first_name.downcase}%")
+    .first
+  return user if user
+
+  nil
+end
+
 def find_user_by_name_or_map(name, email = nil, verbose: false)
+  $USER_STATS[:total_lookups] += 1
+
   name_str = name.to_s.strip
   email_str = email.to_s.strip
 
@@ -285,13 +407,56 @@ def find_user_by_name_or_map(name, email = nil, verbose: false)
   if email_str.present? && email_str.downcase != 'restricted'
     user = User.where(deleted_on: nil).find_by('lower(email) = ?', email_str.downcase)
     if user
+      $USER_STATS[:email_matches] += 1
+      $USER_STATS[:matched_users] << user.id
       vputs "[USER-MATCH] Matched '#{name_str}' by email: #{email_str} -> #{user.id}" if verbose
       return user
     end
   end
 
-  # PRIORITY 2: Dynamic first_name + last_name matching from Jira displayName
-  # This replaces hardcoded user_map with intelligent name comparison
+  # PRIORITY 2: Parse name using enhanced parsing (handles dot-separated and multi-part)
+  parsed = parse_jira_name(name_str)
+  parsed_first = parsed[:first_name]
+  parsed_last = parsed[:last_name]
+  combinations = parsed[:combinations]  # For multi-part names, this contains multiple name combinations to try
+
+  # For multi-part names with combinations, try each combination in priority order
+  if combinations.present?
+    combinations.each do |combo|
+      combo_first = combo[0].strip
+      combo_last = combo[1].strip
+      user = try_match_user_combination(combo_first, combo_last)
+      if user
+        $USER_STATS[:first_last_matches] += 1
+        $USER_STATS[:matched_users] << user.id
+        strategy_desc = "#{combo_first}+#{combo_last}"
+        vputs "[USER-MATCH] Matched '#{name_str}' by parsed first+last (#{strategy_desc}): #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
+        return user
+      end
+    end
+  elsif parsed_first && parsed_last
+    # Standard two-part name matching
+    user = try_match_user_combination(parsed_first, parsed_last)
+    if user
+      $USER_STATS[:first_last_matches] += 1
+      $USER_STATS[:matched_users] << user.id
+      vputs "[USER-MATCH] Matched '#{name_str}' by parsed first+last: #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
+      return user
+    end
+  elsif parsed_first
+    # Only first name available - try single name match
+    user = User.where(deleted_on: nil)
+      .where('lower(first_name) = ? OR lower(last_name) = ?', parsed_first.downcase, parsed_first.downcase)
+      .first
+    if user
+      $USER_STATS[:partial_matches] += 1
+      $USER_STATS[:matched_users] << user.id
+      vputs "[USER-MATCH] Matched '#{name_str}' by single name: #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
+      return user
+    end
+  end
+
+  # PRIORITY 3: Try dynamic first_name + last_name matching from Jira displayName (backward compat)
   if name_str.present?
     # Try exact full name match (case-insensitive)
     normalized = name_str.downcase
@@ -299,6 +464,8 @@ def find_user_by_name_or_map(name, email = nil, verbose: false)
       .where("lower(coalesce(first_name,'') || ' ' || coalesce(last_name,'')) = ?", normalized)
       .first
     if user
+      $USER_STATS[:full_name_matches] += 1
+      $USER_STATS[:matched_users] << user.id
       vputs "[USER-MATCH] Matched '#{name_str}' by full name: #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
       return user
     end
@@ -314,6 +481,8 @@ def find_user_by_name_or_map(name, email = nil, verbose: false)
         .where('lower(first_name) = ? AND lower(last_name) = ?', first.downcase, last.downcase)
         .first
       if user
+        $USER_STATS[:first_last_matches] += 1
+        $USER_STATS[:matched_users] << user.id
         vputs "[USER-MATCH] Matched '#{name_str}' by first+last name: #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
         return user
       end
@@ -323,6 +492,8 @@ def find_user_by_name_or_map(name, email = nil, verbose: false)
         .where('lower(first_name) = ? AND lower(last_name) LIKE ?', first.downcase, "#{last.downcase}%")
         .first
       if user
+        $USER_STATS[:partial_matches] += 1
+        $USER_STATS[:matched_users] << user.id
         vputs "[USER-MATCH] Matched '#{name_str}' by partial last name: #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
         return user
       end
@@ -332,6 +503,8 @@ def find_user_by_name_or_map(name, email = nil, verbose: false)
         .where('lower(last_name) = ? AND lower(first_name) LIKE ?', last.downcase, "#{first.downcase}%")
         .first
       if user
+        $USER_STATS[:partial_matches] += 1
+        $USER_STATS[:matched_users] << user.id
         vputs "[USER-MATCH] Matched '#{name_str}' by partial first name: #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
         return user
       end
@@ -342,18 +515,21 @@ def find_user_by_name_or_map(name, email = nil, verbose: false)
         .where('lower(first_name) = ? OR lower(last_name) = ?', single, single)
         .first
       if user
+        $USER_STATS[:partial_matches] += 1
+        $USER_STATS[:matched_users] << user.id
         vputs "[USER-MATCH] Matched '#{name_str}' by single name: #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
         return user
       end
     end
   end
 
-  # PRIORITY 3: Fallback to explicit config map (optional override)
-  # This allows manual overrides for edge cases where automatic matching fails
+  # PRIORITY 4: Fallback to explicit config map (optional override)
   if USER_UUID_MAP[name_str]
     uid = USER_UUID_MAP[name_str]
     user = User.find_by(id: uid)
     if user
+      $USER_STATS[:config_map_matches] += 1
+      $USER_STATS[:matched_users] << user.id
       vputs "[USER-MATCH] Matched '#{name_str}' by config map -> #{user.id}" if verbose
       return user
     end
@@ -364,29 +540,46 @@ def find_user_by_name_or_map(name, email = nil, verbose: false)
     uid = USER_UUID_MAP[name_str.downcase]
     user = User.find_by(id: uid)
     if user
+      $USER_STATS[:config_map_matches] += 1
+      $USER_STATS[:matched_users] << user.id
       vputs "[USER-MATCH] Matched '#{name_str}' by config map (lowercase) -> #{user.id}" if verbose
       return user
     end
   end
 
-  # PRIORITY 4: Optionally create new user if allowed
+  # PRIORITY 5: Optionally create new user if allowed
   if CREATE_MISSING_USERS && email_str.present? && email_str.downcase != 'restricted'
+    # Use parsed names if available, otherwise fall back to simple split
+    if parsed_first
+      first_name = parsed_first
+      last_name = parsed_last || 'User'
+    else
+      parts = name_str.split(' ')
+      first_name = parts.first || 'Imported'
+      last_name = parts[1..]&.join(' ') || 'User'
+    end
+
     attrs = {
       email: email_str.downcase,
-      first_name: name_str.split(' ').first || 'Imported',
-      last_name: name_str.split(' ')[1..]&.join(' ') || 'User',
+      first_name: first_name,
+      last_name: last_name,
       created_by: DEFAULT_CREATED_BY,
       modified_by: DEFAULT_CREATED_BY
     }
     created = User.create(attrs)
     if created.persisted?
-      vputs "[USER-CREATE] Created new user '#{name_str}' (#{email_str}) -> #{created.id}" if verbose
+      $USER_STATS[:created_users] += 1
+      $USER_STATS[:matched_users] << created.id
+      vputs "[USER-CREATE] Created new user '#{name_str}' (#{email_str}) with first='#{first_name}', last='#{last_name}' -> #{created.id}" if verbose
       return created
     end
   end
 
-  # PRIORITY 5: Final fallback to default user
+  # PRIORITY 6: Final fallback to default user
   default_user = User.find_by(id: DEFAULT_USER_UUID)
+  $USER_STATS[:fallback_users] += 1
+  $USER_STATS[:fallback_users_set] << DEFAULT_USER_UUID if default_user
+  $USER_STATS[:not_found_names][name_str] += 1
   vputs "[USER-FALLBACK] Using default user for '#{name_str}' -> #{DEFAULT_USER_UUID}" if verbose
   default_user
 end
@@ -555,6 +748,7 @@ def find_or_create_modules(module_name:, submodule_name:, product_id:, created_b
   parent = nil
   child = nil
 
+  # Step 1: Find or create parent module (must have no parent_id)
   if module_name.present?
     parent = QaModule.where('lower(name) = ? AND parent_id IS NULL AND product_id = ?', module_name.strip.downcase, product_id).first
     if parent.nil? && CREATE_MISSING_MODULES
@@ -563,20 +757,35 @@ def find_or_create_modules(module_name:, submodule_name:, product_id:, created_b
     end
   end
 
+  # Step 2: Find or create child module (submodule)
   if submodule_name.present?
+    # Case A: Parent exists - create child with parent_id
     if parent
       child = QaModule.where('lower(name) = ? AND parent_id = ? AND product_id = ?', submodule_name.strip.downcase, parent.id, product_id).first
       if child.nil? && CREATE_MISSING_MODULES
         child = QaModule.create!(name: submodule_name.strip, parent_id: parent.id, product_id: product_id)
         child.update_columns(created_by: created_by, modified_by: created_by) if child.respond_to?(:created_by)
       end
+    # Case B: No parent - look for existing submodule and extract parent relationship
     else
-      child = QaModule.where('lower(name) = ? AND product_id = ?', submodule_name.strip.downcase, product_id).first
+      # First, try to find existing submodule with a parent
+      child = QaModule.where('lower(name) = ? AND parent_id IS NOT NULL AND product_id = ?', submodule_name.strip.downcase, product_id).first
       if child && child.parent_id.present?
+        # Found submodule with parent - use that parent
         parent = QaModule.find_by(id: child.parent_id)
-      elsif child.nil? && CREATE_MISSING_MODULES
-        child = QaModule.create!(name: submodule_name.strip, product_id: product_id)
-        child.update_columns(created_by: created_by, modified_by: created_by) if child.respond_to?(:created_by)
+      else
+        # Submodule exists without parent or doesn't exist - check for unparented version
+        child = QaModule.where('lower(name) = ? AND parent_id IS NULL AND product_id = ?', submodule_name.strip.downcase, product_id).first
+
+        if child && !parent
+          # Submodule found without parent, and we don't have a parent module
+          # This is an orphaned child - keep as-is but don't set a parent
+          # (it might be intended as a standalone module)
+        elsif child.nil? && CREATE_MISSING_MODULES
+          # Submodule doesn't exist - create as standalone (no parent_id)
+          child = QaModule.create!(name: submodule_name.strip, product_id: product_id)
+          child.update_columns(created_by: created_by, modified_by: created_by) if child.respond_to?(:created_by)
+        end
       end
     end
   end
@@ -584,20 +793,351 @@ def find_or_create_modules(module_name:, submodule_name:, product_id:, created_b
   [parent, child]
 end
 
+# Extract Jira description and convert to rich HTML for ActionText storage
+# Handles both plain text and Jira ADF (Atlassian Document Format) content
 def extract_description(field)
   return '' if field.nil?
   return field if field.is_a?(String)
 
   if field.is_a?(Hash)
-    text_parts = []
-    (field['content'] || []).each do |block|
-      (block['content'] || []).each do |sub|
-        text_parts << sub['text'] if sub['type'] == 'text' && sub['text']
-      end
-    end
-    return text_parts.join(' ')
+    # Jira description is in ADF format - convert to HTML
+    html = convert_adf_to_html(field['content'] || [])
+    return html.present? ? html : ''
   end
   field.to_s
+end
+
+# Convert Jira ADF (Atlassian Document Format) to HTML for ActionText
+# This preserves formatting like tables, lists, headings, etc.
+def convert_adf_to_html(content_array)
+  return '' if content_array.nil? || !content_array.is_a?(Array)
+
+  html_parts = []
+  content_array.each do |block|
+    next unless block.is_a?(Hash)
+
+    block_html = convert_adf_block_to_html(block)
+    html_parts << block_html if block_html.present?
+  end
+
+  html_parts.join("\n")
+end
+
+# Convert a single ADF block to HTML
+def convert_adf_block_to_html(block)
+  return '' if block.nil? || !block.is_a?(Hash)
+
+  block_type = block['type']&.to_s&.downcase
+  content = block['content'] || []
+
+  case block_type
+  when 'paragraph'
+    inner_html = convert_adf_inline_to_html(content)
+    inner_html.present? ? "<p>#{inner_html}</p>" : ''
+
+  when 'heading'
+    inner_html = convert_adf_inline_to_html(content)
+    level = block.dig('attrs', 'level') || 1
+    inner_html.present? ? "<h#{level}>#{inner_html}</h#{level}>" : ''
+
+  when 'bulletlist', 'bullet_list'
+    list_html = convert_adf_list_to_html(content, 'ul')
+    list_html.present? ? "<ul>#{list_html}</ul>" : ''
+
+  when 'orderedlist', 'ordered_list'
+    list_html = convert_adf_list_to_html(content, 'ol')
+    list_html.present? ? "<ol>#{list_html}</ol>" : ''
+
+  when 'table'
+    convert_adf_table_to_html(block)
+
+  when 'codeblock', 'code_block'
+    code_text = convert_adf_inline_to_html(content)
+    if code_text.present?
+      lang = block.dig('attrs', 'language') || 'plaintext'
+      "<pre><code class=\"language-#{lang}\">#{CGI.escapeHTML(code_text)}</code></pre>"
+    else
+      ''
+    end
+
+  when 'blockquote'
+    inner_html = convert_adf_inline_to_html(content)
+    inner_html.present? ? "<blockquote>#{inner_html}</blockquote>" : ''
+
+  when 'horizontalrule', 'horizontal_rule', 'hr'
+    '<hr>'
+
+  when 'image'
+    src = block.dig('attrs', 'src')
+    alt = block.dig('attrs', 'alt') || 'image'
+    src.present? ? "<img src=\"#{CGI.escapeHTML(src)}\" alt=\"#{CGI.escapeHTML(alt)}\">" : ''
+
+  else
+    # For unknown types with content, try to process nested content
+    convert_adf_to_html(content) if content.is_a?(Array)
+  end
+end
+
+# Convert ADF inline content (text, mentions, etc) to HTML
+def convert_adf_inline_to_html(content_array)
+  return '' if content_array.nil? || !content_array.is_a?(Array)
+
+  html_parts = []
+  content_array.each do |item|
+    next unless item.is_a?(Hash)
+
+    item_type = item['type']&.to_s&.downcase
+
+    case item_type
+    when 'text'
+      text = item['text'].to_s
+      # Apply marks (bold, italic, code, etc)
+      marks = item['marks'] || []
+      marked_text = text
+      marks.each do |mark|
+        mark_type = mark['type']&.to_s&.downcase
+        case mark_type
+        when 'bold', 'strong'
+          marked_text = "<strong>#{marked_text}</strong>"
+        when 'italic', 'em'
+          marked_text = "<em>#{marked_text}</em>"
+        when 'code'
+          marked_text = "<code>#{CGI.escapeHTML(marked_text)}</code>"
+        when 'underline'
+          marked_text = "<u>#{marked_text}</u>"
+        when 'strikethrough'
+          marked_text = "<s>#{marked_text}</s>"
+        when 'link'
+          href = mark.dig('attrs', 'href') || '#'
+          marked_text = "<a href=\"#{CGI.escapeHTML(href)}\">#{marked_text}</a>"
+        when 'textcolor', 'textColor'
+          # Support for text color formatting
+          color = mark.dig('attrs', 'color') || '#000000'
+          marked_text = "<span style=\"color: #{CGI.escapeHTML(color)}\">#{marked_text}</span>"
+        when 'backgroundcolor', 'backgroundColor'
+          # Support for background color formatting
+          color = mark.dig('attrs', 'color') || '#ffffff'
+          marked_text = "<span style=\"background-color: #{CGI.escapeHTML(color)}\">#{marked_text}</span>"
+        when 'subsup'
+          # Support for superscript/subscript
+          type = mark.dig('attrs', 'type')
+          if type == 'sub'
+            marked_text = "<sub>#{marked_text}</sub>"
+          elsif type == 'sup'
+            marked_text = "<sup>#{marked_text}</sup>"
+          end
+        end
+      end
+      html_parts << marked_text if marked_text.present?
+
+    when 'mention'
+      mention_text = item.dig('attrs', 'text') || '@user'
+      html_parts << "<span class=\"mention\">#{CGI.escapeHTML(mention_text)}</span>"
+
+    when 'hardbreak'
+      html_parts << '<br>'
+
+    when 'emoji'
+      emoji_text = item.dig('attrs', 'text') || '😊'
+      html_parts << emoji_text
+
+    when 'inlinecard', 'card'
+      url = item.dig('attrs', 'url')
+      title = item.dig('attrs', 'title') || url
+      url.present? ? html_parts << "<a href=\"#{CGI.escapeHTML(url)}\">#{CGI.escapeHTML(title)}</a>" : nil
+
+    else
+      # Recursively handle nested content
+      if item['content'].is_a?(Array)
+        nested_html = convert_adf_inline_to_html(item['content'])
+        html_parts << nested_html if nested_html.present?
+      end
+    end
+  end
+
+  html_parts.join('')
+end
+
+# Convert ADF list to HTML
+def convert_adf_list_to_html(items, tag)
+  return '' if items.nil? || !items.is_a?(Array)
+
+  list_items = []
+  items.each do |item|
+    next unless item.is_a?(Hash) && item['type'] == 'listitem'
+
+    item_content = item['content'] || []
+    item_html = convert_adf_to_html(item_content)
+    # Extract text if it's wrapped in <p> tags
+    item_html = item_html.gsub(/<p>(.*?)<\/p>/, '\1')
+    list_items << "<li>#{item_html}</li>" if item_html.present?
+  end
+
+  list_items.join("\n")
+end
+
+# Convert ADF table to HTML
+def convert_adf_table_to_html(table_block)
+  return '' if table_block.nil?
+
+  table_rows = table_block['content'] || []
+  return '' if table_rows.empty?
+
+  rows_html = []
+  table_rows.each do |row|
+    next unless row.is_a?(Hash) && row['type'] == 'tablerow'
+
+    cells = row['content'] || []
+    cells_html = []
+    cells.each do |cell|
+      next unless cell.is_a?(Hash)
+
+      cell_type = cell['type'] == 'tablehead' ? 'th' : 'td'
+      cell_content = cell['content'] || []
+      cell_html = convert_adf_to_html(cell_content)
+      # Remove wrapping p tags
+      cell_html = cell_html.gsub(/<p>(.*?)<\/p>/, '\1')
+      cells_html << "<#{cell_type}>#{cell_html}</#{cell_type}>"
+    end
+
+    rows_html << "<tr>#{cells_html.join('')}</tr>" if cells_html.any?
+  end
+
+  rows_html.any? ? "<table>#{rows_html.join("\n")}</table>" : ''
+end
+
+# Process Jira ADF (Atlassian Document Format) content recursively
+# Handles: text, paragraphs, lists, tables, code blocks, headings, etc.
+def process_adf_content(content_array, text_parts = [])
+  return text_parts if content_array.nil? || !content_array.is_a?(Array)
+
+  content_array.each do |block|
+    next unless block.is_a?(Hash)
+
+    block_type = block['type']&.to_s&.downcase
+
+    case block_type
+    when 'paragraph'
+      para_text = extract_adf_text_from_block(block['content'] || [])
+      text_parts << para_text if para_text.present?
+
+    when 'heading'
+      heading_text = extract_adf_text_from_block(block['content'] || [])
+      level = block.dig('attrs', 'level') || 1
+      prefix = '#' * level
+      text_parts << "#{prefix} #{heading_text}" if heading_text.present?
+
+    when 'bulletlist', 'bullet_list', 'orderedlist', 'ordered_list', 'list'
+      list_items = block['content'] || []
+      list_items.each_with_index do |item, idx|
+        next unless item.is_a?(Hash) && item['type'] == 'listitem'
+
+        item_text = extract_adf_text_from_block(item['content'] || [])
+        next if item_text.blank?
+
+        if %w[orderedlist ordered_list].include?(block_type)
+          text_parts << "#{idx + 1}. #{item_text}"
+        else
+          text_parts << "• #{item_text}"
+        end
+      end
+
+    when 'table'
+      table_text = extract_table_as_text(block)
+      text_parts << table_text if table_text.present?
+
+    when 'codeblock', 'code_block'
+      code_text = extract_adf_text_from_block(block['content'] || [])
+      language = block.dig('attrs', 'language') || 'code'
+      if code_text.present?
+        text_parts << "```#{language}"
+        text_parts << code_text
+        text_parts << '```'
+      end
+
+    when 'blockquote'
+      quote_text = extract_adf_text_from_block(block['content'] || [])
+      if quote_text.present?
+        quoted_lines = quote_text.split("\n").map { |line| "> #{line}" }
+        text_parts.concat(quoted_lines)
+      end
+
+    when 'horizontalrule', 'horizontal_rule', 'hr'
+      text_parts << '---'
+
+    when 'image'
+      alt_text = block.dig('attrs', 'alt') || 'image'
+      text_parts << "[Image: #{alt_text}]"
+
+    when 'mention'
+      mention_text = block.dig('attrs', 'text') || "@user"
+      text_parts << mention_text
+
+    when 'inlinecard', 'card', 'embed'
+      url = block.dig('attrs', 'url')
+      text_parts << "[Link: #{url}]" if url.present?
+
+    else
+      nested_text = extract_adf_text_from_block(block['content'] || [])
+      text_parts << nested_text if nested_text.present?
+    end
+  end
+
+  text_parts
+end
+
+# Extract plain text from ADF inline content
+def extract_adf_text_from_block(content_array = [])
+  return '' if content_array.nil? || !content_array.is_a?(Array)
+
+  text_parts = []
+  content_array.each do |item|
+    next unless item.is_a?(Hash)
+
+    if item['type'] == 'text'
+      text = item['text'].to_s
+      text_parts << text if text.present?
+    elsif item['type'] == 'mention'
+      mention_name = item.dig('attrs', 'text') || '@user'
+      text_parts << mention_name
+    elsif item['type'] == 'hardbreak'
+      text_parts << "\n"
+    elsif item['content'].is_a?(Array)
+      nested = extract_adf_text_from_block(item['content'])
+      text_parts << nested if nested.present?
+    end
+  end
+
+  text_parts.join('')
+end
+
+# Convert Jira table ADF to readable text format
+def extract_table_as_text(table_block)
+  return '' if table_block.nil?
+
+  table_rows = table_block['content'] || []
+  return '' if table_rows.empty?
+
+  lines = []
+  lines << '[Table]'
+
+  table_rows.each do |row|
+    next unless row.is_a?(Hash) && row['type'] == 'tableRow'
+
+    cells = row['content'] || []
+    row_text = cells.map do |cell|
+      next unless cell.is_a?(Hash)
+
+      cell_content = cell['content'] || []
+      cell_text = extract_adf_text_from_block(cell_content)
+      cell_text.present? ? cell_text : '-'
+    end.compact.join(' | ')
+
+    lines << row_text if row_text.present?
+  end
+
+  lines << '[/Table]'
+  lines.join("\n")
 end
 
 def extract_comment_body(body_field)
@@ -606,32 +1146,63 @@ def extract_comment_body(body_field)
 
   if body_field.is_a?(Hash)
     text_parts = []
-    (body_field['content'] || []).each do |block|
-      (block['content'] || []).each do |sub|
-        text_parts << sub['text'] if sub['type'] == 'text' && sub['text']
-      end
-    end
-    return text_parts.join(' ')
+    process_adf_content(body_field['content'] || [], text_parts)
+    return text_parts.join("\n").strip
   end
   body_field.to_s
 end
 
+# Extract value from a custom field (handles various formats from Jira API)
 def extract_custom_field_value(field_data)
   return '' if field_data.nil?
-  return field_data if field_data.is_a?(String)
+  return field_data.to_s.strip if field_data.is_a?(String)
 
   if field_data.is_a?(Hash)
-    if field_data.key?('value')
-      return field_data['value']
-    elsif field_data.key?('name')
-      return field_data['name']
-    elsif field_data.key?('key')
-      return field_data['key']
+    # Try common field value keys used by Jira
+    return field_data['value'].to_s.strip if field_data['value'].present?
+    return field_data['name'].to_s.strip if field_data['name'].present?
+    return field_data['key'].to_s.strip if field_data['key'].present?
+    return field_data['id'].to_s.strip if field_data['id'].present?
+  end
+
+  if field_data.is_a?(Array) && field_data.any?
+    # For arrays, try to extract first item's value
+    first_item = field_data.first
+    if first_item.is_a?(Hash)
+      return extract_custom_field_value(first_item)
     else
-      return field_data.to_s
+      return first_item.to_s.strip
     end
   end
-  field_data.to_s
+
+  field_data.to_s.strip
+end
+
+# Helper: parse module/submodule from a single string like "Parent - Child"
+# - If submodule is already provided, return both as-is
+# - If only module_name is provided and contains a hyphen, split on the FIRST hyphen ("-", "–", or "—")
+#   and treat the left as parent module and the right side (including further hyphens) as submodule
+# - Preserves all characters after the hyphen without truncation
+# - Trims surrounding whitespace only
+def parse_module_and_submodule(module_name_str, submodule_name_str)
+  mod = module_name_str.to_s.strip
+  sub = submodule_name_str.to_s.strip
+
+  return [mod, sub] if sub.present?
+
+  return [mod, sub] if mod.blank?
+
+  # Only derive submodule when no explicit submodule is provided
+  # Split on the first hyphen-like character (minus, en dash, em dash) with optional spaces around
+  # Example: "Core Banking - Accounts - Savings" => ["Core Banking", "Accounts - Savings"]
+  parts = mod.split(/\s*[\-\u2013\u2014]\s*/, 2) # - (U+002D), en dash (U+2013), em dash (U+2014)
+  if parts.length == 2
+    derived_mod = parts[0].strip
+    derived_sub = parts[1].strip
+    return [derived_mod, derived_sub]
+  end
+
+  [mod, sub]
 end
 
 # ===============================
@@ -1188,20 +1759,18 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
             http.verify_mode = OpenSSL::SSL::VERIFY_PEER
             http.ca_file = nil
             http.ciphers = 'HIGH:!aNULL:!eNULL:!EXPORT:!DES:!MD5:!PSK:!RC4'
-            http.ssl_timeout = 90
+            http.ssl_timeout = 120
           end
 
-          timeout_multiplier = size_mb > 30 ? 2 : 1
-          http.open_timeout = 90 * timeout_multiplier
-          http.read_timeout = 900 * timeout_multiplier
-          http.write_timeout = 90 * timeout_multiplier if http.respond_to?(:write_timeout=)
-          http.keep_alive_timeout = 60
+          http.read_timeout = 1800
+          http.open_timeout = 120
+          http.write_timeout = 900 if http.respond_to?(:write_timeout=)
+          http.keep_alive_timeout = 300
 
           request = Net::HTTP::Get.new(uri.request_uri)
           request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
           request['Connection'] = 'keep-alive'
           request['Accept-Encoding'] = 'identity'
-          request['User-Agent'] = 'JiraImporter/1.0'
 
           vputs "  Attempt #{download_attempt}/#{max_download_retries}: Downloading comment attachment #{filename} (#{size_mb} MB)..." if verbose
 
@@ -1236,7 +1805,7 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
           warn "  SSL error after #{max_download_retries} attempts: #{e.message}"
         end
 
-      rescue Errno::ECONNRESET, Errno::EPIPE, EOFError, Net::ReadTimeout, Net::OpenTimeout, SocketError => e
+      rescue Errno::ECONNRESET, Errno::EPIPE, EOFError, Net::ReadTimeout, Net::OpenTimeout => e
         download_success = false
         if download_attempt < max_download_retries
           wait_time = [2 ** download_attempt, 30].min
@@ -1269,17 +1838,14 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
 
       bytes_written = 0
       chunk_size = 1024 * 1024
-      if resp.body
-        resp.body.each_char.each_slice(chunk_size) do |chunk|
-          tf.write(chunk.join)
-          bytes_written += chunk.length
-
-          # Progress for large files
-          if size_mb > 10 && bytes_written % (10 * 1024 * 1024) == 0
-            progress_mb = (bytes_written / 1024.0 / 1024.0).round(1)
-            vputs "  📊 Downloaded #{progress_mb}/#{size_mb} MB..." if verbose
-          end
+      if resp.body.respond_to?(:read)
+        while chunk = resp.body.read(1_048_576)
+          tf.write(chunk)
+          bytes_written += chunk.bytesize
         end
+      else
+        tf.write(resp.body)
+        bytes_written = resp.body.bytesize
       end
       tf.rewind
 
@@ -1568,438 +2134,192 @@ def fetch_and_attach_to_rich_text_jira(rich_record, attachments, verbose: false)
   stats
 end
 
-# Reconcile: ensure all expected issue-level attachments are present on the Defect
-# - If a filename from Jira is missing on the defect, download & attach it
-# - If an attached blob is missing from storage, download again and attach
-# This is idempotent (matches by filename)
-def reconcile_issue_attachments(defect, expected_attachments, verbose: false)
-  return unless defect && expected_attachments && expected_attachments.any?
+# Repair and update defect description from Jira data
+# - Checks if existing description is different from current Jira data
+# - Updates only if necessary
+# - Returns true if updated, false if no changes needed
+def validate_and_update_description(defect, jira_description_field, issue_key, verbose: false)
+  return false unless defect && jira_description_field
 
-  # Build filename -> att map from Jira
-  expected_by_name = expected_attachments.each_with_object({}) do |att, h|
-    name = att['filename'] || att['name']
-    h[name] = att if name
+  # Extract full formatted description from Jira field
+  new_description = extract_description(jira_description_field).to_s.strip
+  existing_description = (defect.content.to_s.strip if defect.respond_to?(:content)) || ''
+
+  vputs "[DESCRIPTION-VALIDATE] #{issue_key}: new_len=#{new_description.length}, existing_len=#{existing_description.length}" if verbose
+
+  # Compare descriptions (normalize whitespace for comparison)
+  new_normalized = new_description.gsub(/\s+/, ' ').downcase
+  existing_normalized = existing_description.gsub(/\s+/, ' ').downcase
+
+  if new_normalized == existing_normalized
+    vputs "[DESCRIPTION-SKIP] #{issue_key}: Description unchanged" if verbose
+    return false
   end
 
-  # Verify existing attachments and collect missing
-  existing_names = defect.attachments.map { |a| a.filename.to_s }
-  missing_names = expected_by_name.keys - existing_names
+  # Description differs - update it
+  begin
+    defect.content = new_description
+    defect.save!
 
-  # Re-attach for blobs missing on disk
-  defect.attachments.each do |a|
-    begin
-      exists = ActiveStorage::Blob.service.exist?(a.blob.key)
-      next if exists
-      # Blob missing in storage; try re-download using expected map
-      att = expected_by_name[a.filename.to_s]
-      next unless att
-      tf = Tempfile.new(['jira_issue_repair', File.extname(a.filename.to_s)])
-      tf.binmode
-      # Reuse the direct downloader used for issue-level in this script
-      uri = URI.parse(att['content'] || att['contentUrl'] || att['self'])
-      redirects = 0
-      max_redirects = 6
-      resp = nil
-      loop do
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = (uri.scheme == 'https')
-        http.read_timeout = 600
-        http.open_timeout = 60
-        request = Net::HTTP::Get.new(uri.request_uri)
-        request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
-        resp = http.request(request)
-        if resp.is_a?(Net::HTTPRedirection)
-          location = resp['location']
-          break unless location
-          redirects += 1
-          break if redirects > max_redirects
-          uri = URI.parse(location)
-          next
-        end
-        break
-      end
-      next unless resp && resp.is_a?(Net::HTTPSuccess)
-      tf.write(resp.body)
-      tf.rewind
-      File.open(tf.path, 'rb') do |f|
-        defect.attachments.attach(io: f, filename: a.filename.to_s, content_type: a.blob.content_type)
-      end
-      vputs "[REPAIR] Re-attached missing blob for issue-level file #{a.filename} on #{defect.defect_unique}" if verbose
-      tf.close!
-    rescue StandardError => e
-      warn "[REPAIR] Failed to re-attach #{a.filename} on #{defect.defect_unique}: #{e.message}"
-      next
-    end
-  end
+    vputs "[DESCRIPTION-UPDATE] #{issue_key}: Updated description (#{new_description.length} chars)" if verbose
 
-  # Attach fully missing files by filename
-  if missing_names.any?
-    to_add = missing_names.map { |n| expected_by_name[n] }.compact
-    begin
-      fetch_and_attach_attachments(defect, to_add, verbose: verbose)
-      vputs "[SYNC] Added #{to_add.length} missing issue-level attachment(s) on #{defect.defect_unique}" if verbose
-    rescue StandardError => e
-      warn "[SYNC] Failed to add missing issue-level attachments on #{defect.defect_unique}: #{e.message}"
+    # Log what was changed
+    if verbose && existing_description.present?
+      vputs "  Previous: #{existing_description[0..100]}..." if existing_description.length > 100
+      vputs "  Updated: #{new_description[0..100]}..." if new_description.length > 100
     end
+
+    return true
+  rescue StandardError => e
+    warn "[DESCRIPTION-ERROR] #{issue_key}: Failed to update description: #{e.class}: #{e.message}"
+    return false
   end
 end
 
-# Import comments for a defect into DefectMessage (preserves author mapping and timestamps)
-# Returns hash with import statistics: { imported: n, skipped: n }
+# Repair and validate descriptions for all defects
+def repair_descriptions_for_defects(issues, verbose: false)
+  return { total: 0, updated: 0, skipped: 0, errors: 0 } if issues.nil? || issues.empty?
+
+  stats = { total: 0, updated: 0, skipped: 0, errors: 0 }
+
+  issues.each do |issue|
+    issue_key = issue['key']
+    fields = issue['fields'] || {}
+    jira_description_field = fields['description']
+
+    stats[:total] += 1
+
+    begin
+      defect = Defect.find_by(defect_unique: issue_key)
+
+      unless defect
+        vputs "[REPAIR-SKIP] #{issue_key}: Defect not found in database" if verbose
+        stats[:skipped] += 1
+        next
+      end
+
+      # Validate and update description if changed
+      was_updated = validate_and_update_description(defect, jira_description_field, issue_key, verbose: verbose)
+
+      if was_updated
+        stats[:updated] += 1
+        info "[DESCRIPTION-REPAIRED] #{issue_key}: Description updated from Jira"
+      else
+        stats[:skipped] += 1
+      end
+
+    rescue StandardError => e
+      stats[:errors] += 1
+      warn "[REPAIR-ERROR] #{issue_key}: Failed to repair description: #{e.class}: #{e.message}"
+    end
+  end
+
+  stats
+end
+
+# Import comments for a defect into DefectMessage (with rich text support)
+# Each comment body is converted to HTML/rich text format and stored as ActionText
 def import_comments_for_defect(defect, comments_array, verbose: false)
-  return { imported: 0, skipped: 0 } if comments_array.nil? || comments_array.empty?
+  return { imported: 0, skipped: 0, dropped: 0 } if comments_array.nil? || comments_array.empty?
 
   stats = { imported: 0, skipped: 0, dropped: 0 }
 
-  vputs "[COMMENTS-DEBUG] Total comments received from Jira: #{comments_array.length}" if verbose
-
   comments_array.each_with_index do |c, comment_idx|
+    next unless c.is_a?(Hash)
+
     author = c['author'] || {}
     author_name = author['displayName'].to_s.strip
     author_email = author['emailAddress'].to_s.strip
 
+    # Find the user who made the comment
     user = find_user_by_name_or_map(author_name, author_email, verbose: verbose) || User.find_by(id: DEFAULT_USER_UUID)
 
-    body = extract_comment_body(c['body'] || c['content'] || c['body']).to_s.strip
-    jira_comment_id = c['id'].to_s.strip # Unique Jira comment identifier
+    # Extract comment body as rich HTML content (preserves formatting like lists, tables, colors, etc)
+    # The extract_comment_body handles both plain text and ADF format
+    body_field = c['body'] || c['content']
 
-    # Check if this comment has attachments matched to it
-    has_attachments = c.is_a?(Hash) && c['_comment_attachments'].is_a?(Array) && c['_comment_attachments'].any?
-    is_synthetic = c['_synthetic'] == true
+    # For ADF format, convert to HTML; for plain text, return as-is
+    if body_field.is_a?(Hash)
+      # Jira ADF format - convert to HTML with full rich text support
+      body_html = convert_adf_to_html(body_field['content'] || [])
+      body = body_html.present? ? body_html : ''
+      
+      # Log rich text conversion if verbose
+      if verbose && body_html.present?
+        has_table = body_html.include?('<table>')
+        has_list = body_html.include?('<ul>') || body_html.include?('<ol>')
+        has_color = body_html.include?('style=')
+        has_image = body_html.include?('<img')
+        
+        features = []
+        features << 'table' if has_table
+        features << 'list' if has_list
+        features << 'color' if has_color
+        features << 'image' if has_image
+        
+        if features.any?
+          vputs "[RICH-TEXT] Comment #{comment_idx + 1} contains: #{features.join(', ')}" if verbose
+        end
+      end
+    elsif body_field.is_a?(String)
+      # Plain text - keep as-is
+      body = body_field.strip
+    else
+      body = body_field.to_s.strip
+    end
 
-    vputs "[COMMENTS-DEBUG] [#{comment_idx + 1}/#{comments_array.length}] Processing comment ID #{jira_comment_id} by #{author_name}, body_length=#{body.length}, has_attachments=#{has_attachments}, synthetic=#{is_synthetic}" if verbose
-
-    # Skip ONLY if both body and comment are completely empty (no content at all)
-    # This ensures all real Jira comments are imported
-    if body.blank? && !has_attachments && !is_synthetic
-      vputs "[COMMENTS-DEBUG] [#{comment_idx + 1}/#{comments_array.length}] DROPPED: Comment #{jira_comment_id} - empty body, no attachments, not synthetic" if verbose
+    # Skip empty comments (unless they have attachments)
+    if body.blank?
       stats[:dropped] += 1
+      vputs "[SKIP] Empty comment at index #{comment_idx} for #{defect.defect_unique}" if verbose
       next
     end
 
     created_at = try_parse_time(c['created'])
     updated_at = try_parse_time(c['updated'])
 
-    # ROBUST DUPLICATE DETECTION - check multiple criteria for distinctness:
-    # 1. Jira comment ID (most reliable for non-synthetic comments)
-    # 2. Exact timestamp match (unix timestamp comparison)
-    # 3. User + timestamp + content match (for synthetic comments without Jira ID)
-
-    # First check: Query DB for comments with same timestamp (most efficient)
+    # Check for duplicate comments (by timestamp, user, and content)
     if created_at
-      existing_by_time = defect.defect_messages.where(created_at: created_at).to_a
-
-      if existing_by_time.any?
-        duplicate = existing_by_time.any? do |em|
-          # Extract plain text from ActionText for comparison
-          existing_body = if em.content.respond_to?(:to_plain_text)
-                            em.content.to_plain_text.strip
-                          else
-                            em.content.to_s.strip
-                          end
-
-          # Consider duplicate if:
-          # - Same timestamp AND same user AND same content (strong match)
-          # - OR for non-synthetic: same timestamp AND same content (Jira ensures uniqueness)
-          same_content = existing_body == body || existing_body == (has_attachments ? 'Attachment(s) uploaded' : '[Empty comment]')
-          same_user = em.user_id == user&.id
-
-          (same_user && same_content) || (!is_synthetic && same_content)
-        end
-
-        if duplicate
-          stats[:skipped] += 1
-          vputs "[SKIP] Duplicate comment detected: #{jira_comment_id} by #{author_name} at #{created_at} on #{defect.defect_unique}" if verbose
-          next
-        end
-      end
-    end
-
-    # Second check: For comments without timestamp, check by user + content
-    if created_at.nil? && body.present?
-      content_to_check = body
-      existing_by_content = defect.defect_messages.where(user_id: user&.id).to_a.select do |em|
-        existing_body = if em.content.respond_to?(:to_plain_text)
-                          em.content.to_plain_text.strip
-                        else
-                          em.content.to_s.strip
-                        end
-        existing_body == content_to_check
+      existing = defect.defect_messages.where(created_at: created_at, user_id: user&.id).detect do |dm|
+        existing_body = dm.content.respond_to?(:to_plain_text) ? dm.content.to_plain_text.strip : dm.content.to_s.strip
+        # Normalize for comparison
+        existing_normalized = existing_body.gsub(/\s+/, ' ').strip.downcase
+        body_normalized = body.gsub(/\s+/, ' ').strip.downcase
+        existing_normalized == body_normalized
       end
 
-      if existing_by_content.any?
+      if existing
         stats[:skipped] += 1
-        vputs "[SKIP] Duplicate comment (by content) detected: #{jira_comment_id} by #{author_name} on #{defect.defect_unique}" if verbose
+        vputs "[SKIP] Duplicate comment for #{defect.defect_unique}: already exists" if verbose
         next
       end
     end
 
-    dm = DefectMessage.new(defect: defect, user: user, modified_by: user)
-    # ActionText will store rich text; assign plain text (or HTML if present)
-    # Only use placeholder text if body is empty - otherwise use actual comment content
-    dm.content = if body.present?
-                   body
-                 else
-                   (has_attachments ? 'Attachment(s) uploaded' : '[Empty comment]')
-                 end
-    dm.created_at = created_at if created_at
-    dm.updated_at = updated_at if updated_at
-
-    # Attempt to save with duplicate handling (in case of race conditions)
+    # Create DefectMessage with rich text content
     begin
+      dm = DefectMessage.new(defect: defect, user: user, modified_by: user)
+      # Assign to content attribute which is ActionText and accepts HTML
+      # This will automatically create the rich_text record with proper formatting
+      dm.content = body
+      dm.created_at = created_at if created_at
+      dm.updated_at = updated_at || created_at || Time.current
+
       dm.save!
-    rescue ActiveRecord::RecordNotUnique => e
-      # If we hit a uniqueness violation (rare but possible in concurrent imports),
-      # skip this comment as it's already been imported
-      stats[:skipped] += 1
-      vputs "[SKIP] Duplicate comment detected during save (race condition): #{jira_comment_id} on #{defect.defect_unique}" if verbose
-      next
+      stats[:imported] += 1
+      vputs "[IMPORT] Added rich text comment by #{author_name} to #{defect.defect_unique} (id=#{dm.id}, length=#{body.length})" if verbose
+    rescue StandardError => e
+      warn "[ERROR] Failed to save comment for #{defect.defect_unique}: #{e.class}: #{e.message}"
+      stats[:dropped] += 1
     end
-
-    stats[:imported] += 1
-    comment_type = is_synthetic ? 'synthetic comment with attachment(s)' : 'comment'
-    vputs "[IMPORT] Added #{comment_type} by #{author_name} to #{defect.defect_unique} (id=#{dm.id})" if verbose
-
-    # IMPORTANT: Only attach files that were explicitly matched to THIS comment
-    # DO NOT attach unmatched attachments to comments that don't have them
-    # Each comment gets ONLY its own attachments (if any)
-    if has_attachments
-      # Check if DefectMessage supports attachments (may not be available in all environments)
-      unless dm.respond_to?(:attachments)
-        warn '[SKIP] DefectMessage model does not support attachments. Comment attachments will not be uploaded.'
-        warn "[SKIP] Please ensure 'has_many_attached :attachments' is defined in app/models/defect_message.rb"
-        next
-      end
-
-      comment_att_count = c['_comment_attachments'].length
-      total_size_mb = (c['_comment_attachments'].sum { |att| att['size'] || 0 } / 1024.0 / 1024.0).round(2)
-
-      vputs "[ATTACH] Attaching #{comment_att_count} file(s) (#{total_size_mb} MB total) to comment #{dm.id}..." if verbose
-
-      max_retries = 2
-      retry_count = 0
-      upload_stats = nil
-      success = false
-
-      while retry_count <= max_retries && !success
-        begin
-          # Attach comment attachments to the DefectMessage's attachments
-          upload_stats = fetch_and_attach_to_rich_text_jira(dm, c['_comment_attachments'], verbose: verbose)
-
-          # Verify attachments were uploaded successfully
-          dm.reload
-          attached_count = dm.attachments.count
-          expected_count = comment_att_count
-
-          # Check if all attachments were uploaded and physically exist in storage
-          all_exist = dm.attachments.all? do |att|
-            ActiveStorage::Blob.service.exist?(att.blob.key)
-          rescue StandardError
-            false
-          end
-
-          if attached_count == expected_count && all_exist
-            vputs "  [OK] Successfully attached all #{attached_count} file(s) to comment #{dm.id}" if verbose
-            vputs "    - Uploaded: #{upload_stats[:uploaded]}, Skipped: #{upload_stats[:skipped]}, Failed: #{upload_stats[:failed]}" if upload_stats && verbose
-            success = true
-          elsif attached_count > 0
-            vputs "  [PARTIAL] Attached #{attached_count}/#{expected_count} file(s) to comment #{dm.id}" if verbose
-
-            # Identify missing attachments and retry
-            attached_filenames = dm.attachments.map { |a| a.filename.to_s }
-            expected_filenames = c['_comment_attachments'].map { |a| a['filename'] || a['name'] }
-            missing_filenames = expected_filenames - attached_filenames
-
-            if missing_filenames.any? && retry_count < max_retries
-              retry_count += 1
-              warn "[RETRY] Attempting to upload #{missing_filenames.length} missing file(s) (attempt #{retry_count}/#{max_retries})"
-
-              # Find the attachment data for missing files
-              missing_attachments = c['_comment_attachments'].select do |a|
-                filename = a['filename'] || a['name']
-                missing_filenames.include?(filename)
-              end
-
-              # Retry upload for missing files
-              sleep(2) # Brief delay before retry
-              retry_stats = fetch_and_attach_to_rich_text_jira(dm, missing_attachments, verbose: verbose)
-              vputs "  [RETRY-RESULT] Uploaded: #{retry_stats[:uploaded]}, Failed: #{retry_stats[:failed]}" if verbose
-
-              # Re-verify after retry
-              dm.reload
-              attached_count = dm.attachments.count
-
-              # Check if we got all files now
-              success = true if attached_count == expected_count
-            else
-              # Can't retry anymore
-              warn "[WARN] Incomplete upload for comment #{dm.id} on #{defect.defect_unique}: #{attached_count}/#{expected_count} files"
-              break
-            end
-          else
-            # Failed to attach any files
-            warn "[WARN] Failed to attach any files to comment #{dm.id} on #{defect.defect_unique}"
-
-            break unless retry_count < max_retries
-
-            retry_count += 1
-            warn "[RETRY] Retrying full attachment upload for comment #{dm.id} (attempt #{retry_count}/#{max_retries})"
-            sleep(2)
-            # Loop will retry
-          end
-        rescue StandardError => e
-          warn "[ERROR] Failed to attach #{comment_att_count} file(s) to comment #{dm.id} on #{defect.defect_unique}: #{e.class}: #{e.message}"
-
-          # Retry on error
-          break unless retry_count < max_retries
-
-          retry_count += 1
-          warn "[RETRY] Retrying after error (attempt #{retry_count}/#{max_retries})"
-          sleep(2)
-          # Loop will retry
-        end
-      end
-    end
-  rescue StandardError => e
-    vputs "[COMMENT-SKIP] Error importing comment for #{defect.defect_unique}: #{e.class}: #{e.message}" if verbose
-    next
   end
 
-  vputs "[IMPORT] Comment import complete for #{defect.defect_unique}: #{stats[:imported]} imported, #{stats[:skipped]} duplicates skipped, #{stats[:dropped]} dropped (empty)" if verbose && (stats[:imported] > 0 || stats[:skipped] > 0 || stats[:dropped] > 0)
   stats
 end
 
-# Helper: best-effort match a Jira comment to a DefectMessage
-# Prefers created_at exact match, then user + content prefix match
-def find_or_create_dm_for_jira_comment(defect, jira_comment)
-  created_at = try_parse_time(jira_comment['created'])
-  author = jira_comment['author'] || {}
-  author_name = author['displayName']
-  author_email = author['emailAddress']
-  user = find_user_by_name_or_map(author_name, author_email, verbose: false) || User.find_by(id: DEFAULT_USER_UUID)
-
-  if created_at
-    dm = defect.defect_messages.where(created_at: created_at).first
-    return dm if dm
-  end
-
-  # Fallback match by content snippet
-  body_field = jira_comment['body'] || jira_comment['content'] || jira_comment['body']
-  body_text = extract_comment_body(body_field).to_s
-  snippet = body_text.strip[0..50]
-  if snippet.present? && user
-    dm = defect.defect_messages.where(user_id: user.id).detect do |m|
-      begin
-        (m.content.try(:to_plain_text) || m.content.to_s).to_s.start_with?(snippet)
-      rescue StandardError
-        false
-      end
-    end
-    return dm if dm
-  end
-
-  # Create if still not found
-  dm = DefectMessage.new(defect: defect, user: user, modified_by: user)
-  dm.content = body_text.presence || '[Imported from Jira]'
-  dm.created_at = created_at if created_at
-  dm.updated_at = try_parse_time(jira_comment['updated']) || created_at
-  dm.save!
-  dm
-end
-
-# Reconcile comment-level attachments for each Jira comment
-# Ensures each Jira-mapped attachment exists on the matching DefectMessage
-# Repairs missing-on-disk blobs and adds fully missing attachments
-def reconcile_comment_attachments(defect, jira_comments, verbose: false)
-  return unless jira_comments && jira_comments.any?
-
-  jira_comments.each do |c|
-    next unless c.is_a?(Hash)
-    atts = (c['_comment_attachments'] || []).select { |a| a.is_a?(Hash) }
-    next if atts.empty?
-
-    dm = find_or_create_dm_for_jira_comment(defect, c)
-    next unless dm
-
-    expected_by_name = atts.each_with_object({}) do |att, h|
-      name = att['filename'] || att['name']
-      h[name] = att if name
-    end
-
-    present_names = dm.respond_to?(:attachments) ? dm.attachments.map { |a| a.filename.to_s } : []
-
-    # Repair missing-on-disk blobs
-    if dm.respond_to?(:attachments)
-      dm.attachments.each do |a|
-        begin
-          ok = ActiveStorage::Blob.service.exist?(a.blob.key)
-          next if ok
-          att = expected_by_name[a.filename.to_s]
-          next unless att
-          # Download and re-attach under same filename
-          uri = URI.parse(att['content'] || att['contentUrl'] || att['self'])
-          redirects = 0
-          max_redirects = 6
-          resp = nil
-          loop do
-            http = Net::HTTP.new(uri.host, uri.port)
-            http.use_ssl = (uri.scheme == 'https')
-            http.read_timeout = 900
-            http.open_timeout = 60
-            request = Net::HTTP::Get.new(uri.request_uri)
-            request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
-            resp = http.request(request)
-            if resp.is_a?(Net::HTTPRedirection)
-              location = resp['location']
-              break unless location
-              redirects += 1
-              break if redirects > max_redirects
-              uri = URI.parse(location)
-              next
-            end
-            break
-          end
-          next unless resp && resp.is_a?(Net::HTTPSuccess)
-          tmp = Tempfile.new(['jira_comment_repair', File.extname(a.filename.to_s)])
-          tmp.binmode
-          tmp.write(resp.body)
-          tmp.rewind
-          File.open(tmp.path, 'rb') do |f|
-            dm.attachments.attach(io: f, filename: a.filename.to_s, content_type: a.blob.content_type)
-          end
-          tmp.close!
-          vputs "[REPAIR] Re-attached missing blob for comment file #{a.filename} on message #{dm.id}" if verbose
-        rescue StandardError => e
-          warn "[REPAIR] Failed to re-attach #{a.filename} for message #{dm.id}: #{e.message}"
-          next
-        end
-      end
-    end
-
-    # Add fully missing files by filename
-    missing = expected_by_name.keys - present_names
-    next if missing.empty?
-
-    begin
-      to_add = atts.select { |x| missing.include?(x['filename'] || x['name']) }
-      if dm.respond_to?(:attachments)
-        stats = fetch_and_attach_to_rich_text_jira(dm, to_add, verbose: verbose)
-        vputs "[SYNC] Added #{stats[:uploaded]} missing comment attachment(s) to message #{dm.id}" if verbose
-      end
-    rescue StandardError => e
-      warn "[SYNC] Failed to add missing comment attachments for message #{dm.id}: #{e.message}"
-    end
-  end
-end
-
 # ===============================
-# IMPORT LOGIC - WITH MODULE MAPPING
+# IMPORT LOGIC - MAIN FUNCTION
 # ===============================
 # Import or update a Jira issue as a Defect record
-# - Creates new defect if defect_unique doesn't exist
-# - Updates existing defect if defect_unique already exists (syncs with latest Jira data)
-# - Prevents duplication of comments, attachments, labels, and history entries
-# - All relationships (assignee, status, modules, banking type) are synchronized
 def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: false)
   fields = issue['fields'] || {}
   issue_key = issue['key'].to_s.strip
@@ -2009,7 +2329,7 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
   product_id = PROJECT_UUID_MAP[jira_project_key] || PROJECT_UUID_MAP[jira_project_name] || DEFAULT_PRODUCT_UUID
 
   unless product_id
-    puts "[SKIP] #{issue_key}: no product mapping for project #{jira_project_key}/#{jira_project_name}"
+    vputs "[SKIP] #{issue_key}: no product mapping for project #{jira_project_key}/#{jira_project_name}" if verbose
     return :skipped
   end
 
@@ -2019,7 +2339,6 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
   jira_priority = (fields.dig('priority', 'name') || DEFAULT_PRIORITY).to_s.strip.presence || DEFAULT_PRIORITY
   issue_type = (fields.dig('issuetype', 'name') || 'Bug').to_s.strip.presence || 'Bug'
 
-  # Handle missing reporter/assignee data
   reporter_data = fields['reporter'] || {}
   reporter_name = (reporter_data['displayName'] || '').to_s.strip
   reporter_email = (reporter_data['emailAddress'] || '').to_s.strip
@@ -2031,12 +2350,20 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
   created_at = try_parse_time(fields['created'])
   updated_at = try_parse_time(fields['updated'])
 
-  # Extract module, submodule, and banking type from custom fields
   module_name = extract_custom_field_value(fields[custom_fields[:module_field]] || '') if custom_fields[:module_field]
   submodule_name = extract_custom_field_value(fields[custom_fields[:submodule_field]] || '') if custom_fields[:submodule_field]
   banking_type_name = extract_custom_field_value(fields[custom_fields[:banking_type_field]] || '') if custom_fields[:banking_type_field]
 
-  # Fallback to project-based values if custom fields are empty
+  # Parse module/submodule: if module contains hyphen and no explicit submodule, split on first hyphen
+  # This preserves all text after the hyphen as the submodule name
+  if module_name.present? && submodule_name.to_s.strip.empty?
+    original_module = module_name.dup
+    module_name, submodule_name = parse_module_and_submodule(module_name, submodule_name)
+    if submodule_name.present?
+      vputs "[MODULE-PARSE] Derived module/submodule from '#{original_module}' => module='#{module_name}', submodule='#{submodule_name}'" if verbose
+    end
+  end
+
   module_name = jira_project_name if module_name.blank?
   banking_type_name = jira_project_key if banking_type_name.blank?
 
@@ -2045,608 +2372,124 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
   attachments_array = (fields['attachment'] || fields['attachments'] || []).select { |a| a.is_a?(Hash) }
   labels_array = (fields['labels'] || []).compact.map(&:to_s).map(&:strip).reject(&:empty?)
 
-  # DEBUG: Log raw labels data
-  if $verbose_flag
-    vputs "[DEBUG-LABELS] Total labels found for #{issue_key}: #{labels_array.length}"
-    vputs "[DEBUG-LABELS]   Labels: #{labels_array.inspect}" if labels_array.any?
-  end
+  vputs "[DEBUG-LABELS] Total labels found for #{issue_key}: #{labels_array.length}" if $verbose_flag && labels_array.any?
 
-  # ===============================
-  # ATTACHMENT STATISTICS FOR THIS ISSUE
-  # ===============================
-  total_attachments_for_issue = attachments_array.length
-
-  puts "=" * 80
-  puts "📎 ATTACHMENTS FOR #{issue_key}"
-  puts "=" * 80
-  puts "Total attachments in Jira: #{total_attachments_for_issue}"
-
-  if attachments_array.any?
-    puts "\nAttachment Details:"
-    attachments_array.each_with_index do |att, idx|
-      filename = att['filename'] || att['name'] || 'unknown'
-      size_mb = ((att['size'] || 0) / 1024.0 / 1024.0).round(2)
-      created = att['created'] || 'N/A'
-      puts "  #{idx + 1}. #{filename} (#{size_mb} MB, created: #{created})"
-    end
-  else
-    puts "  (No attachments)"
-  end
-  puts ""
-
-  # DEBUG: Log raw attachment data (verbose mode)
-  if $verbose_flag && attachments_array.any?
-    vputs "[DEBUG-ATTACHMENTS] Raw attachment data:"
-    attachments_array.each_with_index do |att, idx|
-      vputs "[DEBUG-ATTACHMENTS]   [#{idx}] id=#{att['id']}, filename=#{att['filename']}, created=#{att['created']}, keys=#{att.keys.join(',')}"
-    end
-  end
-
-  # DEBUG: Log raw comment data (verbose mode)
-  if $verbose_flag && comments_array.any?
-    vputs "[DEBUG-COMMENTS] Total comments found: #{comments_array.length}"
-    comments_array.each_with_index do |c, idx|
-      c_created = try_parse_time(c['created'])
-      vputs "[DEBUG-COMMENTS]   [#{idx}] id=#{c['id']}, created=#{c_created}, has_attachment=#{c.key?('attachment')}, keys=#{c.keys.join(',')}"
-    end
-  end
-
-  # Split attachments that belong to specific comments vs issue-level attachments.
-  # Strategy: Look for attachment metadata embedded in Jira comment JSON that references which attachments belong to comments.
-  # Jira includes 'created' timestamp on attachments; comments also have 'created' timestamp.
-  # Match attachments to comments if the attachment was created around the same time as the comment (within 1 hour window).
-
-  # Check each comment for attachment references
-  (comments_array || []).each do |c|
-    next unless c.is_a?(Hash)
-
-    comment_attachments = []
-    comment_created = try_parse_time(c['created'])
-    body_text = extract_comment_body(c['body'] || c['content']) || ''
-
-    vputs "[DEBUG] Processing comment #{c['id']} created=#{comment_created}, body_length=#{body_text.length}" if $verbose_flag
-
-    # Strategy 1: Check if this comment has direct attachment array (Jira stores these under comment.attachment)
-    if c.key?('attachment') && c['attachment'].is_a?(Array) && c['attachment'].any?
-      c['attachment'].each do |att|
-        next unless att.is_a?(Hash)
-
-        att_id = att['id']
-        att_fname = att['filename']
-        vputs "[DEBUG]   Found direct comment.attachment: id=#{att_id}, filename=#{att_fname}" if $verbose_flag
-        comment_attachments << att
-      end
-    end
-
-    # Strategy 2: Match by exact attachment ID in comment's attachment reference field (if present)
-    if c.key?('attachment_ids') && c['attachment_ids'].is_a?(Array)
-      c['attachment_ids'].each do |att_id|
-        matching_att = (attachments_array || []).find { |a| a['id'] == att_id }
-        if matching_att
-          vputs "[DEBUG]   Found attachment by ID match: #{att_id}" if $verbose_flag
-          comment_attachments << matching_att
-        end
-      end
-    end
-
-    # Strategy 3: Match by creation time proximity (attachment created within 5 minutes of comment)
-    # Use a tight time window to ensure attachments with different timestamps go to different comments
-    (attachments_array || []).each do |att|
-      next if comment_attachments.any? { |ca| ca['id'] == att['id'] }
-
-      att_created = try_parse_time(att['created'])
-      if att_created && comment_created
-        time_diff = (att_created - comment_created).abs
-        # If attachment was created within 5 minutes of comment, consider it as comment attachment
-        # This tight window ensures attachments with different timestamps are not grouped together
-        if time_diff < 300 # 5 minutes (300 seconds)
-          vputs "[DEBUG]   Found attachment by time match (#{time_diff}s apart): #{att['filename']}" if $verbose_flag
-          comment_attachments << att
-        elsif $verbose_flag
-          vputs "[DEBUG]   Skipped attachment #{att['filename']} (time diff #{time_diff}s > 5min)" if $verbose_flag
-        end
-      elsif $verbose_flag
-        vputs "[DEBUG]   Skipped attachment #{att['filename']} (missing created timestamp)" if $verbose_flag
-      end
-    end
-
-    # Strategy 4: Match by filename in comment body text
-    (attachments_array || []).each do |att|
-      next if comment_attachments.any? { |ca| ca['id'] == att['id'] }
-
-      fname = att['filename'].to_s.strip
-      if fname.present? && body_text.include?(fname)
-        vputs "[DEBUG]   Found attachment by filename match in body: #{fname}" if $verbose_flag
-        comment_attachments << att
-      end
-    end
-
-    if comment_attachments.any?
-      # Validate: Check if attachments have significantly different timestamps
-      # If they do, only keep the ones closest to the comment timestamp
-      att_with_times = comment_attachments.map do |att|
-        { att: att, created: try_parse_time(att['created']), id: att['id'] }
-      end
-
-      # Filter out attachments with timestamps if we have multiple and they're not close together
-      if att_with_times.length > 1 && comment_created
-        # Calculate time difference for each attachment from comment
-        att_with_times.each do |awt|
-          awt[:time_diff] = awt[:created] ? (awt[:created] - comment_created).abs : Float::INFINITY
-        end
-
-        # Check if attachments have widely different timestamps (> 1 minute apart from each other)
-        timestamps = att_with_times.map { |awt| awt[:created] }.compact.sort
-        if timestamps.length > 1
-          max_spread = (timestamps.last - timestamps.first).abs
-
-          if max_spread > 60 # More than 1 minute spread between attachments
-            # Only keep attachments that are closest to comment timestamp
-            min_diff = att_with_times.map { |awt| awt[:time_diff] }.min
-
-            # Keep only attachments within 1 minute of the closest one
-            filtered = att_with_times.select { |awt| (awt[:time_diff] - min_diff).abs <= 60 }
-
-            if filtered.length < comment_attachments.length
-              vputs "[DEBUG]   Filtered out #{comment_attachments.length - filtered.length} attachment(s) with divergent timestamps (spread: #{max_spread}s)" if $verbose_flag
-              comment_attachments = filtered.map { |awt| awt[:att] }
-            end
-          end
-        end
-      end
-
-      # Mark attachments as belonging to this comment so import_comments_for_defect can attach them
-      c['_comment_attachments'] = comment_attachments.uniq { |x| x['id'] || x['filename'] }
-      vputs "[DEBUG]   Comment #{c['id']} has #{comment_attachments.length} attachment(s)" if $verbose_flag
-    elsif $verbose_flag
-      vputs "[DEBUG]   Comment #{c['id']} has no attachments" if $verbose_flag
-    end
-  end
-
-  # Determine ids/names of attachments referenced by comments - remove these from issue-level attachments
-  # Only attachments explicitly matched to comments will be removed from the defect-level
-  comment_att_ids = comments_array.flat_map { |c| (c['_comment_attachments'] || []).map { |a| a['id'] || a['filename'] } }
-
-  # Get comment attachment details for reporting
-  comment_attachments_details = comments_array.flat_map { |c| c['_comment_attachments'] || [] }.uniq { |a| a['id'] || a['filename'] }
-
-  puts "Attachment Categorization:"
-  puts "  Comment-level attachments: #{comment_att_ids.length}"
-  if comment_attachments_details.any?
-    comment_attachments_details.each_with_index do |att, idx|
-      filename = att['filename'] || att['name'] || 'unknown'
-      size_mb = ((att['size'] || 0) / 1024.0 / 1024.0).round(2)
-      puts "    #{idx + 1}. #{filename} (#{size_mb} MB) → Will attach to comment"
-    end
-  end
-
-  # Remove comment attachments from issue-level array - remaining attachments stay on the defect
-  original_count = attachments_array.length
-  if comment_att_ids.any?
-    attachments_array = (attachments_array || []).reject { |a| comment_att_ids.include?(a['id'] || a['filename']) }
-  end
-
-  puts "  Issue-level attachments: #{attachments_array.length}"
-  if attachments_array.any?
-    attachments_array.each_with_index do |att, idx|
-      filename = att['filename'] || att['name'] || 'unknown'
-      size_mb = ((att['size'] || 0) / 1024.0 / 1024.0).round(2)
-      puts "    #{idx + 1}. #{filename} (#{size_mb} MB) → Will attach to defect"
-    end
-  end
-  puts ""
-
-  # Map users with fallbacks (using dynamic first+last name matching)
+  # Map users
   reporter_user = find_user_by_name_or_map(reporter_name, reporter_email, verbose: verbose) || User.find_by(id: DEFAULT_USER_UUID)
   assignee_user = find_user_by_name_or_map(assignee_name, assignee_email, verbose: verbose) || User.find_by(id: DEFAULT_USER_UUID)
 
-  # ID used for created_by/modified_by when creating related records
   created_by_uid = reporter_user&.id || DEFAULT_CREATED_BY || DEFAULT_USER_UUID
 
-  # Determine or create status using dynamic name matching
-  status = nil
-  begin
-    status = find_or_create_status(jira_status_name, created_by: created_by_uid, verbose: verbose) if jira_status_name.present?
-  rescue StandardError => e
-    vputs "[WARN] Could not find/create status #{jira_status_name}: #{e.class}: #{e.message}" if verbose
-    status = Status.where('lower(name) = ?', jira_status_name.to_s.downcase).first
-  end
-
-  # Banking type (create or fallback using dynamic matching)
-  banking = nil
-  begin
-    if banking_type_name.present?
-      banking = find_or_create_banking_type(banking_type_name, product_id: product_id, created_by: created_by_uid, verbose: verbose)
-      vputs "[INFO] Banking type for #{issue_key}: '#{banking_type_name}' -> #{banking&.id || 'FALLBACK'}" if verbose
-    end
-  rescue StandardError => e
-    vputs "[WARN] Could not find/create banking type #{banking_type_name}: #{e.class}: #{e.message}" if verbose
-    banking = BankingType.find_by(id: FALLBACK_BANKING_TYPE_ID) if FALLBACK_BANKING_TYPE_ID
-  end
-
-  # Apply fallback if no banking type found
-  if banking.nil? && defined?(FALLBACK_BANKING_TYPE_ID) && FALLBACK_BANKING_TYPE_ID
-    banking = BankingType.find_by(id: FALLBACK_BANKING_TYPE_ID)
-    vputs "[BANKING-FALLBACK] Using fallback banking type -> #{FALLBACK_BANKING_TYPE_ID}" if verbose && banking
-  end
-
-  # Create/find modules
-  parent_module, child_module = find_or_create_modules(
-    module_name: module_name,
-    submodule_name: submodule_name,
-    product_id: product_id,
-    created_by: created_by_uid
-  )
-
-  # Apply fallbacks if modules weren't created/found
-  parent_module ||= QaModule.find_by(id: FALLBACK_QA_MODULE_ID) if defined?(FALLBACK_QA_MODULE_ID) && FALLBACK_QA_MODULE_ID
-  child_module ||= QaModule.find_by(id: FALLBACK_SUBMODULE_ID) if defined?(FALLBACK_SUBMODULE_ID) && FALLBACK_SUBMODULE_ID
-
-  # DRY RUN: Just show what would happen
+  # DRY RUN
   if dry_run
-    # Count comment attachments for dry-run output
-    comment_att_count = comments_array.flat_map { |c| (c['_comment_attachments'] || []).length }.sum
-    issue_att_count = attachments_array.length
-
-    vputs "[DRY] Would process Defect #{issue_key}:"
-    vputs "      summary: #{summary.inspect}"
-    vputs "      product_id: #{product_id}"
-    vputs "      reporter: #{reporter_name.presence || 'MISSING'} -> #{reporter_user&.id}"
-    vputs "      assignee: #{assignee_name.presence || 'MISSING'} -> #{assignee_user&.id}"
-    vputs "      status: #{jira_status_name} -> #{status&.id}"
-    vputs "      priority: #{jira_priority}"
-    vputs "      module: #{module_name} -> #{parent_module&.id || ('FALLBACK:' + FALLBACK_QA_MODULE_ID.to_s)}"
-    vputs "      submodule: #{submodule_name} -> #{child_module&.id || ('FALLBACK:' + FALLBACK_SUBMODULE_ID.to_s)}"
-    vputs "      banking: #{banking_type_name} -> #{banking&.id || ('FALLBACK:' + FALLBACK_BANKING_TYPE_ID.to_s)}"
-    vputs "      labels: #{labels_array.length} #{labels_array.inspect}"
-    vputs "      comments: #{comments_array.length}"
-    vputs "      attachments (issue-level): #{issue_att_count}"
-    if issue_att_count > 0
-      issue_names = (attachments_array || []).map { |a| a['filename'] || a['name'] || a['id'] }
-      vputs "        - #{issue_names.join(', ')}"
-    end
-    vputs "      attachments (comment-level): #{comment_att_count}"
-    if comment_att_count > 0
-      comment_names = comments_array.flat_map { |c| (c['_comment_attachments'] || []).map { |a| a['filename'] || a['name'] || a['id'] } }
-      vputs "        - #{comment_names.join(', ')}"
-    end
+    vputs "[DRY] Would process Defect #{issue_key}: summary=#{summary.inspect}" if verbose
     return :ok
   end
 
-  # ACTUAL IMPORT - find or create defect by defect_unique
+  # ACTUAL IMPORT
   saved_defect = nil
   result = nil
-  ActiveRecord::Base.transaction do
-    # Try to find or initialize; track if it's new
-    defect = Defect.find_or_initialize_by(defect_unique: issue_key)
-    created_flag = defect.new_record?
 
-    # ALWAYS update core attributes (even for existing records) to sync with latest Jira data
-    defect.product_id = product_id
-    defect.summary = summary if summary.present?
-    defect.content = description if description.present?
-    defect.priority = jira_priority if jira_priority.present?
-    defect.issue_type = issue_type if issue_type.present?
+  begin
+    ActiveRecord::Base.transaction do
+      defect = Defect.find_or_initialize_by(defect_unique: issue_key)
+      created_flag = defect.new_record?
 
-    # ALWAYS update relationships with actual module data
-    defect.qa_module_id = parent_module&.id || FALLBACK_QA_MODULE_ID
-    defect.submodule_id = child_module&.id || FALLBACK_SUBMODULE_ID
-    defect.banking_type_id = banking&.id || FALLBACK_BANKING_TYPE_ID
-
-    if verbose
-      vputs "[DEFECT-UPDATE] Setting relationships for #{issue_key}:"
-      vputs "  - qa_module_id: #{defect.qa_module_id}"
-      vputs "  - submodule_id: #{defect.submodule_id}"
-      vputs "  - banking_type_id: #{defect.banking_type_id}"
-    end
-
-    # Update audit fields (preserve creator for existing, set for new)
-    if created_flag
-      # New record: set creator fields
-      defect.creator_id = reporter_user.id if defect.respond_to?(:creator_id) && reporter_user
-      defect.created_by = reporter_user.id if defect.respond_to?(:created_by) && reporter_user
-      defect.created_at = created_at if created_at
-    end
-    # Always update modified_by and updated_at for both new and existing records
-    defect.modified_by = reporter_user.id if defect.respond_to?(:modified_by) && reporter_user
-    defect.updated_at = updated_at if updated_at
-
-    defect.draft = false if defect.respond_to?(:draft)
-    defect.retest_count = 0 if defect.respond_to?(:retest_count)
-
-    begin
-      defect.save!
-      if verbose
-        vputs "[DEFECT-SAVED] Successfully saved #{issue_key}"
-        vputs "  - Defect ID: #{defect.id}"
-        vputs "  - Banking Type ID in DB: #{defect.reload.banking_type_id}"
-      end
-    rescue ActiveRecord::RecordNotUnique
-      # Race: another process inserted same defect_unique between find and save.
-      defect = Defect.find_by(defect_unique: issue_key)
-      created_flag = false
-
-      # Re-apply attributes and persist update
       defect.product_id = product_id
       defect.summary = summary if summary.present?
-      defect.content = description if description.present?
+      # Assign description as rich HTML content for ActionText storage
+      if description.present?
+        # ActionText will automatically create/update the rich text record
+        # when we assign HTML string to the rich_text attribute
+        defect.content = description
+      end
       defect.priority = jira_priority if jira_priority.present?
       defect.issue_type = issue_type if issue_type.present?
+
+      # Find or create status
+      status = find_or_create_status(jira_status_name, created_by: created_by_uid, verbose: verbose) if jira_status_name.present?
+
+      # Find or create modules
+      parent_module, child_module = find_or_create_modules(
+        module_name: module_name,
+        submodule_name: submodule_name,
+        product_id: product_id,
+        created_by: created_by_uid
+      )
+
       defect.qa_module_id = parent_module&.id || FALLBACK_QA_MODULE_ID
       defect.submodule_id = child_module&.id || FALLBACK_SUBMODULE_ID
+
+      # Banking type
+      banking = find_or_create_banking_type(banking_type_name, product_id: product_id, created_by: created_by_uid, verbose: verbose) if banking_type_name.present?
       defect.banking_type_id = banking&.id || FALLBACK_BANKING_TYPE_ID
-      defect.creator_id = reporter_user.id if defect.respond_to?(:creator_id) && reporter_user
-      defect.created_by = reporter_user.id if defect.respond_to?(:created_by) && reporter_user
-      defect.modified_by = reporter_user.id if defect.respond_to?(:modified_by) && reporter_user
+
+      if created_flag
+        defect.creator_id = reporter_user&.id if defect.respond_to?(:creator_id) && reporter_user
+        defect.created_by = reporter_user&.id if defect.respond_to?(:created_by) && reporter_user
+        defect.created_at = created_at if created_at
+      end
+
+      defect.modified_by = reporter_user&.id if defect.respond_to?(:modified_by) && reporter_user
       defect.updated_at = updated_at if updated_at
       defect.draft = false if defect.respond_to?(:draft)
+
       defect.save!
-      if verbose
-        vputs "[DEFECT-SAVED] Successfully updated #{issue_key} after race condition"
-        vputs "  - Banking Type ID in DB: #{defect.reload.banking_type_id}"
+
+      # Update assignee
+      defect.user_ids = [assignee_user.id] if assignee_user
+
+      # Update status
+      defect.status_ids = [status.id] if status
+
+      saved_defect = defect
+      result = created_flag ? :created : :updated
+    end
+
+    # After transaction: attach files
+    begin
+      fetch_and_attach_attachments(saved_defect, attachments_array, verbose: verbose) if %i[created updated].include?(result) && attachments_array && attachments_array.any?
+    rescue StandardError => e
+      warn "[WARN] Failed to attach files for #{issue_key}: #{e.class}: #{e.message}"
+    end
+
+    # Attach labels
+    begin
+      if %i[created updated].include?(result) && labels_array && labels_array.any?
+        saved_defect.reload
+        attach_labels_to_defect(saved_defect, labels_array, created_by: created_by_uid, verbose: verbose)
       end
+    rescue StandardError => e
+      warn "[WARN] Failed to attach labels for #{issue_key}: #{e.class}: #{e.message}"
     end
 
-    # Update assignee (sync with Jira: always replace to match latest Jira state)
-    # Always set assignee if we have a valid user, overwriting any existing assignment
-    if assignee_user
-      defect.user_ids = [assignee_user.id]
-      vputs "[ASSIGNEE] Set assignee to #{assignee_user.first_name} #{assignee_user.last_name} (#{assignee_user.id})" if verbose
+    # Import comments
+    begin
+      if %i[created updated].include?(result) && comments_array && comments_array.any?
+        vputs "[COMMENTS] Importing #{comments_array.length} comment(s) for #{issue_key}..." if verbose
+        import_comments_for_defect(saved_defect, comments_array, verbose: verbose)
+      end
+    rescue StandardError => e
+      warn "[WARN] Failed to import comments for #{issue_key}: #{e.class}: #{e.message}"
     end
 
-    # Update status (sync with Jira: always replace to match latest Jira state)
-    defect.status_ids = [status.id] if status
-
-    # Log action and track changes
-    if created_flag
-      vputs "[IMPORT] Created defect #{issue_key} id=#{defect.id}"
-    elsif verbose
-      vputs "[IMPORT] Updated defect #{issue_key} id=#{defect.id} (synced with latest Jira data)"
+    # Validate and update description
+    begin
+      if %i[created updated].include?(result)
+        validate_and_update_description(saved_defect, fields['description'], issue_key, verbose: verbose)
+      end
+    rescue StandardError => e
+      warn "[WARN] Failed to validate description for #{issue_key}: #{e.class}: #{e.message}"
     end
-    # commit transaction and then perform attachment uploads to ensure files are persisted even if transaction rolls back elsewhere
-    saved_defect = defect
-    # end transaction block
-    result = created_flag ? :created : :updated
+
     result
-  end
-  # After transaction, perform attachments (outside transaction to ensure service upload completes)
-  begin
-    fetch_and_attach_attachments(saved_defect, attachments_array, verbose: verbose) if %i[created updated].include?(result) && attachments_array && attachments_array.any?
+  rescue ActiveRecord::RecordInvalid => e
+    warn "[ERROR] Failed to save defect #{issue_key}: #{e.record.errors.full_messages.join(', ')}"
+    :error
   rescue StandardError => e
-    warn "[WARN] Failed to attach files for #{issue_key}: #{e.class}: #{e.message}"
+    warn "[EXCEPTION] issue=#{issue_key} #{e.class}: #{e.message}"
+    :error
   end
-
-  # Attach labels (after transaction to ensure defect is persisted)
-  begin
-    if %i[created updated].include?(result) && labels_array && labels_array.any?
-      # Reload defect to ensure it's fully persisted before attaching labels
-      saved_defect.reload
-      attach_labels_to_defect(saved_defect, labels_array, created_by: created_by_uid, verbose: verbose)
-
-      # Verify labels were attached
-      if verbose
-        label_count = saved_defect.labels.count
-        vputs "[INFO] Defect #{issue_key} now has #{label_count} label(s) attached"
-      end
-    end
-  rescue StandardError => e
-    warn "[WARN] Failed to attach labels for #{issue_key}: #{e.class}: #{e.message}"
-    warn "  Backtrace: #{e.backtrace.first(3).join("\n  ")}" if verbose
-  end
-
-  # Import comments (after attachments so attachments are already present)
-  begin
-    if %i[created updated].include?(result) && comments_array && comments_array.any?
-      vputs "[COMMENTS] Importing #{comments_array.length} comment(s) for #{issue_key}..." if verbose
-      comment_stats = import_comments_for_defect(saved_defect, comments_array, verbose: verbose)
-
-      # Verify comments were saved
-      if verbose && comment_stats[:imported] > 0
-        comment_count = saved_defect.defect_messages.count
-        vputs "[COMMENTS-VERIFY] DefectMessage records in DB for #{issue_key}: #{comment_count}"
-        if comment_count > 0
-          latest = saved_defect.defect_messages.order(created_at: :desc).first
-          user = User.find_by(id: latest.user_id)
-          user_name = user ? "#{user.first_name} #{user.last_name}" : 'UNKNOWN'
-          content_preview = begin
-            latest.content.to_plain_text.truncate(60)
-          rescue StandardError
-            'N/A'
-          end
-          attachment_count = latest.attachments.count
-          vputs "  - Latest: by #{user_name} at #{latest.created_at}"
-          vputs "  - Content: #{content_preview}"
-          vputs "  - Attachments: #{attachment_count}" if attachment_count > 0
-        end
-      end
-    end
-  rescue StandardError => e
-    warn "[WARN] Failed to import comments for #{issue_key}: #{e.class}: #{e.message}"
-  end
-
-  # Reconcile: ensure all expected issue-level attachments are present on the Defect
-  # - If a filename from Jira is missing on the defect, download & attach it
-  # - If an attached blob is missing from storage, download again and attach
-  # This is idempotent (matches by filename)
-  begin
-    reconcile_issue_attachments(saved_defect, attachments_array, verbose: verbose) if %i[created updated].include?(result) && attachments_array && attachments_array.any?
-  rescue StandardError => e
-    warn "[WARN] Failed to reconcile issue-level attachments for #{issue_key}: #{e.class}: #{e.message}"
-  end
-
-  # Reconcile comment-level attachments for each Jira comment
-  # Ensures each Jira-mapped attachment exists on the matching DefectMessage
-  # Repairs missing-on-disk blobs and adds fully missing attachments
-  begin
-    reconcile_comment_attachments(saved_defect, comments_array, verbose: verbose) if %i[created updated].include?(result) && comments_array && comments_array.any?
-  rescue StandardError => e
-    warn "[WARN] Failed to reconcile comment-level attachments for #{issue_key}: #{e.class}: #{e.message}"
-  end
-
-  # Fetch and import issue changelog/history
-  begin
-    if %i[created updated].include?(result)
-      vputs "[HISTORY] Fetching changelog for #{issue_key}..." if verbose
-      changelog = fetch_issue_changelog(issue_key, verbose: verbose)
-
-      if changelog && changelog.any?
-        vputs "[HISTORY] Retrieved #{changelog.length} changelog entries from Jira for #{issue_key}" if verbose
-
-        # Parse all changelog entries into structured format
-        all_history_entries = changelog.flat_map do |history|
-          parse_changelog_entry(history, issue_key, verbose: verbose)
-        end
-
-        if verbose && all_history_entries.any?
-          # Show summary of event types captured
-          event_types = all_history_entries.group_by { |h| h[:history_type] }.transform_values(&:count)
-          vputs "[HISTORY] Captured #{all_history_entries.length} total events for #{issue_key}:"
-          event_types.sort_by { |_k, v| -v }.each do |type, count|
-            vputs "  - #{type}: #{count} event(s)"
-          end
-        end
-
-        # Sort history entries by timestamp (oldest first for logical import order)
-        all_history_entries.sort_by! { |h| h[:created_at] || Time.at(0) }
-
-        # Import the parsed history entries into DefectHistory
-        if all_history_entries.any?
-          import_histories_for_defect(saved_defect, all_history_entries, verbose: verbose)
-
-          # Verify history was saved
-          if verbose
-            history_count = saved_defect.defect_histories.count
-            vputs "[HISTORY-VERIFY] DefectHistory records in DB for #{issue_key}: #{history_count}"
-            if history_count > 0
-              latest = saved_defect.defect_histories.order(created_at: :desc).first
-              vputs "  - Latest: #{latest.history_type} at #{latest.created_at}"
-            end
-          end
-        end
-      elsif verbose
-        vputs "[HISTORY] No changelog entries found for #{issue_key}"
-      end
-    end
-  rescue StandardError => e
-    warn "[WARN] Failed to import history for #{issue_key}: #{e.class}: #{e.message}"
-  end
-
-  # COMPREHENSIVE VERIFICATION: Check all attachments before moving to next defect
-  begin
-    if %i[created updated].include?(result)
-      vputs '' if verbose
-      vputs '[VERIFY] ' + ('=' * 70) if verbose
-      vputs "[VERIFY] Final verification for defect: #{saved_defect.defect_unique}" if verbose
-      vputs '[VERIFY] ' + ('=' * 70) if verbose
-
-      # Reload to ensure we have latest data
-      saved_defect.reload
-
-      # Verify issue-level attachments
-      issue_level_files = saved_defect.attachments.map { |a| a.filename.to_s }
-      issue_level_missing = []
-
-      saved_defect.attachments.each do |att|
-        exists = ActiveStorage::Blob.service.exist?(att.blob.key)
-        issue_level_missing << att.filename.to_s unless exists
-      rescue StandardError => e
-        issue_level_missing << att.filename.to_s
-        warn "[VERIFY-ERROR] Failed to verify issue-level attachment #{att.filename}: #{e.message}"
-      end
-
-      vputs "[VERIFY] Issue-level attachments: #{issue_level_files.length} file(s)" if verbose
-      if issue_level_files.any?
-        vputs "[VERIFY]   Files: #{issue_level_files.join(', ')}" if verbose
-        if issue_level_missing.any?
-          warn "[VERIFY] ⚠️  Missing from storage: #{issue_level_missing.join(', ')}"
-        elsif verbose
-          vputs '[VERIFY]   ✅ All issue-level files verified in storage'
-        end
-      end
-
-      # Verify comment-level attachments with detailed reporting
-      comment_level_stats = {
-        total_comments: 0,
-        comments_with_attachments: 0,
-        total_files: 0,
-        verified_files: 0,
-        missing_files: []
-      }
-
-      saved_defect.defect_messages.each do |dm|
-        comment_level_stats[:total_comments] += 1
-
-        # Check if DefectMessage has attachments association (may not be available in all environments)
-        next unless dm.respond_to?(:attachments)
-
-        begin
-          next unless dm.attachments.any?
-
-          comment_level_stats[:comments_with_attachments] += 1
-
-          dm.attachments.each do |att|
-            comment_level_stats[:total_files] += 1
-            filename = att.filename.to_s
-
-            begin
-              exists = ActiveStorage::Blob.service.exist?(att.blob.key)
-              if exists
-                comment_level_stats[:verified_files] += 1
-              else
-                comment_level_stats[:missing_files] << "#{filename} (comment #{dm.id})"
-              end
-            rescue StandardError => e
-              comment_level_stats[:missing_files] << "#{filename} (comment #{dm.id}, error: #{e.message})"
-            end
-          end
-        rescue NoMethodError => e
-          # DefectMessage model may not have attachments association in older versions
-          vputs "[VERIFY-SKIP] DefectMessage attachments not available: #{e.message}" if verbose
-        end
-      end
-
-      vputs '[VERIFY] Comment-level attachments:' if verbose
-      vputs "[VERIFY]   Total comments: #{comment_level_stats[:total_comments]}" if verbose
-      vputs "[VERIFY]   Comments with attachments: #{comment_level_stats[:comments_with_attachments]}" if verbose
-      vputs "[VERIFY]   Total attachment files: #{comment_level_stats[:total_files]}" if verbose
-      vputs "[VERIFY]   Verified in storage: #{comment_level_stats[:verified_files]}" if verbose
-
-      if comment_level_stats[:missing_files].any?
-        warn "[VERIFY] ⚠️  Missing comment attachments (#{comment_level_stats[:missing_files].length}):"
-        comment_level_stats[:missing_files].each do |missing|
-          warn "[VERIFY]     - #{missing}"
-        end
-      elsif verbose
-        vputs '[VERIFY]   ✅ All comment-level files verified in storage'
-      end
-
-      # Overall summary
-      total_attachments = issue_level_files.length + comment_level_stats[:total_files]
-      total_missing = issue_level_missing.length + comment_level_stats[:missing_files].length
-
-      vputs '' if verbose
-      if total_missing > 0
-        warn "[VERIFY] ⚠️  DEFECT #{saved_defect.defect_unique}: #{total_missing}/#{total_attachments} attachment(s) missing from storage!"
-        warn '[VERIFY] This will cause 404 errors when users try to view/download these files.'
-        warn '[VERIFY] Consider re-running the import for this defect to retry failed uploads.'
-      elsif verbose
-        vputs "[VERIFY] ✅ DEFECT #{saved_defect.defect_unique}: All #{total_attachments} attachment(s) verified successfully!"
-      end
-      vputs '[VERIFY] ' + ('=' * 70) if verbose
-      vputs '' if verbose
-    end
-  rescue StandardError => e
-    warn "[VERIFY-ERROR] Could not complete verification for #{issue_key}: #{e.class}: #{e.message}"
-    warn "[VERIFY-ERROR] Backtrace: #{e.backtrace.first(3).join(', ')}" if verbose
-  end
-
-  :ok
-rescue ActiveRecord::RecordInvalid => e
-  warn "[ERROR] Failed to save defect #{issue_key}: #{e.record.errors.full_messages.join(', ')}"
-  :error
-rescue StandardError => e
-  warn "[EXCEPTION] issue=#{issue_key} #{e.class}: #{e.message}"
-  :error
 end
 
 # ===============================
@@ -2699,8 +2542,6 @@ begin
   # Track per-project stats
   project_stats = Hash.new { |h, k| h[k] = { created: 0, updated: 0 } }
 
-  # Collector for per-issue import/verification reports (used by repair pass)
-  $IMPORT_REPORTS = []
 
   # Collector for per-issue import/verification reports (used by repair pass)
   $IMPORT_REPORTS = []
@@ -2857,7 +2698,14 @@ begin
         if defect
           # actual counts
           actual_issue_files = defect.attachments.map { |a| a.filename.to_s }
-          actual_comment_files = defect.defect_messages.flat_map { |dm| dm.respond_to?(:attachments) ? dm.attachments.map { |att| att.filename.to_s } : [] }
+          # For comment-level attachments, gather per-DefectMessage attachments
+          actual_comment_files = defect.defect_messages.flat_map do |dm|
+            if dm.respond_to?(:attachments)
+              dm.attachments.map { |att| att.filename.to_s }
+            else
+              []
+            end
+          end
           actual_comments = defect.defect_messages.count
           actual_labels = defect.labels.count
 
@@ -2878,6 +2726,70 @@ begin
           report[:fields_status][:comment_attachments] = missing_comment.empty?
           report[:fields_status][:comments] = (expected_comments == actual_comments)
           report[:fields_status][:labels] = (expected_labels == actual_labels)
+
+          # --- New: per-attachment verification details ---
+          report[:attachment_details] ||= { issue_level: [], comment_level: [] }
+
+          # Verify issue-level attachments: check ActiveStorage blob presence where possible
+          defect.attachments.each do |attach_record|
+            begin
+              blob = attach_record.blob
+              in_storage = false
+              if blob && blob.respond_to?(:key)
+                begin
+                  in_storage = ActiveStorage::Blob.service.exist?(blob.key)
+                rescue StandardError => e
+                  in_storage = false
+                  vputs "  [VERIFY-WARN] Could not verify storage for blob #{blob&.key}: #{e.class}: #{e.message}" if verbose
+                end
+              end
+
+              report[:attachment_details][:issue_level] << {
+                filename: attach_record.filename.to_s,
+                attachment_id: attach_record.id,
+                blob_key: blob&.key,
+                in_storage: in_storage
+              }
+            rescue StandardError => e
+              report[:attachment_details][:issue_level] << { filename: attach_record.filename.to_s, error: "#{e.class}: #{e.message}" }
+            end
+          end
+
+          # Verify comment-level attachments per DefectMessage
+          defect.defect_messages.each do |dm|
+            next unless dm.respond_to?(:attachments)
+            dm.attachments.each do |att|
+              begin
+                blob = att.blob
+                in_storage = false
+                if blob && blob.respond_to?(:key)
+                  begin
+                    in_storage = ActiveStorage::Blob.service.exist?(blob.key)
+                  rescue StandardError => e
+                    in_storage = false
+                    vputs "  [VERIFY-WARN] Could not verify comment blob #{blob&.key}: #{e.class}: #{e.message}" if verbose
+                  end
+                end
+
+                report[:attachment_details][:comment_level] << {
+                  filename: att.filename.to_s,
+                  attachment_id: att.id,
+                  defect_message_id: dm.id,
+                  blob_key: blob&.key,
+                  in_storage: in_storage
+                }
+              rescue StandardError => e
+                report[:attachment_details][:comment_level] << { filename: att.filename.to_s, error: "#{e.class}: #{e.message}" }
+              end
+            end
+          end
+
+          # Record unverified attachments lists (attached in DB but blob not found)
+          unverified_issue_files = report[:attachment_details][:issue_level].select { |d| d[:in_storage] == false }.map { |d| d[:filename] }
+          unverified_comment_files = report[:attachment_details][:comment_level].select { |d| d[:in_storage] == false }.map { |d| d[:filename] }
+
+          report[:missing][:unverified_issue_files] = unverified_issue_files
+          report[:missing][:unverified_comment_files] = unverified_comment_files
 
         else
           report[:errors] << 'Defect record missing in DB after import'
@@ -3131,8 +3043,22 @@ begin
 
     # Print per-issue line
     status_str = passed ? 'OK' : 'ISSUES'
-    info "#{issue.ljust(20)} -> #{status_str}    (comments: #{r[:actual][:comments]}/#{r[:expected][:comments]}, issue_atts: #{r[:actual][:issue_attachments]}/#{r[:expected][:issue_attachments]}, comment_atts: #{r[:actual][:comment_attachments]}/#{r[:expected][:comment_attachments]}, labels: #{r[:actual][:labels]}/#{r[:expected][:labels]}, history: #{r[:actual][:history]}/#{r[:expected][:history]})"
-  end
+    # Compute verified counts for printing
+    verified_issue = (r.dig(:attachment_details, :issue_level) || []).count { |d| d[:in_storage] }
+    total_issue_attached = r[:actual][:issue_attachments] || 0
+    verified_comment = (r.dig(:attachment_details, :comment_level) || []).count { |d| d[:in_storage] }
+    total_comment_attached = r[:actual][:comment_attachments] || 0
+
+    info "#{issue.ljust(20)} -> #{status_str}    (comments: #{r[:actual][:comments]}/#{r[:expected][:comments]}, issue_atts: #{total_issue_attached}/#{r[:expected][:issue_attachments]} (verified: #{verified_issue}), comment_atts: #{total_comment_attached}/#{r[:expected][:comment_attachments]} (verified: #{verified_comment}), labels: #{r[:actual][:labels]}/#{r[:expected][:labels]}, history: #{r[:actual][:history]}/#{r[:expected][:history]})"
+
+    # If there are unverified attachments, print details for quick triage
+    if (r.dig(:missing, :unverified_issue_files) || []).any?
+      info "    Unverified issue-level attachments: #{(r[:missing][:unverified_issue_files]).join(', ')}"
+    end
+    if (r.dig(:missing, :unverified_comment_files) || []).any?
+      info "    Unverified comment-level attachments: #{(r[:missing][:unverified_comment_files]).join(', ')}"
+    end
+   end
 
   success_pct = total_issues > 0 ? ((overall_pass_count.to_f / total_issues) * 100).round(2) : 100.0
   info '\nOverall Success Summary:'
@@ -3156,8 +3082,147 @@ begin
   info '\nEnd of import verification report.'
   info '=' * 80
   end  # Close unless options[:dry_run]
-rescue StandardError => e
-  puts "ERROR: #{e.message}"
-  puts e.backtrace.first(5).join("\n")
-  exit 1
+
+  # ===============================
+  # USER MATCH STATISTICS REPORT
+  # ===============================
+  unless options[:dry_run]
+    info "\n" + "=" * 80
+    info "👤 USER MATCH STATISTICS REPORT"
+    info "=" * 80
+
+    total_lookups = $USER_STATS[:total_lookups]
+    info "\nTotal user lookups performed: #{total_lookups}"
+    info ""
+    info "Match breakdown:"
+    info "  ✅ Email matches:          #{$USER_STATS[:email_matches]} (#{total_lookups > 0 ? (($USER_STATS[:email_matches].to_f / total_lookups) * 100).round(2) : 0}%)"
+    info "  ✅ Full name matches:      #{$USER_STATS[:full_name_matches]} (#{total_lookups > 0 ? (($USER_STATS[:full_name_matches].to_f / total_lookups) * 100).round(2) : 0}%)"
+    info "  ✅ First+Last matches:     #{$USER_STATS[:first_last_matches]} (#{total_lookups > 0 ? (($USER_STATS[:first_last_matches].to_f / total_lookups) * 100).round(2) : 0}%)"
+    info "  ✅ Partial matches:        #{$USER_STATS[:partial_matches]} (#{total_lookups > 0 ? (($USER_STATS[:partial_matches].to_f / total_lookups) * 100).round(2) : 0}%)"
+    info "  ✅ Config map matches:     #{$USER_STATS[:config_map_matches]}"
+    info "  🆕 Created users:          #{$USER_STATS[:created_users]}"
+    info "  ⚠️  Fallback to default:    #{$USER_STATS[:fallback_users]}"
+    info ""
+
+    total_matched = $USER_STATS[:matched_users].length
+    info "Summary:"
+    info "  Total unique matched users: #{total_matched}"
+    info "  Total unique fallback uses: #{$USER_STATS[:fallback_users_set].length}"
+    info ""
+
+    # Reporter/Assignee specific report
+    info "Reporter/Assignee Matching:"
+    reporter_matched = $USER_STATS[:reporter_matches].values.count { |v| v[:status] == 'matched' }
+    reporter_fallback = $USER_STATS[:reporter_matches].length - reporter_matched
+
+    assignee_matched = $USER_STATS[:assignee_matches].values.count { |v| v[:status] == 'matched' }
+    assignee_fallback = $USER_STATS[:assignee_matches].length - assignee_matched
+
+    info "  Reporters: #{reporter_matched} matched, #{reporter_fallback} fallback to default"
+    info "  Assignees: #{assignee_matched} matched, #{assignee_fallback} fallback to default"
+    info ""
+
+    # Name parsing strategies report
+    if $USER_STATS[:parsed_names].any?
+      info "Name Parsing Strategies Used:"
+      strategies = $USER_STATS[:parsed_names].values.group_by { |v| v[:strategy] }
+      strategies.each do |strategy, entries|
+        info "  #{strategy}: #{entries.length} name(s)"
+      end
+      info ""
+
+      # Show details of dot-separated names parsed
+      dot_separated = $USER_STATS[:parsed_names].select { |_, v| v[:strategy] == 'dot-separated' }
+      if dot_separated.any?
+        info "  Dot-separated names parsed:"
+        dot_separated.each do |name, parsed|
+          info "    - '#{name}' → first: '#{parsed[:first_name]}', last: '#{parsed[:last_name]}'"
+        end
+        info ""
+      end
+
+      # Show details of multi-part names
+      multi_part = $USER_STATS[:parsed_names].select { |_, v| v[:strategy] == 'multi-part-first-two' }
+      if multi_part.any?
+        info "  Multi-part names (using first 2 parts):"
+        multi_part.each do |name, parsed|
+          info "    - '#{name}' → first: '#{parsed[:first_name]}', last: '#{parsed[:last_name]}'"
+        end
+        info ""
+      end
+    end
+
+    # Not found names
+    if $USER_STATS[:not_found_names].any?
+      info "Names that could not be matched (fell back to default user):"
+      $USER_STATS[:not_found_names].sort_by { |_, count| -count }.each do |name, count|
+        info "  - '#{name}' (#{count} occurrence#{'s' if count > 1})"
+      end
+      info ""
+    end
+
+    # Issues with reporter/assignee fallback to default
+    reporter_fallback_issues = $USER_STATS[:reporter_matches].select { |_, v| v[:status] == 'fallback' }
+    assignee_fallback_issues = $USER_STATS[:assignee_matches].select { |_, v| v[:status] == 'fallback' }
+
+    if reporter_fallback_issues.any?
+      info "\n⚠️  CRITICAL: Issues where reporter fell back to default user (#{reporter_fallback_issues.length}):"
+      reporter_fallback_issues.each_with_index do |(issue_key, data), idx|
+        info "  #{idx + 1}. #{issue_key}:"
+        info "     Name: '#{data[:name]}'"
+        info "     Email: '#{data[:email]}'"
+        info "     Assigned to: #{data[:user_id]} (DEFAULT USER)"
+
+        # Check if name was parsed and show parsing strategy
+        parsed_info = $USER_STATS[:parsed_names][data[:name]]
+        if parsed_info
+          info "     Parse strategy: #{parsed_info[:strategy]}"
+          info "     Parsed as: first='#{parsed_info[:first_name]}', last='#{parsed_info[:last_name]}'"
+        end
+
+        if idx < reporter_fallback_issues.length
+          info ""
+        end
+      end
+      info ""
+    end
+
+    if assignee_fallback_issues.any?
+      info "\n⚠️  CRITICAL: Issues where assignee fell back to default user (#{assignee_fallback_issues.length}):"
+      assignee_fallback_issues.each_with_index do |(issue_key, data), idx|
+        info "  #{idx + 1}. #{issue_key}:"
+        info "     Name: '#{data[:name]}'"
+        info "     Email: '#{data[:email]}'"
+        info "     Assigned to: #{data[:user_id]} (DEFAULT USER)"
+
+        # Check if name was parsed and show parsing strategy
+        parsed_info = $USER_STATS[:parsed_names][data[:name]]
+        if parsed_info
+          info "     Parse strategy: #{parsed_info[:strategy]}"
+          info "     Parsed as: first='#{parsed_info[:first_name]}', last='#{parsed_info[:last_name]}'"
+        end
+
+        if idx < assignee_fallback_issues.length
+          info ""
+        end
+      end
+      info ""
+    end
+
+    # Recommendation for fixing fallback users
+    if reporter_fallback_issues.any? || assignee_fallback_issues.any?
+      total_fallback = reporter_fallback_issues.length + assignee_fallback_issues.length
+      info "🔧 RECOMMENDATIONS FOR FIXING FALLBACK USERS:"
+      info "  1. Review the names above to ensure they are spelled correctly in both Jira and the local user database"
+      info "  2. Check for case sensitivity issues (e.g., 'John Smith' vs 'john smith')"
+      info "  3. For dot-separated names (e.g., archana.verma), ensure the local database has matching first_name and last_name"
+      info "  4. For multi-part names (3+ parts), the script uses first 2 parts - verify this matches your database"
+      info "  5. Create missing users in the database if they don't exist"
+      info "  6. Run: rails runner scripts/verify_and_fix_user_assignments.rb"
+      info "  7. The verification script will attempt to fix #{total_fallback} incorrectly assigned issue(s)"
+      info ""
+    end
+
+    info "=" * 80
+  end
 end

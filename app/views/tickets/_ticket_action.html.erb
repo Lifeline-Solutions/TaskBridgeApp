@@ -16,17 +16,16 @@
     <% end %>
   <% end %>
 
-  <% allowed_statuses = ['Approved', 'Work in Progress', 'On-Hold', 'Under Development', 'QA Testing', 'Client Confirmation Pending', 'Awaiting Build', 'Reopened', 'Resolved', 'Closed', 'Declined'] %>
+  <% allowed_statuses = ['Approved', 'Work in Progress', 'On-Hold', 'QA Testing', 'Client Confirmation Pending', 'Awaiting Build', 'Reopened', 'Resolved', 'Closed', 'Declined'] %>
   <% current_status = @ticket.statuses.first&.name %>
   <% if allowed_statuses.include?(current_status) && !current_user.has_role?(:client) %>
     <%= form_with url: add_status_project_ticket_path(@project, @ticket, local: true, data: { turbo: false }) do %>
       <% current_status = @ticket.statuses.first&.name %>
       <% transition_map = {
         'Approved' => ['Work in Progress'],
-        'Work in Progress' => ['Declined', 'Resolved', 'On-Hold', 'Under Development', 'Client Confirmation Pending'],
-        'On-Hold' => ['Under Development', 'Work in Progress'],
-        'Under Development' => ['QA Testing', 'Awaiting Build', 'On-Hold'],
-        'QA Testing' => ['Resolved', 'Client Confirmation Pending', 'Under Development'],
+        'Work in Progress' => ['Declined', 'Resolved', 'On-Hold', 'Client Confirmation Pending'],
+        'On-Hold' => ['Work in Progress'],
+        'QA Testing' => ['Resolved', 'Client Confirmation Pending'],
         'Client Confirmation Pending' => ['Resolved', 'Work in Progress'],
         'Awaiting Build' => ['QA Testing'],
         'Reopened' => ['Work in Progress'],
@@ -50,10 +49,9 @@
         'New' => ['Assigned', ""],
         'Assigned' => ['Work in Progress'],
         ['Assigned','Assigned'] => ['Work in Progress'],
-        'Work in Progress' => ['Declined', 'Resolved', 'On-Hold', 'Under Development', 'Client Confirmation Pending'],
-        'On-Hold' => ['Under Development', 'Work in Progress'],
-        'Under Development' => ['QA Testing', 'Awaiting Build', 'On-Hold'],
-        'QA Testing' => ['Resolved', 'Client Confirmation Pending', 'Under Development'],
+        'Work in Progress' => ['Declined', 'Resolved', 'On-Hold', 'Client Confirmation Pending'],
+        'On-Hold' => ['Work in Progress'],
+        'QA Testing' => ['Resolved', 'Client Confirmation Pending',],
         'Client Confirmation Pending' => ['Resolved', 'Work in Progress'],
         'Awaiting Build' => ['QA Testing'],
         'Reopened' => ['Work in Progress'],
