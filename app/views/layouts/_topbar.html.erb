@@ -145,9 +145,17 @@
   <!-- Desktop: Search Bar -->
   <div class="hidden lg:flex items-center flex-1 max-w-2xl order-1">
     <div class="relative w-full">
-      <%= form_with url: project_index_path, method: :get, class: 'relative flex items-center' do |f| %>
+      <%= form_with url: global_search_path, method: :get, class: 'relative flex items-center', data: { controller: 'global-search' } do |f| %>
         <div class="relative w-full">
-          <%= f.text_field :query, class: "border border-gray-300 h-11 w-full px-5 pr-12 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 pl-12 transition-all duration-200", id: "searchInput", autocomplete: "off", placeholder: "Search" %>
+          <%= f.text_field :query, 
+              class: "border border-gray-300 h-11 w-full px-5 pr-12 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 pl-12 transition-all duration-200", 
+              id: "searchInput", 
+              autocomplete: "off", 
+              placeholder: "Search tickets and defects...",
+              data: { 
+                'global-search-target': 'input',
+                action: 'input->global-search#handleInput keydown->global-search#handleKeydown'
+              } %>
           <!-- Search Icon -->
           <button type="submit" class="absolute left-4 top-3 flex items-center text-gray-400 dark:text-gray-300 hover:text-blue-600 focus:outline-none transition-colors">
             <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -164,6 +172,8 @@
           <div class="absolute right-4 top-3 text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded border pointer-events-none">
             ⌘F
           </div>
+          <!-- Autocomplete Suggestions -->
+          <div data-global-search-target="suggestions" class="hidden absolute z-50 top-full mt-2 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-96 overflow-y-auto"></div>
         </div>
       <% end %>
     </div>
@@ -321,7 +331,7 @@
   <!-- Mobile: Search Bar -->
   <div class="w-full lg:hidden order-3">
     <div class="relative">
-      <%= form_with url: project_index_path, method: :get, class: 'relative flex items-center' do |f| %>
+      <%= form_with url: global_search_path, method: :get, class: 'relative flex items-center' do |f| %>
         <div class="relative w-full flex items-center">
           <span class="absolute left-3 top-1/2 transform -translate-y-1/2 flex items-center pointer-events-none">
             <svg class="h-5 w-5 text-gray-400 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" stroke="currentColor">
