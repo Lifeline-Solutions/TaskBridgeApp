@@ -9,7 +9,7 @@ Rails.application.routes.draw do
   get "/crash", to: "test#crash"
   get '/health', to: 'health#index'
 
-  devise_for :users, controllers: { invitations: 'invitations' }
+  devise_for :users, controllers: { invitations: 'invitations', registrations: 'users/registrations' }
   resources :users do
     collection do
       get :search
