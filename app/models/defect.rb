@@ -161,7 +161,7 @@ class Defect < ApplicationRecord
   validates :priority, presence: true, unless: :draft?
   validates :issue_type, presence: true, unless: :draft?
   validates :product_id, presence: true, unless: :draft?
-  validates :banking_type_id, presence: { message: "must be selected" }, unless: :draft?
+  validates :banking_type_id, presence: { message: 'must be selected' }, unless: :draft?
   # validates :creator_id, presence: true
   # Add validation to ensure module belongs to selected project
   validate :qa_module_belongs_to_product, unless: :draft?

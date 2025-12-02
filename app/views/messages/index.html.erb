@@ -192,22 +192,19 @@
   </div>
 
   <!-- New Message Button -->
-  <div data-controller="messages">
-    <div class="p-4 border-t border-gray-200 dark:border-gray-600">
-      <button id="newMessageButton"
-              class="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition-colors"
-              data-action="click->messages#toggleForm">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
-        </svg>
-        New Message
-      </button>
-    </div>
+  <div class="p-4 border-t border-gray-200 dark:border-gray-600">
+    <button id="newMessageButton"
+            class="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+      </svg>
+      <span id="buttonText">New Message</span>
+    </button>
+  </div>
 
-    <!-- Form Container (initially hidden) -->
-    <div id="messageFormContainer" class="hidden" data-messages-target="form">
-      <%= render 'messages/form', task: @task, message: @task.messages.build %>
-    </div>
+  <!-- Form Container (initially hidden) -->
+  <div id="messageFormContainer" class="hidden">
+    <%= render 'messages/form', task: @task, message: @task.messages.build %>
   </div>
 </div>
 
@@ -254,16 +251,49 @@
     filterMessages('all');
   });
   
-  // Stimulus controller for message form toggle
-  document.addEventListener('turbo:load', function() {
-    const newMessageButton = document.getElementById('newMessageButton');
+  // Message form toggle functionality
+  function toggleMessageForm() {
     const messageFormContainer = document.getElementById('messageFormContainer');
+    const buttonText = document.getElementById('buttonText');
+    const newMessageButton = document.getElementById('newMessageButton');
     
-    if (newMessageButton && messageFormContainer) {
-      newMessageButton.addEventListener('click', function() {
-        messageFormContainer.classList.toggle('hidden');
-        newMessageButton.textContent = messageFormContainer.classList.contains('hidden') ? 'New Message' : 'Cancel';
+    if (messageFormContainer && buttonText && newMessageButton) {
+      if (messageFormContainer.classList.contains('hidden')) {
+        messageFormContainer.classList.remove('hidden');
+        buttonText.textContent = 'Cancel';
+        newMessageButton.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+        newMessageButton.classList.add('bg-red-600', 'hover:bg-red-700');
+      } else {
+        messageFormContainer.classList.add('hidden');
+        buttonText.textContent = 'New Message';
+        newMessageButton.classList.remove('bg-red-600', 'hover:bg-red-700');
+        newMessageButton.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+      }
+    }
+  }
+
+  function initializeMessageForm() {
+    const newMessageButton = document.getElementById('newMessageButton');
+    
+    if (newMessageButton) {
+      // Remove any existing event listeners by cloning the node
+      const newButton = newMessageButton.cloneNode(true);
+      newMessageButton.parentNode.replaceChild(newButton, newMessageButton);
+      
+      // Add the event listener to the new button
+      newButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        toggleMessageForm();
       });
     }
+  }
+
+  // Initialize on both DOMContentLoaded and turbo:load
+  document.addEventListener('DOMContentLoaded', function() {
+    initializeMessageForm();
+  });
+
+  document.addEventListener('turbo:load', function() {
+    initializeMessageForm();
   });
 </script>

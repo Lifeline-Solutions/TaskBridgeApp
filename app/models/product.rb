@@ -17,11 +17,11 @@ class Product < ApplicationRecord
   has_one_attached :image
   has_many :defects, dependent: :nullify
   has_many :defect_filters, dependent: :nullify
-  
+
   # Many-to-many relationship with banking types
   has_and_belongs_to_many :banking_types,
                           join_table: :banking_types_products
-  
+
   before_create :set_default_status
 
   has_rich_text :content

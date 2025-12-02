@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # DashboardWidget - Represents a dashboard created from a saved filter
 # Displays defects matching the filter criteria with a chosen visualization type
 #

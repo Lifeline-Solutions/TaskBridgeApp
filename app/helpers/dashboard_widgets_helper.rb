@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 module DashboardWidgetsHelper
   # Returns the FontAwesome icon name for a given visualization type
   # @param viz_type [Symbol, String] The visualization type (e.g., :pie_chart, 'bar_chart')

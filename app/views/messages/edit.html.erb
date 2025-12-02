@@ -50,7 +50,7 @@
         <%= f.submit "Update Message",
             class: "px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg" %>
         <%= link_to "Cancel",
-            task_messages_path(@task),
+            product_task_path(@task.product, @task),
             class: "px-5 py-2.5 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium rounded-lg" %>
       </div>
     <% end %>

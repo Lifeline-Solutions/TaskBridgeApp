@@ -1,12 +1,12 @@
 # Create a test product
-product = Product.create!(document_name: "Test Product", client: Client.first || Client.create!(name: "Test Client"), user: User.first)
+product = Product.create!(document_name: 'Test Product', client: Client.first || Client.create!(name: 'Test Client'), user: User.first)
 puts "Created Product: #{product.id}"
 
 # Create a banking type and add to product
-bt = BankingType.find_or_create_by!(name: "Test Banking Type")
+bt = BankingType.find_or_create_by!(name: 'Test Banking Type')
 unless product.banking_types.include?(bt)
-  product.banking_types << bt 
-  puts "Added Banking Type to Product"
+  product.banking_types << bt
+  puts 'Added Banking Type to Product'
 end
 puts "Banking Type: #{bt.id}"
 
@@ -14,7 +14,7 @@ puts "Banking Type: #{bt.id}"
 puts "Product Banking Types Count: #{product.banking_types.count}"
 
 # Create a defect
-defect = Defect.create!(summary: "Test Defect", product: product, priority: "SEVERITY 1", statuses: [Status.first || Status.create!(name: "Open")], user_ids: [User.first.id], banking_type: bt)
+defect = Defect.create!(summary: 'Test Defect', product: product, priority: 'SEVERITY 1', statuses: [Status.first || Status.create!(name: 'Open')], user_ids: [User.first.id], banking_type: bt)
 puts "Created Defect: #{defect.id}"
 
 # Simulate set_form_data logic

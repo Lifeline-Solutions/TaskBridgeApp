@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # QA Dashboards Controller - Manages dashboards with embedded widgets
 class QaDashboardsController < ApplicationController
   before_action :authenticate_user!
@@ -30,7 +28,7 @@ class QaDashboardsController < ApplicationController
   def show
     # Initialize product filter variables
     @selected_product_ids = params[:product_id] || []
-    
+
     # Load products with QA statuses (similar to reports_controller approach)
     products = Product.qa_projects.active.includes(:client, :groupwares)
     @product_options = products.map do |product|
@@ -38,7 +36,7 @@ class QaDashboardsController < ApplicationController
       groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
       ["#{client_name} - #{groupware_names}", product.id]
     end
-    
+
     # Determine which products to filter by:
     # 1. If user selected products via dropdown, use those
     # 2. Otherwise, use the filter's associated product_id (default view)
@@ -50,7 +48,7 @@ class QaDashboardsController < ApplicationController
                             else
                               []
                             end
-    
+
     # Generate automatic charts for active filter parameters with product filtering
     result = DashboardDataGenerator.new(@dashboard, product_ids: product_ids_to_filter).generate
     @defects = result[:defects]

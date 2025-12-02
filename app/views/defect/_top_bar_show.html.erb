@@ -258,14 +258,27 @@
                     <div class="max-h-60 overflow-y-auto">
                       <div id="priorityItems" class="p-2 space-y-2">
 
-                        <% selected_priorities = Array(params[:priority]) %>
-                        <% priorities = ['SEVERITY 1', 'SEVERITY 2', 'SEVERITY 3', 'SEVERITY 4'] %>
+                        <% 
+                          # Define all possible priority options in uppercase for display
+                          display_priorities = ['SEVERITY 1', 'SEVERITY 2', 'SEVERITY 3', 'SEVERITY 4']
+                          
+                          # Get selected priorities from params
+                          selected_priorities = Array(params[:priority])
+                          
+                          # Create a mapping of display values to search patterns for case-insensitive matching
+                          priority_patterns = {
+                            'SEVERITY 1' => /severity 1/i,
+                            'SEVERITY 2' => /severity 2/i, 
+                            'SEVERITY 3' => /severity 3/i,
+                            'SEVERITY 4' => /severity 4/i
+                          }
+                        %>
 
                         <!-- Select All -->
                         <div class="flex items-center border-b pb-2 mb-2">
                           <%= check_box_tag 'select_all_priority',
                                             'all',
-                                            selected_priorities.length == priorities.length,
+                                            selected_priorities.length == display_priorities.length,
                                             id: "select_all_priority",
                                             class: "mr-2 select-all-checkbox",
                                             data: { target: 'priority' } %>
@@ -273,16 +286,21 @@
                         </div>
 
                         <!-- Priority Items -->
-                        <% priorities.each do |priority| %>
+                        <% display_priorities.each do |display_priority| %>
+                          <% 
+                            # Check if this priority is selected using case-insensitive pattern matching
+                            pattern = priority_patterns[display_priority]
+                            is_selected = selected_priorities.any? { |selected| pattern.match?(selected) }
+                          %>
                           <div class="flex items-center dropdown-item"
-                              data-name="<%= priority.downcase %>">
+                              data-name="<%= display_priority.downcase %>">
                             <%= check_box_tag 'priority[]',
-                                              priority,
-                                              selected_priorities.include?(priority),
-                                              id: "priority_#{priority.parameterize}",
+                                              display_priority, # This is what gets sent in params
+                                              is_selected,
+                                              id: "priority_#{display_priority.parameterize}",
                                               class: "mr-2 priority-checkbox" %>
-                            <%= label_tag "priority_#{priority.parameterize}",
-                                          priority,
+                            <%= label_tag "priority_#{display_priority.parameterize}",
+                                          display_priority,
                                           class: "text-sm" %>
                           </div>
                         <% end %>
@@ -313,6 +331,46 @@
                   const dropdown = document.getElementById(id);
                   dropdown.classList.toggle('hidden');
                 }
+
+                // Update the button text functionality to handle case-insensitive counts
+                function updatePriorityButtonText() {
+                  const priorityCheckboxes = document.querySelectorAll('.priority-checkbox:not(.select-all-checkbox)');
+                  const selectedCount = Array.from(priorityCheckboxes).filter(cb => cb.checked).length;
+                  const totalCount = priorityCheckboxes.length;
+                  const buttonText = document.getElementById('priorityButtonText');
+                  
+                  if (selectedCount === 0) {
+                    buttonText.textContent = 'Filter by Priority';
+                  } else if (selectedCount === totalCount) {
+                    buttonText.textContent = 'Filter by Priority (All)';
+                  } else {
+                    buttonText.textContent = `Filter by Priority (${selectedCount} selected)`;
+                  }
+                }
+
+                // Initialize button text on page load
+                document.addEventListener('turbo:load', function() {
+                  updatePriorityButtonText();
+                  
+                  // Add event listeners to priority checkboxes
+                  document.querySelectorAll('.priority-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', function() {
+                      updatePriorityButtonText();
+                    });
+                  });
+                  
+                  // Select all functionality for priorities
+                  const selectAllPriority = document.getElementById('select_all_priority');
+                  if (selectAllPriority) {
+                    selectAllPriority.addEventListener('change', function(e) {
+                      const checkboxes = document.querySelectorAll('.priority-checkbox:not(.select-all-checkbox)');
+                      checkboxes.forEach(cb => {
+                        cb.checked = e.target.checked;
+                      });
+                      updatePriorityButtonText();
+                    });
+                  }
+                });
               </script>
 
 
