@@ -188,7 +188,7 @@
           <% @filter_params.each do |key, value| %>
             <% next if value.blank? || %w[page order query].include?(key) %>
             <span class="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm">
-              <strong><%= key.to_s.titleize %>:</strong>&nbsp;<%= format_filter_value(key, value) %>
+              <strong><%= filter_param_label(key) %>:</strong>&nbsp;<%= format_filter_value(key, value) %>
             </span>
           <% end %>
         </div>

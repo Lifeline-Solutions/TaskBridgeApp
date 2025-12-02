@@ -1,0 +1,238 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="bg-white shadow-md rounded-lg p-6">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Team Breach Report</h1>
+
+    <!-- Filter Form -->
+    <div class="bg-gray-50 p-4 rounded-lg mb-6">
+      <%= form_with url: team_report_breach_path, method: :get, local: true, class: "space-y-4" do |f| %>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Team Selection -->
+          <div>
+            <%= label_tag :team_id, "Select Team", class: "block text-sm font-medium text-gray-700 mb-2" %>
+            <%= select_tag :team_id,
+                options_from_collection_for_select(Team.all, :id, :name, params[:team_id]),
+                prompt: "Choose a team...",
+                class: "w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+          </div>
+
+          <!-- Start Date -->
+          <div>
+            <%= label_tag :start_date, "Start Date", class: "block text-sm font-medium text-gray-700 mb-2" %>
+            <%= date_field_tag :start_date,
+                params[:start_date] || 6.months.ago.to_date,
+                class: "w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+          </div>
+
+          <!-- End Date -->
+          <div>
+            <%= label_tag :end_date, "End Date", class: "block text-sm font-medium text-gray-700 mb-2" %>
+            <%= date_field_tag :end_date,
+                params[:end_date] || Date.today,
+                class: "w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <%= submit_tag "Generate Report", class: "bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md transition duration-150 ease-in-out" %>
+          <% if @team.present? %>
+            <%= link_to "Export CSV", team_report_breach_path(team_id: params[:team_id], start_date: params[:start_date], end_date: params[:end_date], format: :csv),
+                class: "bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-md transition duration-150 ease-in-out" %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <% if flash[:alert] %>
+      <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6" role="alert">
+        <p><%= flash[:alert] %></p>
+      </div>
+    <% end %>
+
+    <% if @team.present? %>
+      <!-- Summary Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <h3 class="text-sm font-medium text-blue-800 mb-1">Team</h3>
+          <p class="text-xl font-bold text-blue-900"><%= @team.name %></p>
+        </div>
+
+        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <h3 class="text-sm font-medium text-gray-700 mb-1">Total Tickets</h3>
+          <p class="text-2xl font-bold text-gray-900"><%= @total_tickets %></p>
+        </div>
+
+        <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
+          <h3 class="text-xs font-medium text-purple-800 mb-1">SLA Status Breach</h3>
+          <p class="text-xl font-bold text-purple-900"><%= @sla_status_breached_count %></p>
+          <p class="text-xs text-purple-600"><%= @sla_status_breach_percentage %>%</p>
+        </div>
+
+        <div class="bg-orange-50 p-4 rounded-lg border border-orange-200">
+          <h3 class="text-xs font-medium text-orange-800 mb-1">Response Breach</h3>
+          <p class="text-xl font-bold text-orange-900"><%= @response_deadline_breached_count %></p>
+          <p class="text-xs text-orange-600"><%= @response_deadline_breach_percentage %>%</p>
+        </div>
+
+        <div class="bg-red-50 p-4 rounded-lg border border-red-200">
+          <h3 class="text-xs font-medium text-red-800 mb-1">Resolution Breach</h3>
+          <p class="text-xl font-bold text-red-900"><%= @resolution_deadline_breached_count %></p>
+          <p class="text-xs text-red-600"><%= @resolution_deadline_breach_percentage %>%</p>
+        </div>
+      </div>
+
+      <!-- Overall Performance Card -->
+      <div class="mb-6">
+        <div class="<%= @overall_breach_percentage >= 80 ? 'bg-green-50 border-green-200' : @overall_breach_percentage >= 50 ? 'bg-yellow-50 border-yellow-200' : 'bg-red-50 border-red-200' %> p-6 rounded-lg border">
+          <div class="flex justify-between items-center">
+            <div>
+              <h3 class="text-lg font-semibold <%= @overall_breach_percentage >= 80 ? 'text-green-800' : @overall_breach_percentage >= 50 ? 'text-yellow-800' : 'text-red-800' %> mb-1">Overall Performance Score</h3>
+              <p class="text-sm text-gray-600">Tickets with any type of breach: <%= @total_breached_count %> of <%= @total_tickets %></p>
+            </div>
+            <div class="text-right">
+              <p class="text-4xl font-bold <%= @overall_breach_percentage >= 80 ? 'text-green-900' : @overall_breach_percentage >= 50 ? 'text-yellow-900' : 'text-red-900' %>"><%= @overall_breach_percentage %>%</p>
+              <p class="text-xs text-gray-600 mt-1">100% = no breaches</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Breakdown Table -->
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Breach Analysis by Status</h2>
+        <div class="overflow-x-auto">
+          <table class="min-w-full bg-white border border-gray-300 rounded-lg">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Status</th>
+                <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Total</th>
+                <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Non-Breach</th>
+                <th class="px-4 py-3 text-right text-xs font-medium text-purple-700 uppercase tracking-wider border-b">SLA Status</th>
+                <th class="px-4 py-3 text-right text-xs font-medium text-orange-700 uppercase tracking-wider border-b">Response</th>
+                <th class="px-4 py-3 text-right text-xs font-medium text-red-700 uppercase tracking-wider border-b">Resolution</th>
+                <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Any Breach</th>
+                <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Score %</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              <% @status_table_data.each do |row| %>
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900"><%= row[:status] %></td>
+                  <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 text-right font-semibold"><%= row[:total] %></td>
+                  <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600 text-right font-semibold"><%= row[:non_breached] %></td>
+                  <td class="px-4 py-3 whitespace-nowrap text-sm text-purple-600 text-right"><%= row[:sla_status_breached] %></td>
+                  <td class="px-4 py-3 whitespace-nowrap text-sm text-orange-600 text-right"><%= row[:response_deadline_breached] %></td>
+                  <td class="px-4 py-3 whitespace-nowrap text-sm text-red-600 text-right"><%= row[:resolution_deadline_breached] %></td>
+                  <td class="px-4 py-3 whitespace-nowrap text-sm text-red-700 text-right font-semibold"><%= row[:any_breached] %></td>
+                  <td class="px-4 py-3 whitespace-nowrap text-right">
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+                          <%= row[:breach_percentage] >= 80 ? 'bg-green-100 text-green-800' : row[:breach_percentage] >= 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800' %>">
+                      <%= row[:breach_percentage] %>%
+                    </span>
+                  </td>
+                </tr>
+              <% end %>
+              <!-- Total Row -->
+              <tr class="bg-gray-100 font-bold">
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">TOTAL</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-right"><%= @total_tickets %></td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600 text-right"><%= @total_tickets - @total_breached_count %></td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-purple-600 text-right"><%= @sla_status_breached_count %></td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-orange-600 text-right"><%= @response_deadline_breached_count %></td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-red-600 text-right"><%= @resolution_deadline_breached_count %></td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-red-700 text-right"><%= @total_breached_count %></td>
+                <td class="px-4 py-3 whitespace-nowrap text-right">
+                  <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+                        <%= @overall_breach_percentage >= 80 ? 'bg-green-100 text-green-800' : @overall_breach_percentage >= 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800' %>">
+                    <%= @overall_breach_percentage %>%
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- User Performance Table -->
+      <% if @user_breach_data.any? %>
+        <div class="mb-8">
+          <h2 class="text-2xl font-bold text-gray-800 mb-4">Performance by Team Member</h2>
+          <p class="text-sm text-gray-600 mb-3">Shows all team members who touched any ticket (assigned at least once) during the selected period</p>
+          <div class="overflow-x-auto">
+            <table class="min-w-full bg-white border border-gray-300 rounded-lg">
+              <thead class="bg-gray-100">
+                <tr>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Team Member</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Total</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Non-Breach</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-purple-700 uppercase tracking-wider border-b">SLA Status</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-orange-700 uppercase tracking-wider border-b">Response</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-red-700 uppercase tracking-wider border-b">Resolution</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Any Breach</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Score %</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                <% @user_breach_data.each do |row| %>
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <%= row[:user].name %>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 text-right font-semibold"><%= row[:total] %></td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600 text-right font-semibold"><%= row[:non_breached] %></td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-purple-600 text-right"><%= row[:sla_status_breached] %></td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-orange-600 text-right"><%= row[:response_deadline_breached] %></td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-red-600 text-right"><%= row[:resolution_deadline_breached] %></td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-red-700 text-right font-semibold"><%= row[:any_breached] %></td>
+                    <td class="px-4 py-3 whitespace-nowrap text-right">
+                      <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+                            <%= row[:breach_percentage] >= 80 ? 'bg-green-100 text-green-800' : row[:breach_percentage] >= 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800' %>">
+                        <%= row[:breach_percentage] %>%
+                      </span>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      <% else %>
+        <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-6" role="alert">
+          <p>No team members have assigned tickets in the selected date range.</p>
+        </div>
+      <% end %>
+
+      <!-- Legend -->
+      <div class="bg-gray-50 p-4 rounded-lg mt-6">
+        <h3 class="text-sm font-semibold text-gray-700 mb-3">Understanding the Report:</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <h4 class="text-xs font-semibold text-gray-600 uppercase mb-2">Breach Types:</h4>
+            <ul class="text-sm text-gray-600 space-y-1">
+              <li><span class="inline-block w-3 h-3 bg-purple-500 rounded-full mr-2"></span><strong>SLA Status:</strong> Overall SLA status marked as "Breached"</li>
+              <li><span class="inline-block w-3 h-3 bg-orange-500 rounded-full mr-2"></span><strong>Response Deadline:</strong> Failed to respond within target time</li>
+              <li><span class="inline-block w-3 h-3 bg-red-500 rounded-full mr-2"></span><strong>Resolution Deadline:</strong> Failed to resolve within target time</li>
+              <li><span class="inline-block w-3 h-3 bg-red-700 rounded-full mr-2"></span><strong>Any Breach:</strong> Ticket breached at least one SLA metric</li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 class="text-xs font-semibold text-gray-600 uppercase mb-2">Performance Score:</h4>
+            <ul class="text-sm text-gray-600 space-y-1">
+              <li><span class="inline-block w-3 h-3 bg-green-500 rounded-full mr-2"></span><strong>80-100%:</strong> Excellent - Very few breaches</li>
+              <li><span class="inline-block w-3 h-3 bg-yellow-500 rounded-full mr-2"></span><strong>50-79%:</strong> Moderate - Some improvement needed</li>
+              <li><span class="inline-block w-3 h-3 bg-red-500 rounded-full mr-2"></span><strong>0-49%:</strong> Critical - High breach rate, immediate action required</li>
+            </ul>
+          </div>
+        </div>
+
+        <p class="text-xs text-gray-500 mt-3">
+          <strong>Note:</strong> Performance Score = (Non-Breached / Total) × 100. A score of 100% means zero SLA breaches (perfect performance).
+          Team members are included if they were assigned to any ticket at least once during the date range.
+          A ticket counts as breached if it violated any of the three SLA metrics.
+        </p>
+      </div>
+    <% end %>
+  </div>
+</div>
+

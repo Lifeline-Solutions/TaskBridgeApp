@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # DashboardDataGenerator - Generates multiple chart visualizations based on active filter parameters
 #
 # Usage:
@@ -27,7 +25,7 @@ class DashboardDataGenerator
   def generate
     defects = dashboard.filtered_defects
       .includes(:users, :statuses, :qa_module, :banking_type, :labels, :creator, :product)
-    
+
     # Apply product filter if specified (supports multiple products)
     defects = defects.where(product_id: product_ids) if product_ids.any?
 
@@ -70,28 +68,28 @@ class DashboardDataGenerator
 
   # Determine if we should show priority chart (if priority filter is active)
   def should_show_priority_chart?(active_params)
-    active_params['priority'].present? || dashboard.defect_filter.filters.dig('priority').present?
+    active_params['priority'].present? || dashboard.defect_filter.filters['priority'].present?
   end
 
   # Determine if we should show status chart (if status filter is active)
   def should_show_status_chart?(active_params)
-    active_params['status'].present? || dashboard.defect_filter.filters.dig('status').present?
+    active_params['status'].present? || dashboard.defect_filter.filters['status'].present?
   end
 
   # Determine if we should show module chart
   def should_show_module_chart?(active_params)
     active_params['qa_module_id'].present?
   end
-  
+
   # Determine if we should show product chart
   def should_show_product_chart?(active_params)
     # Show product chart if multiple products are selected
     product_id_params = active_params['product_id']
     return false if product_id_params.blank?
-    
+
     # If multiple products selected via params, show the chart
     return true if product_ids.size > 1
-    
+
     # If product_ids in params is array with multiple items
     product_id_params.is_a?(Array) && product_id_params.size > 1
   end
@@ -151,7 +149,7 @@ class DashboardDataGenerator
       .count
       .transform_keys { |(_id, name)| name }
   end
-  
+
   # Generate product distribution chart
   def generate_product_chart(relation)
     relation
@@ -219,7 +217,7 @@ class DashboardDataGenerator
     ordered_buckets = {}
     ['This Week', 'Last Week', 'This Month', 'Older'].each do |bucket|
       count = buckets[bucket] || 0
-      ordered_buckets[bucket] = count if count > 0
+      ordered_buckets[bucket] = count if count.positive?
     end
     ordered_buckets
   end

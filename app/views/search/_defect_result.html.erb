@@ -1,0 +1,80 @@
+<%= link_to defect_path(defect), class: "block" do %>
+  <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-red-500 dark:hover:border-red-400 hover:shadow-md transition-all duration-200">
+    <div class="flex items-start justify-between">
+      <div class="flex-1 min-w-0">
+        <!-- Defect ID and Title -->
+        <div class="flex items-center gap-2 mb-2">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+            <%= defect.defect_unique %>
+          </span>
+          <% if defect.statuses.any? %>
+            <% status = defect.statuses.first %>
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium 
+              <%= case status.name
+                  when 'Done', 'Closed' then 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                  when 'In Progress' then 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                  when 'To Do' then 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                  else 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                  end %>">
+              <%= status.name %>
+            </span>
+          <% end %>
+          <% if defect.blocked? %>
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
+              <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+              </svg>
+              Blocked
+            </span>
+          <% end %>
+        </div>
+        
+        <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1 line-clamp-1">
+          <%= defect.summary %>
+        </h3>
+        
+        <!-- Metadata -->
+        <div class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+          <div class="flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            </svg>
+            <span><%= defect.product&.document_name || 'No Product' %></span>
+          </div>
+          
+          <% if defect.priority.present? %>
+            <div class="flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              <span><%= defect.priority %></span>
+            </div>
+          <% end %>
+          
+          <% if defect.issue_type.present? %>
+            <div class="flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+              </svg>
+              <span><%= defect.issue_type %></span>
+            </div>
+          <% end %>
+          
+          <div class="flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span><%= time_ago_in_words(defect.created_at) %> ago</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Arrow Icon -->
+      <div class="ml-4 flex-shrink-0">
+        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+<% end %>

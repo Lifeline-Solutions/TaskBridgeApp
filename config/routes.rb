@@ -1,5 +1,4 @@
 Rails.application.routes.draw do
-  resources :banking_types
   resources :sales, only: [:index]
 
   get 'users/active', to: 'users#active', as: 'active_users'
@@ -10,6 +9,11 @@ Rails.application.routes.draw do
   get '/health', to: 'health#index'
 
   devise_for :users, controllers: { invitations: 'invitations' }
+  
+  # Global search routes
+  get '/search', to: 'search#index', as: 'global_search'
+  get '/search/autocomplete', to: 'search#autocomplete', as: 'search_autocomplete'
+  
   resources :users do
     collection do
       get :search
@@ -51,6 +55,7 @@ Rails.application.routes.draw do
   get 'profiles_show', to: 'profiles#profiles_show', as: 'profiles_show'
   get 'profiles_show_user', to: 'profiles#profiles_show_user', as: 'profiles_show_user'
   get 'workload_project_tickets', to: 'profiles#workload_project_tickets', as: 'workload_project_tickets'
+  get 'team_report_breach', to: 'profiles#team_report_breach', as: 'team_report_breach'
 
 
 
@@ -106,6 +111,17 @@ Rails.application.routes.draw do
       patch :toggle_paid
       get :download_tasks_csv
     end
+    
+    # Nested banking types for many-to-many management
+    resources :banking_types do
+      collection do
+        post :add_existing
+      end
+      member do
+        delete :remove
+      end
+    end
+    
     resources :tasks do
       member do
         post :assign_user

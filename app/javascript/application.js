@@ -7,12 +7,11 @@ import 'controllers';
 import 'trix';
 import '@rails/actiontext';
 
+// Configuration files (not Stimulus controllers)
+import 'config/groupware';
+import 'config/trix_custom_formatting';
+
 /* import './controllers/ckeditor_init' */
 
-//= require rails-ujs
-//= require turbolinks
-//= require_tree .
-//= require 'chartkick'
-//= require 'chart.js'
-// import "./channels"
-//= require 'trix_custom_formatting_controller.js'
+// Channels
+// import "channels"

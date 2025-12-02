@@ -17,6 +17,11 @@ class Product < ApplicationRecord
   has_one_attached :image
   has_many :defects, dependent: :nullify
   has_many :defect_filters, dependent: :nullify
+
+  # Many-to-many relationship with banking types
+  has_and_belongs_to_many :banking_types,
+                          join_table: :banking_types_products
+
   before_create :set_default_status
 
   has_rich_text :content
@@ -30,6 +35,10 @@ class Product < ApplicationRecord
 
   scope :with_quality_assurance_status, lambda {
     joins(:statuses).where(statuses: { name: 'Quality Assurance' }).distinct
+  }
+
+  scope :qa_projects, lambda {
+    joins(:statuses).where(statuses: { name: ['Pre Quality Assurance', 'Post Quality Assurance'] }).distinct
   }
 
   scope :active, -> { where(archive_status: false) }

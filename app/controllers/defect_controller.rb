@@ -165,7 +165,7 @@ class DefectController < ApplicationController
 
         # If we get here, the column exists - load banking types
         @banking_types = if @selected_product_ids.any?
-                           BankingType.where(product_id: @selected_product_ids)
+                           BankingType.for_product(@selected_product_ids)
                              .distinct
                              .order(:name)
                          else
@@ -196,17 +196,6 @@ class DefectController < ApplicationController
   end
 
   def index_show
-    # Debug logging to see what filters are being sent
-    Rails.logger.info '===== DEFECT FILTERS DEBUG ====='
-    Rails.logger.info "Status: #{params[:status].inspect}"
-    Rails.logger.info "Priority: #{params[:priority].inspect}"
-    Rails.logger.info "Assignee (user_id): #{params[:user_id].inspect}"
-    Rails.logger.info "Reporter (reporter_id): #{params[:reporter_id].inspect}"
-    Rails.logger.info "Labels: #{params[:label_ids].inspect}"
-    Rails.logger.info "Module: #{params[:qa_module_id].inspect}"
-    Rails.logger.info "Submodule: #{params[:submodule_id].inspect}"
-    Rails.logger.info '================================='
-
     # Base scope - use safe includes that won't break if columns don't exist
     @defects = Defect.published
       .includes(:users, :labels, :statuses, product: %i[client groupwares])
@@ -254,10 +243,16 @@ class DefectController < ApplicationController
       Rails.logger.info "After status filter: #{@defects.except(:distinct).distinct.count} defects"
     end
 
-    # FIXED: Priority filter (multiple checkboxes -> priority[])
+    # Priority filter (multiple checkboxes -> priority[]) - CASE INSENSITIVE
     selected_priorities = Array(params[:priority]).reject(&:blank?)
     if selected_priorities.any?
-      @defects = @defects.where(defects: { priority: selected_priorities })
+      # Build case-insensitive conditions for each priority
+      priority_conditions = selected_priorities.map do |_priority|
+        'LOWER(defects.priority) = LOWER(?)'
+      end
+
+      # Use OR conditions to match any of the selected priorities
+      @defects = @defects.where(priority_conditions.join(' OR '), *selected_priorities)
       Rails.logger.info "After priority filter: #{@defects.except(:distinct).distinct.count} defects"
     end
 
@@ -427,7 +422,7 @@ class DefectController < ApplicationController
       .select(:id))
       .order(:name)
 
-    # FIXED: Scope QA modules directly to selected products for consistency
+    # Scope QA modules directly to selected products for consistency
     @qa_modules = if product_ids.any?
                     QaModule.where(product_id: product_ids, parent_id: nil)
                       .distinct
@@ -474,9 +469,9 @@ class DefectController < ApplicationController
                     QaModule.where(id: all_submodule_ids).order(:name)
                   end
 
-    # FIXED: Scope banking types directly to selected products for consistency
+    # Scope banking types directly to selected products for consistency
     @banking_types = if product_ids.any?
-                       BankingType.where(product_id: product_ids)
+                       BankingType.for_product(product_ids)
                          .distinct
                          .order(:name)
                      else
@@ -547,7 +542,15 @@ class DefectController < ApplicationController
     # Attachment paginations
     @attachments_per_page = 6
     @attachments_page = (params[:attachments_page] || 1).to_i
-    all_attachments = @defect.all_attachments.sort_by(&:created_at).reverse
+    all_attachments = @defect.all_attachments.sort_by do |a|
+      if a.respond_to?(:created_at)
+        a.created_at
+      elsif a.respond_to?(:attachable) && a.attachable.respond_to?(:created_at)
+        a.attachable.created_at
+      else
+        Time.current
+      end
+    end.reverse
     @attachments_total = all_attachments.size
     @attachments_total_pages = (@attachments_total / @attachments_per_page.to_f).ceil
 
@@ -685,13 +688,6 @@ class DefectController < ApplicationController
   def edit
     @defect = Defect.find(params[:id])
 
-    # Load banking types scoped to the defect's product
-    @banking_types = if @defect.product_id.present?
-                       BankingType.where(product_id: @defect.product_id).order(:name)
-                     else
-                       BankingType.all.order(:name)
-                     end
-
     @products = Product.with_quality_assurance_status
 
     # QA users (get their IDs)
@@ -710,7 +706,15 @@ class DefectController < ApplicationController
       .distinct
       .order(:first_name, :last_name)
 
-    # Use set_form_data to load statuses, modules, etc. consistently with new action
+    # Set selected product from defect (same pattern as new action)
+    # This ensures banking types are loaded correctly
+    @selected_product = if params[:product_id].present?
+                          Product.find_by(id: params[:product_id])
+                        elsif @defect.product_id.present?
+                          @defect.product
+                        end
+
+    # Use set_form_data to load statuses, modules, banking types, etc. consistently with new action
     set_form_data
 
     # Dropdown options for product selection
@@ -732,6 +736,13 @@ class DefectController < ApplicationController
                     QaModule.where(parent_id: nil).order(:name)
                   end
 
+    # Explicitly load banking types for the defect's product (fixes missing banking types in edit form)
+    @banking_types = if @defect.product_id.present?
+                       BankingType.for_product(@defect.product_id).order(:name)
+                     else
+                       BankingType.all.order(:name)
+                     end
+
     @submodules = if @defect.qa_module
                     # Select only id + name and make the result distinct (and ordered)
                     @defect.qa_module.submodules.select(:id, :name).distinct.order(:name)
@@ -749,15 +760,13 @@ class DefectController < ApplicationController
     audit_on_update(@defect)
 
     selected_user_ids = params[:defect][:user_ids]
-    
+
     # Check if this is a "Save as Draft" or "Publish" action
     is_draft_save = params[:commit] == 'draft'
     is_publish = params[:commit] == 'publish'
 
     # If publishing a draft, set draft to false before update
-    if is_publish && @defect.draft?
-      @defect.draft = false
-    end
+    @defect.draft = false if is_publish && @defect.draft?
 
     if @defect.update(defect_params.except(:attachments))
       # Attach new files without removing old ones
@@ -809,7 +818,6 @@ class DefectController < ApplicationController
         .event('defect.soft_delete')
         .log("Soft-deleted Defect ##{@defect.id}")
       UserMailer.defect_deleted_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
-      redirect_to index_show_defect_index_path(product_id: @defect.product_id), notice: 'Defect was successfully deleted.'
     else
       @defect.destroy
       activity('user_activity')
@@ -817,8 +825,8 @@ class DefectController < ApplicationController
         .performed_on(@defect)
         .event('defect.hard_delete')
         .log("Hard-deleted Defect ##{@defect.id}")
-      redirect_to index_show_defect_index_path(product_id: @defect.product_id), notice: 'Defect was successfully deleted.'
     end
+    redirect_to index_show_defect_index_path(product_id: @defect.product_id), notice: 'Defect was successfully deleted.'
   end
 
   # add a user to the defect
@@ -1570,7 +1578,7 @@ class DefectController < ApplicationController
   rescue ActiveRecord::RecordNotFound
     respond_to do |format|
       format.json { render json: { error: 'File or defect not found' }, status: :not_found }
-      format.turbo_stream { render turbo_stream: turbo_stream.replace("flash", partial: "layouts/flash", locals: { alert: 'File or defect not found.' }) }
+      format.turbo_stream { render turbo_stream: turbo_stream.replace('flash', partial: 'layouts/flash', locals: { alert: 'File or defect not found.' }) }
       format.js { render js: "alert('File or defect not found.');" }
       format.html { redirect_to defects_path, alert: 'File or defect not found.' }
     end
@@ -1628,7 +1636,12 @@ class DefectController < ApplicationController
 
   def set_form_data
     # selected product if provided in params (used to scope modules/banking types)
-    @selected_product = (Product.find_by(id: params[:product_id]) if params[:product_id].present?)
+    # Also use @defect.product if we're editing a defect
+    @selected_product = if params[:product_id].present?
+                          Product.find_by(id: params[:product_id])
+                        elsif defined?(@defect) && @defect&.product_id.present?
+                          @defect.product
+                        end
 
     # QA modules (parent modules) - scoped to selected product if present
     @qa_modules = if @selected_product
@@ -1639,7 +1652,7 @@ class DefectController < ApplicationController
 
     # banking types scoped to selected product (so UI can show only product banking types)
     @banking_types = if @selected_product
-                       BankingType.where(product_id: @selected_product.id).order(:name)
+                       BankingType.for_product(@selected_product.id)
                      else
                        []
                      end

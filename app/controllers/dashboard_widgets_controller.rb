@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class DashboardWidgetsController < ApplicationController
   before_action :authenticate_user!
   before_action :set_dashboard, only: %i[show edit update destroy refresh]
