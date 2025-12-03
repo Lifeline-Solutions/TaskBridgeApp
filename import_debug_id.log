@@ -1,0 +1,211 @@
+DEBUG: Parsed projects from command line: ["ISP"]
+DEBUG: Cleaned project list: ["ISP"]
+Starting direct Jira import with modules for project(s): ISP (dry_run: false)
+Discovering custom fields...
+Found Module field: customfield_10232 - Imarisha Mobile Banking Modules
+Found Submodule field: customfield_10233 - Imarisha Mobile Banking Modules/Sub-Modules
+Found Module field: customfield_10064 - Modules(s) Affected
+Found Submodule field: customfield_10464 - Imarisha  ERP Modules / Sub-Modules
+Found Module field: customfield_10465 - Imarisha  ERP Modules
+Found Module field: customfield_10103 - Module
+Found Submodule field: customfield_10163 - KCBL Modules/Submodules
+Found Module field: customfield_10164 - KCBL Modules
+Found Module field: customfield_10430 - Rafiki Modules
+Found Submodule field: customfield_10397 - NCBA Modules / Sub-Modules
+Found Submodule field: customfield_10431 - Rafiki Modules /Sub Modules
+Found Submodule field: customfield_10156 - Sofia Modules_Submodules
+Found Module field: customfield_10398 - NCBA Modules
+Found Module field: customfield_10140 - Module - AML
+Found Banking Type field: customfield_10141 - BankingType
+Found Module field: customfield_10265 - Imarisha Internet Banking Modules
+Found Submodule field: customfield_10266 - Imarisha Internet Banking Modules/Sub-Modules
+Found Module field: customfield_10267 - Imarisha Agency Banking Modules
+Found Submodule field: customfield_10268 - Imarisha Agency Banking Modules/Sub-Modules
+Found Module field: customfield_10137 - Module 2 - Admin Portal Features
+Found Submodule field: customfield_10533 - Imarisha Audit Modules / Sub-Modules
+Found Module field: customfield_10532 - Imarisha Audit Modules
+Found Module field: customfield_10136 - Module  - SC Juza
+Found Submodule field: customfield_10365 - Kenya Police Modules / Sub-Modules
+Found Module field: customfield_10366 - Kenya Police Modules
+Fetching Jira issues with JQL: project = ISP AND issuetype = Bug AND cf[10141] = "ERP"
+Projects: ISP
+DEBUG: Project keys received: ["ISP"]
+DEBUG: Full JQL: project = ISP AND issuetype = Bug AND cf[10141] = "ERP"
+Page 1: Requesting with nextPageToken=nil
+✓ Page 1: Fetched 100 issues (total collected: 100) [isLast: false, hasNextToken: YES]
+Page 2: Requesting with nextPageToken=ChkjU3RyaW5nJlNWTlElS...
+✓ Page 2: Fetched 100 issues (total collected: 200) [isLast: false, hasNextToken: YES]
+Page 3: Requesting with nextPageToken=ChkjU3RyaW5nJlNWTlElS...
+✓ Page 3: Fetched 100 issues (total collected: 300) [isLast: false, hasNextToken: YES]
+Page 4: Requesting with nextPageToken=ChkjU3RyaW5nJlNWTlElS...
+✓ Page 4: Fetched 100 issues (total collected: 400) [isLast: false, hasNextToken: YES]
+Page 5: Requesting with nextPageToken=ChkjU3RyaW5nJlNWTlElS...
+✓ Page 5: Fetched 40 issues (total collected: 440) [isLast: true, hasNextToken: NO]
+✓ Jira indicates last page (isLast: true) - pagination complete
+📊 Total issues fetched from Jira: 440 (across 5 pages)
+Successfully fetched 440 issues from Jira across 1 project(s)
+Using custom fields - Module: customfield_10366, Submodule: customfield_10365, Banking Type: customfield_10141
+
+Issues per project:
+  - ISP: 440 issue(s)
+Processing issue 1/440: ISP-1990
+[DEBUG-LABELS] Total labels found for ISP-1990: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'To Do' by name: TO DO -> 26ce9725-f948-4e26-8bfd-5e353e685e59
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+📥 DOWNLOADING ISSUE-LEVEL ATTACHMENTS FOR ISP-1990
+   Total files: 1 (17.83 MB)
+
+   [1/1] ⏭️  SKIP: ISP-1990-Search and Show Entries.mp4 (already attached)
+
+📊 Attachment Summary for ISP-1990:
+   ✅ Uploaded: 0
+   ⏭️  Skipped: 1
+   ❌ Failed: 0
+
+[LABEL] Processing 2 label(s) for ISP-1990
+[LABEL-MATCH] Found existing label 'New_ERP' (stored as 'new_erp') -> a9f0bd31-9bc0-4a7b-90fc-2ed53a305e8d
+[LABEL-SKIP] Label 'new_erp' already attached to ISP-1990
+[LABEL-MATCH] Found existing label 'QA' (stored as 'qa') -> f66526ba-6a94-47b5-8239-f9fae5aa2248
+[LABEL-SKIP] Label 'qa' already attached to ISP-1990
+[LABEL] Completed processing labels for ISP-1990. Total attached: 2
+[DESCRIPTION-VALIDATE] ISP-1990: new_len=371, existing_len=407
+[DESCRIPTION-UPDATE] ISP-1990: Updated description (371 chars)
+  Previous: <div class="trix-content">
+  <p><strong>Actual Result-</strong>In full screen mode and when the side ...
+  Updated: <p><strong>Actual Result-</strong>In full screen mode and when the side bar is restored back, on both...
+Processing issue 2/440: ISP-1989
+[DEBUG-LABELS] Total labels found for ISP-1989: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'To Do' by name: TO DO -> 26ce9725-f948-4e26-8bfd-5e353e685e59
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+📥 DOWNLOADING ISSUE-LEVEL ATTACHMENTS FOR ISP-1989
+   Total files: 1 (9.47 MB)
+
+   [1/1] ⏭️  SKIP: ISP-1989-PO for Tender.mp4 (already attached)
+
+📊 Attachment Summary for ISP-1989:
+   ✅ Uploaded: 0
+   ⏭️  Skipped: 1
+   ❌ Failed: 0
+
+[LABEL] Processing 2 label(s) for ISP-1989
+[LABEL-MATCH] Found existing label 'New_ERP' (stored as 'new_erp') -> a9f0bd31-9bc0-4a7b-90fc-2ed53a305e8d
+[LABEL-SKIP] Label 'new_erp' already attached to ISP-1989
+[LABEL-MATCH] Found existing label 'QA' (stored as 'qa') -> f66526ba-6a94-47b5-8239-f9fae5aa2248
+[LABEL-SKIP] Label 'qa' already attached to ISP-1989
+[LABEL] Completed processing labels for ISP-1989. Total attached: 2
+[DESCRIPTION-VALIDATE] ISP-1989: new_len=354, existing_len=367
+[DESCRIPTION-UPDATE] ISP-1989: Updated description (354 chars)
+  Previous: <div class="trix-content">
+  <p><strong>Actual Result-</strong><span>Tender no. dropdown is displayed...
+  Updated: <p><strong>Actual Result-</strong><span style="color: #ff5630">Tender no. dropdown is displayed as bl...
+Processing issue 3/440: ISP-1988
+[DEBUG-LABELS] Total labels found for ISP-1988: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+📥 DOWNLOADING ISSUE-LEVEL ATTACHMENTS FOR ISP-1988
+   Total files: 1 (21.9 MB)
+
+   [1/1] ⏭️  SKIP: ISP-1988-Tender based on Proc plan.mp4 (already attached)
+
+📊 Attachment Summary for ISP-1988:
+   ✅ Uploaded: 0
+   ⏭️  Skipped: 1
+   ❌ Failed: 0
+
+[LABEL] Processing 2 label(s) for ISP-1988
+[LABEL-MATCH] Found existing label 'New_ERP' (stored as 'new_erp') -> a9f0bd31-9bc0-4a7b-90fc-2ed53a305e8d
+[LABEL-SKIP] Label 'new_erp' already attached to ISP-1988
+[LABEL-MATCH] Found existing label 'QA' (stored as 'qa') -> f66526ba-6a94-47b5-8239-f9fae5aa2248
+[LABEL-SKIP] Label 'qa' already attached to ISP-1988
+[LABEL] Completed processing labels for ISP-1988. Total attached: 2
+[DESCRIPTION-VALIDATE] ISP-1988: new_len=79, existing_len=115
+[DESCRIPTION-UPDATE] ISP-1988: Updated description (79 chars)
+  Previous: <div class="trix-content">
+  <p><strong>Actual Result-</strong></p>
+<p><strong>Expected Result-</stro...
+Processing issue 4/440: ISP-1979
+[DEBUG-LABELS] Total labels found for ISP-1979: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+📥 DOWNLOADING ISSUE-LEVEL ATTACHMENTS FOR ISP-1979
+   Total files: 1 (21.34 MB)
+
+   [1/1] 📥 Downloading: ISP-1979, 1978-Tender details.mp4 (21.34 MB)
+  Attempt 1/5: Downloading from https://craftsilicon.atlassian.net/rest/api/3/attachment/content/130216...
+  Following redirect 1/6 to: https://api.media.atlassian.com/file/e05414be-f676-4be8-becd-00f2c7d6b76f/binary?token=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiN...
+  Attempt 1/5: Downloading from https://api.media.atlassian.com/file/e05414be-f676-4be8-becd-00f2c7d6b76f/binary?token=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiN...
+  📊 Downloaded 10.0/21.34 MB...
+  📊 Downloaded 20.0/21.34 MB...
+  ✅ Downloaded 22378248 bytes successfully
+[1;34mINFO [0m 2025-12-02T23:32:19.580Z pid=3237317 tid=1xh61: Sidekiq 8.0.8 connecting to Redis with options {:size=>10, :pool_name=>"internal", :url=>"redis://:REDACTED@localhost:6379/0"}
+/home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:1626:in `each_char': Interrupt
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:1626:in `each'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:1626:in `each_slice'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:1626:in `block in fetch_and_attach_attachments'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:1514:in `each'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:1514:in `each_with_index'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:1514:in `fetch_and_attach_attachments'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:2461:in `import_issue_with_modules'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:2565:in `block in <main>'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:2560:in `each'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:2560:in `each_with_index'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:2560:in `<main>'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/commands/runner/runner_command.rb:44:in `load'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/commands/runner/runner_command.rb:44:in `block in perform'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/activesupport-7.2.2.2/lib/active_support/execution_wrapper.rb:91:in `wrap'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/commands/runner/runner_command.rb:70:in `conditional_executor'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/commands/runner/runner_command.rb:43:in `perform'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/thor-1.4.0/lib/thor/command.rb:28:in `run'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/thor-1.4.0/lib/thor/invocation.rb:127:in `invoke_command'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/command/base.rb:178:in `invoke_command'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/thor-1.4.0/lib/thor.rb:538:in `dispatch'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/command/base.rb:73:in `perform'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/command.rb:71:in `block in invoke'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/command.rb:149:in `with_argv'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/command.rb:69:in `invoke'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/commands.rb:18:in `<main>'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/3.3.0/bundled_gems.rb:75:in `require'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/3.3.0/bundled_gems.rb:75:in `block (2 levels) in replace_require'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/bootsnap-1.18.6/lib/bootsnap/load_path_cache/core_ext/kernel_require.rb:30:in `require'
+	from bin/rails:4:in `<main>'
+   ✅ Successfully attached: ISP-1979, 1978-Tender details.mp4 (verified in storage)
+  Attached ISP-1979, 1978-Tender details.mp4 to defect ISP-1979 (service_exists=true)
+
+📊 Attachment Summary for ISP-1979:
+   ✅ Uploaded: 1
+   ⏭️  Skipped: 0
+   ❌ Failed: 0
+
+[LABEL] Processing 2 label(s) for ISP-1979
+[LABEL-MATCH] Found existing label 'New_ERP' (stored as 'new_erp') -> a9f0bd31-9bc0-4a7b-90fc-2ed53a305e8d
+[LABEL-ATTACH] Successfully attached label 'new_erp' (ID: a9f0bd31-9bc0-4a7b-90fc-2ed53a305e8d) to ISP-1979
+[LABEL-MATCH] Found existing label 'QA' (stored as 'qa') -> f66526ba-6a94-47b5-8239-f9fae5aa2248
+[LABEL-ATTACH] Successfully attached label 'qa' (ID: f66526ba-6a94-47b5-8239-f9fae5aa2248) to ISP-1979
+[LABEL] Completed processing labels for ISP-1979. Total attached: 2
+[DESCRIPTION-VALIDATE] ISP-1979: new_len=332, existing_len=345
+[DESCRIPTION-UPDATE] ISP-1979: Updated description (332 chars)
+  Previous: <div class="trix-content">
+  <p><strong>Actual Result-</strong><span>Items in this Tender section are...
+  Updated: <p><strong>Actual Result-</strong><span style="color: #ff5630">Items in this Tender section are displ...
+Processing issue 5/440: ISP-1978
+[DEBUG-LABELS] Total labels found for ISP-1978: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+📥 DOWNLOADING ISSUE-LEVEL ATTACHMENTS FOR ISP-1978
+   Total files: 1 (21.34 MB)
+
+   [1/1] 📥 Downloading: ISP-1978-Tender details.mp4 (21.34 MB)
+  Attempt 1/5: Downloading from https://craftsilicon.atlassian.net/rest/api/3/attachment/content/130215...
+  Following redirect 1/6 to: https://api.media.atlassian.com/file/93523a22-dcd3-4480-8eea-08827b9d038f/binary?token=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiN...
+  Attempt 1/5: Downloading from https://api.media.atlassian.com/file/93523a22-dcd3-4480-8eea-08827b9d038f/binary?token=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiN...
+  📊 Downloaded 10.0/21.34 MB...

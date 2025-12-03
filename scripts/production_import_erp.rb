@@ -14,26 +14,26 @@ APP_ROOT = Rails.root
 
 options = {
   dry_run: false,
-  verbose: false,
-  projects: [],
-  days_back: 2000
+  verbose: true, # Default to verbose for production monitoring
+  projects: ['ISP'],
+  days_back: 2000,
+  custom_jql: 'project = ISP AND labels = QA AND issuetype = Bug AND status IN ("Awaiting Build", "Awaiting client API", "Awaiting Client Information", BLOCKED, Failed-QA, "In Progress", On-Hold, "QA Testing", Reopened, Resolved, "Support Testing", "To Do", Closed) AND cf[10141] = "ERP" ORDER BY created DESC'
 }
 
 OptionParser.new do |opts|
-  opts.banner = 'Usage: rails runner scripts/import_jira_with_modules.rb --project PROJECT_KEY [options]'
+  opts.banner = 'Usage: rails runner scripts/production_import_erp.rb [options]'
 
-  opts.on('--project KEY1,KEY2,...', Array, 'Jira project key(s) (e.g. PSP or PSP,KCBL,FLOW)') { |v| options[:projects] = v }
-  opts.on('--jql JQL', 'Custom JQL query (overrides project/days logic)') { |v| options[:custom_jql] = v }
+  opts.on('--project KEY1,KEY2,...', Array, 'Override Jira project key(s)') { |v| options[:projects] = v }
+  opts.on('--jql JQL', 'Override Custom JQL query') { |v| options[:custom_jql] = v }
   opts.on('--dry-run', "Don't save; only show what would happen") { options[:dry_run] = true }
   opts.on('--verbose', 'Verbose logging') { options[:verbose] = true }
   opts.on('--days N', Integer, 'How many days back to fetch (default 2000)') { |v| options[:days_back] = v }
 end.parse!
 
+# Project check removed as we have a default
 if options[:projects].empty?
-  puts 'ERROR: --project is required. Examples:'
-  puts '  Single project:   --project PSP'
-  puts '  Multiple projects: --project PSP,KCBL,FLOW'
-  exit 1
+  puts 'WARNING: No projects specified, defaulting to ISP.'
+  options[:projects] = ['ISP']
 end
 
 config_path = APP_ROOT.join('config', 'jira_import.yml')

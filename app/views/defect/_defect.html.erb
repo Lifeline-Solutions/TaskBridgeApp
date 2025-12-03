@@ -49,21 +49,54 @@
 <% end %>
 
 <% if @qa_products.present? %>
-  <div class="flex gap-10 mt-5">
+  <div class="flex gap-3 mt-5 items-center">
     <!-- Pagination Controls -->
-    <div class="pagination">
+    <div class="flex gap-3 items-center">
+      <!-- First Page Button -->
+      <% if @page > 1 %>
+        <%= link_to 'First',
+                    defect_index_path(page: 1, query: params[:query], status: params[:status]),
+                    class: 'h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] px-4 py-3 rounded font-bold text-slate-100' %>
+      <% else %>
+        <button disabled class="h-12 bg-gray-300 dark:bg-gray-600 px-4 py-3 rounded font-bold text-gray-500 dark:text-gray-400 cursor-not-allowed">
+          First
+        </button>
+      <% end %>
+
+      <!-- Previous Page Button -->
       <% if @page > 1 %>
         <%= link_to 'Previous',
                     defect_index_path(page: @page - 1, query: params[:query], status: params[:status]),
-                    class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
+                    class: 'h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] px-4 py-3 rounded font-bold text-slate-100' %>
+      <% else %>
+        <button disabled class="h-12 bg-gray-300 dark:bg-gray-600 px-4 py-3 rounded font-bold text-gray-500 dark:text-gray-400 cursor-not-allowed">
+          Previous
+        </button>
       <% end %>
 
-      <span>Page <%= @page %> of <%= @total_pages %></span>
+      <!-- Page Info -->
+      <span class="px-3 text-gray-700 dark:text-gray-300 font-semibold">Page <%= @page %> of <%= @total_pages %></span>
 
+      <!-- Next Page Button -->
       <% if @page < @total_pages %>
         <%= link_to 'Next',
                     defect_index_path(page: @page + 1, query: params[:query], status: params[:status]),
-                    class: 'mb-4 h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] p-3 rounded font-bold rounded-lg text-slate-100' %>
+                    class: 'h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] px-4 py-3 rounded font-bold text-slate-100' %>
+      <% else %>
+        <button disabled class="h-12 bg-gray-300 dark:bg-gray-600 px-4 py-3 rounded font-bold text-gray-500 dark:text-gray-400 cursor-not-allowed">
+          Next
+        </button>
+      <% end %>
+
+      <!-- Last Page Button -->
+      <% if @page < @total_pages %>
+        <%= link_to 'Last',
+                    defect_index_path(page: @total_pages, query: params[:query], status: params[:status]),
+                    class: 'h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] px-4 py-3 rounded font-bold text-slate-100' %>
+      <% else %>
+        <button disabled class="h-12 bg-gray-300 dark:bg-gray-600 px-4 py-3 rounded font-bold text-gray-500 dark:text-gray-400 cursor-not-allowed">
+          Last
+        </button>
       <% end %>
     </div>
   </div>

@@ -1,0 +1,78 @@
+/home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/net-http-0.6.0/lib/net/http.rb:1665:in `initialize': Failed to open TCP connection to craftsilicon.atlassian.net:443 (getaddrinfo: Name or service not known) (Socket::ResolutionError)
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/net-http-0.6.0/lib/net/http.rb:1665:in `open'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/net-http-0.6.0/lib/net/http.rb:1665:in `block in connect'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/timeout-0.4.3/lib/timeout.rb:185:in `block in timeout'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/timeout-0.4.3/lib/timeout.rb:192:in `timeout'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/net-http-0.6.0/lib/net/http.rb:1663:in `connect'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/net-http-0.6.0/lib/net/http.rb:1642:in `do_start'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/net-http-0.6.0/lib/net/http.rb:1631:in `start'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/net-http-0.6.0/lib/net/http.rb:2375:in `request'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/sentry-ruby-6.0.0/lib/sentry/net/http.rb:34:in `request'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:247:in `block in fetch_jira_issues_with_modules'
+	from <internal:kernel>:187:in `loop'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:216:in `fetch_jira_issues_with_modules'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:2518:in `<main>'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/commands/runner/runner_command.rb:44:in `load'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/commands/runner/runner_command.rb:44:in `block in perform'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/activesupport-7.2.2.2/lib/active_support/execution_wrapper.rb:91:in `wrap'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/commands/runner/runner_command.rb:70:in `conditional_executor'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/commands/runner/runner_command.rb:43:in `perform'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/thor-1.4.0/lib/thor/command.rb:28:in `run'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/thor-1.4.0/lib/thor/invocation.rb:127:in `invoke_command'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/command/base.rb:178:in `invoke_command'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/thor-1.4.0/lib/thor.rb:538:in `dispatch'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/command/base.rb:73:in `perform'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/command.rb:71:in `block in invoke'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/command.rb:149:in `with_argv'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/command.rb:69:in `invoke'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/commands.rb:18:in `<main>'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/3.3.0/bundled_gems.rb:75:in `require'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/3.3.0/bundled_gems.rb:75:in `block (2 levels) in replace_require'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/bootsnap-1.18.6/lib/bootsnap/load_path_cache/core_ext/kernel_require.rb:30:in `require'
+	from bin/rails:4:in `<main>'
+/home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/net-http-0.6.0/lib/net/http.rb:1665:in `initialize': getaddrinfo: Name or service not known (Socket::ResolutionError)
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/net-http-0.6.0/lib/net/http.rb:1665:in `open'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/net-http-0.6.0/lib/net/http.rb:1665:in `block in connect'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/timeout-0.4.3/lib/timeout.rb:185:in `block in timeout'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/timeout-0.4.3/lib/timeout.rb:192:in `timeout'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/net-http-0.6.0/lib/net/http.rb:1663:in `connect'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/net-http-0.6.0/lib/net/http.rb:1642:in `do_start'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/net-http-0.6.0/lib/net/http.rb:1631:in `start'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/net-http-0.6.0/lib/net/http.rb:2375:in `request'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/sentry-ruby-6.0.0/lib/sentry/net/http.rb:34:in `request'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:247:in `block in fetch_jira_issues_with_modules'
+	from <internal:kernel>:187:in `loop'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:216:in `fetch_jira_issues_with_modules'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:2518:in `<main>'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/commands/runner/runner_command.rb:44:in `load'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/commands/runner/runner_command.rb:44:in `block in perform'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/activesupport-7.2.2.2/lib/active_support/execution_wrapper.rb:91:in `wrap'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/commands/runner/runner_command.rb:70:in `conditional_executor'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/commands/runner/runner_command.rb:43:in `perform'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/thor-1.4.0/lib/thor/command.rb:28:in `run'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/thor-1.4.0/lib/thor/invocation.rb:127:in `invoke_command'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/command/base.rb:178:in `invoke_command'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/thor-1.4.0/lib/thor.rb:538:in `dispatch'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/command/base.rb:73:in `perform'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/command.rb:71:in `block in invoke'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/command.rb:149:in `with_argv'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/command.rb:69:in `invoke'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/commands.rb:18:in `<main>'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/3.3.0/bundled_gems.rb:75:in `require'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/3.3.0/bundled_gems.rb:75:in `block (2 levels) in replace_require'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/bootsnap-1.18.6/lib/bootsnap/load_path_cache/core_ext/kernel_require.rb:30:in `require'
+	from bin/rails:4:in `<main>'
+DEBUG: Parsed projects from command line: ["ISP"]
+DEBUG: Cleaned project list: ["ISP"]
+Starting direct Jira import with modules for project(s): ISP (dry_run: false)
+Discovering custom fields...
+Found Module field: customfield_10232 - Imarisha Mobile Banking Modules
+Found Submodule field: customfield_10233 - Imarisha Mobile Banking Modules/Sub-Modules
+Found TARGET Submodule field: customfield_10464 - Imarisha  ERP Modules / Sub-Modules
+Found TARGET Module field: customfield_10465 - Imarisha  ERP Modules
+Found Banking Type field: customfield_10141 - BankingType
+Fetching Jira issues with JQL: project = ISP AND labels = QA AND issuetype = Bug AND status IN ("Awaiting Build", "Awaiting client API", "Awaiting Client Information", BLOCKED, Failed-QA, "In Progress", On-Hold, "QA Testing", Reopened, Resolved, "Support Testing", "To Do", Closed) AND cf[10141] = "ERP" ORDER BY created DESC
+Projects: ISP
+DEBUG: Project keys received: ["ISP"]
+DEBUG: Full JQL: project = ISP AND labels = QA AND issuetype = Bug AND status IN ("Awaiting Build", "Awaiting client API", "Awaiting Client Information", BLOCKED, Failed-QA, "In Progress", On-Hold, "QA Testing", Reopened, Resolved, "Support Testing", "To Do", Closed) AND cf[10141] = "ERP" ORDER BY created DESC
+Page 1: Requesting with nextPageToken=nil

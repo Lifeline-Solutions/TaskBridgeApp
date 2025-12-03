@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
-# scripts/import_jira_with_modules.rb
+# scripts/production_import_audit.rb
+
 
 require 'net/http'
 require 'uri'
@@ -14,26 +15,79 @@ APP_ROOT = Rails.root
 
 options = {
   dry_run: false,
-  verbose: false,
-  projects: [],
-  days_back: 2000
+  verbose: true,
+  projects: ['ISP'],
+  days_back: 2000,
+  custom_jql: 'project = ISP AND labels = QA AND issuetype = Bug AND status IN ("Awaiting Build", "Awaiting client API", "Awaiting Client Information", BLOCKED, Failed-QA, "In Progress", On-Hold, "QA Testing", Reopened, Resolved, "Support Testing", "To Do", Closed) AND cf[10141] = "Audit" ORDER BY created DESC'
 }
 
 OptionParser.new do |opts|
-  opts.banner = 'Usage: rails runner scripts/import_jira_with_modules.rb --project PROJECT_KEY [options]'
+  opts.banner = 'Usage: rails runner scripts/production_import_audit.rb [options]'
 
-  opts.on('--project KEY1,KEY2,...', Array, 'Jira project key(s) (e.g. PSP or PSP,KCBL,FLOW)') { |v| options[:projects] = v }
-  opts.on('--jql JQL', 'Custom JQL query (overrides project/days logic)') { |v| options[:custom_jql] = v }
+  opts.on('--project KEY1,KEY2,...', Array, 'Override Jira project key(s)') { |v| options[:projects] = v }
+  opts.on('--jql JQL', 'Override Custom JQL query') { |v| options[:custom_jql] = v }
   opts.on('--dry-run', "Don't save; only show what would happen") { options[:dry_run] = true }
   opts.on('--verbose', 'Verbose logging') { options[:verbose] = true }
   opts.on('--days N', Integer, 'How many days back to fetch (default 2000)') { |v| options[:days_back] = v }
 end.parse!
 
+# Project check removed as we have a default
 if options[:projects].empty?
-  puts 'ERROR: --project is required. Examples:'
-  puts '  Single project:   --project PSP'
-  puts '  Multiple projects: --project PSP,KCBL,FLOW'
-  exit 1
+  puts 'WARNING: No projects specified, defaulting to ISP.'
+  options[:projects] = ['ISP']
+end
+
+# ... (rest of the file)
+
+# ===============================
+# CUSTOM FIELD DISCOVERY
+# ===============================
+def discover_custom_fields
+  url = "#{JIRA_BASE_URL}/rest/api/3/field"
+  uri = URI.parse(url)
+
+  vputs 'Discovering custom fields...'
+
+  http = Net::HTTP.new(uri.host, uri.port)
+  http.use_ssl = true
+  http.read_timeout = 60
+
+  request = Net::HTTP::Get.new(uri.request_uri)
+  request['Accept'] = 'application/json'
+  request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
+
+  response = http.request(request)
+
+  unless response.is_a?(Net::HTTPSuccess)
+    warn "❌ Failed to fetch custom fields: #{response.code} #{response.message}"
+    return [nil, nil, nil]
+  end
+
+  fields = JSON.parse(response.body)
+  module_field = nil
+  submodule_field = nil
+  banking_type_field = nil
+
+  fields.each do |field|
+    name = field['name']&.downcase || ''
+    field_id = field['id']
+
+    # Specific check for Imarisha Audit Modules
+    # Using exact IDs found: customfield_10532 and customfield_10533
+    puts "DEBUG: Checking #{field_id} - #{name}" if name.include?('module')
+    if field_id == 'customfield_10532' || name == 'imarisha audit modules'
+      module_field = field_id
+      vputs "Found AUDIT TARGET Module field: #{field_id} - #{field['name']}"
+    elsif field_id == 'customfield_10533' || name == 'imarisha audit modules / sub-modules'
+      submodule_field = field_id
+      vputs "Found AUDIT TARGET Submodule field: #{field_id} - #{field['name']}"
+    elsif name.include?('banking') && name.include?('type')
+      banking_type_field = field_id
+      vputs "Found Banking Type field: #{field_id} - #{field['name']}"
+    end
+  end
+
+  [module_field, submodule_field, banking_type_field]
 end
 
 config_path = APP_ROOT.join('config', 'jira_import.yml')
@@ -114,62 +168,8 @@ end
 
 info "Starting direct Jira import with modules for project(s): #{project_list.join(', ')} (dry_run: #{options[:dry_run]})"
 
-# ===============================
-# CUSTOM FIELD DISCOVERY
-# ===============================
-def discover_custom_fields
-  url = "#{JIRA_BASE_URL}/rest/api/3/field"
-  uri = URI.parse(url)
+# Duplicate discover_custom_fields removed
 
-  vputs 'Discovering custom fields...'
-
-  http = Net::HTTP.new(uri.host, uri.port)
-  http.use_ssl = true
-  http.read_timeout = 60
-
-  request = Net::HTTP::Get.new(uri.request_uri)
-  request['Accept'] = 'application/json'
-  request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
-
-  response = http.request(request)
-
-  unless response.is_a?(Net::HTTPSuccess)
-    warn "❌ Failed to fetch custom fields: #{response.code} #{response.message}"
-    return nil, nil, nil
-  end
-
-  fields = JSON.parse(response.body)
-
-  module_field = nil
-  submodule_field = nil
-  banking_type_field = nil
-
-  fields.each do |field|
-    name = field['name']&.downcase || ''
-    field_id = field['id']
-
-    # Specific check for Imarisha ERP Modules
-    if name == 'imarisha  erp modules' # Note: double space in name from logs
-      module_field = field_id
-      vputs "Found TARGET Module field: #{field_id} - #{field['name']}"
-    elsif name == 'imarisha  erp modules / sub-modules'
-      submodule_field = field_id
-      vputs "Found TARGET Submodule field: #{field_id} - #{field['name']}"
-    # Fallback to generic discovery if not already found (or keep searching but prioritize above)
-    elsif module_field.nil? && name.include?('module') && !name.include?('sub')
-      module_field = field_id
-      vputs "Found Module field: #{field_id} - #{field['name']}"
-    elsif submodule_field.nil? && (name.include?('submodule') || (name.include?('module') && name.include?('sub')))
-      submodule_field = field_id
-      vputs "Found Submodule field: #{field_id} - #{field['name']}"
-    elsif name.include?('banking') && name.include?('type')
-      banking_type_field = field_id
-      vputs "Found Banking Type field: #{field_id} - #{field['name']}"
-    end
-  end
-
-  [module_field, submodule_field, banking_type_field]
-end
 
 # ===============================
 # JIRA API FETCHER - WITH MODULE FIELDS
@@ -225,7 +225,8 @@ def fetch_jira_issues_with_modules(project_keys:, custom_jql: nil, max_results: 
     query_params = {
       jql: jql_query,
       maxResults: max_results,
-      fields: fields_to_fetch.join(',')
+      fields: fields_to_fetch.join(','),
+      expand: 'changelog'
     }
 
     query_params[:nextPageToken] = next_page_token if next_page_token.present?
@@ -2489,6 +2490,18 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
       end
     rescue StandardError => e
       warn "[WARN] Failed to import comments for #{issue_key}: #{e.class}: #{e.message}"
+    end
+
+    # Import history
+    changelog = issue['changelog'] || {}
+    histories = changelog['histories'] || []
+    begin
+      if %i[created updated].include?(result) && histories.any?
+        vputs "[HISTORY] Importing #{histories.length} history entries for #{issue_key}..." if verbose
+        import_histories_for_defect(saved_defect, histories, verbose: verbose)
+      end
+    rescue StandardError => e
+      warn "[WARN] Failed to import history for #{issue_key}: #{e.class}: #{e.message}"
     end
 
     # Validate and update description
