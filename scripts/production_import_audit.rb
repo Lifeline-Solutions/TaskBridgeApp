@@ -16,7 +16,7 @@ APP_ROOT = Rails.root
 options = {
   dry_run: false,
   verbose: true,
-  projects: ['ISP'],
+  projects: ['ISP2'],
   days_back: 2000,
   custom_jql: 'project = ISP AND labels = QA AND issuetype = Bug AND status IN ("Awaiting Build", "Awaiting client API", "Awaiting Client Information", BLOCKED, Failed-QA, "In Progress", On-Hold, "QA Testing", Reopened, Resolved, "Support Testing", "To Do", Closed) AND cf[10141] = "Audit" ORDER BY created DESC'
 }
