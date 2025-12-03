@@ -23,7 +23,7 @@
             </h2>
             <div class="flex items-center justify-between mt-2">
               <p class="text-sm">
-                Created by: <%= @defect.users.map { |u| [u.first_name, u.last_name].compact.join(" ") }
+                Reporter: <%= @defect.users.map { |u| [u.first_name, u.last_name].compact.join(" ") }
                            .reject(&:blank?)
                            .join(", ")
                            .presence || "Unassigned" %>
