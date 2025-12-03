@@ -23,6 +23,7 @@ OptionParser.new do |opts|
   opts.banner = 'Usage: rails runner scripts/import_jira_with_modules.rb --project PROJECT_KEY [options]'
 
   opts.on('--project KEY1,KEY2,...', Array, 'Jira project key(s) (e.g. PSP or PSP,KCBL,FLOW)') { |v| options[:projects] = v }
+  opts.on('--jql JQL', 'Custom JQL query (overrides project/days logic)') { |v| options[:custom_jql] = v }
   opts.on('--dry-run', "Don't save; only show what would happen") { options[:dry_run] = true }
   opts.on('--verbose', 'Verbose logging') { options[:verbose] = true }
   opts.on('--days N', Integer, 'How many days back to fetch (default 2000)') { |v| options[:days_back] = v }
@@ -147,10 +148,18 @@ def discover_custom_fields
     name = field['name']&.downcase || ''
     field_id = field['id']
 
-    if name.include?('module') && !name.include?('sub')
+    # Specific check for Imarisha ERP Modules
+    if name == 'imarisha  erp modules' # Note: double space in name from logs
+      module_field = field_id
+      vputs "Found TARGET Module field: #{field_id} - #{field['name']}"
+    elsif name == 'imarisha  erp modules / sub-modules'
+      submodule_field = field_id
+      vputs "Found TARGET Submodule field: #{field_id} - #{field['name']}"
+    # Fallback to generic discovery if not already found (or keep searching but prioritize above)
+    elsif module_field.nil? && name.include?('module') && !name.include?('sub')
       module_field = field_id
       vputs "Found Module field: #{field_id} - #{field['name']}"
-    elsif name.include?('submodule') || (name.include?('module') && name.include?('sub'))
+    elsif submodule_field.nil? && (name.include?('submodule') || (name.include?('module') && name.include?('sub')))
       submodule_field = field_id
       vputs "Found Submodule field: #{field_id} - #{field['name']}"
     elsif name.include?('banking') && name.include?('type')
@@ -165,7 +174,7 @@ end
 # ===============================
 # JIRA API FETCHER - WITH MODULE FIELDS
 # ===============================
-def fetch_jira_issues_with_modules(project_keys:, max_results: 100, days_back: 2000)
+def fetch_jira_issues_with_modules(project_keys:, custom_jql: nil, max_results: 100, days_back: 2000)
   # First discover custom fields
   module_field, submodule_field, banking_type_field = discover_custom_fields
 
@@ -177,20 +186,22 @@ def fetch_jira_issues_with_modules(project_keys:, max_results: 100, days_back: 2
   start_date = (Time.now - (days_back * 24 * 60 * 60)).strftime('%Y-%m-%d')
   end_date = Time.now.strftime('%Y-%m-%d')
 
-  # Build JQL for multiple projects using IN operator
-  project_clause = if project_keys.length == 1
-                     "project = \"#{project_keys.first}\""
-                   else
-                     "project IN (#{project_keys.map { |p| "\"#{p}\"" }.join(', ')})"
-                   end
-
-  jql_query = "#{project_clause} AND created >= \"#{start_date}\" ORDER BY created DESC"
+  jql_query = if custom_jql.present?
+                custom_jql
+              else
+                # Build JQL for multiple projects using IN operator
+                project_clause = if project_keys.length == 1
+                                   "project = \"#{project_keys.first}\""
+                                 else
+                                   "project IN (#{project_keys.map { |p| "\"#{p}\"" }.join(', ')})"
+                                 end
+                "#{project_clause} AND created >= \"#{start_date}\" ORDER BY created DESC"
+              end
 
   info "Fetching Jira issues with JQL: #{jql_query}"
-  info "Date range: #{start_date} to #{end_date}"
+  info "Date range: #{start_date} to #{end_date}" unless custom_jql.present?
   info "Projects: #{project_keys.join(', ')}"
   puts "DEBUG: Project keys received: #{project_keys.inspect}"
-  puts "DEBUG: Project clause: #{project_clause}"
   puts "DEBUG: Full JQL: #{jql_query}"
 
   # Build fields list
@@ -231,7 +242,7 @@ def fetch_jira_issues_with_modules(project_keys:, max_results: 100, days_back: 2
     request['Accept'] = 'application/json'
     request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
 
-    vputs "Page #{page_count}: Requesting with nextPageToken=#{next_page_token.present? ? next_page_token[0..20] + '...' : 'nil'}" if $verbose_flag
+    vputs "Page #{page_count}: Requesting with nextPageToken=#{next_page_token.present? ? "#{next_page_token[0..20]}..." : 'nil'}" if $verbose_flag
 
     response = http.request(request)
 
@@ -653,7 +664,7 @@ def attach_labels_to_defect(defect, labels_array, created_by:, verbose: false)
       if defect.labels.exists?(label.id)
         # Update audit fields on the join table record if needed
         join_record = defect.defect_labels.find_by(label_id: label.id)
-        join_record.update_columns(created_by: created_by, modified_by: created_by) if join_record && join_record.respond_to?(:created_by=)
+        join_record.update_columns(created_by: created_by, modified_by: created_by) if join_record.respond_to?(:created_by=)
 
         vputs "[LABEL-ATTACH] Successfully attached label '#{label.name}' (ID: #{label.id}) to #{defect.defect_unique}" if verbose
       elsif verbose
@@ -723,25 +734,46 @@ def find_or_create_banking_type(name, product_id:, created_by:, verbose: false)
   return nil if name.blank?
 
   name_str = name.to_s.strip
+  product = Product.find_by(id: product_id)
+  return nil unless product
 
-  # Try to find existing banking type by name (case-insensitive) and product
-  bt = BankingType.where('lower(name) = ? AND product_id = ?', name_str.downcase, product_id).first
+  # 1. Try to find existing banking type by name (globally)
+  #    We search globally because BankingTypes are now shared across products (M:N)
+  bt = BankingType.where('lower(name) = ?', name_str.downcase).first
+
   if bt
     vputs "[BANKING-MATCH] Found existing banking type '#{name_str}' -> #{bt.id}" if verbose
-    return bt
+  else
+    # 2. Create new banking type if allowed
+    return nil unless CREATE_MISSING_BANKING
+
+    begin
+      # Note: We don't set product_id on creation as it's a legacy field,
+      # but we can set it if the model still requires it.
+      # Based on the model, it seems optional.
+      bt = BankingType.create!(
+        name: name_str,
+        created_by_id: created_by,
+        modified_by_id: created_by
+      )
+      vputs "[BANKING-CREATE] Created new banking type '#{name_str}' -> #{bt.id}" if verbose
+    rescue StandardError => e
+      vputs "[BANKING-ERROR] Failed to create banking type '#{name_str}': #{e.class}: #{e.message}" if verbose
+      return nil
+    end
   end
 
-  # Create new banking type if allowed
-  return nil unless CREATE_MISSING_BANKING
-
-  begin
-    bt = BankingType.create!(name: name_str, product_id: product_id, created_by_id: created_by, modified_by_id: created_by)
-    vputs "[BANKING-CREATE] Created new banking type '#{name_str}' -> #{bt.id}" if verbose
-    bt
-  rescue StandardError => e
-    vputs "[BANKING-ERROR] Failed to create banking type '#{name_str}': #{e.class}: #{e.message}" if verbose
-    nil
+  # 3. Ensure association with the product exists (Many-to-Many)
+  if bt && !bt.products.exists?(product.id)
+    begin
+      bt.products << product
+      vputs "[BANKING-LINK] Linked banking type '#{bt.name}' to product '#{product.document_name}'" if verbose
+    rescue StandardError => e
+      vputs "[BANKING-ERROR] Failed to link banking type '#{bt.name}' to product: #{e.message}" if verbose
+    end
   end
+
+  bt
 end
 
 def find_or_create_modules(module_name:, submodule_name:, product_id:, created_by:)
@@ -1461,7 +1493,7 @@ def import_histories_for_defect(defect, changelog_entries, verbose: false)
     end
   end
 
-  if imported_count > 0
+  if imported_count.positive?
     info "[HISTORY] Imported #{imported_count} history entries for #{defect.defect_unique} (skipped #{skipped_count} duplicates)"
   elsif verbose
     vputs "[HISTORY] No new history entries for #{defect.defect_unique} (#{skipped_count} duplicates skipped)"
@@ -1485,7 +1517,7 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
 
   puts "📥 DOWNLOADING ISSUE-LEVEL ATTACHMENTS FOR #{defect.defect_unique}"
   puts "   Total files: #{total_files} (#{total_size_mb} MB)"
-  puts ""
+  puts ''
 
   attachments_array.each_with_index do |att, idx|
     filename = att['filename'] || att['name'] || 'attachment'
@@ -1529,7 +1561,7 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
           if http.use_ssl?
             http.ssl_version = :TLSv1_2
             http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-            http.ca_file = nil  # Use system CA certs
+            http.ca_file = nil # Use system CA certs
             # Set cipher suites for better compatibility
             http.ciphers = 'HIGH:!aNULL:!eNULL:!EXPORT:!DES:!MD5:!PSK:!RC4'
             http.ssl_timeout = 90
@@ -1574,11 +1606,11 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
           break
         end
 
-        unless resp && resp.is_a?(Net::HTTPSuccess)
+        unless resp.is_a?(Net::HTTPSuccess)
           if resp
             warn "  Failed to download (HTTP #{resp.code}): #{resp.message}"
           else
-            warn "  Failed to download: no successful response"
+            warn '  Failed to download: no successful response'
           end
 
           # Exponential backoff before retry
@@ -1596,7 +1628,7 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
 
         # Write response body in chunks for large files
         bytes_written = 0
-        chunk_size = 1024 * 1024  # 1MB chunks
+        chunk_size = 1024 * 1024 # 1MB chunks
 
         if resp.body
           resp.body.each_char.each_slice(chunk_size) do |chunk|
@@ -1650,7 +1682,6 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
         end
 
         vputs "  Attached #{filename} to defect #{defect.defect_unique} (service_exists=#{exists})" if verbose
-
       rescue OpenSSL::SSL::SSLError => e
         warn "  SSL Error on attempt #{download_attempt}/#{max_download_retries}: #{e.message}"
         warn "  Details: #{e.class}"
@@ -1675,7 +1706,6 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
           warn "  ❌ FAILED after #{max_download_retries} attempts (connection error)"
           stats[:failed] += 1
         end
-
       rescue StandardError => e
         warn "  Error on attempt #{download_attempt}/#{max_download_retries}: #{e.class}: #{e.message}"
         warn "  Backtrace: #{e.backtrace[0..2].join("\n           ")}" if verbose
@@ -1688,7 +1718,6 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
           warn "  ❌ FAILED after #{max_download_retries} attempts"
           stats[:failed] += 1
         end
-
       ensure
         # cleanup tempfile
         if tf
@@ -1703,18 +1732,17 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
 
     # Pause between downloads to avoid overwhelming the server
     sleep 1.5 if download_success
-
   rescue StandardError => e
     warn "Outer error attaching file #{att.inspect} to #{defect.defect_unique}: #{e.class}: #{e.message}"
     stats[:failed] += 1
   end
 
-  puts ""
+  puts ''
   puts "📊 Attachment Summary for #{defect.defect_unique}:"
   puts "   ✅ Uploaded: #{stats[:uploaded]}"
   puts "   ⏭️  Skipped: #{stats[:skipped]}"
   puts "   ❌ Failed: #{stats[:failed]}"
-  puts ""
+  puts ''
 
   stats
 end
@@ -1794,7 +1822,6 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
           download_success = true
           break
         end
-
       rescue OpenSSL::SSL::SSLError => e
         download_success = false
         if download_attempt < max_download_retries
@@ -1804,7 +1831,6 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
         else
           warn "  SSL error after #{max_download_retries} attempts: #{e.message}"
         end
-
       rescue Errno::ECONNRESET, Errno::EPIPE, EOFError, Net::ReadTimeout, Net::OpenTimeout => e
         download_success = false
         if download_attempt < max_download_retries
@@ -1814,7 +1840,6 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
         else
           warn "  Connection error after #{max_download_retries} attempts: #{e.class}"
         end
-
       rescue StandardError => e
         download_success = false
         warn "  Error downloading comment attachment: #{e.class}: #{e.message}"
@@ -1853,8 +1878,8 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
 
       rich_text = rich_record.content
 
-      unless rich_text && rich_text.persisted?
-        vputs "  [WARN] Rich text not persisted, reloading..." if verbose
+      unless rich_text&.persisted?
+        vputs '  [WARN] Rich text not persisted, reloading...' if verbose
         begin
           rich_record.reload
           rich_text = rich_record.content
@@ -1862,7 +1887,7 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
           warn "  Could not reload record to attach comment file #{filename}"
           next
         ensure
-          tf.close! if tf
+          tf&.close!
         end
       end
 
@@ -1880,7 +1905,6 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
       else
         warn "  ⚠️  Comment attachment created but not verified: #{filename}"
       end
-
     rescue StandardError => e
       warn "  Error creating/uploading comment attachment #{filename}: #{e.class}: #{e.message}"
     ensure
@@ -1970,7 +1994,7 @@ def fetch_and_attach_to_rich_text_jira(rich_record, attachments, verbose: false)
             request['Connection'] = 'keep-alive'
             request['Accept-Encoding'] = 'identity'
 
-            print "." if verbose && size > 10_000_000 && download_attempt == 1
+            print '.' if verbose && size > 10_000_000 && download_attempt == 1
 
             resp = http.request(request)
 
@@ -1980,39 +2004,37 @@ def fetch_and_attach_to_rich_text_jira(rich_record, attachments, verbose: false)
 
               redirects += 1
               if redirects > max_redirects
-                puts "❌ FAILED (too many redirects)" if verbose
+                puts '❌ FAILED (too many redirects)' if verbose
                 resp = nil
                 break
               end
               uri = URI.parse(location)
-              print "→" if verbose
+              print '→' if verbose
               next
             end
 
             download_success = true
             break
           end
-
         rescue OpenSSL::SSL::SSLError => e
           download_success = false
           if download_attempt < max_download_retries
-            wait_time = 2 ** download_attempt
+            wait_time = 2**download_attempt
             print " [SSL retry in #{wait_time}s]" if verbose
             sleep wait_time
           else
-            puts "❌ SSL ERROR" if verbose
+            puts '❌ SSL ERROR' if verbose
             warn "[ERROR] SSL error downloading #{filename} after #{max_download_retries} attempts"
             stats[:failed] += 1
           end
-
         rescue Errno::ECONNRESET, Errno::EPIPE, EOFError, Net::ReadTimeout, Net::OpenTimeout => e
           download_success = false
           if download_attempt < max_download_retries
-            wait_time = 2 ** download_attempt
+            wait_time = 2**download_attempt
             print " [Connection retry in #{wait_time}s]" if verbose
             sleep wait_time
           else
-            puts "❌ CONNECTION ERROR" if verbose
+            puts '❌ CONNECTION ERROR' if verbose
             warn "[ERROR] Connection error downloading #{filename} after #{max_download_retries} attempts"
             stats[:failed] += 1
           end
@@ -2029,14 +2051,14 @@ def fetch_and_attach_to_rich_text_jira(rich_record, attachments, verbose: false)
       end
 
       download_duration = (Time.now - download_start).round(2)
-      puts "" if verbose && size > 10_000_000
+      puts '' if verbose && size > 10_000_000
 
       tmp = Tempfile.new([filename.gsub(/[^0-9A-Za-z.-]/, '_')])
       tmp.binmode
 
       bytes_written = 0
       if resp.body.respond_to?(:read)
-        while chunk = resp.body.read(1_048_576)
+        while (chunk = resp.body.read(1_048_576))
           tmp.write(chunk)
           bytes_written += chunk.bytesize
         end
@@ -2046,9 +2068,7 @@ def fetch_and_attach_to_rich_text_jira(rich_record, attachments, verbose: false)
       end
       tmp.rewind
 
-      if size > 0 && bytes_written < size
-        puts "⚠️  PARTIAL (#{bytes_written}/#{size} bytes)" if verbose
-      end
+      puts "⚠️  PARTIAL (#{bytes_written}/#{size} bytes)" if size.positive? && bytes_written < size && verbose
 
       begin
         upload_start = Time.now
@@ -2064,13 +2084,11 @@ def fetch_and_attach_to_rich_text_jira(rich_record, attachments, verbose: false)
             upload_success = true
           rescue Net::ReadTimeout, Net::OpenTimeout, Errno::ETIMEDOUT => e
             upload_retry_count += 1
-            if upload_retry_count < max_upload_retries
-              backoff_time = 2 ** upload_retry_count
-              print " [Upload retry in #{backoff_time}s]" if verbose
-              sleep(backoff_time)
-            else
-              raise e
-            end
+            raise e unless upload_retry_count < max_upload_retries
+
+            backoff_time = 2**upload_retry_count
+            print " [Upload retry in #{backoff_time}s]" if verbose
+            sleep(backoff_time)
           end
         end
 
@@ -2078,7 +2096,7 @@ def fetch_and_attach_to_rich_text_jira(rich_record, attachments, verbose: false)
 
         rich_record.reload
         attached = rich_record.attachments.find { |a| a.filename.to_s == filename }
-        if attached && attached.blob
+        if attached&.blob
           exists = begin
             ActiveStorage::Blob.service.exist?(attached.blob.key)
           rescue StandardError
@@ -2087,23 +2105,23 @@ def fetch_and_attach_to_rich_text_jira(rich_record, attachments, verbose: false)
 
           if exists
             total_time = download_duration + upload_duration
-            speed_mbps = size > 0 ? ((size / 1024.0 / 1024.0) / total_time).round(2) : 0
+            speed_mbps = size.positive? ? ((size / 1024.0 / 1024.0) / total_time).round(2) : 0
             puts "✅ OK (#{total_time.round(1)}s, #{speed_mbps} MB/s)" if verbose
             stats[:uploaded] += 1
           else
-            puts "⚠️  PARTIAL (not in storage)" if verbose
+            puts '⚠️  PARTIAL (not in storage)' if verbose
             stats[:failed] += 1
           end
         else
-          puts "⚠️  FAILED (not created)" if verbose
+          puts '⚠️  FAILED (not created)' if verbose
           stats[:failed] += 1
         end
       rescue Net::ReadTimeout => e
-        puts "❌ TIMEOUT" if verbose
+        puts '❌ TIMEOUT' if verbose
         warn "[ERROR] Upload timeout for #{filename}"
         stats[:failed] += 1
       rescue Errno::ENOSPC => e
-        puts "❌ DISK FULL" if verbose
+        puts '❌ DISK FULL' if verbose
         warn "[ERROR] No disk space for #{filename}"
         stats[:failed] += 1
       rescue StandardError => e
@@ -2367,7 +2385,7 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
   module_name = jira_project_name if module_name.blank?
   banking_type_name = jira_project_key if banking_type_name.blank?
 
-  comments_container = fields.dig('comment') || {}
+  comments_container = fields['comment'] || {}
   comments_array = (comments_container['comments'] || []).select { |c| c.is_a?(Hash) }
   attachments_array = (fields['attachment'] || fields['attachments'] || []).select { |a| a.is_a?(Hash) }
   labels_array = (fields['labels'] || []).compact.map(&:to_s).map(&:strip).reject(&:empty?)
@@ -2499,6 +2517,7 @@ begin
   # Step 1: Fetch from Jira API with module fields for all specified projects
   fetch_result = fetch_jira_issues_with_modules(
     project_keys: project_list,
+    custom_jql: options[:custom_jql],
     max_results: 100,
     days_back: options[:days_back]
   )
@@ -2645,18 +2664,7 @@ begin
     # Post-import verification and correction
     info "\n🔍 Running post-import verification..."
 
-    verification_stats = {
-      missing_comments: 0,
-      missing_attachments: 0,
-      missing_labels: 0,
-      missing_history: 0,
-      fixed_comments: 0,
-      fixed_attachments: 0,
-      fixed_labels: 0,
-      fixed_history: 0
-    }
-
-    issues.each_with_index do |issue, index|
+    issues.each_with_index do |issue, _index|
       issue_key = issue['key']
       defect = Defect.find_by(defect_unique: issue_key)
 
@@ -2676,10 +2684,10 @@ begin
 
         # expected counts
         expected_issue_files = (fields['attachment'] || fields['attachments'] || []).select { |a| a.is_a?(Hash) }.map { |a| (a['filename'] || a['name'] || a['id']).to_s }
-        expected_comment_files = (fields.dig('comment','comments') || []).flat_map { |c| (c['_comment_attachments'] || []).map { |a| (a['filename']||a['name']||a['id']).to_s } }
+        expected_comment_files = (fields.dig('comment', 'comments') || []).flat_map { |c| (c['_comment_attachments'] || []).map { |a| (a['filename'] || a['name'] || a['id']).to_s } }
 
         # Count only non-empty comments (matching import logic)
-        all_comments = fields.dig('comment','comments') || []
+        all_comments = fields.dig('comment', 'comments') || []
         expected_comments = all_comments.count do |c|
           body = extract_comment_body(c['body'] || c['content']).to_s.strip
           has_attachments = c.is_a?(Hash) && c['_comment_attachments'].is_a?(Array) && c['_comment_attachments'].any?
@@ -2810,7 +2818,6 @@ begin
         report[:expected][:history] = (fetch_issue_changelog(issue_key, verbose: false) || []).length
         report[:actual][:history] = history_count
         report[:fields_status][:history] = report[:actual][:history] >= report[:expected][:history]
-
       rescue StandardError => e
         report[:errors] << "Verification error: #{e.class}: #{e.message}"
       ensure
@@ -2818,101 +2825,90 @@ begin
       end
     end
 
-  # Post-import diagnostics and reporting
-  info "\n🔍 Running post-import diagnostics..."
+    # Post-import diagnostics and reporting
+    info "\n🔍 Running post-import diagnostics..."
 
-  # Collector for missing issues/comments/attachments
-  missing_collector = {
-    issues: [],
-    comments: [],
-    attachments: [],
-    labels: [],
-    histories: []
-  }
+    # Collector for missing issues/comments/attachments
+    missing_collector = {
+      issues: [],
+      comments: [],
+      attachments: [],
+      labels: [],
+      histories: []
+    }
 
-  # Reported issues from import
-  reported_issues = {}
+    # Reported issues from import
+    reported_issues = {}
 
-  # Iterate over each issue and compare expected vs actual data
-  $IMPORT_REPORTS.each do |report|
-    issue_key = report[:issue_key]
-    next if reported_issues[issue_key]
+    # Iterate over each issue and compare expected vs actual data
+    $IMPORT_REPORTS.each do |report|
+      issue_key = report[:issue_key]
+      next if reported_issues[issue_key]
 
-    reported_issues[issue_key] = true
+      reported_issues[issue_key] = true
 
-    # Check for missing defect records
-    if report[:status] == 'missing_defect'
-      missing_collector[:issues] << issue_key
-      next
+      # Check for missing defect records
+      if report[:status] == 'missing_defect'
+        missing_collector[:issues] << issue_key
+        next
+      end
+
+      # Check for missing comments
+      if report[:expected][:comments].to_i > report[:actual][:comments].to_i
+        missing_count = report[:expected][:comments].to_i - report[:actual][:comments].to_i
+        missing_collector[:comments] << { issue: issue_key, count: missing_count }
+      end
+
+      # Check for missing attachments (issue-level)
+      if report[:expected][:issue_attachments].to_i > report[:actual][:issue_attachments].to_i
+        missing_count = report[:expected][:issue_attachments].to_i - report[:actual][:issue_attachments].to_i
+        missing_collector[:attachments] << { issue: issue_key, type: 'issue', count: missing_count }
+      end
+
+      # Check for missing attachments (comment-level)
+      if report[:expected][:comment_attachments].to_i > report[:actual][:comment_attachments].to_i
+        missing_count = report[:expected][:comment_attachments].to_i - report[:actual][:comment_attachments].to_i
+        missing_collector[:attachments] << { issue: issue_key, type: 'comment', count: missing_count }
+      end
+
+      # Check for missing labels
+      if report[:expected][:labels].to_i > report[:actual][:labels].to_i
+        missing_count = report[:expected][:labels].to_i - report[:actual][:labels].to_i
+        missing_collector[:labels] << { issue: issue_key, count: missing_count }
+      end
+
+      # Check for missing history entries
+      if report[:expected][:history].to_i > report[:actual][:history].to_i
+        missing_count = report[:expected][:history].to_i - report[:actual][:history].to_i
+        missing_collector[:histories] << { issue: issue_key, count: missing_count }
+      end
     end
 
-    # Check for missing comments
-    if report[:expected][:comments].to_i > report[:actual][:comments].to_i
-      missing_count = report[:expected][:comments].to_i - report[:actual][:comments].to_i
-      missing_collector[:comments] << { issue: issue_key, count: missing_count }
-    end
+    # Summary of missing items
+    info 'Missing Items Summary:'
+    info "  Issues: #{missing_collector[:issues].length} defect(s) missing" if missing_collector[:issues].any?
+    info "  Comments: #{missing_collector[:comments].length} comment(s) missing" if missing_collector[:comments].any?
+    info "  Attachments: #{missing_collector[:attachments].length} attachment(s) missing" if missing_collector[:attachments].any?
+    info "  Labels: #{missing_collector[:labels].length} label(s) missing" if missing_collector[:labels].any?
+    info "  Histories: #{missing_collector[:histories].length} history entry(ies) missing" if missing_collector[:histories].any?
 
-    # Check for missing attachments (issue-level)
-    if report[:expected][:issue_attachments].to_i > report[:actual][:issue_attachments].to_i
-      missing_count = report[:expected][:issue_attachments].to_i - report[:actual][:issue_attachments].to_i
-      missing_collector[:attachments] << { issue: issue_key, type: 'issue', count: missing_count }
-    end
+    # ===============================
+    # REPAIR PASS: Attempt to fix missing items
+    # ===============================
+    if missing_collector.values.flatten.any?
+      info "\n🔧 Running repair pass for missing items..."
 
-    # Check for missing attachments (comment-level)
-    if report[:expected][:comment_attachments].to_i > report[:actual][:comment_attachments].to_i
-      missing_count = report[:expected][:comment_attachments].to_i - report[:actual][:comment_attachments].to_i
-      missing_collector[:attachments] << { issue: issue_key, type: 'comment', count: missing_count }
-    end
+      # Retry logic for repairs
+      max_retries = 3
+      retry_delay = 5
 
-    # Check for missing labels
-    if report[:expected][:labels].to_i > report[:actual][:labels].to_i
-      missing_count = report[:expected][:labels].to_i - report[:actual][:labels].to_i
-      missing_collector[:labels] << { issue: issue_key, count: missing_count }
-    end
-
-    # Check for missing history entries
-    if report[:expected][:history].to_i > report[:actual][:history].to_i
-      missing_count = report[:expected][:history].to_i - report[:actual][:history].to_i
-      missing_collector[:histories] << { issue: issue_key, count: missing_count }
-    end
-  end
-
-  # Summary of missing items
-  info "Missing Items Summary:"
-  if missing_collector[:issues].any?
-    info "  Issues: #{missing_collector[:issues].length} defect(s) missing"
-  end
-  if missing_collector[:comments].any?
-    info "  Comments: #{missing_collector[:comments].length} comment(s) missing"
-  end
-  if missing_collector[:attachments].any?
-    info "  Attachments: #{missing_collector[:attachments].length} attachment(s) missing"
-  end
-  if missing_collector[:labels].any?
-    info "  Labels: #{missing_collector[:labels].length} label(s) missing"
-  end
-  if missing_collector[:histories].any?
-    info "  Histories: #{missing_collector[:histories].length} history entry(ies) missing"
-  end
-
-  # ===============================
-  # REPAIR PASS: Attempt to fix missing items
-  # ===============================
-  if missing_collector.values.flatten.any?
-    info "\n🔧 Running repair pass for missing items..."
-
-    # Retry logic for repairs
-    max_retries = 3
-    retry_delay = 5
-
-    # Helper to perform repairs with retries
-    perform_repair = lambda do |action, item, retries|
-      begin
+      # Helper to perform repairs with retries
+      perform_repair = lambda do |action, item, retries|
         action.call(item)
         true
       rescue StandardError => e
         retries -= 1
-        if retries > 0
+        if retries.positive?
           warn "  ⚠️  Error: #{e.message}. Retrying in #{retry_delay} seconds..."
           sleep retry_delay
           perform_repair.call(action, item, retries)
@@ -2921,163 +2917,141 @@ begin
           false
         end
       end
-    end
 
-    # Repair missing defects
-    if missing_collector[:issues].any?
-      info "  Repairing missing defects..."
-      missing_collector[:issues].each do |issue_key|
-        perform_repair.call(->(key) { Defect.find_or_create_by!(defect_unique: key) }, { issue: issue_key }, max_retries)
-      end
-    end
-
-    # Repair missing comments
-    if missing_collector[:comments].any?
-      info "  Repairing missing comments..."
-      missing_collector[:comments].each do |entry|
-        issue_key = entry[:issue]
-        defect = Defect.find_by(defect_unique: issue_key)
-        next unless defect
-
-        # Re-fetch issue from Jira and extract comments
-        jira_issue = fetch_result[:issues].find { |i| i['key'] == issue_key }
-        next unless jira_issue
-
-        comments_array = jira_issue.dig('fields', 'comment', 'comments') || []
-        next if comments_array.empty?
-
-        # Import missing comments
-        import_comments_for_defect(defect, comments_array, verbose: false)
-      end
-    end
-
-    # Repair missing attachments (issue-level and comment-level)
-    if missing_collector[:attachments].any?
-      info "  Repairing missing attachments..."
-      missing_collector[:attachments].each do |entry|
-        issue_key = entry[:issue]
-        defect = Defect.find_by(defect_unique: issue_key)
-        next unless defect
-
-        # Re-fetch issue from Jira and extract attachments
-        jira_issue = fetch_result[:issues].find { |i| i['key'] == issue_key }
-        next unless jira_issue
-
-        attachments_array = (jira_issue['fields']['attachment'] || jira_issue['fields']['attachments'] || []).select { |a| a.is_a?(Hash) }
-        next if attachments_array.empty?
-
-        # Attach missing files
-        fetch_and_attach_attachments(defect, attachments_array, verbose: false)
-      end
-    end
-
-    # Repair missing labels
-    if missing_collector[:labels].any?
-      info "  Repairing missing labels..."
-      missing_collector[:labels].each do |entry|
-        issue_key = entry[:issue]
-        defect = Defect.find_by(defect_unique: issue_key)
-        next unless defect
-
-        # Re-fetch issue from Jira
-        jira_issue = fetch_result[:issues].find { |i| i['key'] == issue_key }
-        next unless jira_issue
-
-        labels_array = (jira_issue['fields']['labels'] || []).compact.map(&:to_s).map(&:strip).reject(&:empty?)
-        next if labels_array.empty?
-
-        # Attach missing labels
-        reporter_user = find_user_by_name_or_map(jira_issue.dig('fields', 'reporter', 'displayName'), jira_issue.dig('fields', 'reporter', 'emailAddress'), verbose: false) || User.find_by(id: DEFAULT_USER_UUID)
-        created_by_uid = reporter_user&.id || DEFAULT_CREATED_BY || DEFAULT_USER_UUID
-        attach_labels_to_defect(defect, labels_array, created_by: created_by_uid, verbose: false)
-      end
-    end
-
-    # Repair missing history entries
-    if missing_collector[:histories].any?
-      info "  Repairing missing history entries..."
-      missing_collector[:histories].each do |entry|
-        issue_key = entry[:issue]
-        defect = Defect.find_by(defect_unique: issue_key)
-        next unless defect
-
-        # Re-fetch issue changelog from Jira
-        changelog = fetch_issue_changelog(issue_key, verbose: false)
-        next if changelog.nil? || changelog.empty?
-
-        # Parse and import missing history entries
-        all_history_entries = changelog.flat_map do |history|
-          parse_changelog_entry(history, issue_key, verbose: false)
+      # Repair missing defects
+      if missing_collector[:issues].any?
+        info '  Repairing missing defects...'
+        missing_collector[:issues].each do |issue_key|
+          perform_repair.call(->(key) { Defect.find_or_create_by!(defect_unique: key) }, { issue: issue_key }, max_retries)
         end
-
-        all_history_entries.sort_by! { |h| h[:created_at] || Time.at(0) }
-
-        import_histories_for_defect(defect, all_history_entries, verbose: false)
       end
-    end
 
-    info "🔧 Repair pass complete!"
-  end
+      # Repair missing comments
+      if missing_collector[:comments].any?
+        info '  Repairing missing comments...'
+        missing_collector[:comments].each do |entry|
+          issue_key = entry[:issue]
+          defect = Defect.find_by(defect_unique: issue_key)
+          next unless defect
+
+          # Re-fetch issue from Jira and extract comments
+          jira_issue = fetch_result[:issues].find { |i| i['key'] == issue_key }
+          next unless jira_issue
+
+          comments_array = jira_issue.dig('fields', 'comment', 'comments') || []
+          next if comments_array.empty?
+
+          # Import missing comments
+          import_comments_for_defect(defect, comments_array, verbose: false)
+        end
+      end
+
+      # Repair missing attachments (issue-level and comment-level)
+      if missing_collector[:attachments].any?
+        info '  Repairing missing attachments...'
+        missing_collector[:attachments].each do |entry|
+          issue_key = entry[:issue]
+          defect = Defect.find_by(defect_unique: issue_key)
+          next unless defect
+
+          # Re-fetch issue from Jira and extract attachments
+          jira_issue = fetch_result[:issues].find { |i| i['key'] == issue_key }
+          next unless jira_issue
+
+          attachments_array = (jira_issue['fields']['attachment'] || jira_issue['fields']['attachments'] || []).select { |a| a.is_a?(Hash) }
+          next if attachments_array.empty?
+
+          # Attach missing files
+          fetch_and_attach_attachments(defect, attachments_array, verbose: false)
+        end
+      end
+
+      # Repair missing labels
+      if missing_collector[:labels].any?
+        info '  Repairing missing labels...'
+        missing_collector[:labels].each do |entry|
+          issue_key = entry[:issue]
+          defect = Defect.find_by(defect_unique: issue_key)
+          next unless defect
+
+          # Re-fetch issue from Jira
+          jira_issue = fetch_result[:issues].find { |i| i['key'] == issue_key }
+          next unless jira_issue
+
+          labels_array = (jira_issue['fields']['labels'] || []).compact.map(&:to_s).map(&:strip).reject(&:empty?)
+          next if labels_array.empty?
+
+          # Attach missing labels
+          reporter_user = find_user_by_name_or_map(jira_issue.dig('fields', 'reporter', 'displayName'), jira_issue.dig('fields', 'reporter', 'emailAddress'), verbose: false) || User.find_by(id: DEFAULT_USER_UUID)
+          created_by_uid = reporter_user&.id || DEFAULT_CREATED_BY || DEFAULT_USER_UUID
+          attach_labels_to_defect(defect, labels_array, created_by: created_by_uid, verbose: false)
+        end
+      end
+
+      # Repair missing history entries
+      if missing_collector[:histories].any?
+        info '  Repairing missing history entries...'
+        missing_collector[:histories].each do |entry|
+          issue_key = entry[:issue]
+          defect = Defect.find_by(defect_unique: issue_key)
+          next unless defect
+
+          # Re-fetch issue changelog from Jira
+          changelog = fetch_issue_changelog(issue_key, verbose: false)
+          next if changelog.nil? || changelog.empty?
+
+          # Parse and import missing history entries
+          all_history_entries = changelog.flat_map do |history|
+            parse_changelog_entry(history, issue_key, verbose: false)
+          end
+
+          all_history_entries.sort_by! { |h| h[:created_at] || Time.at(0) }
+
+          import_histories_for_defect(defect, all_history_entries, verbose: false)
+        end
+      end
+
+      info '🔧 Repair pass complete!'
+    end
 
     # Final detailed per-issue report and overall success metrics
     info "\n📋 DETAILED IMPORT VERIFICATION REPORT"
-  info '=' * 80
+    info '=' * 80
 
-  total_issues = $IMPORT_REPORTS.length
-  fields_monitored = %i[issue_attachments comment_attachments comments labels history]
+    total_issues = $IMPORT_REPORTS.length
+    fields_monitored = %i[issue_attachments comment_attachments comments labels history]
 
-  overall_pass_count = 0
-  per_issue_failures = []
+    overall_pass_count = 0
+    per_issue_failures = []
 
-  $IMPORT_REPORTS.each do |r|
-    issue = r[:issue_key]
-    # Determine if all monitored fields passed
-    passed = fields_monitored.all? { |f| r[:fields_status][f] }
-    overall_pass_count += 1 if passed
+    $IMPORT_REPORTS.each do |r|
+      issue = r[:issue_key]
+      # Determine if all monitored fields passed
+      passed = fields_monitored.all? { |f| r[:fields_status][f] }
+      overall_pass_count += 1 if passed
 
-    unless passed
-      # collect failing fields for this issue
-      failed_fields = fields_monitored.select { |f| !r[:fields_status][f] }
-      per_issue_failures << { issue: issue, failed: failed_fields, missing: r[:missing] }
-    end
-
-    # Print per-issue line
-    status_str = passed ? 'OK' : 'ISSUES'
-    # Compute verified counts for printing
-    verified_issue = (r.dig(:attachment_details, :issue_level) || []).count { |d| d[:in_storage] }
-    total_issue_attached = r[:actual][:issue_attachments] || 0
-    verified_comment = (r.dig(:attachment_details, :comment_level) || []).count { |d| d[:in_storage] }
-    total_comment_attached = r[:actual][:comment_attachments] || 0
-
-    info "#{issue.ljust(20)} -> #{status_str}    (comments: #{r[:actual][:comments]}/#{r[:expected][:comments]}, issue_atts: #{total_issue_attached}/#{r[:expected][:issue_attachments]} (verified: #{verified_issue}), comment_atts: #{total_comment_attached}/#{r[:expected][:comment_attachments]} (verified: #{verified_comment}), labels: #{r[:actual][:labels]}/#{r[:expected][:labels]}, history: #{r[:actual][:history]}/#{r[:expected][:history]})"
-
-    # If there are unverified attachments, print details for quick triage
-    if (r.dig(:missing, :unverified_issue_files) || []).any?
-      info "    Unverified issue-level attachments: #{(r[:missing][:unverified_issue_files]).join(', ')}"
-    end
-    if (r.dig(:missing, :unverified_comment_files) || []).any?
-      info "    Unverified comment-level attachments: #{(r[:missing][:unverified_comment_files]).join(', ')}"
-    end
-   end
-
-  success_pct = total_issues > 0 ? ((overall_pass_count.to_f / total_issues) * 100).round(2) : 100.0
-  info '\nOverall Success Summary:'
-  info "  Issues fully OK: #{overall_pass_count}/#{total_issues} (#{success_pct}%)"
-  info "  Issues with problems: #{per_issue_failures.length}"
-
-  if per_issue_failures.any?
-    info '\nIssues with failures (details):'
-    per_issue_failures.each do |entry|
-      info " - #{entry[:issue]} -> failed fields: #{entry[:failed].join(', ')}"
-      missing = entry[:missing] || {}
-      if missing[:issue_files] && missing[:issue_files].any?
-        info "     Missing issue files: #{missing[:issue_files].join(', ')}"
+      unless passed
+        # collect failing fields for this issue
+        failed_fields = fields_monitored.reject { |f| r[:fields_status][f] }
+        per_issue_failures << { issue: issue, failed: failed_fields, missing: r[:missing] }
       end
-      if missing[:comment_files] && missing[:comment_files].any?
-        info "     Missing comment files: #{missing[:comment_files].join(', ')}"
+
+      # Print per-issue line
+      status_str = passed ? 'OK' : 'ISSUES'
+      info "#{issue.ljust(20)} -> #{status_str}    (comments: #{r[:actual][:comments]}/#{r[:expected][:comments]}, issue_atts: #{r[:actual][:issue_attachments]}/#{r[:expected][:issue_attachments]}, comment_atts: #{r[:actual][:comment_attachments]}/#{r[:expected][:comment_attachments]}, labels: #{r[:actual][:labels]}/#{r[:expected][:labels]}, history: #{r[:actual][:history]}/#{r[:expected][:history]})"
+    end
+
+
+
+    if per_issue_failures.any?
+      info '\nIssues with failures (details):'
+      per_issue_failures.each do |entry|
+        info " - #{entry[:issue]} -> failed fields: #{entry[:failed].join(', ')}"
+        missing = entry[:missing] || {}
+        info "     Missing issue files: #{missing[:issue_files].join(', ')}" if missing[:issue_files]&.any?
+        info "     Missing comment files: #{missing[:comment_files].join(', ')}" if missing[:comment_files]&.any?
       end
     end
-  end
 
   info '\nEnd of import verification report.'
   info '=' * 80

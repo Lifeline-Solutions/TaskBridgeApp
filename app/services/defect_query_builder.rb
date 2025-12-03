@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # DefectQueryBuilder - Query Object Pattern for applying complex filters to defects
 #
 # Usage:

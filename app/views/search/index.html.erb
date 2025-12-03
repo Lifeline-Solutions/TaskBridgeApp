@@ -1,0 +1,101 @@
+<div class="container mx-auto px-4 py-6 max-w-7xl">
+  <!-- Flash Messages -->
+  <% if flash[:alert].present? %>
+    <div class="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+      <div class="flex items-center">
+        <svg class="w-5 h-5 text-red-600 dark:text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+        <p class="text-sm text-red-800 dark:text-red-200"><%= flash[:alert] %></p>
+      </div>
+    </div>
+  <% end %>
+  
+  <% if flash[:notice].present? %>
+    <div class="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+      <div class="flex items-center">
+        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+        </svg>
+        <p class="text-sm text-blue-800 dark:text-blue-200"><%= flash[:notice] %></p>
+      </div>
+    </div>
+  <% end %>
+  
+  <!-- Search Header -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+      Search Results
+    </h1>
+    <% if @query.present? %>
+      <p class="text-gray-600 dark:text-gray-400">
+        Found <span class="font-semibold text-gray-900 dark:text-white"><%= @total_count %></span> 
+        results for "<span class="font-semibold text-indigo-600 dark:text-indigo-400"><%= @query %></span>"
+      </p>
+    <% end %>
+  </div>
+
+  <% if @total_count == 0 %>
+    <!-- No Results -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-12 text-center">
+      <svg class="mx-auto h-16 w-16 text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No results found</h3>
+      <p class="text-gray-600 dark:text-gray-400 mb-4">
+        <% if @query.present? %>
+          We couldn't find anything matching "<%= @query %>"
+        <% else %>
+          Enter a search query to find tickets and defects
+        <% end %>
+      </p>
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        Try searching by:
+      </p>
+      <ul class="text-sm text-gray-500 dark:text-gray-400 mt-2 space-y-1">
+        <li>• Issue ID (e.g., PROJ-123, CS-0001)</li>
+        <li>• Keywords in title or description</li>
+        <li>• Priority or status</li>
+      </ul>
+    </div>
+  <% else %>
+    <!-- Results Sections -->
+    <div class="space-y-8">
+      <!-- Tickets Section -->
+      <% if @tickets.any? %>
+        <div>
+          <div class="flex items-center mb-4">
+            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+              Service Desk Tickets
+              <span class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">(<%= @tickets.size %> found)</span>
+            </h2>
+          </div>
+          <div class="space-y-3">
+            <%= render partial: 'search/ticket_result', collection: @tickets, as: :ticket %>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Defects Section -->
+      <% if @defects.any? %>
+        <div>
+          <div class="flex items-center mb-4">
+            <svg class="w-5 h-5 text-red-600 dark:text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+              Defects
+              <span class="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">(<%= @defects.size %> found)</span>
+            </h2>
+          </div>
+          <div class="space-y-3">
+            <%= render partial: 'search/defect_result', collection: @defects, as: :defect %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

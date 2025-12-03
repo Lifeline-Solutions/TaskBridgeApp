@@ -1,0 +1,1176 @@
+[EXCEPTION] issue=ISP-1990 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1990) already exists.
+[EXCEPTION] issue=ISP-1989 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1989) already exists.
+[EXCEPTION] issue=ISP-1988 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1988) already exists.
+[EXCEPTION] issue=ISP-1979 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1979) already exists.
+[EXCEPTION] issue=ISP-1978 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1978) already exists.
+[EXCEPTION] issue=ISP-1975 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1975) already exists.
+[EXCEPTION] issue=ISP-1974 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1974) already exists.
+[EXCEPTION] issue=ISP-1973 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1973) already exists.
+[EXCEPTION] issue=ISP-1972 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1972) already exists.
+[EXCEPTION] issue=ISP-1971 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1971) already exists.
+[EXCEPTION] issue=ISP-1970 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1970) already exists.
+DEBUG: Parsed projects from command line: ["ISP"]
+DEBUG: Cleaned project list: ["ISP"]
+Starting direct Jira import with modules for project(s): ISP (dry_run: false)
+Discovering custom fields...
+Found Module field: customfield_10232 - Imarisha Mobile Banking Modules
+Found Submodule field: customfield_10233 - Imarisha Mobile Banking Modules/Sub-Modules
+Found TARGET Submodule field: customfield_10464 - Imarisha  ERP Modules / Sub-Modules
+Found TARGET Module field: customfield_10465 - Imarisha  ERP Modules
+Found Banking Type field: customfield_10141 - BankingType
+Fetching Jira issues with JQL: project = ISP AND labels = QA AND issuetype = Bug AND status IN ("Awaiting Build", "Awaiting client API", "Awaiting Client Information", BLOCKED, Failed-QA, "In Progress", On-Hold, "QA Testing", Reopened, Resolved, "Support Testing", "To Do", Closed) AND cf[10141] = "ERP" ORDER BY created DESC
+Projects: ISP
+DEBUG: Project keys received: ["ISP"]
+DEBUG: Full JQL: project = ISP AND labels = QA AND issuetype = Bug AND status IN ("Awaiting Build", "Awaiting client API", "Awaiting Client Information", BLOCKED, Failed-QA, "In Progress", On-Hold, "QA Testing", Reopened, Resolved, "Support Testing", "To Do", Closed) AND cf[10141] = "ERP" ORDER BY created DESC
+Page 1: Requesting with nextPageToken=nil
+✓ Page 1: Fetched 100 issues (total collected: 100) [isLast: false, hasNextToken: YES]
+Page 2: Requesting with nextPageToken=Ck1jcmVhdGVkJmNyZWF0Z...
+✓ Page 2: Fetched 100 issues (total collected: 200) [isLast: false, hasNextToken: YES]
+Page 3: Requesting with nextPageToken=Ck1jcmVhdGVkJmNyZWF0Z...
+✓ Page 3: Fetched 100 issues (total collected: 300) [isLast: false, hasNextToken: YES]
+Page 4: Requesting with nextPageToken=Ck1jcmVhdGVkJmNyZWF0Z...
+✓ Page 4: Fetched 100 issues (total collected: 400) [isLast: false, hasNextToken: YES]
+Page 5: Requesting with nextPageToken=Ck1jcmVhdGVkJmNyZWF0Z...
+✓ Page 5: Fetched 39 issues (total collected: 439) [isLast: true, hasNextToken: NO]
+✓ Jira indicates last page (isLast: true) - pagination complete
+📊 Total issues fetched from Jira: 439 (across 5 pages)
+Successfully fetched 439 issues from Jira across 1 project(s)
+Using custom fields - Module: customfield_10465, Submodule: customfield_10464, Banking Type: customfield_10141
+
+Issues per project:
+  - ISP: 439 issue(s)
+Processing issue 1/439: ISP-1990
+[DEBUG-LABELS] Total labels found for ISP-1990: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'To Do' by name: TO DO -> 26ce9725-f948-4e26-8bfd-5e353e685e59
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 2/439: ISP-1989
+[DEBUG-LABELS] Total labels found for ISP-1989: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'To Do' by name: TO DO -> 26ce9725-f948-4e26-8bfd-5e353e685e59
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 3/439: ISP-1988
+[DEBUG-LABELS] Total labels found for ISP-1988: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 4/439: ISP-1979
+[DEBUG-LABELS] Total labels found for ISP-1979: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 5/439: ISP-1978
+[DEBUG-LABELS] Total labels found for ISP-1978: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 6/439: ISP-1975
+[DEBUG-LABELS] Total labels found for ISP-1975: 3
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 7/439: ISP-1974
+[DEBUG-LABELS] Total labels found for ISP-1974: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 8/439: ISP-1973
+[DEBUG-LABELS] Total labels found for ISP-1973: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 9/439: ISP-1972
+[DEBUG-LABELS] Total labels found for ISP-1972: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 10/439: ISP-1971
+[DEBUG-LABELS] Total labels found for ISP-1971: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 11/439: ISP-1970
+[DEBUG-LABELS] Total labels found for ISP-1970: 2
+[USER-FALLBACK] Using default user for 'Kiriba Delphine' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 12/439: ISP-1969
+[DEBUG-LABELS] Total labels found for ISP-1969: 2
+[USER-FALLBACK] Using default user for 'Kiriba Delphine' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358[EXCEPTION] issue=ISP-1969 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1969) already exists.
+[EXCEPTION] issue=ISP-1968 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1968) already exists.
+[EXCEPTION] issue=ISP-1967 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1967) already exists.
+[EXCEPTION] issue=ISP-1966 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1966) already exists.
+[EXCEPTION] issue=ISP-1965 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1965) already exists.
+[EXCEPTION] issue=ISP-1964 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1964) already exists.
+[EXCEPTION] issue=ISP-1962 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1962) already exists.
+[EXCEPTION] issue=ISP-1961 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1961) already exists.
+[EXCEPTION] issue=ISP-1960 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1960) already exists.
+[EXCEPTION] issue=ISP-1959 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1959) already exists.
+[EXCEPTION] issue=ISP-1956 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1956) already exists.
+[EXCEPTION] issue=ISP-1955 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1955) already exists.
+[EXCEPTION] issue=ISP-1954 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1954) already exists.
+[EXCEPTION] issue=ISP-1953 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1953) already exists.
+[EXCEPTION] issue=ISP-1952 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1952) already exists.
+[EXCEPTION] issue=ISP-1949 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1949) already exists.
+
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 13/439: ISP-1968
+[DEBUG-LABELS] Total labels found for ISP-1968: 2
+[USER-FALLBACK] Using default user for 'Kiriba Delphine' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 14/439: ISP-1967
+[DEBUG-LABELS] Total labels found for ISP-1967: 2
+[USER-FALLBACK] Using default user for 'Kiriba Delphine' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 15/439: ISP-1966
+[DEBUG-LABELS] Total labels found for ISP-1966: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 16/439: ISP-1965
+[DEBUG-LABELS] Total labels found for ISP-1965: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 17/439: ISP-1964
+[DEBUG-LABELS] Total labels found for ISP-1964: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 18/439: ISP-1962
+[DEBUG-LABELS] Total labels found for ISP-1962: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 19/439: ISP-1961
+[DEBUG-LABELS] Total labels found for ISP-1961: 2
+[USER-FALLBACK] Using default user for 'Stephen Mungai' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 20/439: ISP-1960
+[DEBUG-LABELS] Total labels found for ISP-1960: 2
+[USER-FALLBACK] Using default user for 'Stephen Mungai' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 21/439: ISP-1959
+[DEBUG-LABELS] Total labels found for ISP-1959: 2
+[USER-FALLBACK] Using default user for 'Stephen Mungai' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 22/439: ISP-1956
+[DEBUG-LABELS] Total labels found for ISP-1956: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 23/439: ISP-1955
+[DEBUG-LABELS] Total labels found for ISP-1955: 3
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 24/439: ISP-1954
+[DEBUG-LABELS] Total labels found for ISP-1954: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 25/439: ISP-1953
+[DEBUG-LABELS] Total labels found for ISP-1953: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 26/439: ISP-1952
+[DEBUG-LABELS] Total labels found for ISP-1952: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 27/439: ISP-1949
+[DEBUG-LABELS] Total labels found for ISP-1949: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 28/439: ISP-1948
+[DEBUG-LABELS] Total labels found for ISP-1948: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358[EXCEPTION] issue=ISP-1948 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1948) already exists.
+[EXCEPTION] issue=ISP-1947 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1947) already exists.
+[EXCEPTION] issue=ISP-1944 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1944) already exists.
+[EXCEPTION] issue=ISP-1943 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1943) already exists.
+[EXCEPTION] issue=ISP-1942 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1942) already exists.
+[EXCEPTION] issue=ISP-1941 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1941) already exists.
+[EXCEPTION] issue=ISP-1940 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1940) already exists.
+[EXCEPTION] issue=ISP-1939 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1939) already exists.
+[EXCEPTION] issue=ISP-1938 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1938) already exists.
+[EXCEPTION] issue=ISP-1937 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1937) already exists.
+[EXCEPTION] issue=ISP-1933 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1933) already exists.
+[EXCEPTION] issue=ISP-1932 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1932) already exists.
+[EXCEPTION] issue=ISP-1931 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1931) already exists.
+[EXCEPTION] issue=ISP-1930 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1930) already exists.
+[EXCEPTION] issue=ISP-1929 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1929) already exists.
+[EXCEPTION] issue=ISP-1928 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1928) already exists.
+
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 29/439: ISP-1947
+[DEBUG-LABELS] Total labels found for ISP-1947: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 30/439: ISP-1944
+[DEBUG-LABELS] Total labels found for ISP-1944: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 31/439: ISP-1943
+[DEBUG-LABELS] Total labels found for ISP-1943: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 32/439: ISP-1942
+[DEBUG-LABELS] Total labels found for ISP-1942: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 33/439: ISP-1941
+[DEBUG-LABELS] Total labels found for ISP-1941: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 34/439: ISP-1940
+[DEBUG-LABELS] Total labels found for ISP-1940: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 35/439: ISP-1939
+[DEBUG-LABELS] Total labels found for ISP-1939: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 36/439: ISP-1938
+[DEBUG-LABELS] Total labels found for ISP-1938: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 37/439: ISP-1937
+[DEBUG-LABELS] Total labels found for ISP-1937: 2
+[USER-MATCH] Matched 'gideon' by single name: gideon gideon -> a2f6fdcb-6a66-4ace-992b-0f3cd5e9cc53
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 38/439: ISP-1933
+[DEBUG-LABELS] Total labels found for ISP-1933: 2
+[USER-FALLBACK] Using default user for 'Kiriba Delphine' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'Awaiting Build' by name: Awaiting Build -> bf46baa0-8c97-4afe-a65a-a300e43d70e6
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 39/439: ISP-1932
+[DEBUG-LABELS] Total labels found for ISP-1932: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'Awaiting Build' by name: Awaiting Build -> bf46baa0-8c97-4afe-a65a-a300e43d70e6
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 40/439: ISP-1931
+[DEBUG-LABELS] Total labels found for ISP-1931: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 41/439: ISP-1930
+[DEBUG-LABELS] Total labels found for ISP-1930: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 42/439: ISP-1929
+[DEBUG-LABELS] Total labels found for ISP-1929: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'Awaiting Build' by name: Awaiting Build -> bf46baa0-8c97-4afe-a65a-a300e43d70e6
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 43/439: ISP-1928
+[DEBUG-LABELS] Total labels found for ISP-1928: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 44/439: ISP-1927
+[DEBUG-LABELS] Total labels found for ISP-1927: 2
+[USER-FALLBACK] Using default user for 'Kiriba Delphine' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358[EXCEPTION] issue=ISP-1927 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1927) already exists.
+[EXCEPTION] issue=ISP-1926 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1926) already exists.
+[EXCEPTION] issue=ISP-1925 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1925) already exists.
+[EXCEPTION] issue=ISP-1924 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1924) already exists.
+[EXCEPTION] issue=ISP-1923 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1923) already exists.
+[EXCEPTION] issue=ISP-1922 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1922) already exists.
+[EXCEPTION] issue=ISP-1921 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1921) already exists.
+[EXCEPTION] issue=ISP-1920 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1920) already exists.
+[EXCEPTION] issue=ISP-1919 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1919) already exists.
+[EXCEPTION] issue=ISP-1918 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1918) already exists.
+[EXCEPTION] issue=ISP-1917 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1917) already exists.
+[EXCEPTION] issue=ISP-1916 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1916) already exists.
+[EXCEPTION] issue=ISP-1915 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1915) already exists.
+[EXCEPTION] issue=ISP-1914 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1914) already exists.
+[EXCEPTION] issue=ISP-1913 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1913) already exists.
+[EXCEPTION] issue=ISP-1912 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1912) already exists.
+
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 45/439: ISP-1926
+[DEBUG-LABELS] Total labels found for ISP-1926: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 46/439: ISP-1925
+[DEBUG-LABELS] Total labels found for ISP-1925: 2
+[USER-FALLBACK] Using default user for 'Kiriba Delphine' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 47/439: ISP-1924
+[DEBUG-LABELS] Total labels found for ISP-1924: 2
+[USER-FALLBACK] Using default user for 'Kiriba Delphine' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 48/439: ISP-1923
+[DEBUG-LABELS] Total labels found for ISP-1923: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 49/439: ISP-1922
+[DEBUG-LABELS] Total labels found for ISP-1922: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 50/439: ISP-1921
+[DEBUG-LABELS] Total labels found for ISP-1921: 2
+[USER-FALLBACK] Using default user for 'Stephen Mungai' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 51/439: ISP-1920
+[DEBUG-LABELS] Total labels found for ISP-1920: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'Awaiting Build' by name: Awaiting Build -> bf46baa0-8c97-4afe-a65a-a300e43d70e6
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 52/439: ISP-1919
+[DEBUG-LABELS] Total labels found for ISP-1919: 2
+[USER-FALLBACK] Using default user for 'Stephen Mungai' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 53/439: ISP-1918
+[DEBUG-LABELS] Total labels found for ISP-1918: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 54/439: ISP-1917
+[DEBUG-LABELS] Total labels found for ISP-1917: 2
+[USER-MATCH] Matched 'gideon' by single name: gideon gideon -> a2f6fdcb-6a66-4ace-992b-0f3cd5e9cc53
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 55/439: ISP-1916
+[DEBUG-LABELS] Total labels found for ISP-1916: 2
+[USER-MATCH] Matched 'gideon' by single name: gideon gideon -> a2f6fdcb-6a66-4ace-992b-0f3cd5e9cc53
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 56/439: ISP-1915
+[DEBUG-LABELS] Total labels found for ISP-1915: 2
+[USER-MATCH] Matched 'gideon' by single name: gideon gideon -> a2f6fdcb-6a66-4ace-992b-0f3cd5e9cc53
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 57/439: ISP-1914
+[DEBUG-LABELS] Total labels found for ISP-1914: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 58/439: ISP-1913
+[DEBUG-LABELS] Total labels found for ISP-1913: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 59/439: ISP-1912
+[DEBUG-LABELS] Total labels found for ISP-1912: 3
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 60/439: ISP-1911
+[DEBUG-LABELS] Total labels found for ISP-1911: 2
+[USER-MATCH] Matched 'Wilberforce Wakhungu' by parsed first+last: wilberforce Wakhungu -> 03c960cf-9cd1-41dc-8a6b-669843030d52
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358[EXCEPTION] issue=ISP-1911 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1911) already exists.
+[EXCEPTION] issue=ISP-1910 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1910) already exists.
+[EXCEPTION] issue=ISP-1909 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1909) already exists.
+[EXCEPTION] issue=ISP-1908 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1908) already exists.
+[EXCEPTION] issue=ISP-1907 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1907) already exists.
+[EXCEPTION] issue=ISP-1906 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1906) already exists.
+[EXCEPTION] issue=ISP-1905 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1905) already exists.
+[EXCEPTION] issue=ISP-1904 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1904) already exists.
+[EXCEPTION] issue=ISP-1903 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1903) already exists.
+[EXCEPTION] issue=ISP-1902 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1902) already exists.
+[EXCEPTION] issue=ISP-1901 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1901) already exists.
+[EXCEPTION] issue=ISP-1900 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1900) already exists.
+[EXCEPTION] issue=ISP-1899 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1899) already exists.
+[EXCEPTION] issue=ISP-1898 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1898) already exists.
+[EXCEPTION] issue=ISP-1897 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1897) already exists.
+[EXCEPTION] issue=ISP-1896 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1896) already exists.
+
+[STATUS-MATCH] Matched status 'Awaiting Build' by name: Awaiting Build -> bf46baa0-8c97-4afe-a65a-a300e43d70e6
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 61/439: ISP-1910
+[DEBUG-LABELS] Total labels found for ISP-1910: 2
+[USER-MATCH] Matched 'Wilberforce Wakhungu' by parsed first+last: wilberforce Wakhungu -> 03c960cf-9cd1-41dc-8a6b-669843030d52
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 62/439: ISP-1909
+[DEBUG-LABELS] Total labels found for ISP-1909: 2
+[USER-MATCH] Matched 'Wilberforce Wakhungu' by parsed first+last: wilberforce Wakhungu -> 03c960cf-9cd1-41dc-8a6b-669843030d52
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 63/439: ISP-1908
+[DEBUG-LABELS] Total labels found for ISP-1908: 2
+[USER-MATCH] Matched 'Wilberforce Wakhungu' by parsed first+last: wilberforce Wakhungu -> 03c960cf-9cd1-41dc-8a6b-669843030d52
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 64/439: ISP-1907
+[DEBUG-LABELS] Total labels found for ISP-1907: 2
+[USER-MATCH] Matched 'Wilberforce Wakhungu' by parsed first+last: wilberforce Wakhungu -> 03c960cf-9cd1-41dc-8a6b-669843030d52
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 65/439: ISP-1906
+[DEBUG-LABELS] Total labels found for ISP-1906: 2
+[USER-MATCH] Matched 'Wilberforce Wakhungu' by parsed first+last: wilberforce Wakhungu -> 03c960cf-9cd1-41dc-8a6b-669843030d52
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 66/439: ISP-1905
+[DEBUG-LABELS] Total labels found for ISP-1905: 2
+[USER-MATCH] Matched 'gideon' by single name: gideon gideon -> a2f6fdcb-6a66-4ace-992b-0f3cd5e9cc53
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 67/439: ISP-1904
+[DEBUG-LABELS] Total labels found for ISP-1904: 2
+[USER-MATCH] Matched 'Wilberforce Wakhungu' by parsed first+last: wilberforce Wakhungu -> 03c960cf-9cd1-41dc-8a6b-669843030d52
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 68/439: ISP-1903
+[DEBUG-LABELS] Total labels found for ISP-1903: 2
+[USER-MATCH] Matched 'Wilberforce Wakhungu' by parsed first+last: wilberforce Wakhungu -> 03c960cf-9cd1-41dc-8a6b-669843030d52
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 69/439: ISP-1902
+[DEBUG-LABELS] Total labels found for ISP-1902: 2
+[USER-MATCH] Matched 'Wilberforce Wakhungu' by parsed first+last: wilberforce Wakhungu -> 03c960cf-9cd1-41dc-8a6b-669843030d52
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 70/439: ISP-1901
+[DEBUG-LABELS] Total labels found for ISP-1901: 2
+[USER-MATCH] Matched 'Wilberforce Wakhungu' by parsed first+last: wilberforce Wakhungu -> 03c960cf-9cd1-41dc-8a6b-669843030d52
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 71/439: ISP-1900
+[DEBUG-LABELS] Total labels found for ISP-1900: 2
+[USER-MATCH] Matched 'Wilberforce Wakhungu' by parsed first+last: wilberforce Wakhungu -> 03c960cf-9cd1-41dc-8a6b-669843030d52
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 72/439: ISP-1899
+[DEBUG-LABELS] Total labels found for ISP-1899: 2
+[USER-MATCH] Matched 'gideon' by single name: gideon gideon -> a2f6fdcb-6a66-4ace-992b-0f3cd5e9cc53
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 73/439: ISP-1898
+[DEBUG-LABELS] Total labels found for ISP-1898: 2
+[USER-FALLBACK] Using default user for 'Kiriba Delphine' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 74/439: ISP-1897
+[DEBUG-LABELS] Total labels found for ISP-1897: 2
+[USER-FALLBACK] Using default user for 'Kiriba Delphine' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 75/439: ISP-1896
+[DEBUG-LABELS] Total labels found for ISP-1896: 2
+[USER-MATCH] Matched 'nicholas.mbithuka' by parsed first+last: nicholas Mbithuka -> a4ac82e1-0812-4298-a390-eb72c4248f1a
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 76/439: ISP-1895
+[DEBUG-LABELS] Total labels found for ISP-1895: 2
+[USER-FALLBACK] Using default user for 'Kiriba Delphine' -> b3613172-fc54-4742-b2ba-c10b97d15bf4[EXCEPTION] issue=ISP-1895 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1895) already exists.
+[EXCEPTION] issue=ISP-1894 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1894) already exists.
+[EXCEPTION] issue=ISP-1893 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1893) already exists.
+[EXCEPTION] issue=ISP-1892 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1892) already exists.
+[EXCEPTION] issue=ISP-1891 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1891) already exists.
+[EXCEPTION] issue=ISP-1890 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1890) already exists.
+[EXCEPTION] issue=ISP-1889 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1889) already exists.
+[EXCEPTION] issue=ISP-1888 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1888) already exists.
+[EXCEPTION] issue=ISP-1887 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1887) already exists.
+[EXCEPTION] issue=ISP-1886 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1886) already exists.
+[EXCEPTION] issue=ISP-1885 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1885) already exists.
+[EXCEPTION] issue=ISP-1884 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1884) already exists.
+[EXCEPTION] issue=ISP-1883 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1883) already exists.
+[EXCEPTION] issue=ISP-1882 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1882) already exists.
+[EXCEPTION] issue=ISP-1881 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1881) already exists.
+[EXCEPTION] issue=ISP-1880 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1880) already exists.
+
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 77/439: ISP-1894
+[DEBUG-LABELS] Total labels found for ISP-1894: 2
+[USER-MATCH] Matched 'nicholas.mbithuka' by parsed first+last: nicholas Mbithuka -> a4ac82e1-0812-4298-a390-eb72c4248f1a
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 78/439: ISP-1893
+[DEBUG-LABELS] Total labels found for ISP-1893: 2
+[USER-MATCH] Matched 'Michael Wakhungu' by parsed first+last: Michael Wakhungu -> 597e3fd3-bd8d-4416-b3c9-e513fe79905f
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 79/439: ISP-1892
+[DEBUG-LABELS] Total labels found for ISP-1892: 2
+[USER-MATCH] Matched 'Michael Wakhungu' by parsed first+last: Michael Wakhungu -> 597e3fd3-bd8d-4416-b3c9-e513fe79905f
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 80/439: ISP-1891
+[DEBUG-LABELS] Total labels found for ISP-1891: 2
+[USER-MATCH] Matched 'Michael Wakhungu' by parsed first+last: Michael Wakhungu -> 597e3fd3-bd8d-4416-b3c9-e513fe79905f
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 81/439: ISP-1890
+[DEBUG-LABELS] Total labels found for ISP-1890: 2
+[USER-MATCH] Matched 'Michael Wakhungu' by parsed first+last: Michael Wakhungu -> 597e3fd3-bd8d-4416-b3c9-e513fe79905f
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 82/439: ISP-1889
+[DEBUG-LABELS] Total labels found for ISP-1889: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 83/439: ISP-1888
+[DEBUG-LABELS] Total labels found for ISP-1888: 2
+[USER-FALLBACK] Using default user for 'Stephen Mungai' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 84/439: ISP-1887
+[DEBUG-LABELS] Total labels found for ISP-1887: 2
+[USER-FALLBACK] Using default user for 'Stephen Mungai' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 85/439: ISP-1886
+[DEBUG-LABELS] Total labels found for ISP-1886: 2
+[USER-FALLBACK] Using default user for 'Stephen Mungai' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 86/439: ISP-1885
+[DEBUG-LABELS] Total labels found for ISP-1885: 3
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 87/439: ISP-1884
+[DEBUG-LABELS] Total labels found for ISP-1884: 2
+[USER-FALLBACK] Using default user for 'Kiriba Delphine' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 88/439: ISP-1883
+[DEBUG-LABELS] Total labels found for ISP-1883: 2
+[USER-FALLBACK] Using default user for 'Kiriba Delphine' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'Awaiting Build' by name: Awaiting Build -> bf46baa0-8c97-4afe-a65a-a300e43d70e6
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 89/439: ISP-1882
+[DEBUG-LABELS] Total labels found for ISP-1882: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 90/439: ISP-1881
+[DEBUG-LABELS] Total labels found for ISP-1881: 2
+[USER-FALLBACK] Using default user for 'Kiriba Delphine' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 91/439: ISP-1880
+[DEBUG-LABELS] Total labels found for ISP-1880: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 92/439: ISP-1879
+[DEBUG-LABELS] Total labels found for ISP-1879: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9[EXCEPTION] issue=ISP-1879 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1879) already exists.
+[EXCEPTION] issue=ISP-1878 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1878) already exists.
+[EXCEPTION] issue=ISP-1877 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1877) already exists.
+[EXCEPTION] issue=ISP-1876 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1876) already exists.
+[EXCEPTION] issue=ISP-1875 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1875) already exists.
+[EXCEPTION] issue=ISP-1874 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1874) already exists.
+[EXCEPTION] issue=ISP-1873 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1873) already exists.
+[EXCEPTION] issue=ISP-1872 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1872) already exists.
+[EXCEPTION] issue=ISP-1871 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1871) already exists.
+[EXCEPTION] issue=ISP-1870 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1870) already exists.
+[EXCEPTION] issue=ISP-1869 ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_defects_on_defect_unique"
+DETAIL:  Key (defect_unique)=(ISP-1869) already exists.
+
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 93/439: ISP-1878
+[DEBUG-LABELS] Total labels found for ISP-1878: 2
+[USER-FALLBACK] Using default user for 'Kiriba Delphine' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 94/439: ISP-1877
+[DEBUG-LABELS] Total labels found for ISP-1877: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 95/439: ISP-1876
+[DEBUG-LABELS] Total labels found for ISP-1876: 2
+[USER-FALLBACK] Using default user for 'Stephen Mungai' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 96/439: ISP-1875
+[DEBUG-LABELS] Total labels found for ISP-1875: 2
+[USER-FALLBACK] Using default user for 'Stephen Mungai' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-FALLBACK] Using default user for 'Stephen Mungai' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[STATUS-MATCH] Matched status 'Closed' by name: Closed -> 8c60b5b6-b9e9-405d-8d7d-d672cb9b23f1
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 97/439: ISP-1874
+[DEBUG-LABELS] Total labels found for ISP-1874: 2
+[USER-FALLBACK] Using default user for 'Stephen Mungai' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 98/439: ISP-1873
+[DEBUG-LABELS] Total labels found for ISP-1873: 2
+[USER-FALLBACK] Using default user for 'Stephen Mungai' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 99/439: ISP-1872
+[DEBUG-LABELS] Total labels found for ISP-1872: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 100/439: ISP-1871
+[DEBUG-LABELS] Total labels found for ISP-1871: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'Awaiting Build' by name: Awaiting Build -> bf46baa0-8c97-4afe-a65a-a300e43d70e6
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 101/439: ISP-1870
+[DEBUG-LABELS] Total labels found for ISP-1870: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 102/439: ISP-1869
+[DEBUG-LABELS] Total labels found for ISP-1869: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'Awaiting Build' by name: Awaiting Build -> bf46baa0-8c97-4afe-a65a-a300e43d70e6
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+Processing issue 103/439: ISP-1868
+[DEBUG-LABELS] Total labels found for ISP-1868: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+📥 DOWNLOADING ISSUE-LEVEL ATTACHMENTS FOR ISP-1868
+   Total files: 2 (38.23 MB)
+
+   [1/2] ⏭️  SKIP: ISP-1868-Creation of PO, 1867,1866,1865-LPO.mp4 (already attached)
+   [2/2] ⏭️  SKIP: ISP-1868-Payment Terms on both the screens.mp4 (already attached)
+
+📊 Attachment Summary for ISP-1868:
+   ✅ Uploaded: 0
+   ⏭️  Skipped: 2
+   ❌ Failed: 0
+
+[LABEL] Processing 2 label(s) for ISP-1868
+[LABEL-MATCH] Found existing label 'New_ERP' (stored as 'new_erp') -> a9f0bd31-9bc0-4a7b-90fc-2ed53a305e8d
+[LABEL-SKIP] Label 'new_erp' already attached to ISP-1868
+[LABEL-MATCH] Found existing label 'QA' (stored as 'qa') -> f66526ba-6a94-47b5-8239-f9fae5aa2248
+[LABEL-SKIP] Label 'qa' already attached to ISP-1868
+[LABEL] Completed processing labels for ISP-1868. Total attached: 2
+[DESCRIPTION-VALIDATE] ISP-1868: new_len=605, existing_len=572
+[DESCRIPTION-UPDATE] ISP-1868: Updated description (605 chars)
+  Previous: <div class="trix-content">
+  <p><strong>Actual Result-</strong><span>On the Approve Purchase Order sc...
+  Updated: <p><strong>Actual Result-</strong><span style="color: #ff5630">On the Approve Purchase Order screen, ...
+Processing issue 104/439: ISP-1867
+[DEBUG-LABELS] Total labels found for ISP-1867: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'Awaiting Build' by name: Awaiting Build -> bf46baa0-8c97-4afe-a65a-a300e43d70e6
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+📥 DOWNLOADING ISSUE-LEVEL ATTACHMENTS FOR ISP-1867
+   Total files: 1 (33.22 MB)
+
+   [1/1] ⏭️  SKIP: ISP-1867,1866,1865-LPO.mp4 (already attached)
+
+📊 Attachment Summary for ISP-1867:
+   ✅ Uploaded: 0
+   ⏭️  Skipped: 1
+   ❌ Failed: 0
+
+[LABEL] Processing 2 label(s) for ISP-1867
+[LABEL-MATCH] Found existing label 'New_ERP' (stored as 'new_erp') -> a9f0bd31-9bc0-4a7b-90fc-2ed53a305e8d
+[LABEL-SKIP] Label 'new_erp' already attached to ISP-1867
+[LABEL-MATCH] Found existing label 'QA' (stored as 'qa') -> f66526ba-6a94-47b5-8239-f9fae5aa2248
+[LABEL-SKIP] Label 'qa' already attached to ISP-1867
+  Error on attempt 1/5: ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_active_storage_attachments_uniqueness"
+DETAIL:  Key (record_type, record_id, name, blob_id)=(Defect, cd8c4c8b-0f13-443d-979e-62dd8705971d, attachments, b493935b-475f-46d9-92f4-58a6baf8f6a8) already exists.
+  Backtrace: /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/activerecord-7.2.2.2/lib/active_record/connection_adapters/postgresql_adapter.rb:894:in `exec_params'
+           /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/activerecord-7.2.2.2/lib/active_record/connection_adapters/postgresql_adapter.rb:894:in `block (2 levels) in exec_no_cache'
+           /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/activerecord-7.2.2.2/lib/active_record/connection_adapters/abstract_adapter.rb:1004:in `block in with_raw_connection'
+  Error on attempt 2/5: ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_active_storage_attachments_uniqueness"
+DETAIL:  Key (record_type, record_id, name, blob_id)=(Defect, cd8c4c8b-0f13-443d-979e-62dd8705971d, attachments, b493935b-475f-46d9-92f4-58a6baf8f6a8) already exists.
+  Backtrace: /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/activerecord-7.2.2.2/lib/active_record/connection_adapters/postgresql_adapter.rb:894:in `exec_params'
+           /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/activerecord-7.2.2.2/lib/active_record/connection_adapters/postgresql_adapter.rb:894:in `block (2 levels) in exec_no_cache'
+           /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/activerecord-7.2.2.2/lib/active_record/connection_adapters/abstract_adapter.rb:1004:in `block in with_raw_connection'
+  Error on attempt 3/5: ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_active_storage_attachments_uniqueness"
+DETAIL:  Key (record_type, record_id, name, blob_id)=(Defect, cd8c4c8b-0f13-443d-979e-62dd8705971d, attachments, b493935b-475f-46d9-92f4-58a6baf8f6a8) already exists.
+  Backtrace: /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/activerecord-7.2.2.2/lib/active_record/connection_adapters/postgresql_adapter.rb:894:in `exec_params'
+           /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/activerecord-7.2.2.2/lib/active_record/connection_adapters/postgresql_adapter.rb:894:in `block (2 levels) in exec_no_cache'
+           /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/activerecord-7.2.2.2/lib/active_record/connection_adapters/abstract_adapter.rb:1004:in `block in with_raw_connection'
+  Error on attempt 4/5: ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_active_storage_attachments_uniqueness"
+DETAIL:  Key (record_type, record_id, name, blob_id)=(Defect, cd8c4c8b-0f13-443d-979e-62dd8705971d, attachments, b493935b-475f-46d9-92f4-58a6baf8f6a8) already exists.
+  Backtrace: /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/activerecord-7.2.2.2/lib/active_record/connection_adapters/postgresql_adapter.rb:894:in `exec_params'
+           /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/activerecord-7.2.2.2/lib/active_record/connection_adapters/postgresql_adapter.rb:894:in `block (2 levels) in exec_no_cache'
+           /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/activerecord-7.2.2.2/lib/active_record/connection_adapters/abstract_adapter.rb:1004:in `block in with_raw_connection'
+  Error on attempt 5/5: ActiveRecord::RecordNotUnique: PG::UniqueViolation: ERROR:  duplicate key value violates unique constraint "index_active_storage_attachments_uniqueness"
+DETAIL:  Key (record_type, record_id, name, blob_id)=(Defect, cd8c4c8b-0f13-443d-979e-62dd8705971d, attachments, b493935b-475f-46d9-92f4-58a6baf8f6a8) already exists.
+  Backtrace: /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/activerecord-7.2.2.2/lib/active_record/connection_adapters/postgresql_adapter.rb:894:in `exec_params'
+           /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/activerecord-7.2.2.2/lib/active_record/connection_adapters/postgresql_adapter.rb:894:in `block (2 levels) in exec_no_cache'
+           /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/activerecord-7.2.2.2/lib/active_record/connection_adapters/abstract_adapter.rb:1004:in `block in with_raw_connection'
+  ❌ FAILED after 5 attempts
+[LABEL] Completed processing labels for ISP-1867. Total attached: 2
+[COMMENTS] Importing 1 comment(s) for ISP-1867...
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[IMPORT] Added rich text comment by Robert Mbugua Kanyoro to ISP-1867 (id=1b866da2-505c-4fbd-bcf9-cc24c8bc633d, length=17)
+[DESCRIPTION-VALIDATE] ISP-1867: new_len=229, existing_len=242
+[DESCRIPTION-UPDATE] ISP-1867: Updated description (229 chars)
+  Previous: <div class="trix-content">
+  <p><strong>Actual Result-</strong><span>Purchase Order which has not yet...
+  Updated: <p><strong>Actual Result-</strong><span style="color: #ff5630">Purchase Order which has not yet been ...
+Processing issue 105/439: ISP-1866
+[DEBUG-LABELS] Total labels found for ISP-1866: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'Awaiting Build' by name: Awaiting Build -> bf46baa0-8c97-4afe-a65a-a300e43d70e6
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+📥 DOWNLOADING ISSUE-LEVEL ATTACHMENTS FOR ISP-1866
+   Total files: 2 (33.31 MB)
+
+   [1/2] ⏭️  SKIP: image-20251119-074754.png (already attached)
+   [2/2] 📥 Downloading: ISP-1866,1865-LPO.mp4 (33.22 MB)
+  Attempt 1/5: Downloading from https://craftsilicon.atlassian.net/rest/api/3/attachment/content/129074...
+  Following redirect 1/6 to: https://api.media.atlassian.com/file/c4761b51-1a1e-4d80-abdd-f2800238dcc1/binary?token=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiN...
+  Attempt 1/5: Downloading from https://api.media.atlassian.com/file/c4761b51-1a1e-4d80-abdd-f2800238dcc1/binary?token=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiN...
+  📊 Downloaded 10.0/33.22 MB...
+  📊 Downloaded 20.0/33.22 MB...
+  📊 Downloaded 30.0/33.22 MB...
+  ✅ Downloaded 34835835 bytes successfully
+  ⏳ Retrying in 2s...
+  Attempt 2/5: Downloading from https://craftsilicon.atlassian.net/rest/api/3/attachment/content/129074...
+  Following redirect 1/6 to: https://api.media.atlassian.com/file/c4761b51-1a1e-4d80-abdd-f2800238dcc1/binary?token=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiN...
+  Attempt 2/5: Downloading from https://api.media.atlassian.com/file/c4761b51-1a1e-4d80-abdd-f2800238dcc1/binary?token=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiN...
+  📊 Downloaded 10.0/33.22 MB...
+  📊 Downloaded 20.0/33.22 MB...
+  📊 Downloaded 30.0/33.22 MB...
+  ✅ Downloaded 34835835 bytes successfully
+  ⏳ Retrying in 4s...
+  Attempt 3/5: Downloading from https://craftsilicon.atlassian.net/rest/api/3/attachment/content/129074...
+  Following redirect 1/6 to: https://api.media.atlassian.com/file/c4761b51-1a1e-4d80-abdd-f2800238dcc1/binary?token=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiN...
+  Attempt 3/5: Downloading from https://api.media.atlassian.com/file/c4761b51-1a1e-4d80-abdd-f2800238dcc1/binary?token=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiN...
+  📊 Downloaded 10.0/33.22 MB...
+  📊 Downloaded 20.0/33.22 MB...
+  📊 Downloaded 30.0/33.22 MB...
+  ✅ Downloaded 34835835 bytes successfully
+  ⏳ Retrying in 8s...
+  Attempt 4/5: Downloading from https://craftsilicon.atlassian.net/rest/api/3/attachment/content/129074...
+  Following redirect 1/6 to: https://api.media.atlassian.com/file/c4761b51-1a1e-4d80-abdd-f2800238dcc1/binary?token=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiN...
+  Attempt 4/5: Downloading from https://api.media.atlassian.com/file/c4761b51-1a1e-4d80-abdd-f2800238dcc1/binary?token=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiN...
+  📊 Downloaded 10.0/33.22 MB...
+  📊 Downloaded 20.0/33.22 MB...
+  📊 Downloaded 30.0/33.22 MB...
+  ✅ Downloaded 34835835 bytes successfully
+  ⏳ Retrying in 15s...
+  Attempt 5/5: Downloading from https://craftsilicon.atlassian.net/rest/api/3/attachment/content/129074...
+  Following redirect 1/6 to: https://api.media.atlassian.com/file/c4761b51-1a1e-4d80-abdd-f2800238dcc1/binary?token=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiN...
+  Attempt 5/5: Downloading from https://api.media.atlassian.com/file/c4761b51-1a1e-4d80-abdd-f2800238dcc1/binary?token=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiN...
+  📊 Downloaded 10.0/33.22 MB...
+  📊 Downloaded 20.0/33.22 MB...
+  📊 Downloaded 30.0/33.22 MB...
+  ✅ Downloaded 34835835 bytes successfully
+
+📊 Attachment Summary for ISP-1866:
+   ✅ Uploaded: 0
+   ⏭️  Skipped: 1
+   ❌ Failed: 1
+
+[LABEL] Processing 2 label(s) for ISP-1866
+[LABEL-MATCH] Found existing label 'New_ERP' (stored as 'new_erp') -> a9f0bd31-9bc0-4a7b-90fc-2ed53a305e8d
+[LABEL-SKIP] Label 'new_erp' already attached to ISP-1866
+[LABEL-MATCH] Found existing label 'QA' (stored as 'qa') -> f66526ba-6a94-47b5-8239-f9fae5aa2248
+[LABEL-SKIP] Label 'qa' already attached to ISP-1866
+[LABEL] Completed processing labels for ISP-1866. Total attached: 2
+[COMMENTS] Importing 1 comment(s) for ISP-1866...
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[IMPORT] Added rich text comment by Robert Mbugua Kanyoro to ISP-1866 (id=80085d22-1908-441f-b0b3-d39cf97a8ac6, length=122)
+[DESCRIPTION-VALIDATE] ISP-1866: new_len=79, existing_len=115
+[DESCRIPTION-UPDATE] ISP-1866: Updated description (79 chars)
+  Previous: <div class="trix-content">
+  <p><strong>Actual Result-</strong></p>
+<p><strong>Expected Result-</stro...
+Processing issue 106/439: ISP-1865
+[DEBUG-LABELS] Total labels found for ISP-1865: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+📥 DOWNLOADING ISSUE-LEVEL ATTACHMENTS FOR ISP-1865
+   Total files: 1 (33.22 MB)
+
+   [1/1] ⏭️  SKIP: ISP-1865-LPO-Part 1.mp4 (already attached)
+
+📊 Attachment Summary for ISP-1865:
+   ✅ Uploaded: 0
+   ⏭️  Skipped: 1
+   ❌ Failed: 0
+
+[LABEL] Processing 2 label(s) for ISP-1865
+[LABEL-MATCH] Found existing label 'New_ERP' (stored as 'new_erp') -> a9f0bd31-9bc0-4a7b-90fc-2ed53a305e8d
+[LABEL-SKIP] Label 'new_erp' already attached to ISP-1865
+[LABEL-MATCH] Found existing label 'QA' (stored as 'qa') -> f66526ba-6a94-47b5-8239-f9fae5aa2248
+[LABEL-SKIP] Label 'qa' already attached to ISP-1865
+[LABEL] Completed processing labels for ISP-1865. Total attached: 2
+[DESCRIPTION-VALIDATE] ISP-1865: new_len=266, existing_len=279
+[DESCRIPTION-UPDATE] ISP-1865: Updated description (266 chars)
+  Previous: <div class="trix-content">
+  <p><strong>Actual Result-</strong><span>LPO number is displayed as the R...
+  Updated: <p><strong>Actual Result-</strong><span style="color: #ff5630">LPO number is displayed as the RFQ num...
+Processing issue 107/439: ISP-1862
+[DEBUG-LABELS] Total labels found for ISP-1862: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+📥 DOWNLOADING ISSUE-LEVEL ATTACHMENTS FOR ISP-1862
+   Total files: 2 (48.57 MB)
+
+   [1/2] ⏭️  SKIP: ISP-1862, 1860-TPP-Submit Response.mp4 (already attached)
+   [2/2] ⏭️  SKIP: ISP-1862,1861,1860-TPP-Responses-Save Draft.mp4 (already attached)
+
+📊 Attachment Summary for ISP-1862:
+   ✅ Uploaded: 0
+   ⏭️  Skipped: 2
+   ❌ Failed: 0
+
+[LABEL] Processing 2 label(s) for ISP-1862
+[LABEL-MATCH] Found existing label 'New_ERP' (stored as 'new_erp') -> a9f0bd31-9bc0-4a7b-90fc-2ed53a305e8d
+[LABEL-SKIP] Label 'new_erp' already attached to ISP-1862
+[LABEL-MATCH] Found existing label 'QA' (stored as 'qa') -> f66526ba-6a94-47b5-8239-f9fae5aa2248
+[LABEL-SKIP] Label 'qa' already attached to ISP-1862
+[LABEL] Completed processing labels for ISP-1862. Total attached: 2
+[DESCRIPTION-VALIDATE] ISP-1862: new_len=190, existing_len=226
+[DESCRIPTION-UPDATE] ISP-1862: Updated description (190 chars)
+  Previous: <div class="trix-content">
+  <p><strong>Actual Result-</strong>Application is submitted successfully ...
+  Updated: <p><strong>Actual Result-</strong>Application is submitted successfully but no feedback is displayed<...
+Processing issue 108/439: ISP-1861
+[DEBUG-LABELS] Total labels found for ISP-1861: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+📥 DOWNLOADING ISSUE-LEVEL ATTACHMENTS FOR ISP-1861
+   Total files: 1 (36.46 MB)
+
+   [1/1] ⏭️  SKIP: ISP-1861,1860-TPP-Responses-Save Draft.mp4 (already attached)
+
+📊 Attachment Summary for ISP-1861:
+   ✅ Uploaded: 0
+   ⏭️  Skipped: 1
+   ❌ Failed: 0
+
+[LABEL] Processing 2 label(s) for ISP-1861
+[LABEL-MATCH] Found existing label 'New_ERP' (stored as 'new_erp') -> a9f0bd31-9bc0-4a7b-90fc-2ed53a305e8d
+[LABEL-SKIP] Label 'new_erp' already attached to ISP-1861
+[LABEL-MATCH] Found existing label 'QA' (stored as 'qa') -> f66526ba-6a94-47b5-8239-f9fae5aa2248
+[LABEL-SKIP] Label 'qa' already attached to ISP-1861
+[LABEL] Completed processing labels for ISP-1861. Total attached: 2
+[DESCRIPTION-VALIDATE] ISP-1861: new_len=278, existing_len=320
+[DESCRIPTION-UPDATE] ISP-1861: Updated description (278 chars)
+  Previous: <div class="trix-content">
+  <p><strong>Actual Result-</strong>RFQ response has already been submitte...
+  Updated: <p><strong>Actual Result-</strong>RFQ response has already been submitted and is available on ERP por...
+Processing issue 109/439: ISP-1860
+[DEBUG-LABELS] Total labels found for ISP-1860: 2
+[USER-MATCH] Matched 'archana.verma' by parsed first+last: archana verma -> 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+📥 DOWNLOADING ISSUE-LEVEL ATTACHMENTS FOR ISP-1860
+   Total files: 2 (48.57 MB)
+
+   [1/2] 📥 Downloading: ISP-1860-TPP-Responses-Save Draft.mp4 (36.46 MB)
+  Attempt 1/5: Downloading from https://craftsilicon.atlassian.net/rest/api/3/attachment/content/128999...
+  Following redirect 1/6 to: https://api.media.atlassian.com/file/af3832ae-79f4-484e-b24d-02011bbc7618/binary?token=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiN...
+  Attempt 1/5: Downloading from https://api.media.atlassian.com/file/af3832ae-79f4-484e-b24d-02011bbc7618/binary?token=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiN...
+  📊 Downloaded 10.0/36.46 MB...
+  📊 Downloaded 20.0/36.46 MB...
+  📊 Downloaded 30.0/36.46 MB...
+  ✅ Downloaded 38233025 bytes successfully
+[1;34mINFO [0m 2025-12-03T00:14:01.337Z pid=3362825 tid=200dh: Sidekiq 8.0.8 connecting to Redis with options {:size=>10, :pool_name=>"internal", :url=>"redis://:REDACTED@localhost:6379/0"}
+   ✅ Successfully attached: ISP-1860-TPP-Responses-Save Draft.mp4 (verified in storage)
+  Attached ISP-1860-TPP-Responses-Save Draft.mp4 to defect ISP-1860 (service_exists=true)
+   [2/2] 📥 Downloading: ISP-1860-TPP-Submit Response.mp4 (12.11 MB)
+  Attempt 1/3: Downloading from https://craftsilicon.atlassian.net/rest/api/3/attachment/content/128998...
+  Following redirect 1/6 to: https://api.media.atlassian.com/file/84a1e2ec-b1a5-4aaa-9c5e-b07684ca9c90/binary?token=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiN...
+  Attempt 1/3: Downloading from https://api.media.atlassian.com/file/84a1e2ec-b1a5-4aaa-9c5e-b07684ca9c90/binary?token=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiN...
+  📊 Downloaded 10.0/12.11 MB...
+  ✅ Downloaded 12693252 bytes successfully
+/home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/net-protocol-0.2.2/lib/net/protocol.rb:47:in `wait_readable': Interrupt
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/net-protocol-0.2.2/lib/net/protocol.rb:47:in `ssl_socket_connect'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/net-http-0.6.0/lib/net/http.rb:1742:in `connect'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/net-http-0.6.0/lib/net/http.rb:1642:in `do_start'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/net-http-0.6.0/lib/net/http.rb:1631:in `start'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/net-http-0.6.0/lib/net/http.rb:2375:in `request'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/sentry-ruby-6.0.0/lib/sentry/net/http.rb:34:in `request'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:1588:in `block (2 levels) in fetch_and_attach_attachments'
+	from <internal:kernel>:187:in `loop'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:1556:in `block in fetch_and_attach_attachments'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:1522:in `each'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:1522:in `each_with_index'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:1522:in `fetch_and_attach_attachments'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:2469:in `import_issue_with_modules'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:2573:in `block in <main>'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:2568:in `each'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:2568:in `each_with_index'
+	from /home/robert/Desktop/CSPM-New/Task_Fresh/TaskBridgeApp/scripts/import_jira_with_modules.rb:2568:in `<main>'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/commands/runner/runner_command.rb:44:in `load'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/commands/runner/runner_command.rb:44:in `block in perform'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/activesupport-7.2.2.2/lib/active_support/execution_wrapper.rb:91:in `wrap'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/commands/runner/runner_command.rb:70:in `conditional_executor'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/commands/runner/runner_command.rb:43:in `perform'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/thor-1.4.0/lib/thor/command.rb:28:in `run'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/thor-1.4.0/lib/thor/invocation.rb:127:in `invoke_command'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/command/base.rb:178:in `invoke_command'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/thor-1.4.0/lib/thor.rb:538:in `dispatch'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/command/base.rb:73:in `perform'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/command.rb:71:in `block in invoke'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/command.rb:149:in `with_argv'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/command.rb:69:in `invoke'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/railties-7.2.2.2/lib/rails/commands.rb:18:in `<main>'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/3.3.0/bundled_gems.rb:75:in `require'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/3.3.0/bundled_gems.rb:75:in `block (2 levels) in replace_require'
+	from /home/robert/.rbenv/versions/3.3.5/lib/ruby/gems/3.3.0/gems/bootsnap-1.18.6/lib/bootsnap/load_path_cache/core_ext/kernel_require.rb:30:in `require'
+	from bin/rails:4:in `<main>'
+   ✅ Successfully attached: ISP-1860-TPP-Submit Response.mp4 (verified in storage)
+  Attached ISP-1860-TPP-Submit Response.mp4 to defect ISP-1860 (service_exists=true)
+
+📊 Attachment Summary for ISP-1860:
+   ✅ Uploaded: 2
+   ⏭️  Skipped: 0
+   ❌ Failed: 0
+
+[LABEL] Processing 2 label(s) for ISP-1860
+[LABEL-MATCH] Found existing label 'New_ERP' (stored as 'new_erp') -> a9f0bd31-9bc0-4a7b-90fc-2ed53a305e8d
+[LABEL-ATTACH] Successfully attached label 'new_erp' (ID: a9f0bd31-9bc0-4a7b-90fc-2ed53a305e8d) to ISP-1860
+[LABEL-MATCH] Found existing label 'QA' (stored as 'qa') -> f66526ba-6a94-47b5-8239-f9fae5aa2248
+[LABEL-ATTACH] Successfully attached label 'qa' (ID: f66526ba-6a94-47b5-8239-f9fae5aa2248) to ISP-1860
+[LABEL] Completed processing labels for ISP-1860. Total attached: 2
+[DESCRIPTION-VALIDATE] ISP-1860: new_len=79, existing_len=115
+[DESCRIPTION-UPDATE] ISP-1860: Updated description (79 chars)
+  Previous: <div class="trix-content">
+  <p><strong>Actual Result-</strong></p>
+<p><strong>Expected Result-</stro...
+Processing issue 110/439: ISP-1859
+[DEBUG-LABELS] Total labels found for ISP-1859: 2
+[USER-FALLBACK] Using default user for 'Kiriba Delphine' -> b3613172-fc54-4742-b2ba-c10b97d15bf4
+[USER-MATCH] Matched 'Robert Mbugua Kanyoro' by email: robert.mbugua@craftsilicon.com -> fb1e0a05-f047-4e22-a52b-b9b1fe4b4358
+[STATUS-MATCH] Matched status 'In Progress' by name: In Progress -> c805a0e9-73fc-4726-a1ab-d28b9a36469e
+[BANKING-MATCH] Found existing banking type 'ERP' -> d9a45733-9624-42c2-afcc-888ce998dbbe
+📥 DOWNLOADING ISSUE-LEVEL ATTACHMENTS FOR ISP-1859
+   Total files: 1 (3.18 MB)
+
+   [1/1] 📥 Downloading: pagination&backNavigation.mp4 (3.18 MB)
+  Attempt 1/3: Downloading from https://craftsilicon.atlassian.net/rest/api/3/attachment/content/128997...
+  Following redirect 1/6 to: https://api.media.atlassian.com/file/f17c6418-2fb2-437e-8ccb-22e4b6b4b71f/binary?token=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiN...
+  Attempt 1/3: Downloading from https://api.media.atlassian.com/file/f17c6418-2fb2-437e-8ccb-22e4b6b4b71f/binary?token=eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJiN...

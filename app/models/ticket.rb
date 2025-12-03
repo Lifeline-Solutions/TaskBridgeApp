@@ -39,6 +39,37 @@ class Ticket < ApplicationRecord
   has_many :ticket_feedbacks, dependent: :destroy
   has_many :feedbacks, class_name: 'TicketFeedback', dependent: :destroy
 
+  # Search scopes for global search
+  scope :search_by_query, ->(query) {
+    return none if query.blank?
+    
+    sanitized_query = "%#{query}%"
+    
+    left_joins(:rich_text_content)
+      .where(
+        'tickets.unique_id ILIKE :q
+         OR tickets.subject ILIKE :q
+         OR tickets.issue ILIKE :q
+         OR tickets.priority ILIKE :q
+         OR action_text_rich_texts.body ILIKE :q',
+        q: sanitized_query
+      )
+      .distinct
+  }
+
+  scope :accessible_by_user, ->(user) {
+    return none unless user
+    
+    # Admin and Observer can see all tickets
+    return all if user.has_any_role?(:admin, :observer)
+    
+    # Regular users can only see tickets from projects they're assigned to
+    joins(:project)
+      .joins('INNER JOIN project_users ON projects.id = project_users.project_id')
+      .where('project_users.user_id = ?', user.id)
+      .distinct
+  }
+
   after_create :set_initial_response_time, :set_target_repair_deadline, :set_resolution_deadline, :ticket_unique_id
   attr_accessor :skip_sla_callbacks, :skip_history_logging
 
