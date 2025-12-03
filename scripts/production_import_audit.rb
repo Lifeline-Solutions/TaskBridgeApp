@@ -16,7 +16,7 @@ APP_ROOT = Rails.root
 options = {
   dry_run: false,
   verbose: true,
-  projects: ['ISP2'],
+  projects: ['ISP'],
   days_back: 2000,
   custom_jql: 'project = ISP AND labels = QA AND issuetype = Bug AND status IN ("Awaiting Build", "Awaiting client API", "Awaiting Client Information", BLOCKED, Failed-QA, "In Progress", On-Hold, "QA Testing", Reopened, Resolved, "Support Testing", "To Do", Closed) AND cf[10141] = "Audit" ORDER BY created DESC'
 }
@@ -34,7 +34,7 @@ end.parse!
 # Project check removed as we have a default
 if options[:projects].empty?
   puts 'WARNING: No projects specified, defaulting to ISP.'
-  options[:projects] = ['ISP2']
+  options[:projects] = ['ISP']
 end
 
 # ... (rest of the file)
