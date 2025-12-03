@@ -34,7 +34,7 @@ end.parse!
 # Project check removed as we have a default
 if options[:projects].empty?
   puts 'WARNING: No projects specified, defaulting to ISP.'
-  options[:projects] = ['ISP']
+  options[:projects] = ['ISP2']
 end
 
 # ... (rest of the file)
