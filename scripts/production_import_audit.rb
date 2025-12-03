@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 # scripts/production_import_audit.rb
 
-
 require 'net/http'
 require 'uri'
 require 'json'
