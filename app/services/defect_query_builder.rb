@@ -26,8 +26,8 @@ class DefectQueryBuilder
 
   # Maps filter field names to database table/column names
   FIELD_MAPPING = {
-    'status' => { table: 'statuses', column: 'name', join: :statuses },
-    'priority' => { table: 'defects', column: 'priority' },
+    'status' => { table: 'statuses', column: 'name', join: :statuses, case_insensitive: true },
+    'priority' => { table: 'defects', column: 'priority', case_insensitive: true },
     'assignee_id' => { table: 'users', column: 'id', join: :users },
     'user_id' => { table: 'users', column: 'id', join: :users }, # Alias for assignee
     'reporter_id' => { table: 'defects', column: 'created_by' },
@@ -66,43 +66,45 @@ class DefectQueryBuilder
 
   # Apply a group of conditions with AND/OR operator
   def apply_condition_group(group)
-    operator = (group['operator'] || group[:operator] || 'AND').upcase
-    conditions = group['conditions'] || group[:conditions] || []
+    operator = group['operator'] || group[:operator] || 'AND'
+    conditions = group['conditions'] || []
 
     return @relation if conditions.empty?
 
-    # Build all conditions (may include nested groups)
+    # Process each condition and combine them
     arel_conditions = conditions.map do |condition|
       if condition['conditions'] || condition[:conditions]
-        # Nested group - build sub-query
-        build_nested_group_condition(condition)
+        # Nested group
+        apply_nested_group(condition)
       else
         # Single condition
-        build_condition(condition.with_indifferent_access)
+        build_condition(condition)
       end
     end.compact
 
     return @relation if arel_conditions.empty?
 
-    # Combine with AND or OR
-    if operator == 'OR'
-      combined = arel_conditions.reduce { |memo, cond| memo.or(cond) }
-      @relation = @relation.where(combined)
-    else
-      arel_conditions.each { |condition| @relation = @relation.where(condition) }
+    combined_condition = arel_conditions.reduce do |accum, condition|
+      if operator.to_s.upcase == 'OR'
+        accum.or(condition)
+      else
+        accum.and(condition)
+      end
     end
 
+    # Apply the combined condition to the relation
+    @relation = @relation.where(combined_condition)
+    
     @relation
   end
 
-  def build_nested_group_condition(nested_group)
-    # For nested groups, we need to build the conditions independently
-    operator = (nested_group['operator'] || nested_group[:operator] || 'AND').upcase
-    conditions = nested_group['conditions'] || nested_group[:conditions] || []
+  def apply_nested_group(group)
+    operator = group['operator'] || group[:operator] || 'AND'
+    conditions = group['conditions'] || []
 
     sub_conditions = conditions.map do |condition|
       if condition['conditions'] || condition[:conditions]
-        build_nested_group_condition(condition)
+        apply_nested_group(condition)
       else
         build_condition(condition.with_indifferent_access)
       end
@@ -110,11 +112,12 @@ class DefectQueryBuilder
 
     return nil if sub_conditions.empty?
 
-    if operator == 'OR'
-      sub_conditions.reduce { |memo, cond| memo.or(cond) }
-    else
-      # For AND, we'll combine them in the parent
-      sub_conditions.reduce { |memo, cond| memo.and(cond) }
+    sub_conditions.reduce do |accum, condition|
+      if operator.to_s.upcase == 'OR'
+        accum.or(condition)
+      else
+        accum.and(condition)
+      end
     end
   end
 
@@ -136,7 +139,11 @@ class DefectQueryBuilder
 
     case operator.to_s.upcase
     when 'IN'
-      arel_table[column].in(Array(value))
+      if field_config[:case_insensitive]
+        arel_table[column].lower.in(Array(value).map(&:to_s).map(&:downcase))
+      else
+        arel_table[column].in(Array(value))
+      end
     when 'NOT IN'
       arel_table[column].not_in(Array(value))
     when 'IS NULL'
@@ -173,13 +180,13 @@ class DefectQueryBuilder
       case key.to_s
       when 'status'
         @joins_needed << :statuses
-        # Handle case-insensitive status matching
-        status_values = Array(value).map(&:to_s).map(&:downcase)
-        @relation = @relation.where('LOWER(statuses.name) IN (?)', status_values)
+        # Case-insensitive status match
+        statuses = Array(value).map(&:downcase)
+        @relation = @relation.where('LOWER(statuses.name) IN (?)', statuses)
       when 'priority'
-        # Handle case-insensitive priority matching with normalization
-        normalized_priorities = normalize_priorities(Array(value))
-        @relation = @relation.where("LOWER(COALESCE(defects.priority, 'unknown')) IN (?)", normalized_priorities)
+        # Case-insensitive priority match
+        priorities = Array(value).map(&:downcase)
+        @relation = @relation.where('LOWER(defects.priority) IN (?)', priorities)
       when 'user_id', 'assignee_id'
         @joins_needed << :users
         @relation = @relation.where(users: { id: Array(value) })
@@ -189,8 +196,11 @@ class DefectQueryBuilder
         @joins_needed << :labels
         @relation = @relation.where(labels: { id: Array(value) })
       when 'qa_module_id'
-        # Enhanced module filtering with submodule expansion
-        apply_module_filter(Array(value), filters['submodule_id'])
+        # Expand to include submodules (match DefectController behavior)
+        module_ids = Array(value)
+        submodule_ids = QaModule.where(parent_id: module_ids).pluck(:id)
+        all_ids = (module_ids + submodule_ids).uniq
+        @relation = @relation.where(qa_module_id: all_ids)
       when 'submodule_id'
         # Handle submodule filtering in conjunction with parent modules
         # This is handled by qa_module_id case above

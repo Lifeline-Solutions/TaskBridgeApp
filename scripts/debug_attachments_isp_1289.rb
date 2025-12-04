@@ -15,17 +15,17 @@ JIRA_API_TOKEN = ENV.fetch('JIRA_API_TOKEN') { CONFIG[:jira_api_token] }
 def fetch_jira_issue(key)
   url = "#{JIRA_BASE_URL}/rest/api/3/issue/#{key}"
   uri = URI.parse(url)
-  
+
   http = Net::HTTP.new(uri.host, uri.port)
   http.use_ssl = true
-  
+
   request = Net::HTTP::Get.new(uri.request_uri)
   request['Accept'] = 'application/json'
   request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
-  
+
   response = http.request(request)
   return nil unless response.is_a?(Net::HTTPSuccess)
-  
+
   JSON.parse(response.body)
 end
 
@@ -41,10 +41,10 @@ if issue
     puts "  Size: #{att['size']} bytes"
     puts "  Created: #{att['created']}"
     puts "  ID: #{att['id']}"
-    puts "  ---"
+    puts '  ---'
   end
 else
-  puts "Could not fetch issue from Jira"
+  puts 'Could not fetch issue from Jira'
 end
 
 puts "\n--- Inspecting Local Data for #{issue_key} ---"
@@ -59,8 +59,8 @@ if defect
     puts "  Created At: #{att.created_at}"
     puts "  Blob Created At: #{att.blob.created_at}"
     puts "  ID: #{att.id}"
-    puts "  ---"
+    puts '  ---'
   end
 else
-  puts "Defect not found in DB"
+  puts 'Defect not found in DB'
 end

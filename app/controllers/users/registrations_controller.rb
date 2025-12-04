@@ -2,9 +2,9 @@ module Users
   class RegistrationsController < Devise::RegistrationsController
     def update
       super do |resource|
-        if resource.errors.empty?
+        if resource.errors.empty? && !resource.first_login
           # Mark first_login as true if it wasn't already
-          resource.update_column(:first_login, true) unless resource.first_login
+          resource.update_column(:first_login, true)
         end
       end
     end

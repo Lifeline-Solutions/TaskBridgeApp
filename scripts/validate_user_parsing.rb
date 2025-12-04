@@ -1,10 +1,10 @@
 # Validation script for enhanced JIRA import with user name parsing
 # Run this in `rails c` to verify the implementation
 
-puts "=" * 80
-puts "JIRA IMPORT - ENHANCED USER NAME PARSING VALIDATION"
-puts "=" * 80
-puts ""
+puts '=' * 80
+puts 'JIRA IMPORT - ENHANCED USER NAME PARSING VALIDATION'
+puts '=' * 80
+puts ''
 
 # Test data representing various name formats from Jira
 test_scenarios = [
@@ -53,7 +53,7 @@ test_scenarios = [
 ]
 
 puts "Running #{test_scenarios.length} test scenarios..."
-puts ""
+puts ''
 
 passed = 0
 failed = 0
@@ -69,45 +69,44 @@ test_scenarios.each do |scenario|
   test_user = User.find_by(email: scenario[:email])
 
   if test_user
-    puts "  ✓ User found in database:"
+    puts '  ✓ User found in database:'
     puts "    - first_name: '#{test_user.first_name}'"
     puts "    - last_name: '#{test_user.last_name}'"
 
     if test_user.first_name.downcase == scenario[:expected_first].downcase &&
        test_user.last_name.downcase == scenario[:expected_last].downcase
-      puts "  ✓ PASS - Names match expected values"
+      puts '  ✓ PASS - Names match expected values'
       passed += 1
     else
       puts "  ✗ FAIL - Names do not match (expected #{scenario[:expected_first]} #{scenario[:expected_last]})"
       failed += 1
     end
   else
-    puts "  ℹ User not found in database (may need to be created during import)"
-    puts "  Skipping validation (user will be created or matched during actual import)"
+    puts '  ℹ User not found in database (may need to be created during import)'
+    puts '  Skipping validation (user will be created or matched during actual import)'
     passed += 1
   end
 
-  puts ""
+  puts ''
 end
 
-puts "=" * 80
-puts "RESULTS"
-puts "=" * 80
+puts '=' * 80
+puts 'RESULTS'
+puts '=' * 80
 puts "Passed: #{passed}/#{test_scenarios.length}"
 puts "Failed: #{failed}/#{test_scenarios.length}"
-puts ""
+puts ''
 
-if failed == 0
-  puts "✓ All validation checks passed!"
+if failed.zero?
+  puts '✓ All validation checks passed!'
 else
-  puts "✗ Some validation checks failed. Please review the implementation."
+  puts '✗ Some validation checks failed. Please review the implementation.'
 end
 
-puts "=" * 80
-puts "Next steps:"
-puts "  1. Run the full import with: rails runner scripts/import_jira_with_modules.rb --project KCBL --dry-run"
-puts "  2. Review the user match statistics in the final report"
-puts "  3. Check for any names that fell back to the default user"
-puts "  4. If satisfied, remove --dry-run to commit changes"
-puts "=" * 80
-
+puts '=' * 80
+puts 'Next steps:'
+puts '  1. Run the full import with: rails runner scripts/import_jira_with_modules.rb --project KCBL --dry-run'
+puts '  2. Review the user match statistics in the final report'
+puts '  3. Check for any names that fell back to the default user'
+puts '  4. If satisfied, remove --dry-run to commit changes'
+puts '=' * 80

@@ -111,11 +111,11 @@ class Defect < ApplicationRecord
   scope :published, -> { where(draft: false) }
 
   # Search scopes for global search
-  scope :search_by_query, ->(query) {
+  scope :search_by_query, lambda { |query|
     return none if query.blank?
-    
+
     sanitized_query = "%#{query}%"
-    
+
     left_joins(:rich_text_content)
       .where(
         'defects.defect_unique ILIKE :q
@@ -130,15 +130,15 @@ class Defect < ApplicationRecord
       .distinct
   }
 
-  scope :accessible_by_user, ->(user) {
+  scope :accessible_by_user, lambda { |user|
     return none unless user
-    
+
     # Admin can see all defects
     return where(draft: false, deleted_on: nil) if user.has_role?(:admin)
-    
+
     # QA Admin can see all QA defects
     return where(draft: false, deleted_on: nil) if user.has_role?('qa admin')
-    
+
     # QA Agent can only see defects they created or are assigned to
     if user.has_role?('qa agent')
       where(draft: false, deleted_on: nil)

@@ -21,4 +21,3 @@ class ErrorNotifierMiddleware
     raise e
   end
 end
-
