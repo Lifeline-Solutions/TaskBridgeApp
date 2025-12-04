@@ -3,17 +3,14 @@
     <%= f.label :name, 'Team Name', class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white" %>
     <%= f.text_field :name, class: "border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full", placeholder: 'Enter team name', required: true %>
   </div>
-
   <div class="mb-5">
     <%= f.label :description, 'Description', class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white" %>
     <%= f.text_area :description, class: "border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full", placeholder: 'Enter team description' %>
   </div>
-
   <div class="mb-5">
     <%= f.label :team_role, 'Team Role', class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white" %>
     <%= f.select :team_role, ["Support", "Development"], { prompt: "Select a team role" }, class: "p-2 border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full" %>
   </div>
-
   <div class="mb-5">
     <%= f.label :user_ids, 'Assign Agents & Project Managers', class: "block mb-2 text-sm font-semibold text-gray-800 dark:text-white tracking-wide" %>
   </div>
