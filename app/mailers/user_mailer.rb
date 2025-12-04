@@ -1,9 +1,10 @@
 # app/mailers/user_mailer.rb
+# app/mailers/user_mailer.rb
 class UserMailer < ApplicationMailer
   default from: (
     if Rails.env.staging?
       'taskbridgestaging@craftsilicon.com'
-    elsif Rails.env.production? or Rails.env.developmenent?
+    elsif Rails.env.production? or Rails.env.development?
       'cspm@craftsilicon.com'
     end
   )
