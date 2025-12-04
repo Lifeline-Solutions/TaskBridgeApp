@@ -144,7 +144,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_02_115908) do
     t.index ["deleted_by_id"], name: "index_banking_types_on_deleted_by_id"
     t.index ["deleted_on"], name: "index_banking_types_on_deleted_on"
     t.index ["modified_by_id"], name: "index_banking_types_on_modified_by_id"
-    t.index ["name"], name: "index_banking_types_on_name", unique: true
+    t.index ["name"], name: "index_banking_types_on_name"
     t.index ["product_id"], name: "index_banking_types_on_product_id"
   end
 
@@ -411,30 +411,41 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_02_115908) do
   end
 
   create_table "defects", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "description"
+    t.date "start_date"
+    t.date "end_date"
+    t.uuid "product_id"
+    t.uuid "user_id"
+    t.string "submodule"
+    t.string "issue"
     t.string "priority"
+    t.string "summary"
+    t.uuid "software_id"
+    t.uuid "groupware_id"
+    t.uuid "script_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
     t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
     t.uuid "deleted_by"
     t.datetime "deleted_on"
-    t.uuid "qa_module_id"
-    t.uuid "submodule_id"
-    t.uuid "banking_type_id"
-    t.uuid "creator_id"
-    t.uuid "product_id"
-    t.string "summary"
     t.string "defect_unique"
     t.string "issue_type", default: "Bug"
     t.boolean "draft", default: false, null: false
     t.integer "retest_count", default: 0, null: false
+    t.uuid "qa_module_id"
+    t.uuid "submodule_id"
+    t.uuid "banking_type_id"
     t.index ["banking_type_id"], name: "index_defects_on_banking_type_id"
-    t.index ["creator_id"], name: "index_defects_on_creator_id"
-    t.index ["defect_unique"], name: "index_defects_on_defect_unique", unique: true
+    t.index ["defect_unique"], name: "index_defects_on_defect_unique"
     t.index ["deleted_on"], name: "index_defects_on_deleted_on"
+    t.index ["groupware_id"], name: "index_defects_on_groupware_id"
     t.index ["product_id"], name: "index_defects_on_product_id"
     t.index ["qa_module_id"], name: "index_defects_on_qa_module_id"
+    t.index ["script_id"], name: "index_defects_on_script_id"
+    t.index ["software_id"], name: "index_defects_on_software_id"
     t.index ["submodule_id"], name: "index_defects_on_submodule_id"
+    t.index ["user_id"], name: "index_defects_on_user_id"
   end
 
   create_table "defects_users", id: false, force: :cascade do |t|
@@ -787,12 +798,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_02_115908) do
     t.uuid "parent_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
-    t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
-    t.uuid "deleted_by"
-    t.datetime "deleted_on"
     t.uuid "product_id"
-    t.index ["deleted_on"], name: "index_qa_modules_on_deleted_on"
     t.index ["parent_id"], name: "index_qa_modules_on_parent_id"
     t.index ["product_id"], name: "index_qa_modules_on_product_id"
   end
@@ -1139,7 +1145,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_02_115908) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "add_statuses", "statuses"
-  add_foreign_key "add_statuses", "tickets", on_delete: :cascade
+  add_foreign_key "add_statuses", "tickets"
   add_foreign_key "add_tasks", "tasks"
   add_foreign_key "add_tasks", "users"
   add_foreign_key "addusers", "products"
@@ -1156,7 +1162,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_02_115908) do
   add_foreign_key "boards", "users"
   add_foreign_key "clients", "users"
   add_foreign_key "comments", "projects"
-  add_foreign_key "comments", "tickets", on_delete: :cascade
+  add_foreign_key "comments", "tickets"
   add_foreign_key "comments", "users"
   add_foreign_key "commonly_selected_clients", "clients"
   add_foreign_key "commonly_selected_clients", "users"
@@ -1194,30 +1200,26 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_02_115908) do
   add_foreign_key "defect_messages", "users", column: "modified_by_id"
   add_foreign_key "defect_statuses", "defects"
   add_foreign_key "defect_statuses", "statuses"
-  add_foreign_key "defects", "banking_types"
   add_foreign_key "defects", "products"
-  add_foreign_key "defects", "qa_modules"
-  add_foreign_key "defects", "qa_modules", column: "submodule_id"
-  add_foreign_key "defects", "users", column: "creator_id"
   add_foreign_key "documents", "products"
   add_foreign_key "draft_defect_messages", "defects"
   add_foreign_key "draft_defect_messages", "users"
   add_foreign_key "draft_defect_messages", "users", column: "created_by_id"
   add_foreign_key "draft_defect_messages", "users", column: "deleted_by_id"
   add_foreign_key "draft_defect_messages", "users", column: "modified_by_id"
-  add_foreign_key "events", "tickets", on_delete: :cascade
+  add_foreign_key "events", "tickets"
   add_foreign_key "events", "users"
   add_foreign_key "events", "users", column: "assigned_user_id"
   add_foreign_key "groupwares", "softwares"
   add_foreign_key "groupwares", "users"
   add_foreign_key "issues", "projects"
-  add_foreign_key "issues", "tickets", on_delete: :cascade
+  add_foreign_key "issues", "tickets"
   add_foreign_key "issues", "users"
   add_foreign_key "messages", "tasks"
   add_foreign_key "messages", "users"
   add_foreign_key "milestones", "products"
   add_foreign_key "milestones", "statuses"
-  add_foreign_key "notifications", "tickets", on_delete: :cascade
+  add_foreign_key "notifications", "tickets"
   add_foreign_key "notifications", "users"
   add_foreign_key "products", "clients"
   add_foreign_key "products", "groupwares"
@@ -1229,17 +1231,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_02_115908) do
   add_foreign_key "projects", "softwares"
   add_foreign_key "projects", "users"
   add_foreign_key "qa_modules", "products"
-  add_foreign_key "ratings", "tickets", on_delete: :cascade
+  add_foreign_key "ratings", "tickets"
   add_foreign_key "ratings", "users"
   add_foreign_key "scripts", "groupwares"
   add_foreign_key "scripts", "softwares"
-  add_foreign_key "sla_tickets", "tickets", on_delete: :cascade
+  add_foreign_key "sla_tickets", "tickets"
   add_foreign_key "sla_tickets", "users"
   add_foreign_key "softwares", "users"
   add_foreign_key "states", "tasks"
   add_foreign_key "states", "users"
   add_foreign_key "statuses", "users"
-  add_foreign_key "taggings", "tickets", on_delete: :cascade
+  add_foreign_key "taggings", "tickets"
   add_foreign_key "taggings", "users"
   add_foreign_key "tasks", "products"
   add_foreign_key "tasks", "tasks", column: "tasks_id"
