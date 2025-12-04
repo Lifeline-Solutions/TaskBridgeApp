@@ -9,11 +9,11 @@ Rails.application.routes.draw do
   get '/health', to: 'health#index'
 
   devise_for :users, controllers: { invitations: 'invitations' }
-  
+
   # Global search routes
   get '/search', to: 'search#index', as: 'global_search'
   get '/search/autocomplete', to: 'search#autocomplete', as: 'search_autocomplete'
-  
+
   resources :users do
     collection do
       get :search
@@ -111,7 +111,7 @@ Rails.application.routes.draw do
       patch :toggle_paid
       get :download_tasks_csv
     end
-    
+
     # Nested banking types for many-to-many management
     resources :banking_types do
       collection do
@@ -121,7 +121,7 @@ Rails.application.routes.draw do
         delete :remove
       end
     end
-    
+
     resources :tasks do
       member do
         post :assign_user
@@ -238,7 +238,7 @@ Rails.application.routes.draw do
     get :submodules, on: :member
   end
 
-  resources :defect_filters, only: [:index, :create, :update, :destroy] do
+  resources :defect_filters, only: [:index, :create, :edit, :update, :destroy] do
     collection do
       get :filter_modal_form
     end
@@ -254,7 +254,7 @@ Rails.application.routes.draw do
   end
 
   post 'reports/save_dashboard', to: 'reports#save_dashboard', as: :save_report_dashboard
-  
+
   resources :report_dashboards, only: [:index, :show, :new, :create, :edit, :update, :destroy] do
     member do
       get :apply

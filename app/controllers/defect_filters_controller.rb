@@ -1,9 +1,29 @@
 class DefectFiltersController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_defect_filter, only: %i[update destroy]
+  before_action :set_defect_filter, only: %i[edit update destroy]
 
   def index
     @defect_filters = current_user.defect_filters.active.includes(:product).order(:name)
+  end
+
+  def edit
+    # Load all necessary data for the edit form
+    @qa_products = Product
+      .includes(:client, :groupwares, :statuses)
+      .joins(:statuses)
+      .where(statuses: { name: ['Pre Quality Assurance', 'End Of Quality Assurance'] })
+      .where('products.deleted_on IS NULL')
+      .distinct
+      .order('products.document_name ASC')
+
+    # Load users, modules, statuses, and labels for filter options
+    @users = User.where(active: true).order(:first_name, :last_name)
+    @modules = QaModule.includes(:children, :parent).distinct.order(:module_name)
+    @statuses = Status.distinct.order(:name)
+    @labels = Label.includes(:labellable).distinct.order(:name)
+
+    # Parse existing filter criteria for the form
+    @current_filters = @defect_filter.sanitized_filters_string_keys
   end
 
   def create
@@ -57,16 +77,53 @@ class DefectFiltersController < ApplicationController
   end
 
   def update
-    if params.dig(:defect_filter, :filters).present?
+    # Check if this is a filter criteria update (from edit form) or just a name update
+    if params[:product_id] || params[:status] || params[:priority] || params[:user_id] ||
+       params[:reporter_id] || params[:qa_module_id] || params[:submodule_id] ||
+       params[:label_ids] || params[:query] || params[:start_date] || params[:end_date] ||
+       params[:filter_open]
+
+      # This is a full filter criteria update from the edit form
+      raw_filters = {
+        'product_id' => params[:product_id],
+        'status' => params[:status],
+        'priority' => params[:priority],
+        'user_id' => params[:user_id],
+        'reporter_id' => params[:reporter_id],
+        'qa_module_id' => params[:qa_module_id],
+        'submodule_id' => params[:submodule_id],
+        'label_ids' => params[:label_ids],
+        'query' => params[:query],
+        'start_date' => params[:start_date],
+        'end_date' => params[:end_date],
+        'filter_open' => params[:filter_open]
+      }.reject { |k, v| v.blank? }
+
+      @defect_filter.filters = permit_filter_keys(raw_filters)
+
+      # Handle product_id association
+      product_param = params[:product_id]
+      normalized_product_id =
+        case product_param
+        when Array
+          product_param.first
+        when String
+          product_param.split(/[ ,]+/).reject(&:blank?).first
+        end
+      @defect_filter.product_id = normalized_product_id
+
+    elsif params.dig(:defect_filter, :filters).present?
+      # Legacy filter update (JSON format)
       raw_filters = parse_filters_param(params.dig(:defect_filter, :filters))
       @defect_filter.filters = permit_filter_keys(raw_filters)
     end
 
+    # Update name if provided
     @defect_filter.name = params.dig(:defect_filter, :name) if params.dig(:defect_filter, :name).present?
     @defect_filter.modified_by = current_user
 
     if @defect_filter.save
-      redirect_back fallback_location: defect_filters_path, notice: 'Filter updated'
+      redirect_to defect_filters_path, notice: 'Filter updated successfully'
     else
       redirect_back fallback_location: defect_filters_path, alert: @defect_filter.errors.full_messages.to_sentence
     end

@@ -1,0 +1,214 @@
+<div class="container mx-auto px-4 py-6">
+  <div class="max-w-4xl mx-auto">
+    <div class="bg-white shadow-lg rounded-lg">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h1 class="text-2xl font-bold text-gray-900">Edit Filter: <%= @defect_filter.name %></h1>
+        <p class="text-gray-600 mt-1">Modify your saved filter criteria</p>
+      </div>
+
+      <div class="p-6">
+        <%= form_with model: @defect_filter, url: defect_filter_path(@defect_filter), method: :patch, local: true, class: "space-y-6" do |form| %>
+          <!-- Filter Name -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <%= form.label :name, "Filter Name", class: "block text-sm font-medium text-gray-700 mb-1" %>
+              <%= form.text_field :name, class: "w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" %>
+            </div>
+          </div>
+
+          <!-- Projects -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Projects</label>
+            <div class="border border-gray-300 rounded-md p-3 bg-gray-50 max-h-48 overflow-y-auto">
+              <% @qa_products.each do |product| %>
+                <label class="flex items-center space-x-2 mb-2">
+                  <%= check_box_tag 'product_id[]', product.id, 
+                      Array(@current_filters['product_id']).include?(product.id.to_s),
+                      class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' %>
+                  <span class="text-sm text-gray-700">
+                    <%= product.document_name %>
+                    <span class="text-xs text-gray-500">(<%= product.client&.name %>)</span>
+                  </span>
+                </label>
+              <% end %>
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <div class="border border-gray-300 rounded-md p-3 bg-gray-50 max-h-32 overflow-y-auto">
+              <% @statuses.each do |status| %>
+                <label class="flex items-center space-x-2 mb-2">
+                  <%= check_box_tag 'status[]', status.name, 
+                      Array(@current_filters['status']).include?(status.name),
+                      class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' %>
+                  <span class="text-sm text-gray-700"><%= status.name %></span>
+                </label>
+              <% end %>
+            </div>
+          </div>
+
+          <!-- Priority -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+            <div class="flex flex-wrap gap-2">
+              <% %w[Critical High Medium Low].each do |priority| %>
+                <label class="flex items-center space-x-2">
+                  <%= check_box_tag 'priority[]', priority, 
+                      Array(@current_filters['priority']).include?(priority),
+                      class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' %>
+                  <span class="text-sm text-gray-700"><%= priority %></span>
+                </label>
+              <% end %>
+            </div>
+          </div>
+
+          <!-- Assignees -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Assignees</label>
+            <div class="border border-gray-300 rounded-md p-3 bg-gray-50 max-h-48 overflow-y-auto">
+              <% @users.each do |user| %>
+                <label class="flex items-center space-x-2 mb-2">
+                  <%= check_box_tag 'user_id[]', user.id, 
+                      Array(@current_filters['user_id']).include?(user.id.to_s),
+                      class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' %>
+                  <span class="text-sm text-gray-700"><%= user.full_name %></span>
+                </label>
+              <% end %>
+            </div>
+          </div>
+
+          <!-- Reporters -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Reporters</label>
+            <div class="border border-gray-300 rounded-md p-3 bg-gray-50 max-h-48 overflow-y-auto">
+              <% @users.each do |user| %>
+                <label class="flex items-center space-x-2 mb-2">
+                  <%= check_box_tag 'reporter_id[]', user.id, 
+                      Array(@current_filters['reporter_id']).include?(user.id.to_s),
+                      class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' %>
+                  <span class="text-sm text-gray-700"><%= user.full_name %></span>
+                </label>
+              <% end %>
+            </div>
+          </div>
+
+          <!-- Modules -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Modules</label>
+            <div class="border border-gray-300 rounded-md p-3 bg-gray-50 max-h-48 overflow-y-auto">
+              <% @modules.select { |m| m.parent_id.nil? }.each do |module_item| %>
+                <div class="mb-2">
+                  <label class="flex items-center space-x-2">
+                    <%= check_box_tag 'qa_module_id[]', module_item.id, 
+                        Array(@current_filters['qa_module_id']).include?(module_item.id.to_s),
+                        class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' %>
+                    <span class="text-sm font-medium text-gray-700"><%= module_item.module_name %></span>
+                  </label>
+                  
+                  <!-- Submodules -->
+                  <% module_item.children.each do |submodule| %>
+                    <div class="ml-6 mt-1">
+                      <label class="flex items-center space-x-2">
+                        <%= check_box_tag 'submodule_id[]', submodule.id, 
+                            Array(@current_filters['submodule_id']).include?(submodule.id.to_s),
+                            class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' %>
+                        <span class="text-sm text-gray-600">└ <%= submodule.module_name %></span>
+                      </label>
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+
+          <!-- Labels -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Labels</label>
+            <div class="border border-gray-300 rounded-md p-3 bg-gray-50 max-h-48 overflow-y-auto">
+              <% @labels.each do |label| %>
+                <label class="flex items-center space-x-2 mb-2">
+                  <%= check_box_tag 'label_ids[]', label.id, 
+                      Array(@current_filters['label_ids']).include?(label.id.to_s),
+                      class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' %>
+                  <span class="text-sm text-gray-700"><%= label.name %></span>
+                </label>
+              <% end %>
+            </div>
+          </div>
+
+          <!-- Additional Options -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <%= form.label :query, "Search Query", class: "block text-sm font-medium text-gray-700 mb-1" %>
+              <%= text_field_tag 'query', @current_filters['query'], 
+                  placeholder: "Search in defect content...",
+                  class: "w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" %>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
+              <div class="flex space-x-2">
+                <%= date_field_tag 'start_date', @current_filters['start_date'], 
+                    placeholder: "Start date",
+                    class: "flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" %>
+                <%= date_field_tag 'end_date', @current_filters['end_date'], 
+                    placeholder: "End date",
+                    class: "flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" %>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter Options -->
+          <div class="flex flex-wrap gap-4">
+            <label class="flex items-center space-x-2">
+              <%= check_box_tag 'filter_open', '1', @current_filters['filter_open'] == '1',
+                  class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' %>
+              <span class="text-sm text-gray-700">Show only open defects</span>
+            </label>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex space-x-4 pt-6 border-t border-gray-200">
+            <%= form.submit 'Update Filter', 
+                class: 'px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500' %>
+            <%= link_to 'Cancel', defect_filters_path, 
+                class: 'px-6 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500' %>
+            <%= link_to 'Apply Updated Filter', '#', 
+                id: 'apply-updated-filter',
+                class: 'px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500' %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("turbo:load", function() {
+    const form = document.querySelector('form');
+    const applyButton = document.getElementById('apply-updated-filter');
+    
+    if (form && applyButton) {
+      applyButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // Collect all form data
+        const formData = new FormData(form);
+        const params = new URLSearchParams();
+        
+        // Add all form fields as URL parameters
+        for (let [key, value] of formData) {
+          if (value && value !== '') {
+            params.append(key, value);
+          }
+        }
+        
+        // Redirect to defect index with filter parameters
+        const url = '<%= index_show_defect_index_path %>' + '?' + params.toString();
+        window.location.href = url;
+      });
+    }
+  });
+</script>

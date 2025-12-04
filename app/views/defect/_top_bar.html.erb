@@ -553,6 +553,20 @@
                     </div>
                   </div>
 
+                  <!-- Date Range Filters -->
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <%= label_tag 'start_date', 'From Date', class: 'block text-xs font-medium mb-1' %>
+                      <%= date_field_tag 'start_date', params[:start_date], 
+                          class: 'w-full p-1 text-sm border border-gray-300 rounded' %>
+                    </div>
+                    <div>
+                      <%= label_tag 'end_date', 'To Date', class: 'block text-xs font-medium mb-1' %>
+                      <%= date_field_tag 'end_date', params[:end_date], 
+                          class: 'w-full p-1 text-sm border border-gray-300 rounded' %>
+                    </div>
+                  </div>
+
                   <!-- Apply button to go to index_show -->
                   <div class="pt-2 flex justify-between">
                     <button type="button" 

@@ -39,6 +39,7 @@
           has_active_filters = params[:status].present? || 
                                params[:priority].present? || 
                                params[:user_id].present? || 
+                               params[:reporter_id].present? || 
                                params[:label_ids].present? || 
                                params[:qa_module_id].present? || 
                                params[:submodule_id].present? || 
@@ -46,7 +47,8 @@
                                params[:start_date].present? || 
                                params[:end_date].present? || 
                                params[:query].present? || 
-                               params[:order].present?
+                               params[:order].present? || 
+                               (params[:product_id].present? && Array(params[:product_id]).any?(&:present?))
         %>
         
         <% if has_active_filters %>

@@ -173,9 +173,13 @@ class DefectQueryBuilder
       case key.to_s
       when 'status'
         @joins_needed << :statuses
-        @relation = @relation.where(statuses: { name: Array(value) })
+        # Handle case-insensitive status matching
+        status_values = Array(value).map(&:to_s).map(&:downcase)
+        @relation = @relation.where('LOWER(statuses.name) IN (?)', status_values)
       when 'priority'
-        @relation = @relation.where(priority: Array(value))
+        # Handle case-insensitive priority matching with normalization
+        normalized_priorities = normalize_priorities(Array(value))
+        @relation = @relation.where("LOWER(COALESCE(defects.priority, 'unknown')) IN (?)", normalized_priorities)
       when 'user_id', 'assignee_id'
         @joins_needed << :users
         @relation = @relation.where(users: { id: Array(value) })
@@ -185,9 +189,11 @@ class DefectQueryBuilder
         @joins_needed << :labels
         @relation = @relation.where(labels: { id: Array(value) })
       when 'qa_module_id'
-        @relation = @relation.where(qa_module_id: Array(value))
+        # Enhanced module filtering with submodule expansion
+        apply_module_filter(Array(value), filters['submodule_id'])
       when 'submodule_id'
-        @relation = @relation.where(submodule_id: Array(value))
+        # Handle submodule filtering in conjunction with parent modules
+        # This is handled by qa_module_id case above
       when 'banking_type_id'
         @relation = @relation.where(banking_type_id: Array(value))
       when 'product_id'
@@ -208,11 +214,33 @@ class DefectQueryBuilder
     @relation
   end
 
-  # Apply all necessary joins
+  # Apply all necessary joins with conflict prevention
   def apply_joins
-    @joins_needed.each do |join|
-      @relation = @relation.joins(join)
+    @joins_needed.uniq.each do |join|
+      # Check if join is already applied to prevent duplicate joins
+      join_tables = case join
+      when :statuses then ['statuses']
+      when :users then ['users', 'defects_users']
+      when :labels then ['labels', 'defects_labels']
+      else [join.to_s]
+      end
+
+      # Only apply join if not already present in the query
+      unless join_already_applied?(join_tables)
+        begin
+          @relation = @relation.joins(join)
+        rescue ActiveRecord::StatementInvalid => e
+          # Handle cases where join table doesn't exist or association is missing
+          Rails.logger.warn "Join #{join} failed: #{e.message}"
+        end
+      end
     end
+  end
+
+  # Check if a join is already applied to the relation
+  def join_already_applied?(table_names)
+    sql = @relation.to_sql.downcase
+    table_names.any? { |table| sql.include?("join #{table}") || sql.include?("joins #{table}") }
   end
 
   # Parse value based on column type
@@ -223,5 +251,61 @@ class DefectQueryBuilder
     else
       value
     end
+  end
+
+  # Normalize priority values to handle case-insensitive matching
+  def normalize_priorities(priorities)
+    priorities.flat_map do |priority|
+      case priority.to_s.strip.downcase
+      when 'severity 1', 's1', 'high' then ['severity 1', 's1', 'high']
+      when 'severity 2', 's2', 'medium' then ['severity 2', 's2', 'medium']
+      when 'severity 3', 's3', 'low' then ['severity 3', 's3', 'low']
+      when 'severity 4', 's4', 'very low' then ['severity 4', 's4', 'very low']
+      else [priority.to_s.downcase]
+      end
+    end
+  end
+
+  # Apply module filtering with proper parent-child relationship handling
+  def apply_module_filter(qa_module_ids, submodule_ids = nil)
+    qa_module_ids = qa_module_ids.reject(&:blank?)
+    submodule_ids = Array(submodule_ids).reject(&:blank?)
+
+    return @relation if qa_module_ids.empty? && submodule_ids.empty?
+
+    begin
+      # Dynamically check if QaModule model exists to avoid errors in environments without this feature
+      qa_module_class = Object.const_get('QaModule')
+
+      if qa_module_ids.any? && submodule_ids.any?
+        # Both parent modules and submodules selected - prefer submodules but fallback to parents
+        submodule_relation = @relation.where(qa_module_id: submodule_ids)
+
+        if submodule_relation.exists?
+          @relation = submodule_relation
+        else
+          # Fallback to parent modules if no defects found in submodules
+          @relation = @relation.where(qa_module_id: qa_module_ids)
+        end
+      elsif qa_module_ids.any?
+        # Only parent modules selected - expand to include all their submodules
+        parent_modules = qa_module_class.where(id: qa_module_ids)
+        if parent_modules.any?
+          child_module_ids = qa_module_class.where(parent_id: qa_module_ids).pluck(:id)
+          all_module_ids = qa_module_ids + child_module_ids
+          @relation = @relation.where(qa_module_id: all_module_ids)
+        else
+          @relation = @relation.where(qa_module_id: qa_module_ids)
+        end
+      elsif submodule_ids.any?
+        # Only submodules selected
+        @relation = @relation.where(qa_module_id: submodule_ids)
+      end
+    rescue NameError, ActiveRecord::StatementInvalid => e
+      # QaModule doesn't exist or column doesn't exist - skip module filtering
+      Rails.logger.warn "Module filtering not available: #{e.message}"
+    end
+
+    @relation
   end
 end

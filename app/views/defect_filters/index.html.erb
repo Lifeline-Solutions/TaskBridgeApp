@@ -49,6 +49,9 @@
                   <%= link_to 'Apply',
                     index_show_defect_index_path(f.sanitized_filters_string_keys.merge('product_id' => f.product_id).compact),
                     class: 'px-2 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600' %>
+                  <%= link_to 'Edit',
+                    edit_defect_filter_path(f),
+                    class: 'ml-2 px-2 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600' %>
                   <%= link_to 'Delete',
                     defect_filter_path(f),
                     method: :delete,

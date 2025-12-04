@@ -56,6 +56,9 @@ class QaDashboardsController < ApplicationController
     @total_count = result[:total_count]
     @filter_params = @dashboard.defect_filter.sanitized_filters
 
+    # Resolve current project names for display
+    @current_project_names = resolve_project_names(product_ids_to_filter)
+
     # Debug: Log active parameters
     Rails.logger.debug '=== DASHBOARD DEBUG ==='
     Rails.logger.debug "Filter ID: #{@dashboard.defect_filter.id}"
@@ -108,5 +111,30 @@ class QaDashboardsController < ApplicationController
       :auto_refresh_interval,
       widgets: %i[name group_by_field visualization_type position]
     )
+  end
+
+  def resolve_project_names(product_ids)
+    return 'All Products' if product_ids.empty?
+
+    # Fetch products based on IDs
+    products = Product.where(id: product_ids).includes(:client, :groupwares)
+
+    if products.empty?
+      # Fallback to dashboard filter's single product if no products found by IDs
+      if @dashboard.defect_filter.product_id.present?
+        fallback_product = Product.find_by(id: @dashboard.defect_filter.product_id)
+        return fallback_product&.document_name || 'All Products'
+      end
+      'All Products'
+    elsif products.one?
+      # Single product - show full name with client info
+      product = products.first
+      client_name = product.client&.name || 'No Client'
+      groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
+      "#{client_name} - #{groupware_names}"
+    else
+      # Multiple products - show count and summarize
+      "#{products.count} Projects Selected"
+    end
   end
 end
