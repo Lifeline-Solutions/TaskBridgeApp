@@ -4,6 +4,7 @@
     <tr>
       <th scope="col" class="px-6 py-3 whitespace-nowrap">Team</th>
       <th scope="col" class="px-6 py-3 whitespace-nowrap">Description</th>
+      <th scope="col" class="px-6 py-3 whitespace-nowrap">Team Role</th>
       <th scope="col" class="px-6 py-3 whitespace-nowrap">Members</th>
       <th scope="col" class="px-6 py-3 whitespace-nowrap">ACTIONS</th>
     </tr>
@@ -17,6 +18,11 @@
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <%= team.description.truncate(30) %>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <% if team.team_role.present? %>
+              <%= team.team_role %> Team
+            <% end %>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
             <%= team.users.count %>
