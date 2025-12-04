@@ -331,26 +331,40 @@ end
 
 def extract_submodule_from_field(field_value)
   # Special extraction for submodule fields with nested 'child' structure
-  # Example: {"value"=>"Admin Portal-Bulk", "child"=>{"value"=>"Bulk-Supervision"}}
+  # ALWAYS extracts from 'child.value' if present (for both ISP and Kenya Police)
+  # Example ISP: {"value"=>"Procurement-Suppliers", "child"=>{"value"=>"Suppliers-Suppliers List"}}
+  # Example Kenya Police: {"value"=>"Admin Portal-Bulk", "child"=>{"value"=>"Bulk-Supervision"}}
   return nil if field_value.nil?
 
   if field_value.is_a?(Hash)
-    # Check if there's a 'child' element (Kenya Police structure)
+    # PRIORITY: Check if there's a 'child' element first
+    # This ensures we always get the submodule from child.value (not the parent value)
     if field_value['child'].present? && field_value['child'].is_a?(Hash)
-      return field_value['child']['value'] if field_value['child']['value'].present?
+      child_value = field_value['child']['value']
+      if child_value.present?
+        vputs "[SUBMODULE EXTRACT] Found child.value: '#{child_value}'"
+        return child_value
+      end
     end
 
-    # Fallback to regular extraction
-    return field_value['value'] if field_value['value'].present?
+    # Fallback to regular extraction ONLY if no child exists
+    if field_value['value'].present?
+      vputs "[SUBMODULE EXTRACT] No child found, using value: '#{field_value['value']}'"
+      return field_value['value']
+    end
+
     return field_value['name'] if field_value['name'].present?
   end
 
   if field_value.is_a?(Array) && field_value.any?
     first = field_value.first
     if first.is_a?(Hash)
+      # PRIORITY: Check child first
       if first['child'].present? && first['child'].is_a?(Hash)
-        return first['child']['value'] if first['child']['value'].present?
+        child_value = first['child']['value']
+        return child_value if child_value.present?
       end
+      # Fallback
       return first['value'] if first['value'].present?
     end
   end
@@ -401,17 +415,18 @@ def extract_module_and_submodule(text)
 end
 
 # Find or create module in database
-def find_or_create_module(module_name, product_id, _created_by)
+def find_or_create_module(module_name, product_id, _created_by, stats = nil)
   return nil if module_name.blank?
 
   module_name = module_name.to_s.strip
   return nil if module_name.empty?
 
-  # Try to find existing module
+  # Try to find existing module (UPDATE)
   module_rec = QaModule.where(product_id: product_id).find_by('LOWER(name) = ?', module_name.downcase)
 
   if module_rec
-    vputs "[MODULE-FOUND] #{module_name} (ID: #{module_rec.id})"
+    vputs "[MODULE-FOUND] #{module_name} (ID: #{module_rec.id}) - Will UPDATE defect assignment"
+    stats[:modules_found] += 1 if stats
     return module_rec
   end
 
@@ -421,7 +436,8 @@ def find_or_create_module(module_name, product_id, _created_by)
       name: module_name,
       product_id: product_id
     )
-    vputs "[MODULE-CREATED] #{module_name} (ID: #{module_rec.id})"
+    vputs "[MODULE-CREATED] #{module_name} (ID: #{module_rec.id}) - New module created"
+    stats[:modules_created] += 1 if stats
     return module_rec
   rescue StandardError => e
     puts "❌ ERROR: Failed to create module '#{module_name}': #{e.message}"
@@ -430,17 +446,18 @@ def find_or_create_module(module_name, product_id, _created_by)
 end
 
 # Find or create submodule in database
-def find_or_create_submodule(submodule_name, parent_module, product_id, _created_by)
+def find_or_create_submodule(submodule_name, parent_module, product_id, _created_by, stats = nil)
   return nil if submodule_name.blank? || parent_module.nil?
 
   submodule_name = submodule_name.to_s.strip
   return nil if submodule_name.empty?
 
-  # Try to find existing submodule (QaModule with parent_id)
+  # Try to find existing submodule (QaModule with parent_id) - UPDATE
   submodule_rec = QaModule.where(parent_id: parent_module.id).find_by('LOWER(name) = ?', submodule_name.downcase)
 
   if submodule_rec
-    vputs "[SUBMODULE-FOUND] #{submodule_name} (ID: #{submodule_rec.id}, Parent: #{parent_module.name})"
+    vputs "[SUBMODULE-FOUND] #{submodule_name} (ID: #{submodule_rec.id}, Parent: #{parent_module.name}) - Will UPDATE defect assignment"
+    stats[:submodules_found] += 1 if stats
     return submodule_rec
   end
 
@@ -451,7 +468,8 @@ def find_or_create_submodule(submodule_name, parent_module, product_id, _created
       parent_id: parent_module.id,
       product_id: product_id
     )
-    vputs "[SUBMODULE-CREATED] #{submodule_name} (ID: #{submodule_rec.id}, Parent: #{parent_module.name})"
+    vputs "[SUBMODULE-CREATED] #{submodule_name} (ID: #{submodule_rec.id}, Parent: #{parent_module.name}) - New submodule created"
+    stats[:submodules_created] += 1 if stats
     return submodule_rec
   rescue StandardError => e
     puts "❌ ERROR: Failed to create submodule '#{submodule_name}': #{e.message}"
@@ -460,11 +478,12 @@ def find_or_create_submodule(submodule_name, parent_module, product_id, _created
 end
 
 # Assign module and submodule to defect
-def assign_modules_to_defect(defect, module_name, submodule_name, product_id, _created_by, dry_run: false)
+# This UPDATES the defect's module/submodule assignments (does not delete anything)
+def assign_modules_to_defect(defect, module_name, submodule_name, product_id, _created_by, stats: nil, dry_run: false)
   # Skip only if BOTH are blank - allow updating one field without the other
   return { status: :skipped, reason: 'no_module_data' } if module_name.blank? && submodule_name.blank?
 
-  vputs "\n[ASSIGN] #{defect.defect_unique}"
+  vputs "\n[ASSIGN/UPDATE] #{defect.defect_unique}"
   vputs "  Current Module: #{defect.qa_module&.name} (ID: #{defect.qa_module_id})"
   vputs "  Current Submodule: #{defect.submodule&.name} (ID: #{defect.submodule_id})"
   vputs "  From Jira - Module: #{module_name || '(blank)'}, Submodule: #{submodule_name || '(blank)'}"
@@ -472,14 +491,14 @@ def assign_modules_to_defect(defect, module_name, submodule_name, product_id, _c
   # Find or create parent module (only if module_name is present)
   parent_module = nil
   if module_name.present?
-    parent_module = find_or_create_module(module_name, product_id, nil)
+    parent_module = find_or_create_module(module_name, product_id, nil, stats)
     return { status: :error, reason: 'failed_to_create_module' } unless parent_module
   end
 
   # Find or create submodule (only if submodule_name and parent_module are present)
   child_module = nil
   if submodule_name.present? && parent_module.present?
-    child_module = find_or_create_submodule(submodule_name, parent_module, product_id, nil)
+    child_module = find_or_create_submodule(submodule_name, parent_module, product_id, nil, stats)
     return { status: :error, reason: 'failed_to_create_submodule' } unless child_module
   end
 
@@ -488,36 +507,36 @@ def assign_modules_to_defect(defect, module_name, submodule_name, product_id, _c
   submodule_changed = defect.submodule_id != child_module&.id
 
   if !module_changed && !submodule_changed
-    vputs "  ✓ No changes needed"
+    vputs "  ✓ No changes needed (already up to date)"
     return { status: :skipped, reason: 'no_changes' }
   end
 
-  # Show what will change
+  # Show what will change (UPDATE operation)
   if module_changed
     old_name = defect.qa_module&.name || 'NONE'
     new_name = parent_module&.name || 'NONE'
-    vputs "  CHANGE: Module #{old_name} → #{new_name}"
+    vputs "  UPDATE: Module #{old_name} → #{new_name}"
   end
 
   if submodule_changed
     old_name = defect.submodule&.name || 'NONE'
     new_name = child_module&.name || 'NONE'
-    vputs "  CHANGE: Submodule #{old_name} → #{new_name}"
+    vputs "  UPDATE: Submodule #{old_name} → #{new_name}"
   end
 
   return { status: :preview } if dry_run
 
-  # Save changes
+  # Save changes (UPDATE defect record)
   begin
     defect.qa_module_id = parent_module&.id
     defect.submodule_id = child_module&.id
     defect.updated_at = Time.current
     defect.save!
 
-    vputs "  ✅ SAVED"
+    vputs "  ✅ UPDATED"
     return { status: :updated, module: parent_module&.name, submodule: child_module&.name }
   rescue StandardError => e
-    puts "  ❌ ERROR: Failed to save defect: #{e.message}"
+    puts "  ❌ ERROR: Failed to update defect: #{e.message}"
     return { status: :error, reason: 'save_failed' }
   end
 end
@@ -548,7 +567,11 @@ stats = {
   errors: 0,
   previewed: 0,
   jira_issues_fetched: 0,
-  jira_matched: 0
+  jira_matched: 0,
+  modules_created: 0,
+  modules_found: 0,
+  submodules_created: 0,
+  submodules_found: 0
 }
 
 # Determine which projects to fetch from Jira
@@ -680,6 +703,7 @@ defects.find_each do |defect|
     submodule_to_assign,
     defect.product_id,
     nil,
+    stats: stats,
     dry_run: DRY_RUN
   )
 
@@ -702,20 +726,33 @@ end
 puts "\n" + "=" * 100
 puts "📊 SUMMARY"
 puts "=" * 100
-puts "Jira Issues Fetched: #{stats[:jira_issues_fetched]}"
-puts "Jira Issues Matched: #{stats[:jira_matched]}"
-puts "Total Defects:       #{stats[:total]}"
-puts "Updated:             #{stats[:updated]}"
-puts "Previewed (DRY):     #{stats[:previewed]}"
-puts "Skipped:             #{stats[:skipped]}"
-puts "Errors:              #{stats[:errors]}"
+puts "Jira Issues Fetched:  #{stats[:jira_issues_fetched]}"
+puts "Jira Issues Matched:  #{stats[:jira_matched]}"
+puts "Total Defects:        #{stats[:total]}"
+puts ""
+puts "Modules Found (existing):   #{stats[:modules_found]}"
+puts "Modules Created (new):      #{stats[:modules_created]}"
+puts "Submodules Found (existing): #{stats[:submodules_found]}"
+puts "Submodules Created (new):    #{stats[:submodules_created]}"
+puts ""
+puts "Defects Updated:      #{stats[:updated]}"
+puts "Defects Previewed:    #{stats[:previewed]}" if DRY_RUN
+puts "Defects Skipped:      #{stats[:skipped]}"
+puts "Errors:               #{stats[:errors]}"
 puts ""
 
 if DRY_RUN && stats[:previewed] > 0
   puts "ℹ️  DRY RUN MODE: #{stats[:previewed]} defect(s) would be updated."
   puts "   To apply changes, run without DRY_RUN=true"
 elsif stats[:updated] > 0
-  puts "✅ SUCCESS: #{stats[:updated]} defect(s) updated with modules/submodules from Jira"
+  puts "✅ SUCCESS: #{stats[:updated]} defect(s) UPDATED with modules/submodules from Jira"
+  puts "   - #{stats[:modules_found]} existing modules reused"
+  puts "   - #{stats[:modules_created]} new modules created"
+  puts "   - #{stats[:submodules_found]} existing submodules reused"
+  puts "   - #{stats[:submodules_created]} new submodules created"
+  puts ""
+  puts "   ℹ️  NOTE: This script UPDATES defect assignments only."
+  puts "   No modules or submodules were deleted."
 else
   puts "ℹ️  No changes were made."
 end
