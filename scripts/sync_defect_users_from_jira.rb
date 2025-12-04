@@ -285,22 +285,36 @@ def find_user_by_intelligent_match(name_or_email, verbose: false)
     end
   end
 
-  # Strategy 9: Fuzzy match - any part matches
-  fuzzy_matches = []
-  all_parts = parts.map { |p| p.downcase }
+  # Strategy 9: STRICT fuzzy match - requires at least 70% similarity
+  # Only match if at least 2 parts match exactly AND total similarity is high
+  if parts.length >= 2
+    best_match = nil
+    best_score = 0
 
-  User.where(deleted_on: nil).each do |user|
-    full_name = "#{user.first_name} #{user.last_name}".downcase
-    name_words = full_name.split(/\s+/)
+    User.where(deleted_on: nil).each do |user|
+      user_first = user.first_name.to_s.downcase.split(/\s+/)
+      user_last = user.last_name.to_s.downcase.split(/\s+/)
+      user_parts = (user_first + user_last).reject(&:empty?)
 
-    # Check if all name parts appear somewhere
-    fuzzy_matches << user if all_parts.all? { |part| name_words.any? { |word| word.include?(part) || part.include?(word) } }
-  end
+      next if user_parts.empty?
 
-  if fuzzy_matches.any?
-    user = fuzzy_matches.first
-    vputs "  [9-MATCH-FUZZY] '#{name_str}' → #{user.first_name} #{user.last_name}" if verbose
-    return user
+      # Count exact matches
+      exact_matches = parts.count { |p| user_parts.any? { |up| up == p } }
+
+      # Calculate similarity score (exact matches / total parts)
+      score = exact_matches.to_f / [parts.length, user_parts.length].max
+
+      # Require at least 2 exact word matches AND 50% similarity
+      if exact_matches >= 2 && score >= 0.5 && score > best_score
+        best_match = user
+        best_score = score
+      end
+    end
+
+    if best_match
+      vputs "  [9-MATCH-STRICT] '#{name_str}' → #{best_match.first_name} #{best_match.last_name} (score: #{(best_score * 100).round}%)" if verbose
+      return best_match
+    end
   end
 
   vputs "  [NO-MATCH] ❌ '#{name_str}'" if verbose
