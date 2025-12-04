@@ -1,3 +1,31 @@
+<%
+  # Helper method to filter statuses based on user role and team_role
+  def filter_statuses_by_role(statuses, user)
+    is_admin = user.has_role?(:admin)
+
+    # Get team_role from user's teams
+    team_roles = user.teams.map(&:team_role).compact.map(&:downcase)
+
+    # If admin or no team_role, show all statuses
+    if is_admin || team_roles.empty?
+      return statuses
+    end
+
+    # If Development team, exclude Client Confirmation Pending
+    if team_roles.include?('development')
+      return statuses.reject { |s| s == 'Client Confirmation Pending' }
+    end
+
+    # If Support team, show all statuses (including Client Confirmation Pending)
+    if team_roles.include?('support')
+      return statuses
+    end
+
+    # Default: return all statuses
+    statuses
+  end
+%>
+
 <% if @project.special && @ticket.issue == 'CHANGE REQUEST' %>
   <% if current_user.has_role?(:admin) || current_user.has_role?(:observer) || current_user.has_role?(:hod)%>
     <%= form_with url: add_status_project_ticket_path(@project, @ticket, data: { turbo: false}), local: true do %>
@@ -35,7 +63,8 @@
       } %>
 
       <% if transition_map[current_status] %>
-        <%= select_tag :status_id, options_for_select(Status.where(name: transition_map[current_status]).pluck(:name, :id), @ticket.statuses.first.id), class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500" %>
+        <% filtered_statuses = filter_statuses_by_role(transition_map[current_status], current_user) %>
+        <%= select_tag :status_id, options_for_select(Status.where(name: filtered_statuses).pluck(:name, :id), @ticket.statuses.first.id), class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500" %>
         <%= submit_tag "UPDATE STATUS", class: 'w-full font-semibold bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg mt-2' %>
       <% end %>
     <% end %>
@@ -63,12 +92,12 @@
       <% if @ticket.statuses.empty? %>
         <%= select_tag :status_id, options_for_select(Status.where(name: ['Assigned']).pluck(:name, :id)), class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500" %>
       <% elsif transition_map[current_status] %>
-        <%= select_tag :status_id, options_for_select(Status.where(name: transition_map[current_status]).pluck(:name, :id), @ticket.statuses.first.id), class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500" %>
+        <% filtered_statuses = filter_statuses_by_role(transition_map[current_status], current_user) %>
+        <%= select_tag :status_id, options_for_select(Status.where(name: filtered_statuses).pluck(:name, :id), @ticket.statuses.first.id), class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500" %>
       <% end %>
       <%= submit_tag "UPDATE STATUS", class: 'w-full font-semibold bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg mt-2' %>
     <% end %>
   <% elsif current_user.has_role?(:client) %>
-
     <%= form_with url: add_status_project_ticket_path(@project, @ticket, data: { turbo: false}), local: true do %>
       <% current_status = @ticket.statuses.first&.name %>
       <% transition_map = {
@@ -76,7 +105,8 @@
         'Resolved' => %w[Closed Reopened],
       }%>
       <% if transition_map[current_status] %>
-        <%= select_tag :status_id, options_for_select(Status.where(name: transition_map[current_status]).pluck(:name, :id), @ticket.statuses.first.id), class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500" %>
+        <% filtered_statuses = filter_statuses_by_role(transition_map[current_status], current_user) %>
+        <%= select_tag :status_id, options_for_select(Status.where(name: filtered_statuses).pluck(:name, :id), @ticket.statuses.first.id), class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500" %>
         <%= submit_tag "UPDATE STATUS", class: 'w-full font-semibold bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-lg mt-2' %>
       <% end %>
     <% end %>
