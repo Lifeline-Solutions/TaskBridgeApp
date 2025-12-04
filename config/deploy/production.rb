@@ -6,7 +6,7 @@
 
 set :stage, :production
 set :rails_env, 'production'                    # <- makes rake tasks use staging
-set :branch, ENV.fetch('BRANCH', 'main-prod')
+set :branch, ENV.fetch('BRANCH', 'dev')
 
 server "172.17.40.11", user: "deploy", roles: %w{app db web}
 
