@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # scripts/assign_modules_and_submodules.rb
 # Fetch modules and submodules from Jira API and assign to defects
-# Ensures full module and submodule names are captured from Jira
+# Automatically discovers custom fields and matches Jira issues to database defects
 #
 # Usage:
 #   # Process single defect (fetches from Jira)
@@ -151,7 +151,7 @@ def discover_custom_fields
     field_id = field['id']
 
     # Specific check for Imarisha ERP Modules
-    if name == 'imarisha  erp modules' # NOTE: double space in name
+    if name == 'imarisha  erp modules'
       module_field = field_id
       vputs "✓ Found TARGET Module field: #{field_id} - #{field['name']}"
     elsif name == 'imarisha  erp modules / sub-modules'
@@ -173,108 +173,126 @@ def discover_custom_fields
   [module_field, submodule_field, banking_type_field]
 end
 
-# Discover custom fields
-vputs "Loading Jira configuration and discovering custom fields..."
-MODULE_FIELD, SUBMODULE_FIELD, BANKING_TYPE_FIELD = discover_custom_fields
-
-unless MODULE_FIELD && SUBMODULE_FIELD
-  puts "❌ ERROR: Could not discover module/submodule fields from Jira"
-  puts "   Please ensure Jira credentials are correct and fields exist"
-  exit 1
-end
-
-vputs "Configuration loaded:"
-vputs "  Jira URL: #{JIRA_BASE_URL}"
-vputs "  Module Field ID: #{MODULE_FIELD}"
-vputs "  Submodule Field ID: #{SUBMODULE_FIELD}"
-vputs "  Banking Type Field ID: #{BANKING_TYPE_FIELD || 'Not found'}"
-
-
-puts "\n" + "=" * 100
-puts "📦 DEFECT MODULE & SUBMODULE ASSIGNMENT"
-puts "=" * 100
-puts "Mode: #{case options[:mode]
-             when :single_defect then "Single Defect (#{options[:defect_key]})"
-             when :project then "Project (#{options[:project_key]})"
-             when :all then "All Defects"
-             else "Not specified"
-             end}"
-puts "Data Source: Existing Database Module Names"
-puts "Dry Run: #{DRY_RUN ? 'YES' : 'NO'}"
-puts "Verbose: #{VERBOSE ? 'YES' : 'NO'}"
-puts "=" * 100
-puts ""
-
-
 # ===============================
 # JIRA API FUNCTIONS
 # ===============================
 
-def fetch_from_jira(issue_key)
-  url = "#{JIRA_BASE_URL}/rest/api/3/issues/#{issue_key}"
-  uri = URI.parse(url)
+def fetch_jira_issues_with_modules(project_keys:, custom_jql: nil, max_results: 100, days_back: 2000)
+  # First discover custom fields
+  module_field, submodule_field, banking_type_field = discover_custom_fields
 
-  vputs "[JIRA] GET #{url}"
+  issues = []
+  next_page_token = nil
+  page_count = 0
+  max_pages = 500
 
-  http = Net::HTTP.new(uri.host, uri.port)
-  http.use_ssl = true
-  http.read_timeout = 120
+  start_date = (Time.now - (days_back * 24 * 60 * 60)).strftime('%Y-%m-%d')
+  end_date = Time.now.strftime('%Y-%m-%d')
 
-  request = Net::HTTP::Get.new(uri.request_uri)
-  request['Accept'] = 'application/json'
-  request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
+  jql_query = if custom_jql.present?
+                custom_jql
+              else
+                # Build JQL for multiple projects using IN operator
+                project_clause = if project_keys.length == 1
+                                   "project = \"#{project_keys.first}\""
+                                 else
+                                   "project IN (#{project_keys.map { |p| "\"#{p}\"" }.join(', ')})"
+                                 end
+                "#{project_clause} AND created >= \"#{start_date}\" ORDER BY created DESC"
+              end
 
-  begin
+  vputs "Fetching Jira issues with JQL: #{jql_query}"
+  vputs "Date range: #{start_date} to #{end_date}" unless custom_jql.present?
+  vputs "Projects: #{project_keys.join(', ')}"
+  puts "DEBUG: Project keys received: #{project_keys.inspect}"
+  puts "DEBUG: Full JQL: #{jql_query}"
+
+  # Build fields list
+  fields_to_fetch = %w[key summary status reporter assignee created updated
+                       description project comment priority issuetype parent epic attachment labels]
+
+  # Add custom fields if found
+  fields_to_fetch << module_field if module_field
+  fields_to_fetch << submodule_field if submodule_field
+  fields_to_fetch << banking_type_field if banking_type_field
+
+  loop do
+    page_count += 1
+
+    if page_count > max_pages
+      warn "Reached maximum page limit (#{max_pages}). Stopping pagination."
+      break
+    end
+
+    # Build query parameters
+    query_params = {
+      jql: jql_query,
+      maxResults: max_results,
+      fields: fields_to_fetch.join(',')
+    }
+
+    query_params[:nextPageToken] = next_page_token if next_page_token.present?
+
+    uri = URI.parse("#{JIRA_BASE_URL}/rest/api/3/search/jql")
+    uri.query = URI.encode_www_form(query_params)
+
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    http.read_timeout = 120
+    http.open_timeout = 30
+
+    request = Net::HTTP::Get.new(uri.request_uri)
+    request['Accept'] = 'application/json'
+    request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
+
+    vputs "Page #{page_count}: Requesting with nextPageToken=#{next_page_token.present? ? "#{next_page_token[0..20]}..." : 'nil'}" if VERBOSE
+
     response = http.request(request)
 
     unless response.is_a?(Net::HTTPSuccess)
-      vputs "[JIRA] Error: #{response.code} - #{response.message}"
-      return nil
+      warn "❌ Failed to fetch from Jira: #{response.code} #{response.message}"
+      warn "Response body: #{response.body[0..500]}"
+      break
     end
 
     data = JSON.parse(response.body)
-    vputs "[JIRA] Fetched: #{data['key']}"
-    return data
-  rescue StandardError => e
-    vputs "[JIRA] Exception: #{e.message}"
-    return nil
-  end
-end
+    fetched = data['issues'] || []
 
-def extract_from_jira_fields(jira_issue)
-  return [nil, nil] if jira_issue.nil?
-
-  fields = jira_issue['fields'] || {}
-
-  # Get raw values from custom fields
-  module_field_value = fields[MODULE_FIELD]
-  submodule_field_value = fields[SUBMODULE_FIELD]
-
-  vputs "[JIRA FIELDS]"
-  vputs "  Module Field (#{MODULE_FIELD}): #{module_field_value.inspect}"
-  vputs "  Submodule Field (#{SUBMODULE_FIELD}): #{submodule_field_value.inspect}"
-
-  # Extract string values from various formats
-  jira_module = extract_field_value(module_field_value)
-  jira_submodule = extract_field_value(submodule_field_value)
-
-  vputs "[EXTRACTED]"
-  vputs "  Module: #{jira_module.inspect}"
-  vputs "  Submodule: #{jira_submodule.inspect}"
-
-  # Parse if module has delimiter but no explicit submodule
-  if jira_module.present? && jira_submodule.blank?
-    parsed_module, parsed_submodule = extract_module_and_submodule(jira_module)
-    if parsed_submodule.present?
-      jira_module = parsed_module
-      jira_submodule = parsed_submodule
-      vputs "[PARSED FROM MODULE]"
-      vputs "  Module: #{jira_module}"
-      vputs "  Submodule: #{jira_submodule}"
+    if fetched.empty?
+      vputs "✓ Page #{page_count}: No issues returned - pagination complete (no more data)"
+      break
     end
+
+    issues.concat(fetched)
+    total_fetched = issues.length
+
+    next_page_token = data['nextPageToken']
+    is_last_page = data['isLast'] == true
+
+    vputs "✓ Page #{page_count}: Fetched #{fetched.length} issues (total collected: #{total_fetched}) [isLast: #{is_last_page}, hasNextToken: #{next_page_token.present? ? 'YES' : 'NO'}]"
+
+    if is_last_page
+      vputs '✓ Jira indicates last page (isLast: true) - pagination complete'
+      break
+    end
+
+    unless next_page_token.present?
+      vputs '✓ No nextPageToken provided - reached end of results'
+      break
+    end
+
+    sleep 1.0 # Delay between pages to avoid rate limiting
   end
 
-  [jira_module, jira_submodule]
+  puts "📊 Total issues fetched from Jira: #{issues.length} (across #{page_count} pages)"
+
+  # Return both issues and discovered field IDs
+  {
+    issues: issues,
+    module_field: module_field,
+    submodule_field: submodule_field,
+    banking_type_field: banking_type_field
+  }
 end
 
 def extract_field_value(field_value)
@@ -305,18 +323,6 @@ end
 # ===============================
 
 # Enhanced parsing: Extract full module and submodule from text
-# Handles formats like:
-#   "Admin Portal – Bulk – Supervision" => Module="Admin Portal-Bulk", Submodule="Bulk-Supervision"
-#   "Core Banking – Accounts – Savings" => Module="Core Banking-Accounts", Submodule="Accounts-Savings"
-#   "Module - Submodule - Description - ..." => Module="Module-Submodule", Submodule="Submodule-Description"
-#   "" or nil => Module=nil, Submodule=nil (returns nil for blank)
-#
-# Logic:
-# 1. Return nil for blank/empty text (safe)
-# 2. Split on em-dashes (–) or space-hyphen-space ( - ) or regular hyphen (-)
-# 3. Take first N parts (before description)
-# 4. Module = parts[0] - parts[1]
-# 5. Submodule = parts[1] - parts[2] (if exists)
 def extract_module_and_submodule(text)
   return [nil, nil] if text.blank?
 
@@ -324,7 +330,6 @@ def extract_module_and_submodule(text)
   return [nil, nil] if text.empty?
 
   # Split on em-dashes or space-hyphen-space or regular hyphens
-  # Priority: em-dash (–) > space-hyphen-space ( - ) > regular hyphen (-)
   parts = []
   if text.include?('–')
     parts = text.split('–').map(&:strip).reject(&:empty?)
@@ -333,12 +338,10 @@ def extract_module_and_submodule(text)
   elsif text.include?('-')
     parts = text.split('-').map(&:strip).reject(&:empty?)
   else
-    # No delimiters found - return nil (don't treat as module)
     vputs "[EXTRACT] No delimiters found in: '#{text}'"
     return [nil, nil]
   end
 
-  # Return nil if we don't have enough parts
   if parts.length < 2
     vputs "[EXTRACT] Only 1 part after split: '#{parts[0]}'"
     return [nil, nil]
@@ -387,8 +390,6 @@ def find_or_create_module(module_name, product_id, _created_by)
 end
 
 # Find or create submodule in database
-# Note: Submodules are QaModules with a parent_id set to the parent module
-# They also need product_id to be set
 def find_or_create_submodule(submodule_name, parent_module, product_id, _created_by)
   return nil if submodule_name.blank? || parent_module.nil?
 
@@ -480,14 +481,71 @@ end
 # MAIN EXECUTION
 # ===============================
 
+puts "\n" + "=" * 100
+puts "📦 DEFECT MODULE & SUBMODULE ASSIGNMENT FROM JIRA"
+puts "=" * 100
+puts "Mode: #{case options[:mode]
+             when :single_defect then "Single Defect (#{options[:defect_key]})"
+             when :project then "Project (#{options[:project_key]})"
+             when :all then "All Defects"
+             else "Not specified"
+             end}"
+puts "Data Source: Jira API with Custom Field Discovery"
+puts "Dry Run: #{DRY_RUN ? 'YES' : 'NO'}"
+puts "Verbose: #{VERBOSE ? 'YES' : 'NO'}"
+puts "=" * 100
+puts ""
+
 stats = {
   total: 0,
   updated: 0,
   skipped: 0,
   errors: 0,
-  previewed: 0
+  previewed: 0,
+  jira_issues_fetched: 0,
+  jira_matched: 0
 }
 
+# Determine which projects to fetch from Jira
+jira_projects = case options[:mode]
+                when :single_defect
+                  # Extract project key from defect (e.g., PSP-114 → PSP)
+                  [options[:defect_key].split('-').first]
+                when :project
+                  [options[:project_key]]
+                else # :all
+                  # Get all unique project keys from database
+                  Defect.pluck('DISTINCT LOWER(defect_unique)').map do |unique|
+                    unique.split('-').first.upcase
+                  end.uniq
+                end
+
+vputs "Jira projects to fetch: #{jira_projects.inspect}"
+
+# Fetch issues from Jira with custom field discovery
+jira_result = fetch_jira_issues_with_modules(
+  project_keys: jira_projects,
+  max_results: 100,
+  days_back: 2000
+)
+
+jira_issues = jira_result[:issues]
+module_field = jira_result[:module_field]
+submodule_field = jira_result[:submodule_field]
+
+stats[:jira_issues_fetched] = jira_issues.length
+
+vputs "Discovered custom fields:"
+vputs "  Module Field: #{module_field}"
+vputs "  Submodule Field: #{submodule_field}"
+
+# Create a mapping of Jira keys to issues
+jira_issues_map = {}
+jira_issues.each do |issue|
+  jira_issues_map[issue['key']] = issue
+end
+
+vputs "Created Jira issues map with #{jira_issues_map.length} issues"
 
 # Fetch defects based on mode
 defects = case options[:mode]
@@ -495,18 +553,14 @@ defects = case options[:mode]
             Defect.where(defect_unique: options[:defect_key])
           when :project
             Defect.where('defect_unique ~ ?', "^#{Regexp.escape(options[:project_key])}-[0-9]+$")
-          when :all
+          else # :all
             Defect.where('defect_unique ~ ?', '^[A-Z]+-[0-9]+$')
           end
 
 stats[:total] = defects.count
 
 if defects.empty?
-  puts "❌ No defects found for #{case options[:mode]
-                                 when :single_defect then "#{options[:defect_key]}"
-                                 when :project then "project #{options[:project_key]}"
-                                 when :all then "the database"
-                                 end}"
+  puts "❌ No defects found"
   exit 1
 end
 
@@ -515,28 +569,49 @@ puts "Found #{stats[:total]} defect(s) to process...\n\n"
 defects.find_each do |defect|
   vputs "\n[PROCESSING] #{defect.defect_unique}"
 
-  # Extract module and submodule from defect summary or module name
-  # Priority: Summary (has full hierarchy) > Module Name > Product Name > Project Key
-  module_text = defect.summary
-  module_text ||= defect.qa_module&.name
-  module_text ||= defect.product&.name
+  # Try to find matching Jira issue
+  jira_issue = jira_issues_map[defect.defect_unique]
 
-  vputs "  Source Text: #{module_text}"
-
-  if module_text.blank?
+  if jira_issue.nil?
+    vputs "⏭️  #{defect.defect_unique}: Skipped (not found in Jira)"
     stats[:skipped] += 1
-    vputs "⏭️  #{defect.defect_unique}: Skipped (no summary, module name, or product)"
     next
   end
 
-  module_to_assign, submodule_to_assign = extract_module_and_submodule(module_text)
+  stats[:jira_matched] += 1
+
+  # Extract module and submodule from Jira custom fields
+  module_to_assign = nil
+  submodule_to_assign = nil
+
+  # Try to get from custom fields first
+  if module_field && jira_issue['fields'][module_field].present?
+    module_to_assign = extract_field_value(jira_issue['fields'][module_field])
+    vputs "  [From Module Field] #{module_to_assign}"
+  end
+
+  if submodule_field && jira_issue['fields'][submodule_field].present?
+    submodule_to_assign = extract_field_value(jira_issue['fields'][submodule_field])
+    vputs "  [From Submodule Field] #{submodule_to_assign}"
+  end
+
+  # If module not found in custom field, try extracting from summary
+  if module_to_assign.blank?
+    summary = jira_issue['fields']['summary']
+    if summary.present?
+      vputs "  [From Summary] #{summary[0..50]}..."
+      module_to_assign, submodule_from_summary = extract_module_and_submodule(summary)
+      submodule_to_assign ||= submodule_from_summary
+    end
+  end
 
   if module_to_assign.blank?
     stats[:skipped] += 1
-    vputs "⏭️  #{defect.defect_unique}: Skipped (no valid module hierarchy found)"
+    vputs "⏭️  #{defect.defect_unique}: Skipped (no module found in Jira)"
     next
   end
 
+  vputs "  Extracted: Module='#{module_to_assign}', Submodule='#{submodule_to_assign || '(none)'}'"
 
   result = assign_modules_to_defect(
     defect,
@@ -566,18 +641,20 @@ end
 puts "\n" + "=" * 100
 puts "📊 SUMMARY"
 puts "=" * 100
-puts "Total Defects:     #{stats[:total]}"
-puts "Updated:           #{stats[:updated]}"
-puts "Previewed (DRY):   #{stats[:previewed]}"
-puts "Skipped:           #{stats[:skipped]}"
-puts "Errors:            #{stats[:errors]}"
+puts "Jira Issues Fetched: #{stats[:jira_issues_fetched]}"
+puts "Jira Issues Matched: #{stats[:jira_matched]}"
+puts "Total Defects:       #{stats[:total]}"
+puts "Updated:             #{stats[:updated]}"
+puts "Previewed (DRY):     #{stats[:previewed]}"
+puts "Skipped:             #{stats[:skipped]}"
+puts "Errors:              #{stats[:errors]}"
 puts ""
 
 if DRY_RUN && stats[:previewed] > 0
   puts "ℹ️  DRY RUN MODE: #{stats[:previewed]} defect(s) would be updated."
   puts "   To apply changes, run without DRY_RUN=true"
 elsif stats[:updated] > 0
-  puts "✅ SUCCESS: #{stats[:updated]} defect(s) updated with module/submodule assignments"
+  puts "✅ SUCCESS: #{stats[:updated]} defect(s) updated with modules/submodules from Jira"
 else
   puts "ℹ️  No changes were made."
 end
