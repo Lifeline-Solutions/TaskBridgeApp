@@ -23,7 +23,5 @@ fields = JSON.parse(response.body)
 
 puts "Searching for 'Audit' fields:"
 fields.each do |f|
-  if f['name'].downcase.include?('audit')
-    puts "#{f['id']} - #{f['name']}" 
-  end
+  puts "#{f['id']} - #{f['name']}" if f['name'].downcase.include?('audit')
 end

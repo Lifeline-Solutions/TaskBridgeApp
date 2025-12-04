@@ -14,6 +14,7 @@ def convert_adf_to_html(content_array)
   html_parts = []
   content_array.each do |block|
     next unless block.is_a?(Hash)
+
     block_html = convert_adf_block_to_html(block)
     html_parts << block_html if block_html.present?
   end
@@ -62,7 +63,7 @@ def convert_adf_table_to_html(table_block)
 
   html = '<table class="table table-bordered">'
 
-  rows.each_with_index do |row, row_idx|
+  rows.each_with_index do |row, _row_idx|
     next unless row.is_a?(Hash) && row['type'] == 'tableRow'
 
     cells = row['content'] || []
@@ -98,12 +99,13 @@ def convert_adf_table_to_html(table_block)
   html
 end
 
-def convert_adf_list_to_html(list_items, list_type)
+def convert_adf_list_to_html(list_items, _list_type)
   return '' if list_items.nil? || list_items.empty?
 
   html_parts = []
   list_items.each do |item|
     next unless item.is_a?(Hash) && item['type'] == 'listItem'
+
     item_content = item['content'] || []
     item_html = convert_adf_to_html(item_content)
     html_parts << "<li>#{item_html}</li>" if item_html.present?
@@ -175,7 +177,7 @@ end
 
 class String
   def present?
-    !self.nil? && !self.empty?
+    !nil? && !empty?
   end
 end
 
@@ -186,18 +188,18 @@ class NilClass
 end
 
 # Main script
-puts "PSP-9 Table Converter"
-puts "=" * 60
+puts 'PSP-9 Table Converter'
+puts '=' * 60
 
 input_file = 'tmp/psp9_description.json'
 
-if !File.exist?(input_file)
+unless File.exist?(input_file)
   puts "❌ File not found: #{input_file}"
-  puts ""
-  puts "Please create the file with the Jira description JSON content."
+  puts ''
+  puts 'Please create the file with the Jira description JSON content.'
   puts "The JSON should contain the 'content' array from the description field."
-  puts ""
-  puts "Example format:"
+  puts ''
+  puts 'Example format:'
   puts '{'
   puts '  "type": "doc",'
   puts '  "version": 1,'
@@ -215,7 +217,7 @@ begin
   data = JSON.parse(File.read(input_file))
 
   puts "✓ Loaded JSON from #{input_file}"
-  puts ""
+  puts ''
 
   # Check structure
   if data.is_a?(Hash)
@@ -230,13 +232,13 @@ begin
       # Convert to HTML
       html = convert_adf_to_html(content)
 
-      puts ""
-      puts "=" * 60
-      puts "CONVERTED HTML:"
-      puts "=" * 60
+      puts ''
+      puts '=' * 60
+      puts 'CONVERTED HTML:'
+      puts '=' * 60
       puts html
-      puts ""
-      puts "=" * 60
+      puts ''
+      puts '=' * 60
 
       # Save to file
       output_file = 'tmp/psp9_converted.html'
@@ -254,40 +256,38 @@ begin
       puts "Found #{data.length} block(s)"
       html = convert_adf_to_html(data)
 
-      puts ""
-      puts "=" * 60
-      puts "CONVERTED HTML:"
-      puts "=" * 60
+      puts ''
+      puts '=' * 60
+      puts 'CONVERTED HTML:'
+      puts '=' * 60
       puts html
-      puts ""
+      puts ''
 
       output_file = 'tmp/psp9_converted.html'
       File.write(output_file, html)
       puts "✓ Saved to: #{output_file}"
     else
-      puts "❌ Unexpected JSON structure"
+      puts '❌ Unexpected JSON structure'
       puts "Top-level keys: #{data.keys.join(', ')}"
     end
   elsif data.is_a?(Array)
     puts "Found array with #{data.length} block(s)"
     html = convert_adf_to_html(data)
 
-    puts ""
-    puts "=" * 60
-    puts "CONVERTED HTML:"
-    puts "=" * 60
+    puts ''
+    puts '=' * 60
+    puts 'CONVERTED HTML:'
+    puts '=' * 60
     puts html
-    puts ""
+    puts ''
 
     output_file = 'tmp/psp9_converted.html'
     File.write(output_file, html)
     puts "✓ Saved to: #{output_file}"
   end
-
 rescue JSON::ParserError => e
   puts "❌ JSON Parse Error: #{e.message}"
-rescue => e
+rescue StandardError => e
   puts "❌ Error: #{e.class}: #{e.message}"
   puts e.backtrace.first(5).join("\n")
 end
-

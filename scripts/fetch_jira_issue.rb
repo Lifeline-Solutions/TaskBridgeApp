@@ -20,9 +20,9 @@ url = "#{JIRA_BASE_URL}/rest/api/3/issue/#{issue_key}"
 uri = URI.parse(url)
 
 uri.query = URI.encode_www_form({
-  expand: 'renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations',
-  fields: '*all'
-})
+                                  expand: 'renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations',
+                                  fields: '*all'
+                                })
 
 http = Net::HTTP.new(uri.host, uri.port)
 http.use_ssl = true
@@ -56,4 +56,3 @@ else
   puts "❌ Failed: #{response.code} #{response.message}"
   puts response.body
 end
-

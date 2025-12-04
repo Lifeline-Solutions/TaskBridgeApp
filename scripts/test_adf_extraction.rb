@@ -198,46 +198,45 @@ sample_adf_content = {
 # Load the extraction functions
 require_relative '../scripts/import_jira_with_modules'
 
-puts "=" * 80
-puts "Testing Enhanced ADF Extraction"
-puts "=" * 80
-puts ""
+puts '=' * 80
+puts 'Testing Enhanced ADF Extraction'
+puts '=' * 80
+puts ''
 
 # Test extraction
 result = extract_description(sample_adf_content)
 
-puts "EXTRACTED CONTENT:"
-puts "-" * 80
+puts 'EXTRACTED CONTENT:'
+puts '-' * 80
 puts result
-puts "-" * 80
-puts ""
+puts '-' * 80
+puts ''
 
-puts "✅ Extraction successful!"
-puts ""
+puts '✅ Extraction successful!'
+puts ''
 
 # Verify key content is present
 checks = [
-  ["Heading present", result.include?("# Bug Description")],
-  ["Bullet list present", result.include?("• First issue found")],
-  ["Ordered list present", result.include?("1. Step one to reproduce")],
-  ["Code block present", result.include?("```ruby")],
-  ["Blockquote present", result.include?("> This is an important note")],
-  ["Table present", result.include?("[Table]") && result.include?("Production | Broken")]
+  ['Heading present', result.include?('# Bug Description')],
+  ['Bullet list present', result.include?('• First issue found')],
+  ['Ordered list present', result.include?('1. Step one to reproduce')],
+  ['Code block present', result.include?('```ruby')],
+  ['Blockquote present', result.include?('> This is an important note')],
+  ['Table present', result.include?('[Table]') && result.include?('Production | Broken')]
 ]
 
-puts "Content Validation:"
-puts "-" * 80
+puts 'Content Validation:'
+puts '-' * 80
 checks.each do |check_name, passed|
-  status = passed ? "✅ PASS" : "❌ FAIL"
+  status = passed ? '✅ PASS' : '❌ FAIL'
   puts "#{status}: #{check_name}"
 end
-puts "-" * 80
-puts ""
+puts '-' * 80
+puts ''
 
 all_passed = checks.all? { |_, passed| passed }
 if all_passed
-  puts "🎉 All content extraction tests passed!"
+  puts '🎉 All content extraction tests passed!'
 else
-  puts "⚠️  Some content extraction tests failed. Review the output above."
+  puts '⚠️  Some content extraction tests failed. Review the output above.'
 end
-

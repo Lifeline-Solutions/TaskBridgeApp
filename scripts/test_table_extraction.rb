@@ -18,15 +18,15 @@ JIRA_API_TOKEN = ENV.fetch('JIRA_API_TOKEN') { CONFIG[:jira_api_token] }
 TEST_ISSUE_KEY = ARGV[0] || 'KCBL-1114'
 
 puts "Testing table extraction for #{TEST_ISSUE_KEY}"
-puts "=" * 80
+puts '=' * 80
 
 # Fetch issue
 url = "#{JIRA_BASE_URL}/rest/api/3/issue/#{TEST_ISSUE_KEY}"
 uri = URI.parse(url)
 uri.query = URI.encode_www_form({
-  expand: 'renderedFields',
-  fields: 'description'
-})
+                                  expand: 'renderedFields',
+                                  fields: 'description'
+                                })
 
 http = Net::HTTP.new(uri.host, uri.port)
 http.use_ssl = true
@@ -45,29 +45,29 @@ if response.is_a?(Net::HTTPSuccess)
   rendered_desc = data.dig('renderedFields', 'description')
 
   puts "\n📄 RENDERED HTML DESCRIPTION:"
-  puts "-" * 80
+  puts '-' * 80
   if rendered_desc
     puts rendered_desc
-    puts "-" * 80
+    puts '-' * 80
 
     if rendered_desc.include?('<table')
       puts "\n✅ TABLE FOUND in rendered HTML!"
-      puts "Table preview:"
-      table_match = rendered_desc.match(/<table.*?<\/table>/m)
+      puts 'Table preview:'
+      table_match = rendered_desc.match(%r{<table.*?</table>}m)
       puts table_match[0] if table_match
     else
       puts "\n⚠️  NO TABLE found in rendered HTML"
     end
   else
-    puts "No rendered description available"
+    puts 'No rendered description available'
   end
 
   # Check raw ADF
   raw_desc = data.dig('fields', 'description')
   puts "\n📋 RAW ADF DESCRIPTION:"
-  puts "-" * 80
+  puts '-' * 80
   puts JSON.pretty_generate(raw_desc)
-  puts "-" * 80
+  puts '-' * 80
 
   if raw_desc.is_a?(Hash)
     content = raw_desc['content'] || []
@@ -88,5 +88,4 @@ else
   puts "❌ Failed to fetch issue: #{response.code} #{response.message}"
 end
 
-puts "\n" + "=" * 80
-
+puts "\n#{'=' * 80}"

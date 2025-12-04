@@ -6,68 +6,68 @@
 #
 # Usage: rails runner scripts/test_user_matching.rb
 
-puts "=" * 80
-puts "USER NAME PARSING & MATCHING TEST SUITE"
-puts "=" * 80
-puts ""
+puts '=' * 80
+puts 'USER NAME PARSING & MATCHING TEST SUITE'
+puts '=' * 80
+puts ''
 
 # Test data with expected results
 test_cases = [
   {
-    name: "dot-separated single user",
-    input_name: "archana.verma",
-    expected_first: "archana",
-    expected_last: "verma",
-    db_first: "archana",
-    db_last: "verma"
+    name: 'dot-separated single user',
+    input_name: 'archana.verma',
+    expected_first: 'archana',
+    expected_last: 'verma',
+    db_first: 'archana',
+    db_last: 'verma'
   },
   {
-    name: "multi-part name (3 parts)",
-    input_name: "Eva Karimi Njagi",
-    expected_first: "Eva",
-    expected_last: "Karimi",
-    db_first: "Eva",
-    db_last: "Karimi"
+    name: 'multi-part name (3 parts)',
+    input_name: 'Eva Karimi Njagi',
+    expected_first: 'Eva',
+    expected_last: 'Karimi',
+    db_first: 'Eva',
+    db_last: 'Karimi'
   },
   {
-    name: "standard two-part",
-    input_name: "John Smith",
-    expected_first: "John",
-    expected_last: "Smith",
-    db_first: "John",
-    db_last: "Smith"
+    name: 'standard two-part',
+    input_name: 'John Smith',
+    expected_first: 'John',
+    expected_last: 'Smith',
+    db_first: 'John',
+    db_last: 'Smith'
   },
   {
-    name: "lowercase two-part",
-    input_name: "simon mungai",
-    expected_first: "simon",
-    expected_last: "mungai",
-    db_first: "Simon",
-    db_last: "Mungai"
+    name: 'lowercase two-part',
+    input_name: 'simon mungai',
+    expected_first: 'simon',
+    expected_last: 'mungai',
+    db_first: 'Simon',
+    db_last: 'Mungai'
   },
   {
-    name: "uppercase two-part",
-    input_name: "SARAH SYUKI",
-    expected_first: "SARAH",
-    expected_last: "SYUKI",
-    db_first: "Sarah",
-    db_last: "Syuki"
+    name: 'uppercase two-part',
+    input_name: 'SARAH SYUKI',
+    expected_first: 'SARAH',
+    expected_last: 'SYUKI',
+    db_first: 'Sarah',
+    db_last: 'Syuki'
   },
   {
-    name: "single part name",
-    input_name: "Madonna",
-    expected_first: "Madonna",
+    name: 'single part name',
+    input_name: 'Madonna',
+    expected_first: 'Madonna',
     expected_last: nil,
-    db_first: "Madonna",
+    db_first: 'Madonna',
     db_last: nil
   },
   {
-    name: "hyphenated last name",
-    input_name: "Mary Jane-Smith",
-    expected_first: "Mary",
-    expected_last: "Jane-Smith",
-    db_first: "Mary",
-    db_last: "Jane-Smith"
+    name: 'hyphenated last name',
+    input_name: 'Mary Jane-Smith',
+    expected_first: 'Mary',
+    expected_last: 'Jane-Smith',
+    db_first: 'Mary',
+    db_last: 'Jane-Smith'
   }
 ]
 
@@ -146,7 +146,7 @@ test_cases.each_with_index do |test, idx|
 
   # Check if parsing is correct
   if parsed[:first_name] == test[:expected_first] && parsed[:last_name] == test[:expected_last]
-    puts "  ✅ PARSING CORRECT"
+    puts '  ✅ PARSING CORRECT'
 
     # Now try to find user in database
     test_user = User.where(
@@ -156,52 +156,48 @@ test_cases.each_with_index do |test, idx|
     )
 
     # If single name test (last is nil), adjust query
-    if test[:db_last].nil?
-      test_user = User.where('LOWER(first_name) = ?', test[:db_first].downcase)
-    end
+    test_user = User.where('LOWER(first_name) = ?', test[:db_first].downcase) if test[:db_last].nil?
 
     if test_user.exists?
       found_user = test_user.first
       puts "  ✅ USER FOUND IN DATABASE: #{found_user.first_name} #{found_user.last_name} (#{found_user.id})"
-      passed += 1
     else
-      puts "  ⚠️  USER NOT FOUND IN DATABASE"
+      puts '  ⚠️  USER NOT FOUND IN DATABASE'
       puts "     Would create: first='#{test[:db_first]}', last='#{test[:db_last]}'"
-      puts "     (This is OK - user can be created during import)"
-      passed += 1
+      puts '     (This is OK - user can be created during import)'
     end
+    passed += 1
   else
-    puts "  ❌ PARSING FAILED"
+    puts '  ❌ PARSING FAILED'
     puts "     Got: first='#{parsed[:first_name]}', last='#{parsed[:last_name]}'"
     failed += 1
   end
 
-  puts ""
+  puts ''
 end
 
 # Summary
-puts "=" * 80
-puts "TEST RESULTS"
-puts "=" * 80
+puts '=' * 80
+puts 'TEST RESULTS'
+puts '=' * 80
 puts "Passed: #{passed}/#{test_cases.length}"
 puts "Failed: #{failed}/#{test_cases.length}"
-puts ""
+puts ''
 
-if failed == 0
-  puts "✅ All parsing tests passed!"
-  puts ""
-  puts "Next steps:"
-  puts "  1. Verify test users exist in database with correct spelling"
-  puts "  2. Run dry-run import: rails runner scripts/import_jira_with_modules.rb --project KCBL --dry-run"
-  puts "  3. Review user match report"
-  puts "  4. Run actual import if report looks good"
-  puts "  5. Run verification: rails runner scripts/verify_and_fix_user_assignments.rb"
+if failed.zero?
+  puts '✅ All parsing tests passed!'
+  puts ''
+  puts 'Next steps:'
+  puts '  1. Verify test users exist in database with correct spelling'
+  puts '  2. Run dry-run import: rails runner scripts/import_jira_with_modules.rb --project KCBL --dry-run'
+  puts '  3. Review user match report'
+  puts '  4. Run actual import if report looks good'
+  puts '  5. Run verification: rails runner scripts/verify_and_fix_user_assignments.rb'
 else
-  puts "❌ Some tests failed"
-  puts "Please review the parsing logic in:"
-  puts "  - scripts/import_jira_with_modules.rb (parse_jira_name function)"
-  puts "  - scripts/verify_and_fix_user_assignments.rb (parse_jira_name function)"
+  puts '❌ Some tests failed'
+  puts 'Please review the parsing logic in:'
+  puts '  - scripts/import_jira_with_modules.rb (parse_jira_name function)'
+  puts '  - scripts/verify_and_fix_user_assignments.rb (parse_jira_name function)'
 end
 
-puts "=" * 80
-
+puts '=' * 80
