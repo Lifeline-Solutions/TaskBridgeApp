@@ -306,31 +306,55 @@ end
 
 # Enhanced parsing: Extract full module and submodule from text
 # Handles formats like:
-#   "Core Banking" => ["Core Banking", nil]
-#   "Core Banking - Accounts" => ["Core Banking", "Accounts"]
-#   "Core Banking - Accounts - Savings" => ["Core Banking", "Accounts - Savings"]
-#   "Admin Portal-Bulk" => ["Admin Portal-Bulk", nil] (no spaces around hyphen = not a delimiter)
-#   "Admin Portal - Bulk" => ["Admin Portal", "Bulk"] (spaces around hyphen = is a delimiter)
+#   "Admin Portal – Bulk – Supervision" => Module="Admin Portal-Bulk", Submodule="Bulk-Supervision"
+#   "Core Banking – Accounts – Savings" => Module="Core Banking-Accounts", Submodule="Accounts-Savings"
+#   "Module - Submodule - Description - ..." => Module="Module-Submodule", Submodule="Submodule-Description"
+#   "" or nil => Module=nil, Submodule=nil (returns nil for blank)
+#
+# Logic:
+# 1. Return nil for blank/empty text (safe)
+# 2. Split on em-dashes (–) or space-hyphen-space ( - ) or regular hyphen (-)
+# 3. Take first N parts (before description)
+# 4. Module = parts[0] - parts[1]
+# 5. Submodule = parts[1] - parts[2] (if exists)
 def extract_module_and_submodule(text)
   return [nil, nil] if text.blank?
 
   text = text.to_s.strip
   return [nil, nil] if text.empty?
 
-  # IMPORTANT: Only split on " - " (hyphen with spaces on BOTH sides)
-  # This way "Admin Portal-Bulk" stays as one, but "Admin Portal - Bulk" splits correctly
-  # Split on FIRST occurrence of " - ", keeping everything after as submodule
-  if text.include?(' - ')
-    parts = text.split(' - ', 2)
-    module_name = parts[0].strip
-    submodule_name = parts[1].strip
-    vputs "[EXTRACT] Found ' - ' delimiter: '#{module_name}' | '#{submodule_name}'"
-    return [module_name, submodule_name]
+  # Split on em-dashes or space-hyphen-space or regular hyphens
+  # Priority: em-dash (–) > space-hyphen-space ( - ) > regular hyphen (-)
+  parts = []
+  if text.include?('–')
+    parts = text.split('–').map(&:strip).reject(&:empty?)
+  elsif text.include?(' - ')
+    parts = text.split(' - ').map(&:strip).reject(&:empty?)
+  elsif text.include?('-')
+    parts = text.split('-').map(&:strip).reject(&:empty?)
+  else
+    # No delimiters found - return nil (don't treat as module)
+    vputs "[EXTRACT] No delimiters found in: '#{text}'"
+    return [nil, nil]
   end
 
-  # No " - " delimiter found - treat entire text as module name
-  vputs "[EXTRACT] No ' - ' delimiter: '#{text}'"
-  [text, nil]
+  # Return nil if we don't have enough parts
+  if parts.length < 2
+    vputs "[EXTRACT] Only 1 part after split: '#{parts[0]}'"
+    return [nil, nil]
+  end
+
+  # Module = parts[0] - parts[1]
+  module_name = "#{parts[0]}-#{parts[1]}"
+
+  # Submodule = parts[1] - parts[2] (if exists)
+  submodule_name = nil
+  if parts.length >= 3
+    submodule_name = "#{parts[1]}-#{parts[2]}"
+  end
+
+  vputs "[EXTRACT] Found hierarchy: Module='#{module_name}', Submodule='#{submodule_name || '(none)'}'"
+  [module_name, submodule_name]
 end
 
 # Find or create module in database
@@ -491,27 +515,28 @@ puts "Found #{stats[:total]} defect(s) to process...\n\n"
 defects.find_each do |defect|
   vputs "\n[PROCESSING] #{defect.defect_unique}"
 
-  # Fetch from Jira API
-  jira_issue = fetch_from_jira(defect.defect_unique)
+  # Extract module and submodule from defect summary or module name
+  # Priority: Summary (has full hierarchy) > Module Name > Product Name > Project Key
+  module_text = defect.summary
+  module_text ||= defect.qa_module&.name
+  module_text ||= defect.product&.name
 
-  unless jira_issue
-    stats[:errors] += 1
-    puts "❌ #{defect.defect_unique}: Error (failed_to_fetch_from_jira)"
+  vputs "  Source Text: #{module_text}"
+
+  if module_text.blank?
+    stats[:skipped] += 1
+    vputs "⏭️  #{defect.defect_unique}: Skipped (no summary, module name, or product)"
     next
   end
 
-  # Extract module and submodule from Jira custom fields
-  module_to_assign, submodule_to_assign = extract_from_jira_fields(jira_issue)
+  module_to_assign, submodule_to_assign = extract_module_and_submodule(module_text)
 
   if module_to_assign.blank?
     stats[:skipped] += 1
-    vputs "⏭️  #{defect.defect_unique}: Skipped (no_module_in_jira)"
+    vputs "⏭️  #{defect.defect_unique}: Skipped (no valid module hierarchy found)"
     next
   end
 
-  vputs "[ASSIGNING]"
-  vputs "  Module: #{module_to_assign}"
-  vputs "  Submodule: #{submodule_to_assign || '(none)'}"
 
   result = assign_modules_to_defect(
     defect,
