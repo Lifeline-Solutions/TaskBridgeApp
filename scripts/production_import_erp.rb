@@ -1190,6 +1190,12 @@ def extract_custom_field_value(field_data)
   return field_data.to_s.strip if field_data.is_a?(String)
 
   if field_data.is_a?(Hash)
+    # Special handling for Cascading Select fields (parent/child)
+    # If a child option is selected, return that as the value
+    if field_data['child'].is_a?(Hash) && field_data['child']['value'].present?
+      return field_data['child']['value'].to_s.strip
+    end
+
     # Try common field value keys used by Jira
     return field_data['value'].to_s.strip if field_data['value'].present?
     return field_data['name'].to_s.strip if field_data['name'].present?
