@@ -25,4 +25,3 @@ rescue StandardError => e
   puts e.backtrace.first(20).join("\n")
   exit 1
 end
-

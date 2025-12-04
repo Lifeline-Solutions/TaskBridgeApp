@@ -31,7 +31,7 @@ class CustomDeviseMailer < Devise::Mailer
     # Use Messaging::EmailSender to persist the email
     @resource = record
     @token = token
-    
+
     email_body = render_to_string(
       template: 'devise/mailer/reset_password_instructions',
       layout: 'mailer'

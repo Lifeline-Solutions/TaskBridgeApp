@@ -11,10 +11,10 @@ require 'json'
 require 'time'
 require 'yaml'
 
-puts "=" * 80
-puts "JIRA USER ASSIGNMENT VERIFICATION & RECONCILIATION"
-puts "=" * 80
-puts ""
+puts '=' * 80
+puts 'JIRA USER ASSIGNMENT VERIFICATION & RECONCILIATION'
+puts '=' * 80
+puts ''
 
 APP_ROOT = Rails.root
 config_path = APP_ROOT.join('config', 'jira_import.yml')
@@ -142,7 +142,7 @@ mismatches = {
 }
 
 puts "Starting verification of #{Defect.count} defects..."
-puts ""
+puts ''
 
 Defect.find_each(batch_size: 100) do |defect|
   stats[:total_defects] += 1
@@ -176,7 +176,9 @@ Defect.find_each(batch_size: 100) do |defect|
       correct_user = find_user_by_parsed_name(parsed[:first_name], parsed[:last_name])
 
       if correct_user
-        if defect_creator&.id != correct_user.id
+        if defect_creator&.id == correct_user.id
+          stats[:reporter_correct] += 1
+        else
           # Mismatch detected
           puts "⚠️  REPORTER MISMATCH: #{issue_key}"
           puts "   Jira: #{jira_reporter_name} (#{jira_reporter_email})"
@@ -189,18 +191,16 @@ Defect.find_each(batch_size: 100) do |defect|
               defect.creator_id = correct_user.id
               defect.save!
               stats[:reporter_fixed] += 1
-              puts "   ✅ FIXED"
+              puts '   ✅ FIXED'
             else
               stats[:reporter_could_not_fix] += 1
-              puts "   ❌ Cannot update creator_id field"
+              puts '   ❌ Cannot update creator_id field'
             end
           rescue StandardError => e
             stats[:reporter_could_not_fix] += 1
             puts "   ❌ Error updating: #{e.message}"
           end
           mismatches[:reporter] << { issue: issue_key, jira_name: jira_reporter_name, expected_user_id: correct_user.id, actual_user_id: defect_creator&.id }
-        else
-          stats[:reporter_correct] += 1
         end
       end
     end
@@ -216,7 +216,9 @@ Defect.find_each(batch_size: 100) do |defect|
       correct_user = find_user_by_parsed_name(parsed[:first_name], parsed[:last_name])
 
       if correct_user
-        if defect_assignee&.id != correct_user.id
+        if defect_assignee&.id == correct_user.id
+          stats[:assignee_correct] += 1
+        else
           # Mismatch detected
           puts "⚠️  ASSIGNEE MISMATCH: #{issue_key}"
           puts "   Jira: #{jira_assignee_name} (#{jira_assignee_email})"
@@ -227,20 +229,17 @@ Defect.find_each(batch_size: 100) do |defect|
           begin
             defect.user_ids = [correct_user.id]
             stats[:assignee_fixed] += 1
-            puts "   ✅ FIXED"
+            puts '   ✅ FIXED'
           rescue StandardError => e
             stats[:assignee_could_not_fix] += 1
             puts "   ❌ Error updating: #{e.message}"
           end
           mismatches[:assignee] << { issue: issue_key, jira_name: jira_assignee_name, expected_user_id: correct_user.id, actual_user_id: defect_assignee&.id }
-        else
-          stats[:assignee_correct] += 1
         end
       end
     end
 
     sleep 0.5 # Rate limiting to avoid Jira API overload
-
   rescue StandardError => e
     stats[:errors] += 1
     puts "ERROR processing #{defect.defect_unique}: #{e.class}: #{e.message}"
@@ -250,36 +249,36 @@ end
 # ===============================
 # FINAL REPORT
 # ===============================
-puts ""
-puts "=" * 80
-puts "VERIFICATION & RECONCILIATION REPORT"
-puts "=" * 80
-puts ""
+puts ''
+puts '=' * 80
+puts 'VERIFICATION & RECONCILIATION REPORT'
+puts '=' * 80
+puts ''
 
-puts "Reporter Verification:"
+puts 'Reporter Verification:'
 puts "  ✅ Correct: #{stats[:reporter_correct]}"
 puts "  🔧 Fixed: #{stats[:reporter_fixed]}"
 puts "  ❌ Could not fix: #{stats[:reporter_could_not_fix]}"
-puts ""
+puts ''
 
-puts "Assignee Verification:"
+puts 'Assignee Verification:'
 puts "  ✅ Correct: #{stats[:assignee_correct]}"
 puts "  🔧 Fixed: #{stats[:assignee_fixed]}"
 puts "  ❌ Could not fix: #{stats[:assignee_could_not_fix]}"
-puts ""
+puts ''
 
-puts "Summary:"
+puts 'Summary:'
 puts "  Total defects checked: #{stats[:total_defects]}"
 puts "  Total fixed: #{stats[:reporter_fixed] + stats[:assignee_fixed]}"
 puts "  Errors encountered: #{stats[:errors]}"
-puts ""
+puts ''
 
 if mismatches[:reporter].any?
   puts "Reporter Mismatches (#{mismatches[:reporter].length}):"
   mismatches[:reporter].each do |m|
     puts "  - #{m[:issue]}: Jira='#{m[:jira_name]}' Expected=#{m[:expected_user_id]} Actual=#{m[:actual_user_id]}"
   end
-  puts ""
+  puts ''
 end
 
 if mismatches[:assignee].any?
@@ -287,10 +286,9 @@ if mismatches[:assignee].any?
   mismatches[:assignee].each do |m|
     puts "  - #{m[:issue]}: Jira='#{m[:jira_name]}' Expected=#{m[:expected_user_id]} Actual=#{m[:actual_user_id]}"
   end
-  puts ""
+  puts ''
 end
 
-puts "=" * 80
-puts "Verification complete!"
-puts "=" * 80
-
+puts '=' * 80
+puts 'Verification complete!'
+puts '=' * 80

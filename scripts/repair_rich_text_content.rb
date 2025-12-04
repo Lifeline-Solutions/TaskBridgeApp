@@ -48,17 +48,21 @@ BACKGROUND_PIDFILE = File.join(BACKGROUND_LOGDIR, "repair_#{Time.now.strftime('%
 BACKGROUND_LOGFILE = File.join(BACKGROUND_LOGDIR, "repair_#{Time.now.strftime('%Y%m%d_%H%M%S')}.log")
 
 # Ensure log directory exists
-FileUtils.mkdir_p(BACKGROUND_LOGDIR) unless File.exist?(BACKGROUND_LOGDIR)
+FileUtils.mkdir_p(BACKGROUND_LOGDIR)
 
 # Write PID file for process tracking
 File.write(BACKGROUND_PIDFILE, Process.pid.to_s)
 
 # Redirect output to both console and log file
 def setup_logging(logfile)
-  File.open(logfile, 'a') do |f|
+  File.open(logfile, 'a') do |_f|
     def $stdout.write(str)
       File.open(BACKGROUND_LOGFILE, 'a') { |f| f.write(str) }
-      super(str) rescue nil
+      begin
+        super
+      rescue StandardError
+        nil
+      end
     end
   end
 end
@@ -94,28 +98,28 @@ $STATS = {
   comments_empty_skipped: 0
 }
 
-puts "=" * 80
-puts "🔧 JIRA RICH TEXT CONTENT REPAIR SCRIPT"
-puts "=" * 80
-puts ""
+puts '=' * 80
+puts '🔧 JIRA RICH TEXT CONTENT REPAIR SCRIPT'
+puts '=' * 80
+puts ''
 puts "Time: #{Time.now}"
 puts "PID: #{Process.pid}"
 puts "Log: #{BACKGROUND_LOGFILE}"
 puts "Background Mode: #{ALLOW_BACKGROUND ? 'ENABLED' : 'DISABLED'}"
-puts ""
+puts ''
 if SINGLE_ISSUE.present?
   puts "Target: Single issue #{SINGLE_ISSUE}"
-  puts "Debug mode: ENABLED (auto-enabled for single issue)"
+  puts 'Debug mode: ENABLED (auto-enabled for single issue)'
 elsif PROJECT_KEY.present?
   puts "Target project: #{PROJECT_KEY}"
   puts "Debug mode: #{DEBUG_MODE ? 'ENABLED' : 'disabled'}"
 else
-  puts "Target project: (all projects)"
+  puts 'Target project: (all projects)'
   puts "Debug mode: #{DEBUG_MODE ? 'ENABLED' : 'disabled'}"
-  puts "Tip: Run for a single project: rails runner scripts/repair_rich_text_content.rb KCBL"
+  puts 'Tip: Run for a single project: rails runner scripts/repair_rich_text_content.rb KCBL'
 end
-puts "Tip: Run for a single issue: rails runner scripts/repair_rich_text_content.rb PSP-9"
-puts ""
+puts 'Tip: Run for a single issue: rails runner scripts/repair_rich_text_content.rb PSP-9'
+puts ''
 
 # ===============================
 # ADF TO HTML CONVERSION (ENHANCED)
@@ -138,7 +142,7 @@ def convert_adf_to_html(content_array, debug: false)
       # Log blocks that returned empty
       block_type = block['type']&.to_s&.downcase
       if block_type == 'table'
-        puts "      [WARNING: Table block returned empty HTML - checking content]"
+        puts '      [WARNING: Table block returned empty HTML - checking content]'
         puts "      [Block structure: #{block.keys.join(', ')}]"
       end
     end
@@ -179,7 +183,7 @@ def convert_adf_block_to_html(block, debug: false)
       if table_html.present?
         puts "      [Table converted successfully: #{table_html.length} chars]"
       else
-        puts "      [WARNING: Table block found but conversion returned empty]"
+        puts '      [WARNING: Table block found but conversion returned empty]'
         puts "      [Table keys: #{block.keys.join(', ')}]"
         puts "      [Table content count: #{(block['content'] || []).length}]"
       end
@@ -242,9 +246,7 @@ def convert_adf_block_to_html(block, debug: false)
   else
     # For unknown types with content, try to process nested content
     if content.is_a?(Array) && content.any?
-      if debug || DEBUG_MODE
-        puts "      [Unknown block type: #{block_type}, processing nested content]"
-      end
+      puts "      [Unknown block type: #{block_type}, processing nested content]" if debug || DEBUG_MODE
       convert_adf_to_html(content, debug: debug)
     else
       ''
@@ -321,7 +323,11 @@ def convert_adf_inline_to_html(content_array, debug: false)
     when 'date'
       timestamp = item.dig('attrs', 'timestamp')
       if timestamp
-        date = Time.at(timestamp / 1000).strftime('%Y-%m-%d') rescue timestamp.to_s
+        date = begin
+          Time.at(timestamp / 1000).strftime('%Y-%m-%d')
+        rescue StandardError
+          timestamp.to_s
+        end
         html_parts << "<time datetime=\"#{date}\">#{date}</time>"
       end
 
@@ -341,11 +347,11 @@ def convert_adf_inline_to_html(content_array, debug: false)
     end
   end
 
-  html_parts.join('')
+  html_parts.join
 end
 
 # Convert ADF list to HTML
-def convert_adf_list_to_html(items, tag, debug: false)
+def convert_adf_list_to_html(items, _tag, debug: false)
   return '' if items.nil? || !items.is_a?(Array)
 
   list_items = []
@@ -355,7 +361,7 @@ def convert_adf_list_to_html(items, tag, debug: false)
     item_content = item['content'] || []
     item_html = convert_adf_to_html(item_content, debug: debug)
     # Extract text if it's wrapped in <p> tags
-    item_html = item_html.gsub(/<p>(.*?)<\/p>/, '\1')
+    item_html = item_html.gsub(%r{<p>(.*?)</p>}, '\1')
     list_items << "<li>#{item_html}</li>" if item_html.present?
   end
 
@@ -371,8 +377,8 @@ def convert_adf_table_to_html(table_block, debug: false)
   if table_rows.empty?
     # Table block exists but has no rows
     if debug || DEBUG_MODE
-      puts "      [WARNING: Table block found but has no content]"
-      puts "      [Checking table block structure...]"
+      puts '      [WARNING: Table block found but has no content]'
+      puts '      [Checking table block structure...]'
       puts "      [Table block keys: #{table_block.keys.join(', ')}]"
     end
     return ''
@@ -403,8 +409,8 @@ def convert_adf_table_to_html(table_block, debug: false)
 
       # Handle tableHeader, tableCell, tablehead, tableHead variations
       cell_type_raw = cell['type']&.to_s&.downcase
-      is_header = (cell_type_raw == 'tableheader' || cell_type_raw == 'tablehead')
-      has_header = true if is_header && row_idx == 0
+      is_header = %w[tableheader tablehead].include?(cell_type_raw)
+      has_header = true if is_header && row_idx.zero?
 
       cell_tag = is_header ? 'th' : 'td'
       cell_inline_style = is_header ? header_style : cell_style
@@ -413,10 +419,10 @@ def convert_adf_table_to_html(table_block, debug: false)
 
       # Recursively convert cell content to HTML
       cell_html = if cell_content.any?
-        convert_adf_to_html(cell_content, debug: debug)
-      else
-        '&nbsp;'
-      end
+                    convert_adf_to_html(cell_content, debug: debug)
+                  else
+                    '&nbsp;'
+                  end
 
       # Remove wrapping p tags but preserve other formatting (lists, tables within cells, etc)
       cell_html = cell_html.gsub(%r{<p>(.*?)</p>}m, '\1').strip
@@ -451,22 +457,20 @@ def convert_adf_table_to_html(table_block, debug: false)
       cells_html << "<#{cell_tag}#{attrs_str}>#{cell_html}</#{cell_tag}>"
     end
 
-    rows_html << "<tr>#{cells_html.join('')}</tr>" if cells_html.any?
+    rows_html << "<tr>#{cells_html.join}</tr>" if cells_html.any?
   end
 
-  if debug || DEBUG_MODE
-    puts "      [Table: #{table_rows.length} rows, #{total_cells} total cells, #{rows_html.length} rendered rows]"
-  end
+  puts "      [Table: #{table_rows.length} rows, #{total_cells} total cells, #{rows_html.length} rendered rows]" if debug || DEBUG_MODE
 
   if rows_html.any?
     # Build complete table with proper styling
     table_content = if has_header && rows_html.length > 1
-      thead = "<thead>#{rows_html[0]}</thead>"
-      tbody = "<tbody>#{rows_html[1..-1].join("\n")}</tbody>"
-      "#{thead}#{tbody}"
-    else
-      "<tbody>#{rows_html.join("\n")}</tbody>"
-    end
+                      thead = "<thead>#{rows_html[0]}</thead>"
+                      tbody = "<tbody>#{rows_html[1..].join("\n")}</tbody>"
+                      "#{thead}#{tbody}"
+                    else
+                      "<tbody>#{rows_html.join("\n")}</tbody>"
+                    end
 
     # Wrap table with comprehensive styling for rich text display
     table_html = "<div style=\"#{table_wrapper_style}\"><table style=\"#{table_style}\">#{table_content}</table></div>"
@@ -511,22 +515,22 @@ def extract_issue_description_html(jira_issue, debug: false)
     # Check if rendered HTML contains ADF macro placeholders instead of actual content
     # These appear as <!-- ADF macro (type = 'table') --> or similar
     if rendered_desc.include?('<!-- ADF macro')
-      puts "    [Rendered HTML has ADF macros - using ADF conversion instead]" if debug
+      puts '    [Rendered HTML has ADF macros - using ADF conversion instead]' if debug
       jira_description_field = jira_issue.dig('fields', 'description')
 
       # Debug: Show what we're getting from Jira
       if debug || DEBUG_MODE
         if jira_description_field.nil?
-          puts "    [ERROR: No description field in Jira response!]"
+          puts '    [ERROR: No description field in Jira response!]'
         elsif jira_description_field.is_a?(String) && jira_description_field.blank?
-          puts "    [ERROR: Description field is empty string]"
+          puts '    [ERROR: Description field is empty string]'
         elsif jira_description_field.is_a?(Hash)
           content = jira_description_field['content']
           if content.nil?
             puts "    [ERROR: Description has no 'content' key]"
             puts "    [Description keys: #{jira_description_field.keys.join(', ')}]"
           elsif content.is_a?(Array) && content.empty?
-            puts "    [WARNING: Description content array is empty]"
+            puts '    [WARNING: Description content array is empty]'
           elsif content.is_a?(Array)
             puts "    [ADF has #{content.length} block(s)]"
           end
@@ -536,19 +540,15 @@ def extract_issue_description_html(jira_issue, debug: false)
       return extract_description(jira_description_field, debug: debug)
     end
 
-    puts "    [Using rendered HTML]" if debug
+    puts '    [Using rendered HTML]' if debug
     return rendered_desc.to_s
   end
 
   # Fall back to raw field and ADF conversion
-  puts "    [No rendered HTML available - using ADF conversion]" if debug
+  puts '    [No rendered HTML available - using ADF conversion]' if debug
   jira_description_field = jira_issue.dig('fields', 'description')
 
-  if debug || DEBUG_MODE
-    if jira_description_field.nil?
-      puts "    [ERROR: No description field found in Jira response]"
-    end
-  end
+  puts '    [ERROR: No description field found in Jira response]' if (debug || DEBUG_MODE) && jira_description_field.nil?
 
   extract_description(jira_description_field, debug: debug)
 end
@@ -564,9 +564,9 @@ def fetch_jira_issue(issue_key)
 
   # Request all fields including description, comments, etc.
   uri.query = URI.encode_www_form({
-    expand: 'renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations',
-    fields: '*all'
-  })
+                                    expand: 'renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations',
+                                    fields: '*all'
+                                  })
 
   http = Net::HTTP.new(uri.host, uri.port)
   http.use_ssl = true
@@ -626,6 +626,7 @@ end
 # Normalize HTML for comparison (remove whitespace differences)
 def normalize_html(html)
   return '' if html.nil?
+
   html.to_s.gsub(/\s+/, ' ').strip.downcase
 end
 
@@ -638,7 +639,7 @@ def repair_defect_content(defect, debug: false)
   # Fetch fresh data from Jira
   jira_issue = fetch_jira_issue(issue_key)
   unless jira_issue
-    puts "❌ FAILED (could not fetch from Jira)"
+    puts '❌ FAILED (could not fetch from Jira)'
     $STATS[:defect_content_failed] += 1
     return false
   end
@@ -652,7 +653,7 @@ def repair_defect_content(defect, debug: false)
     puts "\n    [Saved full Jira response to: #{filename}]"
   end
 
-  puts "" if debug
+  puts '' if debug
 
   # Extract description from Jira (prefer rendered HTML)
   jira_description_html = extract_issue_description_html(jira_issue, debug: debug)
@@ -664,9 +665,7 @@ def repair_defect_content(defect, debug: false)
   if debug || DEBUG_MODE
     puts "    [Current DB content: #{current_description.length} chars]"
     puts "    [Jira content: #{jira_description_html.length} chars]"
-    if jira_description_html.include?('<table')
-      puts "    [✅ Jira has table content]"
-    end
+    puts '    [✅ Jira has table content]' if jira_description_html.include?('<table')
   end
 
   # Normalize for comparison
@@ -674,7 +673,7 @@ def repair_defect_content(defect, debug: false)
   current_normalized = normalize_html(current_description)
 
   if jira_normalized == current_normalized
-    puts "✅ OK (already in sync)"
+    puts '✅ OK (already in sync)'
     return false
   end
 
@@ -682,7 +681,7 @@ def repair_defect_content(defect, debug: false)
   begin
     # Ensure we're not saving empty content
     if jira_description_html.blank? && current_description.present?
-      puts "⚠️  SKIPPED (Jira returned empty, keeping current content)"
+      puts '⚠️  SKIPPED (Jira returned empty, keeping current content)'
       return false
     end
 
@@ -709,11 +708,11 @@ def repair_defect_messages(defect, debug: false)
   jira_comments = fetch_jira_comments(issue_key)
 
   if jira_comments.empty?
-    puts "⏭️  SKIP (no comments in Jira)"
+    puts '⏭️  SKIP (no comments in Jira)'
     return { updated: 0, failed: 0 }
   end
 
-  puts ""
+  puts ''
   puts "    Found #{jira_comments.length} comment(s) in Jira"
 
   stats = { updated: 0, failed: 0 }
@@ -722,20 +721,22 @@ def repair_defect_messages(defect, debug: false)
     $STATS[:comments_checked] += 1
 
     # Extract comment data
-    comment_id = jira_comment['id']
+    jira_comment['id']
     author_name = jira_comment.dig('author', 'displayName')
     created_at_str = jira_comment['created']
-    created_at = Time.parse(created_at_str) rescue nil
+    created_at = begin
+      Time.parse(created_at_str)
+    rescue StandardError
+      nil
+    end
 
     # Prefer rendered HTML body
     jira_body_html = jira_comment['renderedBody']
 
     # Check if rendered HTML contains ADF macro placeholders
     if jira_body_html.present? && jira_body_html.include?('<!-- ADF macro')
-      if debug
-        puts "    [Comment #{idx + 1}: Rendered HTML has ADF macros - using ADF conversion instead]"
-      end
-      jira_body_html = nil  # Force fallback to ADF conversion
+      puts "    [Comment #{idx + 1}: Rendered HTML has ADF macros - using ADF conversion instead]" if debug
+      jira_body_html = nil # Force fallback to ADF conversion
     elsif debug && jira_body_html.present?
       puts "    [Comment #{idx + 1}: Using rendered HTML]"
     end
@@ -744,13 +745,13 @@ def repair_defect_messages(defect, debug: false)
     if jira_body_html.blank?
       puts "    [Comment #{idx + 1}: Using ADF conversion]" if debug
       body_field = jira_comment['body']
-      if body_field.is_a?(Hash)
-        jira_body_html = convert_adf_to_html(body_field['content'] || [], debug: debug)
-      elsif body_field.is_a?(String)
-        jira_body_html = body_field.strip
-      else
-        jira_body_html = body_field.to_s.strip
-      end
+      jira_body_html = if body_field.is_a?(Hash)
+                         convert_adf_to_html(body_field['content'] || [], debug: debug)
+                       elsif body_field.is_a?(String)
+                         body_field.strip
+                       else
+                         body_field.to_s.strip
+                       end
     end
 
     # Skip empty comments
@@ -789,7 +790,7 @@ def repair_defect_messages(defect, debug: false)
       jira_normalized = normalize_html(jira_body_html)
 
       if current_normalized == jira_normalized
-        puts "✅ OK (already in sync)"
+        puts '✅ OK (already in sync)'
       else
         # Content differs - update it
         begin
@@ -838,24 +839,24 @@ end
 # MAIN EXECUTION
 # ===============================
 
-puts "🔍 Finding all defects with Jira keys..."
-if SINGLE_ISSUE.present?
-  # Process a single specific issue
-  defects = Defect.where(defect_unique: SINGLE_ISSUE).where(deleted_on: nil)
-elsif PROJECT_KEY.present?
-  # Constrain to a single project key like KCBL
-  # Using ~ for regex and anchoring at start to the project key
-  defects = Defect.where("defect_unique ~ ?", "^#{Regexp.escape(PROJECT_KEY)}-[0-9]+$").where(deleted_on: nil).order(:defect_unique)
-else
-  # All projects
-  defects = Defect.where("defect_unique ~ '^[A-Z]+-[0-9]+$'").where(deleted_on: nil).order(:defect_unique)
-end
+puts '🔍 Finding all defects with Jira keys...'
+defects = if SINGLE_ISSUE.present?
+            # Process a single specific issue
+            Defect.where(defect_unique: SINGLE_ISSUE).where(deleted_on: nil)
+          elsif PROJECT_KEY.present?
+            # Constrain to a single project key like KCBL
+            # Using ~ for regex and anchoring at start to the project key
+            Defect.where('defect_unique ~ ?', "^#{Regexp.escape(PROJECT_KEY)}-[0-9]+$").where(deleted_on: nil).order(:defect_unique)
+          else
+            # All projects
+            Defect.where("defect_unique ~ '^[A-Z]+-[0-9]+$'").where(deleted_on: nil).order(:defect_unique)
+          end
 $STATS[:total_defects] = defects.count
 
 if SINGLE_ISSUE.present?
-  if $STATS[:total_defects] == 0
+  if $STATS[:total_defects].zero?
     puts "   ❌ Issue #{SINGLE_ISSUE} not found in database"
-    puts "   Tip: Check if the issue has been imported from Jira"
+    puts '   Tip: Check if the issue has been imported from Jira'
     exit 1
   else
     puts "   ✅ Found issue #{SINGLE_ISSUE}"
@@ -863,17 +864,17 @@ if SINGLE_ISSUE.present?
 else
   puts "   Found #{$STATS[:total_defects]} defect(s) with Jira keys"
 end
-puts ""
+puts ''
 
-if $STATS[:total_defects] == 0
-  puts "No defects found to repair. Exiting."
+if $STATS[:total_defects].zero?
+  puts 'No defects found to repair. Exiting.'
   exit 0
 end
 
-puts "=" * 80
-puts "🔧 STARTING REPAIR PROCESS"
-puts "=" * 80
-puts ""
+puts '=' * 80
+puts '🔧 STARTING REPAIR PROCESS'
+puts '=' * 80
+puts ''
 
 defects.each_with_index do |defect, idx|
   # Check for shutdown signal - complete current issue then exit
@@ -891,20 +892,20 @@ defects.each_with_index do |defect, idx|
 
   # For single issue, show current content
   if SINGLE_ISSUE.present?
-    puts ""
-    puts "=" * 80
-    puts "CURRENT CONTENT IN DATABASE"
-    puts "=" * 80
+    puts ''
+    puts '=' * 80
+    puts 'CURRENT CONTENT IN DATABASE'
+    puts '=' * 80
     current_content = defect.content.to_s
     puts "Length: #{current_content.length} characters"
     puts "Has <table>: #{current_content.include?('<table')}"
     puts "Has <ul> or <ol>: #{current_content.include?('<ul>') || current_content.include?('<ol>')}"
-    puts ""
-    puts "Content preview (first 1000 chars):"
-    puts "-" * 80
+    puts ''
+    puts 'Content preview (first 1000 chars):'
+    puts '-' * 80
     puts current_content[0..1000]
-    puts "-" * 80
-    puts ""
+    puts '-' * 80
+    puts ''
   end
 
   # Repair defect description
@@ -912,27 +913,27 @@ defects.each_with_index do |defect, idx|
 
   # For single issue, show updated content
   if SINGLE_ISSUE.present? && description_updated
-    puts ""
-    puts "=" * 80
-    puts "UPDATED CONTENT FROM JIRA"
-    puts "=" * 80
+    puts ''
+    puts '=' * 80
+    puts 'UPDATED CONTENT FROM JIRA'
+    puts '=' * 80
     updated_content = defect.reload.content.to_s
     puts "Length: #{updated_content.length} characters"
     puts "Has <table>: #{updated_content.include?('<table')}"
     puts "Has <ul> or <ol>: #{updated_content.include?('<ul>') || updated_content.include?('<ol>')}"
-    puts ""
-    puts "Full updated content:"
-    puts "-" * 80
+    puts ''
+    puts 'Full updated content:'
+    puts '-' * 80
     puts updated_content
-    puts "-" * 80
-    puts ""
+    puts '-' * 80
+    puts ''
   end
 
   # Repair defect comments
   comment_stats = repair_defect_messages(defect, debug: DEBUG_MODE)
   $STATS[:total_comments] += comment_stats[:updated] + comment_stats[:failed]
 
-  puts ""
+  puts ''
 
   # Small delay to avoid overwhelming Jira API (skip for single issue)
   sleep 0.5 unless SINGLE_ISSUE.present?
@@ -942,67 +943,72 @@ end
 # FINAL REPORT
 # ===============================
 
-puts "=" * 80
-puts "📊 REPAIR COMPLETE - FINAL STATISTICS"
-puts "=" * 80
-puts ""
+puts '=' * 80
+puts '📊 REPAIR COMPLETE - FINAL STATISTICS'
+puts '=' * 80
+puts ''
 
-puts "Defects:"
+puts 'Defects:'
 puts "  Total defects found:       #{$STATS[:total_defects]}"
 puts "  Defects checked:           #{$STATS[:defects_checked]}"
 puts "  Descriptions updated:      #{$STATS[:defect_content_updated]}"
 puts "  Description update failed: #{$STATS[:defect_content_failed]}"
-puts ""
+puts ''
 
-puts "Comments:"
+puts 'Comments:'
 puts "  Total comments checked:    #{$STATS[:comments_checked]}"
 puts "  Comments updated/created:  #{$STATS[:comments_updated]}"
 puts "  Comments update failed:    #{$STATS[:comments_failed]}"
 puts "  Empty comments skipped:    #{$STATS[:comments_empty_skipped]}"
-puts ""
+puts ''
 
-success_rate_defects = $STATS[:defects_checked] > 0 ?
-  (($STATS[:defect_content_updated].to_f / $STATS[:defects_checked]) * 100).round(2) : 0
+success_rate_defects = if $STATS[:defects_checked].positive?
+                         (($STATS[:defect_content_updated].to_f / $STATS[:defects_checked]) * 100).round(2)
+                       else
+                         0
+                       end
 
-success_rate_comments = $STATS[:comments_checked] > 0 ?
-  (($STATS[:comments_updated].to_f / $STATS[:comments_checked]) * 100).round(2) : 0
+success_rate_comments = if $STATS[:comments_checked].positive?
+                          (($STATS[:comments_updated].to_f / $STATS[:comments_checked]) * 100).round(2)
+                        else
+                          0
+                        end
 
-puts "Success Rates:"
+puts 'Success Rates:'
 puts "  Defect descriptions:       #{success_rate_defects}%"
 puts "  Comments:                  #{success_rate_comments}%"
-puts ""
+puts ''
 
-if $STATS[:defect_content_failed] > 0 || $STATS[:comments_failed] > 0
-  puts "⚠️  Some items failed to update. Check the errors above for details."
+if $STATS[:defect_content_failed].positive? || $STATS[:comments_failed].positive?
+  puts '⚠️  Some items failed to update. Check the errors above for details.'
 else
-  puts "✅ All items processed successfully!"
+  puts '✅ All items processed successfully!'
 end
 
-puts ""
-puts "=" * 80
+puts ''
+puts '=' * 80
 
 # ===============================
 # CLEANUP & FINAL SUMMARY
 # ===============================
-puts "\n" + "=" * 80
-puts "✅ REPAIR PROCESS COMPLETED"
-puts "=" * 80
+puts "\n#{'=' * 80}"
+puts '✅ REPAIR PROCESS COMPLETED'
+puts '=' * 80
 puts "Completion Time: #{Time.now}"
 puts "Total Runtime: #{(Time.now - $repair_start_time).round(2)} seconds"
-puts ""
-puts "Summary:"
+puts ''
+puts 'Summary:'
 puts "  Process ID: #{Process.pid}"
 puts "  Log File: #{BACKGROUND_LOGFILE}"
 puts "  PID File: #{BACKGROUND_PIDFILE}"
-puts ""
+puts ''
 
 # Mark as complete
 completion_file = File.join(BACKGROUND_LOGDIR, "repair_#{Time.now.strftime('%Y%m%d_%H%M%S')}.complete")
 File.write(completion_file, "Completed at #{Time.now}\nTotal defects: #{$STATS[:total_defects]}\nSuccessful: #{$STATS[:defect_content_updated]}\nErrors: #{$STATS[:defect_content_failed]}")
 
-puts "✅ Repair process finished successfully!"
-puts "=" * 80
+puts '✅ Repair process finished successfully!'
+puts '=' * 80
 
 # Clean up PID file
-File.delete(BACKGROUND_PIDFILE) if File.exist?(BACKGROUND_PIDFILE)
-
+FileUtils.rm_f(BACKGROUND_PIDFILE)

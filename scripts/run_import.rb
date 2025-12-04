@@ -14,7 +14,7 @@ require 'optparse'
 ARGV_COPY = ARGV.dup
 
 # Quick validation
-if ARGV.empty? || !ARGV.any? { |arg| arg.include?('--project') }
+if ARGV.empty? || ARGV.none? { |arg| arg.include?('--project') }
   puts 'ERROR: --project is required. Examples:'
   puts '  rails runner scripts/run_import.rb --project PSP'
   puts '  rails runner scripts/run_import.rb --project PSP,KCBL,FLOW --verbose'
@@ -25,7 +25,7 @@ end
 # Load the main import script
 script_path = File.join(Rails.root, 'scripts', 'import_jira_with_modules.rb')
 
-if !File.exist?(script_path)
+unless File.exist?(script_path)
   puts "ERROR: Import script not found at #{script_path}"
   exit 1
 end
@@ -40,7 +40,6 @@ begin
   # Use eval with binding to execute in current context
   # This ensures method definitions happen before the main execution block
   eval(script_content, binding, script_path)
-
 rescue SystemExit => e
   # Allow normal script exits
   exit e.status
@@ -53,4 +52,3 @@ rescue StandardError => e
   puts e.backtrace.join("\n")
   exit 1
 end
-

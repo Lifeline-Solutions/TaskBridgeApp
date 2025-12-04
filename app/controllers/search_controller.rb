@@ -1,23 +1,21 @@
-# frozen_string_literal: true
-
 # Controller for handling global search requests
 class SearchController < ApplicationController
   before_action :authenticate_user!
 
   def index
     @query = params[:query].to_s.strip
-    
+
     if @query.blank?
       @tickets = Ticket.none
       @defects = Defect.none
       @total_count = 0
-      flash.now[:notice] = "Enter a search term to find tickets and defects"
+      flash.now[:notice] = 'Enter a search term to find tickets and defects'
       return
     end
 
     # Use SearchService to perform the search
     service = SearchService.new(@query, current_user)
-    
+
     begin
       result = service.search
 
@@ -31,36 +29,34 @@ class SearchController < ApplicationController
       @tickets = result[:tickets]
       @defects = result[:defects]
       @total_count = @tickets.size + @defects.size
-      
+
       # Show helpful message if no results found
-      if @total_count == 0
-        flash.now[:alert] = "No results found for '#{@query}'. Try different keywords or check your spelling."
-      end
+      flash.now[:alert] = "No results found for '#{@query}'. Try different keywords or check your spelling." if @total_count.zero?
     rescue StandardError => e
       # Log the error for debugging
       Rails.logger.error("Search error: #{e.message}\n#{e.backtrace.join("\n")}")
-      
+
       # Show user-friendly error message
       @tickets = Ticket.none
       @defects = Defect.none
       @total_count = 0
-      flash.now[:alert] = "An error occurred while searching. Please try again or contact support if the problem persists."
+      flash.now[:alert] = 'An error occurred while searching. Please try again or contact support if the problem persists.'
     end
   end
 
   # Autocomplete endpoint for search suggestions
   def autocomplete
     @query = params[:query].to_s.strip
-    
-    if @query.blank? || @query.length < 1
+
+    if @query.blank? || @query.empty?
       render json: []
       return
     end
 
     begin
       # Use SearchService but limit results for autocomplete
-      service = SearchService.new(@query, current_user)
-      
+      SearchService.new(@query, current_user)
+
       # Get limited results for autocomplete
       tickets = Ticket
         .search_by_query(@query)
@@ -68,19 +64,18 @@ class SearchController < ApplicationController
         .includes(:project)
         .limit(5)
         .select(:id, :unique_id, :subject, :project_id)
-      
+
       defects = Defect
         .search_by_query(@query)
         .accessible_by_user(current_user)
         .includes(:product)
         .limit(5)
         .select(:id, :defect_unique, :summary, :product_id)
-      
+
       # Format results for autocomplete
-      suggestions = []
-      
-      tickets.each do |ticket|
-        suggestions << {
+
+      suggestions = tickets.map do |ticket|
+        {
           type: 'ticket',
           id: ticket.id,
           key: ticket.unique_id,
@@ -89,7 +84,7 @@ class SearchController < ApplicationController
           url: project_ticket_path(ticket.project, ticket)
         }
       end
-      
+
       defects.each do |defect|
         suggestions << {
           type: 'defect',
@@ -100,12 +95,12 @@ class SearchController < ApplicationController
           url: defect_path(defect)
         }
       end
-      
+
       render json: suggestions
     rescue StandardError => e
       # Log the error
       Rails.logger.error("Autocomplete error: #{e.message}\n#{e.backtrace.join("\n")}")
-      
+
       # Return empty array instead of crashing
       render json: []
     end
