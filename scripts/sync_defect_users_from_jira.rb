@@ -146,9 +146,16 @@ def find_user_by_intelligent_match(name_or_email, verbose: false)
       return user
     end
 
+    # Convert email prefix to name (e.g., archana.verma@x.com → Archana Verma)
     email_prefix = email_str.split('@').first
     name_str = email_prefix.gsub(/[._-]/, ' ').titleize
     vputs "  [EMAIL→NAME] Converted to: '#{name_str}'" if verbose
+  # Strategy 1b: Username format (archana.verma, ambadas.g, etc.)
+  elsif name_str.include?('.') || name_str.include?('_') || name_str.include?('-')
+    # Convert username to proper name (e.g., archana.verma → Archana Verma)
+    converted_name = name_str.gsub(/[._-]/, ' ').titleize
+    vputs "  [USERNAME→NAME] Converting '#{name_str}' to: '#{converted_name}'" if verbose
+    name_str = converted_name
   end
 
   clean_name = name_str.gsub(/[^a-zA-Z\s.]/, ' ').squeeze(' ').strip
