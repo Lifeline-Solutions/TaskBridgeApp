@@ -26,7 +26,10 @@ options = {
   verbose: ENV['VERBOSE'].to_s.downcase == 'true',
   mode: :none,
   defect_key: nil,
-  project_key: nil
+  project_key: nil,
+  module_name: nil,
+  submodule_name: nil,
+  extract_from_existing: true  # Default: extract from current module name
 }
 
 OptionParser.new do |opts|
@@ -46,12 +49,51 @@ OptionParser.new do |opts|
     options[:mode] = :all
   end
 
+  opts.on('--module MODULE', 'Module name to assign (e.g., "Core Banking")') do |v|
+    options[:module_name] = v.to_s.strip
+    options[:extract_from_existing] = false
+  end
+
+  opts.on('--submodule SUBMODULE', 'Submodule name to assign (e.g., "Accounts - Savings")') do |v|
+    options[:submodule_name] = v.to_s.strip
+  end
+
   opts.on('--dry-run', "Preview changes without saving") do
     options[:dry_run] = true
   end
 
   opts.on('--verbose', 'Verbose output') do
     options[:verbose] = true
+  end
+
+  opts.on('--help', 'Show help message') do
+    puts opts
+    puts "\n" + "=" * 100
+    puts "EXAMPLES"
+    puts "=" * 100
+    puts "\n1. Extract modules from existing data:"
+    puts "   rails runner scripts/assign_modules_and_submodules.rb --defect PSP-114"
+    puts "   rails runner scripts/assign_modules_and_submodules.rb --project PSP"
+    puts ""
+    puts "2. Assign specific module/submodule to one defect:"
+    puts "   rails runner scripts/assign_modules_and_submodules.rb --defect PSP-114 --module \"Core Banking\" --submodule \"Accounts\""
+    puts ""
+    puts "3. Assign module/submodule to entire project:"
+    puts "   rails runner scripts/assign_modules_and_submodules.rb --project PSP --module \"Core Banking\" --submodule \"Deposits\""
+    puts ""
+    puts "4. Assign module/submodule to all defects:"
+    puts "   rails runner scripts/assign_modules_and_submodules.rb --all --module \"Mobile App\" --submodule \"Android\""
+    puts ""
+    puts "5. Preview changes before applying:"
+    puts "   DRY_RUN=true rails runner scripts/assign_modules_and_submodules.rb --project PSP --module \"Core Banking\""
+    puts ""
+    puts "6. Assign with verbose output:"
+    puts "   VERBOSE=true rails runner scripts/assign_modules_and_submodules.rb --defect PSP-114 --module \"Core Banking\" --submodule \"Accounts\""
+    puts ""
+    puts "7. Extract + verbose to see current state:"
+    puts "   VERBOSE=true rails runner scripts/assign_modules_and_submodules.rb --defect PSP-114"
+    puts "\n" + "=" * 100
+    exit 0
   end
 end.parse!
 
@@ -74,10 +116,17 @@ puts "Mode: #{case options[:mode]
              when :single_defect then "Single Defect (#{options[:defect_key]})"
              when :project then "Project (#{options[:project_key]})"
              when :all then "All Defects"
+             else "Not specified"
              end}"
+puts "Assignment Type: #{if options[:module_name].present?
+                         "MANUAL - Module: #{options[:module_name]}, Submodule: #{options[:submodule_name] || '(none)'}"
+                       else
+                         "AUTO-EXTRACT - from existing module/product name"
+                       end}"
 puts "Dry Run: #{DRY_RUN ? 'YES' : 'NO'}"
 puts "Verbose: #{VERBOSE ? 'YES' : 'NO'}"
-puts "\n"
+puts "=" * 100
+puts ""
 
 # ===============================
 # HELPER FUNCTIONS
@@ -279,19 +328,22 @@ end
 puts "Found #{stats[:total]} defect(s) to process...\n\n"
 
 defects.find_each do |defect|
-  # Extract module and submodule from defect's current module name
-  # (In a real scenario, you'd fetch this from Jira or a custom field)
-  module_text = defect.qa_module&.name
-
-  # If no module set, derive from issue key or product
-  module_text ||= defect.product&.name || defect.defect_unique.split('-').first
-
-  extracted_module, extracted_submodule = extract_module_and_submodule(module_text)
+  # Determine which module/submodule to assign
+  if options[:module_name].present?
+    # Use provided module/submodule
+    module_to_assign = options[:module_name]
+    submodule_to_assign = options[:submodule_name]
+  else
+    # Extract from existing module name or derive from product
+    module_text = defect.qa_module&.name
+    module_text ||= defect.product&.name || defect.defect_unique.split('-').first
+    module_to_assign, submodule_to_assign = extract_module_and_submodule(module_text)
+  end
 
   result = assign_modules_to_defect(
     defect,
-    extracted_module,
-    extracted_submodule,
+    module_to_assign,
+    submodule_to_assign,
     defect.product_id,
     created_by,
     dry_run: DRY_RUN
