@@ -1,25 +1,23 @@
 #!/usr/bin/env ruby
 # scripts/fix_defect_users_from_db.rb
 #
-# This script updates creator and assignee fields for defects using data already in the database.
-# It looks at the current creator_id and user assignments and tries to find better matches
-# if they're using the default user.
+# This script calls Jira API to get the ACTUAL reporter and assignee,
+# then compares with what's in your database and fixes any discrepancies.
 #
-# Unlike update_defect_user_mappings.rb, this script does NOT call Jira API - it works
-# entirely with the data already in your database.
+# It will update creator_id (created_by) and assignees if they differ from Jira.
 #
 # Usage:
-#   # Update all defects for a project
-#   bundle exec rails runner scripts/fix_defect_users_from_db.rb --project KCBL
+#   # Update all defects for a project from Jira
+#   bundle exec rails runner scripts/fix_defect_users_from_db.rb --project ISP
 #
-#   # Update a specific issue
-#   bundle exec rails runner scripts/fix_defect_users_from_db.rb --issue KCBL-1096
+#   # Update a specific issue from Jira
+#   bundle exec rails runner scripts/fix_defect_users_from_db.rb --issue ISP-1383
 #
 #   # Dry run (preview without saving)
-#   bundle exec rails runner scripts/fix_defect_users_from_db.rb --project KCBL --dry-run
+#   bundle exec rails runner scripts/fix_defect_users_from_db.rb --project ISP --dry-run
 #
 #   # Verbose output
-#   bundle exec rails runner scripts/fix_defect_users_from_db.rb --project KCBL --verbose
+#   bundle exec rails runner scripts/fix_defect_users_from_db.rb --issue ISP-1383 --verbose
 
 require 'optparse'
 require 'yaml'
