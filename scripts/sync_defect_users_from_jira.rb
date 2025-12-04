@@ -273,6 +273,45 @@ def find_user_by_intelligent_match(name_or_email, verbose: false)
     end
   end
 
+  # Strategy 7b: Match on word combinations - smart matching
+  # For "Robert Mbugua Kanyoro" find "Robert Kanyoro" by checking key parts
+  if parts.length >= 2
+    # Check if first and last words exist in any user's full name
+    first_word = parts.first.downcase
+    last_word = parts.last.downcase
+
+    # Look for users where both first_word and last_word appear
+    User.where(deleted_on: nil).each do |user|
+      user_full = "#{user.first_name} #{user.last_name}".downcase
+      if user_full.include?(first_word) && user_full.include?(last_word)
+        vputs "  [7b-MATCH-KEY-WORDS] '#{name_str}' → #{user.first_name} #{user.last_name}" if verbose
+        return user
+      end
+    end
+  end
+
+  # Strategy 7c: Match on ANY significant word - flexible matching
+  # For "Robert Mbugua Kanyoro" find anyone with Robert OR Kanyoro
+  best_matches = []
+
+  User.where(deleted_on: nil).each do |user|
+    user_full_name = "#{user.first_name} #{user.last_name}".downcase
+    user_words = user_full_name.split(/\s+/).reject(&:empty?)
+
+    # Count how many Jira name parts appear in the user's full name
+    matched_parts = parts.count { |part| user_words.any? { |word| word.include?(part.downcase) || part.downcase.include?(word) } }
+
+    # If at least 2 parts match (e.g., Robert AND Kanyoro both found)
+    best_matches << [user, matched_parts] if matched_parts >= 2 && matched_parts >= (parts.length * 0.5)
+  end
+
+  if best_matches.any?
+    # Pick the one with most matches
+    user = best_matches.max_by { |_, score| score }.first
+    vputs "  [7c-MATCH-FLEXIBLE] '#{name_str}' → #{user.first_name} #{user.last_name}" if verbose
+    return user
+  end
+
   # Strategy 8: Single word match
   if parts.length == 1
     single = parts.first.downcase
@@ -285,8 +324,7 @@ def find_user_by_intelligent_match(name_or_email, verbose: false)
     end
   end
 
-  # Strategy 9: STRICT fuzzy match - requires at least 70% similarity
-  # Only match if at least 2 parts match exactly AND total similarity is high
+  # Strategy 9: STRICT fuzzy match - requires at least 2 exact word matches
   if parts.length >= 2
     best_match = nil
     best_score = 0
