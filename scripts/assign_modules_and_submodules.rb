@@ -461,26 +461,30 @@ end
 
 # Assign module and submodule to defect
 def assign_modules_to_defect(defect, module_name, submodule_name, product_id, _created_by, dry_run: false)
+  # Skip only if BOTH are blank - allow updating one field without the other
   return { status: :skipped, reason: 'no_module_data' } if module_name.blank? && submodule_name.blank?
 
   vputs "\n[ASSIGN] #{defect.defect_unique}"
   vputs "  Current Module: #{defect.qa_module&.name} (ID: #{defect.qa_module_id})"
   vputs "  Current Submodule: #{defect.submodule&.name} (ID: #{defect.submodule_id})"
-  vputs "  From Jira - Module: #{module_name}, Submodule: #{submodule_name || '(none)'}"
+  vputs "  From Jira - Module: #{module_name || '(blank)'}, Submodule: #{submodule_name || '(blank)'}"
 
-  # Find or create parent module
-  parent_module = find_or_create_module(module_name, product_id, nil)
-  return { status: :error, reason: 'failed_to_create_module' } unless parent_module
+  # Find or create parent module (only if module_name is present)
+  parent_module = nil
+  if module_name.present?
+    parent_module = find_or_create_module(module_name, product_id, nil)
+    return { status: :error, reason: 'failed_to_create_module' } unless parent_module
+  end
 
-  # Find or create submodule (if provided)
+  # Find or create submodule (only if submodule_name and parent_module are present)
   child_module = nil
-  if submodule_name.present?
+  if submodule_name.present? && parent_module.present?
     child_module = find_or_create_submodule(submodule_name, parent_module, product_id, nil)
     return { status: :error, reason: 'failed_to_create_submodule' } unless child_module
   end
 
   # Check if assignment has changed
-  module_changed = defect.qa_module_id != parent_module.id
+  module_changed = defect.qa_module_id != parent_module&.id
   submodule_changed = defect.submodule_id != child_module&.id
 
   if !module_changed && !submodule_changed
@@ -491,7 +495,8 @@ def assign_modules_to_defect(defect, module_name, submodule_name, product_id, _c
   # Show what will change
   if module_changed
     old_name = defect.qa_module&.name || 'NONE'
-    vputs "  CHANGE: Module #{old_name} → #{parent_module.name}"
+    new_name = parent_module&.name || 'NONE'
+    vputs "  CHANGE: Module #{old_name} → #{new_name}"
   end
 
   if submodule_changed
@@ -504,13 +509,13 @@ def assign_modules_to_defect(defect, module_name, submodule_name, product_id, _c
 
   # Save changes
   begin
-    defect.qa_module_id = parent_module.id
+    defect.qa_module_id = parent_module&.id
     defect.submodule_id = child_module&.id
     defect.updated_at = Time.current
     defect.save!
 
     vputs "  ✅ SAVED"
-    return { status: :updated, module: parent_module.name, submodule: child_module&.name }
+    return { status: :updated, module: parent_module&.name, submodule: child_module&.name }
   rescue StandardError => e
     puts "  ❌ ERROR: Failed to save defect: #{e.message}"
     return { status: :error, reason: 'save_failed' }
@@ -636,21 +641,34 @@ defects.find_each do |defect|
   puts "    Raw Submodule Field (#{submodule_field}): #{raw_submodule_value.inspect}"
 
   # Get module from custom field
-  if module_field && raw_module_value.present?
-    module_to_assign = extract_field_value(raw_module_value)
-    puts "    → Extracted Module: '#{module_to_assign}'"
+  if module_field
+    if raw_module_value.present?
+      module_to_assign = extract_field_value(raw_module_value)
+      puts "    → Extracted Module: '#{module_to_assign}'" if module_to_assign.present?
+    end
   end
 
   # Get submodule from custom field (uses special extraction for 'child' structure)
-  if submodule_field && raw_submodule_value.present?
-    submodule_to_assign = extract_submodule_from_field(raw_submodule_value)
-    puts "    → Extracted Submodule: '#{submodule_to_assign}'"
+  if submodule_field
+    if raw_submodule_value.present?
+      submodule_to_assign = extract_submodule_from_field(raw_submodule_value)
+      puts "    → Extracted Submodule: '#{submodule_to_assign}'" if submodule_to_assign.present?
+    end
   end
 
-  # If custom fields are blank, skip this defect
+  # Skip ONLY if BOTH raw fields are nil/empty in Jira (no data at all)
+  # If fields exist but extraction returned nil, we still want to process (might need to clear)
+  if raw_module_value.blank? && raw_submodule_value.blank?
+    stats[:skipped] += 1
+    vputs "⏭️  #{defect.defect_unique}: Skipped (No module/submodule data in Jira)"
+    next
+  end
+
+  # If we have raw data but extraction failed, skip with different message
   if module_to_assign.blank? && submodule_to_assign.blank?
     stats[:skipped] += 1
-    vputs "⏭️  #{defect.defect_unique}: Skipped (Module and Submodule custom fields are empty in Jira)"
+    puts "    ⚠️  Warning: Jira has data but extraction returned nil for both fields"
+    vputs "⏭️  #{defect.defect_unique}: Skipped (Extraction failed)"
     next
   end
 
