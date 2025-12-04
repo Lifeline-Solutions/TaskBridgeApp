@@ -150,21 +150,21 @@ def discover_custom_fields
     name = field['name']&.downcase || ''
     field_id = field['id']
 
-    # Priority 1: Kenya Police Modules (most specific)
-    if name == 'kenya police modules'
+    # Priority 1: Imarisha ERP Modules (used by ISP and most projects)
+    if name == 'imarisha  erp modules'
       module_field = field_id
       vputs "✓ Found TARGET Module field: #{field_id} - #{field['name']}"
-    elsif name == 'kenya police modules / sub-modules'
+    elsif name == 'imarisha  erp modules / sub-modules'
       submodule_field = field_id
       vputs "✓ Found TARGET Submodule field: #{field_id} - #{field['name']}"
-    # Priority 2: Imarisha ERP Modules
-    elsif name == 'imarisha  erp modules' && module_field.nil?
+    # Priority 2: Kenya Police Modules (project-specific)
+    elsif name == 'kenya police modules' && module_field.nil?
       module_field = field_id
       vputs "✓ Found Module field: #{field_id} - #{field['name']}"
-    elsif name == 'imarisha  erp modules / sub-modules' && submodule_field.nil?
+    elsif name == 'kenya police modules / sub-modules' && submodule_field.nil?
       submodule_field = field_id
       vputs "✓ Found Submodule field: #{field_id} - #{field['name']}"
-    # Priority 3: Generic module fields
+    # Priority 3: Generic module fields (fallback)
     elsif module_field.nil? && name.include?('module') && !name.include?('sub')
       module_field = field_id
       vputs "✓ Found Module field: #{field_id} - #{field['name']}"
