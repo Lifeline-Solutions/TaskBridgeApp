@@ -607,13 +607,17 @@ vputs "Discovered custom fields:"
 vputs "  Module Field: #{module_field}"
 vputs "  Submodule Field: #{submodule_field}"
 
-# Create a mapping of Jira keys to issues
+# Create a mapping of Jira keys to issues for fast lookup
+# This maps Jira issue keys (e.g., "ISP-1382") to full issue data
 jira_issues_map = {}
 jira_issues.each do |issue|
-  jira_issues_map[issue['key']] = issue
+  issue_key = issue['key']
+  jira_issues_map[issue_key] = issue
+  vputs "  Mapped Jira issue: #{issue_key}"
 end
 
-vputs "Created Jira issues map with #{jira_issues_map.length} issues"
+puts "📋 Created Jira issues map with #{jira_issues_map.length} issues"
+vputs "Sample keys: #{jira_issues_map.keys.first(5).join(', ')}" if jira_issues_map.any?
 
 # Fetch defects based on mode
 defects = case options[:mode]
@@ -637,15 +641,20 @@ puts "Found #{stats[:total]} defect(s) to process...\n\n"
 defects.find_each do |defect|
   vputs "\n[PROCESSING] #{defect.defect_unique}"
 
-  # Try to find matching Jira issue
+  # Dynamically match Jira issue by key
+  # The defect_unique in the database should match the Jira issue key exactly
   jira_issue = jira_issues_map[defect.defect_unique]
 
   if jira_issue.nil?
-    vputs "⏭️  #{defect.defect_unique}: Skipped (not found in Jira)"
+    vputs "⏭️  #{defect.defect_unique}: Skipped (not found in Jira issues map)"
+    vputs "    Database key: '#{defect.defect_unique}'"
+    vputs "    Available Jira keys sample: #{jira_issues_map.keys.first(3).join(', ')}" if VERBOSE
     stats[:skipped] += 1
     next
   end
 
+  # Successfully matched!
+  vputs "  ✓ Matched database defect '#{defect.defect_unique}' to Jira issue '#{jira_issue['key']}'"
   stats[:jira_matched] += 1
 
   # Extract module and submodule from Jira custom fields
