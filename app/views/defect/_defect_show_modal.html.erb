@@ -23,10 +23,7 @@
             </h2>
             <div class="flex items-center justify-between mt-2">
               <p class="text-sm">
-                Reporter: <%= @defect.users.map { |u| [u.first_name, u.last_name].compact.join(" ") }
-                           .reject(&:blank?)
-                           .join(", ")
-                           .presence || "Unassigned" %>
+                Reporter: <%= [@defect.creator&.first_name, @defect.creator&.last_name].compact.join(" ").presence || "Unassigned" %>
               </p>
               <p class="text-sm">
               <span class="font-medium">Date Created: </span>

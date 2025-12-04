@@ -87,69 +87,26 @@ Rails.application.configure do
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
 
-  # Enable DNS rebinding protection and other `Host` header attacks.
-  # config.hosts = [
-  #   "example.com",     # Allow requests from example.com
-  #   /.*\.example\.com/ # Allow requests from subdomains like `www.example.com`
-  # ]
-  # Skip DNS rebinding protection for the default health check endpoint.
-  # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
-
   # Raise error when a before_action's only/except options reference missing actions
 
-  # host should be the hostname only (no scheme or trailing slash); protocol set separately
-  config.action_mailer.default_url_options = { host: 'taskbridge.craftsilicon.com', protocol: 'https' }
+  config.action_mailer.default_url_options = { host: 'https://taskbridge.craftsilicon.com/', protocol: 'https' }
   config.action_controller.raise_on_missing_callback_actions = true
+  #config.action_mailer.default_url_options = { host: '172.17.40.11', port: 3000 }
+  config.active_storage.variant_processor = :mini_magick
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.perform_caching = false
   config.action_mailer.delivery_method = :smtp
-
-  smtp_address = ENV.fetch('SMTP_ADDRESS', 'secure.emailsrvr.com')
-  smtp_port    = Integer(ENV.fetch('SMTP_PORT', '465'))
-  smtp_domain  = ENV.fetch('SMTP_DOMAIN', 'craftsilicon.com')
-  smtp_user    = ENV['SMTP_USERNAME']
-  smtp_pass    = ENV['SMTP_PASSWORD']
-
-  # Port 465 uses implicit SSL (ssl: true, tls: false)
-  # Port 587 uses explicit TLS (ssl: false, tls: true, enable_starttls_auto: true)
-  # Port 25 typically uses no encryption or opportunistic TLS
-
-  if smtp_port == 465
-    # Implicit SSL for port 465
-    use_ssl = true
-    use_tls = false
-    enable_starttls = false
-  elsif smtp_port == 587
-    # Explicit TLS/STARTTLS for port 587
-    use_ssl = false
-    use_tls = true
-    enable_starttls = true
-  else
-    # Custom configuration via ENV vars
-    use_ssl = ENV.fetch('SMTP_USE_SSL', 'false') == 'true'
-    use_tls = ENV.fetch('SMTP_USE_TLS', 'true') == 'true'
-    enable_starttls = ENV.fetch('SMTP_ENABLE_STARTTLS_AUTO', 'false') == 'true'
-  end
-
   config.action_mailer.smtp_settings = {
-    address: smtp_address,
-    port: smtp_port,
-    domain: smtp_domain,
-    user_name: smtp_user,
-    password: smtp_pass,
+    address: 'secure.emailsrvr.com',
+    port: 465, # Port 465 uses implicit SSL/TLS (SMTPS)
+    domain: 'craftsilicon.com',
+    user_name: 'cspm@craftsilicon.com',
+    password: 'Cspm@2025!',
     authentication: :plain,
-    ssl: use_ssl,
-    tls: use_tls,
-    enable_starttls_auto: enable_starttls,
-    open_timeout: Integer(ENV.fetch('SMTP_OPEN_TIMEOUT', '10')),
-    read_timeout: Integer(ENV.fetch('SMTP_READ_TIMEOUT', '10'))
-  }.tap do |h|
-    # Only disable verification if explicitly asked (not recommended for production)
-    if ENV['SMTP_OPENSSL_VERIFY_MODE'].present?
-      h[:openssl_verify_mode] = ENV['SMTP_OPENSSL_VERIFY_MODE']
-    end
-
-    # Log SMTP settings (excluding password) for debugging
-    Rails.logger.info("SMTP Configuration: address=#{smtp_address}, port=#{smtp_port}, user=#{smtp_user.present? ? '[SET]' : '[MISSING]'}, password=#{smtp_pass.present? ? '[SET]' : '[MISSING]'}, ssl=#{use_ssl}, tls=#{use_tls}")
-  end
+    ssl: true, # Use implicit SSL for port 465 (SMTPS)
+    # NOTE: Do NOT set enable_starttls_auto with ssl: true - they are mutually exclusive
+    # Port 465 = implicit SSL (use ssl: true)
+    # Port 587 = explicit STARTTLS (use enable_starttls_auto: true)
+    openssl_verify_mode: 'none'
+  }
 end

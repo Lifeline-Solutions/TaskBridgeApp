@@ -4,5 +4,16 @@
   - mailers
   - active_storage_analysis
   - active_storage_purge
+
+# Retry configuration
+# Email jobs will retry automatically with exponential backoff
+# Handles temporary server issues like "554 not accepting connections"
+:max_retries: 25  # Default is 25, keep it
+:retry_jitter: 0.25  # Add randomness to prevent thundering herd
+
 :redis:
   url: redis://:your_password@localhost:6379/0
+
+# Dead job retention
+:dead_max_jobs: 10000  # Keep more dead jobs for debugging
+:dead_timeout_in_seconds: 15552000  # 180 days (6 months)

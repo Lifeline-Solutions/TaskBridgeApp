@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_11_22_203539) do
+ActiveRecord::Schema[7.2].define(version: 2025_12_02_115908) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -702,6 +702,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_11_22_203539) do
     t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
     t.uuid "deleted_by"
     t.datetime "deleted_on"
+    t.string "proxy_name"
     t.index ["client_id"], name: "index_products_on_client_id"
     t.index ["deleted_on"], name: "index_products_on_deleted_on"
     t.index ["groupware_id"], name: "index_products_on_groupware_id"

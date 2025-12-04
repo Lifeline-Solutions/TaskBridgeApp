@@ -590,8 +590,12 @@ class ProfilesController < ApplicationController
         }
       end
 
-      # Sort by breach percentage (lowest first = most breached)
-      @status_table_data.sort_by! { |row| row[:breach_percentage] }
+      # Sort by specified status order: Assigned, Work in Progress, QA Testing, Client Confirmation Pending, On-Hold, Reopened, Closed, Declined
+      status_order = ['Assigned', 'Work in Progress', 'QA Testing', 'Client Confirmation Pending', 'Under Development', 'Awaiting Build', 'On-Hold', 'Reopened', 'Closed', 'Resolved','Declined']
+      @status_table_data.sort_by! do |row|
+        index = status_order.index(row[:status])
+        index.nil? ? status_order.length : index  # Put unmapped statuses at the end
+      end
 
       # Per-user breach analysis (team members who touched tickets - assigned at least once)
       @user_breach_data = []
