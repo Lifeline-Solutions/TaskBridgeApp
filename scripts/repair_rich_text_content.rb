@@ -717,11 +717,26 @@ def repair_defect_messages(defect, debug: false)
 
   stats = { updated: 0, failed: 0 }
 
+  # Track processed Jira comment IDs to prevent duplicates
+  processed_jira_ids = Set.new
+
+  # Collect all existing messages to avoid multiple database queries
+  existing_messages = defect.defect_messages.index_by { |dm| dm.id }
+
   jira_comments.each_with_index do |jira_comment, idx|
     $STATS[:comments_checked] += 1
 
     # Extract comment data
-    jira_comment['id']
+    jira_comment_id = jira_comment['id'].to_s
+
+    # Skip if we've already processed this Jira comment in this run
+    if processed_jira_ids.include?(jira_comment_id)
+      puts "    [#{idx + 1}/#{jira_comments.length}] Comment #{jira_comment_id}... ⚠️  DUPLICATE (skipped, already processed in this run)"
+      next
+    end
+
+    processed_jira_ids.add(jira_comment_id)
+
     author_name = jira_comment.dig('author', 'displayName')
     created_at_str = jira_comment['created']
     created_at = begin
@@ -762,18 +777,17 @@ def repair_defect_messages(defect, debug: false)
 
     print "    [#{idx + 1}/#{jira_comments.length}] Comment by #{author_name}... "
 
-    # Try to find matching comment in database
-    # Match by timestamp (most reliable) or by content similarity
+    # Try to find matching comment in database using multiple strategies
     existing_message = nil
 
     if created_at
-      # Try to find by timestamp (within 5 second window)
+      # Strategy 1: Find by timestamp (within 5 second window) - most reliable
       existing_message = defect.defect_messages.find do |dm|
         dm.created_at && (dm.created_at - created_at).abs < 5
       end
     end
 
-    # If not found by timestamp, try by content similarity
+    # Strategy 2: If not found by timestamp, try by normalized content
     unless existing_message
       jira_normalized = normalize_html(jira_body_html)
       existing_message = defect.defect_messages.find do |dm|
@@ -807,8 +821,20 @@ def repair_defect_messages(defect, debug: false)
         end
       end
     else
-      # Comment doesn't exist in database - create it
+      # Comment doesn't exist in database - create it, but ensure it's distinct
       begin
+        # Final check: ensure no duplicate content before creating
+        jira_normalized = normalize_html(jira_body_html)
+        final_check = defect.defect_messages.any? do |dm|
+          current_normalized = normalize_html(dm.content.to_s.strip)
+          current_normalized == jira_normalized
+        end
+
+        if final_check
+          puts "⚠️  SKIPPED (duplicate content detected, not creating)"
+          next
+        end
+
         # Try to find user by name
         user = User.find_by('first_name || \' \' || last_name ILIKE ?', "%#{author_name}%") || User.first
 
