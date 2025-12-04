@@ -580,38 +580,36 @@ defects.find_each do |defect|
 
   stats[:jira_matched] += 1
 
-  # Extract module and submodule from Jira custom fields
+  # Extract module and submodule from Jira custom fields ONLY
+  # The custom fields should contain the proper module and submodule values
   module_to_assign = nil
   submodule_to_assign = nil
 
-  # Try to get from custom fields first
+  # Debug: Show raw field values
+  vputs "  [DEBUG] Module Field (#{module_field}): #{jira_issue['fields'][module_field].inspect}" if VERBOSE && module_field
+  vputs "  [DEBUG] Submodule Field (#{submodule_field}): #{jira_issue['fields'][submodule_field].inspect}" if VERBOSE && submodule_field
+
+  # Get from custom fields (these are the correct source)
   if module_field && jira_issue['fields'][module_field].present?
     module_to_assign = extract_field_value(jira_issue['fields'][module_field])
-    vputs "  [From Module Field] #{module_to_assign}"
+    vputs "  ✓ Module from custom field: #{module_to_assign}"
   end
 
   if submodule_field && jira_issue['fields'][submodule_field].present?
     submodule_to_assign = extract_field_value(jira_issue['fields'][submodule_field])
-    vputs "  [From Submodule Field] #{submodule_to_assign}"
+    vputs "  ✓ Submodule from custom field: #{submodule_to_assign}"
   end
 
-  # If module not found in custom field, try extracting from summary
-  if module_to_assign.blank?
-    summary = jira_issue['fields']['summary']
-    if summary.present?
-      vputs "  [From Summary] #{summary[0..50]}..."
-      module_to_assign, submodule_from_summary = extract_module_and_submodule(summary)
-      submodule_to_assign ||= submodule_from_summary
-    end
-  end
-
-  if module_to_assign.blank?
+  # If custom fields are blank, skip this defect
+  # NOTE: Custom fields must be populated in Jira for this script to work
+  if module_to_assign.blank? && submodule_to_assign.blank?
     stats[:skipped] += 1
-    vputs "⏭️  #{defect.defect_unique}: Skipped (no module found in Jira)"
+    vputs "⏭️  #{defect.defect_unique}: Skipped (Module and Submodule custom fields are empty in Jira)"
+    vputs "     Please populate customfield_10465 (Module) and customfield_10464 (Submodule) in Jira"
     next
   end
 
-  vputs "  Extracted: Module='#{module_to_assign}', Submodule='#{submodule_to_assign || '(none)'}'"
+  vputs "  → Will assign: Module='#{module_to_assign || '(none)'}', Submodule='#{submodule_to_assign || '(none)'}'"
 
   result = assign_modules_to_defect(
     defect,
