@@ -26,6 +26,40 @@ class Project < ApplicationRecord
   validates :title, presence: true, uniqueness: true
 
   validate :content_length_within_limit
+  
+  # Search scopes for global search
+  scope :search_by_query, lambda { |query|
+    return none if query.blank?
+
+    sanitized_query = "%#{query}%"
+
+    left_joins(:rich_text_content)
+      .where(
+        'projects.title ILIKE :q
+         OR projects.description ILIKE :q
+         OR action_text_rich_texts.body ILIKE :q',
+        q: sanitized_query
+      )
+      .where(deleted_on: nil)
+      .distinct
+  }
+
+  scope :accessible_by_user, lambda { |user|
+    return none unless user
+
+    # Internal roles (Admin, QA, Agent, Project Manager, Observer) can see all projects
+    allowed_roles = ['admin', 'qa', 'agent', 'project manager', 'observer']
+    user_roles = user.roles.map(&:name)
+    if (user_roles & allowed_roles).any?
+      return where(deleted_on: nil)
+    end
+
+    # Other users can see projects they are assigned to
+    joins(:assignees)
+      .where('assignees.user_id = ?', user.id)
+      .where(deleted_on: nil)
+      .distinct
+  }
 
   def assigned_to?(user)
     users.include?(user)

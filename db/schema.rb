@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_12_02_115908) do
+ActiveRecord::Schema[7.2].define(version: 2025_12_04_083520) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -272,6 +272,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_02_115908) do
     t.datetime "deleted_on"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "custom_fields", default: [], comment: "Array of custom field names selected for distribution visualization (status, reporter, assignee, labels, modules, submodules, banking_types)"
+    t.index ["custom_fields"], name: "index_dashboards_on_custom_fields", using: :gin
     t.index ["defect_filter_id"], name: "index_dashboards_on_defect_filter_id"
     t.index ["user_id", "deleted_on"], name: "index_dashboards_on_user_id_and_deleted_on"
     t.index ["user_id"], name: "index_dashboards_on_user_id"
@@ -1019,6 +1021,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_02_115908) do
     t.uuid "modified_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
     t.uuid "deleted_by"
     t.datetime "deleted_on"
+    t.string "team_role"
     t.index ["deleted_on"], name: "index_teams_on_deleted_on"
   end
 

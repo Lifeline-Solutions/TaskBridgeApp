@@ -64,6 +64,35 @@
       </p>
     </div>
 
+    <!-- Custom Fields Selection -->
+    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+      <div class="flex items-start mb-4">
+        <div class="flex-1">
+          <h3 class="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-2">
+            Custom Field Distributions (Optional)
+          </h3>
+          <p class="text-xs text-blue-700 dark:text-blue-300 mb-4">
+            Select fields to display distribution charts alongside filter-based metrics. 
+            You can display distributions by Status, Reporter, Assignee, Labels, Modules, Submodules, Banking Types, or Ageing.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        <% Dashboard::GROUPABLE_FIELDS.each do |field| %>
+          <label class="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+            <%= f.check_box :custom_fields, 
+                { multiple: true, class: "w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 dark:bg-gray-600 dark:border-gray-500" }, 
+                field, 
+                nil %>
+            <span class="text-sm text-gray-700 dark:text-gray-300">
+              <%= field.titleize %>
+            </span>
+          </label>
+        <% end %>
+      </div>
+    </div>
+
     <!-- Actions -->
     <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
       <%= link_to "Cancel", qa_dashboards_path, class: "px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" %>

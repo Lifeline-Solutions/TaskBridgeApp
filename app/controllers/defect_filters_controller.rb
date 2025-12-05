@@ -4,6 +4,21 @@ class DefectFiltersController < ApplicationController
 
   def index
     @defect_filters = current_user.defect_filters.active.includes(:product).order(:name)
+
+    respond_to do |format|
+      format.html
+      format.json do
+        render json: {
+          defect_filters: @defect_filters.map { |f|
+            {
+              id: f.id,
+              name: f.name,
+              filters: f.filters
+            }
+          }
+        }
+      end
+    end
   end
 
   def edit
@@ -35,7 +50,7 @@ class DefectFiltersController < ApplicationController
     # 2. Sanitize and normalize filter keys
     permitted_filters = permit_filter_keys(raw_filters)
 
-    # 3️. Normalize product_id (handle string, array, or nil)
+    # 3. Normalize product_id (handle string, array, or nil)
     product_param = params.dig(:defect_filter, :product_id) || params[:product_id]
     normalized_product_id =
       case product_param
@@ -77,65 +92,33 @@ class DefectFiltersController < ApplicationController
   end
 
   def update
-    # Check if this is a filter criteria update (from edit form) or just a name update
-    if params[:product_id] || params[:status] || params[:priority] || params[:user_id] ||
-       params[:reporter_id] || params[:qa_module_id] || params[:submodule_id] ||
-       params[:label_ids] || params[:query] || params[:start_date] || params[:end_date] ||
-       params[:filter_open]
+    # Store old filters for comparison
+    old_filters = @defect_filter.filters.dup
 
-      # This is a full filter criteria update from the edit form
-      raw_filters = {
-        'product_id' => params[:product_id],
-        'status' => params[:status],
-        'priority' => params[:priority],
-        'user_id' => params[:user_id],
-        'reporter_id' => params[:reporter_id],
-        'qa_module_id' => params[:qa_module_id],
-        'submodule_id' => params[:submodule_id],
-        'label_ids' => params[:label_ids],
-        'query' => params[:query],
-        'start_date' => params[:start_date],
-        'end_date' => params[:end_date],
-        'filter_open' => params[:filter_open]
-      }.reject { |k, v| v.blank? }
-
-      @defect_filter.filters = permit_filter_keys(raw_filters)
-
-      # Handle product_id association
-      product_param = params[:product_id]
-      normalized_product_id =
-        case product_param
-        when Array
-          product_param.first
-        when String
-          product_param.split(/[ ,]+/).reject(&:blank?).first
-        end
-      @defect_filter.product_id = normalized_product_id
-
-    elsif params.dig(:defect_filter, :name).present?
-      # Update from save modal - just update the name while keeping existing filters
-      @defect_filter.name = params.dig(:defect_filter, :name)
-    elsif params.dig(:defect_filter, :filters).present?
-      # Legacy filter update (JSON format)
+    if params.dig(:defect_filter, :filters).present?
       raw_filters = parse_filters_param(params.dig(:defect_filter, :filters))
       @defect_filter.filters = permit_filter_keys(raw_filters)
     end
 
     @defect_filter.modified_by = current_user
 
-    if @defect_filter.save
-      if request.referer&.include?('index_show')
-        # If coming from the defect index page, redirect back with the filter applied
-        filter_params = @defect_filter.sanitized_filters_string_keys || {}
-        filter_params['product_id'] = @defect_filter.product_id if @defect_filter.product_id.present?
+    # Always update the timestamp to show it was just modified
+    @defect_filter.updated_at = Time.current
 
-        redirect_to index_show_defect_index_path(filter_params.merge(current_filter_id: @defect_filter.id)),
-                    notice: 'Filter updated successfully'
-      else
-        redirect_to defect_filters_path, notice: 'Filter updated successfully'
-      end
+    if @defect_filter.save
+      # Clear the update flag after successful update
+      session.delete(:filter_being_updated)
+
+      # Redirect to the filter with updated params
+      redirect_to index_show_defect_index_path(
+        product_id: @defect_filter.product_id,
+        **@defect_filter.filters.symbolize_keys
+      ), notice: 'Filter updated successfully!'
     else
-      redirect_back fallback_location: defect_filters_path, alert: @defect_filter.errors.full_messages.to_sentence
+      redirect_back(
+        fallback_location: defect_filters_path,
+        alert: @defect_filter.errors.full_messages.to_sentence
+      )
     end
   end
 
@@ -183,7 +166,7 @@ class DefectFiltersController < ApplicationController
     raw = raw_hash.to_h.with_indifferent_access.slice(*DefectFilter::ALLOWED_FILTER_KEYS)
 
     # Normalize array parameters
-    array_keys = %w[product_id user_id reporter_id qa_module_id submodule_id label_ids status]
+    array_keys = %w[product_id user_id reporter_id qa_module_id submodule_id label_ids status priority banking_type_id]
     array_keys.each do |key|
       raw[key] = Array(raw_hash[key]).reject(&:blank?) if raw_hash.key?(key)
     end
@@ -197,3 +180,4 @@ class DefectFiltersController < ApplicationController
     raw
   end
 end
+

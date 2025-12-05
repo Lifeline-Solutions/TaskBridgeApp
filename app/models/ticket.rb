@@ -60,13 +60,21 @@ class Ticket < ApplicationRecord
   scope :accessible_by_user, lambda { |user|
     return none unless user
 
-    # Admin and Observer can see all tickets
-    return all if user.has_any_role?(:admin, :observer)
+    # Internal roles (Admin, Observer, QA, Agent, Project Manager) can see all tickets
+    allowed_roles = ['admin', 'qa', 'agent', 'project manager', 'observer']
+    user_roles = user.roles.map(&:name)
+    return all if (user_roles & allowed_roles).any?
 
-    # Regular users can only see tickets from projects they're assigned to
-    joins(:project)
-      .joins('INNER JOIN project_users ON projects.id = project_users.project_id')
-      .where('project_users.user_id = ?', user.id)
+    # Regular users can see tickets if:
+    # 1. They belong to the project (via assignees)
+    # 2. They are the creator (user_id)
+    # 3. They are tagged in the ticket
+    left_joins(:project => :assignees)
+      .left_joins(:taggings)
+      .where(
+        'assignees.user_id = :user_id OR tickets.user_id = :user_id OR taggings.user_id = :user_id',
+        user_id: user.id
+      )
       .distinct
   }
 

@@ -447,12 +447,28 @@ class DefectController < ApplicationController
       @products = nil
     end
 
-    # Build option lists for dropdowns from the CURRENT filtered (but unpaginated) result set
-    filtered_ids = @defects.except(:select, :order, :limit, :offset).select(:id)
+    # Build option lists for dropdowns from the UNFILTERED result set (after product/client filters only)
+    # This ensures all available options are shown, even if not currently selected in other filters
+    unfiltered_base = Defect.published
+      .includes(:users, :labels, :statuses, product: %i[client groupwares])
 
-    # FIX: Use subqueries to avoid DISTINCT + ORDER BY issues
+    # Apply only product and client filters to the base scope
+    if params[:client_name].present? && product_ids.any?
+      unfiltered_base = unfiltered_base.joins(product: :client)
+        .where('LOWER(clients.name) = ?', params[:client_name].to_s.downcase.strip)
+        .where(products: { id: product_ids })
+    elsif params[:client_name].present?
+      unfiltered_base = unfiltered_base.joins(product: :client)
+        .where('LOWER(clients.name) = ?', params[:client_name].to_s.downcase.strip)
+    elsif product_ids.any?
+      unfiltered_base = unfiltered_base.where(product_id: product_ids)
+    end
+
+    unfiltered_ids = unfiltered_base.except(:select, :order, :limit, :offset).select(:id)
+
+    # FIX: Use subqueries to avoid DISTINCT + ORDER BY issues, using unfiltered defects
     @statuses = Status.where(id: Status.joins(:defects)
-      .where(defects: { id: filtered_ids })
+      .where(defects: { id: unfiltered_ids })
       .distinct
       .select(:id))
       .order(:name)
@@ -464,7 +480,7 @@ class DefectController < ApplicationController
                       .order(:name)
                   else
                     QaModule.where(id: QaModule.joins(:defects)
-                      .where(defects: { id: filtered_ids })
+                      .where(defects: { id: unfiltered_ids })
                       .where(parent_id: nil)
                       .distinct
                       .select(:id))
@@ -489,7 +505,7 @@ class DefectController < ApplicationController
                     # Fallback to submodules from defects
                     available_module_ids = @qa_modules.pluck(:id)
                     submodule_ids_from_defects = QaModule.joins(:defects)
-                      .where(defects: { id: filtered_ids })
+                      .where(defects: { id: unfiltered_ids })
                       .where.not(parent_id: nil)
                       .distinct
                       .pluck(:id)
@@ -511,17 +527,36 @@ class DefectController < ApplicationController
                          .order(:name)
                      else
                        BankingType.where(id: BankingType.joins(:defects)
-                         .where(defects: { id: filtered_ids })
+                         .where(defects: { id: unfiltered_ids })
                          .distinct
                          .select(:id))
                          .order(:name)
                      end
 
     @labels = Label.where(id: Label.joins(:defects)
-      .where(defects: { id: filtered_ids })
+      .where(defects: { id: unfiltered_ids })
       .distinct
       .select(:id))
       .order(:name)
+
+    # Load assignees from unfiltered defects so all available assignees show in dropdown
+    @assignees_for_filter = User.joins(:defects)
+      .where(defects: { id: unfiltered_ids })
+      .distinct
+      .order(:first_name, :last_name)
+
+    # Load reporters from unfiltered defects so all available reporters show in dropdown
+    @reporters_for_filter = User.where(id: Defect.where(id: unfiltered_ids)
+      .select('DISTINCT created_by'))
+      .order(:first_name, :last_name)
+
+    # Only show update button if user explicitly clicked "Apply" from a saved filter
+    # This prevents the button from showing on every page load
+    @matched_filter = nil
+    if params[:filter_id].present?
+      # User came from defect_filters#index - show update button
+      @matched_filter = current_user.defect_filters.active.find_by(id: params[:filter_id])
+    end
 
     # Load default defect assignee
     @default_defect_assignee = DefaultDefectAssignee.where(archive_status: false).first
@@ -930,6 +965,16 @@ class DefectController < ApplicationController
     @banking_types = BankingType.where(id: Defect.where(id: filtered_ids).select(:banking_type_id))
       .distinct
       .order(:name)
+
+    # Initialize assignees and reporters (required for filter dropdowns)
+    @assignees_for_filter = User.joins(:defects)
+      .where(defects: { id: @defects.except(:select, :order, :limit, :offset).select(:id) })
+      .distinct
+      .order(:first_name, :last_name)
+
+    @reporters_for_filter = User.where(id: Defect.where(id: @defects.except(:select, :order, :limit, :offset).select(:id))
+      .select('DISTINCT created_by'))
+      .order(:first_name, :last_name)
 
     render :index_show
   end
@@ -1682,6 +1727,87 @@ class DefectController < ApplicationController
     # are now handled in the main index action to ensure proper ordering
 
     defects
+  end
+
+  def find_matching_saved_filter(current_params)
+    # Get all active saved filters for current user
+    saved_filters = current_user.defect_filters.active
+
+    return nil if saved_filters.blank?
+
+    # Build current filter hash from params
+    current_filter = extract_filter_params(current_params)
+
+    # Return nil if no filters are active
+    return nil if current_filter.empty?
+
+    # Check each saved filter for a match
+    saved_filters.each do |filter|
+      if filters_match?(filter.filters || {}, current_filter)
+        return filter
+      end
+    end
+
+    nil
+  end
+
+  def extract_filter_params(params)
+    # Extract only filter-related parameters
+    filter_keys = %w[status priority user_id reporter_id label_ids qa_module_id submodule_id
+                     banking_type_id order start_date end_date query client_name]
+
+    extracted = {}
+
+    # Collect array parameters
+    %w[status priority user_id reporter_id label_ids qa_module_id submodule_id banking_type_id].each do |key|
+      values = Array(params[key]).reject(&:blank?).map(&:to_s).sort
+      extracted[key] = values if values.any?
+    end
+
+    # Collect single value parameters
+    %w[order start_date end_date query client_name].each do |key|
+      extracted[key] = params[key].to_s if params[key].present?
+    end
+
+    extracted
+  end
+
+  def filters_match?(saved_filters, current_filters)
+    # Normalize both filter sets for comparison
+    saved_normalized = normalize_filters(saved_filters)
+    current_normalized = normalize_filters(current_filters)
+
+    # Check if they have the same keys
+    return false if saved_normalized.keys.sort != current_normalized.keys.sort
+
+    # Check if all values match
+    saved_normalized.each do |key, value|
+      current_value = current_normalized[key]
+
+      # Handle array comparisons
+      if value.is_a?(Array) && current_value.is_a?(Array)
+        return false if value.map(&:to_s).sort != current_value.map(&:to_s).sort
+      elsif value.to_s.downcase != current_value.to_s.downcase
+        return false
+      end
+    end
+
+    true
+  end
+
+  def normalize_filters(filters)
+    # Convert all values to lowercase strings for case-insensitive comparison
+    normalized = {}
+
+    filters.each do |key, value|
+      if value.is_a?(Array)
+        normalized[key] = value.map { |v| v.to_s.downcase }
+      elsif value.present?
+        normalized[key] = value.to_s.downcase
+      end
+    end
+
+    normalized
   end
 
   def authorize_view_failure_reports!

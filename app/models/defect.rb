@@ -133,23 +133,22 @@ class Defect < ApplicationRecord
   scope :accessible_by_user, lambda { |user|
     return none unless user
 
-    # Admin can see all defects
-    return where(draft: false, deleted_on: nil) if user.has_role?(:admin)
-
-    # QA Admin can see all QA defects
-    return where(draft: false, deleted_on: nil) if user.has_role?('qa admin')
-
-    # QA Agent can only see defects they created or are assigned to
-    if user.has_role?('qa agent')
-      where(draft: false, deleted_on: nil)
-        .where('defects.created_by = :user_id OR defects.id IN (
-          SELECT defect_id FROM defects_users WHERE user_id = :user_id
-        )', user_id: user.id)
-        .distinct
-    else
-      # Non-QA users cannot see defects in search
-      none
+    # Internal roles (Admin, QA, Agent, Project Manager, Observer) can see all defects
+    # We check role names directly to handle both global and scoped roles, and to avoid
+    # issues with symbol/string conversion or 'project manager' spacing.
+    allowed_roles = ['admin', 'qa', 'agent', 'project manager', 'observer', 'qa admin']
+    user_roles = user.roles.map(&:name)
+    
+    if (user_roles & allowed_roles).any?
+      return where(draft: false, deleted_on: nil)
     end
+
+    # Clients and other external users can only see defects they created or are assigned/tagged in
+    where(draft: false, deleted_on: nil)
+      .where('defects.created_by = :user_id OR defects.id IN (
+        SELECT defect_id FROM defects_users WHERE user_id = :user_id
+      )', user_id: user.id)
+      .distinct
   }
 
   before_create :set_default_status
