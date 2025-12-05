@@ -24,28 +24,6 @@ module DashboardsHelper
     end
   end
 
-  # Customize filter parameter labels
-  def filter_param_label(key)
-    case key.to_s
-    when 'product_id'
-      'Project'
-    when 'qa_module_id'
-      'QA Module'
-    when 'submodule_id'
-      'Submodule'
-    when 'user_id'
-      'Assignee'
-    when 'reporter_id'
-      'Reporter'
-    when 'banking_type_id'
-      'Banking Type'
-    when 'label_ids'
-      'Labels'
-    else
-      key.to_s.titleize
-    end
-  end
-
   private
 
   def format_qa_module_ids(value)
@@ -84,14 +62,10 @@ module DashboardsHelper
 
   def format_product_ids(value)
     ids = Array(value)
-    products = Product.includes(:client, :groupwares).where(id: ids)
+    products = Product.where(id: ids).pluck(:document_name)
     return value if products.empty?
 
-    products.map do |product|
-      client_name = product.client&.name || 'No Client Assigned'
-      groupware_names = product.groupwares.any? ? product.groupwares.map(&:name).join(', ') : 'No Software'
-      "#{client_name} - #{groupware_names}"
-    end.join(', ')
+    products.map { |name| name.presence || 'Unnamed Project' }.join(', ')
   end
 
   def format_banking_type_ids(value)
