@@ -47,8 +47,12 @@ class Project < ApplicationRecord
   scope :accessible_by_user, lambda { |user|
     return none unless user
 
-    # Admin can see all projects
-    return where(deleted_on: nil) if user.has_role?(:admin)
+    # Internal roles (Admin, QA, Agent, Project Manager, Observer) can see all projects
+    allowed_roles = ['admin', 'qa', 'agent', 'project manager', 'observer']
+    user_roles = user.roles.map(&:name)
+    if (user_roles & allowed_roles).any?
+      return where(deleted_on: nil)
+    end
 
     # Other users can see projects they are assigned to
     joins(:assignees)
