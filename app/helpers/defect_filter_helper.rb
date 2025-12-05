@@ -1,9 +1,15 @@
 module DefectFilterHelper
-  # Check if any filter parameters are present
+  # Check if any filter parameters are present (excluding route navigation parameters)
   def filter_params_present?
-    filter_keys = %i[product_id status priority user_id reporter_id qa_module_id
-                     submodule_id banking_type_id label_ids start_date end_date order]
-    filter_keys.any? { |key| params[key].present? && params[key] != [] }
+    # First check for actual filter parameters (not route navigation)
+    actual_filter_keys = %i[status priority user_id reporter_id qa_module_id
+                           submodule_id banking_type_id label_ids start_date end_date query order]
+    has_actual_filters = actual_filter_keys.any? { |key| params[key].present? && params[key] != [] }
+
+    # Only include product_id if there are other filters present (not just route navigation)
+    has_product_filter = params[:product_id].present? && has_actual_filters
+
+    has_actual_filters || has_product_filter
   end
 
   # Build URL with a specific filter parameter removed

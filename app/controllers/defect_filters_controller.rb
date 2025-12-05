@@ -1,6 +1,6 @@
 class DefectFiltersController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_defect_filter, only: %i[update destroy]
+  before_action :set_defect_filter, only: %i[edit update destroy]
 
   def index
     @defect_filters = current_user.defect_filters.active.includes(:product).order(:name)
@@ -19,6 +19,26 @@ class DefectFiltersController < ApplicationController
         }
       end
     end
+  end
+
+  def edit
+    # Load all necessary data for the edit form
+    @qa_products = Product
+      .includes(:client, :groupwares, :statuses)
+      .joins(:statuses)
+      .where(statuses: { name: ['Pre Quality Assurance', 'End Of Quality Assurance'] })
+      .where('products.deleted_on IS NULL')
+      .distinct
+      .order('products.document_name ASC')
+
+    # Load users, modules, statuses, and labels for filter options
+    @users = User.where(active: true).order(:first_name, :last_name)
+    @modules = QaModule.includes(:children, :parent).distinct.order(:name)
+    @statuses = Status.distinct.order(:name)
+    @labels = Label.distinct.order(:name)
+
+    # Parse existing filter criteria for the form
+    @current_filters = @defect_filter.sanitized_filters_string_keys
   end
 
   def create
@@ -80,7 +100,6 @@ class DefectFiltersController < ApplicationController
       @defect_filter.filters = permit_filter_keys(raw_filters)
     end
 
-    @defect_filter.name = params.dig(:defect_filter, :name) if params.dig(:defect_filter, :name).present?
     @defect_filter.modified_by = current_user
 
     # Always update the timestamp to show it was just modified

@@ -37,15 +37,27 @@
     </div>
 
     <script>
-      document.addEventListener("turbo:load", function () {
+      // Initialize modal only once to prevent duplicates
+      let modalInitialized = false;
+      
+      function initializeSaveFilterModal() {
+        if (modalInitialized) return;
+        
         var openBtn = document.getElementById('openSaveFilterModal');
         var modal = document.getElementById('saveFilterModal');
         var cancel = document.getElementById('cancelSaveFilter');
 
-        if (openBtn) openBtn.addEventListener('click', function () { modal.classList.remove('hidden'); });
-        if (cancel) cancel.addEventListener('click', function () { modal.classList.add('hidden'); });
+        if (openBtn && modal) {
+          openBtn.addEventListener('click', function () { modal.classList.remove('hidden'); });
+          if (cancel) cancel.addEventListener('click', function () { modal.classList.add('hidden'); });
+          modal.addEventListener('click', function (e) { if (e.target === modal) modal.classList.add('hidden'); });
+          modalInitialized = true;
+        }
+      }
 
-        if (modal) modal.addEventListener('click', function (e) { if (e.target === modal) modal.classList.add('hidden'); });
+      document.addEventListener("turbo:load", initializeSaveFilterModal);
+      document.addEventListener("turbo:before-cache", function () {
+        modalInitialized = false;
       });
     </script>
   </div>
