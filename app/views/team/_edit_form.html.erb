@@ -20,6 +20,10 @@
         <%= f.text_area :description, class: "border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-4 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500", placeholder: 'Enter team description' %>
       </div>
     </div>
+    <div class="mb-5">
+      <%= f.label :team_role, 'Team Role', class: "block mb-2 text-sm font-medium text-gray-900 dark:text-white" %>
+      <%= f.select :team_role, ["Support", "Development"], { prompt: "Select a team role" }, class: "p-2 border border-gray-300 rounded-md font-medium placeholder-current focus:outline-none dark:bg-gray-700 dark:border-gray-50 dark:text-slate-100 w-full" %>
+    </div>
     <div class="mb-2">
       <%= f.label :user_ids, 'Pick Agents and Project Managers', class: "block mb-2 text-lg font-semibold text-gray-700 dark:text-gray-200" %>
     </div>
@@ -27,7 +31,6 @@
       <!-- Searchable Input -->
       <input type="text" id="searchUser" class="border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-4 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-200 focus:ring-2 focus:ring-blue-400"
              placeholder="Search User..." onclick="showDropdown()"  onkeyup="filterUserDropdown()" autocomplete="off">
-
       <!-- Selected Items Container -->
       <div id="selectedUsers" class="flex flex-wrap gap-2 mt-2">
         <% @team.users.each do |user| %>
@@ -37,7 +40,6 @@
           <input type="hidden" name="team[user_ids][]" value="<%= user.id %>" class="user-input-<%= user.id %>">
         <% end %>
       </div>
-
       <!-- Hidden Inputs for Rails Form (Updated Name) -->
       <div id="hiddenUserInputs"></div>
 

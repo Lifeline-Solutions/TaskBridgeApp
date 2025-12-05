@@ -49,4 +49,3 @@ rescue StandardError => e
   puts "ERROR: Failed to execute import script: #{e.message}"
   exit 1
 end
-

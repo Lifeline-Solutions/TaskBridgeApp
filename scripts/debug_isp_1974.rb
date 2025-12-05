@@ -16,105 +16,102 @@ JIRA_API_TOKEN = ENV.fetch('JIRA_API_TOKEN') { CONFIG[:jira_api_token] }
 def discover_custom_fields
   url = "#{JIRA_BASE_URL}/rest/api/3/field"
   uri = URI.parse(url)
-  
+
   puts "Discovering custom fields from #{url}..."
-  
+
   http = Net::HTTP.new(uri.host, uri.port)
   http.use_ssl = true
-  
+
   request = Net::HTTP::Get.new(uri.request_uri)
   request['Accept'] = 'application/json'
   request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
-  
+
   response = http.request(request)
-  
+
   unless response.is_a?(Net::HTTPSuccess)
     puts "Error fetching fields: #{response.code} #{response.message}"
     return nil
   end
-  
+
   fields = JSON.parse(response.body)
-  
+
   puts "\n--- Searching for Module Fields ---"
   fields.each do |field|
     name = field['name']&.downcase || ''
-    if name.include?('imarisha') && name.include?('module')
-      puts "Found candidate: ID='#{field['id']}', Name='#{field['name']}'"
-    end
+    puts "Found candidate: ID='#{field['id']}', Name='#{field['name']}'" if name.include?('imarisha') && name.include?('module')
   end
-  
+
   module_field = nil
   submodule_field = nil
-  
+
   fields.each do |field|
     name = field['name']&.downcase || ''
     field_id = field['id']
-    
+
     # Exact logic from production_import_erp.rb
-    if name == 'imarisha  erp modules'
+    case name
+    when 'imarisha  erp modules'
       module_field = field_id
       puts "\n[MATCH] Module field (double space): #{field_id} - #{field['name']}"
-    elsif name == 'imarisha  erp modules / sub-modules'
+    when 'imarisha  erp modules / sub-modules'
       submodule_field = field_id
       puts "[MATCH] Submodule field (double space): #{field_id} - #{field['name']}"
-    elsif name == 'imarisha erp modules'
+    when 'imarisha erp modules'
       puts "[POSSIBLE MATCH] Module field (single space): #{field_id} - #{field['name']}"
-    elsif name == 'imarisha erp modules / sub-modules'
+    when 'imarisha erp modules / sub-modules'
       puts "[POSSIBLE MATCH] Submodule field (single space): #{field_id} - #{field['name']}"
     end
   end
-  
+
   [module_field, submodule_field]
 end
 
 def fetch_issue(key, module_field, submodule_field)
   url = "#{JIRA_BASE_URL}/rest/api/3/issue/#{key}"
   uri = URI.parse(url)
-  
+
   puts "\nFetching issue #{key}..."
-  
+
   http = Net::HTTP.new(uri.host, uri.port)
   http.use_ssl = true
-  
+
   request = Net::HTTP::Get.new(uri.request_uri)
   request['Accept'] = 'application/json'
   request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
-  
+
   response = http.request(request)
-  
+
   unless response.is_a?(Net::HTTPSuccess)
     puts "Error fetching issue: #{response.code} #{response.message}"
     return
   end
-  
+
   issue = JSON.parse(response.body)
   fields = issue['fields'] || {}
-  
+
   puts "\n--- Field Values for #{key} ---"
-  
+
   if module_field
     val = fields[module_field]
     puts "Module Field (#{module_field}): #{val.inspect}"
     puts "  -> Extracted: #{extract_custom_field_value(val)}"
   else
-    puts "Module Field: NOT IDENTIFIED"
+    puts 'Module Field: NOT IDENTIFIED'
   end
-  
+
   if submodule_field
     val = fields[submodule_field]
     puts "Submodule Field (#{submodule_field}): #{val.inspect}"
     puts "  -> Extracted: #{extract_custom_field_value(val)}"
   else
-    puts "Submodule Field: NOT IDENTIFIED"
+    puts 'Submodule Field: NOT IDENTIFIED'
   end
-  
+
   # Check for other potential fields containing the data
   puts "\n--- Checking all fields for 'Contracts' ---"
   fields.each do |k, v|
     str_val = v.to_s
-    if str_val.include?('Contracts') && k.start_with?('customfield_')
-      puts "Field #{k}: #{str_val[0..100]}..."
-    end
+    puts "Field #{k}: #{str_val[0..100]}..." if str_val.include?('Contracts') && k.start_with?('customfield_')
   end
 end
 
@@ -131,11 +128,10 @@ def extract_custom_field_value(field_data)
 
   if field_data.is_a?(Array) && field_data.any?
     first_item = field_data.first
-    if first_item.is_a?(Hash)
-      return extract_custom_field_value(first_item)
-    else
-      return first_item.to_s.strip
-    end
+    return extract_custom_field_value(first_item) if first_item.is_a?(Hash)
+
+    return first_item.to_s.strip
+
   end
 
   field_data.to_s.strip

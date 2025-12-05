@@ -8,50 +8,50 @@ rendered_html_with_macro = '<p>Some of the data maintenance actions are not bein
 
 # Simulate the ADF structure
 adf_data = {
-  "type" => "doc",
-  "version" => 1,
-  "content" => [
+  'type' => 'doc',
+  'version' => 1,
+  'content' => [
     {
-      "type" => "paragraph",
-      "content" => [
+      'type' => 'paragraph',
+      'content' => [
         {
-          "type" => "text",
-          "text" => "Some of the data maintenance actions are not being displayed in the audit report"
+          'type' => 'text',
+          'text' => 'Some of the data maintenance actions are not being displayed in the audit report'
         },
         {
-          "type" => "hardBreak"
+          'type' => 'hardBreak'
         }
       ]
     },
     {
-      "type" => "table",
-      "content" => [
+      'type' => 'table',
+      'content' => [
         {
-          "type" => "tableRow",
-          "content" => [
+          'type' => 'tableRow',
+          'content' => [
             {
-              "type" => "tableHeader",
-              "content" => [
+              'type' => 'tableHeader',
+              'content' => [
                 {
-                  "type" => "paragraph",
-                  "content" => [
+                  'type' => 'paragraph',
+                  'content' => [
                     {
-                      "type" => "text",
-                      "text" => "Action"
+                      'type' => 'text',
+                      'text' => 'Action'
                     }
                   ]
                 }
               ]
             },
             {
-              "type" => "tableHeader",
-              "content" => [
+              'type' => 'tableHeader',
+              'content' => [
                 {
-                  "type" => "paragraph",
-                  "content" => [
+                  'type' => 'paragraph',
+                  'content' => [
                     {
-                      "type" => "text",
-                      "text" => "Status"
+                      'type' => 'text',
+                      'text' => 'Status'
                     }
                   ]
                 }
@@ -60,31 +60,31 @@ adf_data = {
           ]
         },
         {
-          "type" => "tableRow",
-          "content" => [
+          'type' => 'tableRow',
+          'content' => [
             {
-              "type" => "tableCell",
-              "content" => [
+              'type' => 'tableCell',
+              'content' => [
                 {
-                  "type" => "paragraph",
-                  "content" => [
+                  'type' => 'paragraph',
+                  'content' => [
                     {
-                      "type" => "text",
-                      "text" => "Data Update"
+                      'type' => 'text',
+                      'text' => 'Data Update'
                     }
                   ]
                 }
               ]
             },
             {
-              "type" => "tableCell",
-              "content" => [
+              'type' => 'tableCell',
+              'content' => [
                 {
-                  "type" => "paragraph",
-                  "content" => [
+                  'type' => 'paragraph',
+                  'content' => [
                     {
-                      "type" => "text",
-                      "text" => "Missing"
+                      'type' => 'text',
+                      'text' => 'Missing'
                     }
                   ]
                 }
@@ -97,55 +97,54 @@ adf_data = {
   ]
 }
 
-puts "=" * 80
-puts "ADF MACRO DETECTION TEST"
-puts "=" * 80
-puts ""
+puts '=' * 80
+puts 'ADF MACRO DETECTION TEST'
+puts '=' * 80
+puts ''
 
 # Test 1: Detect ADF macro in rendered HTML
-puts "1️⃣  Testing ADF macro detection:"
+puts '1️⃣  Testing ADF macro detection:'
 if rendered_html_with_macro.include?('<!-- ADF macro')
-  puts "   ✅ ADF macro detected in rendered HTML"
-  puts "   → Should use ADF conversion instead"
+  puts '   ✅ ADF macro detected in rendered HTML'
+  puts '   → Should use ADF conversion instead'
 else
-  puts "   ❌ ADF macro NOT detected"
+  puts '   ❌ ADF macro NOT detected'
 end
-puts ""
+puts ''
 
 # Test 2: Show what rendered HTML looks like
-puts "2️⃣  Rendered HTML content:"
-puts "   " + rendered_html_with_macro.inspect
-puts ""
+puts '2️⃣  Rendered HTML content:'
+puts "   #{rendered_html_with_macro.inspect}"
+puts ''
 
 # Test 3: Show ADF structure
-puts "3️⃣  ADF structure:"
+puts '3️⃣  ADF structure:'
 puts "   Has table block: #{adf_data['content'].any? { |b| b['type'] == 'table' }}"
 if adf_data['content'].any? { |b| b['type'] == 'table' }
   table = adf_data['content'].find { |b| b['type'] == 'table' }
   puts "   Table rows: #{table['content'].count}"
 end
-puts ""
+puts ''
 
 # Test 4: Simulate conversion
-puts "4️⃣  What should happen:"
+puts '4️⃣  What should happen:'
 puts "   - Detect '<!-- ADF macro' in rendered HTML"
-puts "   - Fall back to ADF conversion"
-puts "   - Convert table block to HTML table"
-puts "   - Result should include <table> tag with actual content"
-puts ""
+puts '   - Fall back to ADF conversion'
+puts '   - Convert table block to HTML table'
+puts '   - Result should include <table> tag with actual content'
+puts ''
 
-puts "=" * 80
-puts "CONCLUSION"
-puts "=" * 80
-puts ""
-puts "✅ The updated script will:"
+puts '=' * 80
+puts 'CONCLUSION'
+puts '=' * 80
+puts ''
+puts '✅ The updated script will:'
 puts "   1. Check rendered HTML for '<!-- ADF macro' comments"
-puts "   2. If found, use ADF conversion instead"
-puts "   3. Convert table blocks from ADF to proper HTML tables"
-puts "   4. Store complete HTML with tables in database"
-puts ""
-puts "🚀 Run the repair script to update content:"
-puts "   bin/rails runner scripts/repair_rich_text_content.rb PSP"
-puts ""
-puts "=" * 80
-
+puts '   2. If found, use ADF conversion instead'
+puts '   3. Convert table blocks from ADF to proper HTML tables'
+puts '   4. Store complete HTML with tables in database'
+puts ''
+puts '🚀 Run the repair script to update content:'
+puts '   bin/rails runner scripts/repair_rich_text_content.rb PSP'
+puts ''
+puts '=' * 80

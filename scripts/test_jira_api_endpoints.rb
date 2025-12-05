@@ -31,23 +31,23 @@ def fetch_jira(url_path, params = {})
 
   response = http.request(request)
   response.is_a?(Net::HTTPSuccess) ? JSON.parse(response.body) : nil
-rescue => e
+rescue StandardError => e
   puts "  Error: #{e.message}"
   nil
 end
 
-puts "=" * 100
+puts '=' * 100
 puts "TESTING DIFFERENT JIRA API ENDPOINTS FOR: #{TEST_ISSUE_KEY}"
-puts "=" * 100
-puts ""
+puts '=' * 100
+puts ''
 
 # Method 1: Standard API v3 with renderedFields
-puts "1️⃣  API v3 with renderedFields"
-puts "-" * 100
+puts '1️⃣  API v3 with renderedFields'
+puts '-' * 100
 data1 = fetch_jira("/rest/api/3/issue/#{TEST_ISSUE_KEY}", {
-  expand: 'renderedFields',
-  fields: 'description'
-})
+                     expand: 'renderedFields',
+                     fields: 'description'
+                   })
 
 if data1
   rendered = data1.dig('renderedFields', 'description')
@@ -55,16 +55,16 @@ if data1
   puts "Has table: #{rendered&.include?('<table') || false}"
   puts "Has ADF macro: #{rendered&.include?('<!-- ADF macro') || false}"
 else
-  puts "Failed to fetch"
+  puts 'Failed to fetch'
 end
-puts ""
+puts ''
 
 # Method 2: API v3 with regular fields (ADF)
-puts "2️⃣  API v3 with ADF fields"
-puts "-" * 100
+puts '2️⃣  API v3 with ADF fields'
+puts '-' * 100
 data2 = fetch_jira("/rest/api/3/issue/#{TEST_ISSUE_KEY}", {
-  fields: 'description'
-})
+                     fields: 'description'
+                   })
 
 if data2
   adf = data2.dig('fields', 'description')
@@ -80,17 +80,17 @@ if data2
     end
   end
 else
-  puts "Failed to fetch"
+  puts 'Failed to fetch'
 end
-puts ""
+puts ''
 
 # Method 3: Try API v2 (older but might have different rendering)
-puts "3️⃣  API v2 (older endpoint)"
-puts "-" * 100
+puts '3️⃣  API v2 (older endpoint)'
+puts '-' * 100
 data3 = fetch_jira("/rest/api/2/issue/#{TEST_ISSUE_KEY}", {
-  expand: 'renderedFields',
-  fields: 'description'
-})
+                     expand: 'renderedFields',
+                     fields: 'description'
+                   })
 
 if data3
   rendered = data3.dig('renderedFields', 'description')
@@ -100,21 +100,21 @@ if data3
     puts "Rendered HTML length: #{rendered.length}"
     puts "Has table: #{rendered.include?('<table')}"
   elsif adf
-    puts "ADF format (v2 returns ADF)"
+    puts 'ADF format (v2 returns ADF)'
     puts "ADF blocks: #{adf['content']&.map { |b| b['type'] }&.join(', ') || 'none'}"
   end
 else
-  puts "Failed to fetch"
+  puts 'Failed to fetch'
 end
-puts ""
+puts ''
 
 # Method 4: Try versionedRepresentations
-puts "4️⃣  Versioned Representations"
-puts "-" * 100
+puts '4️⃣  Versioned Representations'
+puts '-' * 100
 data4 = fetch_jira("/rest/api/3/issue/#{TEST_ISSUE_KEY}", {
-  expand: 'versionedRepresentations',
-  fields: 'description'
-})
+                     expand: 'versionedRepresentations',
+                     fields: 'description'
+                   })
 
 if data4
   versioned = data4.dig('versionedRepresentations', 'description')
@@ -122,78 +122,81 @@ if data4
     puts "Available formats: #{versioned.keys.join(', ')}"
 
     # Try different format variations
-    ['storage', 'view', 'editor', 'atlassian_document_format', 'wiki'].each do |format|
-      if versioned[format]
-        content = versioned[format]
-        puts "\n  #{format.upcase}:"
-        if content.is_a?(String)
-          puts "    Type: String, Length: #{content.length}"
-          puts "    Has table: #{content.include?('<table') || content.include?('table')}"
-          puts "    Preview: #{content[0..200]}"
-        elsif content.is_a?(Hash)
-          puts "    Type: Hash"
-          puts "    Keys: #{content.keys.join(', ')}"
-          if content['content']
-            blocks = content['content'].map { |b| b['type'] rescue 'unknown' }.join(', ')
-            puts "    Blocks: #{blocks}"
-          end
+    %w[storage view editor atlassian_document_format wiki].each do |format|
+      next unless versioned[format]
+
+      content = versioned[format]
+      puts "\n  #{format.upcase}:"
+      if content.is_a?(String)
+        puts "    Type: String, Length: #{content.length}"
+        puts "    Has table: #{content.include?('<table') || content.include?('table')}"
+        puts "    Preview: #{content[0..200]}"
+      elsif content.is_a?(Hash)
+        puts '    Type: Hash'
+        puts "    Keys: #{content.keys.join(', ')}"
+        if content['content']
+          blocks = content['content'].map do |b|
+            b['type']
+          rescue StandardError
+            'unknown'
+          end.join(', ')
+          puts "    Blocks: #{blocks}"
         end
       end
     end
   else
-    puts "No versioned representations available"
+    puts 'No versioned representations available'
   end
 else
-  puts "Failed to fetch"
+  puts 'Failed to fetch'
 end
-puts ""
+puts ''
 
 # Method 5: Direct HTML rendering endpoint (if exists)
-puts "5️⃣  Direct Rendering Endpoint"
-puts "-" * 100
+puts '5️⃣  Direct Rendering Endpoint'
+puts '-' * 100
 data5 = fetch_jira("/rest/api/3/issue/#{TEST_ISSUE_KEY}", {
-  expand: 'renderedFields,versionedRepresentations',
-  fields: '*all'
-})
+                     expand: 'renderedFields,versionedRepresentations',
+                     fields: '*all'
+                   })
 
 if data5
   # Check all possible locations for rendered content
   locations = [
-    ['renderedFields', 'description'],
-    ['fields', 'description', 'rendered'],
-    ['versionedRepresentations', 'description', 'storage'],
-    ['versionedRepresentations', 'description', 'view']
+    %w[renderedFields description],
+    %w[fields description rendered],
+    %w[versionedRepresentations description storage],
+    %w[versionedRepresentations description view]
   ]
 
   locations.each do |path|
     content = data5.dig(*path)
-    if content
-      puts "Found at: #{path.join(' → ')}"
-      if content.is_a?(String)
-        puts "  Length: #{content.length}"
-        puts "  Has <table>: #{content.include?('<table')}"
-        puts "  Has ADF macro: #{content.include?('<!-- ADF macro')}"
-        puts "  Preview: #{content[0..200]}"
-      end
-      puts ""
+    next unless content
+
+    puts "Found at: #{path.join(' → ')}"
+    if content.is_a?(String)
+      puts "  Length: #{content.length}"
+      puts "  Has <table>: #{content.include?('<table')}"
+      puts "  Has ADF macro: #{content.include?('<!-- ADF macro')}"
+      puts "  Preview: #{content[0..200]}"
     end
+    puts ''
   end
 end
-puts ""
+puts ''
 
-puts "=" * 100
-puts "CONCLUSION"
-puts "=" * 100
-puts ""
-puts "If NO endpoint returns actual table HTML/data:"
-puts "  → The table data is truly missing from Jira API"
-puts "  → Possible reasons:"
-puts "    1. Table was created with unsupported Jira markup"
+puts '=' * 100
+puts 'CONCLUSION'
+puts '=' * 100
+puts ''
+puts 'If NO endpoint returns actual table HTML/data:'
+puts '  → The table data is truly missing from Jira API'
+puts '  → Possible reasons:'
+puts '    1. Table was created with unsupported Jira markup'
 puts "    2. Table is corrupted in Jira's database"
 puts "    3. API permissions don't include full content"
 puts "    4. Need to use Jira's internal storage format"
-puts ""
-puts "Next step: Check the issue in Jira web UI to confirm table exists"
-puts ""
-puts "=" * 100
-
+puts ''
+puts 'Next step: Check the issue in Jira web UI to confirm table exists'
+puts ''
+puts '=' * 100

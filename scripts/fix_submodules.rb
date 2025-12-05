@@ -24,9 +24,9 @@ options = {
 }
 
 OptionParser.new do |opts|
-  opts.banner = "Usage: rails runner scripts/fix_submodules.rb [options]"
-  opts.on("--dry-run", "Simulate changes") { options[:dry_run] = true }
-  opts.on("--project KEY", "Project key (default ISP)") { |v| options[:project] = v }
+  opts.banner = 'Usage: rails runner scripts/fix_submodules.rb [options]'
+  opts.on('--dry-run', 'Simulate changes') { options[:dry_run] = true }
+  opts.on('--project KEY', 'Project key (default ISP)') { |v| options[:project] = v }
 end.parse!
 
 def log(msg)
@@ -36,21 +36,21 @@ end
 def discover_custom_fields
   url = "#{JIRA_BASE_URL}/rest/api/3/field"
   uri = URI.parse(url)
-  
+
   http = Net::HTTP.new(uri.host, uri.port)
   http.use_ssl = true
-  
+
   request = Net::HTTP::Get.new(uri.request_uri)
   request['Accept'] = 'application/json'
   request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
-  
+
   response = http.request(request)
   return nil unless response.is_a?(Net::HTTPSuccess)
-  
+
   fields = JSON.parse(response.body)
   module_field = nil
   submodule_field = nil
-  
+
   fields.each do |field|
     name = field['name']&.downcase || ''
     field_id = field['id']
@@ -62,7 +62,7 @@ def discover_custom_fields
       submodule_field = field_id
     end
   end
-  
+
   [module_field, submodule_field]
 end
 
@@ -72,9 +72,7 @@ def extract_custom_field_value(field_data)
 
   if field_data.is_a?(Hash)
     # Special handling for Cascading Select fields (parent/child)
-    if field_data['child'].is_a?(Hash) && field_data['child']['value'].present?
-      return field_data['child']['value'].to_s.strip
-    end
+    return field_data['child']['value'].to_s.strip if field_data['child'].is_a?(Hash) && field_data['child']['value'].present?
 
     return field_data['value'].to_s.strip if field_data['value'].present?
     return field_data['name'].to_s.strip if field_data['name'].present?
@@ -84,11 +82,10 @@ def extract_custom_field_value(field_data)
 
   if field_data.is_a?(Array) && field_data.any?
     first_item = field_data.first
-    if first_item.is_a?(Hash)
-      return extract_custom_field_value(first_item)
-    else
-      return first_item.to_s.strip
-    end
+    return extract_custom_field_value(first_item) if first_item.is_a?(Hash)
+
+    return first_item.to_s.strip
+
   end
 
   field_data.to_s.strip
@@ -101,10 +98,8 @@ def parse_module_and_submodule(module_name_str, submodule_name_str)
   return [mod, sub] if sub.present?
   return [mod, sub] if mod.blank?
 
-  parts = mod.split(/\s*[\-\u2013\u2014]\s*/, 2)
-  if parts.length == 2
-    return [parts[0].strip, parts[1].strip]
-  end
+  parts = mod.split(/\s*[-\u2013\u2014]\s*/, 2)
+  return [parts[0].strip, parts[1].strip] if parts.length == 2
 
   [mod, sub]
 end
@@ -155,12 +150,12 @@ module_field, submodule_field = discover_custom_fields
 log "Discovered fields - Module: #{module_field}, Submodule: #{submodule_field}"
 
 unless module_field && submodule_field
-  log "ERROR: Could not find required custom fields. Exiting."
+  log 'ERROR: Could not find required custom fields. Exiting.'
   exit 1
 end
 
 # Get all defects for the project
-defects = Defect.where("defect_unique LIKE ?", "#{options[:project]}-%")
+defects = Defect.where('defect_unique LIKE ?', "#{options[:project]}-%")
 log "Found #{defects.count} defects to check."
 
 stats = { updated: 0, skipped: 0, errors: 0 }

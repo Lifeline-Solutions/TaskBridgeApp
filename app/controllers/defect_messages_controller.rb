@@ -7,7 +7,6 @@ class DefectMessagesController < ApplicationController
 
   def index
     @timeline_items = @defect.timeline_items
-
     # Full-text search in ActionText body
     if params[:query].present?
       search_query = "%#{params[:query].strip}%"
@@ -15,7 +14,6 @@ class DefectMessagesController < ApplicationController
         .joins("LEFT JOIN action_text_rich_texts ON action_text_rich_texts.record_id = defect_messages.id AND action_text_rich_texts.record_type = 'DefectMessage'")
         .where('action_text_rich_texts.body ILIKE :q', q: search_query)
     end
-
     # Sorting
     @defect_messages = case params[:sort_by]
                        when 'oldest'
@@ -34,7 +32,6 @@ class DefectMessagesController < ApplicationController
 
     @defect_messages = @defect_messages.offset((@page - 1) * @per_page).limit(@per_page)
   end
-
   def create
     @defect_message = @defect.defect_messages.build(defect_message_params)
     @defect_message.user = current_user

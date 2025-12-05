@@ -101,9 +101,7 @@ def convert_adf_block_to_html_enhanced(block, options = {})
   else
     # For unknown types with content, try to process nested content
     if content.is_a?(Array) && content.any?
-      if options[:debug]
-        puts "    [Unknown block type: #{block_type}, attempting to process content]"
-      end
+      puts "    [Unknown block type: #{block_type}, attempting to process content]" if options[:debug]
       convert_adf_to_html_enhanced(content, options)
     else
       ''
@@ -118,11 +116,10 @@ def convert_adf_table_to_html_enhanced(table_block, options = {})
 
   if table_rows.empty?
     # Table exists but has no content - create placeholder
-    if options[:show_placeholders]
-      return '<div class="missing-table"><em>[Table content unavailable from Jira API]</em></div>'
-    else
-      return ''
-    end
+    return '<div class="missing-table"><em>[Table content unavailable from Jira API]</em></div>' if options[:show_placeholders]
+
+    return ''
+
   end
 
   rows_html = []
@@ -141,8 +138,8 @@ def convert_adf_table_to_html_enhanced(table_block, options = {})
       next unless cell.is_a?(Hash)
 
       cell_type_raw = cell['type']&.to_s&.downcase
-      is_header = (cell_type_raw == 'tableheader' || cell_type_raw == 'tablehead')
-      has_header = true if is_header && row_idx == 0
+      is_header = %w[tableheader tablehead].include?(cell_type_raw)
+      has_header = true if is_header && row_idx.zero?
 
       cell_tag = is_header ? 'th' : 'td'
 
@@ -170,14 +167,14 @@ def convert_adf_table_to_html_enhanced(table_block, options = {})
       cells_html << "<#{cell_tag}#{attrs_str}>#{cell_html}</#{cell_tag}>"
     end
 
-    rows_html << "<tr>#{cells_html.join('')}</tr>" if cells_html.any?
+    rows_html << "<tr>#{cells_html.join}</tr>" if cells_html.any?
   end
 
   if rows_html.any?
     # Wrap header rows in thead if present
     if has_header && rows_html.length > 1
       thead = "<thead>#{rows_html[0]}</thead>"
-      tbody = "<tbody>#{rows_html[1..-1].join("\n")}</tbody>"
+      tbody = "<tbody>#{rows_html[1..].join("\n")}</tbody>"
       "<table border=\"1\" cellpadding=\"4\" cellspacing=\"0\">#{thead}#{tbody}</table>"
     else
       "<table border=\"1\" cellpadding=\"4\" cellspacing=\"0\">#{rows_html.join("\n")}</table>"
@@ -275,10 +272,10 @@ def convert_adf_inline_to_html_enhanced(content_array, options = {})
     end
   end
 
-  html_parts.join('')
+  html_parts.join
 end
 
-def convert_adf_list_to_html_enhanced(items, tag, options = {})
+def convert_adf_list_to_html_enhanced(items, _tag, options = {})
   return '' if items.nil? || !items.is_a?(Array)
 
   list_items = []
@@ -300,11 +297,10 @@ def convert_adf_list_to_html_enhanced(items, tag, options = {})
   list_items.join("\n")
 end
 
-puts "Enhanced ADF converter loaded with:"
-puts "  ✅ Improved table handling (thead/tbody, colspan, rowspan, colors)"
-puts "  ✅ More ADF node types (media, expand, status, date)"
-puts "  ✅ Better error handling for missing content"
-puts "  ✅ Placeholder support for empty tables"
-puts ""
-puts "Use show_placeholders: true to see placeholders for missing tables"
-
+puts 'Enhanced ADF converter loaded with:'
+puts '  ✅ Improved table handling (thead/tbody, colspan, rowspan, colors)'
+puts '  ✅ More ADF node types (media, expand, status, date)'
+puts '  ✅ Better error handling for missing content'
+puts '  ✅ Placeholder support for empty tables'
+puts ''
+puts 'Use show_placeholders: true to see placeholders for missing tables'

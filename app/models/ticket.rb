@@ -40,11 +40,11 @@ class Ticket < ApplicationRecord
   has_many :feedbacks, class_name: 'TicketFeedback', dependent: :destroy
 
   # Search scopes for global search
-  scope :search_by_query, ->(query) {
+  scope :search_by_query, lambda { |query|
     return none if query.blank?
-    
+
     sanitized_query = "%#{query}%"
-    
+
     left_joins(:rich_text_content)
       .where(
         'tickets.unique_id ILIKE :q
@@ -57,12 +57,12 @@ class Ticket < ApplicationRecord
       .distinct
   }
 
-  scope :accessible_by_user, ->(user) {
+  scope :accessible_by_user, lambda { |user|
     return none unless user
-    
+
     # Admin and Observer can see all tickets
     return all if user.has_any_role?(:admin, :observer)
-    
+
     # Regular users can only see tickets from projects they're assigned to
     joins(:project)
       .joins('INNER JOIN project_users ON projects.id = project_users.project_id')

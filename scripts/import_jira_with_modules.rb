@@ -92,12 +92,12 @@ $USER_STATS = {
   config_map_matches: 0,
   created_users: 0,
   fallback_users: 0,
-  matched_users: Set.new,      # Set of user IDs successfully matched
-  fallback_users_set: Set.new,  # Set of user IDs that fell back to default
+  matched_users: Set.new, # Set of user IDs successfully matched
+  fallback_users_set: Set.new, # Set of user IDs that fell back to default
   not_found_names: Hash.new(0), # Names that couldn't be matched
-  parsed_names: {},             # Track parsed names for reporting
-  reporter_matches: {},         # Track reporter matches per issue
-  assignee_matches: {}          # Track assignee matches per issue
+  parsed_names: {}, # Track parsed names for reporting
+  reporter_matches: {}, # Track reporter matches per issue
+  assignee_matches: {} # Track assignee matches per issue
 }
 
 project_list = options[:projects].map(&:strip).reject(&:empty?)
@@ -149,7 +149,7 @@ def discover_custom_fields
     field_id = field['id']
 
     # Specific check for Imarisha ERP Modules
-    if name == 'imarisha  erp modules' # Note: double space in name from logs
+    if name == 'imarisha  erp modules' # NOTE: double space in name from logs
       module_field = field_id
       vputs "Found TARGET Module field: #{field_id} - #{field['name']}"
     elsif name == 'imarisha  erp modules / sub-modules'
@@ -343,10 +343,10 @@ def parse_jira_name(full_name)
     # 3. Second + Last (if 3+ parts)
     # 4. First + Last (if 4+ parts)
     combinations = [
-      [parts[0], parts[1]],  # First + Second
-      parts.length >= 3 ? [parts[0], parts[2]] : nil,  # First + Third
-      parts.length >= 3 ? [parts[1], parts[-1]] : nil,  # Second + Last
-      parts.length >= 4 ? [parts[0], parts[-1]] : nil,  # First + Last
+      [parts[0], parts[1]], # First + Second
+      parts.length >= 3 ? [parts[0], parts[2]] : nil, # First + Third
+      parts.length >= 3 ? [parts[1], parts[-1]] : nil, # Second + Last
+      parts.length >= 4 ? [parts[0], parts[-1]] : nil # First + Last
     ].compact
 
     # Return all combinations as a special marker for later use
@@ -360,7 +360,7 @@ def parse_jira_name(full_name)
   # STRATEGY 3: Standard split (2 parts or less)
   if parts.length >= 2
     first = parts[0].strip.presence
-    last = parts[1..-1].map(&:strip).join(' ').presence
+    last = parts[1..].map(&:strip).join(' ').presence
     if first && last
       $USER_STATS[:parsed_names][name_str] = { strategy: 'standard-split', first_name: first, last_name: last }
       return { first_name: first, last_name: last }
@@ -429,7 +429,7 @@ def find_user_by_name_or_map(name, email = nil, verbose: false)
   parsed = parse_jira_name(name_str)
   parsed_first = parsed[:first_name]
   parsed_last = parsed[:last_name]
-  combinations = parsed[:combinations]  # For multi-part names, this contains multiple name combinations to try
+  combinations = parsed[:combinations] # For multi-part names, this contains multiple name combinations to try
 
   # For multi-part names with combinations, try each combination in priority order
   if combinations.present?
@@ -437,13 +437,13 @@ def find_user_by_name_or_map(name, email = nil, verbose: false)
       combo_first = combo[0].strip
       combo_last = combo[1].strip
       user = try_match_user_combination(combo_first, combo_last)
-      if user
-        $USER_STATS[:first_last_matches] += 1
-        $USER_STATS[:matched_users] << user.id
-        strategy_desc = "#{combo_first}+#{combo_last}"
-        vputs "[USER-MATCH] Matched '#{name_str}' by parsed first+last (#{strategy_desc}): #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
-        return user
-      end
+      next unless user
+
+      $USER_STATS[:first_last_matches] += 1
+      $USER_STATS[:matched_users] << user.id
+      strategy_desc = "#{combo_first}+#{combo_last}"
+      vputs "[USER-MATCH] Matched '#{name_str}' by parsed first+last (#{strategy_desc}): #{user.first_name} #{user.last_name} -> #{user.id}" if verbose
+      return user
     end
   elsif parsed_first && parsed_last
     # Standard two-part name matching
@@ -565,7 +565,7 @@ def find_user_by_name_or_map(name, email = nil, verbose: false)
       first_name = parsed_first
       last_name = parsed_last || 'User'
     else
-      parts = name_str.split(' ')
+      parts = name_str.split
       first_name = parts.first || 'Imported'
       last_name = parts[1..]&.join(' ') || 'User'
     end
@@ -748,7 +748,7 @@ def find_or_create_banking_type(name, product_id:, created_by:, verbose: false)
     return nil unless CREATE_MISSING_BANKING
 
     begin
-      # Note: We don't set product_id on creation as it's a legacy field,
+      # NOTE: We don't set product_id on creation as it's a legacy field,
       # but we can set it if the model still requires it.
       # Based on the model, it seems optional.
       bt = BankingType.create!(
@@ -987,11 +987,11 @@ def convert_adf_inline_to_html(content_array)
     end
   end
 
-  html_parts.join('')
+  html_parts.join
 end
 
 # Convert ADF list to HTML
-def convert_adf_list_to_html(items, tag)
+def convert_adf_list_to_html(items, _tag)
   return '' if items.nil? || !items.is_a?(Array)
 
   list_items = []
@@ -1001,7 +1001,7 @@ def convert_adf_list_to_html(items, tag)
     item_content = item['content'] || []
     item_html = convert_adf_to_html(item_content)
     # Extract text if it's wrapped in <p> tags
-    item_html = item_html.gsub(/<p>(.*?)<\/p>/, '\1')
+    item_html = item_html.gsub(%r{<p>(.*?)</p>}, '\1')
     list_items << "<li>#{item_html}</li>" if item_html.present?
   end
 
@@ -1028,11 +1028,11 @@ def convert_adf_table_to_html(table_block)
       cell_content = cell['content'] || []
       cell_html = convert_adf_to_html(cell_content)
       # Remove wrapping p tags
-      cell_html = cell_html.gsub(/<p>(.*?)<\/p>/, '\1')
+      cell_html = cell_html.gsub(%r{<p>(.*?)</p>}, '\1')
       cells_html << "<#{cell_type}>#{cell_html}</#{cell_type}>"
     end
 
-    rows_html << "<tr>#{cells_html.join('')}</tr>" if cells_html.any?
+    rows_html << "<tr>#{cells_html.join}</tr>" if cells_html.any?
   end
 
   rows_html.any? ? "<table>#{rows_html.join("\n")}</table>" : ''
@@ -1067,11 +1067,11 @@ def process_adf_content(content_array, text_parts = [])
         item_text = extract_adf_text_from_block(item['content'] || [])
         next if item_text.blank?
 
-        if %w[orderedlist ordered_list].include?(block_type)
-          text_parts << "#{idx + 1}. #{item_text}"
-        else
-          text_parts << "• #{item_text}"
-        end
+        text_parts << if %w[orderedlist ordered_list].include?(block_type)
+                        "#{idx + 1}. #{item_text}"
+                      else
+                        "• #{item_text}"
+                      end
       end
 
     when 'table'
@@ -1102,7 +1102,7 @@ def process_adf_content(content_array, text_parts = [])
       text_parts << "[Image: #{alt_text}]"
 
     when 'mention'
-      mention_text = block.dig('attrs', 'text') || "@user"
+      mention_text = block.dig('attrs', 'text') || '@user'
       text_parts << mention_text
 
     when 'inlinecard', 'card', 'embed'
@@ -1140,7 +1140,7 @@ def extract_adf_text_from_block(content_array = [])
     end
   end
 
-  text_parts.join('')
+  text_parts.join
 end
 
 # Convert Jira table ADF to readable text format
@@ -1200,11 +1200,10 @@ def extract_custom_field_value(field_data)
   if field_data.is_a?(Array) && field_data.any?
     # For arrays, try to extract first item's value
     first_item = field_data.first
-    if first_item.is_a?(Hash)
-      return extract_custom_field_value(first_item)
-    else
-      return first_item.to_s.strip
-    end
+    return extract_custom_field_value(first_item) if first_item.is_a?(Hash)
+
+    return first_item.to_s.strip
+
   end
 
   field_data.to_s.strip
@@ -1227,7 +1226,7 @@ def parse_module_and_submodule(module_name_str, submodule_name_str)
   # Only derive submodule when no explicit submodule is provided
   # Split on the first hyphen-like character (minus, en dash, em dash) with optional spaces around
   # Example: "Core Banking - Accounts - Savings" => ["Core Banking", "Accounts - Savings"]
-  parts = mod.split(/\s*[\-\u2013\u2014]\s*/, 2) # - (U+002D), en dash (U+2013), em dash (U+2014)
+  parts = mod.split(/\s*[-\u2013\u2014]\s*/, 2) # - (U+002D), en dash (U+2013), em dash (U+2014)
   if parts.length == 2
     derived_mod = parts[0].strip
     derived_sub = parts[1].strip
@@ -1570,7 +1569,7 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
           # Generous timeouts for large files (31+ MB) - increased based on file size
           timeout_multiplier = size_mb > 30 ? 2 : 1
           http.open_timeout = 90 * timeout_multiplier
-          http.read_timeout = 900 * timeout_multiplier  # Up to 30 minutes for very large files
+          http.read_timeout = 900 * timeout_multiplier # Up to 30 minutes for very large files
           http.write_timeout = 90 * timeout_multiplier if http.respond_to?(:write_timeout=)
           http.keep_alive_timeout = 60
 
@@ -1580,7 +1579,7 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
 
           # Add headers for better connection handling
           request['Connection'] = 'keep-alive'
-          request['Accept-Encoding'] = 'identity'  # Disable compression for stability
+          request['Accept-Encoding'] = 'identity' # Disable compression for stability
           request['User-Agent'] = 'JiraImporter/1.0'
 
           vputs "  Attempt #{download_attempt}/#{max_download_retries}: Downloading from #{uri.to_s[0..120]}..." if verbose
@@ -1615,7 +1614,7 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
 
           # Exponential backoff before retry
           if download_attempt < max_download_retries
-            wait_time = [2 ** download_attempt, 30].min  # Cap at 30 seconds
+            wait_time = [2**download_attempt, 30].min # Cap at 30 seconds
             puts "  ⏳ Waiting #{wait_time}s before retry (attempt #{download_attempt}/#{max_download_retries})..."
             sleep wait_time
           end
@@ -1630,16 +1629,14 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
         bytes_written = 0
         chunk_size = 1024 * 1024 # 1MB chunks
 
-        if resp.body
-          resp.body.each_char.each_slice(chunk_size) do |chunk|
-            tf.write(chunk.join)
-            bytes_written += chunk.length
+        resp.body&.each_char&.each_slice(chunk_size) do |chunk|
+          tf.write(chunk.join)
+          bytes_written += chunk.length
 
-            # Progress indicator for large files
-            if size_mb > 10 && bytes_written % (10 * 1024 * 1024) == 0
-              progress_mb = (bytes_written / 1024.0 / 1024.0).round(1)
-              vputs "  📊 Downloaded #{progress_mb}/#{size_mb} MB..." if verbose
-            end
+          # Progress indicator for large files
+          if size_mb > 10 && (bytes_written % (10 * 1024 * 1024)).zero?
+            progress_mb = (bytes_written / 1024.0 / 1024.0).round(1)
+            vputs "  📊 Downloaded #{progress_mb}/#{size_mb} MB..." if verbose
           end
         end
 
@@ -1673,7 +1670,7 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
 
           # Retry if verification failed but we haven't exhausted retries
           if download_attempt < max_download_retries
-            wait_time = 2 ** download_attempt
+            wait_time = 2**download_attempt
             puts "  ⏳ Storage verification failed, retrying in #{wait_time}s..."
             sleep wait_time
           else
@@ -1687,19 +1684,18 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
         warn "  Details: #{e.class}"
 
         if download_attempt < max_download_retries
-          wait_time = [2 ** download_attempt, 30].min
+          wait_time = [2**download_attempt, 30].min
           puts "  ⏳ Retrying in #{wait_time}s due to SSL error..."
           sleep wait_time
         else
           warn "  ❌ FAILED after #{max_download_retries} attempts (SSL error)"
           stats[:failed] += 1
         end
-
       rescue Errno::ECONNRESET, Errno::EPIPE, EOFError, Net::ReadTimeout, Net::OpenTimeout, SocketError => e
         warn "  Connection error on attempt #{download_attempt}/#{max_download_retries}: #{e.class} - #{e.message}"
 
         if download_attempt < max_download_retries
-          wait_time = [2 ** download_attempt, 30].min
+          wait_time = [2**download_attempt, 30].min
           puts "  ⏳ Retrying in #{wait_time}s due to connection error..."
           sleep wait_time
         else
@@ -1711,7 +1707,7 @@ def fetch_and_attach_attachments(defect, attachments_array, verbose: false)
         warn "  Backtrace: #{e.backtrace[0..2].join("\n           ")}" if verbose
 
         if download_attempt < max_download_retries
-          wait_time = [2 ** download_attempt, 15].min
+          wait_time = [2**download_attempt, 15].min
           puts "  ⏳ Retrying in #{wait_time}s..."
           sleep wait_time
         else
@@ -1825,7 +1821,7 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
       rescue OpenSSL::SSL::SSLError => e
         download_success = false
         if download_attempt < max_download_retries
-          wait_time = [2 ** download_attempt, 30].min
+          wait_time = [2**download_attempt, 30].min
           warn "  SSL error on attempt #{download_attempt}, retrying in #{wait_time}s..."
           sleep wait_time
         else
@@ -1834,7 +1830,7 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
       rescue Errno::ECONNRESET, Errno::EPIPE, EOFError, Net::ReadTimeout, Net::OpenTimeout => e
         download_success = false
         if download_attempt < max_download_retries
-          wait_time = [2 ** download_attempt, 30].min
+          wait_time = [2**download_attempt, 30].min
           warn "  Connection error (#{e.class}), retrying in #{wait_time}s..."
           sleep wait_time
         else
@@ -1843,13 +1839,11 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
       rescue StandardError => e
         download_success = false
         warn "  Error downloading comment attachment: #{e.class}: #{e.message}"
-        if download_attempt < max_download_retries
-          wait_time = [2 ** download_attempt, 15].min
-          warn "  Retrying in #{wait_time}s..."
-          sleep wait_time
-        else
-          break
-        end
+        break unless download_attempt < max_download_retries
+
+        wait_time = [2**download_attempt, 15].min
+        warn "  Retrying in #{wait_time}s..."
+        sleep wait_time
       end
     end
 
@@ -1862,9 +1856,9 @@ def fetch_and_attach_to_rich_text(rich_record, attachments_array, verbose: false
       tf.binmode
 
       bytes_written = 0
-      chunk_size = 1024 * 1024
+      1024 * 1024
       if resp.body.respond_to?(:read)
-        while chunk = resp.body.read(1_048_576)
+        while (chunk = resp.body.read(1_048_576))
           tf.write(chunk)
           bytes_written += chunk.bytesize
         end
@@ -2187,10 +2181,10 @@ def validate_and_update_description(defect, jira_description_field, issue_key, v
       vputs "  Updated: #{new_description[0..100]}..." if new_description.length > 100
     end
 
-    return true
+    true
   rescue StandardError => e
     warn "[DESCRIPTION-ERROR] #{issue_key}: Failed to update description: #{e.class}: #{e.message}"
-    return false
+    false
   end
 end
 
@@ -2225,7 +2219,6 @@ def repair_descriptions_for_defects(issues, verbose: false)
       else
         stats[:skipped] += 1
       end
-
     rescue StandardError => e
       stats[:errors] += 1
       warn "[REPAIR-ERROR] #{issue_key}: Failed to repair description: #{e.class}: #{e.message}"
@@ -2261,23 +2254,21 @@ def import_comments_for_defect(defect, comments_array, verbose: false)
       # Jira ADF format - convert to HTML with full rich text support
       body_html = convert_adf_to_html(body_field['content'] || [])
       body = body_html.present? ? body_html : ''
-      
+
       # Log rich text conversion if verbose
       if verbose && body_html.present?
         has_table = body_html.include?('<table>')
         has_list = body_html.include?('<ul>') || body_html.include?('<ol>')
         has_color = body_html.include?('style=')
         has_image = body_html.include?('<img')
-        
+
         features = []
         features << 'table' if has_table
         features << 'list' if has_list
         features << 'color' if has_color
         features << 'image' if has_image
-        
-        if features.any?
-          vputs "[RICH-TEXT] Comment #{comment_idx + 1} contains: #{features.join(', ')}" if verbose
-        end
+
+        vputs "[RICH-TEXT] Comment #{comment_idx + 1} contains: #{features.join(', ')}" if features.any? && verbose
       end
     elsif body_field.is_a?(String)
       # Plain text - keep as-is
@@ -2377,9 +2368,7 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
   if module_name.present? && submodule_name.to_s.strip.empty?
     original_module = module_name.dup
     module_name, submodule_name = parse_module_and_submodule(module_name, submodule_name)
-    if submodule_name.present?
-      vputs "[MODULE-PARSE] Derived module/submodule from '#{original_module}' => module='#{module_name}', submodule='#{submodule_name}'" if verbose
-    end
+    vputs "[MODULE-PARSE] Derived module/submodule from '#{original_module}' => module='#{module_name}', submodule='#{submodule_name}'" if submodule_name.present? && verbose
   end
 
   module_name = jira_project_name if module_name.blank?
@@ -2466,14 +2455,14 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
 
     # After transaction: attach files
     begin
-      fetch_and_attach_attachments(saved_defect, attachments_array, verbose: verbose) if %i[created updated].include?(result) && attachments_array && attachments_array.any?
+      fetch_and_attach_attachments(saved_defect, attachments_array, verbose: verbose) if %i[created updated].include?(result) && attachments_array&.any?
     rescue StandardError => e
       warn "[WARN] Failed to attach files for #{issue_key}: #{e.class}: #{e.message}"
     end
 
     # Attach labels
     begin
-      if %i[created updated].include?(result) && labels_array && labels_array.any?
+      if %i[created updated].include?(result) && labels_array&.any?
         saved_defect.reload
         attach_labels_to_defect(saved_defect, labels_array, created_by: created_by_uid, verbose: verbose)
       end
@@ -2483,7 +2472,7 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
 
     # Import comments
     begin
-      if %i[created updated].include?(result) && comments_array && comments_array.any?
+      if %i[created updated].include?(result) && comments_array&.any?
         vputs "[COMMENTS] Importing #{comments_array.length} comment(s) for #{issue_key}..." if verbose
         import_comments_for_defect(saved_defect, comments_array, verbose: verbose)
       end
@@ -2493,9 +2482,7 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
 
     # Validate and update description
     begin
-      if %i[created updated].include?(result)
-        validate_and_update_description(saved_defect, fields['description'], issue_key, verbose: verbose)
-      end
+      validate_and_update_description(saved_defect, fields['description'], issue_key, verbose: verbose) if %i[created updated].include?(result)
     rescue StandardError => e
       warn "[WARN] Failed to validate description for #{issue_key}: #{e.class}: #{e.message}"
     end
@@ -2560,7 +2547,6 @@ begin
 
   # Track per-project stats
   project_stats = Hash.new { |h, k| h[k] = { created: 0, updated: 0 } }
-
 
   # Collector for per-issue import/verification reports (used by repair pass)
   $IMPORT_REPORTS = []
@@ -2740,55 +2726,52 @@ begin
 
           # Verify issue-level attachments: check ActiveStorage blob presence where possible
           defect.attachments.each do |attach_record|
-            begin
-              blob = attach_record.blob
-              in_storage = false
-              if blob && blob.respond_to?(:key)
-                begin
-                  in_storage = ActiveStorage::Blob.service.exist?(blob.key)
-                rescue StandardError => e
-                  in_storage = false
-                  vputs "  [VERIFY-WARN] Could not verify storage for blob #{blob&.key}: #{e.class}: #{e.message}" if verbose
-                end
+            blob = attach_record.blob
+            in_storage = false
+            if blob.respond_to?(:key)
+              begin
+                in_storage = ActiveStorage::Blob.service.exist?(blob.key)
+              rescue StandardError => e
+                in_storage = false
+                vputs "  [VERIFY-WARN] Could not verify storage for blob #{blob&.key}: #{e.class}: #{e.message}" if verbose
               end
-
-              report[:attachment_details][:issue_level] << {
-                filename: attach_record.filename.to_s,
-                attachment_id: attach_record.id,
-                blob_key: blob&.key,
-                in_storage: in_storage
-              }
-            rescue StandardError => e
-              report[:attachment_details][:issue_level] << { filename: attach_record.filename.to_s, error: "#{e.class}: #{e.message}" }
             end
+
+            report[:attachment_details][:issue_level] << {
+              filename: attach_record.filename.to_s,
+              attachment_id: attach_record.id,
+              blob_key: blob&.key,
+              in_storage: in_storage
+            }
+          rescue StandardError => e
+            report[:attachment_details][:issue_level] << { filename: attach_record.filename.to_s, error: "#{e.class}: #{e.message}" }
           end
 
           # Verify comment-level attachments per DefectMessage
           defect.defect_messages.each do |dm|
             next unless dm.respond_to?(:attachments)
-            dm.attachments.each do |att|
-              begin
-                blob = att.blob
-                in_storage = false
-                if blob && blob.respond_to?(:key)
-                  begin
-                    in_storage = ActiveStorage::Blob.service.exist?(blob.key)
-                  rescue StandardError => e
-                    in_storage = false
-                    vputs "  [VERIFY-WARN] Could not verify comment blob #{blob&.key}: #{e.class}: #{e.message}" if verbose
-                  end
-                end
 
-                report[:attachment_details][:comment_level] << {
-                  filename: att.filename.to_s,
-                  attachment_id: att.id,
-                  defect_message_id: dm.id,
-                  blob_key: blob&.key,
-                  in_storage: in_storage
-                }
-              rescue StandardError => e
-                report[:attachment_details][:comment_level] << { filename: att.filename.to_s, error: "#{e.class}: #{e.message}" }
+            dm.attachments.each do |att|
+              blob = att.blob
+              in_storage = false
+              if blob.respond_to?(:key)
+                begin
+                  in_storage = ActiveStorage::Blob.service.exist?(blob.key)
+                rescue StandardError => e
+                  in_storage = false
+                  vputs "  [VERIFY-WARN] Could not verify comment blob #{blob&.key}: #{e.class}: #{e.message}" if verbose
+                end
               end
+
+              report[:attachment_details][:comment_level] << {
+                filename: att.filename.to_s,
+                attachment_id: att.id,
+                defect_message_id: dm.id,
+                blob_key: blob&.key,
+                in_storage: in_storage
+              }
+            rescue StandardError => e
+              report[:attachment_details][:comment_level] << { filename: att.filename.to_s, error: "#{e.class}: #{e.message}" }
             end
           end
 
@@ -3018,7 +3001,7 @@ begin
     info "\n📋 DETAILED IMPORT VERIFICATION REPORT"
     info '=' * 80
 
-    total_issues = $IMPORT_REPORTS.length
+    $IMPORT_REPORTS.length
     fields_monitored = %i[issue_attachments comment_attachments comments labels history]
 
     overall_pass_count = 0
@@ -3041,8 +3024,6 @@ begin
       info "#{issue.ljust(20)} -> #{status_str}    (comments: #{r[:actual][:comments]}/#{r[:expected][:comments]}, issue_atts: #{r[:actual][:issue_attachments]}/#{r[:expected][:issue_attachments]}, comment_atts: #{r[:actual][:comment_attachments]}/#{r[:expected][:comment_attachments]}, labels: #{r[:actual][:labels]}/#{r[:expected][:labels]}, history: #{r[:actual][:history]}/#{r[:expected][:history]})"
     end
 
-
-
     if per_issue_failures.any?
       info '\nIssues with failures (details):'
       per_issue_failures.each do |entry|
@@ -3053,39 +3034,39 @@ begin
       end
     end
 
-  info '\nEnd of import verification report.'
-  info '=' * 80
-  end  # Close unless options[:dry_run]
+    info '\nEnd of import verification report.'
+    info '=' * 80
+  end
 
   # ===============================
   # USER MATCH STATISTICS REPORT
   # ===============================
   unless options[:dry_run]
-    info "\n" + "=" * 80
-    info "👤 USER MATCH STATISTICS REPORT"
-    info "=" * 80
+    info "\n#{'=' * 80}"
+    info '👤 USER MATCH STATISTICS REPORT'
+    info '=' * 80
 
     total_lookups = $USER_STATS[:total_lookups]
     info "\nTotal user lookups performed: #{total_lookups}"
-    info ""
-    info "Match breakdown:"
-    info "  ✅ Email matches:          #{$USER_STATS[:email_matches]} (#{total_lookups > 0 ? (($USER_STATS[:email_matches].to_f / total_lookups) * 100).round(2) : 0}%)"
-    info "  ✅ Full name matches:      #{$USER_STATS[:full_name_matches]} (#{total_lookups > 0 ? (($USER_STATS[:full_name_matches].to_f / total_lookups) * 100).round(2) : 0}%)"
-    info "  ✅ First+Last matches:     #{$USER_STATS[:first_last_matches]} (#{total_lookups > 0 ? (($USER_STATS[:first_last_matches].to_f / total_lookups) * 100).round(2) : 0}%)"
-    info "  ✅ Partial matches:        #{$USER_STATS[:partial_matches]} (#{total_lookups > 0 ? (($USER_STATS[:partial_matches].to_f / total_lookups) * 100).round(2) : 0}%)"
+    info ''
+    info 'Match breakdown:'
+    info "  ✅ Email matches:          #{$USER_STATS[:email_matches]} (#{total_lookups.positive? ? (($USER_STATS[:email_matches].to_f / total_lookups) * 100).round(2) : 0}%)"
+    info "  ✅ Full name matches:      #{$USER_STATS[:full_name_matches]} (#{total_lookups.positive? ? (($USER_STATS[:full_name_matches].to_f / total_lookups) * 100).round(2) : 0}%)"
+    info "  ✅ First+Last matches:     #{$USER_STATS[:first_last_matches]} (#{total_lookups.positive? ? (($USER_STATS[:first_last_matches].to_f / total_lookups) * 100).round(2) : 0}%)"
+    info "  ✅ Partial matches:        #{$USER_STATS[:partial_matches]} (#{total_lookups.positive? ? (($USER_STATS[:partial_matches].to_f / total_lookups) * 100).round(2) : 0}%)"
     info "  ✅ Config map matches:     #{$USER_STATS[:config_map_matches]}"
     info "  🆕 Created users:          #{$USER_STATS[:created_users]}"
     info "  ⚠️  Fallback to default:    #{$USER_STATS[:fallback_users]}"
-    info ""
+    info ''
 
     total_matched = $USER_STATS[:matched_users].length
-    info "Summary:"
+    info 'Summary:'
     info "  Total unique matched users: #{total_matched}"
     info "  Total unique fallback uses: #{$USER_STATS[:fallback_users_set].length}"
-    info ""
+    info ''
 
     # Reporter/Assignee specific report
-    info "Reporter/Assignee Matching:"
+    info 'Reporter/Assignee Matching:'
     reporter_matched = $USER_STATS[:reporter_matches].values.count { |v| v[:status] == 'matched' }
     reporter_fallback = $USER_STATS[:reporter_matches].length - reporter_matched
 
@@ -3094,45 +3075,45 @@ begin
 
     info "  Reporters: #{reporter_matched} matched, #{reporter_fallback} fallback to default"
     info "  Assignees: #{assignee_matched} matched, #{assignee_fallback} fallback to default"
-    info ""
+    info ''
 
     # Name parsing strategies report
     if $USER_STATS[:parsed_names].any?
-      info "Name Parsing Strategies Used:"
+      info 'Name Parsing Strategies Used:'
       strategies = $USER_STATS[:parsed_names].values.group_by { |v| v[:strategy] }
       strategies.each do |strategy, entries|
         info "  #{strategy}: #{entries.length} name(s)"
       end
-      info ""
+      info ''
 
       # Show details of dot-separated names parsed
       dot_separated = $USER_STATS[:parsed_names].select { |_, v| v[:strategy] == 'dot-separated' }
       if dot_separated.any?
-        info "  Dot-separated names parsed:"
+        info '  Dot-separated names parsed:'
         dot_separated.each do |name, parsed|
           info "    - '#{name}' → first: '#{parsed[:first_name]}', last: '#{parsed[:last_name]}'"
         end
-        info ""
+        info ''
       end
 
       # Show details of multi-part names
       multi_part = $USER_STATS[:parsed_names].select { |_, v| v[:strategy] == 'multi-part-first-two' }
       if multi_part.any?
-        info "  Multi-part names (using first 2 parts):"
+        info '  Multi-part names (using first 2 parts):'
         multi_part.each do |name, parsed|
           info "    - '#{name}' → first: '#{parsed[:first_name]}', last: '#{parsed[:last_name]}'"
         end
-        info ""
+        info ''
       end
     end
 
     # Not found names
     if $USER_STATS[:not_found_names].any?
-      info "Names that could not be matched (fell back to default user):"
+      info 'Names that could not be matched (fell back to default user):'
       $USER_STATS[:not_found_names].sort_by { |_, count| -count }.each do |name, count|
         info "  - '#{name}' (#{count} occurrence#{'s' if count > 1})"
       end
-      info ""
+      info ''
     end
 
     # Issues with reporter/assignee fallback to default
@@ -3154,11 +3135,9 @@ begin
           info "     Parsed as: first='#{parsed_info[:first_name]}', last='#{parsed_info[:last_name]}'"
         end
 
-        if idx < reporter_fallback_issues.length
-          info ""
-        end
+        info '' if idx < reporter_fallback_issues.length
       end
-      info ""
+      info ''
     end
 
     if assignee_fallback_issues.any?
@@ -3176,27 +3155,25 @@ begin
           info "     Parsed as: first='#{parsed_info[:first_name]}', last='#{parsed_info[:last_name]}'"
         end
 
-        if idx < assignee_fallback_issues.length
-          info ""
-        end
+        info '' if idx < assignee_fallback_issues.length
       end
-      info ""
+      info ''
     end
 
     # Recommendation for fixing fallback users
     if reporter_fallback_issues.any? || assignee_fallback_issues.any?
       total_fallback = reporter_fallback_issues.length + assignee_fallback_issues.length
-      info "🔧 RECOMMENDATIONS FOR FIXING FALLBACK USERS:"
-      info "  1. Review the names above to ensure they are spelled correctly in both Jira and the local user database"
+      info '🔧 RECOMMENDATIONS FOR FIXING FALLBACK USERS:'
+      info '  1. Review the names above to ensure they are spelled correctly in both Jira and the local user database'
       info "  2. Check for case sensitivity issues (e.g., 'John Smith' vs 'john smith')"
-      info "  3. For dot-separated names (e.g., archana.verma), ensure the local database has matching first_name and last_name"
-      info "  4. For multi-part names (3+ parts), the script uses first 2 parts - verify this matches your database"
+      info '  3. For dot-separated names (e.g., archana.verma), ensure the local database has matching first_name and last_name'
+      info '  4. For multi-part names (3+ parts), the script uses first 2 parts - verify this matches your database'
       info "  5. Create missing users in the database if they don't exist"
-      info "  6. Run: rails runner scripts/verify_and_fix_user_assignments.rb"
+      info '  6. Run: rails runner scripts/verify_and_fix_user_assignments.rb'
       info "  7. The verification script will attempt to fix #{total_fallback} incorrectly assigned issue(s)"
-      info ""
+      info ''
     end
 
-    info "=" * 80
+    info '=' * 80
   end
 end

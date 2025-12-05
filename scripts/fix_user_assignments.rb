@@ -45,9 +45,7 @@ def parse_name(raw_name)
   name_str = raw_name.to_s.strip.downcase
 
   # Handle email (extract prefix before @)
-  if name_str.include?('@')
-    name_str = name_str.split('@').first.strip
-  end
+  name_str = name_str.split('@').first.strip if name_str.include?('@')
 
   # Handle dot-separated (archana.verma)
   if name_str.include?('.')
@@ -129,7 +127,7 @@ stats = {
 
 updated_list = []
 not_found_list = Hash.new(0)
-fallback_list = Hash.new(0)
+Hash.new(0)
 
 puts '=' * 80
 puts "USER ASSIGNMENT RECONCILIATION (dry_run=#{DRY_RUN})"
@@ -172,17 +170,12 @@ defects.each_with_index do |defect, idx|
     assignee_name = nil
 
     # Strategy 1: Check if defect.creator relationship exists
-    if defect.respond_to?(:creator) && defect.creator
-      reporter_name = "#{defect.creator.first_name} #{defect.creator.last_name}".strip
-    end
+    reporter_name = "#{defect.creator.first_name} #{defect.creator.last_name}".strip if defect.respond_to?(:creator) && defect.creator
 
     # Strategy 2: Check if defect.users exist (assignee)
-    if current_user
-      assignee_name = "#{current_user.first_name} #{current_user.last_name}".strip
-    end
+    assignee_name = "#{current_user.first_name} #{current_user.last_name}".strip if current_user
 
     # If we have user names, attempt to reconcile them
-    reconciled = false
 
     # Reconcile reporter (creator)
     if reporter_name.present? && reporter_name != 'UNKNOWN'
@@ -193,13 +186,14 @@ defects.each_with_index do |defect, idx|
         old_id = defect.creator_id
         new_id = reporter_user.id
 
-        if old_id != new_id
+        if old_id == new_id
+          vputs "  - Reporter: already correct (#{reporter_user.name})"
+        else
           unless DRY_RUN
             defect.creator_id = new_id
             defect.save!
           end
           stats[:updated_reporter] += 1
-          reconciled = true
           updated_list << {
             issue: issue_key,
             field: 'reporter',
@@ -208,8 +202,6 @@ defects.each_with_index do |defect, idx|
             parsed: "#{parsed[:first]} #{parsed[:last]}".strip
           }
           vputs "  ✓ Reporter: #{User.find_by(id: old_id)&.name || 'UNKNOWN'} → #{reporter_user.name}"
-        else
-          vputs "  - Reporter: already correct (#{reporter_user.name})"
         end
       elsif reporter_user.nil? && reporter_name.present?
         stats[:not_found] += 1
@@ -229,7 +221,6 @@ defects.each_with_index do |defect, idx|
           defect.save!
         end
         stats[:updated_assignee] += 1
-        reconciled = true
         updated_list << {
           issue: issue_key,
           field: 'assignee',
@@ -244,7 +235,6 @@ defects.each_with_index do |defect, idx|
         vputs "  ⚠ Assignee '#{assignee_name}' not found in users"
       end
     end
-
   rescue StandardError => e
     stats[:errors] += 1
     vputs "  ✗ Error: #{e.class}: #{e.message}"
@@ -268,7 +258,7 @@ end
 
 if not_found_list.any?
   puts ''
-  puts 'NOT FOUND NAMES (#{not_found_list.size} unique):'
+  puts "NOT FOUND NAMES (#{not_found_list.size} unique):"
   not_found_list.sort_by { |_k, v| -v }.each do |name, count|
     puts "  • '#{name}' (#{count} occurrence(s))"
   end
@@ -286,4 +276,3 @@ end
 puts ''
 puts "Done. (dry_run=#{DRY_RUN})"
 puts '=' * 80
-

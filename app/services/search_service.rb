@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # Service class for handling global search across tickets and defects
 class SearchService
   # Pattern for ticket unique IDs (e.g., PROJ-123, CS-0001)
@@ -80,21 +78,17 @@ class SearchService
   end
 
   def find_ticket_by_unique_id(unique_id)
-    ticket = Ticket
+    Ticket
       .where('LOWER(unique_id) = ?', unique_id.downcase)
       .accessible_by_user(current_user)
       .first
-
-    ticket
   end
 
   def find_defect_by_unique_id(unique_id)
-    defect = Defect
+    Defect
       .where('LOWER(defect_unique) = ?', unique_id.downcase)
       .accessible_by_user(current_user)
       .first
-
-    defect
   end
 
   def empty_results
