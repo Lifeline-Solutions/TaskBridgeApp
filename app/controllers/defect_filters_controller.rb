@@ -112,18 +112,28 @@ class DefectFiltersController < ApplicationController
         end
       @defect_filter.product_id = normalized_product_id
 
+    elsif params.dig(:defect_filter, :name).present?
+      # Update from save modal - just update the name while keeping existing filters
+      @defect_filter.name = params.dig(:defect_filter, :name)
     elsif params.dig(:defect_filter, :filters).present?
       # Legacy filter update (JSON format)
       raw_filters = parse_filters_param(params.dig(:defect_filter, :filters))
       @defect_filter.filters = permit_filter_keys(raw_filters)
     end
 
-    # Update name if provided
-    @defect_filter.name = params.dig(:defect_filter, :name) if params.dig(:defect_filter, :name).present?
     @defect_filter.modified_by = current_user
 
     if @defect_filter.save
-      redirect_to defect_filters_path, notice: 'Filter updated successfully'
+      if request.referer&.include?('index_show')
+        # If coming from the defect index page, redirect back with the filter applied
+        filter_params = @defect_filter.sanitized_filters_string_keys || {}
+        filter_params['product_id'] = @defect_filter.product_id if @defect_filter.product_id.present?
+
+        redirect_to index_show_defect_index_path(filter_params.merge(current_filter_id: @defect_filter.id)),
+                    notice: 'Filter updated successfully'
+      else
+        redirect_to defect_filters_path, notice: 'Filter updated successfully'
+      end
     else
       redirect_back fallback_location: defect_filters_path, alert: @defect_filter.errors.full_messages.to_sentence
     end
