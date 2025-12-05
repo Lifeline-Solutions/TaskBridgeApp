@@ -70,16 +70,20 @@
             <span class="hidden md:inline">Save Filters</span>
           </button>
 
-          <!-- Update Filters Button (only shown when a filter is active and can be updated) -->
-          <button type="button"
-                  id="updateFiltersButton"
-                  class="inline-flex items-center gap-2 px-3 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg font-medium transition-all duration-200 border border-blue-300 dark:border-blue-700"
-                  style="display: none;">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <span class="hidden md:inline">Update Filters</span>
-          </button>
+          <!-- Update Filters Button (only shown when a saved filter matches current filters) -->
+          <% if @matched_filter.present? %>
+            <button type="button"
+                    id="updateFiltersButton"
+                    class="inline-flex items-center gap-2 px-3 py-2 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/20 rounded-lg font-medium transition-all duration-200 border border-cyan-300 dark:border-cyan-700 hover:border-cyan-400 dark:hover:border-cyan-500"
+                    data-filter-id="<%= @matched_filter.id %>"
+                    data-filter-name="<%= @matched_filter.name %>"
+                    title="Update this saved filter with current selections">
+              <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span class="hidden md:inline">Update Filters</span>
+            </button>
+          <% end %>
         <% end %>
 
         <!-- Filter Button -->
@@ -1169,11 +1173,13 @@
     const closeUpdateFiltersModal = document.getElementById("closeUpdateFiltersModal");
     const cancelUpdateFilter = document.getElementById("cancelUpdateFilter");
     const confirmUpdateFilter = document.getElementById("confirmUpdateFilter");
-    let matchedFilterId = null;
-    let savedFilters = [];
 
     if (updateFiltersButton && updateFiltersModal) {
-      // Function to collect current filter parameters
+      // Get filter ID and name from data attributes (set by Rails controller)
+      const filterId = updateFiltersButton.dataset.filterId;
+      const filterName = updateFiltersButton.dataset.filterName || "Selected Filter";
+
+      // Function to collect current filter parameters from URL
       function getCurrentFilterParams() {
         const params = new URLSearchParams(window.location.search);
         const filterParams = {};
@@ -1196,74 +1202,23 @@
         return filterParams;
       }
 
-      // Function to normalize and compare filter parameters
-      function filtersMatch(filter1, filter2) {
-        const str1 = JSON.stringify(filter1).toLowerCase().trim();
-        const str2 = JSON.stringify(filter2).toLowerCase().trim();
-        return str1 === str2;
-      }
-
-      // Fetch saved filters and check for matches
-      async function updateButtonVisibility() {
-        try {
-          // Fetch saved filters from server
-          const response = await fetch('/defect_filters.json');
-          if (!response.ok) return;
-
-          const data = await response.json();
-          savedFilters = data.defect_filters || [];
-
-          const currentParams = getCurrentFilterParams();
-          let matchedFilter = null;
-
-          // Check if current filters match any saved filter
-          for (let filter of savedFilters) {
-            if (filtersMatch(filter.filters, currentParams)) {
-              matchedFilter = filter;
-              break;
-            }
-          }
-
-          if (matchedFilter) {
-            updateFiltersButton.style.display = 'inline-flex';
-            matchedFilterId = matchedFilter.id;
-            updateFiltersButton.dataset.filterId = matchedFilter.id;
-            updateFiltersButton.dataset.filterName = matchedFilter.name;
-          } else {
-            updateFiltersButton.style.display = 'none';
-            matchedFilterId = null;
-          }
-        } catch (error) {
-          console.log('Could not fetch saved filters:', error);
-          updateFiltersButton.style.display = 'none';
-        }
-      }
-
-      // Update button visibility on page load
-      updateButtonVisibility();
-
-      // Listen for checkbox changes to update button visibility
-      let updateTimeout;
-      document.addEventListener('change', function(e) {
-        if (e.target.type === 'checkbox') {
-          clearTimeout(updateTimeout);
-          updateTimeout = setTimeout(() => {
-            updateButtonVisibility();
-          }, 500); // Debounce to avoid too many checks
-        }
-      });
-
       // Handle Update Filters button click
       updateFiltersButton.addEventListener("click", function(e) {
         e.stopPropagation();
-        const filterName = updateFiltersButton.dataset.filterName || "Selected Filter";
-        document.getElementById("matchedFilterName").textContent = `Update "${filterName}"?`;
-        updateFiltersModal.classList.remove("hidden");
+        const matchedNameEl = document.getElementById("matchedFilterName");
+        if (matchedNameEl) {
+          matchedNameEl.textContent = `Update "${filterName}" with current selections?`;
+        }
+        if (updateFiltersModal) {
+          updateFiltersModal.classList.remove("hidden");
+        }
       });
 
       // Close modal functions
       const closeModal = function() {
-        updateFiltersModal.classList.add("hidden");
+        if (updateFiltersModal) {
+          updateFiltersModal.classList.add("hidden");
+        }
       };
 
       if (closeUpdateFiltersModal) {
@@ -1274,24 +1229,26 @@
         cancelUpdateFilter.addEventListener("click", closeModal);
       }
 
-      updateFiltersModal.addEventListener("click", function(e) {
-        if (e.target === updateFiltersModal) {
-          closeModal();
-        }
-      });
+      if (updateFiltersModal) {
+        updateFiltersModal.addEventListener("click", function(e) {
+          if (e.target === updateFiltersModal) {
+            closeModal();
+          }
+        });
+      }
 
       // Handle Confirm Update
       if (confirmUpdateFilter) {
         confirmUpdateFilter.addEventListener("click", function(e) {
           e.preventDefault();
-          if (matchedFilterId) {
+          if (filterId) {
             // Collect current filter parameters
             const currentParams = getCurrentFilterParams();
 
             // Create a form to PATCH the filter
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = `/defect_filters/${matchedFilterId}`;
+            form.action = `/defect_filters/${filterId}`;
 
             // Add CSRF token
             const csrfToken = document.querySelector('meta[name="csrf-token"]');

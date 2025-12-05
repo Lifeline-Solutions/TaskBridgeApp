@@ -30,7 +30,7 @@ class DefectFiltersController < ApplicationController
     # 2. Sanitize and normalize filter keys
     permitted_filters = permit_filter_keys(raw_filters)
 
-    # 3️. Normalize product_id (handle string, array, or nil)
+    # 3. Normalize product_id (handle string, array, or nil)
     product_param = params.dig(:defect_filter, :product_id) || params[:product_id]
     normalized_product_id =
       case product_param
@@ -72,6 +72,9 @@ class DefectFiltersController < ApplicationController
   end
 
   def update
+    # Store old filters for comparison
+    old_filters = @defect_filter.filters.dup
+
     if params.dig(:defect_filter, :filters).present?
       raw_filters = parse_filters_param(params.dig(:defect_filter, :filters))
       @defect_filter.filters = permit_filter_keys(raw_filters)
@@ -80,10 +83,23 @@ class DefectFiltersController < ApplicationController
     @defect_filter.name = params.dig(:defect_filter, :name) if params.dig(:defect_filter, :name).present?
     @defect_filter.modified_by = current_user
 
+    # Always update the timestamp to show it was just modified
+    @defect_filter.updated_at = Time.current
+
     if @defect_filter.save
-      redirect_back fallback_location: defect_filters_path, notice: 'Filter updated'
+      # Clear the update flag after successful update
+      session.delete(:filter_being_updated)
+
+      # Redirect to the filter with updated params
+      redirect_to index_show_defect_index_path(
+        product_id: @defect_filter.product_id,
+        **@defect_filter.filters.symbolize_keys
+      ), notice: 'Filter updated successfully!'
     else
-      redirect_back fallback_location: defect_filters_path, alert: @defect_filter.errors.full_messages.to_sentence
+      redirect_back(
+        fallback_location: defect_filters_path,
+        alert: @defect_filter.errors.full_messages.to_sentence
+      )
     end
   end
 
@@ -131,7 +147,7 @@ class DefectFiltersController < ApplicationController
     raw = raw_hash.to_h.with_indifferent_access.slice(*DefectFilter::ALLOWED_FILTER_KEYS)
 
     # Normalize array parameters
-    array_keys = %w[product_id user_id reporter_id qa_module_id submodule_id label_ids status]
+    array_keys = %w[product_id user_id reporter_id qa_module_id submodule_id label_ids status priority banking_type_id]
     array_keys.each do |key|
       raw[key] = Array(raw_hash[key]).reject(&:blank?) if raw_hash.key?(key)
     end
@@ -145,3 +161,4 @@ class DefectFiltersController < ApplicationController
     raw
   end
 end
+

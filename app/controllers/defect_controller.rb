@@ -515,6 +515,14 @@ class DefectController < ApplicationController
       .select('DISTINCT created_by'))
       .order(:first_name, :last_name)
 
+    # Only show update button if user explicitly clicked "Apply" from a saved filter
+    # This prevents the button from showing on every page load
+    @matched_filter = nil
+    if params[:filter_id].present?
+      # User came from defect_filters#index - show update button
+      @matched_filter = current_user.defect_filters.active.find_by(id: params[:filter_id])
+    end
+
     # Load default defect assignee
     @default_defect_assignee = DefaultDefectAssignee.where(archive_status: false).first
 
@@ -1663,6 +1671,87 @@ class DefectController < ApplicationController
     # are now handled in the main index action to ensure proper ordering
 
     defects
+  end
+
+  def find_matching_saved_filter(current_params)
+    # Get all active saved filters for current user
+    saved_filters = current_user.defect_filters.active
+
+    return nil if saved_filters.blank?
+
+    # Build current filter hash from params
+    current_filter = extract_filter_params(current_params)
+
+    # Return nil if no filters are active
+    return nil if current_filter.empty?
+
+    # Check each saved filter for a match
+    saved_filters.each do |filter|
+      if filters_match?(filter.filters || {}, current_filter)
+        return filter
+      end
+    end
+
+    nil
+  end
+
+  def extract_filter_params(params)
+    # Extract only filter-related parameters
+    filter_keys = %w[status priority user_id reporter_id label_ids qa_module_id submodule_id
+                     banking_type_id order start_date end_date query client_name]
+
+    extracted = {}
+
+    # Collect array parameters
+    %w[status priority user_id reporter_id label_ids qa_module_id submodule_id banking_type_id].each do |key|
+      values = Array(params[key]).reject(&:blank?).map(&:to_s).sort
+      extracted[key] = values if values.any?
+    end
+
+    # Collect single value parameters
+    %w[order start_date end_date query client_name].each do |key|
+      extracted[key] = params[key].to_s if params[key].present?
+    end
+
+    extracted
+  end
+
+  def filters_match?(saved_filters, current_filters)
+    # Normalize both filter sets for comparison
+    saved_normalized = normalize_filters(saved_filters)
+    current_normalized = normalize_filters(current_filters)
+
+    # Check if they have the same keys
+    return false if saved_normalized.keys.sort != current_normalized.keys.sort
+
+    # Check if all values match
+    saved_normalized.each do |key, value|
+      current_value = current_normalized[key]
+
+      # Handle array comparisons
+      if value.is_a?(Array) && current_value.is_a?(Array)
+        return false if value.map(&:to_s).sort != current_value.map(&:to_s).sort
+      elsif value.to_s.downcase != current_value.to_s.downcase
+        return false
+      end
+    end
+
+    true
+  end
+
+  def normalize_filters(filters)
+    # Convert all values to lowercase strings for case-insensitive comparison
+    normalized = {}
+
+    filters.each do |key, value|
+      if value.is_a?(Array)
+        normalized[key] = value.map { |v| v.to_s.downcase }
+      elsif value.present?
+        normalized[key] = value.to_s.downcase
+      end
+    end
+
+    normalized
   end
 
   def authorize_view_failure_reports!
