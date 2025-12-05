@@ -32,8 +32,8 @@ class CustomFieldChartGenerator
       generate_banking_type_chart
     when 'label'
       generate_label_chart
-    when 'ageing'
-      generate_ageing_chart
+    when 'product'
+      generate_product_chart
     else
       {}
     end
@@ -136,25 +136,14 @@ class CustomFieldChartGenerator
       .transform_keys { |(_id, name)| name }
   end
 
-  # Ageing distribution (age groups based on created_at)
-  def generate_ageing_chart
-    buckets = defects.reorder(nil).group(<<~SQL.squish).count
-      CASE
-        WHEN defects.created_at >= NOW() - INTERVAL '7 days' THEN 'This Week'
-        WHEN defects.created_at >= NOW() - INTERVAL '14 days' THEN 'Last Week'
-        WHEN defects.created_at >= NOW() - INTERVAL '30 days' THEN 'This Month'
-        WHEN defects.created_at >= NOW() - INTERVAL '90 days' THEN 'Last 3 Months'
-        ELSE 'Older than 3 Months'
-      END
-    SQL
-
-    # Return in chronological order
-    ordered_buckets = {}
-    ['This Week', 'Last Week', 'This Month', 'Last 3 Months', 'Older than 3 Months'].each do |bucket|
-      count = buckets[bucket] || 0
-      ordered_buckets[bucket] = count if count.positive?
-    end
-    ordered_buckets
+  # Product distribution
+  def generate_product_chart
+    defects
+      .reorder(nil)
+      .joins(:product)
+      .group('products.id', 'products.document_name')
+      .count
+      .transform_keys { |(_id, name)| name.presence || 'Unnamed Project' }
   end
 
   def normalize_priority(priority)
