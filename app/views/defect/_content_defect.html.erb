@@ -196,9 +196,10 @@
   /* List styling for proper display */
   .prose ul,
   .prose ol {
-    padding-left: 2rem;
+    padding-left: 1.5em;
     margin-top: 0.75rem;
     margin-bottom: 0.75rem;
+    list-style-position: outside; /* Ensure bullets/numbers are outside the text block */
   }
 
   .prose ul {
@@ -211,7 +212,9 @@
 
   .prose li {
     margin-bottom: 0.25rem;
-    padding-left: 0.5rem;
+    padding-left: 0.25rem;
+    margin-left: 0;
+    text-indent: 0; /* Prevent overlap from pasted styles */
   }
 
   /* Nested lists */
