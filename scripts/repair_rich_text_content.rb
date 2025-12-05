@@ -95,7 +95,9 @@ $STATS = {
   comments_checked: 0,
   comments_updated: 0,
   comments_failed: 0,
-  comments_empty_skipped: 0
+  comments_empty_skipped: 0,
+  comments_already_uptodate: 0,
+  comments_duplicate_prevented: 0
 }
 
 puts '=' * 80
@@ -798,15 +800,30 @@ def repair_defect_messages(defect, debug: false)
     end
 
     if existing_message
-      # Found existing message - check if content matches
+      # Found existing message - check if content is already up-to-date
       current_content = existing_message.content.to_s.strip
       current_normalized = normalize_html(current_content)
       jira_normalized = normalize_html(jira_body_html)
 
       if current_normalized == jira_normalized
-        puts '✅ OK (already in sync)'
+        # Content is already up-to-date - no edit needed
+        puts '✅ OK (already up-to-date, no edit needed)'
+        $STATS[:comments_already_uptodate] += 1
       else
-        # Content differs - update it
+        # Content differs - check if update would create duplicate
+        # Ensure no other message has the same content we're about to save
+        would_create_duplicate = defect.defect_messages.where.not(id: existing_message.id).any? do |dm|
+          other_normalized = normalize_html(dm.content.to_s.strip)
+          other_normalized == jira_normalized
+        end
+
+        if would_create_duplicate
+          puts "⚠️  SKIPPED (updating would create duplicate content)"
+          $STATS[:comments_duplicate_prevented] += 1
+          next
+        end
+
+        # Safe to update - content differs and won't create duplicate
         begin
           existing_message.content = jira_body_html
           existing_message.save!(validate: false)
@@ -823,18 +840,22 @@ def repair_defect_messages(defect, debug: false)
     else
       # Comment doesn't exist in database - create it, but ensure it's distinct
       begin
-        # Final check: ensure no duplicate content before creating
+        # Check: Ensure no duplicate content exists (comprehensive check for distinctness)
         jira_normalized = normalize_html(jira_body_html)
-        final_check = defect.defect_messages.any? do |dm|
+
+        # Check against ALL existing messages to ensure distinctness
+        duplicate_found = defect.defect_messages.any? do |dm|
           current_normalized = normalize_html(dm.content.to_s.strip)
           current_normalized == jira_normalized
         end
 
-        if final_check
-          puts "⚠️  SKIPPED (duplicate content detected, not creating)"
+        if duplicate_found
+          puts "⚠️  SKIPPED (duplicate content already exists, ensuring distinct)"
+          $STATS[:comments_duplicate_prevented] += 1
           next
         end
 
+        # Safe to create - content is distinct
         # Try to find user by name
         user = User.find_by('first_name || \' \' || last_name ILIKE ?', "%#{author_name}%") || User.first
 
@@ -847,9 +868,15 @@ def repair_defect_messages(defect, debug: false)
         dm.content = jira_body_html
         dm.save!(validate: false)
 
-        puts "✅ CREATED (#{jira_body_html.length} chars)"
+        puts "✅ CREATED (#{jira_body_html.length} chars, distinct content)"
         $STATS[:comments_updated] += 1
         stats[:updated] += 1
+      rescue ActiveRecord::RecordNotUnique => e
+        # Database-level duplicate constraint violation
+        puts "⚠️  SKIPPED (database prevented duplicate: #{e.message})"
+        $STATS[:comments_duplicate_prevented] += 1
+        $STATS[:comments_failed] += 1
+        stats[:failed] += 1
       rescue StandardError => e
         puts "❌ FAILED to create (#{e.message})"
         $STATS[:comments_failed] += 1
@@ -984,6 +1011,8 @@ puts ''
 puts 'Comments:'
 puts "  Total comments checked:    #{$STATS[:comments_checked]}"
 puts "  Comments updated/created:  #{$STATS[:comments_updated]}"
+puts "  Already up-to-date:        #{$STATS[:comments_already_uptodate]}"
+puts "  Duplicates prevented:      #{$STATS[:comments_duplicate_prevented]}"
 puts "  Comments update failed:    #{$STATS[:comments_failed]}"
 puts "  Empty comments skipped:    #{$STATS[:comments_empty_skipped]}"
 puts ''
