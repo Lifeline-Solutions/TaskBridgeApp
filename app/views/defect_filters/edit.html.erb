@@ -73,7 +73,7 @@
                   <%= check_box_tag 'user_id[]', user.id, 
                       Array(@current_filters['user_id']).include?(user.id.to_s),
                       class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' %>
-                  <span class="text-sm text-gray-700"><%= user.full_name %></span>
+                  <span class="text-sm text-gray-700"><%= user.name %></span>
                 </label>
               <% end %>
             </div>
@@ -88,7 +88,7 @@
                   <%= check_box_tag 'reporter_id[]', user.id, 
                       Array(@current_filters['reporter_id']).include?(user.id.to_s),
                       class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' %>
-                  <span class="text-sm text-gray-700"><%= user.full_name %></span>
+                  <span class="text-sm text-gray-700"><%= user.name %></span>
                 </label>
               <% end %>
             </div>
