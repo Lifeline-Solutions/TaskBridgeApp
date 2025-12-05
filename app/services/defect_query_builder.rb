@@ -24,20 +24,32 @@ class DefectQueryBuilder
     'IS NOT NULL' => :not_eq
   }.freeze
 
-  # Maps filter field names to database table/column names
+  # Enhanced field mapping with relationship handling and normalization
   FIELD_MAPPING = {
     'status' => { table: 'statuses', column: 'name', join: :statuses, case_insensitive: true },
-    'priority' => { table: 'defects', column: 'priority', case_insensitive: true },
+    'priority' => { table: 'defects', column: 'priority', case_insensitive: true, normalize: :normalize_priority },
     'assignee_id' => { table: 'users', column: 'id', join: :users },
     'user_id' => { table: 'users', column: 'id', join: :users }, # Alias for assignee
     'reporter_id' => { table: 'defects', column: 'created_by' },
     'label_ids' => { table: 'labels', column: 'id', join: :labels },
-    'qa_module_id' => { table: 'defects', column: 'qa_module_id' },
-    'submodule_id' => { table: 'defects', column: 'submodule_id' },
+    'qa_module_id' => { table: 'defects', column: 'qa_module_id', expand_children: true },
+    'submodule_id' => { table: 'defects', column: 'submodule_id', parent_field: 'qa_module_id' },
     'banking_type_id' => { table: 'defects', column: 'banking_type_id' },
     'created_at' => { table: 'defects', column: 'created_at' },
     'updated_at' => { table: 'defects', column: 'updated_at' },
     'product_id' => { table: 'defects', column: 'product_id' }
+  }.freeze
+
+  # Priority normalization patterns
+  PRIORITY_PATTERNS = {
+    /severity\s*1/i => 'SEVERITY 1',
+    /severity\s*2/i => 'SEVERITY 2',
+    /severity\s*3/i => 'SEVERITY 3',
+    /severity\s*4/i => 'SEVERITY 4',
+    /high/i => 'SEVERITY 1',
+    /medium/i => 'SEVERITY 2',
+    /low/i => 'SEVERITY 3',
+    /critical/i => 'SEVERITY 1'
   }.freeze
 
   def initialize(base_relation = Defect.all)
@@ -94,7 +106,7 @@ class DefectQueryBuilder
 
     # Apply the combined condition to the relation
     @relation = @relation.where(combined_condition)
-    
+
     @relation
   end
 
@@ -317,5 +329,62 @@ class DefectQueryBuilder
     end
 
     @relation
+  end
+
+  private
+
+  # Helper method to normalize priority values
+  def normalize_priority(values)
+    return values unless values.is_a?(Array)
+
+    normalized = []
+    values.each do |value|
+      # Add original value
+      normalized << value
+
+      # Check against priority patterns for normalization
+      PRIORITY_PATTERNS.each do |pattern, normalized_value|
+        if value.to_s.downcase.match?(pattern)
+          normalized << normalized_value unless normalized.include?(normalized_value)
+        end
+      end
+    end
+
+    normalized.uniq
+  end
+
+  # Helper method to expand module relationships
+  def expand_module_relationships(field, values)
+    return values unless values.is_a?(Array) && values.any?
+
+    field_config = FIELD_MAPPING[field.to_s]
+    return values unless field_config && field_config[:expand_children]
+
+    begin
+      # Determine the model class
+      model_class = case field_config[:expand_children]
+      when true
+        # Default to QaModule for backward compatibility
+        Object.const_get('QaModule')
+      when String
+        Object.const_get(field_config[:expand_children])
+      else
+        return values
+      end
+
+      expanded_values = values.dup
+
+      # Find child IDs for each parent ID
+      parent_items = model_class.where(id: values)
+      parent_items.each do |parent|
+        child_ids = model_class.where(parent_id: parent.id).pluck(:id)
+        expanded_values.concat(child_ids)
+      end
+
+      expanded_values.uniq
+    rescue NameError, ActiveRecord::StatementInvalid => e
+      Rails.logger.warn "Module relationship expansion failed: #{e.message}"
+      values
+    end
   end
 end
