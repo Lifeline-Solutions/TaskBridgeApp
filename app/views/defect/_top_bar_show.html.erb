@@ -400,20 +400,19 @@
                     <div class="max-h-60 overflow-y-auto">
                       <div id="assigneeItems" class="p-2 space-y-2">
                         <% selected_assignees = Array(params[:user_id]) %>
-                        <% assignees_for_filter = User.joins(:defects).where(defects: { id: @defects.except(:select, :order, :limit, :offset).select(:id) }).distinct.order(:first_name, :last_name) %>
-                        
+
                         <!-- Select All Option -->
                         <div class="flex items-center border-b pb-2 mb-2">
                           <%= check_box_tag 'select_all_assignee', 
                                             'all', 
-                                            selected_assignees.length == assignees_for_filter.length,
+                                            selected_assignees.length == @assignees_for_filter.length,
                                             id: "select_all_assignee",
                                             class: "mr-2 select-all-checkbox",
                                             data: { target: 'assignee' } %>
                           <%= label_tag "select_all_assignee", "Select All", class: "text-sm font-medium" %>
                         </div>
                         
-                        <% assignees_for_filter.each do |assignee| %>
+                        <% @assignees_for_filter.each do |assignee| %>
                           <div class="flex items-center dropdown-item">
                             <%= check_box_tag 'user_id[]',
                                               assignee.id,
@@ -455,20 +454,19 @@
                     <div class="max-h-60 overflow-y-auto">
                       <div id="reporterItems" class="p-2 space-y-2">
                         <% selected_reporters = Array(params[:reporter_id]) %>
-                        <% reporters_for_filter = User.where(id: @defects.except(:select, :order, :limit, :offset, :distinct).select('DISTINCT defects.created_by')).order(:first_name, :last_name) %>
-                        
+
                         <!-- Select All Option -->
                         <div class="flex items-center border-b pb-2 mb-2">
                           <%= check_box_tag 'select_all_reporter', 
                                             'all', 
-                                            selected_reporters.any? && selected_reporters.length == reporters_for_filter.length,
+                                            selected_reporters.any? && selected_reporters.length == @reporters_for_filter.length,
                                             id: "select_all_reporter",
                                             class: "mr-2 select-all-checkbox",
                                             data: { target: 'reporter' } %>
                           <%= label_tag "select_all_reporter", "Select All", class: "text-sm font-medium" %>
                         </div>
                         
-                        <% reporters_for_filter.each do |reporter| %>
+                        <% @reporters_for_filter.each do |reporter| %>
                           <div class="flex items-center dropdown-item">
                             <%= check_box_tag 'reporter_id[]',
                                               reporter.id,

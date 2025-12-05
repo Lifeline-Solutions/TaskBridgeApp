@@ -412,12 +412,28 @@ class DefectController < ApplicationController
       @products = nil
     end
 
-    # Build option lists for dropdowns from the CURRENT filtered (but unpaginated) result set
-    filtered_ids = @defects.except(:select, :order, :limit, :offset).select(:id)
+    # Build option lists for dropdowns from the UNFILTERED result set (after product/client filters only)
+    # This ensures all available options are shown, even if not currently selected in other filters
+    unfiltered_base = Defect.published
+      .includes(:users, :labels, :statuses, product: %i[client groupwares])
 
-    # FIX: Use subqueries to avoid DISTINCT + ORDER BY issues
+    # Apply only product and client filters to the base scope
+    if params[:client_name].present? && product_ids.any?
+      unfiltered_base = unfiltered_base.joins(product: :client)
+        .where('LOWER(clients.name) = ?', params[:client_name].to_s.downcase.strip)
+        .where(products: { id: product_ids })
+    elsif params[:client_name].present?
+      unfiltered_base = unfiltered_base.joins(product: :client)
+        .where('LOWER(clients.name) = ?', params[:client_name].to_s.downcase.strip)
+    elsif product_ids.any?
+      unfiltered_base = unfiltered_base.where(product_id: product_ids)
+    end
+
+    unfiltered_ids = unfiltered_base.except(:select, :order, :limit, :offset).select(:id)
+
+    # FIX: Use subqueries to avoid DISTINCT + ORDER BY issues, using unfiltered defects
     @statuses = Status.where(id: Status.joins(:defects)
-      .where(defects: { id: filtered_ids })
+      .where(defects: { id: unfiltered_ids })
       .distinct
       .select(:id))
       .order(:name)
@@ -429,7 +445,7 @@ class DefectController < ApplicationController
                       .order(:name)
                   else
                     QaModule.where(id: QaModule.joins(:defects)
-                      .where(defects: { id: filtered_ids })
+                      .where(defects: { id: unfiltered_ids })
                       .where(parent_id: nil)
                       .distinct
                       .select(:id))
@@ -454,7 +470,7 @@ class DefectController < ApplicationController
                     # Fallback to submodules from defects
                     available_module_ids = @qa_modules.pluck(:id)
                     submodule_ids_from_defects = QaModule.joins(:defects)
-                      .where(defects: { id: filtered_ids })
+                      .where(defects: { id: unfiltered_ids })
                       .where.not(parent_id: nil)
                       .distinct
                       .pluck(:id)
@@ -476,17 +492,28 @@ class DefectController < ApplicationController
                          .order(:name)
                      else
                        BankingType.where(id: BankingType.joins(:defects)
-                         .where(defects: { id: filtered_ids })
+                         .where(defects: { id: unfiltered_ids })
                          .distinct
                          .select(:id))
                          .order(:name)
                      end
 
     @labels = Label.where(id: Label.joins(:defects)
-      .where(defects: { id: filtered_ids })
+      .where(defects: { id: unfiltered_ids })
       .distinct
       .select(:id))
       .order(:name)
+
+    # Load assignees from unfiltered defects so all available assignees show in dropdown
+    @assignees_for_filter = User.joins(:defects)
+      .where(defects: { id: unfiltered_ids })
+      .distinct
+      .order(:first_name, :last_name)
+
+    # Load reporters from unfiltered defects so all available reporters show in dropdown
+    @reporters_for_filter = User.where(id: Defect.where(id: unfiltered_ids)
+      .select('DISTINCT created_by'))
+      .order(:first_name, :last_name)
 
     # Load default defect assignee
     @default_defect_assignee = DefaultDefectAssignee.where(archive_status: false).first
