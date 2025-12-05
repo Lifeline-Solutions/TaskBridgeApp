@@ -67,6 +67,9 @@ class QaDashboardsController < ApplicationController
     Rails.logger.debug "Charts Generated: #{@charts.keys.inspect}"
     Rails.logger.debug '======================='
 
+    # Generate custom field charts (new feature)
+    @custom_field_charts = generate_custom_field_charts(@defects) if @dashboard.custom_fields.present?
+
     # Legacy widget data (if widgets exist)
     @widget_data = {}
     @dashboard.widgets.each_with_index do |_widget, index|
@@ -96,6 +99,18 @@ class QaDashboardsController < ApplicationController
 
   private
 
+  def generate_custom_field_charts(defects)
+    charts = {}
+    return charts if @dashboard.custom_fields.blank?
+
+    generator = CustomFieldChartGenerator.new(defects)
+    @dashboard.custom_fields.each do |field|
+      chart_data = generator.generate_chart(field)
+      charts[field.titleize] = chart_data if chart_data.present?
+    end
+    charts
+  end
+
   def set_dashboard
     @dashboard = current_user.dashboards.find(params[:id])
   end
@@ -106,6 +121,7 @@ class QaDashboardsController < ApplicationController
       :description,
       :defect_filter_id,
       :auto_refresh_interval,
+      custom_fields: [],
       widgets: %i[name group_by_field visualization_type position]
     )
   end

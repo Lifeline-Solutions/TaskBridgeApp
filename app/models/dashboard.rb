@@ -42,6 +42,7 @@ class Dashboard < ApplicationRecord
   validates :user, presence: true
   validates :defect_filter, presence: true
   validate :validate_widgets_structure
+  validate :validate_custom_fields
 
   # Scopes
   scope :active, -> { where(deleted_on: nil, archive_status: false) }
@@ -49,6 +50,7 @@ class Dashboard < ApplicationRecord
 
   # Default values
   attribute :widgets, :jsonb, default: []
+  attribute :custom_fields, :jsonb, default: []
   attribute :archive_status, :boolean, default: false
 
   # Widget helper methods
@@ -111,6 +113,14 @@ class Dashboard < ApplicationRecord
       errors.add(:widgets, "Widget #{index} has invalid group_by_field: #{widget['group_by_field']}") unless GROUPABLE_FIELDS.include?(widget['group_by_field'])
 
       errors.add(:widgets, "Widget #{index} has invalid visualization_type: #{widget['visualization_type']}") unless VISUALIZATION_TYPES.values.include?(widget['visualization_type'])
+    end
+  end
+
+  def validate_custom_fields
+    return if custom_fields.blank?
+
+    custom_fields.each do |field|
+      errors.add(:custom_fields, "Invalid field: #{field}") unless GROUPABLE_FIELDS.include?(field)
     end
   end
 end
