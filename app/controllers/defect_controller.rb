@@ -216,7 +216,42 @@ class DefectController < ApplicationController
         # Prefer saved product_id if not provided in URL
         merged['product_id'] = filter.product_id if filter.product_id.present? && !merged.key?('product_id')
         merged.except!('page')
-        redirect_to index_show_defect_index_path(merged) and return
+        redirect_to index_show_defect_index_path(merged.merge(current_filter_id: filter.id)) and return
+      end
+    end
+
+    # Detect if current parameters match an existing saved filter (for update vs create logic)
+    # Only consider actual filter parameters, not route parameters like client_name/product_id
+    filter_only_params = {
+      'status' => params[:status],
+      'priority' => params[:priority],
+      'user_id' => params[:user_id],
+      'reporter_id' => params[:reporter_id],
+      'qa_module_id' => params[:qa_module_id],
+      'submodule_id' => params[:submodule_id],
+      'label_ids' => params[:label_ids],
+      'query' => params[:query],
+      'start_date' => params[:start_date],
+      'end_date' => params[:end_date],
+      'order' => params[:order]
+    }.compact.reject { |k, v| v.blank? || v == [] }
+
+    # Only include product_id if there are other filters present (not just route navigation)
+    if filter_only_params.any? && params[:product_id].present?
+      filter_only_params['product_id'] = params[:product_id]
+    end
+
+    @matching_filter = nil
+    if filter_only_params.any? # Only look for matching filters if we have actual filter params
+      @matching_filter = current_user.defect_filters.active.find do |filter|
+        filter_params = filter.sanitized_filters_string_keys || {}
+        filter_params['product_id'] = filter.product_id if filter.product_id.present?
+
+        # Normalize both for comparison (convert arrays to sorted arrays for consistent comparison)
+        normalized_current = normalize_filter_params(filter_only_params)
+        normalized_saved = normalize_filter_params(filter_params)
+
+        normalized_current == normalized_saved
       end
     end
 
@@ -1612,6 +1647,27 @@ class DefectController < ApplicationController
   end
 
   private
+
+  # Helper method to normalize filter parameters for comparison
+  def normalize_filter_params(params_hash)
+    return {} if params_hash.blank?
+
+    normalized = {}
+    params_hash.each do |key, value|
+      next if value.blank? || value == []
+
+      # Convert arrays to sorted arrays for consistent comparison
+      if value.is_a?(Array)
+        normalized[key] = value.reject(&:blank?).sort
+      elsif value.is_a?(String)
+        normalized[key] = value.strip
+      else
+        normalized[key] = value
+      end
+    end
+
+    normalized
+  end
 
   def apply_defect_filters(defects)
     # Start with base ordering
