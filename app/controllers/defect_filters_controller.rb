@@ -4,6 +4,21 @@ class DefectFiltersController < ApplicationController
 
   def index
     @defect_filters = current_user.defect_filters.active.includes(:product).order(:name)
+
+    respond_to do |format|
+      format.html
+      format.json do
+        render json: {
+          defect_filters: @defect_filters.map { |f|
+            {
+              id: f.id,
+              name: f.name,
+              filters: f.filters
+            }
+          }
+        }
+      end
+    end
   end
 
   def create

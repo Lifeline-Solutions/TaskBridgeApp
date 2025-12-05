@@ -923,6 +923,16 @@ class DefectController < ApplicationController
       .distinct
       .order(:name)
 
+    # Initialize assignees and reporters (required for filter dropdowns)
+    @assignees_for_filter = User.joins(:defects)
+      .where(defects: { id: @defects.except(:select, :order, :limit, :offset).select(:id) })
+      .distinct
+      .order(:first_name, :last_name)
+
+    @reporters_for_filter = User.where(id: Defect.where(id: @defects.except(:select, :order, :limit, :offset).select(:id))
+      .select('DISTINCT created_by'))
+      .order(:first_name, :last_name)
+
     render :index_show
   end
 
