@@ -55,6 +55,7 @@ class SearchService
       query: query,
       tickets: search_tickets,
       defects: search_defects,
+      projects: search_projects,
       total_count: nil # Will be calculated in controller
     }
   end
@@ -77,6 +78,14 @@ class SearchService
       .limit(50)
   end
 
+  def search_projects
+    Project
+      .search_by_query(query)
+      .accessible_by_user(current_user)
+      .order(created_at: :desc)
+      .limit(20)
+  end
+
   def find_ticket_by_unique_id(unique_id)
     Ticket
       .where('LOWER(unique_id) = ?', unique_id.downcase)
@@ -97,6 +106,7 @@ class SearchService
       query: '',
       tickets: Ticket.none,
       defects: Defect.none,
+      projects: Project.none,
       total_count: 0
     }
   end

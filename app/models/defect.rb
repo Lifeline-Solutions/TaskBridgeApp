@@ -139,17 +139,13 @@ class Defect < ApplicationRecord
     # QA Admin can see all QA defects
     return where(draft: false, deleted_on: nil) if user.has_role?('qa admin')
 
-    # QA Agent can only see defects they created or are assigned to
-    if user.has_role?('qa agent')
-      where(draft: false, deleted_on: nil)
-        .where('defects.created_by = :user_id OR defects.id IN (
-          SELECT defect_id FROM defects_users WHERE user_id = :user_id
-        )', user_id: user.id)
-        .distinct
-    else
-      # Non-QA users cannot see defects in search
-      none
-    end
+    # QA Agent, Client, and others can see defects they created or are assigned/tagged in
+    # This covers "users especially with client role can only search items that they are tagged"
+    where(draft: false, deleted_on: nil)
+      .where('defects.created_by = :user_id OR defects.id IN (
+        SELECT defect_id FROM defects_users WHERE user_id = :user_id
+      )', user_id: user.id)
+      .distinct
   }
 
   before_create :set_default_status

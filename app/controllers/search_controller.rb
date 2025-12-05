@@ -25,10 +25,11 @@ class SearchController < ApplicationController
         return
       end
 
-      # Handle search results
+    # Handle search results
       @tickets = result[:tickets]
       @defects = result[:defects]
-      @total_count = @tickets.size + @defects.size
+      @projects = result[:projects] || Project.none
+      @total_count = @tickets.size + @defects.size + @projects.size
 
       # Show helpful message if no results found
       flash.now[:alert] = "No results found for '#{@query}'. Try different keywords or check your spelling." if @total_count.zero?
@@ -39,6 +40,7 @@ class SearchController < ApplicationController
       # Show user-friendly error message
       @tickets = Ticket.none
       @defects = Defect.none
+      @projects = Project.none
       @total_count = 0
       flash.now[:alert] = 'An error occurred while searching. Please try again or contact support if the problem persists.'
     end
@@ -71,6 +73,12 @@ class SearchController < ApplicationController
         .includes(:product)
         .limit(5)
         .select(:id, :defect_unique, :summary, :product_id)
+        
+      projects = Project
+        .search_by_query(@query)
+        .accessible_by_user(current_user)
+        .limit(5)
+        .select(:id, :title)
 
       # Format results for autocomplete
 
@@ -93,6 +101,17 @@ class SearchController < ApplicationController
           title: defect.summary,
           product: defect.product&.document_name,
           url: defect_path(defect)
+        }
+      end
+      
+      projects.each do |project|
+        suggestions << {
+          type: 'project',
+          id: project.id,
+          key: 'PROJ',
+          title: project.title,
+          product: 'Project',
+          url: project_path(project)
         }
       end
 
