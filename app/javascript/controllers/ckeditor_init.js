@@ -25,7 +25,69 @@
     colorButton_enableMore: true,
     colorButton_enableAutomatic: true,
     removePlugins: 'elementspath',
-    resize_enabled: false
+    resize_enabled: false,
+    // Enable paste from Word plugin
+    extraPlugins: 'pastefromword',
+    pasteFromWordRemoveFontStyles: true,
+    pasteFromWordRemoveStyles: false, // Keep some styles but clean them
+    // Comprehensive paste filter
+    on: {
+      paste: function (evt) {
+        const editor = evt.editor;
+        let data = evt.data.dataValue;
+
+        if (!data) return;
+
+        console.log('Original paste:', data.substring(0, 200));
+
+        // === STEP 1: Remove Word/Docs XML/conditional comments ===
+        data = data.replace(/<!--\[if[^\]]*\]>[\s\S]*?<!\[endif\]-->/gi, '');
+        data = data.replace(/<!--[\s\S]*?-->/g, '');
+
+        // === STEP 2: Remove Office namespace tags ===
+        data = data.replace(/<\/?o:p[^>]*>/gi, '');
+        data = data.replace(/<\/?w:[^>]*>/gi, '');
+        data = data.replace(/<\/?m:[^>]*>/gi, '');
+
+        // === STEP 3: Remove MS Word/Docs CSS classes ===
+        data = data.replace(/\s*class=["']?Mso[a-zA-Z0-9]*["']?/gi, '');
+        data = data.replace(/\s*class=["']?[^"']*\bmso-[^"']*["']?/gi, '');
+
+        // === STEP 4: Remove mso-list spans (these cause duplicate bullets) ===
+        data = data.replace(/<span[^>]*mso-list[^>]*>.*?<\/span>/gi, '');
+        data = data.replace(/<span[^>]*style=["'][^"']*mso-list[^"']*["'][^>]*>.*?<\/span>/gi, '');
+
+        // === STEP 5: Clean inline bullets/numbers from list items ===
+        // Match various bullet characters at start of <li>
+        data = data.replace(/(<li[^>]*>)\s*[•●○◦▪▫■□✓✔➢➣➤►▶⇒→➔➜]\s*/gi, '$1');
+        data = data.replace(/(<li[^>]*>)\s*[\-\*·‣⁃]\s+/gi, '$1');
+
+        // Match numbers/letters at start of <li> (1. 1) A. a) etc.)
+        data = data.replace(/(<li[^>]*>)\s*\d+[\.\)]\s*/gi, '$1');
+        data = data.replace(/(<li[^>]*>)\s*[a-zA-Z][\.\)]\s*/gi, '$1');
+
+        // === STEP 6: Remove font tags and excessive styling ===
+        data = data.replace(/<\/?font[^>]*>/gi, '');
+        data = data.replace(/\s*style=["'][^"']*font-family[^"']*["']/gi, '');
+
+        // === STEP 7: Clean up empty or whitespace-only tags ===
+        data = data.replace(/<p[^>]*>\s*<\/p>/gi, '');
+        data = data.replace(/<span[^>]*>\s*<\/span>/gi, '');
+        data = data.replace(/<div[^>]*>\s*<\/div>/gi, '');
+
+        // === STEP 8: Remove empty class/style attributes ===
+        data = data.replace(/\s*class=["']\s*["']/gi, '');
+        data = data.replace(/\s*style=["']\s*["']/gi, '');
+
+        // === STEP 9: Normalize whitespace in list items ===
+        data = data.replace(/(<li[^>]*>)\s+/gi, '$1');
+        data = data.replace(/\s+(<\/li>)/gi, '$1');
+
+        console.log('Cleaned paste:', data.substring(0, 200));
+
+        evt.data.dataValue = data;
+      }
+    }
   };
 
   function isInitializing(el) {
