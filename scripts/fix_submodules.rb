@@ -55,9 +55,10 @@ def discover_custom_fields
     name = field['name']&.downcase || ''
     field_id = field['id']
     
-    if name == 'imarisha  erp modules'
+    # Updated to look for Audit modules based on screenshot
+    if name == 'imarisha audit modules'
       module_field = field_id
-    elsif name == 'imarisha  erp modules / sub-modules'
+    elsif name == 'imarisha audit modules / sub-modules'
       submodule_field = field_id
     end
   end
@@ -191,9 +192,24 @@ defects.find_each do |defect|
     module_name = extract_custom_field_value(raw_module)
     submodule_name = extract_custom_field_value(raw_submodule)
     
+    if module_name.blank? && submodule_name.blank?
+      # log "  #{defect.defect_unique}: No Audit module data found. Skipping."
+      stats[:skipped] += 1
+      next
+    end
+
     # Apply parsing logic
     if module_name.present? && submodule_name.to_s.strip.empty?
       module_name, submodule_name = parse_module_and_submodule(module_name, submodule_name)
+    elsif module_name.present? && submodule_name.present?
+      # If submodule contains parent name, strip it
+      # Example: Module="Miscellaneous", Sub="Miscellaneous - Reports" -> Sub="Reports"
+      prefix_pattern = /^#{Regexp.escape(module_name)}\s*[\-\u2013\u2014]\s*/i
+      if submodule_name.match?(prefix_pattern)
+        new_sub = submodule_name.sub(prefix_pattern, '')
+        # log "  Stripped parent from submodule: '#{submodule_name}' -> '#{new_sub}'"
+        submodule_name = new_sub
+      end
     end
     
     # Check if update is needed
