@@ -18,9 +18,9 @@ class DefectFiltersController < ApplicationController
 
     # Load users, modules, statuses, and labels for filter options
     @users = User.where(active: true).order(:first_name, :last_name)
-    @modules = QaModule.includes(:children, :parent).distinct.order(:module_name)
+    @modules = QaModule.includes(:children, :parent).distinct.order(:name)
     @statuses = Status.distinct.order(:name)
-    @labels = Label.includes(:labellable).distinct.order(:name)
+    @labels = Label.distinct.order(:name)
 
     # Parse existing filter criteria for the form
     @current_filters = @defect_filter.sanitized_filters_string_keys
