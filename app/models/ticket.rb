@@ -60,8 +60,10 @@ class Ticket < ApplicationRecord
   scope :accessible_by_user, lambda { |user|
     return none unless user
 
-    # Admin and Observer can see all tickets
-    return all if user.has_any_role?(:admin, :observer)
+    # Internal roles (Admin, Observer, QA, Agent, Project Manager) can see all tickets
+    allowed_roles = ['admin', 'qa', 'agent', 'project manager', 'observer']
+    user_roles = user.roles.map(&:name)
+    return all if (user_roles & allowed_roles).any?
 
     # Regular users can see tickets if:
     # 1. They belong to the project (via assignees)
