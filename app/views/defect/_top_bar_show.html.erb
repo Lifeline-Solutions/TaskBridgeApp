@@ -39,6 +39,7 @@
           has_active_filters = params[:status].present? || 
                                params[:priority].present? || 
                                params[:user_id].present? || 
+                               params[:reporter_id].present? || 
                                params[:label_ids].present? || 
                                params[:qa_module_id].present? || 
                                params[:submodule_id].present? || 
@@ -46,7 +47,8 @@
                                params[:start_date].present? || 
                                params[:end_date].present? || 
                                params[:query].present? || 
-                               params[:order].present?
+                               params[:order].present? || 
+                               (params[:product_id].present? && Array(params[:product_id]).any?(&:present?))
         %>
         
         <% if has_active_filters %>
@@ -69,6 +71,21 @@
             </svg>
             <span class="hidden md:inline">Save Filters</span>
           </button>
+
+          <!-- Update Filters Button (only shown when a saved filter matches current filters) -->
+          <% if @matched_filter.present? %>
+            <button type="button"
+                    id="updateFiltersButton"
+                    class="inline-flex items-center gap-2 px-3 py-2 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/20 rounded-lg font-medium transition-all duration-200 border border-cyan-300 dark:border-cyan-700 hover:border-cyan-400 dark:hover:border-cyan-500"
+                    data-filter-id="<%= @matched_filter.id %>"
+                    data-filter-name="<%= @matched_filter.name %>"
+                    title="Update this saved filter with current selections">
+              <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span class="hidden md:inline">Update Filters</span>
+            </button>
+          <% end %>
         <% end %>
 
         <!-- Filter Button -->
@@ -400,19 +417,20 @@
                     <div class="max-h-60 overflow-y-auto">
                       <div id="assigneeItems" class="p-2 space-y-2">
                         <% selected_assignees = Array(params[:user_id]) %>
+                        <% assignees_list = @assignees_for_filter || [] %>
 
                         <!-- Select All Option -->
                         <div class="flex items-center border-b pb-2 mb-2">
                           <%= check_box_tag 'select_all_assignee', 
                                             'all', 
-                                            selected_assignees.length == @assignees_for_filter.length,
+                                            selected_assignees.length == assignees_list.length,
                                             id: "select_all_assignee",
                                             class: "mr-2 select-all-checkbox",
                                             data: { target: 'assignee' } %>
                           <%= label_tag "select_all_assignee", "Select All", class: "text-sm font-medium" %>
                         </div>
                         
-                        <% @assignees_for_filter.each do |assignee| %>
+                        <% assignees_list.each do |assignee| %>
                           <div class="flex items-center dropdown-item">
                             <%= check_box_tag 'user_id[]',
                                               assignee.id,
@@ -454,19 +472,20 @@
                     <div class="max-h-60 overflow-y-auto">
                       <div id="reporterItems" class="p-2 space-y-2">
                         <% selected_reporters = Array(params[:reporter_id]) %>
+                        <% reporters_list = @reporters_for_filter || [] %>
 
                         <!-- Select All Option -->
                         <div class="flex items-center border-b pb-2 mb-2">
                           <%= check_box_tag 'select_all_reporter', 
                                             'all', 
-                                            selected_reporters.any? && selected_reporters.length == @reporters_for_filter.length,
+                                            selected_reporters.any? && selected_reporters.length == reporters_list.length,
                                             id: "select_all_reporter",
                                             class: "mr-2 select-all-checkbox",
                                             data: { target: 'reporter' } %>
                           <%= label_tag "select_all_reporter", "Select All", class: "text-sm font-medium" %>
                         </div>
                         
-                        <% @reporters_for_filter.each do |reporter| %>
+                        <% reporters_list.each do |reporter| %>
                           <div class="flex items-center dropdown-item">
                             <%= check_box_tag 'reporter_id[]',
                                               reporter.id,
@@ -933,7 +952,9 @@
 <div id="saveFiltersModal" class="hidden fixed inset-0 bg-gray-900/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
   <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6">
     <div class="flex items-center justify-between mb-4">
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Save Filter</h3>
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+        <%= @matching_filter ? "Update Filter" : "Save Filter" %>
+      </h3>
       <button type="button" 
               id="closeSaveFiltersModal"
               class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
@@ -943,66 +964,140 @@
       </button>
     </div>
 
-    <%= form_with url: defect_filters_path, method: :post, id: "saveFilterForm", class: "space-y-4" do |f| %>
-      <!-- Filter Name -->
-      <div>
-        <%= f.label :name, "Filter Name", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
-        <%= f.text_field :name, 
-              required: true,
-              placeholder: "e.g., High Priority Bugs",
-              class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" %>
-      </div>
+    <% if @matching_filter %>
+      <%= form_with model: @matching_filter, url: defect_filter_path(@matching_filter), method: :patch, id: "saveFilterForm", class: "space-y-4" do |f| %>
+        <!-- Update Existing Filter -->
+        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
+          <div class="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span class="text-sm font-medium">Update existing filter: "<%= @matching_filter.name %>"</span>
+          </div>
+        </div>
+        
+        <!-- Filter Name -->
+        <div>
+          <%= f.label :name, "Filter Name", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+          <%= f.text_field :name, 
+                value: @matching_filter.name,
+                required: true,
+                placeholder: "e.g., High Priority Bugs",
+                class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" %>
+        </div>
+        
+        <!-- Hidden fields for filter parameters -->
+        <%= hidden_field_tag 'defect_filter[product_id]', params[:product_id] %>
+        <%= hidden_field_tag 'defect_filter[filters][client_name]', params[:client_name] %>
+        <%= hidden_field_tag 'defect_filter[filters][order]', params[:order] %>
+        <%= hidden_field_tag 'defect_filter[filters][start_date]', params[:start_date] %>
+        <%= hidden_field_tag 'defect_filter[filters][end_date]', params[:end_date] %>
+        <%= hidden_field_tag 'defect_filter[filters][query]', params[:query] %>
+        
+        <% Array(params[:status]).each do |status| %>
+          <%= hidden_field_tag 'defect_filter[filters][status][]', status %>
+        <% end %>
+        
+        <% Array(params[:priority]).each do |priority| %>
+          <%= hidden_field_tag 'defect_filter[filters][priority][]', priority %>
+        <% end %>
+        
+        <% Array(params[:user_id]).each do |user_id| %>
+          <%= hidden_field_tag 'defect_filter[filters][user_id][]', user_id %>
+        <% end %>
+        
+        <% Array(params[:reporter_id]).each do |reporter_id| %>
+          <%= hidden_field_tag 'defect_filter[filters][reporter_id][]', reporter_id %>
+        <% end %>
+        
+        <% Array(params[:label_ids]).each do |label_id| %>
+          <%= hidden_field_tag 'defect_filter[filters][label_ids][]', label_id %>
+        <% end %>
+        
+        <% Array(params[:qa_module_id]).each do |module_id| %>
+          <%= hidden_field_tag 'defect_filter[filters][qa_module_id][]', module_id %>
+        <% end %>
+        
+        <% Array(params[:submodule_id]).each do |submodule_id| %>
+          <%= hidden_field_tag 'defect_filter[filters][submodule_id][]', submodule_id %>
+        <% end %>
+        
+        <% Array(params[:banking_type_id]).each do |banking_type_id| %>
+          <%= hidden_field_tag 'defect_filter[filters][banking_type_id][]', banking_type_id %>
+        <% end %>
 
-      <!-- Hidden fields for filter parameters -->
-      <%= hidden_field_tag 'defect_filter[product_id]', params[:product_id] %>
-      <%= hidden_field_tag 'defect_filter[filters][client_name]', params[:client_name] %>
-      <%= hidden_field_tag 'defect_filter[filters][order]', params[:order] %>
-      <%= hidden_field_tag 'defect_filter[filters][start_date]', params[:start_date] %>
-      <%= hidden_field_tag 'defect_filter[filters][end_date]', params[:end_date] %>
-      <%= hidden_field_tag 'defect_filter[filters][query]', params[:query] %>
-      
-      <% Array(params[:status]).each do |status| %>
-        <%= hidden_field_tag 'defect_filter[filters][status][]', status %>
+        <!-- Action Buttons -->
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button"
+                  id="cancelSaveFilter"
+                  class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">
+            Cancel
+          </button>
+          <%= f.submit (@matching_filter ? "Update Filter" : "Save Filter"), 
+                class: "px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors" %>
+        </div>
       <% end %>
-      
-      <% Array(params[:priority]).each do |priority| %>
-        <%= hidden_field_tag 'defect_filter[filters][priority][]', priority %>
-      <% end %>
-      
-      <% Array(params[:user_id]).each do |user_id| %>
-        <%= hidden_field_tag 'defect_filter[filters][user_id][]', user_id %>
-      <% end %>
-      
-      <% Array(params[:reporter_id]).each do |reporter_id| %>
-        <%= hidden_field_tag 'defect_filter[filters][reporter_id][]', reporter_id %>
-      <% end %>
-      
-      <% Array(params[:label_ids]).each do |label_id| %>
-        <%= hidden_field_tag 'defect_filter[filters][label_ids][]', label_id %>
-      <% end %>
-      
-      <% Array(params[:qa_module_id]).each do |module_id| %>
-        <%= hidden_field_tag 'defect_filter[filters][qa_module_id][]', module_id %>
-      <% end %>
-      
-      <% Array(params[:submodule_id]).each do |submodule_id| %>
-        <%= hidden_field_tag 'defect_filter[filters][submodule_id][]', submodule_id %>
-      <% end %>
-      
-      <% Array(params[:banking_type_id]).each do |banking_type_id| %>
-        <%= hidden_field_tag 'defect_filter[filters][banking_type_id][]', banking_type_id %>
-      <% end %>
+    <% else %>
+      <%= form_with url: defect_filters_path, method: :post, id: "saveFilterForm", class: "space-y-4" do |f| %>
+        <!-- Filter Name -->
+        <div>
+          <%= f.label :name, "Filter Name", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+          <%= f.text_field :name, 
+                required: true,
+                placeholder: "e.g., High Priority Bugs",
+                class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" %>
+        </div>
 
-      <!-- Action Buttons -->
-      <div class="flex justify-end gap-3 pt-2">
-        <button type="button"
-                id="cancelSaveFilter"
-                class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">
-          Cancel
-        </button>
-        <%= f.submit "Save Filter", 
-              class: "px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors" %>
-      </div>
+        <%= hidden_field_tag 'defect_filter[product_id]', params[:product_id] %>
+        <%= hidden_field_tag 'defect_filter[filters][client_name]', params[:client_name] %>
+        <%= hidden_field_tag 'defect_filter[filters][order]', params[:order] %>
+        <%= hidden_field_tag 'defect_filter[filters][start_date]', params[:start_date] %>
+        <%= hidden_field_tag 'defect_filter[filters][end_date]', params[:end_date] %>
+        <%= hidden_field_tag 'defect_filter[filters][query]', params[:query] %>
+        
+        <% Array(params[:status]).each do |status| %>
+          <%= hidden_field_tag 'defect_filter[filters][status][]', status %>
+        <% end %>
+        
+        <% Array(params[:priority]).each do |priority| %>
+          <%= hidden_field_tag 'defect_filter[filters][priority][]', priority %>
+        <% end %>
+        
+        <% Array(params[:user_id]).each do |user_id| %>
+          <%= hidden_field_tag 'defect_filter[filters][user_id][]', user_id %>
+        <% end %>
+        
+        <% Array(params[:reporter_id]).each do |reporter_id| %>
+          <%= hidden_field_tag 'defect_filter[filters][reporter_id][]', reporter_id %>
+        <% end %>
+        
+        <% Array(params[:label_ids]).each do |label_id| %>
+          <%= hidden_field_tag 'defect_filter[filters][label_ids][]', label_id %>
+        <% end %>
+        
+        <% Array(params[:qa_module_id]).each do |module_id| %>
+          <%= hidden_field_tag 'defect_filter[filters][qa_module_id][]', module_id %>
+        <% end %>
+        
+        <% Array(params[:submodule_id]).each do |submodule_id| %>
+          <%= hidden_field_tag 'defect_filter[filters][submodule_id][]', submodule_id %>
+        <% end %>
+        
+        <% Array(params[:banking_type_id]).each do |banking_type_id| %>
+          <%= hidden_field_tag 'defect_filter[filters][banking_type_id][]', banking_type_id %>
+        <% end %>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button"
+                  id="cancelSaveFilter"
+                  class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">
+            Cancel
+          </button>
+          <%= f.submit "Save Filter", 
+                class: "px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors" %>
+        </div>
+      <% end %>
     <% end %>
   </div>
 </div>
@@ -1018,13 +1113,15 @@
           </svg>
           Active Filters
         </h3>
-        <%= link_to index_show_defect_index_path(params[:product_id]), 
-            class: "text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium transition-colors duration-150 flex items-center gap-1" do %>
+        <button type="button" id="clear-all-filters"
+            class="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium transition-colors duration-150 flex items-center gap-1"
+            data-preserve-product="<%= params[:product_id] %>" 
+            data-clear-all-url="<%= index_show_defect_index_path %>">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
           Clear All
-        <% end %>
+        </button>
       </div>
       
       <div class="flex flex-wrap gap-2">
@@ -1148,6 +1245,120 @@
           closeModal();
         }
       });
+    }
+
+    // ========== UPDATE FILTERS MODAL ==========
+    const updateFiltersButton = document.getElementById("updateFiltersButton");
+    const updateFiltersModal = document.getElementById("updateFiltersModal");
+    const closeUpdateFiltersModal = document.getElementById("closeUpdateFiltersModal");
+    const cancelUpdateFilter = document.getElementById("cancelUpdateFilter");
+    const confirmUpdateFilter = document.getElementById("confirmUpdateFilter");
+
+    if (updateFiltersButton && updateFiltersModal) {
+      // Get filter ID and name from data attributes (set by Rails controller)
+      const filterId = updateFiltersButton.dataset.filterId;
+      const filterName = updateFiltersButton.dataset.filterName || "Selected Filter";
+
+      // Function to collect current filter parameters from URL
+      function getCurrentFilterParams() {
+        const params = new URLSearchParams(window.location.search);
+        const filterParams = {};
+
+        // Collect all filter parameters
+        ['status', 'priority', 'user_id', 'reporter_id', 'label_ids', 'qa_module_id', 'submodule_id', 'banking_type_id'].forEach(key => {
+          const values = params.getAll(key);
+          if (values.length > 0) {
+            filterParams[key] = values;
+          }
+        });
+
+        ['order', 'start_date', 'end_date', 'query', 'client_name'].forEach(key => {
+          const value = params.get(key);
+          if (value) {
+            filterParams[key] = value;
+          }
+        });
+
+        return filterParams;
+      }
+
+      // Handle Update Filters button click
+      updateFiltersButton.addEventListener("click", function(e) {
+        e.stopPropagation();
+        const matchedNameEl = document.getElementById("matchedFilterName");
+        if (matchedNameEl) {
+          matchedNameEl.textContent = `Update "${filterName}" with current selections?`;
+        }
+        if (updateFiltersModal) {
+          updateFiltersModal.classList.remove("hidden");
+        }
+      });
+
+      // Close modal functions
+      const closeModal = function() {
+        if (updateFiltersModal) {
+          updateFiltersModal.classList.add("hidden");
+        }
+      };
+
+      if (closeUpdateFiltersModal) {
+        closeUpdateFiltersModal.addEventListener("click", closeModal);
+      }
+
+      if (cancelUpdateFilter) {
+        cancelUpdateFilter.addEventListener("click", closeModal);
+      }
+
+      if (updateFiltersModal) {
+        updateFiltersModal.addEventListener("click", function(e) {
+          if (e.target === updateFiltersModal) {
+            closeModal();
+          }
+        });
+      }
+
+      // Handle Confirm Update
+      if (confirmUpdateFilter) {
+        confirmUpdateFilter.addEventListener("click", function(e) {
+          e.preventDefault();
+          if (filterId) {
+            // Collect current filter parameters
+            const currentParams = getCurrentFilterParams();
+
+            // Create a form to PATCH the filter
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/defect_filters/${filterId}`;
+
+            // Add CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]');
+            if (csrfToken) {
+              const csrfInput = document.createElement('input');
+              csrfInput.type = 'hidden';
+              csrfInput.name = 'authenticity_token';
+              csrfInput.value = csrfToken.content;
+              form.appendChild(csrfInput);
+            }
+
+            // Add method override for PATCH
+            const methodInput = document.createElement('input');
+            methodInput.type = 'hidden';
+            methodInput.name = '_method';
+            methodInput.value = 'PATCH';
+            form.appendChild(methodInput);
+
+            // Add current filter parameters
+            const filtersInput = document.createElement('input');
+            filtersInput.type = 'hidden';
+            filtersInput.name = 'defect_filter[filters]';
+            filtersInput.value = JSON.stringify(currentParams);
+            form.appendChild(filtersInput);
+
+            document.body.appendChild(form);
+            form.submit();
+          }
+        });
+      }
     }
   });
 
@@ -1458,34 +1669,81 @@
     }
   }
 
-  // ========== LABELS FILTER MANAGEMENT ==========
-  document.addEventListener("turbo:load", () => {
-    const searchInput   = document.getElementById("label-search");
-    const dropdown      = document.getElementById("label-dropdown");
-    const selectedBox   = document.getElementById("selected-labels");
-    const hiddenInputs  = document.getElementById("hidden-labels");
+  // ========== ENHANCED FILTER SYSTEM WITH PROPER EVENT MANAGEMENT ==========
+  
+  // Global state management to prevent event duplication
+  let filterSystemInitialized = false;
+  let eventListeners = new Map();
+  
+  // Cleanup function for proper memory management
+  function cleanupFilterEvents() {
+    eventListeners.forEach((listener, element) => {
+      if (element && typeof element.removeEventListener === 'function') {
+        element.removeEventListener(listener.event, listener.handler);
+      }
+    });
+    eventListeners.clear();
+  }
+  
+  // Enhanced event listener registration with cleanup tracking
+  function addManagedEventListener(element, event, handler, options = {}) {
+    if (!element) return;
+    
+    element.addEventListener(event, handler, options);
+    eventListeners.set(element, { event, handler });
+  }
+  
+  // Main filter initialization with proper cleanup
+  function initializeFilterSystem() {
+    if (filterSystemInitialized) return;
+    
+    // Initialize Labels Filter Management
+    initializeLabelsFilter();
+    
+    // Initialize Select All functionality with proper state management
+    initializeSelectAllFunctionality();
+    
+    // Initialize Module-Submodule relationships
+    initializeModuleSubmoduleFiltering();
+    
+    // Initialize dropdown management
+    initializeDropdownManagement();
+    
+    // Restore filter state
+    restoreFilterState();
+    
+    filterSystemInitialized = true;
+  }
+  
+  // Enhanced Labels Filter with proper cleanup
+  function initializeLabelsFilter() {
+    const searchInput = document.getElementById("label-search");
+    const dropdown = document.getElementById("label-dropdown");
+    const selectedBox = document.getElementById("selected-labels");
+    const hiddenInputs = document.getElementById("hidden-labels");
 
     if (searchInput && dropdown) {
       // Filter dropdown items as user types
-      searchInput.addEventListener("input", () => {
+      const inputHandler = () => {
         const query = searchInput.value.toLowerCase();
         dropdown.querySelectorAll(".dropdown-item").forEach(item => {
           item.classList.toggle("hidden", !item.dataset.name.toLowerCase().includes(query));
         });
         dropdown.classList.remove("hidden");
-      });
+      };
+      addManagedEventListener(searchInput, "input", inputHandler);
 
-      // Handle selecting a label
-      dropdown.addEventListener("click", e => {
+      // Handle selecting a label with proper state management
+      const clickHandler = (e) => {
         if (!e.target.classList.contains("dropdown-item")) return;
 
-        const id   = e.target.dataset.id;
+        const id = e.target.dataset.id;
         const name = e.target.dataset.name;
 
         // Prevent duplicates
         if (document.getElementById(`label-tag-${id}`)) return;
 
-        // Create tag
+        // Create tag with enhanced cleanup
         const tag = document.createElement("span");
         tag.id = `label-tag-${id}`;
         tag.className = "bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-xs flex items-center gap-1";
@@ -1503,43 +1761,318 @@
         // Reset input & hide dropdown
         searchInput.value = "";
         dropdown.classList.add("hidden");
-      });
+        
+        // Trigger filter update
+        updateFilterButtonStates();
+      };
+      addManagedEventListener(dropdown, "click", clickHandler);
 
-      // Remove tag
-      selectedBox.addEventListener("click", e => {
+      // Enhanced tag removal with state update
+      const removeHandler = (e) => {
         if (!e.target.classList.contains("remove-tag")) return;
         const id = e.target.dataset.id;
-        document.getElementById(`label-tag-${id}`).remove();
-        document.getElementById(`label-hidden-${id}`).remove();
-      });
-
-      // Hide dropdown when clicking outside
-      document.addEventListener("click", e => {
-        if (document.getElementById("label-select") && !document.getElementById("label-select").contains(e.target)) {
-          dropdown.classList.add("hidden");
-        }
-      });
+        const tag = document.getElementById(`label-tag-${id}`);
+        const hidden = document.getElementById(`label-hidden-${id}`);
+        
+        if (tag) tag.remove();
+        if (hidden) hidden.remove();
+        
+        updateFilterButtonStates();
+      };
+      addManagedEventListener(selectedBox, "click", removeHandler);
     }
+  }
+  
+  // Enhanced Select All functionality with proper state synchronization
+  function initializeSelectAllFunctionality() {
+    document.querySelectorAll('.select-all-checkbox').forEach(checkbox => {
+      if (checkbox.dataset.initialized) return;
+      
+      const changeHandler = function(e) {
+        const target = this.dataset.target;
+        const allCheckboxes = document.querySelectorAll(`.${target}-checkbox`);
 
-    // Prevent form submission when only updating button text for all checkboxes
+        // Update only visible individual checkboxes
+        const visibleCheckboxes = Array.from(allCheckboxes).filter(cb => {
+          if (cb.classList.contains('select-all-checkbox')) return false;
+          const parentItem = cb.closest('.dropdown-item');
+          return !parentItem || parentItem.style.display !== 'none';
+        });
+
+        visibleCheckboxes.forEach(cb => {
+          cb.checked = e.target.checked;
+        });
+
+        // Update button text and states
+        updateButtonTextForFilter(target);
+        updateFilterButtonStates();
+      };
+      
+      addManagedEventListener(checkbox, 'change', changeHandler);
+      checkbox.dataset.initialized = 'true';
+    });
+
+    // Individual checkbox state management
     document.querySelectorAll('[class$="-checkbox"]').forEach(checkbox => {
-      checkbox.addEventListener('change', function(e) {
-        // Only prevent default to avoid unnecessary submissions
-        // The form will only submit when the "Apply" button is clicked
-        e.stopPropagation();
+      if (checkbox.classList.contains('select-all-checkbox') || checkbox.dataset.initialized) return;
+      
+      const changeHandler = function() {
+        updateSelectAllState(this);
+        updateButtonTextForCheckbox(this);
+        updateFilterButtonStates();
+      };
+      
+      addManagedEventListener(checkbox, 'change', changeHandler);
+      checkbox.dataset.initialized = 'true';
+    });
+  }
+  
+  // Enhanced Module-Submodule filtering with automatic expansion
+  function initializeModuleSubmoduleFiltering() {
+    document.querySelectorAll('.module-checkbox').forEach(checkbox => {
+      if (checkbox.dataset.moduleInitialized) return;
+      
+      const changeHandler = function() {
+        updateSubmoduleVisibility();
+        
+        // Optional: Auto-expand submodules when parent is selected
+        if (this.checked) {
+          const moduleId = this.dataset.parentId || this.value;
+          const submodules = document.querySelectorAll(`.submodule-checkbox[data-parent-id="${moduleId}"]`);
+          submodules.forEach(sub => {
+            if (!sub.checked) {
+              sub.checked = true;
+              sub.dispatchEvent(new Event('change'));
+            }
+          });
+        }
+      };
+      
+      addManagedEventListener(checkbox, 'change', changeHandler);
+      checkbox.dataset.moduleInitialized = 'true';
+    });
+    
+    // Initialize visibility on page load
+    updateSubmoduleVisibility();
+  }
+  
+  // Enhanced dropdown management with proper state tracking
+  function initializeDropdownManagement() {
+    // Close dropdowns when clicking outside
+    const outsideClickHandler = function(e) {
+      if (!e.target.closest('.multi-select-dropdown')) {
+        document.querySelectorAll('.dropdown-content').forEach(dropdown => {
+          dropdown.classList.add('hidden');
+        });
+      }
+    };
+    
+    // Only add if not already added
+    if (!document.hasAttribute('data-dropdown-listener')) {
+      addManagedEventListener(document, 'click', outsideClickHandler);
+      document.setAttribute('data-dropdown-listener', 'true');
+    }
+  }
+  
+  // Enhanced button state management
+  function updateFilterButtonStates() {
+    const saveButton = document.getElementById('saveFiltersButton');
+    const clearButton = document.querySelector('a[href*="Clear"]');
+    const filterButton = document.getElementById('filterDropdownButton');
+    
+    // Check if any filters are active
+    const hasActiveFilters = checkForActiveFilters();
+    
+    // Update button visibility and states
+    if (saveButton) {
+      saveButton.style.display = hasActiveFilters ? 'flex' : 'none';
+    }
+    
+    if (clearButton) {
+      clearButton.style.display = hasActiveFilters ? 'flex' : 'none';
+    }
+    
+    if (filterButton) {
+      filterButton.classList.toggle('bg-blue-50', hasActiveFilters);
+      filterButton.classList.toggle('text-blue-700', hasActiveFilters);
+    }
+  }
+  
+  // Enhanced filter detection
+  function checkForActiveFilters() {
+    // Check form inputs
+    const form = document.getElementById('index-show-filter-form');
+    if (!form) return false;
+    
+    const formData = new FormData(form);
+    let hasFilters = false;
+    
+    // Check all form inputs except preserved ones
+    for (const [key, value] of formData.entries()) {
+      if (key !== 'product_id[]' && key !== 'client_name' && value && value.trim()) {
+        hasFilters = true;
+        break;
+      }
+    }
+    
+    return hasFilters;
+  }
+  
+  // Enhanced state restoration
+  function restoreFilterState() {
+    const filterDropdown = document.getElementById("filterDropdown");
+    const shouldOpenFilter = sessionStorage.getItem('filterDropdownOpen') === 'true';
+    
+    if (shouldOpenFilter && filterDropdown) {
+      filterDropdown.classList.remove("hidden");
+      sessionStorage.removeItem('filterDropdownOpen');
+    }
+    
+    // Update all button states on load
+    updateFilterButtonStates();
+  }
+  
+  // Turbo event management with proper cleanup
+  document.addEventListener("turbo:load", () => {
+    initializeFilterSystem();
+  });
+  
+  document.addEventListener("turbo:before-cache", () => {
+    cleanupFilterEvents();
+    filterSystemInitialized = false;
+    
+    // Clean up data attributes
+    document.querySelectorAll('[data-initialized], [data-module-initialized]').forEach(el => {
+      delete el.dataset.initialized;
+      delete el.dataset.moduleInitialized;
+    });
+    
+    document.removeAttribute('data-dropdown-listener');
+  });
+  
+  // Utility functions for enhanced functionality
+  function updateButtonTextForFilter(filterType) {
+    const buttonTextId = `${filterType}ButtonText`;
+    const buttonText = document.getElementById(buttonTextId);
+    const checkboxes = document.querySelectorAll(`.${filterType}-checkbox:not(.select-all-checkbox)`);
+    
+    if (!buttonText || !checkboxes.length) return;
+    
+    const visibleCheckboxes = Array.from(checkboxes).filter(cb => {
+      const parentItem = cb.closest('.dropdown-item');
+      return !parentItem || parentItem.style.display !== 'none';
+    });
+    
+    const selectedCount = visibleCheckboxes.filter(cb => cb.checked).length;
+    const totalCount = visibleCheckboxes.length;
+    
+    const filterNames = {
+      'product': 'Select Projects...',
+      'status': 'Filter by Status',
+      'priority': 'Filter by Priority',
+      'assignee': 'Filter by Assignee',
+      'reporter': 'Filter by Reporter',
+      'module': 'Filter by Module',
+      'submodule': 'Filter by Submodule',
+      'banking-type': 'Filter by Banking Type',
+      'labels': 'Filter by Labels'
+    };
+    
+    const defaultText = filterNames[filterType] || 'Filter...';
+    
+    if (selectedCount === 0) {
+      buttonText.textContent = defaultText;
+    } else if (selectedCount === totalCount) {
+      buttonText.textContent = `${defaultText} (All)`;
+    } else {
+      buttonText.textContent = `${defaultText} (${selectedCount} selected)`;
+    }
+  }
+  
+  function updateButtonTextForCheckbox(checkbox) {
+    const className = Array.from(checkbox.classList).find(cls => cls.endsWith('-checkbox'));
+    if (!className) return;
+    
+    const filterType = className.replace('-checkbox', '');
+    updateButtonTextForFilter(filterType);
+  }
+  
+  function updateSelectAllState(checkbox) {
+    const className = Array.from(checkbox.classList).find(cls => cls.endsWith('-checkbox'));
+    if (!className) return;
+
+    const target = className.replace('-checkbox', '');
+    const selectAllCheckbox = document.querySelector(`.select-all-checkbox[data-target="${target}"]`);
+    const allCheckboxes = document.querySelectorAll(`.${target}-checkbox:not(.select-all-checkbox)`);
+
+    if (selectAllCheckbox && allCheckboxes.length > 0) {
+      const visibleCheckboxes = Array.from(allCheckboxes).filter(cb => {
+        const parentItem = cb.closest('.dropdown-item');
+        return !parentItem || parentItem.style.display !== 'none';
+      });
+
+      if (visibleCheckboxes.length > 0) {
+        const allChecked = visibleCheckboxes.every(cb => cb.checked);
+        const someChecked = visibleCheckboxes.some(cb => cb.checked);
+
+        selectAllCheckbox.checked = allChecked;
+        selectAllCheckbox.indeterminate = someChecked && !allChecked;
+      }
+    }
+  }
+  
+  // Enhanced Clear All functionality - preserves project scope while clearing other filters
+  function handleClearAllFilters() {
+    const clearAllBtn = document.getElementById('clear-all-filters');
+    if (!clearAllBtn) return;
+    
+    addManagedEventListener(clearAllBtn, 'click', function(e) {
+      e.preventDefault();
+      
+      const baseUrl = this.dataset.clearAllUrl;
+      const preserveProduct = this.dataset.preserveProduct;
+      
+      // Build URL that preserves product scope but clears other filters
+      let clearUrl = baseUrl;
+      if (preserveProduct && preserveProduct !== '') {
+        // If we have a product to preserve, add it as a parameter
+        const separator = baseUrl.includes('?') ? '&' : '?';
+        clearUrl = `${baseUrl}${separator}product_id=${encodeURIComponent(preserveProduct)}`;
+      }
+      
+      // Navigate to the clear URL
+      window.location.href = clearUrl;
+    });
+  }
+  
+  // Initialize Clear All functionality
+  handleClearAllFilters();
+  
+  // Auto-submit form when filters change to preserve all existing filters
+  function initializeAutoSubmit() {
+    const filterForm = document.getElementById('index-show-filter-form');
+    if (!filterForm) return;
+    
+    // Add auto-submit to all checkboxes in the filter form
+    filterForm.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+      addManagedEventListener(checkbox, 'change', function() {
+        // Small delay to allow UI updates
+        setTimeout(() => {
+          filterForm.requestSubmit();
+        }, 100);
       });
     });
-
-    // Restore filter state on page load
-    document.addEventListener("turbo:load", function () {
-      const filterDropdown = document.getElementById("filterDropdown");
-      const shouldOpenFilter = sessionStorage.getItem('filterDropdownOpen') === 'true';
-      
-      if (shouldOpenFilter && filterDropdown) {
-        filterDropdown.classList.remove("hidden");
-        // Clear the stored state
-        sessionStorage.removeItem('filterDropdownOpen');
-      }
+    
+    // Also handle text inputs and selects
+    filterForm.querySelectorAll('input[type="text"], select').forEach(element => {
+      addManagedEventListener(element, 'change', function() {
+        setTimeout(() => {
+          filterForm.requestSubmit();
+        }, 300);
+      });
     });
-  });
+  }
+  
+  // Initialize auto-submit functionality
+  initializeAutoSubmit();
 </script>

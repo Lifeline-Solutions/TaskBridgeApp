@@ -216,7 +216,42 @@ class DefectController < ApplicationController
         # Prefer saved product_id if not provided in URL
         merged['product_id'] = filter.product_id if filter.product_id.present? && !merged.key?('product_id')
         merged.except!('page')
-        redirect_to index_show_defect_index_path(merged) and return
+        redirect_to index_show_defect_index_path(merged.merge(current_filter_id: filter.id)) and return
+      end
+    end
+
+    # Detect if current parameters match an existing saved filter (for update vs create logic)
+    # Only consider actual filter parameters, not route parameters like client_name/product_id
+    filter_only_params = {
+      'status' => params[:status],
+      'priority' => params[:priority],
+      'user_id' => params[:user_id],
+      'reporter_id' => params[:reporter_id],
+      'qa_module_id' => params[:qa_module_id],
+      'submodule_id' => params[:submodule_id],
+      'label_ids' => params[:label_ids],
+      'query' => params[:query],
+      'start_date' => params[:start_date],
+      'end_date' => params[:end_date],
+      'order' => params[:order]
+    }.compact.reject { |k, v| v.blank? || v == [] }
+
+    # Only include product_id if there are other filters present (not just route navigation)
+    if filter_only_params.any? && params[:product_id].present?
+      filter_only_params['product_id'] = params[:product_id]
+    end
+
+    @matching_filter = nil
+    if filter_only_params.any? # Only look for matching filters if we have actual filter params
+      @matching_filter = current_user.defect_filters.active.find do |filter|
+        filter_params = filter.sanitized_filters_string_keys || {}
+        filter_params['product_id'] = filter.product_id if filter.product_id.present?
+
+        # Normalize both for comparison (convert arrays to sorted arrays for consistent comparison)
+        normalized_current = normalize_filter_params(filter_only_params)
+        normalized_saved = normalize_filter_params(filter_params)
+
+        normalized_current == normalized_saved
       end
     end
 
@@ -514,6 +549,14 @@ class DefectController < ApplicationController
     @reporters_for_filter = User.where(id: Defect.where(id: unfiltered_ids)
       .select('DISTINCT created_by'))
       .order(:first_name, :last_name)
+
+    # Only show update button if user explicitly clicked "Apply" from a saved filter
+    # This prevents the button from showing on every page load
+    @matched_filter = nil
+    if params[:filter_id].present?
+      # User came from defect_filters#index - show update button
+      @matched_filter = current_user.defect_filters.active.find_by(id: params[:filter_id])
+    end
 
     # Load default defect assignee
     @default_defect_assignee = DefaultDefectAssignee.where(archive_status: false).first
@@ -922,6 +965,16 @@ class DefectController < ApplicationController
     @banking_types = BankingType.where(id: Defect.where(id: filtered_ids).select(:banking_type_id))
       .distinct
       .order(:name)
+
+    # Initialize assignees and reporters (required for filter dropdowns)
+    @assignees_for_filter = User.joins(:defects)
+      .where(defects: { id: @defects.except(:select, :order, :limit, :offset).select(:id) })
+      .distinct
+      .order(:first_name, :last_name)
+
+    @reporters_for_filter = User.where(id: Defect.where(id: @defects.except(:select, :order, :limit, :offset).select(:id))
+      .select('DISTINCT created_by'))
+      .order(:first_name, :last_name)
 
     render :index_show
   end
@@ -1640,6 +1693,27 @@ class DefectController < ApplicationController
 
   private
 
+  # Helper method to normalize filter parameters for comparison
+  def normalize_filter_params(params_hash)
+    return {} if params_hash.blank?
+
+    normalized = {}
+    params_hash.each do |key, value|
+      next if value.blank? || value == []
+
+      # Convert arrays to sorted arrays for consistent comparison
+      if value.is_a?(Array)
+        normalized[key] = value.reject(&:blank?).sort
+      elsif value.is_a?(String)
+        normalized[key] = value.strip
+      else
+        normalized[key] = value
+      end
+    end
+
+    normalized
+  end
+
   def apply_defect_filters(defects)
     # Start with base ordering
     defects = defects.order(created_at: params[:order] == 'asc' ? :asc : :desc)
@@ -1653,6 +1727,87 @@ class DefectController < ApplicationController
     # are now handled in the main index action to ensure proper ordering
 
     defects
+  end
+
+  def find_matching_saved_filter(current_params)
+    # Get all active saved filters for current user
+    saved_filters = current_user.defect_filters.active
+
+    return nil if saved_filters.blank?
+
+    # Build current filter hash from params
+    current_filter = extract_filter_params(current_params)
+
+    # Return nil if no filters are active
+    return nil if current_filter.empty?
+
+    # Check each saved filter for a match
+    saved_filters.each do |filter|
+      if filters_match?(filter.filters || {}, current_filter)
+        return filter
+      end
+    end
+
+    nil
+  end
+
+  def extract_filter_params(params)
+    # Extract only filter-related parameters
+    filter_keys = %w[status priority user_id reporter_id label_ids qa_module_id submodule_id
+                     banking_type_id order start_date end_date query client_name]
+
+    extracted = {}
+
+    # Collect array parameters
+    %w[status priority user_id reporter_id label_ids qa_module_id submodule_id banking_type_id].each do |key|
+      values = Array(params[key]).reject(&:blank?).map(&:to_s).sort
+      extracted[key] = values if values.any?
+    end
+
+    # Collect single value parameters
+    %w[order start_date end_date query client_name].each do |key|
+      extracted[key] = params[key].to_s if params[key].present?
+    end
+
+    extracted
+  end
+
+  def filters_match?(saved_filters, current_filters)
+    # Normalize both filter sets for comparison
+    saved_normalized = normalize_filters(saved_filters)
+    current_normalized = normalize_filters(current_filters)
+
+    # Check if they have the same keys
+    return false if saved_normalized.keys.sort != current_normalized.keys.sort
+
+    # Check if all values match
+    saved_normalized.each do |key, value|
+      current_value = current_normalized[key]
+
+      # Handle array comparisons
+      if value.is_a?(Array) && current_value.is_a?(Array)
+        return false if value.map(&:to_s).sort != current_value.map(&:to_s).sort
+      elsif value.to_s.downcase != current_value.to_s.downcase
+        return false
+      end
+    end
+
+    true
+  end
+
+  def normalize_filters(filters)
+    # Convert all values to lowercase strings for case-insensitive comparison
+    normalized = {}
+
+    filters.each do |key, value|
+      if value.is_a?(Array)
+        normalized[key] = value.map { |v| v.to_s.downcase }
+      elsif value.present?
+        normalized[key] = value.to_s.downcase
+      end
+    end
+
+    normalized
   end
 
   def authorize_view_failure_reports!
