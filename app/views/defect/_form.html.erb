@@ -77,7 +77,7 @@
     <div class="flex flex-wrap gap-2">
       <!-- Priority -->
       <%= f.select :priority,
-            options_for_select(['SEVERITY 1', 'SEVERITY 2', 'SEVERITY 3', 'SEVERITY 4'], @defect.priority),
+            options_for_select(['SEVERITY 1', 'SEVERITY 2', 'SEVERITY 3', 'SEVERITY 4'], @defect.priority&.upcase),
             { prompt: "Priority *" },
             { class: "px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white", required: true } %>
 
