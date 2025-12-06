@@ -79,7 +79,7 @@
       </div>
 
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-        <% Dashboard::GROUPABLE_FIELDS.each do |field| %>
+        <% Dashboard::GROUPABLE_FIELDS.reject { |f| f == 'product' }.each do |field| %>
           <label class="flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
             <%= f.check_box :custom_fields, 
                 { multiple: true, class: "w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 dark:bg-gray-600 dark:border-gray-500" }, 

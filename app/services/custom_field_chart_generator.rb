@@ -32,8 +32,7 @@ class CustomFieldChartGenerator
       generate_banking_type_chart
     when 'label'
       generate_label_chart
-    when 'product'
-      generate_product_chart
+
     else
       {}
     end
@@ -108,12 +107,18 @@ class CustomFieldChartGenerator
 
   # Sub-module distribution
   def generate_submodule_chart
-    defects
+    # Group by submodule_id to avoid table aliasing issues with joins
+    counts = defects
       .reorder(nil)
-      .where('submodule IS NOT NULL')
-      .group(:submodule)
+      .where.not(submodule_id: nil)
+      .group(:submodule_id)
       .count
-      .transform_keys { |name| name.presence || '(Not Set)' }
+
+    # Fetch submodule names efficiently
+    submodule_names = QaModule.where(id: counts.keys).pluck(:id, :name).to_h
+
+    # Transform keys from ID to Name
+    counts.transform_keys { |id| submodule_names[id] || 'Unknown' }
   end
 
   # Banking Type distribution
@@ -136,15 +141,7 @@ class CustomFieldChartGenerator
       .transform_keys { |(_id, name)| name }
   end
 
-  # Product distribution
-  def generate_product_chart
-    defects
-      .reorder(nil)
-      .joins(:product)
-      .group('products.id', 'products.document_name')
-      .count
-      .transform_keys { |(_id, name)| name.presence || 'Unnamed Project' }
-  end
+
 
   def normalize_priority(priority)
     return 'Unknown' if priority.blank?
