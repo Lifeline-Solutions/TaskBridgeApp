@@ -34,7 +34,7 @@ class Dashboard < ApplicationRecord
   # Group by fields (what dimension to visualize)
   GROUPABLE_FIELDS = %w[
     status priority assignee reporter
-    qa_module submodule banking_type label product
+    qa_module submodule banking_type label
   ].freeze
 
   # Validations
