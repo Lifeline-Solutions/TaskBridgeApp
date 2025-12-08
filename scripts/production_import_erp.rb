@@ -996,12 +996,12 @@ def convert_adf_list_to_html(items, _tag)
 
   list_items = []
   items.each do |item|
-    next unless item.is_a?(Hash) && item['type'] == 'listitem'
+    next unless item.is_a?(Hash) && item['type'].to_s.downcase == 'listitem'
 
     item_content = item['content'] || []
     item_html = convert_adf_to_html(item_content)
     # Extract text if it's wrapped in <p> tags
-    item_html = item_html.gsub(%r{<p>(.*?)</p>}, '\1')
+    # item_html = item_html.gsub(%r{<p>(.*?)</p>}, '\1')
     list_items << "<li>#{item_html}</li>" if item_html.present?
   end
 
@@ -1017,18 +1017,18 @@ def convert_adf_table_to_html(table_block)
 
   rows_html = []
   table_rows.each do |row|
-    next unless row.is_a?(Hash) && row['type'] == 'tablerow'
+    next unless row.is_a?(Hash) && row['type'].to_s.downcase == 'tablerow'
 
     cells = row['content'] || []
     cells_html = []
     cells.each do |cell|
       next unless cell.is_a?(Hash)
 
-      cell_type = cell['type'] == 'tablehead' ? 'th' : 'td'
+      cell_type = cell['type'].to_s.downcase == 'tableheader' ? 'th' : 'td'
       cell_content = cell['content'] || []
       cell_html = convert_adf_to_html(cell_content)
       # Remove wrapping p tags
-      cell_html = cell_html.gsub(%r{<p>(.*?)</p>}, '\1')
+      # cell_html = cell_html.gsub(%r{<p>(.*?)</p>}, '\1')
       cells_html << "<#{cell_type}>#{cell_html}</#{cell_type}>"
     end
 
@@ -2291,19 +2291,24 @@ def import_comments_for_defect(defect, comments_array, verbose: false)
     created_at = try_parse_time(c['created'])
     updated_at = try_parse_time(c['updated'])
 
-    # Check for duplicate comments (by timestamp, user, and content)
+    # Check for existing comment by timestamp and user
     if created_at
-      existing = defect.defect_messages.where(created_at: created_at, user_id: user&.id).detect do |dm|
-        existing_body = dm.content.respond_to?(:to_plain_text) ? dm.content.to_plain_text.strip : dm.content.to_s.strip
-        # Normalize for comparison
-        existing_normalized = existing_body.gsub(/\s+/, ' ').strip.downcase
-        body_normalized = body.gsub(/\s+/, ' ').strip.downcase
-        existing_normalized == body_normalized
-      end
+      existing_comment = defect.defect_messages.find_by(created_at: created_at, user_id: user&.id)
 
-      if existing
+      if existing_comment
+        # Update content if it exists (user requested to update instead of duplicate)
+        # Only update if content is different to avoid unnecessary writes
+        existing_body = existing_comment.content.respond_to?(:to_plain_text) ? existing_comment.content.to_plain_text.strip : existing_comment.content.to_s.strip
+        
+        if existing_body != body.strip
+          existing_comment.content = body
+          existing_comment.save!
+          vputs "[UPDATE] Updated comment for #{defect.defect_unique} at #{created_at}" if verbose
+        else
+          vputs "[SKIP] Comment already exists and is identical for #{defect.defect_unique}" if verbose
+        end
+        
         stats[:skipped] += 1
-        vputs "[SKIP] Duplicate comment for #{defect.defect_unique}: already exists" if verbose
         next
       end
     end
@@ -2489,6 +2494,26 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
       validate_and_update_description(saved_defect, fields['description'], issue_key, verbose: verbose) if %i[created updated].include?(result)
     rescue StandardError => e
       warn "[WARN] Failed to validate description for #{issue_key}: #{e.class}: #{e.message}"
+    end
+
+    # Import history (only if none exists)
+    begin
+      if %i[created updated].include?(result)
+        if saved_defect.defect_histories.exists?
+          vputs "[HISTORY-SKIP] History already exists for #{issue_key}" if verbose
+        else
+          vputs "[HISTORY] Fetching history for #{issue_key}..." if verbose
+          changelog = fetch_issue_changelog(issue_key, verbose: verbose)
+          if changelog.any?
+             parsed_history = changelog.flat_map { |entry| parse_changelog_entry(entry, issue_key, verbose: verbose) }
+             # Sort by creation time to ensure chronological order
+             parsed_history.sort_by! { |h| h[:created_at] || Time.at(0) }
+             import_histories_for_defect(saved_defect, parsed_history, verbose: verbose)
+          end
+        end
+      end
+    rescue StandardError => e
+      warn "[WARN] Failed to import history for #{issue_key}: #{e.class}: #{e.message}"
     end
 
     result
