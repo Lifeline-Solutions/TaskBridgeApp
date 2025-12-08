@@ -1362,7 +1362,7 @@
   document.addEventListener("turbo:render", initializeDownloadDropdown);
   
   // Initialize on DOMContentLoaded as fallback
-  document.addEventListener("DOMContentLoaded", initializeDownloadDropdown);
+  document.addEventListener("turbo:load", initializeDownloadDropdown);
 
   // ========== MAIN FILTER DROPDOWN TOGGLE ==========
   document.addEventListener("turbo:load", function () {
