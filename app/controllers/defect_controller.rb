@@ -836,7 +836,11 @@ class DefectController < ApplicationController
   def update
     audit_on_update(@defect)
 
+    # Track changes before update for detailed notifications
+    changes_to_track = track_defect_changes(@defect, defect_params)
+
     selected_user_ids = params[:defect][:user_ids]
+    original_user_ids = @defect.user_ids.dup
 
     # Check if this is a "Save as Draft" or "Publish" action
     is_draft_save = params[:commit] == 'draft'
@@ -851,6 +855,12 @@ class DefectController < ApplicationController
         params[:defect][:attachments].each do |file|
           @defect.attachments.attach(file)
         end
+      end
+
+      # Track assignee changes
+      if selected_user_ids != original_user_ids
+        assignee_changes = track_assignee_changes(original_user_ids, selected_user_ids)
+        changes_to_track.merge!(assignee_changes) if assignee_changes.any?
       end
 
       @defect.user_ids = selected_user_ids
@@ -871,15 +881,16 @@ class DefectController < ApplicationController
         .event('defect.update')
         .log("Updated Defect ##{@defect.id}")
 
+      # Log detailed changes to history and send notifications
+      log_defect_changes(changes_to_track) unless is_draft_save
+
       # Handle redirects based on action
       if is_draft_save
         redirect_to index_show_defect_index_path(product_id: @defect.product_id), notice: 'Draft saved successfully.'
       elsif is_publish
         redirect_to @defect, notice: 'Defect was successfully published.'
-        UserMailer.edit_defect_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
       else
         redirect_to @defect, notice: 'Defect was successfully updated.'
-        UserMailer.edit_defect_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
       end
 
     else
@@ -1932,5 +1943,159 @@ class DefectController < ApplicationController
     action_name = history_type.parameterize.underscore
 
     UserMailer.defect_action_email(defect, defect.users.pluck(:email), user, action_name).deliver_later
+  end
+
+  def track_defect_changes(defect, params)
+    changes = {}
+
+    # Track summary changes
+    changes[:summary] = { from: defect.summary, to: params[:summary] } if params[:summary].present? && params[:summary] != defect.summary
+
+    # Track description changes
+    changes[:description] = { from: defect.description, to: params[:description] } if params[:description].present? && params[:description] != defect.description
+
+    # Track priority changes
+    changes[:priority] = { from: defect.priority, to: params[:priority] } if params[:priority].present? && params[:priority] != defect.priority
+
+    # Track status changes
+    changes[:status] = { from: defect.status, to: params[:status] } if params[:status].present? && params[:status] != defect.status
+
+    # Track severity changes
+    changes[:severity] = { from: defect.severity, to: params[:severity] } if params[:severity].present? && params[:severity] != defect.severity
+
+    # Track label changes
+    if params[:label_ids].present?
+      current_label_ids = defect.label_ids.sort
+      new_label_ids = params[:label_ids].map(&:to_i).sort
+      changes[:labels] = { from: current_label_ids, to: new_label_ids } if new_label_ids != current_label_ids
+    end
+
+    changes
+  end
+
+  def track_assignee_changes(original_user_ids, new_user_ids)
+    changes = {}
+
+    original_ids = original_user_ids.sort
+    new_ids = new_user_ids.map(&:to_i).sort
+
+    changes[:assignees] = { from: original_ids, to: new_ids } if original_ids != new_ids
+
+    changes
+  end
+
+  def log_defect_changes(changes_hash)
+    return if changes_hash.empty?
+
+    # Create a general "Edit" entry in the timeline that summarizes all changes
+    change_summary = build_edit_summary(changes_hash)
+
+    DefectHistory.create!(
+      defect: @defect,
+      user: current_user,
+      history_type: 'Edit',
+      history: change_summary,
+      created_at: Time.current
+    )
+
+    # Log each type of change to history for detailed tracking
+    changes_hash.each do |field, change_data|
+      history_type = case field
+                     when :summary then 'Summary Updated'
+                     when :description then 'Description Updated'
+                     when :priority then 'Priority Updated'
+                     when :status then 'Status Updated'
+                     when :severity then 'Severity Updated'
+                     when :labels then 'Labels Updated'
+                     when :assignees then 'Assignees Updated'
+                     else 'General Update'
+                     end
+
+      history_details = build_change_details(field, change_data)
+
+      DefectHistory.create!(
+        defect: @defect,
+        user: current_user,
+        history_type: history_type,
+        history: history_details,
+        created_at: Time.current
+      )
+    end
+
+    # Send targeted notification emails based on change types
+    send_edit_notifications(changes_hash)
+  end
+
+  def build_change_details(field, change_data)
+    case field
+    when :summary
+      "Summary changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
+    when :description
+      'Description updated'
+    when :priority
+      "Priority changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
+    when :status
+      "Status changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
+    when :severity
+      "Severity changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
+    when :labels
+      old_labels = Label.where(id: change_data[:from]).pluck(:name).join(', ')
+      new_labels = Label.where(id: change_data[:to]).pluck(:name).join(', ')
+      "Labels changed from [#{old_labels}] to [#{new_labels}]"
+    when :assignees
+      old_users = User.where(id: change_data[:from]).pluck(:name).join(', ')
+      new_users = User.where(id: change_data[:to]).pluck(:name).join(', ')
+      "Assignees changed from [#{old_users}] to [#{new_users}]"
+    else
+      "#{field.to_s.humanize} changed"
+    end
+  end
+
+  def build_edit_summary(changes_hash)
+    change_count = changes_hash.keys.size
+    change_types = []
+
+    changes_hash.keys.each do |field|
+      change_types << case field
+                      when :summary
+                        'summary'
+                      when :description
+                        'description'
+                      when :priority
+                        'priority'
+                      when :status
+                        'status'
+                      when :severity
+                        'severity'
+                      when :labels
+                        'labels'
+                      when :assignees
+                        'assignees'
+                      else
+                        field.to_s.humanize.downcase
+                      end
+    end
+
+    if change_count == 1
+      "Updated #{change_types.first}"
+    else
+      "Updated #{change_count} fields: #{change_types.join(', ')}"
+    end
+  end
+
+  def send_edit_notifications(changes_hash)
+    # Get all users who should be notified (current assignees + watchers)
+    notify_users = @defect.users.pluck(:email)
+
+    # Determine notification priority based on change types
+    high_priority_changes = %i[status priority assignees].any? { |field| changes_hash.key?(field) }
+
+    if high_priority_changes
+      # Send immediate high-priority notification
+      UserMailer.defect_priority_update_email(@defect, notify_users, current_user, changes_hash).deliver_now
+    else
+      # Send standard edit notification
+      UserMailer.defect_edit_notification_email(@defect, notify_users, current_user, changes_hash).deliver_later
+    end
   end
 end
