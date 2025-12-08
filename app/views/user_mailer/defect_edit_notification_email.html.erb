@@ -1,0 +1,79 @@
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+  <div style="background-color: #17a2b8; color: white; padding: 15px; border-radius: 5px 5px 0 0;">
+    <h2 style="margin: 0; font-size: 18px;">📝 Defect Updated</h2>
+  </div>
+  
+  <div style="background-color: white; padding: 20px; border-radius: 0 0 5px 5px; border: 1px solid #ddd;">
+    <p style="margin: 0 0 15px 0; font-size: 16px;">
+      <strong><%= @actor.name %></strong> has updated defect <strong>#<%= @defect.defect_unique %></strong>:
+    </p>
+    
+    <h3 style="color: #333; font-size: 16px; margin: 15px 0 10px 0;"><%= @defect.summary %></h3>
+    
+    <div style="background-color: #e8f4f8; border: 1px solid #b8daff; border-radius: 4px; padding: 15px; margin: 15px 0;">
+      <h4 style="margin: 0 0 10px 0; color: #004085;">📋 Summary of Changes:</h4>
+      
+      <% @changes.each do |field, change_data| %>
+        <div style="margin-bottom: 10px; padding: 8px; background-color: #f8f9fa; border-radius: 3px;">
+          <% case field %>
+          <% when :title %>
+            <strong>📌 Title Updated:</strong><br>
+            <span style="color: #6c757d; text-decoration: line-through;"><%= change_data[:from] %></span><br>
+            <span style="color: #28a745; font-weight: bold;"><%= change_data[:to] %></span>
+          <% when :description %>
+            <strong>📄 Description:</strong> Updated content
+          <% when :priority %>
+            <strong>🚨 Priority:</strong> 
+            <span style="background-color: #e9ecef; padding: 2px 6px; border-radius: 3px;"><%= change_data[:from] %></span>
+            → 
+            <span style="background-color: #fff3cd; padding: 2px 6px; border-radius: 3px;"><%= change_data[:to] %></span>
+          <% when :status %>
+            <strong>📊 Status:</strong> 
+            <span style="background-color: #e9ecef; padding: 2px 6px; border-radius: 3px;"><%= change_data[:from] %></span>
+            → 
+            <span style="background-color: #d1ecf1; padding: 2px 6px; border-radius: 3px;"><%= change_data[:to] %></span>
+          <% when :severity %>
+            <strong>⚠️ Severity:</strong> 
+            <span style="background-color: #e9ecef; padding: 2px 6px; border-radius: 3px;"><%= change_data[:from] %></span>
+            → 
+            <span style="background-color: #f8d7da; padding: 2px 6px; border-radius: 3px;"><%= change_data[:to] %></span>
+          <% when :labels %>
+            <% 
+              old_labels = Label.where(id: change_data[:from]).pluck(:name)
+              new_labels = Label.where(id: change_data[:to]).pluck(:name)
+            %>
+            <strong>🏷️ Labels Updated:</strong><br>
+            <% if old_labels.any? %>
+              Removed: <% old_labels.each do |label| %><span style="background-color: #f8d7da; padding: 2px 6px; border-radius: 3px; margin: 2px;"><%= label %></span><% end %><br>
+            <% end %>
+            <% if new_labels.any? %>
+              Added: <% new_labels.each do |label| %><span style="background-color: #d4edda; padding: 2px 6px; border-radius: 3px; margin: 2px;"><%= label %></span><% end %>
+            <% end %>
+          <% when :assignees %>
+            <% 
+              old_users = User.where(id: change_data[:from]).pluck(:name)
+              new_users = User.where(id: change_data[:to]).pluck(:name)
+            %>
+            <strong>👥 Assignees Updated:</strong><br>
+            Previous: <%= old_users.any? ? old_users.join(', ') : 'None' %><br>
+            Current: <%= new_users.any? ? new_users.join(', ') : 'None' %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+    
+    <div style="margin: 20px 0;">
+      <a href="<%= @url %>" 
+         style="background-color: #007bff; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+        🔗 View Full Defect
+      </a>
+    </div>
+    
+    <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+    
+    <p style="color: #666; font-size: 12px; margin: 0;">
+      Defect #<%= @defect.defect_unique %> in <%= @defect.product.present? ? (@defect.product.proxy_name.present? ? @defect.product.proxy_name : @defect.product.client&.name) : 'Unknown Product' %>
+      <br>Updated on <%= Time.current.strftime("%B %d, %Y at %I:%M %p") %>
+    </p>
+  </div>
+</div>
