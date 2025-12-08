@@ -26,6 +26,12 @@ class QaDashboardsController < ApplicationController
   end
 
   def show
+    # Check if defect filter exists (might be deleted/archived)
+    unless @dashboard.defect_filter.present?
+      redirect_to qa_dashboards_path, alert: 'This dashboard\'s filter has been deleted. Please update or delete this dashboard.'
+      return
+    end
+
     # Initialize product filter variables
     @selected_product_ids = params[:product_id] || []
 

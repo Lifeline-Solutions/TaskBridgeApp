@@ -87,12 +87,10 @@ class DefectFiltersController < ApplicationController
     @defect_filter.updated_at = Time.current
 
     if @defect_filter.save
-      # Clear the update flag after successful update
-      session.delete(:filter_being_updated)
-
-      # Redirect to the filter with updated params
+      # Redirect to the filter with updated params and filter_id to show the update button
       redirect_to index_show_defect_index_path(
         product_id: @defect_filter.product_id,
+        filter_id: @defect_filter.id,
         **@defect_filter.filters.symbolize_keys
       ), notice: 'Filter updated successfully!'
     else
