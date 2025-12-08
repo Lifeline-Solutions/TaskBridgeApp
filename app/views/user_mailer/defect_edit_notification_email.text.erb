@@ -8,8 +8,8 @@ Summary: <%= @defect.summary %>
 Summary of Changes:
 <% @changes.each do |field, change_data| %>
 <% case field %>
-<% when :title %>
-- Title Updated:
+<% when :summary %>
+- Summary Updated:
   From: <%= change_data[:from] %>
   To: <%= change_data[:to] %>
 <% when :description %>

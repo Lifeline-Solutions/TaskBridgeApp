@@ -16,8 +16,8 @@
       <% @changes.each do |field, change_data| %>
         <div style="margin-bottom: 10px; padding: 8px; background-color: #f8f9fa; border-radius: 3px;">
           <% case field %>
-          <% when :title %>
-            <strong>📌 Title Updated:</strong><br>
+          <% when :summary %>
+            <strong>📌 Summary Updated:</strong><br>
             <span style="color: #6c757d; text-decoration: line-through;"><%= change_data[:from] %></span><br>
             <span style="color: #28a745; font-weight: bold;"><%= change_data[:to] %></span>
           <% when :description %>
