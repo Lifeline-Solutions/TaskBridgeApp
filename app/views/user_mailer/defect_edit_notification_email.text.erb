@@ -1,0 +1,46 @@
+Defect Updated - #<%= @defect.defect_unique %>
+==============================
+
+<%= @actor.name %> has updated defect #<%= @defect.defect_unique %>:
+
+Summary: <%= @defect.summary %>
+
+Summary of Changes:
+<% @changes.each do |field, change_data| %>
+<% case field %>
+<% when :title %>
+- Title Updated:
+  From: <%= change_data[:from] %>
+  To: <%= change_data[:to] %>
+<% when :description %>
+- Description: Updated content
+<% when :priority %>
+- Priority: <%= change_data[:from] %> → <%= change_data[:to] %>
+<% when :status %>
+- Status: <%= change_data[:from] %> → <%= change_data[:to] %>
+<% when :severity %>
+- Severity: <%= change_data[:from] %> → <%= change_data[:to] %>
+<% when :labels %>
+<% 
+  old_labels = Label.where(id: change_data[:from]).pluck(:name)
+  new_labels = Label.where(id: change_data[:to]).pluck(:name)
+%>
+- Labels Updated:
+  Previous: <%= old_labels.any? ? old_labels.join(', ') : 'None' %>
+  Current: <%= new_labels.any? ? new_labels.join(', ') : 'None' %>
+<% when :assignees %>
+<% 
+  old_users = User.where(id: change_data[:from]).pluck(:name)
+  new_users = User.where(id: change_data[:to]).pluck(:name)
+%>
+- Assignees Updated:
+  Previous: <%= old_users.any? ? old_users.join(', ') : 'None' %>
+  Current: <%= new_users.any? ? new_users.join(', ') : 'None' %>
+<% end %>
+
+<% end %>
+View full defect: <%= @url %>
+
+---
+Defect #<%= @defect.defect_unique %> in <%= @defect.product.present? ? (@defect.product.proxy_name.present? ? @defect.product.proxy_name : @defect.product.client&.name) : 'Unknown Product' %>
+Updated on <%= Time.current.strftime("%B %d, %Y at %I:%M %p") %>
