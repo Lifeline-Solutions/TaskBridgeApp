@@ -3,9 +3,9 @@
 # Verify that the deduplication fix is working correctly
 # Usage: rails runner scripts/verify_no_duplicates.rb
 
-puts "\n" + "=" * 80
-puts "🔍 DEFECT MESSAGE DEDUPLICATION VERIFICATION"
-puts "=" * 80
+puts "\n#{'=' * 80}"
+puts '🔍 DEFECT MESSAGE DEDUPLICATION VERIFICATION'
+puts '=' * 80
 puts "\n"
 
 # Find all defects
@@ -45,7 +45,7 @@ defects.find_each do |defect|
     # Show the duplicate content
     message_contents = messages.pluck(:content).group_by { |c| c }.select { |_, v| v.size > 1 }
     message_contents.each do |content, occurrences|
-      preview = content.to_s[0..80].gsub(/\n/, ' ')
+      preview = content.to_s[0..80].gsub("\n", ' ')
       puts "   └─ Duplicate (#{occurrences.size}x): \"#{preview}...\""
     end
   else
@@ -53,9 +53,9 @@ defects.find_each do |defect|
   end
 end
 
-puts "\n" + "=" * 80
-puts "📊 SUMMARY"
-puts "=" * 80
+puts "\n#{'=' * 80}"
+puts '📊 SUMMARY'
+puts '=' * 80
 puts "\n"
 
 puts "Total Defects Checked:      #{defects.count}"
@@ -65,18 +65,17 @@ puts "Potential Duplicates:       #{total_messages - total_distinct}"
 puts "\n"
 
 if duplicates_found
-  puts "❌ DUPLICATES DETECTED"
+  puts '❌ DUPLICATES DETECTED'
   puts "\nIssues with duplicates:"
   issues_with_duplicates.each do |issue|
     puts "  • #{issue[:key]}: #{issue[:duplicates]} duplicate(s) found"
   end
   puts "\nRun the repair script to fix these duplicates:"
-  puts "  rails runner scripts/repair_rich_text_content.rb"
+  puts '  rails runner scripts/repair_rich_text_content.rb'
 else
-  puts "✅ NO DUPLICATES FOUND"
+  puts '✅ NO DUPLICATES FOUND'
   puts "\nYour defect messages are clean and distinct!"
 end
 
-puts "\n" + "=" * 80
+puts "\n#{'=' * 80}"
 puts "\n"
-

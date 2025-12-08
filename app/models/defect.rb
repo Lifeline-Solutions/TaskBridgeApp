@@ -138,10 +138,8 @@ class Defect < ApplicationRecord
     # issues with symbol/string conversion or 'project manager' spacing.
     allowed_roles = ['admin', 'qa', 'agent', 'project manager', 'observer', 'qa admin']
     user_roles = user.roles.map(&:name)
-    
-    if (user_roles & allowed_roles).any?
-      return where(draft: false, deleted_on: nil)
-    end
+
+    return where(draft: false, deleted_on: nil) if user_roles.intersect?(allowed_roles)
 
     # Clients and other external users can only see defects they created or are assigned/tagged in
     where(draft: false, deleted_on: nil)

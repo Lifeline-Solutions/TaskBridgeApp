@@ -63,13 +63,13 @@ class Ticket < ApplicationRecord
     # Internal roles (Admin, Observer, QA, Agent, Project Manager) can see all tickets
     allowed_roles = ['admin', 'qa', 'agent', 'project manager', 'observer']
     user_roles = user.roles.map(&:name)
-    return all if (user_roles & allowed_roles).any?
+    return all if user_roles.intersect?(allowed_roles)
 
     # Regular users can see tickets if:
     # 1. They belong to the project (via assignees)
     # 2. They are the creator (user_id)
     # 3. They are tagged in the ticket
-    left_joins(:project => :assignees)
+    left_joins(project: :assignees)
       .left_joins(:taggings)
       .where(
         'assignees.user_id = :user_id OR tickets.user_id = :user_id OR taggings.user_id = :user_id',

@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # DashboardDataGenerator - Generates multiple chart visualizations based on active filter parameters
 #
 # Usage:
@@ -70,12 +68,12 @@ class DashboardDataGenerator
 
   # Determine if we should show priority chart (if priority filter is active)
   def should_show_priority_chart?(active_params)
-    active_params['priority'].present? || dashboard.defect_filter.filters.dig('priority').present?
+    active_params['priority'].present? || dashboard.defect_filter.filters['priority'].present?
   end
 
   # Determine if we should show status chart (if status filter is active)
   def should_show_status_chart?(active_params)
-    active_params['status'].present? || dashboard.defect_filter.filters.dig('status').present?
+    active_params['status'].present? || dashboard.defect_filter.filters['status'].present?
   end
 
   # Determine if we should show module chart
@@ -219,7 +217,7 @@ class DashboardDataGenerator
     ordered_buckets = {}
     ['This Week', 'Last Week', 'This Month', 'Older'].each do |bucket|
       count = buckets[bucket] || 0
-      ordered_buckets[bucket] = count if count > 0
+      ordered_buckets[bucket] = count if count.positive?
     end
     ordered_buckets
   end

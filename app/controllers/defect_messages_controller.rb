@@ -32,6 +32,7 @@ class DefectMessagesController < ApplicationController
 
     @defect_messages = @defect_messages.offset((@page - 1) * @per_page).limit(@per_page)
   end
+
   def create
     @defect_message = @defect.defect_messages.build(defect_message_params)
     @defect_message.user = current_user

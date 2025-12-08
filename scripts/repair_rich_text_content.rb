@@ -723,7 +723,7 @@ def repair_defect_messages(defect, debug: false)
   processed_jira_ids = Set.new
 
   # Collect all existing messages to avoid multiple database queries
-  existing_messages = defect.defect_messages.index_by { |dm| dm.id }
+  defect.defect_messages.index_by(&:id)
 
   jira_comments.each_with_index do |jira_comment, idx|
     $STATS[:comments_checked] += 1
@@ -818,7 +818,7 @@ def repair_defect_messages(defect, debug: false)
         end
 
         if would_create_duplicate
-          puts "⚠️  SKIPPED (updating would create duplicate content)"
+          puts '⚠️  SKIPPED (updating would create duplicate content)'
           $STATS[:comments_duplicate_prevented] += 1
           next
         end
@@ -850,7 +850,7 @@ def repair_defect_messages(defect, debug: false)
         end
 
         if duplicate_found
-          puts "⚠️  SKIPPED (duplicate content already exists, ensuring distinct)"
+          puts '⚠️  SKIPPED (duplicate content already exists, ensuring distinct)'
           $STATS[:comments_duplicate_prevented] += 1
           next
         end
