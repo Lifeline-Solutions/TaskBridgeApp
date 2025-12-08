@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_12_05_075852) do
+ActiveRecord::Schema[7.2].define(version: 2025_12_08_073721) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -439,7 +439,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_05_075852) do
     t.index ["submodule_id"], name: "index_defects_on_submodule_id"
   end
 
-  create_table "defects_users", id: false, force: :cascade do |t|
+  create_table "defects_users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "defect_id", null: false
     t.uuid "user_id", null: false
     t.uuid "created_by", default: "c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da", null: false
