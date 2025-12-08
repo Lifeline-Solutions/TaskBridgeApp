@@ -329,66 +329,7 @@
                 </div>
               </div>
 
-              <script>
-                // Case-insensitive filter function
-                function filterDropdownItems(searchInputId, itemsContainerId) {
-                  const input = document.getElementById(searchInputId).value.toLowerCase();
-                  const items = document
-                    .getElementById(itemsContainerId)
-                    .getElementsByClassName("dropdown-item");
 
-                  Array.from(items).forEach(item => {
-                    const name = item.getAttribute("data-name").toLowerCase();
-                    item.style.display = name.includes(input) ? "flex" : "none";
-                  });
-                }
-
-                // Toggle dropdown visibility
-                function toggleDropdown(id) {
-                  const dropdown = document.getElementById(id);
-                  dropdown.classList.toggle('hidden');
-                }
-
-                // Update the button text functionality to handle case-insensitive counts
-                function updatePriorityButtonText() {
-                  const priorityCheckboxes = document.querySelectorAll('.priority-checkbox:not(.select-all-checkbox)');
-                  const selectedCount = Array.from(priorityCheckboxes).filter(cb => cb.checked).length;
-                  const totalCount = priorityCheckboxes.length;
-                  const buttonText = document.getElementById('priorityButtonText');
-                  
-                  if (selectedCount === 0) {
-                    buttonText.textContent = 'Filter by Priority';
-                  } else if (selectedCount === totalCount) {
-                    buttonText.textContent = 'Filter by Priority (All)';
-                  } else {
-                    buttonText.textContent = `Filter by Priority (${selectedCount} selected)`;
-                  }
-                }
-
-                // Initialize button text on page load
-                document.addEventListener('turbo:load', function() {
-                  updatePriorityButtonText();
-                  
-                  // Add event listeners to priority checkboxes
-                  document.querySelectorAll('.priority-checkbox').forEach(checkbox => {
-                    checkbox.addEventListener('change', function() {
-                      updatePriorityButtonText();
-                    });
-                  });
-                  
-                  // Select all functionality for priorities
-                  const selectAllPriority = document.getElementById('select_all_priority');
-                  if (selectAllPriority) {
-                    selectAllPriority.addEventListener('change', function(e) {
-                      const checkboxes = document.querySelectorAll('.priority-checkbox:not(.select-all-checkbox)');
-                      checkboxes.forEach(cb => {
-                        cb.checked = e.target.checked;
-                      });
-                      updatePriorityButtonText();
-                    });
-                  }
-                });
-              </script>
 
 
               <!-- Assignee Filter (Multi-Select) -->
@@ -1434,24 +1375,7 @@
       }
     }
 
-    // Initialize the multi-select functionality for index_show
-    initializeMultiSelectDropdowns();
-    initializeSelectAllFunctionality();
-    initializeModuleSubmoduleFiltering();
-    updateAllButtonTexts();
   });
-
-  // ========== MULTI-SELECT DROPDOWN MANAGEMENT ==========
-  function initializeMultiSelectDropdowns() {
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', function(e) {
-      if (!e.target.closest('.multi-select-dropdown')) {
-        document.querySelectorAll('.dropdown-content').forEach(dropdown => {
-          dropdown.classList.add('hidden');
-        });
-      }
-    });
-  }
 
   function toggleDropdown(dropdownId) {
     const dropdown = document.getElementById(dropdownId);
@@ -1478,196 +1402,7 @@
     });
   }
 
-  function initializeSelectAllFunctionality() {
-    // Add event listeners to all "Select All" checkboxes
-    document.querySelectorAll('.select-all-checkbox').forEach(checkbox => {
-      checkbox.addEventListener('change', function(e) {
-        const target = this.dataset.target;
-        const checkboxes = document.querySelectorAll(`.${target}-checkbox`);
-        
-        // Update all individual checkboxes to match select-all state
-        checkboxes.forEach(cb => {
-          cb.checked = e.target.checked;
-        });
-        
-        // Update button text after selecting all
-        updateButtonText(checkboxes[0]);
-      });
-    });
 
-    // Update "Select All" when individual checkboxes change
-    document.querySelectorAll('[class$="-checkbox"]').forEach(checkbox => {
-      if (!checkbox.classList.contains('select-all-checkbox')) {
-        checkbox.addEventListener('change', function() {
-          updateSelectAllState(this);
-          updateButtonText(this);
-        });
-      }
-    });
-  }
-
-  function updateSelectAllState(checkbox) {
-    const className = Array.from(checkbox.classList).find(cls => cls.endsWith('-checkbox'));
-    if (!className) return;
-    
-    const target = className.replace('-checkbox', '');
-    const selectAllCheckbox = document.querySelector(`.select-all-checkbox[data-target="${target}"]`);
-    const checkboxes = document.querySelectorAll(`.${target}-checkbox:not(.select-all-checkbox)`);
-    
-    if (selectAllCheckbox && checkboxes.length > 0) {
-      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-      const someChecked = Array.from(checkboxes).some(cb => cb.checked);
-      
-      selectAllCheckbox.checked = allChecked;
-      selectAllCheckbox.indeterminate = someChecked && !allChecked;
-    }
-  }
-
-  function updateButtonText(checkbox) {
-    const className = Array.from(checkbox.classList).find(cls => cls.endsWith('-checkbox'));
-    if (!className) return;
-    
-    const target = className.replace('-checkbox', '');
-    const buttonId = `${target}DropdownButton`;
-    const buttonTextId = `${target}ButtonText`;
-    const checkboxes = document.querySelectorAll(`.${target}-checkbox:not(.select-all-checkbox)`);
-    
-    const selectedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
-    const totalCount = checkboxes.length;
-    
-    updateDropdownButtonText(buttonId, buttonTextId, selectedCount, totalCount, getDefaultText(target));
-  }
-
-  function updateAllButtonTexts() {
-    const filterTypes = ['product', 'status', 'priority', 'assignee', 'reporter', 'module', 'submodule', 'banking-type', 'labels'];
-    
-    filterTypes.forEach(type => {
-      const buttonId = `${type}DropdownButton`;
-      const buttonTextId = `${type}ButtonText`;
-      const checkboxes = document.querySelectorAll(`.${type}-checkbox:not(.select-all-checkbox)`);
-      
-      if (checkboxes.length > 0) {
-        const selectedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
-        const totalCount = checkboxes.length;
-        
-        updateDropdownButtonText(buttonId, buttonTextId, selectedCount, totalCount, getDefaultText(type));
-      }
-    });
-  }
-
-  function updateDropdownButtonText(buttonId, buttonTextId, selectedCount, totalCount, defaultText) {
-    const button = document.getElementById(buttonId);
-    const buttonText = document.getElementById(buttonTextId);
-    
-    if (buttonText) {
-      if (selectedCount === 0) {
-        buttonText.textContent = defaultText;
-      } else if (selectedCount === totalCount) {
-        buttonText.textContent = `${defaultText} (All)`;
-      } else {
-        buttonText.textContent = `${defaultText} (${selectedCount} selected)`;
-      }
-    }
-  }
-
-  function getDefaultText(filterType) {
-    const textMap = {
-      'product': 'Select Products...',
-      'status': 'Filter by Status',
-      'priority': 'Filter by Priority',
-      'assignee': 'Filter by Assignee',
-      'reporter': 'Filter by Reporter',
-      'module': 'Filter by Module',
-      'submodule': 'Filter by Submodule',
-      'banking-type': 'Filter by Banking Type',
-      'labels': 'Filter by Labels'
-    };
-    
-    return textMap[filterType] || 'Filter...';
-  }
-
-  // ========== MODULE AND SUBMODULE DYNAMIC FILTERING ==========
-  function initializeModuleSubmoduleFiltering() {
-    // Add event listeners to module checkboxes to update submodule visibility
-    document.querySelectorAll('.module-checkbox').forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
-        updateSubmoduleVisibility();
-      });
-    });
-
-    // Initialize submodule visibility on page load
-    updateSubmoduleVisibility();
-  }
-
-  function updateSubmoduleVisibility() {
-    const selectedModuleIds = getSelectedModuleIds();
-    const submoduleItems = document.querySelectorAll('.submodule-item');
-    
-    if (selectedModuleIds.length === 0) {
-      // If no modules are selected, show all submodules
-      submoduleItems.forEach(item => {
-        item.style.display = 'flex';
-      });
-    } else {
-      // Show only submodules that belong to selected modules
-      submoduleItems.forEach(item => {
-        const parentId = item.getAttribute('data-parent-id');
-        if (selectedModuleIds.includes(parentId)) {
-          item.style.display = 'flex';
-        } else {
-          item.style.display = 'none';
-        }
-      });
-    }
-    
-    // Update submodule button text to reflect filtered state
-    updateSubmoduleButtonText();
-  }
-
-  function getSelectedModuleIds() {
-    const selectedModules = [];
-    document.querySelectorAll('.module-checkbox:checked').forEach(checkbox => {
-      selectedModules.push(checkbox.getAttribute('data-parent-id'));
-    });
-    return selectedModules;
-  }
-
-  function updateSubmoduleButtonText() {
-    const selectedModuleIds = getSelectedModuleIds();
-    const submoduleButtonText = document.getElementById('submoduleButtonText');
-    const submoduleCheckboxes = document.querySelectorAll('.submodule-checkbox:not(.select-all-checkbox)');
-    
-    if (selectedModuleIds.length === 0) {
-      // No modules selected - show count of all submodules
-      const selectedSubmodules = Array.from(submoduleCheckboxes).filter(cb => cb.checked).length;
-      const totalSubmodules = submoduleCheckboxes.length;
-      
-      if (selectedSubmodules === 0) {
-        submoduleButtonText.textContent = 'Filter by Submodule';
-      } else if (selectedSubmodules === totalSubmodules) {
-        submoduleButtonText.textContent = 'Filter by Submodule (All)';
-      } else {
-        submoduleButtonText.textContent = `Filter by Submodule (${selectedSubmodules} selected)`;
-      }
-    } else {
-      // Modules selected - show count of visible (filtered) submodules
-      const visibleSubmodules = Array.from(submoduleCheckboxes).filter(cb => {
-        const parentId = cb.closest('.submodule-item').getAttribute('data-parent-id');
-        return selectedModuleIds.includes(parentId);
-      });
-      
-      const selectedVisibleSubmodules = visibleSubmodules.filter(cb => cb.checked).length;
-      const totalVisibleSubmodules = visibleSubmodules.length;
-      
-      if (selectedVisibleSubmodules === 0) {
-        submoduleButtonText.textContent = 'Filter by Submodule';
-      } else if (selectedVisibleSubmodules === totalVisibleSubmodules) {
-        submoduleButtonText.textContent = 'Filter by Submodule (All)';
-      } else {
-        submoduleButtonText.textContent = `Filter by Submodule (${selectedVisibleSubmodules} selected)`;
-      }
-    }
-  }
 
   // ========== ENHANCED FILTER SYSTEM WITH PROPER EVENT MANAGEMENT ==========
   
@@ -1711,6 +1446,7 @@
     
     // Restore filter state
     restoreFilterState();
+    updateAllButtonTexts();
     
     filterSystemInitialized = true;
   }
@@ -2019,6 +1755,11 @@
         selectAllCheckbox.indeterminate = someChecked && !allChecked;
       }
     }
+  }
+
+  function updateAllButtonTexts() {
+    const filterTypes = ['product', 'status', 'priority', 'assignee', 'reporter', 'module', 'submodule', 'banking-type', 'labels'];
+    filterTypes.forEach(type => updateButtonTextForFilter(type));
   }
   
   // Enhanced Clear All functionality - preserves project scope while clearing other filters
