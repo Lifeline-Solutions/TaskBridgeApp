@@ -423,7 +423,7 @@
                         <div class="flex items-center border-b pb-2 mb-2">
                           <%= check_box_tag 'select_all_assignee', 
                                             'all', 
-                                            selected_assignees.length == assignees_list.length,
+                                            assignees_list.any? && selected_assignees.length == assignees_list.length,
                                             id: "select_all_assignee",
                                             class: "mr-2 select-all-checkbox",
                                             data: { target: 'assignee' } %>
@@ -1099,6 +1099,42 @@
         </div>
       <% end %>
     <% end %>
+  </div>
+</div>
+
+<!-- Update Filters Modal -->
+<div id="updateFiltersModal" class="hidden fixed inset-0 bg-gray-900/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Update Filter</h3>
+      <button type="button"
+              id="closeUpdateFiltersModal"
+              class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="mb-4">
+      <p class="text-sm text-gray-600 dark:text-gray-400" id="matchedFilterName">
+        Update this filter with current selections?
+      </p>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex justify-end gap-3 pt-2">
+      <button type="button"
+              id="cancelUpdateFilter"
+              class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">
+        Cancel
+      </button>
+      <button type="button"
+              id="confirmUpdateFilter"
+              class="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium transition-colors">
+        Update Filter
+      </button>
+    </div>
   </div>
 </div>
 
