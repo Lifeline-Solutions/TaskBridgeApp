@@ -65,27 +65,12 @@
 
           <button type="button"
                   id="saveFiltersButton"
-                  class="inline-flex items-center gap-2 px-3 py-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg font-medium transition-all duration-200 border border-green-300 dark:border-green-700">
+                  class="inline-flex items-center gap-2 px-3 py-2 <%= @filter_to_update ? 'text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 border-blue-300 dark:border-blue-700' : 'text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 border-green-300 dark:border-green-700' %> rounded-lg font-medium transition-all duration-200 border">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<%= @filter_to_update ? 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' : 'M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4' %>" />
             </svg>
-            <span class="hidden md:inline">Save Filters</span>
+            <span class="hidden md:inline"><%= @filter_to_update ? 'Update Filter' : 'Save Filters' %></span>
           </button>
-
-          <!-- Update Filters Button (only shown when a saved filter matches current filters) -->
-          <% if @matched_filter.present? %>
-            <button type="button"
-                    id="updateFiltersButton"
-                    class="inline-flex items-center gap-2 px-3 py-2 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/20 rounded-lg font-medium transition-all duration-200 border border-cyan-300 dark:border-cyan-700 hover:border-cyan-400 dark:hover:border-cyan-500"
-                    data-filter-id="<%= @matched_filter.id %>"
-                    data-filter-name="<%= @matched_filter.name %>"
-                    title="Update this saved filter with current selections">
-              <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              <span class="hidden md:inline">Update Filters</span>
-            </button>
-          <% end %>
         <% end %>
 
         <!-- Filter Button -->
@@ -112,6 +97,7 @@
                 <%= hidden_field_tag 'product_id[]', product_id %>
               <% end %>
               <%= hidden_field_tag :client_name, params[:client_name] %>
+              <%= hidden_field_tag :current_filter_id, params[:current_filter_id] if params[:current_filter_id].present? %>
 
               <!-- Project Filter (Multi-Select) - Only show when multiple projects exist -->
               <% if @products.present? && @products.size > 1 %>
@@ -953,7 +939,7 @@
   <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6">
     <div class="flex items-center justify-between mb-4">
       <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-        <%= @matching_filter ? "Update Filter" : "Save Filter" %>
+        <%= @filter_to_update ? "Update Filter" : "Save Filter" %>
       </h3>
       <button type="button" 
               id="closeSaveFiltersModal"
@@ -964,15 +950,15 @@
       </button>
     </div>
 
-    <% if @matching_filter %>
-      <%= form_with model: @matching_filter, url: defect_filter_path(@matching_filter), method: :patch, id: "saveFilterForm", class: "space-y-4" do |f| %>
+    <% if @filter_to_update %>
+      <%= form_with model: @filter_to_update, url: defect_filter_path(@filter_to_update), method: :patch, id: "saveFilterForm", class: "space-y-4" do |f| %>
         <!-- Update Existing Filter -->
         <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
           <div class="flex items-center gap-2 text-blue-700 dark:text-blue-300">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
-            <span class="text-sm font-medium">Update existing filter: "<%= @matching_filter.name %>"</span>
+            <span class="text-sm font-medium">Update existing filter: "<%= @filter_to_update.name %>"</span>
           </div>
         </div>
         
@@ -980,7 +966,7 @@
         <div>
           <%= f.label :name, "Filter Name", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
           <%= f.text_field :name, 
-                value: @matching_filter.name,
+                value: @filter_to_update.name,
                 required: true,
                 placeholder: "e.g., High Priority Bugs",
                 class: "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white" %>
@@ -1033,8 +1019,8 @@
                   class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors">
             Cancel
           </button>
-          <%= f.submit (@matching_filter ? "Update Filter" : "Save Filter"), 
-                class: "px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors" %>
+          <%= f.submit (@filter_to_update ? "Update Filter" : "Save Filter"),
+                class: "px-4 py-2 #{@filter_to_update ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} text-white rounded-lg font-medium transition-colors" %>
         </div>
       <% end %>
     <% else %>

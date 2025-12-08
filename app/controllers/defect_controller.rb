@@ -229,6 +229,7 @@ class DefectController < ApplicationController
       'reporter_id' => params[:reporter_id],
       'qa_module_id' => params[:qa_module_id],
       'submodule_id' => params[:submodule_id],
+      'banking_type_id' => params[:banking_type_id],
       'label_ids' => params[:label_ids],
       'query' => params[:query],
       'start_date' => params[:start_date],
@@ -237,11 +238,14 @@ class DefectController < ApplicationController
     }.compact.reject { |k, v| v.blank? || v == [] }
 
     # Only include product_id if there are other filters present (not just route navigation)
-    if filter_only_params.any? && params[:product_id].present?
-      filter_only_params['product_id'] = params[:product_id]
-    end
+    filter_only_params['product_id'] = params[:product_id] if filter_only_params.any? && params[:product_id].present?
 
     @matching_filter = nil
+    @current_filter = nil
+
+    # If user applied a filter from dropdown, track it for potential updates
+    @current_filter = current_user.defect_filters.active.find_by(id: params[:current_filter_id]) if params[:current_filter_id].present?
+
     if filter_only_params.any? # Only look for matching filters if we have actual filter params
       @matching_filter = current_user.defect_filters.active.find do |filter|
         filter_params = filter.sanitized_filters_string_keys || {}
@@ -254,6 +258,9 @@ class DefectController < ApplicationController
         normalized_current == normalized_saved
       end
     end
+
+    # Determine which filter to show for update: prefer current_filter if params changed, otherwise matching_filter
+    @filter_to_update = @current_filter || @matching_filter
 
     # Handle multiple product_ids (array) or single product_id
     product_ids = Array(params[:product_id]).reject(&:blank?)
@@ -1702,13 +1709,13 @@ class DefectController < ApplicationController
       next if value.blank? || value == []
 
       # Convert arrays to sorted arrays for consistent comparison
-      if value.is_a?(Array)
-        normalized[key] = value.reject(&:blank?).sort
-      elsif value.is_a?(String)
-        normalized[key] = value.strip
-      else
-        normalized[key] = value
-      end
+      normalized[key] = if value.is_a?(Array)
+                          value.reject(&:blank?).sort
+                        elsif value.is_a?(String)
+                          value.strip
+                        else
+                          value
+                        end
     end
 
     normalized
@@ -1743,9 +1750,7 @@ class DefectController < ApplicationController
 
     # Check each saved filter for a match
     saved_filters.each do |filter|
-      if filters_match?(filter.filters || {}, current_filter)
-        return filter
-      end
+      return filter if filters_match?(filter.filters || {}, current_filter)
     end
 
     nil
