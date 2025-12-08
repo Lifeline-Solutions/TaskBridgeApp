@@ -141,8 +141,6 @@ class CustomFieldChartGenerator
       .transform_keys { |(_id, name)| name }
   end
 
-
-
   def normalize_priority(priority)
     return 'Unknown' if priority.blank?
 

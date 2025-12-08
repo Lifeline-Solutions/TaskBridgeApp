@@ -6,50 +6,49 @@ module DefectHelper
 
     # Step 1: Remove Word/Docs XML comments and conditional tags
     cleaned = html.gsub(/<!--\[if.*?\]>.*?<!\[endif\]-->/m, '')
-                  .gsub(/<!--.*?-->/m, '')
+      .gsub(/<!--.*?-->/m, '')
 
     # Step 2: Remove Office namespace tags
-    cleaned = cleaned.gsub(/<\/?o:p[^>]*>/i, '')
-                    .gsub(/<\/?w:[^>]*>/i, '')
-                    .gsub(/<\/?m:[^>]*>/i, '')
+    cleaned = cleaned.gsub(%r{</?o:p[^>]*>}i, '')
+      .gsub(%r{</?w:[^>]*>}i, '')
+      .gsub(%r{</?m:[^>]*>}i, '')
 
     # Step 3: Remove MS Word/Docs CSS classes
     cleaned = cleaned.gsub(/\s*class=["']?Mso[a-zA-Z0-9]*["']?/i, '')
-                    .gsub(/\s*class=["']?[^"']*\bmso-[^"']*["']?/i, '')
+      .gsub(/\s*class=["']?[^"']*\bmso-[^"']*["']?/i, '')
 
     # Step 4: Remove mso-list spans (critical for duplicate bullets)
-    cleaned = cleaned.gsub(/<span[^>]*mso-list[^>]*>.*?<\/span>/im, '')
-                    .gsub(/<span[^>]*style=["'][^"']*mso-list[^"']*["'][^>]*>.*?<\/span>/im, '')
+    cleaned = cleaned.gsub(%r{<span[^>]*mso-list[^>]*>.*?</span>}im, '')
+      .gsub(%r{<span[^>]*style=["'][^"']*mso-list[^"']*["'][^>]*>.*?</span>}im, '')
 
     # Step 5: Clean inline bullets/numbers from list items
     # Remove various bullet unicode characters
     cleaned = cleaned.gsub(/(<li[^>]*>)\s*[•●○◦▪▫■□✓✔➢➣➤►▶⇒→➔➜]\s*/i, '\1')
     # Remove dash/asterisk bullets
-    cleaned = cleaned.gsub(/(<li[^>]*>)\s*[\-\*·‣⁃]\s+/i, '\1')
+    cleaned = cleaned.gsub(/(<li[^>]*>)\s*[-*·‣⁃]\s+/i, '\1')
     # Remove numbered lists (1. 2) 3. etc.)
-    cleaned = cleaned.gsub(/(<li[^>]*>)\s*\d+[\.\)]\s*/i, '\1')
+    cleaned = cleaned.gsub(/(<li[^>]*>)\s*\d+[.)]\s*/i, '\1')
     # Remove lettered lists (A. B) a. etc.)
-    cleaned = cleaned.gsub(/(<li[^>]*>)\s*[a-zA-Z][\.\)]\s*/i, '\1')
+    cleaned = cleaned.gsub(/(<li[^>]*>)\s*[a-zA-Z][.)]\s*/i, '\1')
 
     # Step 6: Remove font tags and font-family styles
-    cleaned = cleaned.gsub(/<\/?font[^>]*>/i, '')
-                    .gsub(/\s*style=["'][^"']*font-family[^"']*["']/i, '')
+    cleaned = cleaned.gsub(%r{</?font[^>]*>}i, '')
+      .gsub(/\s*style=["'][^"']*font-family[^"']*["']/i, '')
 
     # Step 7: Clean up empty tags
-    cleaned = cleaned.gsub(/<p[^>]*>\s*<\/p>/i, '')
-                    .gsub(/<span[^>]*>\s*<\/span>/i, '')
-                    .gsub(/<div[^>]*>\s*<\/div>/i, '')
+    cleaned = cleaned.gsub(%r{<p[^>]*>\s*</p>}i, '')
+      .gsub(%r{<span[^>]*>\s*</span>}i, '')
+      .gsub(%r{<div[^>]*>\s*</div>}i, '')
 
     # Step 8: Remove empty class/style attributes
     cleaned = cleaned.gsub(/\s*class=["']\s*["']/i, '')
-                    .gsub(/\s*style=["']\s*["']/i, '')
+      .gsub(/\s*style=["']\s*["']/i, '')
 
     # Step 9: Normalize whitespace in list items
-    cleaned = cleaned.gsub(/(<li[^>]*>)\s+/i, '\1')
-                    .gsub(/\s+(<\/li>)/i, '\1')
-
-    cleaned
+    cleaned.gsub(/(<li[^>]*>)\s+/i, '\1')
+      .gsub(%r{\s+(</li>)}i, '\1')
   end
+
   def priority_badge_class(priority)
     case priority.to_s.downcase
     when 'severity 1', 'high' then 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'

@@ -384,9 +384,6 @@ defects.each_with_index do |defect, idx|
     rescue StandardError
       []
     end
-
-    creator_changed = false
-    assignee_changed = false
     changes_made = false
 
     # === UPDATE CREATOR (REPORTER) ===
@@ -419,7 +416,6 @@ defects.each_with_index do |defect, idx|
             info '     [DRY RUN] Would update created_by'
           else
             defect.created_by = matched_creator.id
-            creator_changed = true
             changes_made = true
           end
 
@@ -464,7 +460,6 @@ defects.each_with_index do |defect, idx|
             info '     [DRY RUN] Would add assignee'
           else
             defect.users << matched_assignee unless defect.users.include?(matched_assignee)
-            assignee_changed = true
             changes_made = true
           end
 
@@ -518,7 +513,7 @@ puts ''
 
 if stats[:creator_matches].any?
   puts "✅ Creator Names Successfully Matched (#{stats[:creator_matches].keys.length} unique):"
-  stats[:creator_matches].sort_by { |name, count| -count }.each do |name, count|
+  stats[:creator_matches].sort_by { |_name, count| -count }.each do |name, count|
     puts "  ✓ '#{name}' (#{count} occurrence#{'s' if count > 1})"
   end
   puts ''
@@ -526,7 +521,7 @@ end
 
 if stats[:creator_no_matches].any?
   puts "❌ Creator Names That Could NOT Be Matched (#{stats[:creator_no_matches].keys.length} unique):"
-  stats[:creator_no_matches].sort_by { |name, count| -count }.each do |name, count|
+  stats[:creator_no_matches].sort_by { |_name, count| -count }.each do |name, count|
     puts "  ✗ '#{name}' (#{count} occurrence#{'s' if count > 1})"
   end
   puts ''
@@ -537,7 +532,7 @@ end
 
 if stats[:assignee_matches].any?
   puts "✅ Assignee Names Successfully Matched (#{stats[:assignee_matches].keys.length} unique):"
-  stats[:assignee_matches].sort_by { |name, count| -count }.each do |name, count|
+  stats[:assignee_matches].sort_by { |_name, count| -count }.each do |name, count|
     puts "  ✓ '#{name}' (#{count} occurrence#{'s' if count > 1})"
   end
   puts ''
@@ -545,7 +540,7 @@ end
 
 if stats[:assignee_no_matches].any?
   puts "❌ Assignee Names That Could NOT Be Matched (#{stats[:assignee_no_matches].keys.length} unique):"
-  stats[:assignee_no_matches].sort_by { |name, count| -count }.each do |name, count|
+  stats[:assignee_no_matches].sort_by { |_name, count| -count }.each do |name, count|
     puts "  ✗ '#{name}' (#{count} occurrence#{'s' if count > 1})"
   end
   puts ''

@@ -235,7 +235,7 @@ class DefectController < ApplicationController
       'start_date' => params[:start_date],
       'end_date' => params[:end_date],
       'order' => params[:order]
-    }.compact.reject { |k, v| v.blank? || v == [] }
+    }.compact.reject { |_k, v| v.blank? || v == [] }
 
     # Only include product_id if there are other filters present (not just route navigation)
     filter_only_params['product_id'] = params[:product_id] if filter_only_params.any? && params[:product_id].present?
@@ -1758,8 +1758,6 @@ class DefectController < ApplicationController
 
   def extract_filter_params(params)
     # Extract only filter-related parameters
-    filter_keys = %w[status priority user_id reporter_id label_ids qa_module_id submodule_id
-                     banking_type_id order start_date end_date query client_name]
 
     extracted = {}
 

@@ -50,7 +50,7 @@ OptionParser.new do |opts|
     options[:mode] = :all
   end
 
-  opts.on('--dry-run', "Preview changes without saving") do
+  opts.on('--dry-run', 'Preview changes without saving') do
     options[:dry_run] = true
   end
 
@@ -60,33 +60,33 @@ OptionParser.new do |opts|
 
   opts.on('--help', 'Show help message') do
     puts opts
-    puts "\n" + "=" * 100
-    puts "EXAMPLES"
-    puts "=" * 100
+    puts "\n#{'=' * 100}"
+    puts 'EXAMPLES'
+    puts '=' * 100
     puts "\n1. Sync and assign for single defect from Jira:"
-    puts "   rails runner scripts/sync_modules_from_jira.rb --defect PSP-114"
-    puts ""
-    puts "2. Sync and assign for entire project from Jira:"
-    puts "   rails runner scripts/sync_modules_from_jira.rb --project PSP"
-    puts ""
-    puts "3. Sync and assign all defects from Jira:"
-    puts "   rails runner scripts/sync_modules_from_jira.rb --all"
-    puts ""
-    puts "4. Preview changes before applying:"
-    puts "   DRY_RUN=true rails runner scripts/sync_modules_from_jira.rb --project PSP"
-    puts ""
-    puts "5. Verbose output with fetch details:"
-    puts "   VERBOSE=true rails runner scripts/sync_modules_from_jira.rb --defect PSP-114"
-    puts ""
-    puts "6. Dry run + verbose:"
-    puts "   DRY_RUN=true VERBOSE=true rails runner scripts/sync_modules_from_jira.rb --project PSP"
-    puts "\n" + "=" * 100
+    puts '   rails runner scripts/sync_modules_from_jira.rb --defect PSP-114'
+    puts ''
+    puts '2. Sync and assign for entire project from Jira:'
+    puts '   rails runner scripts/sync_modules_from_jira.rb --project PSP'
+    puts ''
+    puts '3. Sync and assign all defects from Jira:'
+    puts '   rails runner scripts/sync_modules_from_jira.rb --all'
+    puts ''
+    puts '4. Preview changes before applying:'
+    puts '   DRY_RUN=true rails runner scripts/sync_modules_from_jira.rb --project PSP'
+    puts ''
+    puts '5. Verbose output with fetch details:'
+    puts '   VERBOSE=true rails runner scripts/sync_modules_from_jira.rb --defect PSP-114'
+    puts ''
+    puts '6. Dry run + verbose:'
+    puts '   DRY_RUN=true VERBOSE=true rails runner scripts/sync_modules_from_jira.rb --project PSP'
+    puts "\n#{'=' * 100}"
     exit 0
   end
 end.parse!
 
 if options[:mode] == :none
-  puts "ERROR: Please specify --defect, --project, or --all"
+  puts 'ERROR: Please specify --defect, --project, or --all'
   exit 1
 end
 
@@ -114,8 +114,8 @@ JIRA_API_USER = ENV.fetch('JIRA_API_USER') { CONFIG[:jira_api_user] }
 JIRA_API_TOKEN = ENV.fetch('JIRA_API_TOKEN') { CONFIG[:jira_api_token] }
 
 unless JIRA_API_USER && JIRA_API_TOKEN
-  puts "ERROR: JIRA_API_USER and JIRA_API_TOKEN must be set in environment variables or config/jira_import.yml"
-  puts "Set them with:"
+  puts 'ERROR: JIRA_API_USER and JIRA_API_TOKEN must be set in environment variables or config/jira_import.yml'
+  puts 'Set them with:'
   puts "  export JIRA_API_USER='your_email@domain.com'"
   puts "  export JIRA_API_TOKEN='your_api_token'"
   exit 1
@@ -125,27 +125,27 @@ end
 MODULE_FIELD = ENV.fetch('JIRA_MODULE_FIELD') { CONFIG[:module_field] || 'customfield_10141' }
 SUBMODULE_FIELD = ENV.fetch('JIRA_SUBMODULE_FIELD') { CONFIG[:submodule_field] || 'customfield_10142' }
 
-vputs "Configuration loaded:"
+vputs 'Configuration loaded:'
 vputs "  Jira URL: #{JIRA_BASE_URL}"
 vputs "  API User: #{JIRA_API_USER}"
 vputs "  Module Field: #{MODULE_FIELD}"
 vputs "  Submodule Field: #{SUBMODULE_FIELD}"
 
-puts "\n" + "=" * 100
-puts "🔗 SYNC MODULES FROM JIRA TO TASKBRIDGE"
-puts "=" * 100
+puts "\n#{'=' * 100}"
+puts '🔗 SYNC MODULES FROM JIRA TO TASKBRIDGE'
+puts '=' * 100
 puts "Mode: #{case options[:mode]
-             when :single_defect then "Single Defect (#{options[:defect_key]})"
-             when :project then "Project (#{options[:project_key]})"
-             when :all then "All Defects"
-             else "Not specified"
-             end}"
+              when :single_defect then "Single Defect (#{options[:defect_key]})"
+              when :project then "Project (#{options[:project_key]})"
+              when :all then 'All Defects'
+              else 'Not specified'
+              end}"
 puts "Data Source: JIRA API (#{JIRA_BASE_URL})"
-puts "Target: TaskBridge Project Database"
+puts 'Target: TaskBridge Project Database'
 puts "Dry Run: #{DRY_RUN ? 'YES (no changes)' : 'NO (will save)'}"
 puts "Verbose: #{VERBOSE ? 'YES' : 'NO'}"
-puts "=" * 100
-puts ""
+puts '=' * 100
+puts ''
 
 # ===============================
 # JIRA API FUNCTIONS
@@ -179,7 +179,7 @@ def fetch_from_jira(jql)
       begin
         error_json = JSON.parse(error_body)
         error_msg = error_json['errorMessages']&.join(', ') || error_json['message'] || error_body
-      rescue
+      rescue StandardError
         error_msg = error_body
       end
 
@@ -193,11 +193,11 @@ def fetch_from_jira(jql)
     data = JSON.parse(response.body)
     issues = data['issues'] || []
     vputs "[API] Fetched #{issues.length} issue(s)"
-    return issues
+    issues
   rescue StandardError => e
     puts "❌ ERROR connecting to Jira API: #{e.class}: #{e.message}"
     puts "   URL: #{JIRA_BASE_URL}"
-    return []
+    []
   end
 end
 
@@ -234,7 +234,7 @@ def extract_module_and_submodule(text)
   return [nil, nil] if text.empty?
 
   # Split on FIRST delimiter, keeping everything after as submodule
-  parts = text.split(/\s*[-\u2013\u2014\/|]\s*/, 2)
+  parts = text.split(%r{\s*[-\u2013\u2014/|]\s*}, 2)
 
   if parts.length == 2
     module_name = parts[0].strip
@@ -270,10 +270,10 @@ def find_or_create_module(module_name, product_id, created_by)
       modified_by: created_by
     )
     vputs "[MODULE-CREATED] #{module_name} (ID: #{module_rec.id})"
-    return module_rec
+    module_rec
   rescue StandardError => e
     puts "❌ ERROR: Failed to create module '#{module_name}': #{e.message}"
-    return nil
+    nil
   end
 end
 
@@ -302,10 +302,10 @@ def find_or_create_submodule(submodule_name, parent_module, created_by)
       modified_by: created_by
     )
     vputs "[SUBMODULE-CREATED] #{submodule_name} (ID: #{submodule_rec.id})"
-    return submodule_rec
+    submodule_rec
   rescue StandardError => e
     puts "❌ ERROR: Failed to create submodule '#{submodule_name}': #{e.message}"
-    return nil
+    nil
   end
 end
 
@@ -322,16 +322,14 @@ def assign_modules_to_defect(defect, jira_module, jira_submodule, product_id, cr
 
   # Find or create submodule (if provided)
   child_module = nil
-  if jira_submodule.present?
-    child_module = find_or_create_submodule(jira_submodule, parent_module, created_by)
-  end
+  child_module = find_or_create_submodule(jira_submodule, parent_module, created_by) if jira_submodule.present?
 
   # Check if assignment changed
   module_changed = defect.qa_module_id != parent_module.id
   submodule_changed = defect.submodule_id != child_module&.id
 
   if !module_changed && !submodule_changed
-    vputs "  ✓ Already assigned - No changes"
+    vputs '  ✓ Already assigned - No changes'
     return { status: :skipped, reason: 'no_changes' }
   end
 
@@ -356,11 +354,11 @@ def assign_modules_to_defect(defect, jira_module, jira_submodule, product_id, cr
     defect.updated_at = Time.current
     defect.save!
 
-    vputs "  ✅ SAVED to TaskBridge"
-    return { status: :updated, module: parent_module.name, submodule: child_module&.name }
+    vputs '  ✅ SAVED to TaskBridge'
+    { status: :updated, module: parent_module.name, submodule: child_module&.name }
   rescue StandardError => e
     puts "  ❌ ERROR: Failed to save defect: #{e.message}"
-    return { status: :error, reason: 'save_failed' }
+    { status: :error, reason: 'save_failed' }
   end
 end
 
@@ -386,7 +384,7 @@ jql = case options[:mode]
       when :project
         "project = #{options[:project_key]} ORDER BY created DESC"
       when :all
-        "ORDER BY updated DESC"
+        'ORDER BY updated DESC'
       end
 
 puts "📡 Fetching from Jira API with JQL: #{jql}\n\n"
@@ -494,32 +492,31 @@ jira_issues.each do |jira_issue|
   end
 end
 
-puts "\n" + "=" * 100
-puts "📊 SUMMARY - JIRA TO TASKBRIDGE SYNC"
-puts "=" * 100
-puts "Data Source: JIRA API"
-puts "Target: TaskBridge Project Database"
-puts ""
+puts "\n#{'=' * 100}"
+puts '📊 SUMMARY - JIRA TO TASKBRIDGE SYNC'
+puts '=' * 100
+puts 'Data Source: JIRA API'
+puts 'Target: TaskBridge Project Database'
+puts ''
 puts "Fetched from Jira:   #{stats[:fetched_from_jira]}"
 puts "Synced to DB:        #{stats[:synced]}"
 puts "Previewed (DRY):     #{stats[:previewed]}"
 puts "Skipped:             #{stats[:skipped]}"
 puts "Errors:              #{stats[:errors]}"
-puts ""
+puts ''
 
-if DRY_RUN && stats[:previewed] > 0
+if DRY_RUN && stats[:previewed].positive?
   puts "ℹ️  DRY RUN MODE: #{stats[:previewed]} defect(s) would be synced from Jira to TaskBridge."
-  puts "   Modules and submodules would be mapped."
-  puts "   To apply changes, run without DRY_RUN=true"
-elsif stats[:synced] > 0
+  puts '   Modules and submodules would be mapped.'
+  puts '   To apply changes, run without DRY_RUN=true'
+elsif stats[:synced].positive?
   puts "✅ SUCCESS: #{stats[:synced]} defect(s) synced from Jira to TaskBridge"
-  puts "   ✓ Modules captured and assigned"
-  puts "   ✓ Submodules captured and assigned"
-  puts "   ✓ Auto-created missing modules/submodules"
+  puts '   ✓ Modules captured and assigned'
+  puts '   ✓ Submodules captured and assigned'
+  puts '   ✓ Auto-created missing modules/submodules'
 else
-  puts "ℹ️  No changes were made."
+  puts 'ℹ️  No changes were made.'
 end
 
-puts "=" * 100
+puts '=' * 100
 puts "\n"
-

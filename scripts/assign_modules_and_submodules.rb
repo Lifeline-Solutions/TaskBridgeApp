@@ -50,7 +50,7 @@ OptionParser.new do |opts|
     options[:mode] = :all
   end
 
-  opts.on('--dry-run', "Preview changes without saving") do
+  opts.on('--dry-run', 'Preview changes without saving') do
     options[:dry_run] = true
   end
 
@@ -60,33 +60,33 @@ OptionParser.new do |opts|
 
   opts.on('--help', 'Show help message') do
     puts opts
-    puts "\n" + "=" * 100
-    puts "EXAMPLES"
-    puts "=" * 100
+    puts "\n#{'=' * 100}"
+    puts 'EXAMPLES'
+    puts '=' * 100
     puts "\n1. Fetch and assign for single defect from Jira:"
-    puts "   rails runner scripts/assign_modules_and_submodules.rb --defect PSP-114"
-    puts ""
-    puts "2. Fetch and assign for entire project from Jira:"
-    puts "   rails runner scripts/assign_modules_and_submodules.rb --project PSP"
-    puts ""
-    puts "3. Fetch and assign all defects from Jira:"
-    puts "   rails runner scripts/assign_modules_and_submodules.rb --all"
-    puts ""
-    puts "4. Preview changes before applying:"
-    puts "   DRY_RUN=true rails runner scripts/assign_modules_and_submodules.rb --project PSP"
-    puts ""
-    puts "5. Verbose output with fetch details:"
-    puts "   VERBOSE=true rails runner scripts/assign_modules_and_submodules.rb --defect PSP-114"
-    puts ""
-    puts "6. Dry run + verbose:"
-    puts "   DRY_RUN=true VERBOSE=true rails runner scripts/assign_modules_and_submodules.rb --project PSP"
-    puts "\n" + "=" * 100
+    puts '   rails runner scripts/assign_modules_and_submodules.rb --defect PSP-114'
+    puts ''
+    puts '2. Fetch and assign for entire project from Jira:'
+    puts '   rails runner scripts/assign_modules_and_submodules.rb --project PSP'
+    puts ''
+    puts '3. Fetch and assign all defects from Jira:'
+    puts '   rails runner scripts/assign_modules_and_submodules.rb --all'
+    puts ''
+    puts '4. Preview changes before applying:'
+    puts '   DRY_RUN=true rails runner scripts/assign_modules_and_submodules.rb --project PSP'
+    puts ''
+    puts '5. Verbose output with fetch details:'
+    puts '   VERBOSE=true rails runner scripts/assign_modules_and_submodules.rb --defect PSP-114'
+    puts ''
+    puts '6. Dry run + verbose:'
+    puts '   DRY_RUN=true VERBOSE=true rails runner scripts/assign_modules_and_submodules.rb --project PSP'
+    puts "\n#{'=' * 100}"
     exit 0
   end
 end.parse!
 
 if options[:mode] == :none
-  puts "ERROR: Please specify --defect, --project, or --all"
+  puts 'ERROR: Please specify --defect, --project, or --all'
   exit 1
 end
 
@@ -115,7 +115,7 @@ JIRA_API_USER = ENV.fetch('JIRA_API_USER') { CONFIG[:jira_api_user] }
 JIRA_API_TOKEN = ENV.fetch('JIRA_API_TOKEN') { CONFIG[:jira_api_token] }
 
 unless JIRA_API_USER && JIRA_API_TOKEN
-  puts "ERROR: JIRA_API_USER and JIRA_API_TOKEN must be set"
+  puts 'ERROR: JIRA_API_USER and JIRA_API_TOKEN must be set'
   exit 1
 end
 
@@ -406,9 +406,7 @@ def extract_module_and_submodule(text)
 
   # Submodule = parts[1] - parts[2] (if exists)
   submodule_name = nil
-  if parts.length >= 3
-    submodule_name = "#{parts[1]}-#{parts[2]}"
-  end
+  submodule_name = "#{parts[1]}-#{parts[2]}" if parts.length >= 3
 
   vputs "[EXTRACT] Found hierarchy: Module='#{module_name}', Submodule='#{submodule_name || '(none)'}'"
   [module_name, submodule_name]
@@ -438,10 +436,10 @@ def find_or_create_module(module_name, product_id, _created_by, stats = nil)
     )
     vputs "[MODULE-CREATED] #{module_name} (ID: #{module_rec.id}) - New module created"
     stats[:modules_created] += 1 if stats
-    return module_rec
+    module_rec
   rescue StandardError => e
     puts "❌ ERROR: Failed to create module '#{module_name}': #{e.message}"
-    return nil
+    nil
   end
 end
 
@@ -470,10 +468,10 @@ def find_or_create_submodule(submodule_name, parent_module, product_id, _created
     )
     vputs "[SUBMODULE-CREATED] #{submodule_name} (ID: #{submodule_rec.id}, Parent: #{parent_module.name}) - New submodule created"
     stats[:submodules_created] += 1 if stats
-    return submodule_rec
+    submodule_rec
   rescue StandardError => e
     puts "❌ ERROR: Failed to create submodule '#{submodule_name}': #{e.message}"
-    return nil
+    nil
   end
 end
 
@@ -507,7 +505,7 @@ def assign_modules_to_defect(defect, module_name, submodule_name, product_id, _c
   submodule_changed = defect.submodule_id != child_module&.id
 
   if !module_changed && !submodule_changed
-    vputs "  ✓ No changes needed (already up to date)"
+    vputs '  ✓ No changes needed (already up to date)'
     return { status: :skipped, reason: 'no_changes' }
   end
 
@@ -533,11 +531,11 @@ def assign_modules_to_defect(defect, module_name, submodule_name, product_id, _c
     defect.updated_at = Time.current
     defect.save!
 
-    vputs "  ✅ UPDATED"
-    return { status: :updated, module: parent_module&.name, submodule: child_module&.name }
+    vputs '  ✅ UPDATED'
+    { status: :updated, module: parent_module&.name, submodule: child_module&.name }
   rescue StandardError => e
     puts "  ❌ ERROR: Failed to update defect: #{e.message}"
-    return { status: :error, reason: 'save_failed' }
+    { status: :error, reason: 'save_failed' }
   end
 end
 
@@ -545,20 +543,20 @@ end
 # MAIN EXECUTION
 # ===============================
 
-puts "\n" + "=" * 100
-puts "📦 DEFECT MODULE & SUBMODULE ASSIGNMENT FROM JIRA"
-puts "=" * 100
+puts "\n#{'=' * 100}"
+puts '📦 DEFECT MODULE & SUBMODULE ASSIGNMENT FROM JIRA'
+puts '=' * 100
 puts "Mode: #{case options[:mode]
-             when :single_defect then "Single Defect (#{options[:defect_key]})"
-             when :project then "Project (#{options[:project_key]})"
-             when :all then "All Defects"
-             else "Not specified"
-             end}"
-puts "Data Source: Jira API with Custom Field Discovery"
+              when :single_defect then "Single Defect (#{options[:defect_key]})"
+              when :project then "Project (#{options[:project_key]})"
+              when :all then 'All Defects'
+              else 'Not specified'
+              end}"
+puts 'Data Source: Jira API with Custom Field Discovery'
 puts "Dry Run: #{DRY_RUN ? 'YES' : 'NO'}"
 puts "Verbose: #{VERBOSE ? 'YES' : 'NO'}"
-puts "=" * 100
-puts ""
+puts '=' * 100
+puts ''
 
 stats = {
   total: 0,
@@ -603,7 +601,7 @@ submodule_field = jira_result[:submodule_field]
 
 stats[:jira_issues_fetched] = jira_issues.length
 
-vputs "Discovered custom fields:"
+vputs 'Discovered custom fields:'
 vputs "  Module Field: #{module_field}"
 vputs "  Submodule Field: #{submodule_field}"
 
@@ -632,7 +630,7 @@ defects = case options[:mode]
 stats[:total] = defects.count
 
 if defects.empty?
-  puts "❌ No defects found"
+  puts '❌ No defects found'
   exit 1
 end
 
@@ -673,19 +671,15 @@ defects.find_each do |defect|
   puts "    Raw Submodule Field (#{submodule_field}): #{raw_submodule_value.inspect}"
 
   # Get module from custom field
-  if module_field
-    if raw_module_value.present?
-      module_to_assign = extract_field_value(raw_module_value)
-      puts "    → Extracted Module: '#{module_to_assign}'" if module_to_assign.present?
-    end
+  if module_field && raw_module_value.present?
+    module_to_assign = extract_field_value(raw_module_value)
+    puts "    → Extracted Module: '#{module_to_assign}'" if module_to_assign.present?
   end
 
   # Get submodule from custom field (uses special extraction for 'child' structure)
-  if submodule_field
-    if raw_submodule_value.present?
-      submodule_to_assign = extract_submodule_from_field(raw_submodule_value)
-      puts "    → Extracted Submodule: '#{submodule_to_assign}'" if submodule_to_assign.present?
-    end
+  if submodule_field && raw_submodule_value.present?
+    submodule_to_assign = extract_submodule_from_field(raw_submodule_value)
+    puts "    → Extracted Submodule: '#{submodule_to_assign}'" if submodule_to_assign.present?
   end
 
   # Skip ONLY if BOTH raw fields are nil/empty in Jira (no data at all)
@@ -699,7 +693,7 @@ defects.find_each do |defect|
   # If we have raw data but extraction failed, skip with different message
   if module_to_assign.blank? && submodule_to_assign.blank?
     stats[:skipped] += 1
-    puts "    ⚠️  Warning: Jira has data but extraction returned nil for both fields"
+    puts '    ⚠️  Warning: Jira has data but extraction returned nil for both fields'
     vputs "⏭️  #{defect.defect_unique}: Skipped (Extraction failed)"
     next
   end
@@ -732,40 +726,39 @@ defects.find_each do |defect|
   end
 end
 
-puts "\n" + "=" * 100
-puts "📊 SUMMARY"
-puts "=" * 100
+puts "\n#{'=' * 100}"
+puts '📊 SUMMARY'
+puts '=' * 100
 puts "Jira Issues Fetched:  #{stats[:jira_issues_fetched]}"
 puts "Jira Issues Matched:  #{stats[:jira_matched]}"
 puts "Total Defects:        #{stats[:total]}"
-puts ""
+puts ''
 puts "Modules Found (existing):   #{stats[:modules_found]}"
 puts "Modules Created (new):      #{stats[:modules_created]}"
 puts "Submodules Found (existing): #{stats[:submodules_found]}"
 puts "Submodules Created (new):    #{stats[:submodules_created]}"
-puts ""
+puts ''
 puts "Defects Updated:      #{stats[:updated]}"
 puts "Defects Previewed:    #{stats[:previewed]}" if DRY_RUN
 puts "Defects Skipped:      #{stats[:skipped]}"
 puts "Errors:               #{stats[:errors]}"
-puts ""
+puts ''
 
-if DRY_RUN && stats[:previewed] > 0
+if DRY_RUN && stats[:previewed].positive?
   puts "ℹ️  DRY RUN MODE: #{stats[:previewed]} defect(s) would be updated."
-  puts "   To apply changes, run without DRY_RUN=true"
-elsif stats[:updated] > 0
+  puts '   To apply changes, run without DRY_RUN=true'
+elsif stats[:updated].positive?
   puts "✅ SUCCESS: #{stats[:updated]} defect(s) UPDATED with modules/submodules from Jira"
   puts "   - #{stats[:modules_found]} existing modules reused"
   puts "   - #{stats[:modules_created]} new modules created"
   puts "   - #{stats[:submodules_found]} existing submodules reused"
   puts "   - #{stats[:submodules_created]} new submodules created"
-  puts ""
-  puts "   ℹ️  NOTE: This script UPDATES defect assignments only."
-  puts "   No modules or submodules were deleted."
+  puts ''
+  puts '   ℹ️  NOTE: This script UPDATES defect assignments only.'
+  puts '   No modules or submodules were deleted.'
 else
-  puts "ℹ️  No changes were made."
+  puts 'ℹ️  No changes were made.'
 end
 
-puts "=" * 100
+puts '=' * 100
 puts "\n"
-

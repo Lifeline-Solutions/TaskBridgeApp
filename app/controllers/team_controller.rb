@@ -70,6 +70,7 @@ class TeamController < ApplicationController
       end
     end
   end
+
   def edit; end
 
   def update
@@ -87,6 +88,7 @@ class TeamController < ApplicationController
       end
     end
   end
+
   def destroy
     @team.destroy unless audit_soft_delete(@team)
     respond_to do |format|
@@ -104,6 +106,7 @@ class TeamController < ApplicationController
   def set_team
     @team = Team.find(params[:id])
   end
+
   def team_params
     params.require(:team).permit(:name, :description, :team_role, user_ids: [])
   end

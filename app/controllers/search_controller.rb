@@ -25,7 +25,7 @@ class SearchController < ApplicationController
         return
       end
 
-    # Handle search results
+      # Handle search results
       @tickets = result[:tickets]
       @defects = result[:defects]
       @projects = result[:projects] || Project.none
@@ -73,7 +73,7 @@ class SearchController < ApplicationController
         .includes(:product)
         .limit(5)
         .select(:id, :defect_unique, :summary, :product_id)
-        
+
       projects = Project
         .search_by_query(@query)
         .accessible_by_user(current_user)
@@ -103,7 +103,7 @@ class SearchController < ApplicationController
           url: defect_path(defect)
         }
       end
-      
+
       projects.each do |project|
         suggestions << {
           type: 'project',
