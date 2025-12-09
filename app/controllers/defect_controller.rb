@@ -1988,17 +1988,6 @@ class DefectController < ApplicationController
   def log_defect_changes(changes_hash)
     return if changes_hash.empty?
 
-    # Create a general "Edit" entry in the timeline that summarizes all changes
-    change_summary = build_edit_summary(changes_hash)
-
-    DefectHistory.create!(
-      defect: @defect,
-      user: current_user,
-      history_type: 'Edit',
-      history: change_summary,
-      created_at: Time.current
-    )
-
     # Log each type of change to history for detailed tracking
     changes_hash.each do |field, change_data|
       history_type = case field
