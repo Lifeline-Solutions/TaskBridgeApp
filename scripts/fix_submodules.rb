@@ -190,11 +190,13 @@ if options[:project].upcase == 'KCBL'
   log "Setting up KCBL Modules/Submodules..."
 
   # Find or create parent module: KCBL Modules/Submodules
-  kcbl_module = QaModule.where('lower(name) = ? AND parent_id IS NULL', 'kcbl modules/submodules'.downcase).first
+  # Ensure we use the KCBL Product ID
+  kcbl_product_id = 'c1469eb7-97d1-4611-9e67-3fce1d0bb1ac'
+  
+  kcbl_module = QaModule.where('lower(name) = ? AND parent_id IS NULL AND product_id = ?', 'kcbl modules/submodules'.downcase, kcbl_product_id).first
   unless kcbl_module
-    product_id = DEFAULT_PRODUCT_UUID
-    log "  Creating parent module: KCBL Modules/Submodules"
-    kcbl_module = QaModule.create!(name: 'KCBL Modules/Submodules', product_id: product_id)
+    log "  Creating parent module: KCBL Modules/Submodules for product #{kcbl_product_id}"
+    kcbl_module = QaModule.create!(name: 'KCBL Modules/Submodules', product_id: kcbl_product_id)
   end
   log "  ✓ Parent Module: #{kcbl_module.name} (#{kcbl_module.id})"
 
@@ -217,6 +219,8 @@ defects.find_each do |defect|
       unless options[:dry_run]
         defect.qa_module_id = kcbl_module.id
         defect.submodule_id = kcbl_submodule.id
+        # Core Banking ID for KCBL product
+        defect.banking_type_id = '7fc78d1b-c21f-4077-a2b4-e8cad57ca71c'
         defect.save!
         log '    ✅ Updated successfully'
       end
