@@ -232,6 +232,13 @@ defects.find_each do |defect|
 
     defect.qa_module_id = parent&.id || FALLBACK_QA_MODULE_ID
     defect.submodule_id = child&.id || FALLBACK_SUBMODULE_ID
+    
+    # Fix for KCBL: Ensure Banking Type is set to 'Core Banking'
+    if options[:project] == 'KCBL'
+      # Core Banking ID for KCBL product
+      defect.banking_type_id = '7fc78d1b-c21f-4077-a2b4-e8cad57ca71c' 
+    end
+
     defect.save!
     log '    ✅ Updated successfully'
   end
