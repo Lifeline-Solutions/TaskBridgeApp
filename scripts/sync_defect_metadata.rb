@@ -164,7 +164,15 @@ def discover_custom_fields(project_key)
   }
 
   # Get patterns for this project
-  patterns = project_patterns[project_key] || {}
+  # Special handling: treat any RMP-like project keys as Rafiki projects
+  if project_key.to_s.upcase.start_with?('RMP')
+    patterns = {
+      module_pattern: /^Rafiki\s+Modules?$/i,
+      submodule_pattern: /^Rafiki\s+Modules?\s*\/\s*Sub\s*Modules?$/i
+    }
+  else
+    patterns = project_patterns[project_key] || {}
+  end
 
   # Collect all matching fields for debugging
   all_module_fields = []
