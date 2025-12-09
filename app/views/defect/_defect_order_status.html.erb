@@ -4,18 +4,18 @@
     <tr>
       <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 sticky left-0 z-30 w-12 min-w-[3rem] border-r border-gray-200 dark:border-gray-600">#</th>
       <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 sticky z-30 w-28 min-w-[7rem] border-r border-gray-200 dark:border-gray-600" style="left: 3rem;">Defect ID</th>
-      <th scope="col" class="px-3 py-2">Summary</th>
-      <th scope="col" class="px-3 py-2">Status</th>
-      <th scope="col" class="px-3 py-2">Priority</th>
-      <th scope="col" class="px-3 py-2">Module</th>
-      <th scope="col" class="px-3 py-2">Sub Module</th>
-      <th scope="col" class="px-3 py-2">Banking Types</th>
-      <th scope="col" class="px-3 py-2">Labels</th>
-      <th scope="col" class="px-3 py-2">Assignee(s)</th>
-      <th scope="col" class="px-3 py-2">Reporter</th>
-      <th scope="col" class="px-3 py-2">Created At</th>
-      <th scope="col" class="px-3 py-2">Retest Count</th>
-      <th scope="col" class="px-3 py-2">Project</th>
+      <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 sticky z-30 w-64 min-w-[16rem] border-r border-gray-200 dark:border-gray-600" style="left: 10rem;">Summary</th>
+      <th scope="col" class="px-3 py-2 border-r border-gray-200 dark:border-gray-600">Status</th>
+      <th scope="col" class="px-3 py-2 border-r border-gray-200 dark:border-gray-600">Priority</th>
+      <th scope="col" class="px-3 py-2 border-r border-gray-200 dark:border-gray-600">Module</th>
+      <th scope="col" class="px-3 py-2 border-r border-gray-200 dark:border-gray-600">Sub Module</th>
+      <th scope="col" class="px-3 py-2 border-r border-gray-200 dark:border-gray-600">Banking Types</th>
+      <th scope="col" class="px-3 py-2 border-r border-gray-200 dark:border-gray-600">Labels</th>
+      <th scope="col" class="px-3 py-2 border-r border-gray-200 dark:border-gray-600">Assignee(s)</th>
+      <th scope="col" class="px-3 py-2 border-r border-gray-200 dark:border-gray-600">Reporter</th>
+      <th scope="col" class="px-3 py-2 border-r border-gray-200 dark:border-gray-600">Created At</th>
+      <th scope="col" class="px-3 py-2 border-r border-gray-200 dark:border-gray-600">Retest Count</th>
+      <th scope="col" class="px-3 py-2 border-r border-gray-200 dark:border-gray-600">Project</th>
       <th scope="col" class="px-3 py-2">Actions</th>
     </tr>
     </thead>
@@ -31,31 +31,33 @@
         <td class="px-3 py-2 whitespace-nowrap bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-600 sticky z-10 w-28 min-w-[7rem] border-r border-gray-200 dark:border-gray-700" style="left: 3rem;">
           <%= link_to defect.defect_unique, defect_path(defect.id), class: "text-blue-600 hover:underline font-medium text-xs" %>
         </td>
-        <td class="px-3 py-2" style="min-width: 200px; max-width: 300px;">
-          <% if defect.summary.present? %>
-            <%= defect.summary.truncate(50) %>
-          <% end %>
+        <td class="px-3 py-2 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-600 sticky z-10 w-64 min-w-[16rem] border-r border-gray-200 dark:border-gray-700" style="left: 10rem;" title="<%= defect.summary if defect.summary.present? %>">
+          <div class="truncate">
+            <% if defect.summary.present? %>
+              <%= defect.summary %>
+            <% end %>
+          </div>
         </td>
-        <td class="px-3 py-2 whitespace-nowrap min-w-[160px]">
+        <td class="px-3 py-2 whitespace-nowrap min-w-[160px] border-r border-gray-200 dark:border-gray-700">
           <div class="flex items-center gap-2">
             <%= render partial: 'defect/defect_statuses', locals: { defect: defect } %>
           </div>
         </td>
-        <td class="px-3 py-2 whitespace-nowrap">
+        <td class="px-3 py-2 whitespace-nowrap border-r border-gray-200 dark:border-gray-700">
           <span class="px-2 py-1 text-xs font-semibold rounded inline-block <%= priority_badge_class(defect.priority) %>">
             <%= defect.priority %>
           </span>
         </td>
-        <td class="px-3 py-2 whitespace-nowrap">
+        <td class="px-3 py-2 whitespace-nowrap border-r border-gray-200 dark:border-gray-700">
           <%= defect.qa_module&.name || 'Not specified' %>
         </td>
-        <td class="px-3 py-2 whitespace-nowrap">
+        <td class="px-3 py-2 whitespace-nowrap border-r border-gray-200 dark:border-gray-700">
           <%= defect.submodule&.name || 'Not specified' %>
         </td>
-        <td class="px-3 py-2 whitespace-nowrap">
+        <td class="px-3 py-2 whitespace-nowrap border-r border-gray-200 dark:border-gray-700">
           <%= defect.banking_type&.name || 'Not specified' %>
         </td>
-        <td class="px-3 py-2">
+        <td class="px-3 py-2 border-r border-gray-200 dark:border-gray-700">
           <% defect.labels.each do |label| %>
                     <span class="px-2 py-1 text-xs font-medium bg-gray-200 text-gray-700 rounded dark:bg-gray-600 dark:text-gray-100">
                       <%= label.name %>
@@ -63,7 +65,7 @@
           <% end %>
         </td>
         <!-- Assignee(s) -->
-        <td class="px-3 py-2 whitespace-nowrap">
+        <td class="px-3 py-2 whitespace-nowrap border-r border-gray-200 dark:border-gray-700">
           <div class="flex items-center gap-2">
             <%= render partial: 'defect/user_initials', locals: { defect: defect } %>
             <span class="text-sm"><%= defect.users.map { |u| [u.first_name, u.last_name].compact.join(' ') }
@@ -73,7 +75,7 @@
           </div>
         </td>
         <!-- Reporter -->
-        <td class="px-3 py-2 whitespace-nowrap">
+        <td class="px-3 py-2 whitespace-nowrap border-r border-gray-200 dark:border-gray-700">
           <% if defect.creator.present? %>
             <div class="flex gap-2 items-center">
               <!-- Avatar circle with initials -->
@@ -87,7 +89,7 @@
             <p class="text-red-500 text-sm">No reporter set</p>
           <% end %>
         </td>
-        <td class="px-3 py-2 whitespace-nowrap min-w-[140px]">
+        <td class="px-3 py-2 whitespace-nowrap min-w-[140px] border-r border-gray-200 dark:border-gray-700">
           <div class="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 flex-shrink-0 text-gray-600 dark:text-gray-400">
               <path d="M12 11.993a.75.75 0 0 0-.75.75v.006c0 .414.336.75.75.75h.006a.75.75 0 0 0 .75-.75v-.006a.75.75 0 0 0-.75-.75H12ZM12 16.494a.75.75 0 0 0-.75.75v.005c0 .414.335.75.75.75h.005a.75.75 0 0 0 .75-.75v-.005a.75.75 0 0 0-.75-.75H12ZM8.999 17.244a.75.75 0 0 1 .75-.75h.006a.75.75 0 0 1 .75.75v.006a.75.75 0 0 1-.75.75h-.006a.75.75 0 0 1-.75-.75v-.006ZM7.499 16.494a.75.75 0 0 0-.75.75v.005c0 .414.336.75.75.75h.005a.75.75 0 0 0 .75-.75v-.005a.75.75 0 0 0-.75-.75H7.5ZM13.499 14.997a.75.75 0 0 1 .75-.75h.006a.75.75 0 0 1 .75.75v.005a.75.75 0 0 1-.75.75h-.006a.75.75 0 0 1-.75-.75v-.005ZM14.25 16.494a.75.75 0 0 0-.75.75v.006c0 .414.335.75.75.75h.005a.75.75 0 0 0 .75-.75v-.006a.75.75 0 0 0-.75-.75h-.005ZM15.75 14.995a.75.75 0 0 1 .75-.75h.005a.75.75 0 0 1 .75.75v.006a.75.75 0 0 1-.75.75H16.5a.75.75 0 0 1-.75-.75v-.006ZM13.498 12.743a.75.75 0 0 1 .75-.75h2.25a.75.75 0 1 1 0 1.5h-2.25a.75.75 0 0 1-.75-.75ZM6.748 14.993a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75Z" />
@@ -96,13 +98,13 @@
             <span class="font-medium text-xs"><%= defect.created_at.strftime('%d-%m-%Y') %></span>
           </div>
         </td>
-        <td class="px-3 py-2 text-center">
+        <td class="px-3 py-2 text-center border-r border-gray-200 dark:border-gray-700">
           <span class="px-2 py-1 text-xs font-medium rounded">
             <%= defect.retest_count %>
           </span>
         </td>
 
-        <td class="px-3 py-2 whitespace-nowrap">
+        <td class="px-3 py-2 whitespace-nowrap border-r border-gray-200 dark:border-gray-700">
           <% if defect.product.present? %>
             <%= link_to(
                   "#{defect.product.client&.name} #{defect.product.groupwares.first&.name}".truncate(30),
