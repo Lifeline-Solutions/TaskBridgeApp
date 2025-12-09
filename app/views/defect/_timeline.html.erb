@@ -55,7 +55,7 @@
                 <%= @defect.creator.present? ? @defect.creator.name : 'Unknown' %>
               </span>
               <span class="text-gray-500 dark:text-gray-400 ml-1">created this defect</span>
-              <span class="text-gray-400 dark:text-gray-500 text-xs ml-2"><%= time_ago_in_words(@defect.created_at) %> ago</span>
+              <span class="text-gray-400 dark:text-gray-500 text-xs ml-2"><%= @defect.created_at.strfime %> ago</span>
             </div>
           </div>
         </div>
