@@ -96,8 +96,8 @@ end
 # JIRA API METHODS
 # ===============================
 
-# Discover custom fields for modules, submodules, and banking types
-def discover_custom_fields
+# Discover custom fields for modules, submodules, and banking types based on project
+def discover_custom_fields(project_key)
   url = "#{JIRA_BASE_URL}/rest/api/3/field"
   uri = URI.parse(url)
 
@@ -123,21 +123,59 @@ def discover_custom_fields
   submodule_field = nil
   banking_type_field = nil
 
+  # Project-specific field mapping
+  project_patterns = {
+    'RMF' => {
+      module_pattern: /rafiki\s*modules?$/i,
+      submodule_pattern: /rafiki\s*modules?\s*\/\s*sub\s*modules?/i
+    },
+    'KCBL' => {
+      module_pattern: /kcbl\s*modules?$/i,
+      submodule_pattern: /kcbl\s*modules?\s*\/\s*submodules?/i
+    }
+  }
+
+  # Get patterns for this project, or use default
+  patterns = project_patterns[project_key] || {}
+
   fields.each do |field|
-    name = field['name']&.downcase || ''
+    name = field['name'] || ''
+    name_lower = name.downcase
     field_id = field['id']
 
-    # Look for module-related fields
-    if name.include?('module') && !name.include?('sub')
-      module_field = field_id
-      vputs "Found Module field: #{field_id} - #{field['name']}"
-    elsif name.include?('submodule') || (name.include?('module') && name.include?('sub'))
-      submodule_field = field_id
-      vputs "Found Submodule field: #{field_id} - #{field['name']}"
-    elsif name.include?('banking') && name.include?('type')
+    # Check for banking type field (common across projects)
+    if name_lower.include?('banking') && name_lower.include?('type')
       banking_type_field = field_id
       vputs "Found Banking Type field: #{field_id} - #{field['name']}"
+      next
     end
+
+    # Project-specific module/submodule detection
+    if patterns[:module_pattern] && name =~ patterns[:module_pattern]
+      module_field = field_id
+      vputs "Found Module field: #{field_id} - #{field['name']}"
+    elsif patterns[:submodule_pattern] && name =~ patterns[:submodule_pattern]
+      submodule_field = field_id
+      vputs "Found Submodule field: #{field_id} - #{field['name']}"
+    # Fallback: Generic detection for other projects
+    elsif patterns.empty?
+      if name_lower.include?('module') && !name_lower.include?('sub')
+        module_field = field_id
+        vputs "Found Module field: #{field_id} - #{field['name']}"
+      elsif name_lower.include?('submodule') || (name_lower.include?('module') && name_lower.include?('sub'))
+        submodule_field = field_id
+        vputs "Found Submodule field: #{field_id} - #{field['name']}"
+      end
+    end
+  end
+
+  # Additional validation: ensure we have the correct fields for specific projects
+  if project_key == 'RMF'
+    # For RMF: Module should be customfield_10430, Submodule should be customfield_10431
+    info "Project RMF detected - Module: #{module_field}, Submodule: #{submodule_field}"
+  elsif project_key == 'KCBL'
+    # For KCBL: Module should be customfield_10164, Submodule should be customfield_10163
+    info "Project KCBL detected - Module: #{module_field}, Submodule: #{submodule_field}"
   end
 
   [module_field, submodule_field, banking_type_field]
@@ -555,8 +593,8 @@ end
 # ===============================
 
 begin
-  # Discover custom fields
-  custom_fields_array = discover_custom_fields
+  # Discover custom fields based on project
+  custom_fields_array = discover_custom_fields(options[:project])
   custom_fields = {
     module_field: custom_fields_array[0],
     submodule_field: custom_fields_array[1],
