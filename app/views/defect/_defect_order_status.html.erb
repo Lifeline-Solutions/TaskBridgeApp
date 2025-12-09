@@ -24,7 +24,7 @@
       <% @defects.each_with_index do |defect, index| %>
       <% row_number = @start_count + index %>
       <!-- Your defect row rendering here, unchanged -->
-      <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 h-12 text-left">
+      <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 h-10 text-left text-sm">
         <td class="px-6 py-4 font-semibold text-gray-600 dark:text-gray-300">
           <%= row_number %>
         </td>
@@ -33,10 +33,10 @@
         </td>
         <td class="px-6 py-4">
           <% if defect.summary.present? %>
-            <%= defect.summary.truncate(50) %>
+            <%= defect.summary.truncate(15) %>
           <% end %>
         </td>
-        <td class="px-6 py-4 whitespace-nowrap min-w-[160px]">
+        <td class="px-6 py-4 whitespace-nowrap">
           <div class="flex items-center gap-2">
             <%= render partial: 'defect/defect_statuses', locals: { defect: defect } %>
           </div>
@@ -47,19 +47,19 @@
           </span>
         </td>
         <td class="px-6 py-4">
-          <%= defect.qa_module&.name || 'Not specified' %>
+          <%= defect.qa_module&.name&.truncate(15) || 'Not specified' %>
         </td>
         <td class="px-6 py-4">
-          <%= defect.submodule&.name || 'Not specified' %>
+          <%= defect.submodule&.name&.truncate(15) || 'Not specified' %>
         </td>
         <td class="px-6 py-4">
-          <%= defect.banking_type&.name || 'Not specified' %>
+          <%= defect.banking_type&.name&.truncate(15) || 'Not specified' %>
         </td>
         <td class="px-6 py-4">
           <% defect.labels.each do |label| %>
-                    <span class="px-2 py-1 text-xs font-medium bg-gray-200 text-gray-700 rounded dark:bg-gray-600 dark:text-gray-100">
-                      <%= label.name %>
-                    </span>
+            <span class="px-2 py-1 text-xs font-medium bg-gray-200 text-gray-700 rounded dark:bg-gray-600 dark:text-gray-100">
+              <%= label.name %>
+            </span>
           <% end %>
         </td>
         <!-- Assignee(s) -->
