@@ -327,9 +327,6 @@ def extract_custom_field_value(field_data)
   return field_data.to_s.strip if field_data.is_a?(String)
 
   if field_data.is_a?(Hash)
-    # Handle cascading select fields
-    return field_data['child']['value'].to_s.strip if field_data['child'].is_a?(Hash) && field_data['child']['value'].present?
-
     return field_data['value'].to_s.strip if field_data['value'].present?
     return field_data['name'].to_s.strip if field_data['name'].present?
     return field_data['key'].to_s.strip if field_data['key'].present?
@@ -343,6 +340,28 @@ def extract_custom_field_value(field_data)
   end
 
   field_data.to_s.strip
+end
+
+# Extract module and submodule from cascading select field
+def extract_cascading_field(field_data)
+  return [nil, nil] if field_data.nil?
+
+  parent_value = nil
+  child_value = nil
+
+  if field_data.is_a?(Hash)
+    # Extract parent (module)
+    parent_value = field_data['value'].to_s.strip if field_data['value'].present?
+    parent_value ||= field_data['name'].to_s.strip if field_data['name'].present?
+
+    # Extract child (submodule) from cascading select
+    if field_data['child'].is_a?(Hash)
+      child_value = field_data['child']['value'].to_s.strip if field_data['child']['value'].present?
+      child_value ||= field_data['child']['name'].to_s.strip if field_data['child']['name'].present?
+    end
+  end
+
+  [parent_value.presence, child_value.presence]
 end
 
 # Parse module and submodule from a single string
@@ -524,11 +543,70 @@ def sync_defect_metadata(defect, jira_issue, custom_fields, product_id)
   fields = jira_issue['fields'] || {}
   issue_key = jira_issue['key']
 
+  # Debug: Show what fields we're looking for
+  vputs "\n[DEBUG] Custom fields to fetch:"
+  vputs "  Module field: #{custom_fields[:module_field]}"
+  vputs "  Submodule field: #{custom_fields[:submodule_field]}"
+  vputs "  Banking type field: #{custom_fields[:banking_type_field]}"
+
+  # Debug: Show raw field values from Jira
+  if custom_fields[:module_field]
+    raw_module = fields[custom_fields[:module_field]]
+    vputs "[DEBUG] Raw module field value: #{raw_module.inspect}"
+  end
+
+  if custom_fields[:submodule_field]
+    raw_submodule = fields[custom_fields[:submodule_field]]
+    vputs "[DEBUG] Raw submodule field value: #{raw_submodule.inspect}"
+  end
+
+  if custom_fields[:banking_type_field]
+    raw_banking = fields[custom_fields[:banking_type_field]]
+    vputs "[DEBUG] Raw banking type field value: #{raw_banking.inspect}"
+  end
+
   # Extract metadata from Jira
-  module_name = extract_custom_field_value(fields[custom_fields[:module_field]] || '') if custom_fields[:module_field]
-  submodule_name = extract_custom_field_value(fields[custom_fields[:submodule_field]] || '') if custom_fields[:submodule_field]
+  module_name = nil
+  submodule_name = nil
+
+  # Try to extract from module field (could be cascading select)
+  if custom_fields[:module_field]
+    module_field_data = fields[custom_fields[:module_field]]
+    parent_mod, child_mod = extract_cascading_field(module_field_data)
+
+    if parent_mod.present?
+      module_name = parent_mod
+      # If cascading field has a child, use it as submodule
+      submodule_name = child_mod if child_mod.present?
+      vputs "[CASCADING] Extracted from module field - Parent: '#{parent_mod}', Child: '#{child_mod}'"
+    end
+  end
+
+  # Try to extract from separate submodule field (could also be cascading select)
+  if custom_fields[:submodule_field]
+    submodule_field_data = fields[custom_fields[:submodule_field]]
+    parent_sub, child_sub = extract_cascading_field(submodule_field_data)
+
+    if parent_sub.present?
+      # If we don't have a module yet, use the parent from submodule field
+      module_name ||= parent_sub
+      # If cascading field has a child, use it as submodule
+      submodule_name = child_sub if child_sub.present?
+      # If no child but parent exists and module is already set, use parent as submodule
+      submodule_name ||= parent_sub if module_name.present? && module_name != parent_sub
+      vputs "[CASCADING] Extracted from submodule field - Parent: '#{parent_sub}', Child: '#{child_sub}'"
+    end
+  end
+
   banking_type_name = extract_custom_field_value(fields[custom_fields[:banking_type_field]] || '') if custom_fields[:banking_type_field]
   labels_array = (fields['labels'] || []).compact.map(&:to_s).map(&:strip).reject(&:empty?)
+
+  # Debug: Show extracted values
+  vputs "[DEBUG] Extracted values:"
+  vputs "  Module: '#{module_name}'"
+  vputs "  Submodule: '#{submodule_name}'"
+  vputs "  Banking type: '#{banking_type_name}'"
+  vputs "  Labels: #{labels_array.inspect}"
 
   # Parse module/submodule
   if module_name.present? && submodule_name.to_s.strip.empty?
