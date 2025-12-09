@@ -118,11 +118,7 @@ def fetch_jira_issue(issue_key)
 
   response = http.request(request)
 
-  if response.is_a?(Net::HTTPSuccess)
-    JSON.parse(response.body)
-  else
-    nil
-  end
+  JSON.parse(response.body) if response.is_a?(Net::HTTPSuccess)
 rescue StandardError => e
   vputs "  [ERROR] Exception fetching #{issue_key}: #{e.message}" if $verbose_flag
   nil

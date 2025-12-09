@@ -1,0 +1,57 @@
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
+  <div style="background-color: #dc3545; color: white; padding: 15px; border-radius: 5px 5px 0 0;">
+    <h2 style="margin: 0; font-size: 18px;">🚨 URGENT: Defect Priority Update</h2>
+  </div>
+  
+  <div style="background-color: white; padding: 20px; border-radius: 0 0 5px 5px; border: 1px solid #ddd;">
+    <p style="margin: 0 0 15px 0; font-size: 16px;">
+      <strong><%= @actor.name %></strong> has made important changes to defect <strong>#<%= @defect.defect_unique %></strong>:
+    </p>
+    
+    <h3 style="color: #333; font-size: 16px; margin: 15px 0 10px 0;"><%= @defect.summary %></h3>
+    
+    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 15px; margin: 15px 0;">
+      <h4 style="margin: 0 0 10px 0; color: #856404;">📋 Changes Made:</h4>
+      
+      <% @changes.each do |field, change_data| %>
+        <div style="margin-bottom: 8px;">
+          <% case field %>
+          <% when :status %>
+            <strong>Status:</strong> 
+            <span style="background-color: #e9ecef; padding: 2px 6px; border-radius: 3px;"><%= change_data[:from] %></span>
+            → 
+            <span style="background-color: #d1ecf1; padding: 2px 6px; border-radius: 3px;"><%= change_data[:to] %></span>
+          <% when :priority %>
+            <strong>Priority:</strong> 
+            <span style="background-color: #e9ecef; padding: 2px 6px; border-radius: 3px;"><%= change_data[:from] %></span>
+            → 
+            <span style="background-color: #f8d7da; padding: 2px 6px; border-radius: 3px;"><%= change_data[:to] %></span>
+          <% when :assignees %>
+            <% 
+              old_users = User.where(id: change_data[:from]).pluck(:name).join(', ')
+              new_users = User.where(id: change_data[:to]).pluck(:name).join(', ')
+            %>
+            <strong>Assignees:</strong> 
+            <span style="background-color: #e9ecef; padding: 2px 6px; border-radius: 3px;"><%= old_users.present? ? old_users : 'None' %></span>
+            → 
+            <span style="background-color: #d4edda; padding: 2px 6px; border-radius: 3px;"><%= new_users.present? ? new_users : 'None' %></span>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+    
+    <div style="margin: 20px 0;">
+      <a href="<%= @url %>" 
+         style="background-color: #007bff; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+        🔗 View Defect Details
+      </a>
+    </div>
+    
+    <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+    
+    <p style="color: #666; font-size: 12px; margin: 0;">
+      This is an urgent notification for defect #<%= @defect.defect_unique %> in <%= @defect.product.present? ? (@defect.product.proxy_name.present? ? @defect.product.proxy_name : @defect.product.client&.name) : 'Unknown Product' %>.
+      <br>Updated on <%= Time.current.strftime("%B %d, %Y at %I:%M %p") %>
+    </p>
+  </div>
+</div>

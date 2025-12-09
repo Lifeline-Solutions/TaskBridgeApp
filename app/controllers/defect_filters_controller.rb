@@ -9,13 +9,13 @@ class DefectFiltersController < ApplicationController
       format.html
       format.json do
         render json: {
-          defect_filters: @defect_filters.map { |f|
+          defect_filters: @defect_filters.map do |f|
             {
               id: f.id,
               name: f.name,
               filters: f.filters
             }
-          }
+          end
         }
       end
     end
@@ -93,7 +93,7 @@ class DefectFiltersController < ApplicationController
 
   def update
     # Store old filters for comparison
-    old_filters = @defect_filter.filters.dup
+    @defect_filter.filters.dup
 
     if params.dig(:defect_filter, :filters).present?
       raw_filters = parse_filters_param(params.dig(:defect_filter, :filters))
@@ -106,12 +106,10 @@ class DefectFiltersController < ApplicationController
     @defect_filter.updated_at = Time.current
 
     if @defect_filter.save
-      # Clear the update flag after successful update
-      session.delete(:filter_being_updated)
-
-      # Redirect to the filter with updated params
+      # Redirect to the filter with updated params and filter_id to show the update button
       redirect_to index_show_defect_index_path(
         product_id: @defect_filter.product_id,
+        filter_id: @defect_filter.id,
         **@defect_filter.filters.symbolize_keys
       ), notice: 'Filter updated successfully!'
     else
@@ -180,4 +178,3 @@ class DefectFiltersController < ApplicationController
     raw
   end
 end
-

@@ -2299,15 +2299,15 @@ def import_comments_for_defect(defect, comments_array, verbose: false)
         # Update content if it exists (user requested to update instead of duplicate)
         # Only update if content is different to avoid unnecessary writes
         existing_body = existing_comment.content.respond_to?(:to_plain_text) ? existing_comment.content.to_plain_text.strip : existing_comment.content.to_s.strip
-        
-        if existing_body != body.strip
+
+        if existing_body == body.strip
+          vputs "[SKIP] Comment already exists and is identical for #{defect.defect_unique}" if verbose
+        elsif verbose
           existing_comment.content = body
           existing_comment.save!
           vputs "[UPDATE] Updated comment for #{defect.defect_unique} at #{created_at}" if verbose
-        else
-          vputs "[SKIP] Comment already exists and is identical for #{defect.defect_unique}" if verbose
         end
-        
+
         stats[:skipped] += 1
         next
       end
@@ -2505,10 +2505,10 @@ def import_issue_with_modules(issue, custom_fields, dry_run: true, verbose: fals
           vputs "[HISTORY] Fetching history for #{issue_key}..." if verbose
           changelog = fetch_issue_changelog(issue_key, verbose: verbose)
           if changelog.any?
-             parsed_history = changelog.flat_map { |entry| parse_changelog_entry(entry, issue_key, verbose: verbose) }
-             # Sort by creation time to ensure chronological order
-             parsed_history.sort_by! { |h| h[:created_at] || Time.at(0) }
-             import_histories_for_defect(saved_defect, parsed_history, verbose: verbose)
+            parsed_history = changelog.flat_map { |entry| parse_changelog_entry(entry, issue_key, verbose: verbose) }
+            # Sort by creation time to ensure chronological order
+            parsed_history.sort_by! { |h| h[:created_at] || Time.at(0) }
+            import_histories_for_defect(saved_defect, parsed_history, verbose: verbose)
           end
         end
       end

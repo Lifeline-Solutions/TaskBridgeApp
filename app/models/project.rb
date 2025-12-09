@@ -26,7 +26,7 @@ class Project < ApplicationRecord
   validates :title, presence: true, uniqueness: true
 
   validate :content_length_within_limit
-  
+
   # Search scopes for global search
   scope :search_by_query, lambda { |query|
     return none if query.blank?
@@ -50,9 +50,7 @@ class Project < ApplicationRecord
     # Internal roles (Admin, QA, Agent, Project Manager, Observer) can see all projects
     allowed_roles = ['admin', 'qa', 'agent', 'project manager', 'observer']
     user_roles = user.roles.map(&:name)
-    if (user_roles & allowed_roles).any?
-      return where(deleted_on: nil)
-    end
+    return where(deleted_on: nil) if user_roles.intersect?(allowed_roles)
 
     # Other users can see projects they are assigned to
     joins(:assignees)

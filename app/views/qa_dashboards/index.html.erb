@@ -37,10 +37,17 @@
             <% end %>
 
             <div class="space-y-2 mb-4">
-              <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                <i class="fas fa-filter w-5"></i>
-                <%= dashboard.defect_filter.name %>
-              </div>
+              <% if dashboard.defect_filter.present? %>
+                <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                  <i class="fas fa-filter w-5"></i>
+                  <%= dashboard.defect_filter.name %>
+                </div>
+              <% else %>
+                <div class="flex items-center text-sm text-yellow-600 dark:text-yellow-400">
+                  <i class="fas fa-exclamation-triangle w-5"></i>
+                  Filter not found
+                </div>
+              <% end %>
               <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
                 <i class="fas fa-chart-bar w-5"></i>
                 <%= pluralize(dashboard.widgets.length, 'widget') %>

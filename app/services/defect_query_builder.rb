@@ -241,20 +241,20 @@ class DefectQueryBuilder
     @joins_needed.uniq.each do |join|
       # Check if join is already applied to prevent duplicate joins
       join_tables = case join
-      when :statuses then ['statuses']
-      when :users then ['users', 'defects_users']
-      when :labels then ['labels', 'defects_labels']
-      else [join.to_s]
-      end
+                    when :statuses then ['statuses']
+                    when :users then %w[users defects_users]
+                    when :labels then %w[labels defects_labels]
+                    else [join.to_s]
+                    end
 
       # Only apply join if not already present in the query
-      unless join_already_applied?(join_tables)
-        begin
-          @relation = @relation.joins(join)
-        rescue ActiveRecord::StatementInvalid => e
-          # Handle cases where join table doesn't exist or association is missing
-          Rails.logger.warn "Join #{join} failed: #{e.message}"
-        end
+      next if join_already_applied?(join_tables)
+
+      begin
+        @relation = @relation.joins(join)
+      rescue ActiveRecord::StatementInvalid => e
+        # Handle cases where join table doesn't exist or association is missing
+        Rails.logger.warn "Join #{join} failed: #{e.message}"
       end
     end
   end
@@ -303,12 +303,12 @@ class DefectQueryBuilder
         # Both parent modules and submodules selected - prefer submodules but fallback to parents
         submodule_relation = @relation.where(qa_module_id: submodule_ids)
 
-        if submodule_relation.exists?
-          @relation = submodule_relation
-        else
-          # Fallback to parent modules if no defects found in submodules
-          @relation = @relation.where(qa_module_id: qa_module_ids)
-        end
+        @relation = if submodule_relation.exists?
+                      submodule_relation
+                    else
+                      # Fallback to parent modules if no defects found in submodules
+                      @relation.where(qa_module_id: qa_module_ids)
+                    end
       elsif qa_module_ids.any?
         # Only parent modules selected - expand to include all their submodules
         parent_modules = qa_module_class.where(id: qa_module_ids)
@@ -331,8 +331,6 @@ class DefectQueryBuilder
     @relation
   end
 
-  private
-
   # Helper method to normalize priority values
   def normalize_priority(values)
     return values unless values.is_a?(Array)
@@ -344,9 +342,7 @@ class DefectQueryBuilder
 
       # Check against priority patterns for normalization
       PRIORITY_PATTERNS.each do |pattern, normalized_value|
-        if value.to_s.downcase.match?(pattern)
-          normalized << normalized_value unless normalized.include?(normalized_value)
-        end
+        normalized << normalized_value if value.to_s.downcase.match?(pattern) && !normalized.include?(normalized_value)
       end
     end
 
@@ -363,14 +359,14 @@ class DefectQueryBuilder
     begin
       # Determine the model class
       model_class = case field_config[:expand_children]
-      when true
-        # Default to QaModule for backward compatibility
-        Object.const_get('QaModule')
-      when String
-        Object.const_get(field_config[:expand_children])
-      else
-        return values
-      end
+                    when true
+                      # Default to QaModule for backward compatibility
+                      Object.const_get('QaModule')
+                    when String
+                      Object.const_get(field_config[:expand_children])
+                    else
+                      return values
+                    end
 
       expanded_values = values.dup
 

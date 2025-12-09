@@ -1,0 +1,28 @@
+URGENT: Defect Priority Update - #<%= @defect.defect_unique %>
+=====================================
+
+<%= @actor.name %> has made important changes to defect #<%= @defect.defect_unique %>:
+
+Summary: <%= @defect.summary %>
+
+Changes Made:
+<% @changes.each do |field, change_data| %>
+<% case field %>
+<% when :status %>
+- Status: <%= change_data[:from] %> → <%= change_data[:to] %>
+<% when :priority %>
+- Priority: <%= change_data[:from] %> → <%= change_data[:to] %>
+<% when :assignees %>
+<% 
+  old_users = User.where(id: change_data[:from]).pluck(:name).join(', ')
+  new_users = User.where(id: change_data[:to]).pluck(:name).join(', ')
+%>
+- Assignees: <%= old_users.present? ? old_users : 'None' %> → <%= new_users.present? ? new_users : 'None' %>
+<% end %>
+<% end %>
+
+View defect details: <%= @url %>
+
+---
+This is an urgent notification for defect #<%= @defect.defect_unique %> in <%= @defect.product.present? ? (@defect.product.proxy_name.present? ? @defect.product.proxy_name : @defect.product.client&.name) : 'Unknown Product' %>.
+Updated on <%= Time.current.strftime("%B %d, %Y at %I:%M %p") %>

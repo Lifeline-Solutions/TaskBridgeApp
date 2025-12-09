@@ -249,7 +249,7 @@ end
 info "Found #{defects.length} defect(s) to process"
 info ''
 
-default_user = User.find_by(id: DEFAULT_USER_UUID) if DEFAULT_USER_UUID
+User.find_by(id: DEFAULT_USER_UUID) if DEFAULT_USER_UUID
 
 defects.each_with_index do |defect, idx|
   stats[:total] += 1

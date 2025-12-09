@@ -291,4 +291,44 @@ class UserMailer < ApplicationMailer
       format.text { render plain: "Defect #{@defect.defect_unique} - #{@action_name} by #{@actor.name}" }
     end
   end
+
+  def defect_priority_update_email(defect, recipient_emails, actor, changes_hash)
+    return if recipient_emails.blank?
+
+    @defect = defect
+    @actor = actor
+    @changes = changes_hash
+    @url = defect_url(@defect, Rails.application.config.action_mailer.default_url_options)
+
+    # Build dynamic subject line based on changes
+    change_types = []
+    change_types << 'Status' if @changes.key?(:status)
+    change_types << 'Priority' if @changes.key?(:priority)
+    change_types << 'Assignees' if @changes.key?(:assignees)
+
+    subject_text = "[URGENT] Defect #{@defect.defect_unique} - #{change_types.join(', ')} Updated by #{@actor.name}"
+
+    mail(to: recipient_emails, subject: subject_text) do |format|
+      format.html { render 'defect_priority_update_email' }
+      format.text { render 'defect_priority_update_email' }
+    end
+  end
+
+  def defect_edit_notification_email(defect, recipient_emails, actor, changes_hash)
+    return if recipient_emails.blank?
+
+    @defect = defect
+    @actor = actor
+    @changes = changes_hash
+    @url = defect_url(@defect, Rails.application.config.action_mailer.default_url_options)
+
+    # Count the number of changes
+    change_count = @changes.keys.size
+    subject_text = "[Defect #{@defect.defect_unique}] #{change_count} update#{'s' if change_count > 1} by #{@actor.name}"
+
+    mail(to: recipient_emails, subject: subject_text) do |format|
+      format.html { render 'defect_edit_notification_email' }
+      format.text { render 'defect_edit_notification_email' }
+    end
+  end
 end

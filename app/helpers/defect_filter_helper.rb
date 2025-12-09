@@ -3,7 +3,7 @@ module DefectFilterHelper
   def filter_params_present?
     # First check for actual filter parameters (not route navigation)
     actual_filter_keys = %i[status priority user_id reporter_id qa_module_id
-                           submodule_id banking_type_id label_ids start_date end_date query order]
+                            submodule_id banking_type_id label_ids start_date end_date query order]
     has_actual_filters = actual_filter_keys.any? { |key| params[key].present? && params[key] != [] }
 
     # Only include product_id if there are other filters present (not just route navigation)

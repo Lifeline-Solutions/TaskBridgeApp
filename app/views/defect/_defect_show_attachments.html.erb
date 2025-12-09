@@ -18,14 +18,17 @@
           <% 
             # Check if user is admin
             user_is_admin = current_user.has_role?(:admin)
-            
+
+            # Check if user is the creator of the defect (matching created_by field)
+            user_is_creator = @defect.created_by == current_user.id
+
             # Check if attachment is from comments (embedded in ActionText)
             # ActionText attachments are of class ActionText::Attachment
             # Regular attachments are ActiveStorage::Attachment
             is_from_comments = attachment.is_a?(ActionText::Attachment)
             
-            # Only show delete for admin users AND attachments not from comments
-            show_delete = user_is_admin && !is_from_comments
+            # Show delete for admin users OR creator, but not for attachments from comments
+            show_delete = (user_is_admin || user_is_creator) && !is_from_comments
           %>
           
           <tr class="bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg">
