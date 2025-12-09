@@ -9,12 +9,18 @@
 
     <div class="field w-full sm:w-1/2 md:w-1/4">
       <%= label_tag :country_code, 'Select Country', class: "block text-sm font-medium text-gray-700" %>
+      <%# safe country label lookup to avoid nil#[] errors %>
       <%= select_tag :country_code,
                      options_for_select(
-                       Client.distinct.pluck(:country_code).compact.map { |code| [ISO3166::Country[code]&.translations[I18n.locale.to_s] || code, code] }
+                       Client.distinct.pluck(:country_code).compact.map { |code|
+                         country = ISO3166::Country[code]
+                         label = country&.translations&.[](I18n.locale.to_s) || country&.name || code
+                         [label, code]
+                       }
                      ),
                      include_blank: true,
                      class: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" %>
+
     </div>
 
     <div class="field w-full sm:w-1/2 md:w-1/4">
