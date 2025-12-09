@@ -1,9 +1,9 @@
 <div class="overflow-auto shadow-md sm:rounded-lg border border-gray-200 dark:border-gray-700" style="max-height: calc(100vh - 300px); min-height: 400px;">
-  <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400" style="table-layout: auto;">
+  <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
     <thead class="text-xs uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600 sticky top-0 z-20">
     <tr>
-      <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 sticky-col-1 border-r border-gray-200 dark:border-gray-600">#</th>
-      <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 sticky-col-2 border-r border-gray-200 dark:border-gray-600">Defect ID</th>
+      <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 sticky left-0 z-30 w-12 min-w-[3rem] border-r border-gray-200 dark:border-gray-600">#</th>
+      <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 sticky z-30 w-28 min-w-[7rem] border-r border-gray-200 dark:border-gray-600" style="left: 3rem;">Defect ID</th>
       <th scope="col" class="px-3 py-2">Summary</th>
       <th scope="col" class="px-3 py-2">Status</th>
       <th scope="col" class="px-3 py-2">Priority</th>
@@ -24,14 +24,14 @@
       <% @defects.each_with_index do |defect, index| %>
       <% row_number = @start_count + index %>
       <!-- Your defect row rendering here, unchanged -->
-      <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-left">
-        <td class="px-3 py-2 font-semibold text-gray-600 dark:text-gray-300 sticky-col-1 border-r border-gray-200 dark:border-gray-700">
+      <tr class="group bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-left">
+        <td class="px-3 py-2 font-semibold text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-600 sticky left-0 z-10 w-12 min-w-[3rem] border-r border-gray-200 dark:border-gray-700">
           <%= row_number %>
         </td>
-        <td class="px-3 py-2 whitespace-nowrap sticky-col-2 border-r border-gray-200 dark:border-gray-700">
-          <%= link_to defect.defect_unique, defect_path(defect.id), class: "text-blue-600 hover:underline font-medium" %>
+        <td class="px-3 py-2 whitespace-nowrap bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-600 sticky z-10 w-28 min-w-[7rem] border-r border-gray-200 dark:border-gray-700" style="left: 3rem;">
+          <%= link_to defect.defect_unique, defect_path(defect.id), class: "text-blue-600 hover:underline font-medium text-xs" %>
         </td>
-        <td class="px-3 py-2 whitespace-nowrap" style="min-width: 200px; max-width: 300px;">
+        <td class="px-3 py-2" style="min-width: 200px; max-width: 300px;">
           <% if defect.summary.present? %>
             <%= defect.summary.truncate(50) %>
           <% end %>
