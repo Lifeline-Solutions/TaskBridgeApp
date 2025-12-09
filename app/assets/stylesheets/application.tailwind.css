@@ -16,16 +16,17 @@
 */
 
 @layer base {
-  input:checked + span {
+  input:checked+span {
     background-color: #2196f3;
   }
 
-  input:checked + span + span {
+  input:checked+span+span {
     transform: translateX(32px);
   }
 }
 
 @layer components {
+
   /* Bulletproof modal positioning - always anchored to right, fixed position */
   #modal-container {
     position: fixed !important;
@@ -36,20 +37,53 @@
     transform: translateX(0) !important;
     z-index: 50 !important;
   }
-  
+
   /* Fixed width states to prevent shifting */
   #modal-container.modal-narrow {
     width: 33.333333% !important;
     min-width: 400px !important;
   }
-  
+
   #modal-container.modal-wide {
     width: 75% !important;
     min-width: 600px !important;
   }
-  
+
   /* Ensure smooth transitions */
   #modal-container * {
     transition: width 0.3s ease-in-out;
+  }
+
+  /* Custom scrollbar styling for defects table - Jira-like appearance */
+  .overflow-auto::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  .overflow-auto::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+
+  .overflow-auto::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+  }
+
+  .overflow-auto::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+
+  /* Dark mode scrollbar */
+  .dark .overflow-auto::-webkit-scrollbar-track {
+    background: #2d3748;
+  }
+
+  .dark .overflow-auto::-webkit-scrollbar-thumb {
+    background: #4a5568;
+  }
+
+  .dark .overflow-auto::-webkit-scrollbar-thumb:hover {
+    background: #718096;
   }
 }
