@@ -123,20 +123,52 @@ def discover_custom_fields(project_key)
   submodule_field = nil
   banking_type_field = nil
 
-  # Project-specific field mapping
+  # Project-specific field mapping with exact patterns
   project_patterns = {
     'RMF' => {
-      module_pattern: /rafiki\s*modules?$/i,
-      submodule_pattern: /rafiki\s*modules?\s*\/\s*sub\s*modules?/i
+      module_pattern: /^Rafiki\s+Modules?$/i,
+      submodule_pattern: /^Rafiki\s+Modules?\s*\/\s*Sub\s*Modules?$/i
+    },
+    'RMP' => {
+      module_pattern: /^Imarisha\s+Mobile\s+Banking\s+Modules?$/i,
+      submodule_pattern: /^Imarisha\s+Mobile\s+Banking\s+Modules?\s*\/\s*Sub-Modules?$/i
     },
     'KCBL' => {
-      module_pattern: /kcbl\s*modules?$/i,
-      submodule_pattern: /kcbl\s*modules?\s*\/\s*submodules?/i
+      module_pattern: /^KCBL\s+Modules?$/i,
+      submodule_pattern: /^KCBL\s+Modules?\s*\/\s*Submodules?$/i
+    },
+    'NCBA' => {
+      module_pattern: /^NCBA\s+Modules?$/i,
+      submodule_pattern: /^NCBA\s+Modules?\s*\/\s*Sub-Modules?$/i
+    },
+    'ISP' => {
+      module_pattern: /^Imarisha\s+Internet\s+Banking\s+Modules?$/i,
+      submodule_pattern: /^Imarisha\s+Internet\s+Banking\s+Modules?\s*\/\s*Sub-Modules?$/i
+    },
+    'IAB' => {
+      module_pattern: /^Imarisha\s+Agency\s+Banking\s+Modules?$/i,
+      submodule_pattern: /^Imarisha\s+Agency\s+Banking\s+Modules?\s*\/\s*Sub-Modules?$/i
+    },
+    'IEP' => {
+      module_pattern: /^Imarisha\s+ERP\s+Modules?$/i,
+      submodule_pattern: /^Imarisha\s+ERP\s+Modules?\s*\/\s*Sub-Modules?$/i
+    },
+    'KPS' => {
+      module_pattern: /^Kenya\s+Police\s+Modules?$/i,
+      submodule_pattern: /^Kenya\s+Police\s+Modules?\s*\/\s*Sub-Modules?$/i
+    },
+    'AUD' => {
+      module_pattern: /^Imarisha\s+Audit\s+Modules?$/i,
+      submodule_pattern: /^Imarisha\s+Audit\s+Modules?\s*\/\s*Sub-Modules?$/i
     }
   }
 
-  # Get patterns for this project, or use default
+  # Get patterns for this project
   patterns = project_patterns[project_key] || {}
+
+  # Collect all matching fields for debugging
+  all_module_fields = []
+  all_submodule_fields = []
 
   fields.each do |field|
     name = field['name'] || ''
@@ -150,32 +182,41 @@ def discover_custom_fields(project_key)
       next
     end
 
-    # Project-specific module/submodule detection
+    # Project-specific module/submodule detection (exact match)
     if patterns[:module_pattern] && name =~ patterns[:module_pattern]
       module_field = field_id
-      vputs "Found Module field: #{field_id} - #{field['name']}"
+      info "✓ Matched Module field for #{project_key}: #{field_id} - #{field['name']}"
     elsif patterns[:submodule_pattern] && name =~ patterns[:submodule_pattern]
       submodule_field = field_id
-      vputs "Found Submodule field: #{field_id} - #{field['name']}"
-    # Fallback: Generic detection for other projects
-    elsif patterns.empty?
-      if name_lower.include?('module') && !name_lower.include?('sub')
-        module_field = field_id
-        vputs "Found Module field: #{field_id} - #{field['name']}"
-      elsif name_lower.include?('submodule') || (name_lower.include?('module') && name_lower.include?('sub'))
-        submodule_field = field_id
-        vputs "Found Submodule field: #{field_id} - #{field['name']}"
+      info "✓ Matched Submodule field for #{project_key}: #{field_id} - #{field['name']}"
+    # Collect all module/submodule fields for fallback
+    elsif name_lower.include?('module')
+      if name_lower.include?('sub') || name_lower.include?('/')
+        all_submodule_fields << { id: field_id, name: field['name'] }
+        vputs "  Found submodule candidate: #{field_id} - #{field['name']}"
+      else
+        all_module_fields << { id: field_id, name: field['name'] }
+        vputs "  Found module candidate: #{field_id} - #{field['name']}"
       end
     end
   end
 
-  # Additional validation: ensure we have the correct fields for specific projects
-  if project_key == 'RMF'
-    # For RMF: Module should be customfield_10430, Submodule should be customfield_10431
-    info "Project RMF detected - Module: #{module_field}, Submodule: #{submodule_field}"
-  elsif project_key == 'KCBL'
-    # For KCBL: Module should be customfield_10164, Submodule should be customfield_10163
-    info "Project KCBL detected - Module: #{module_field}, Submodule: #{submodule_field}"
+  # Fallback: if no specific match found, use generic detection
+  if module_field.nil? && patterns.empty? && all_module_fields.any?
+    module_field = all_module_fields.first[:id]
+    vputs "Using fallback module field: #{module_field} - #{all_module_fields.first[:name]}"
+  end
+
+  if submodule_field.nil? && patterns.empty? && all_submodule_fields.any?
+    submodule_field = all_submodule_fields.first[:id]
+    vputs "Using fallback submodule field: #{submodule_field} - #{all_submodule_fields.first[:name]}"
+  end
+
+  # Validation message
+  if module_field || submodule_field
+    info "Project #{project_key} - Module: #{module_field || 'Not found'}, Submodule: #{submodule_field || 'Not found'}"
+  else
+    warn "⚠️  No module/submodule fields found for project #{project_key}"
   end
 
   [module_field, submodule_field, banking_type_field]
