@@ -2,8 +2,8 @@
   <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400" style="table-layout: auto;">
     <thead class="text-xs uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600 sticky top-0 z-20">
     <tr>
-      <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 sticky left-0 z-30 border-r border-gray-200 dark:border-gray-600">#</th>
-      <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 sticky left-[60px] z-30 border-r border-gray-200 dark:border-gray-600">Defect ID</th>
+      <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 sticky-col-1 border-r border-gray-200 dark:border-gray-600">#</th>
+      <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 sticky-col-2 border-r border-gray-200 dark:border-gray-600">Defect ID</th>
       <th scope="col" class="px-3 py-2">Summary</th>
       <th scope="col" class="px-3 py-2">Status</th>
       <th scope="col" class="px-3 py-2">Priority</th>
@@ -25,10 +25,10 @@
       <% row_number = @start_count + index %>
       <!-- Your defect row rendering here, unchanged -->
       <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-left">
-        <td class="px-3 py-2 font-semibold text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 sticky left-0 z-10 border-r border-gray-200 dark:border-gray-700">
+        <td class="px-3 py-2 font-semibold text-gray-600 dark:text-gray-300 sticky-col-1 border-r border-gray-200 dark:border-gray-700">
           <%= row_number %>
         </td>
-        <td class="px-3 py-2 whitespace-nowrap bg-white dark:bg-gray-800 sticky left-[60px] z-10 border-r border-gray-200 dark:border-gray-700">
+        <td class="px-3 py-2 whitespace-nowrap sticky-col-2 border-r border-gray-200 dark:border-gray-700">
           <%= link_to defect.defect_unique, defect_path(defect.id), class: "text-blue-600 hover:underline font-medium" %>
         </td>
         <td class="px-3 py-2 whitespace-nowrap" style="min-width: 200px; max-width: 300px;">
