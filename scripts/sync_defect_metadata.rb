@@ -462,8 +462,8 @@ def sync_defect_metadata(defect, jira_issue, custom_fields, product_id)
 
   updated = false
 
-  # Update modules
-  if module_name.present? || submodule_name.present?
+  # Update modules - always update if present in Jira
+  if module_name.present?
     parent_module, child_module = find_or_create_modules(
       module_name: module_name,
       submodule_name: submodule_name,
@@ -471,26 +471,56 @@ def sync_defect_metadata(defect, jira_issue, custom_fields, product_id)
       created_by: created_by_uid
     )
 
-    if parent_module && defect.qa_module_id != parent_module.id
-      defect.qa_module_id = parent_module.id
-      updated = true
-      vputs "[UPDATE] Updated module for #{issue_key}: #{parent_module.name}"
+    if parent_module
+      if defect.qa_module_id != parent_module.id
+        defect.qa_module_id = parent_module.id
+        updated = true
+        info "[UPDATE] Updated module for #{issue_key}: #{parent_module.name}"
+      else
+        vputs "[KEEP] Module already set to '#{parent_module.name}' for #{issue_key}"
+      end
     end
 
-    if child_module && defect.submodule_id != child_module.id
-      defect.submodule_id = child_module.id
-      updated = true
-      vputs "[UPDATE] Updated submodule for #{issue_key}: #{child_module.name}"
+    if child_module
+      if defect.submodule_id != child_module.id
+        defect.submodule_id = child_module.id
+        updated = true
+        info "[UPDATE] Updated submodule for #{issue_key}: #{child_module.name}"
+      else
+        vputs "[KEEP] Submodule already set to '#{child_module.name}' for #{issue_key}"
+      end
+    end
+  elsif submodule_name.present?
+    # Handle case where only submodule is provided
+    parent_module, child_module = find_or_create_modules(
+      module_name: module_name,
+      submodule_name: submodule_name,
+      product_id: product_id,
+      created_by: created_by_uid
+    )
+
+    if child_module
+      if defect.submodule_id != child_module.id
+        defect.submodule_id = child_module.id
+        updated = true
+        info "[UPDATE] Updated submodule for #{issue_key}: #{child_module.name}"
+      else
+        vputs "[KEEP] Submodule already set to '#{child_module.name}' for #{issue_key}"
+      end
     end
   end
 
-  # Update banking type
+  # Update banking type - always update if present in Jira
   if banking_type_name.present?
     banking = find_or_create_banking_type(banking_type_name, product_id: product_id, created_by: created_by_uid)
-    if banking && defect.banking_type_id != banking.id
-      defect.banking_type_id = banking.id
-      updated = true
-      vputs "[UPDATE] Updated banking type for #{issue_key}: #{banking.name}"
+    if banking
+      if defect.banking_type_id != banking.id
+        defect.banking_type_id = banking.id
+        updated = true
+        info "[UPDATE] Updated banking type for #{issue_key}: #{banking.name}"
+      else
+        vputs "[KEEP] Banking type already set to '#{banking.name}' for #{issue_key}"
+      end
     end
   end
 
@@ -503,9 +533,21 @@ def sync_defect_metadata(defect, jira_issue, custom_fields, product_id)
   end
 
   # Update labels (always check for new labels)
-  attach_labels_to_defect(defect, labels_array, created_by: created_by_uid) if labels_array.any?
+  labels_added = 0
+  if labels_array.any?
+    initial_label_count = defect.labels.count
+    attach_labels_to_defect(defect, labels_array, created_by: created_by_uid)
+    labels_added = defect.labels.count - initial_label_count
+  end
 
-  { updated: updated, labels_count: labels_array.length }
+  {
+    updated: updated,
+    labels_count: labels_array.length,
+    labels_added: labels_added,
+    module: module_name,
+    submodule: submodule_name,
+    banking_type: banking_type_name
+  }
 end
 
 # ===============================
@@ -540,8 +582,15 @@ begin
     no_change: 0,
     not_found: 0,
     errors: 0,
-    labels_attached: 0
+    labels_attached: 0,
+    labels_added: 0,
+    modules_updated: 0,
+    submodules_updated: 0,
+    banking_types_updated: 0
   }
+
+  # Detailed report for each defect
+  detailed_report = []
 
   if options[:defect_unique]
     # Sync specific defect
@@ -567,6 +616,21 @@ begin
       stats[:no_change] = 1
     end
     stats[:labels_attached] = result[:labels_count]
+    stats[:labels_added] += result[:labels_added]
+    stats[:modules_updated] += 1 if result[:module].present?
+    stats[:submodules_updated] += 1 if result[:submodule].present?
+    stats[:banking_types_updated] += 1 if result[:banking_type].present?
+
+    # Add to detailed report
+    detailed_report << {
+      defect_unique: options[:defect_unique],
+      status: result[:updated] ? 'Updated' : 'No Change',
+      module: result[:module] || 'N/A',
+      submodule: result[:submodule] || 'N/A',
+      banking_type: result[:banking_type] || 'N/A',
+      labels: result[:labels_count],
+      labels_added: result[:labels_added]
+    }
   else
     # Sync all defects in project
     info "Syncing all defects in project: #{options[:project]}"
@@ -599,14 +663,39 @@ begin
           stats[:no_change] += 1
         end
         stats[:labels_attached] += result[:labels_count]
+        stats[:labels_added] += result[:labels_added]
+        stats[:modules_updated] += 1 if result[:module].present?
+        stats[:submodules_updated] += 1 if result[:submodule].present?
+        stats[:banking_types_updated] += 1 if result[:banking_type].present?
+
+        # Add to detailed report
+        detailed_report << {
+          defect_unique: issue_key,
+          status: result[:updated] ? 'Updated' : 'No Change',
+          module: result[:module] || 'N/A',
+          submodule: result[:submodule] || 'N/A',
+          banking_type: result[:banking_type] || 'N/A',
+          labels: result[:labels_count],
+          labels_added: result[:labels_added]
+        }
       rescue StandardError => e
         warn "[ERROR] Failed to sync #{issue_key}: #{e.class}: #{e.message}"
         stats[:errors] += 1
+        detailed_report << {
+          defect_unique: issue_key,
+          status: 'Error',
+          module: 'N/A',
+          submodule: 'N/A',
+          banking_type: 'N/A',
+          labels: 0,
+          labels_added: 0,
+          error: "#{e.class}: #{e.message}"
+        }
       end
     end
   end
 
-  # Summary
+  # Summary Statistics
   info "\n" + ('=' * 80)
   info '📊 SYNC SUMMARY'
   info '=' * 80
@@ -615,10 +704,62 @@ begin
   info "  ⏭️  No changes: #{stats[:no_change]}"
   info "  ⚠️  Not found in DB: #{stats[:not_found]}"
   info "  ❌ Errors: #{stats[:errors]}"
-  info "  🏷️  Labels processed: #{stats[:labels_attached]}"
+  info ""
+  info "Metadata Statistics:"
+  info "  📦 Modules synced: #{stats[:modules_updated]}"
+  info "  📂 Submodules synced: #{stats[:submodules_updated]}"
+  info "  🏦 Banking types synced: #{stats[:banking_types_updated]}"
+  info "  🏷️  Total labels in Jira: #{stats[:labels_attached]}"
+  info "  ➕ New labels added: #{stats[:labels_added]}"
   info '=' * 80
 
+  # Detailed Report
+  if detailed_report.any?
+    info "\n" + ('=' * 80)
+    info '📋 DETAILED REPORT'
+    info '=' * 80
+
+    # Group by status
+    updated_items = detailed_report.select { |r| r[:status] == 'Updated' }
+    no_change_items = detailed_report.select { |r| r[:status] == 'No Change' }
+    error_items = detailed_report.select { |r| r[:status] == 'Error' }
+
+    if updated_items.any?
+      info "\n✅ UPDATED DEFECTS (#{updated_items.length}):"
+      info '-' * 80
+      updated_items.each do |report|
+        info "#{report[:defect_unique]}"
+        info "  Module: #{report[:module]}"
+        info "  Submodule: #{report[:submodule]}"
+        info "  Banking Type: #{report[:banking_type]}"
+        info "  Labels: #{report[:labels]} (#{report[:labels_added]} new)"
+        info ""
+      end
+    end
+
+    if no_change_items.any? && options[:verbose]
+      info "\n⏭️  NO CHANGES (#{no_change_items.length}):"
+      info '-' * 80
+      no_change_items.each do |report|
+        vputs "#{report[:defect_unique]} - Module: #{report[:module]}, Submodule: #{report[:submodule]}, Banking: #{report[:banking_type]}, Labels: #{report[:labels]}"
+      end
+      info ""
+    end
+
+    if error_items.any?
+      info "\n❌ ERRORS (#{error_items.length}):"
+      info '-' * 80
+      error_items.each do |report|
+        info "#{report[:defect_unique]}: #{report[:error]}"
+      end
+      info ""
+    end
+
+    info '=' * 80
+  end
+
   info "\n✅ Sync completed successfully!"
+  info "Report generated at: #{Time.current.strftime('%Y-%m-%d %H:%M:%S')}"
 rescue StandardError => e
   warn "\n❌ Fatal error: #{e.class}: #{e.message}"
   warn e.backtrace.first(5).join("\n")
