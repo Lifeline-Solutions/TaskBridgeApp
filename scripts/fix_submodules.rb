@@ -20,13 +20,13 @@ FALLBACK_SUBMODULE_ID = CONFIG[:fallback_submodule_id]
 
 options = {
   dry_run: false,
-  project: 'RMP'
+  project: 'KCBL'
 }
 
 OptionParser.new do |opts|
   opts.banner = 'Usage: rails runner scripts/fix_submodules.rb [options]'
   opts.on('--dry-run', 'Simulate changes') { options[:dry_run] = true }
-  opts.on('--project KEY', 'Project key (default RMP)') { |v| options[:project] = v }
+  opts.on('--project KEY', 'Project key (default KCBL)') { |v| options[:project] = v }
 end.parse!
 
 def log(msg)
@@ -74,13 +74,12 @@ def discover_custom_fields(project_key = 'RMP')
     name = field['name']&.downcase || ''
     field_id = field['id']
     
-    # Debug log for module fields
-    log "Found field: #{name} (#{field_id})" if name.include?('module')
+    # Debug log for KCBL fields
+    log "Found field: #{name} (#{field_id})" if name.include?('kcbl')
 
-    if name =~ patterns[:module]
+    if name == 'kcbl modules'
       module_field = field_id
-      log "✓ Matched Module field: #{field['name']} (#{field_id})"
-    elsif name =~ patterns[:submodule]
+    elsif name.include?('kcbl modules') && (name.include?('submodules') || name.include?('sub-modules') || name.include?('sub modules'))
       submodule_field = field_id
       log "✓ Matched Submodule field: #{field['name']} (#{field_id})"
     end
