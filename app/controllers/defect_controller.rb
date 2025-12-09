@@ -582,7 +582,7 @@ class DefectController < ApplicationController
   end
 
   def show
-    redirect_to defect_index_path, alert: 'You are not authorized to view this defect.' and return unless current_user.has_any_role?(:admin, :observer, :qa) || Defect.joins(:users).where(id: params[:id], users: { id: current_user.id }).exists?
+    redirect_to defect_index_path, alert: 'You are not authorized to view this defect.' and return unless current_user.has_any_role?(:admin, :observer, :qa, :agent) || Defect.joins(:users).where(id: params[:id], users: { id: current_user.id }).exists?
 
     @defect = Defect.find(params[:id])
 
@@ -616,8 +616,6 @@ class DefectController < ApplicationController
     @defects_history = DefectHistory.where(defect_id: @defect.id).order(created_at: :desc)
 
     @timeline_items = @defect.timeline_items(order: :desc)
-
-    @defects = @defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa, :agent)
 
     # Attachment paginations
     @attachments_per_page = 6
