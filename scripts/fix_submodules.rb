@@ -20,13 +20,13 @@ FALLBACK_SUBMODULE_ID = CONFIG[:fallback_submodule_id]
 
 options = {
   dry_run: false,
-  project: 'ISP'
+  project: 'RMP'
 }
 
 OptionParser.new do |opts|
   opts.banner = 'Usage: rails runner scripts/fix_submodules.rb [options]'
   opts.on('--dry-run', 'Simulate changes') { options[:dry_run] = true }
-  opts.on('--project KEY', 'Project key (default ISP)') { |v| options[:project] = v }
+  opts.on('--project KEY', 'Project key (default RMP)') { |v| options[:project] = v }
 end.parse!
 
 def log(msg)
@@ -55,10 +55,12 @@ def discover_custom_fields
     name = field['name']&.downcase || ''
     field_id = field['id']
     
-    # Updated to look for Audit modules based on screenshot
-    if name == 'imarisha audit modules'
+    # Debug log for Rafiki fields
+    log "Found field: #{name} (#{field_id})" if name.include?('rafiki')
+
+    if name == 'rafiki modules'
       module_field = field_id
-    elsif name == 'imarisha audit modules / sub-modules'
+    elsif name == 'rafiki modules /sub modules' || name == 'rafiki modules / sub modules' || name == 'rafiki modules /sub-modules' || name == 'rafiki modules / sub-modules'
       submodule_field = field_id
     end
   end
