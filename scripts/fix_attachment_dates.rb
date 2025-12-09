@@ -16,13 +16,13 @@ JIRA_API_TOKEN = ENV.fetch('JIRA_API_TOKEN') { CONFIG[:jira_api_token] }
 
 options = {
   dry_run: false,
-  project: 'ISP'
+  project: 'RMP'
 }
 
 OptionParser.new do |opts|
   opts.banner = 'Usage: rails runner scripts/fix_attachment_dates.rb [options]'
   opts.on('--dry-run', 'Simulate changes') { options[:dry_run] = true }
-  opts.on('--project KEY', 'Project key (default ISP)') { |v| options[:project] = v }
+  opts.on('--project KEY', 'Project key (default RMP)') { |v| options[:project] = v }
 end.parse!
 
 def log(msg)
