@@ -1,22 +1,22 @@
-<div class="overflow-x-auto shadow-md sm:rounded-lg h-full">
-  <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-    <thead class="text-xs uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400 w-[100%]">
+<div class="overflow-auto shadow-md sm:rounded-lg border border-gray-200 dark:border-gray-700" style="max-height: calc(100vh - 300px); min-height: 400px;">
+  <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400" style="table-layout: auto;">
+    <thead class="text-xs uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600 sticky top-0 z-20">
     <tr>
-      <th scope="col" class="px-6 py-3">#</th>
-      <th scope="col" class="px-6 py-3">Defect ID</th>
-      <th scope="col" class="px-6 py-3">Summary</th>
-      <th scope="col" class="px-6 py-3">Status</th>
-      <th scope="col" class="px-6 py-3">Priority</th>
-      <th scope="col" class="px-6 py-3">Module</th>
-      <th scope="col" class="px-6 py-3">Sub Module</th>
-      <th scope="col" class="px-6 py-3">Banking Types</th>
-      <th scope="col" class="px-6 py-3">Labels</th>
-      <th scope="col" class="px-6 py-3">Assignee(s)</th>
-      <th scope="col" class="px-6 py-3">Reporter</th>
-      <th scope="col" class="px-6 py-3">Created At</th>
-      <th scope="col" class="px-6 py-3">Retest Count</th>
-      <th scope="col" class="px-6 py-3">Project</th>
-      <th scope="col" class="px-6 py-3">Actions</th>
+      <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 sticky left-0 z-30 border-r border-gray-200 dark:border-gray-600">#</th>
+      <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 sticky left-[60px] z-30 border-r border-gray-200 dark:border-gray-600">Defect ID</th>
+      <th scope="col" class="px-3 py-2">Summary</th>
+      <th scope="col" class="px-3 py-2">Status</th>
+      <th scope="col" class="px-3 py-2">Priority</th>
+      <th scope="col" class="px-3 py-2">Module</th>
+      <th scope="col" class="px-3 py-2">Sub Module</th>
+      <th scope="col" class="px-3 py-2">Banking Types</th>
+      <th scope="col" class="px-3 py-2">Labels</th>
+      <th scope="col" class="px-3 py-2">Assignee(s)</th>
+      <th scope="col" class="px-3 py-2">Reporter</th>
+      <th scope="col" class="px-3 py-2">Created At</th>
+      <th scope="col" class="px-3 py-2">Retest Count</th>
+      <th scope="col" class="px-3 py-2">Project</th>
+      <th scope="col" class="px-3 py-2">Actions</th>
     </tr>
     </thead>
     <tbody>
@@ -24,38 +24,38 @@
       <% @defects.each_with_index do |defect, index| %>
       <% row_number = @start_count + index %>
       <!-- Your defect row rendering here, unchanged -->
-      <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 h-12 text-left">
-        <td class="px-6 py-4 font-semibold text-gray-600 dark:text-gray-300">
+      <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-left">
+        <td class="px-3 py-2 font-semibold text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 sticky left-0 z-10 border-r border-gray-200 dark:border-gray-700">
           <%= row_number %>
         </td>
-        <td class="px-6 py-4">
-          <%= link_to defect.defect_unique, defect_path(defect.id), class: "text-blue-600 hover:underline" %>
+        <td class="px-3 py-2 whitespace-nowrap bg-white dark:bg-gray-800 sticky left-[60px] z-10 border-r border-gray-200 dark:border-gray-700">
+          <%= link_to defect.defect_unique, defect_path(defect.id), class: "text-blue-600 hover:underline font-medium" %>
         </td>
-        <td class="px-6 py-4">
+        <td class="px-3 py-2 whitespace-nowrap" style="min-width: 200px; max-width: 300px;">
           <% if defect.summary.present? %>
             <%= defect.summary.truncate(50) %>
           <% end %>
         </td>
-        <td class="px-6 py-4 whitespace-nowrap min-w-[160px]">
+        <td class="px-3 py-2 whitespace-nowrap min-w-[160px]">
           <div class="flex items-center gap-2">
             <%= render partial: 'defect/defect_statuses', locals: { defect: defect } %>
           </div>
         </td>
-        <td class="px-6 py-4 whitespace-nowrap">
-          <span class="px-3 py-2 text-sm font-semibold rounded inline-block <%= priority_badge_class(defect.priority) %>">
+        <td class="px-3 py-2 whitespace-nowrap">
+          <span class="px-2 py-1 text-xs font-semibold rounded inline-block <%= priority_badge_class(defect.priority) %>">
             <%= defect.priority %>
           </span>
         </td>
-        <td class="px-6 py-4">
+        <td class="px-3 py-2 whitespace-nowrap">
           <%= defect.qa_module&.name || 'Not specified' %>
         </td>
-        <td class="px-6 py-4">
+        <td class="px-3 py-2 whitespace-nowrap">
           <%= defect.submodule&.name || 'Not specified' %>
         </td>
-        <td class="px-6 py-4">
+        <td class="px-3 py-2 whitespace-nowrap">
           <%= defect.banking_type&.name || 'Not specified' %>
         </td>
-        <td class="px-6 py-4">
+        <td class="px-3 py-2">
           <% defect.labels.each do |label| %>
                     <span class="px-2 py-1 text-xs font-medium bg-gray-200 text-gray-700 rounded dark:bg-gray-600 dark:text-gray-100">
                       <%= label.name %>
@@ -63,55 +63,57 @@
           <% end %>
         </td>
         <!-- Assignee(s) -->
-        <td class="px-6 py-4 flex items-center gap-2">
-          <%= render partial: 'defect/user_initials', locals: { defect: defect } %>
-          <%= defect.users.map { |u| [u.first_name, u.last_name].compact.join(' ') }
-                    .reject(&:blank?)
-                    .join(', ')
-                    .presence || 'Unassigned' %>
+        <td class="px-3 py-2 whitespace-nowrap">
+          <div class="flex items-center gap-2">
+            <%= render partial: 'defect/user_initials', locals: { defect: defect } %>
+            <span class="text-sm"><%= defect.users.map { |u| [u.first_name, u.last_name].compact.join(' ') }
+                      .reject(&:blank?)
+                      .join(', ')
+                      .presence || 'Unassigned' %></span>
+          </div>
         </td>
         <!-- Reporter -->
-        <td class="px-6 py-4">
+        <td class="px-3 py-2 whitespace-nowrap">
           <% if defect.creator.present? %>
-            <div class="flex gap-2">
+            <div class="flex gap-2 items-center">
               <!-- Avatar circle with initials -->
-              <div class="w-10 h-10 flex items-center px-2 py-1 rounded-full text-sm font-medium bg-green-700 text-white">
+              <div class="w-8 h-8 flex items-center justify-center rounded-full text-xs font-medium bg-green-700 text-white">
                 <%= defect.creator.name.split.map { |n| n[0] }.join.upcase %>
               </div>
               <!-- Full name -->
-              <span class="flex w-full"><%= defect.creator.name %></span>
+              <span class="text-sm"><%= defect.creator.name %></span>
             </div>
           <% else %>
             <p class="text-red-500 text-sm">No reporter set</p>
           <% end %>
         </td>
-        <td class="px-6 py-4 whitespace-nowrap min-w-[140px]">
+        <td class="px-3 py-2 whitespace-nowrap min-w-[140px]">
           <div class="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 flex-shrink-0 text-gray-600 dark:text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 flex-shrink-0 text-gray-600 dark:text-gray-400">
               <path d="M12 11.993a.75.75 0 0 0-.75.75v.006c0 .414.336.75.75.75h.006a.75.75 0 0 0 .75-.75v-.006a.75.75 0 0 0-.75-.75H12ZM12 16.494a.75.75 0 0 0-.75.75v.005c0 .414.335.75.75.75h.005a.75.75 0 0 0 .75-.75v-.005a.75.75 0 0 0-.75-.75H12ZM8.999 17.244a.75.75 0 0 1 .75-.75h.006a.75.75 0 0 1 .75.75v.006a.75.75 0 0 1-.75.75h-.006a.75.75 0 0 1-.75-.75v-.006ZM7.499 16.494a.75.75 0 0 0-.75.75v.005c0 .414.336.75.75.75h.005a.75.75 0 0 0 .75-.75v-.005a.75.75 0 0 0-.75-.75H7.5ZM13.499 14.997a.75.75 0 0 1 .75-.75h.006a.75.75 0 0 1 .75.75v.005a.75.75 0 0 1-.75.75h-.006a.75.75 0 0 1-.75-.75v-.005ZM14.25 16.494a.75.75 0 0 0-.75.75v.006c0 .414.335.75.75.75h.005a.75.75 0 0 0 .75-.75v-.006a.75.75 0 0 0-.75-.75h-.005ZM15.75 14.995a.75.75 0 0 1 .75-.75h.005a.75.75 0 0 1 .75.75v.006a.75.75 0 0 1-.75.75H16.5a.75.75 0 0 1-.75-.75v-.006ZM13.498 12.743a.75.75 0 0 1 .75-.75h2.25a.75.75 0 1 1 0 1.5h-2.25a.75.75 0 0 1-.75-.75ZM6.748 14.993a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75Z" />
               <path fill-rule="evenodd" d="M18 2.993a.75.75 0 0 0-1.5 0v1.5h-9V2.994a.75.75 0 1 0-1.5 0v1.497h-.752a3 3 0 0 0-3 3v11.252a3 3 0 0 0 3 3h13.5a3 3 0 0 0 3-3V7.492a3 3 0 0 0-3-3H18V2.993ZM3.748 18.743v-7.5a1.5 1.5 0 0 1 1.5-1.5h13.5a1.5 1.5 0 0 1 1.5 1.5v7.5a1.5 1.5 0 0 1-1.5 1.5h-13.5a1.5 1.5 0 0 1-1.5-1.5Z" clip-rule="evenodd" />
             </svg>
-            <span class="font-medium text-sm"><%= defect.created_at.strftime('%d-%m-%Y') %></span>
+            <span class="font-medium text-xs"><%= defect.created_at.strftime('%d-%m-%Y') %></span>
           </div>
         </td>
-        <td class="px-6 py-4">
+        <td class="px-3 py-2 text-center">
           <span class="px-2 py-1 text-xs font-medium rounded">
             <%= defect.retest_count %>
           </span>
         </td>
 
-        <td class="px-6 py-4">
+        <td class="px-3 py-2 whitespace-nowrap">
           <% if defect.product.present? %>
             <%= link_to(
                   "#{defect.product.client&.name} #{defect.product.groupwares.first&.name}".truncate(30),
                   product_path(defect.product),
-                  class: "text-blue-600 hover:underline"
+                  class: "text-blue-600 hover:underline text-sm"
                 ) %>
           <% else %>
-            <span class="text-gray-400 italic">Not specified</span>
+            <span class="text-gray-400 italic text-sm">Not specified</span>
           <% end %>
         </td>
-        <td class="px-6 py-4 text-right" data-controller="dropdown" data-dropdown-ticket-id-value="<%= defect.id %>">
+        <td class="px-3 py-2 text-right" data-controller="dropdown" data-dropdown-ticket-id-value="<%= defect.id %>">
           <div class="relative w-full flex justify-start">
             <%= render partial: 'defect/action_dropdown', locals: { defect: defect } %>
           </div>
