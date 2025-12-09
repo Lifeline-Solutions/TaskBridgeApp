@@ -22,7 +22,7 @@
               <div class="text-sm">
                 <span class="font-medium text-gray-900 dark:text-gray-100"><%= defect.user.name %></span>
                 <span class="text-gray-500 dark:text-gray-400 ml-1"><%= defect.history_type.present? ? defect.history_type.downcase : 'updated' %></span>
-                <span class="text-gray-400 dark:text-gray-500 text-xs ml-2"><%= time_ago_in_words(defect.created_at) %> ago</span>
+                <span class="text-gray-400 dark:text-gray-500 text-xs ml-2"><%= defect.created_at.strftime('%d-%m-%Y') %></span>
               </div>
 
               <!-- History Text with Highlights -->
@@ -55,7 +55,7 @@
                 <%= @defect.creator.present? ? @defect.creator.name : 'Unknown' %>
               </span>
               <span class="text-gray-500 dark:text-gray-400 ml-1">created this defect</span>
-              <span class="text-gray-400 dark:text-gray-500 text-xs ml-2"><%= time_ago_in_words(@defect.created_at) %> ago</span>
+              <span class="text-gray-400 dark:text-gray-500 text-xs ml-2"><%= @defect.created_at.strftime('%d-%m-%Y')%></span>
             </div>
           </div>
         </div>
@@ -95,7 +95,7 @@
                 <%= @defect.creator.present? ? @defect.creator.name : 'Unknown' %>
               </span>
               <span class="text-gray-500 dark:text-gray-400 ml-1">created this defect</span>
-              <span class="text-gray-400 dark:text-gray-500 text-xs ml-2"><%= time_ago_in_words(@defect.created_at) %> ago</span>
+              <span class="text-gray-400 dark:text-gray-500 text-xs ml-2"><%= @defect.created_at.strftime('%d-%m-%Y') %></span>
             </div>
           </div>
         </div>

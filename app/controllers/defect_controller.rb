@@ -41,7 +41,7 @@ class DefectController < ApplicationController
         .where(product_id: qa_product_ids)
 
       # Filter defects for non-admin users
-      raw_defects = raw_defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa)
+      raw_defects = raw_defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa, :agent)
 
       # Apply additional filters (this adds ordering)
       raw_defects = apply_defect_filters(raw_defects)
@@ -245,6 +245,7 @@ class DefectController < ApplicationController
 
     # If user applied a filter from dropdown, track it for potential updates
     @current_filter = current_user.defect_filters.active.find_by(id: params[:current_filter_id]) if params[:current_filter_id].present?
+    @defects = @defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa, :agent)
 
     if filter_only_params.any? # Only look for matching filters if we have actual filter params
       @matching_filter = current_user.defect_filters.active.find do |filter|
@@ -581,7 +582,7 @@ class DefectController < ApplicationController
   end
 
   def show
-    redirect_to defect_index_path, alert: 'You are not authorized to view this defect.' and return unless current_user.has_any_role?(:admin, :observer, :qa) || Defect.joins(:users).where(id: params[:id], users: { id: current_user.id }).exists?
+    redirect_to defect_index_path, alert: 'You are not authorized to view this defect.' and return unless current_user.has_any_role?(:admin, :observer, :qa, :agent) || Defect.joins(:users).where(id: params[:id], users: { id: current_user.id }).exists?
 
     @defect = Defect.find(params[:id])
 
