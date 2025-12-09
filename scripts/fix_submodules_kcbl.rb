@@ -20,13 +20,13 @@ FALLBACK_SUBMODULE_ID = CONFIG[:fallback_submodule_id]
 
 options = {
   dry_run: false,
-  project: 'KCBL'
+  project: 'RMP'
 }
 
 OptionParser.new do |opts|
   opts.banner = 'Usage: rails runner scripts/fix_submodules.rb [options]'
   opts.on('--dry-run', 'Simulate changes') { options[:dry_run] = true }
-  opts.on('--project KEY', 'Project key (default KCBL)') { |v| options[:project] = v }
+  opts.on('--project KEY', 'Project key (default RMP)') { |v| options[:project] = v }
 end.parse!
 
 def log(msg)
@@ -74,12 +74,13 @@ def discover_custom_fields(project_key = 'RMP')
     name = field['name']&.downcase || ''
     field_id = field['id']
     
-    # Debug log for KCBL fields
-    log "Found field: #{name} (#{field_id})" if name.include?('kcbl')
+    # Debug log for module fields
+    log "Found field: #{name} (#{field_id})" if name.include?('module')
 
-    if name == 'kcbl modules'
+    if name =~ patterns[:module]
       module_field = field_id
-    elsif name.include?('kcbl modules') && (name.include?('submodules') || name.include?('sub-modules') || name.include?('sub modules'))
+      log "✓ Matched Module field: #{field['name']} (#{field_id})"
+    elsif name =~ patterns[:submodule]
       submodule_field = field_id
       log "✓ Matched Submodule field: #{field['name']} (#{field_id})"
     end
@@ -291,18 +292,11 @@ defects.find_each do |defect|
         created_by: defect.created_by || 1
       )
 
-    defect.qa_module_id = parent&.id || FALLBACK_QA_MODULE_ID
-    defect.submodule_id = child&.id || FALLBACK_SUBMODULE_ID
-    
-    # Fix for KCBL: Ensure Banking Type is set to 'Core Banking'
-    if options[:project] == 'KCBL'
-      # Core Banking ID for KCBL product
-      defect.banking_type_id = '7fc78d1b-c21f-4077-a2b4-e8cad57ca71c' 
+      defect.qa_module_id = parent&.id || FALLBACK_QA_MODULE_ID
+      defect.submodule_id = child&.id || FALLBACK_SUBMODULE_ID
+      defect.save!
+      log '    ✅ Updated successfully'
     end
-
-    defect.save!
-    log '    ✅ Updated successfully'
-  end
 
     stats[:updated] += 1
   rescue StandardError => e
