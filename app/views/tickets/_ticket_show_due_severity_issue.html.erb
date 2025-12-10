@@ -56,11 +56,11 @@
         <div class="flex items-center gap-2">
           <div class="relative flex-1">
             <% if @ticket.project.special %>
-              <%= f.select :issue, options_for_select(['SUPPORT', 'NEW FEATURE', 'BUG', 'REQUEST', 'INCIDENT', 'CHANGE REQUEST'], @ticket.issue), {},
+              <%= f.select :issue, options_for_select(['SUPPORT', 'NEW FEATURE', 'BUG', 'REQUEST', 'INCIDENT', 'CHANGE REQUEST', 'BILLABLE FEATURE'], @ticket.issue), {},
                   class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 dark:focus:ring-indigo-500 dark:focus:border-indigo-500",
                   required: true %>
             <% else %>
-              <%= f.select :issue, options_for_select(['SUPPORT', 'NEW FEATURE', 'BUG', 'REQUEST', 'INCIDENT'], @ticket.issue), {},
+              <%= f.select :issue, options_for_select(['SUPPORT', 'NEW FEATURE', 'BUG', 'REQUEST', 'INCIDENT', 'BILLABLE FEATURE'], @ticket.issue), {},
                   class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 dark:focus:ring-indigo-500 dark:focus:border-indigo-500",
                   required: true %>
             <% end %>
