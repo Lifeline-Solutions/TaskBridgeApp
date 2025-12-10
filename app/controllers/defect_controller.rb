@@ -1952,17 +1952,60 @@ class DefectController < ApplicationController
     # Track summary changes
     changes[:summary] = { from: defect.summary, to: params[:summary] } if params[:summary].present? && params[:summary] != defect.summary
 
-    # Track description changes
-    changes[:description] = { from: defect.description, to: params[:description] } if params[:description].present? && params[:description] != defect.description
+    # Track content/description changes (ActionText)
+    if params[:content].present?
+      current_content = defect.content&.body&.to_s || ''
+      new_content = params[:content].to_s
+      # Only track if content actually changed
+      changes[:description] = { from: 'previous content', to: 'updated content' } if current_content != new_content && new_content.present?
+    end
 
     # Track priority changes
     changes[:priority] = { from: defect.priority, to: params[:priority] } if params[:priority].present? && params[:priority] != defect.priority
 
-    # Track status changes
-    changes[:status] = { from: defect.status, to: params[:status] } if params[:status].present? && params[:status] != defect.status
+    # Track status changes (using status_id)
+    if params[:status_id].present?
+      current_status_id = defect.statuses.first&.id
+      new_status_id = params[:status_id].to_i
+      if current_status_id != new_status_id
+        current_status_name = defect.statuses.first&.name || 'None'
+        new_status_name = Status.find_by(id: new_status_id)&.name || 'Unknown'
+        changes[:status] = { from: current_status_name, to: new_status_name }
+      end
+    end
 
-    # Track severity changes
-    changes[:severity] = { from: defect.severity, to: params[:severity] } if params[:severity].present? && params[:severity] != defect.severity
+    # Track banking type changes
+    if params[:banking_type_id].present?
+      current_banking_type_id = defect.banking_type_id
+      new_banking_type_id = params[:banking_type_id].to_i
+      if current_banking_type_id != new_banking_type_id
+        current_banking_type = defect.banking_type&.name || 'None'
+        new_banking_type = BankingType.find_by(id: new_banking_type_id)&.name || 'Unknown'
+        changes[:banking_type] = { from: current_banking_type, to: new_banking_type }
+      end
+    end
+
+    # Track module changes
+    if params[:qa_module_id].present?
+      current_module_id = defect.qa_module_id
+      new_module_id = params[:qa_module_id].to_i
+      if current_module_id != new_module_id
+        current_module = defect.qa_module&.name || 'None'
+        new_module = QaModule.find_by(id: new_module_id)&.name || 'Unknown'
+        changes[:module] = { from: current_module, to: new_module }
+      end
+    end
+
+    # Track submodule changes
+    if params[:submodule_id].present?
+      current_submodule_id = defect.submodule_id
+      new_submodule_id = params[:submodule_id].to_i
+      if current_submodule_id != new_submodule_id
+        current_submodule = defect.submodule&.name || 'None'
+        new_submodule = QaModule.find_by(id: new_submodule_id)&.name || 'Unknown'
+        changes[:submodule] = { from: current_submodule, to: new_submodule }
+      end
+    end
 
     # Track label changes
     if params[:label_ids].present?
@@ -1998,6 +2041,9 @@ class DefectController < ApplicationController
                      when :severity then 'Severity Updated'
                      when :labels then 'Labels Updated'
                      when :assignees then 'Assignees Updated'
+                     when :banking_type then 'Banking Type Updated'
+                     when :module then 'Module Updated'
+                     when :submodule then 'Submodule Updated'
                      else 'General Update'
                      end
 
@@ -2028,6 +2074,12 @@ class DefectController < ApplicationController
       "Status changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
     when :severity
       "Severity changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
+    when :banking_type
+      "Banking Type changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
+    when :module
+      "Module changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
+    when :submodule
+      "Submodule changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
     when :labels
       old_labels = Label.where(id: change_data[:from]).pluck(:name).join(', ')
       new_labels = Label.where(id: change_data[:to]).pluck(:name).join(', ')
