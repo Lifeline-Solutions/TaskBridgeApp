@@ -49,6 +49,33 @@ module DefectHelper
       .gsub(%r{\s+(</li>)}i, '\1')
   end
 
+  # Sanitize rich text content while preserving colors, highlights, and other formatting
+  def sanitize_rich_text(content)
+    return '' if content.blank?
+
+    # Use Rails' built-in sanitize but with extended allowed attributes
+    # This preserves the style attribute which contains colors, backgrounds, etc.
+    ActionController::Base.helpers.sanitize(content.to_s,
+      tags: %w[
+        strong em b i u s strike del ins mark sub sup
+        p br span div
+        h1 h2 h3 h4 h5 h6
+        blockquote pre code
+        ul ol li
+        a
+        table thead tbody tfoot tr th td caption colgroup col
+        figure figcaption
+        hr
+      ],
+      attributes: %w[
+        href style class title id
+        colspan rowspan scope align valign
+        cellpadding cellspacing border
+        width height bgcolor
+      ]
+    ).html_safe
+  end
+
   def priority_badge_class(priority)
     case priority.to_s.downcase
     when 'severity 1', 'high' then 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
