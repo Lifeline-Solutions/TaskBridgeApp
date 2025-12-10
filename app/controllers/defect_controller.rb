@@ -2070,33 +2070,33 @@ class DefectController < ApplicationController
   def build_change_details(field, change_data)
     case field
     when :summary
-      "Summary changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
+      "#{change_data[:from]} → #{change_data[:to]}"
     when :description
       if change_data[:from].present? && change_data[:to].present?
-        "Description changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
+        "#{change_data[:from]} → #{change_data[:to]}"
       else
         'Description updated'
       end
     when :priority
-      "Priority changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
+      "#{change_data[:from]} → #{change_data[:to]}"
     when :status
-      "Status changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
+      "#{change_data[:from]} → #{change_data[:to]}"
     when :severity
-      "Severity changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
+      "#{change_data[:from]} → #{change_data[:to]}"
     when :banking_type
-      "Banking Type changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
+      "#{change_data[:from]} → #{change_data[:to]}"
     when :module
-      "Module changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
+      "#{change_data[:from]} → #{change_data[:to]}"
     when :submodule
-      "Submodule changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
+      "#{change_data[:from]} → #{change_data[:to]}"
     when :labels
       old_labels = Label.where(id: change_data[:from]).pluck(:name).join(', ')
       new_labels = Label.where(id: change_data[:to]).pluck(:name).join(', ')
-      "Labels changed from [#{old_labels}] to [#{new_labels}]"
+      "#{old_labels.presence || 'None'} → #{new_labels.presence || 'None'}"
     when :assignees
       old_users = User.where(id: change_data[:from]).pluck(:name).join(', ')
       new_users = User.where(id: change_data[:to]).pluck(:name).join(', ')
-      "Assignees changed from [#{old_users}] to [#{new_users}]"
+      "#{old_users.presence || 'None'} → #{new_users.presence || 'None'}"
     else
       "#{field.to_s.humanize} changed"
     end
