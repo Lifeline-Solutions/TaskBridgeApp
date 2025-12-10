@@ -1958,10 +1958,9 @@ class DefectController < ApplicationController
       new_content = params[:content].to_s
       # Only track if content actually changed
       if current_content != new_content && new_content.present?
-        # Strip HTML for readable history
-        old_text = ActionView::Base.full_sanitizer.sanitize(current_content).squish
-        new_text = ActionView::Base.full_sanitizer.sanitize(new_content).squish
-        changes[:description] = { from: old_text, to: new_text }
+        # Keep HTML formatting for rich text display in history
+        # Convert to plain string for Sidekiq/JSON serialization
+        changes[:description] = { from: current_content.to_s, to: new_content.to_s }
       end
     end
 
@@ -2138,15 +2137,32 @@ class DefectController < ApplicationController
     # Get all users who should be notified (current assignees + watchers)
     notify_users = @defect.users.pluck(:email)
 
+    # Convert all values to plain strings for Sidekiq serialization
+    json_safe_changes = convert_to_json_safe(changes_hash)
+
     # Determine notification priority based on change types
-    high_priority_changes = %i[status priority assignees].any? { |field| changes_hash.key?(field) }
+    high_priority_changes = %i[status priority assignees].any? { |field| json_safe_changes.key?(field) }
 
     if high_priority_changes
-      # Send immediate high-priority notification
-      UserMailer.defect_priority_update_email(@defect, notify_users, current_user, changes_hash).deliver_now
+      # Send immediate high-priority notification (queued in background)
+      UserMailer.defect_priority_update_email(@defect, notify_users, current_user, json_safe_changes).deliver_later
     else
       # Send standard edit notification
-      UserMailer.defect_edit_notification_email(@defect, notify_users, current_user, changes_hash).deliver_later
+      UserMailer.defect_edit_notification_email(@defect, notify_users, current_user, json_safe_changes).deliver_later
+    end
+  end
+
+  # Convert SafeBuffer and other non-JSON types to plain strings
+  def convert_to_json_safe(hash)
+    hash.deep_transform_values do |value|
+      case value
+      when ActiveSupport::SafeBuffer
+        value.to_str  # Convert SafeBuffer to plain string
+      when String
+        value.to_s    # Ensure it's a plain string
+      else
+        value         # Keep other types as-is
+      end
     end
   end
 end
