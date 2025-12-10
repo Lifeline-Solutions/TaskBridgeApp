@@ -126,7 +126,7 @@ class TicketsController < ApplicationController
         end
 
         # Set SLA for new feature or regular ticket
-        if @ticket.issue == 'NEW FEATURE'
+        if @ticket.issue == 'NEW FEATURE' or "BILLABLE FEATURE"
           SlaTicket.find_or_create_by!(ticket_id: @ticket.id) do |sla|
             sla.sla_status = 'NO SLA'
             sla.sla_target_response_deadline = 'NO SLA'
@@ -158,6 +158,23 @@ class TicketsController < ApplicationController
             .set_source('ticket', @ticket.id)
             .set_party('user', current_user.id)
             .send(queue: true)
+
+        elsif @ticket.issue == 'BILLABLE FEATURE'
+            Messaging::EmailSender
+              .send_email(
+                "A new ticket has been created with Ticket ID #{@ticket.unique_id}.",
+                to: ['cx@craftsilicon.com', 'finance@craftsilicon.com'],
+                actor: current_user,
+                priority: :normal,
+                type: 'ticket_create_change_request'
+              )
+              .use_template(
+                view: 'user_mailer/create_ticket_email',
+                assigns: { ticket: @ticket, current_user: current_user, assigned_user: ['cx@craftsilicon.com','finance@craftsilicon.com'], project: @project, url: url }
+              )
+              .set_source('ticket', @ticket.id)
+              .set_party('user', current_user.id)
+              .send(queue: true)
         else
           # Notify only the current assignee and the project owner (if different)
           if assigned_user.present?
