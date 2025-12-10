@@ -269,7 +269,7 @@ class TicketsController < ApplicationController
         end
 
         # Set SLA for new feature or regular ticket
-        if @ticket.issue == 'NEW FEATURE'
+        if @ticket.issue == 'NEW FEATURE' or "BILLABLE FEATURE"
           SlaTicket.find_or_create_by!(ticket_id: @ticket.id) do |sla|
             sla.sla_status = 'NO SLA'
             sla.sla_target_response_deadline = 'NO SLA'
