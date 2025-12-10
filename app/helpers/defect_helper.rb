@@ -81,11 +81,11 @@ module DefectHelper
             content_tag(:div, class: 'text-xs text-gray-500 dark:text-gray-400 mb-1') do
               'Before'
             end +
-            content_tag(:div, class: 'text-sm text-gray-700 dark:text-gray-300 bg-red-50 dark:bg-red-900/20 p-2 rounded defect-history-content') do
-              # Sanitize and render HTML for rich text
+            content_tag(:div, class: 'prose prose-sm max-w-none dark:prose-invert bg-red-50 dark:bg-red-900/20 p-2 rounded prose-ul:list-disc prose-ol:list-decimal prose-li:my-1') do
+              # Sanitize and render HTML for rich text - strip style attributes to let Tailwind work
               ActionController::Base.helpers.sanitize(old_value,
                 tags: %w[strong em b i u p br span div ul ol li h1 h2 h3 h4 h5 h6 blockquote a],
-                attributes: %w[style class href]
+                attributes: %w[class href]  # Removed style to prevent inline override
               ).html_safe
             end
           end
@@ -95,11 +95,11 @@ module DefectHelper
             content_tag(:div, class: 'text-xs text-gray-500 dark:text-gray-400 mb-1') do
               'After'
             end +
-            content_tag(:div, class: 'text-sm text-gray-700 dark:text-gray-300 bg-green-50 dark:bg-green-900/20 p-2 rounded defect-history-content') do
-              # Sanitize and render HTML for rich text
+            content_tag(:div, class: 'prose prose-sm max-w-none dark:prose-invert bg-green-50 dark:bg-green-900/20 p-2 rounded prose-ul:list-disc prose-ol:list-decimal prose-li:my-1') do
+              # Sanitize and render HTML for rich text - strip style attributes to let Tailwind work
               ActionController::Base.helpers.sanitize(new_value,
                 tags: %w[strong em b i u p br span div ul ol li h1 h2 h3 h4 h5 h6 blockquote a],
-                attributes: %w[style class href]
+                attributes: %w[class href]  # Removed style to prevent inline override
               ).html_safe
             end
           end
