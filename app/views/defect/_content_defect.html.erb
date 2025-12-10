@@ -159,15 +159,29 @@
 </script>
 
 <style>
-  /* Scope styling to prose container so only ActionText content is affected */
+  /* ===== TABLE STYLING - Comprehensive fix for Word/Docs paste issues ===== */
+
+  /* CRITICAL: Table container must allow horizontal scrolling if needed */
+  .prose {
+    overflow-x: auto;
+  }
+
+  /* Core table structure with fixed layout for consistent column widths */
   .prose table {
-    width: 100%;
-    border-collapse: collapse;
-    border-spacing: 0;
+    width: 100% !important;
+    max-width: 100%;
+    border-collapse: collapse !important;
+    border-spacing: 0 !important;
     margin-top: 0.75rem;
     margin-bottom: 0.75rem;
   }
 
+  /* Ensure table rows behave correctly */
+  .prose table tr {
+    display: table-row !important;
+  }
+
+  /* Cell styling with proper constraints */
   .prose th,
   .prose td {
     padding: 0.5rem 0.75rem;
@@ -186,7 +200,7 @@
     border-color: #f1f5f9;
   }
 
-  /* Optional nicer table appearance in prose */
+  /* Table caption */
   .prose table caption {
     caption-side: top;
     font-weight: 600;
