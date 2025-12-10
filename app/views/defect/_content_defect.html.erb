@@ -1,11 +1,7 @@
 <% if @defect.content.present? %>
   <span class="break-words overflow-hidden">
     <div class="pl-8 prose dark:prose-invert max-w-full w-full">
-      <%= sanitize(
-        @defect.content.body.to_s,
-        tags: %w[strong em b i u p br span div figure figcaption h1 h2 h3 h4 h5 h6 blockquote ul ol li a table thead tbody tfoot tr th td caption colgroup col],
-        attributes: %w[href style border class title colspan rowspan scope align cellpadding cellspacing]
-      ).html_safe %>
+      <%= @defect.content.body.to_s.html_safe %>
     </div>
 
     <% if @defect.content.body.attachments.any? %>
@@ -263,12 +259,35 @@
   }
 
   /* Preserve inline styles (colors, backgrounds, font sizes) in prose */
+  /* IMPORTANT: These rules ensure that inline styles from the rich text editor are preserved */
   .prose [style*="color"],
   .prose [style*="background-color"],
+  .prose [style*="background"],
   .prose [style*="font-size"],
   .prose [style*="font-family"],
-  .prose [style*="text-align"] {
+  .prose [style*="font-weight"],
+  .prose [style*="text-align"],
+  .prose [style*="text-decoration"],
+  .prose [style*="border"],
+  .prose [style*="padding"],
+  .prose [style*="margin"] {
     display: inherit;
+  }
+
+  /* Ensure span elements with inline styles are properly displayed */
+  .prose span[style] {
+    all: unset;
+    display: inline;
+  }
+
+  /* Re-apply the inline styles after reset */
+  .prose span[style*="color"] {
+    color: inherit; /* Will use the style attribute value */
+  }
+
+  .prose span[style*="background-color"],
+  .prose span[style*="background"] {
+    background-color: inherit; /* Will use the style attribute value */
   }
 
   /* Font size classes */
