@@ -1957,7 +1957,12 @@ class DefectController < ApplicationController
       current_content = defect.content&.body&.to_s || ''
       new_content = params[:content].to_s
       # Only track if content actually changed
-      changes[:description] = { from: 'previous content', to: 'updated content' } if current_content != new_content && new_content.present?
+      if current_content != new_content && new_content.present?
+        # Strip HTML and truncate for readable history
+        old_text = ActionView::Base.full_sanitizer.sanitize(current_content).squish.truncate(200)
+        new_text = ActionView::Base.full_sanitizer.sanitize(new_content).squish.truncate(200)
+        changes[:description] = { from: old_text, to: new_text }
+      end
     end
 
     # Track priority changes
@@ -2067,7 +2072,11 @@ class DefectController < ApplicationController
     when :summary
       "Summary changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
     when :description
-      'Description updated'
+      if change_data[:from].present? && change_data[:to].present?
+        "Description changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
+      else
+        'Description updated'
+      end
     when :priority
       "Priority changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
     when :status
