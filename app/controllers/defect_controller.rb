@@ -1958,9 +1958,9 @@ class DefectController < ApplicationController
       new_content = params[:content].to_s
       # Only track if content actually changed
       if current_content != new_content && new_content.present?
-        # Strip HTML and truncate for readable history
-        old_text = ActionView::Base.full_sanitizer.sanitize(current_content).squish.truncate(200)
-        new_text = ActionView::Base.full_sanitizer.sanitize(new_content).squish.truncate(200)
+        # Strip HTML for readable history
+        old_text = ActionView::Base.full_sanitizer.sanitize(current_content).squish
+        new_text = ActionView::Base.full_sanitizer.sanitize(new_content).squish
         changes[:description] = { from: old_text, to: new_text }
       end
     end
