@@ -86,6 +86,60 @@
         data = data.replace(/(<li[^>]*>)\s+/gi, '$1');
         data = data.replace(/\s+(<\/li>)/gi, '$1');
 
+        // === STEP 10: TABLE SANITIZATION - Critical for fixing table rendering ===
+
+        // Remove width/height attributes from tables and cells that cause layout issues
+        data = data.replace(/(<table[^>]*)\s+width=["'][^"']*["']/gi, '$1');
+        data = data.replace(/(<table[^>]*)\s+height=["'][^"']*["']/gi, '$1');
+        data = data.replace(/(<td[^>]*)\s+width=["'][^"']*["']/gi, '$1');
+        data = data.replace(/(<td[^>]*)\s+height=["'][^"']*["']/gi, '$1');
+        data = data.replace(/(<th[^>]*)\s+width=["'][^"']*["']/gi, '$1');
+        data = data.replace(/(<th[^>]*)\s+height=["'][^"']*["']/gi, '$1');
+        data = data.replace(/(<tr[^>]*)\s+height=["'][^"']*["']/gi, '$1');
+
+        // Remove inline width/height styles from table elements
+        data = data.replace(/(<table[^>]*style=["'][^"']*)width:\s*[^;"']+;?/gi, '$1');
+        data = data.replace(/(<table[^>]*style=["'][^"']*)height:\s*[^;"']+;?/gi, '$1');
+        data = data.replace(/(<td[^>]*style=["'][^"']*)width:\s*[^;"']+;?/gi, '$1');
+        data = data.replace(/(<td[^>]*style=["'][^"']*)height:\s*[^;"']+;?/gi, '$1');
+        data = data.replace(/(<th[^>]*style=["'][^"']*)width:\s*[^;"']+;?/gi, '$1');
+        data = data.replace(/(<th[^>]*style=["'][^"']*)height:\s*[^;"']+;?/gi, '$1');
+        data = data.replace(/(<tr[^>]*style=["'][^"']*)height:\s*[^;"']+;?/gi, '$1');
+
+        // Remove Microsoft Office table classes
+        data = data.replace(/(<table[^>]*)\s+class=["'][^"']*Mso[^"']*["']/gi, '$1');
+        data = data.replace(/(<tr[^>]*)\s+class=["'][^"']*Mso[^"']*["']/gi, '$1');
+        data = data.replace(/(<td[^>]*)\s+class=["'][^"']*Mso[^"']*["']/gi, '$1');
+        data = data.replace(/(<th[^>]*)\s+class=["'][^"']*Mso[^"']*["']/gi, '$1');
+
+        // Remove cellpadding, cellspacing attributes (use CSS instead)
+        data = data.replace(/(<table[^>]*)\s+cellpadding=["'][^"']*["']/gi, '$1');
+        data = data.replace(/(<table[^>]*)\s+cellspacing=["'][^"']*["']/gi, '$1');
+
+        // Strip nested divs and spans from table cells while preserving content
+        data = data.replace(/<(td|th)([^>]*)>(\s*)<div[^>]*>(.*?)<\/div>(\s*)<\/(td|th)>/gi, '<$1$2>$3$4$5</$6>');
+        data = data.replace(/<(td|th)([^>]*)>(\s*)<span[^>]*>(.*?)<\/span>(\s*)<\/(td|th)>/gi, '<$1$2>$3$4$5</$6>');
+        data = data.replace(/<(td|th)([^>]*)>(\s*)<p[^>]*>(.*?)<\/p>(\s*)<\/(td|th)>/gi, '<$1$2>$3$4$5</$6>');
+
+        // Remove display:block styles from elements inside table cells
+        data = data.replace(/(<(?:td|th)[^>]*>.*?)<([^>]+)\s+style=["']([^"']*)display:\s*block;?([^"']*)["']([^>]*)>(.*?)<\/(td|th)>/gi,
+          function (match, before, tag, stylesBefore, stylesAfter, attrs, content, closeTag) {
+            // Remove display:block but keep other styles
+            let cleanStyles = (stylesBefore + stylesAfter).trim();
+            if (cleanStyles) {
+              return before + '<' + tag + ' style="' + cleanStyles + '"' + attrs + '>' + content + '</' + closeTag + '>';
+            } else {
+              return before + '<' + tag + attrs + '>' + content + '</' + closeTag + '>';
+            }
+          }
+        );
+
+        // Remove position:absolute/relative from table elements
+        data = data.replace(/(<(?:table|tr|td|th)[^>]*style=["'][^"']*)position:\s*(?:absolute|relative);?/gi, '$1');
+
+        // Clean up any remaining empty style attributes after cleanup
+        data = data.replace(/\s+style=["'][\s;]*["']/gi, '');
+
         console.log('Cleaned paste:', data.substring(0, 200));
 
         evt.data.dataValue = data;
