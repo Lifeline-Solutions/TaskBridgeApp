@@ -23,6 +23,10 @@
   input:checked+span+span {
     transform: translateX(32px);
   }
+
+  .overflow-auto::-webkit-scrollbar-corner {
+    background-color: #f1f1f1;
+  }
 }
 
 @layer components {
