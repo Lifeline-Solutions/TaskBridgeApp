@@ -182,53 +182,11 @@ log "Found #{defects.count} defects to check."
 
 stats = { updated: 0, skipped: 0, errors: 0 }
 
-# For KCBL projects: find or create the KCBL Modules/Submodules module
-kcbl_module = nil
-kcbl_submodule = nil
 
-if options[:project].upcase == 'KCBL'
-  log "Setting up KCBL Modules/Submodules..."
-
-  # Find or create parent module: KCBL Modules/Submodules
-  # Ensure we use the KCBL Product ID
-  kcbl_product_id = 'c1469eb7-97d1-4611-9e67-3fce1d0bb1ac'
-  
-  kcbl_module = QaModule.where('lower(name) = ? AND parent_id IS NULL AND product_id = ?', 'kcbl modules/submodules'.downcase, kcbl_product_id).first
-  unless kcbl_module
-    log "  Creating parent module: KCBL Modules/Submodules for product #{kcbl_product_id}"
-    kcbl_module = QaModule.create!(name: 'KCBL Modules/Submodules', product_id: kcbl_product_id)
-  end
-  log "  ✓ Parent Module: #{kcbl_module.name} (#{kcbl_module.id})"
-
-  # For KCBL, the submodule is the same as the parent
-  kcbl_submodule = kcbl_module
-  log "  ✓ Submodule: #{kcbl_submodule.name} (#{kcbl_submodule.id})"
-end
 
 defects.find_each do |defect|
   begin
-    # For KCBL: directly assign the pre-configured modules
-    if options[:project].upcase == 'KCBL'
-      if defect.qa_module_id == kcbl_module.id && defect.submodule_id == kcbl_submodule.id
-        # log "  #{defect.defect_unique}: Already has correct modules. Skipping."
-        stats[:skipped] += 1
-        next
-      end
-
-      log "  #{defect.defect_unique}: Updating to KCBL Modules/Submodules..."
-      unless options[:dry_run]
-        defect.qa_module_id = kcbl_module.id
-        defect.submodule_id = kcbl_submodule.id
-        # Core Banking ID for KCBL product
-        defect.banking_type_id = '7fc78d1b-c21f-4077-a2b4-e8cad57ca71c'
-        defect.save!
-        log '    ✅ Updated successfully'
-      end
-      stats[:updated] += 1
-      next
-    end
-
-    # For other projects (RMP, etc.): Fetch from Jira
+    # Fetch from Jira
     url = "#{JIRA_BASE_URL}/rest/api/3/issue/#{defect.defect_unique}"
     uri = URI.parse(url)
     http = Net::HTTP.new(uri.host, uri.port)
@@ -287,11 +245,18 @@ defects.find_each do |defect|
     log "    Old: Module='#{current_module}', Sub='#{current_submodule}'"
     log "    New: Module='#{module_name}', Sub='#{submodule_name}'"
 
+    # Determine Product ID
+    product_id = defect.product_id
+    if options[:project].upcase == 'KCBL' && product_id.blank?
+      product_id = 'c1469eb7-97d1-4611-9e67-3fce1d0bb1ac'
+    end
+    product_id ||= DEFAULT_PRODUCT_UUID
+
     unless options[:dry_run]
       parent, child = find_or_create_modules(
         module_name: module_name,
         submodule_name: submodule_name,
-        product_id: defect.product_id || DEFAULT_PRODUCT_UUID,
+        product_id: product_id,
         created_by: defect.created_by || 1
       )
 
