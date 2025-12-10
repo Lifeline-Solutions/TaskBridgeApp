@@ -162,7 +162,7 @@
                   <%= hidden_field_tag 'defect[user_ids][]',
                         @defect.user_ids.first,
                         id: "assignee-id-field" %>
-                  
+
                   <!-- Dropdown caret icon -->
                   <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,7 +182,7 @@
               </div>
 
               <!-- Banking Type -->
-          <div class="relative w-full" 
+          <div class="relative w-full"
                data-banking-types='<%= raw (@banking_types || []).map { |bt| { id: bt.id, name: bt.name } }.to_json %>'
                data-assignee-users='<%= raw @users.map { |u| { id: u.id, name: u.name } }.to_json %>'
                data-projects='<%= raw @products_and_clients_defects.map { |name, id| { name: name, id: id } }.to_json %>'>
@@ -263,7 +263,7 @@
               </label>
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <% @defect.attachments.each do |attachment| %>
-                  <div class="border border-gray-200 rounded-lg p-3 dark:border-gray-700" 
+                  <div class="border border-gray-200 rounded-lg p-3 dark:border-gray-700"
                        data-controller="attachment"
                        data-attachment-url-value="<%= defect_attachment_path(@defect, attachment_id: attachment.id) %>">
                     <% if attachment.image? || attachment.previewable? %>
@@ -322,7 +322,7 @@
                 value: "publish",
                 data: { disable_with: "Publishing..." },
                 class: "bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg px-6 py-2 shadow-md" %>
-              
+
               <!-- Save as Draft button (no validation) -->
               <%= f.submit "Save as Draft",
                 name: "commit",
@@ -483,11 +483,11 @@
   (function() {
     // Find the container with data attributes
     const bankingTypeContainer = document.querySelector('[data-banking-types]');
-    
+
     if (!bankingTypeContainer) {
       return;
     }
-    
+
     // Read data from HTML data attributes (this works even in Turbo Frames)
     try {
       window.bankingTypesData = JSON.parse(bankingTypeContainer.dataset.bankingTypes || '[]');
@@ -570,7 +570,7 @@
         }
       });
     }
-      
+
     // ===== Banking Type Search =====
     const bankingTypeInput = document.getElementById("banking-type-search");
     const bankingTypeResults = document.getElementById("banking-type-results");
@@ -741,7 +741,7 @@
     // ===== Dynamic module/submodule loading =====
     const modSelect = document.querySelector('[data-project-modules-target="moduleSelect"]');
     const submodSelect = document.querySelector('[data-project-modules-target="submoduleSelect"]');
-    
+
     if (modSelect) {
       modSelect.addEventListener('change', function () {
         const moduleId = this.value;
@@ -785,7 +785,7 @@
     if (!window.projectsData) {
       return;
     }
-    
+
     initSearchableDropdowns();
     initModuleSubmoduleLoading();
     initStatusDropdown();
@@ -795,12 +795,12 @@
   document.addEventListener('turbo:load', function() {
     initializeAll();
   });
-  
+
   // Initialize on turbo:frame-load (when modal/frame loads)
   document.addEventListener('turbo:frame-load', function(event) {
     initializeAll();
   });
-  
+
   // Initialize on DOMContentLoaded as fallback
   document.addEventListener('DOMContentLoaded', function() {
     initializeAll();
@@ -810,18 +810,18 @@
   document.addEventListener('turbo:load', function() {
     const form = document.querySelector('form[action*="defect"]');
     if (!form) return;
-    
+
     const draftButton = form.querySelector('input[type="submit"][value="draft"]');
     const updateButton = form.querySelector('input[type="submit"]:not([value="draft"])');
-    
+
     if (draftButton) {
       // When draft button is clicked, disable HTML5 validation
       draftButton.addEventListener('click', function(e) {
 
-        
+
         // Disable HTML5 validation on the form
         form.setAttribute('novalidate', 'novalidate');
-        
+
         // Remove required attributes from all required fields
         const requiredFields = form.querySelectorAll('[required]');
         requiredFields.forEach(field => {
@@ -829,7 +829,7 @@
           field.dataset.wasRequired = 'true';
         });
 
-        
+
         // Handle data-required fields (like CKEditor content)
         const dataRequiredFields = form.querySelectorAll('[data-required="true"]');
         dataRequiredFields.forEach(field => {
@@ -838,22 +838,22 @@
         });
       });
     }
-      
+
     // When update button is clicked, restore validation
     if (updateButton) {
       updateButton.addEventListener('click', function(e) {
 
-        
+
         // Enable HTML5 validation
         form.removeAttribute('novalidate');
-        
+
         // Restore required attributes
         const fieldsToRestore = form.querySelectorAll('[data-was-required="true"]');
         fieldsToRestore.forEach(field => {
           field.setAttribute('required', 'required');
           field.removeAttribute('data-was-required');
         });
-        
+
         // Restore data-required attributes
         const dataFieldsToRestore = form.querySelectorAll('[data-was-data-required="true"]');
         dataFieldsToRestore.forEach(field => {
