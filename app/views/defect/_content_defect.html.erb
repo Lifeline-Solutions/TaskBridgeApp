@@ -155,30 +155,84 @@
 </script>
 
 <style>
-  /* Scope styling to prose container so only ActionText content is affected */
-  .prose table {
-    width: 100%;
-    border-collapse: collapse;
-    border-spacing: 0;
-    margin-top: 0.75rem;
-    margin-bottom: 0.75rem;
-    border: 1px solid #000 !important; /* Outer table border */
+  /* ===== TABLE STYLING - Comprehensive fix for Word/Docs paste issues ===== */
+
+  /* CRITICAL: Table container must allow horizontal scrolling if needed */
+  .prose {
+    overflow-x: auto;
   }
 
+  /* Core table structure with fixed layout for consistent column widths */
+  .prose table {
+    width: 100% !important;
+    max-width: 100%;
+    border-collapse: collapse !important;
+    border-spacing: 0 !important;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid #000 !important;
+    table-layout: fixed !important; /* CRITICAL: Prevents cells from stacking vertically */
+    display: table !important; /* Force table display, override any inline styles */
+  }
+
+  /* Ensure table rows behave correctly */
+  .prose table tr {
+    display: table-row !important;
+  }
+
+  /* Cell styling with proper constraints */
   .prose th,
   .prose td {
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #000 !important; /* black borders in light mode, use !important to override inline styles if needed */
-    vertical-align: top;
+    display: table-cell !important; /* CRITICAL: Force table-cell display */
+    padding: 0.5rem 0.75rem !important;
+    border: 1px solid #000 !important;
+    vertical-align: top !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    min-width: 50px; /* Prevent overly narrow columns */
+    max-width: none; /* Allow proper width distribution */
+  }
+
+  /* CRITICAL: Strip nested div/p/span layout interference from pasted content */
+  .prose td > div,
+  .prose th > div,
+  .prose td > p,
+  .prose th > p,
+  .prose td > span,
+  .prose th > span {
+    display: inline !important; /* Prevent block-level stacking within cells */
+    margin: 0 !important;
+    padding: 0 !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+
+  /* Remove any absolute positioning from table cells */
+  .prose td,
+  .prose th,
+  .prose td *,
+  .prose th * {
+    position: static !important;
   }
 
   /* Bold table headers */
   .prose th {
-    font-weight: 700;
-    background-color: #f3f4f6; /* Light gray background for headers */
+    font-weight: 700 !important;
+    background-color: #f3f4f6;
+    text-align: left;
   }
 
-  /* Dark mode: use a light border color (Tailwind slate-100 ~ #f1f5f9) */
+  /* Table body */
+  .prose tbody {
+    display: table-row-group !important;
+  }
+
+  /* Table header */
+  .prose thead {
+    display: table-header-group !important;
+  }
+
+  /* Dark mode: use a light border color */
   .dark .prose table {
     border-color: #f1f5f9 !important;
   }
@@ -189,27 +243,33 @@
   }
 
   .dark .prose th {
-    background-color: #374151; /* Dark gray background for headers in dark mode */
+    background-color: #374151;
   }
 
-  /* Optional nicer table appearance in prose */
+  /* Table caption */
   .prose table caption {
     caption-side: top;
     font-weight: 600;
     margin-bottom: 0.5rem;
   }
 
-  /* Support for tables with inline border styles */
+  /* Override any inline styles that could break table layout */
   .prose table[border],
-  .prose table[style*="border"] {
+  .prose table[style*="border"],
+  .prose table[style*="width"],
+  .prose table[style*="display"] {
     border-collapse: collapse !important;
+    display: table !important;
+    width: 100% !important;
   }
 
+  /* Ensure all cells have proper borders regardless of inline styles */
   .prose table[border] th,
   .prose table[border] td,
   .prose table[style*="border"] th,
   .prose table[style*="border"] td {
     border: 1px solid #000 !important;
+    display: table-cell !important;
   }
 
   /* Dark mode for tables with inline borders */
@@ -218,6 +278,27 @@
   .dark .prose table[style*="border"] th,
   .dark .prose table[style*="border"] td {
     border-color: #f1f5f9 !important;
+  }
+
+  /* Remove Word/Docs table styling artifacts */
+  .prose table[class*="Mso"],
+  .prose table[class*="mso"],
+  .prose tr[class*="Mso"],
+  .prose tr[class*="mso"],
+  .prose td[class*="Mso"],
+  .prose td[class*="mso"],
+  .prose th[class*="Mso"],
+  .prose th[class*="mso"] {
+    border-collapse: collapse !important;
+    display: table !important;
+  }
+
+  /* Remove height constraints that could cause stacking */
+  .prose table,
+  .prose tr,
+  .prose td,
+  .prose th {
+    height: auto !important;
   }
 
   /* ===== LIST STYLING - Comprehensive fix for Word/Docs paste issues ===== */
