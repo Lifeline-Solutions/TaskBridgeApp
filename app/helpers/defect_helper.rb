@@ -63,44 +63,96 @@ module DefectHelper
 
     history_text = defect_history.history
 
-    # Match pattern: "Something changed from A to B by C"
-    match = history_text.match(/(.+?)\s+from\s+(.+?)\s+to\s+(.+?)\s+by\s+(.+)$/i)
+    # Check if it's the new arrow format (X → Y)
+    if history_text.include?('→')
+      # Split on arrow to get before and after
+      parts = history_text.split('→').map(&:strip)
 
-    return history_text unless match
+      if parts.length == 2
+        old_value = parts[0]
+        new_value = parts[1]
 
-    action = match[1]
-    old_value = match[2].strip
-    new_value = match[3].strip
-    actor = match[4].strip
+        # Display in 2-column layout
+        content_tag(:div, class: 'grid grid-cols-2 gap-4 mt-2') do
+          output = []
 
-    # Check if values are user names (for assignee changes)
-    is_assignee_change = action.downcase.include?('assignee')
+          # Before column
+          output << content_tag(:div, class: 'border-l-4 border-red-400 pl-3') do
+            content_tag(:div, class: 'text-xs text-gray-500 dark:text-gray-400 mb-1') do
+              'Before'
+            end +
+            content_tag(:div, class: 'text-sm text-gray-700 dark:text-gray-300 bg-red-50 dark:bg-red-900/20 p-2 rounded prose dark:prose-invert max-w-none') do
+              # Sanitize and render HTML for rich text
+              ActionController::Base.helpers.sanitize(old_value,
+                tags: %w[strong em b i u p br span div ul ol li h1 h2 h3 h4 h5 h6 blockquote a],
+                attributes: %w[style class href]
+              ).html_safe
+            end
+          end
 
-    content_tag(:div, class: 'flex items-center gap-2 flex-wrap') do
-      output = []
+          # After column
+          output << content_tag(:div, class: 'border-l-4 border-green-400 pl-3') do
+            content_tag(:div, class: 'text-xs text-gray-500 dark:text-gray-400 mb-1') do
+              'After'
+            end +
+            content_tag(:div, class: 'text-sm text-gray-700 dark:text-gray-300 bg-green-50 dark:bg-green-900/20 p-2 rounded prose dark:prose-invert max-w-none') do
+              # Sanitize and render HTML for rich text
+              ActionController::Base.helpers.sanitize(new_value,
+                tags: %w[strong em b i u p br span div ul ol li h1 h2 h3 h4 h5 h6 blockquote a],
+                attributes: %w[style class href]
+              ).html_safe
+            end
+          end
 
-      # Old value
-      output << if is_assignee_change && old_value.downcase != 'none'
-                  render_user_badge(old_value, 'line-through text-red-600')
-                else
-                  content_tag(:span, old_value, class: 'px-2 py-0.5 bg-red-50 text-red-700 rounded line-through font-medium')
-                end
+          safe_join(output)
+        end
+      else
+        # If split didn't work as expected, show as plain text
+        content_tag(:div, history_text, class: 'text-sm text-gray-700 dark:text-gray-300')
+      end
+    else
+      # Old format fallback - try to match "from X to Y by Z" pattern
+      match = history_text.match(/(.+?)\s+from\s+(.+?)\s+to\s+(.+?)\s+by\s+(.+)$/i)
 
-      # Arrow
-      output << content_tag(:span, '→', class: 'text-gray-400 font-bold')
+      if match
+        action = match[1]
+        old_value = match[2].strip
+        new_value = match[3].strip
+        actor = match[4].strip
 
-      # New value
-      output << if is_assignee_change && new_value.downcase != 'none'
-                  render_user_badge(new_value, 'text-green-700 font-medium')
-                else
-                  content_tag(:span, new_value, class: 'px-2 py-0.5 bg-green-50 text-green-700 rounded font-medium')
-                end
+        # Check if values are user names (for assignee changes)
+        is_assignee_change = action.downcase.include?('assignee')
 
-      # Actor (by C)
-      output << content_tag(:span, 'by', class: 'text-gray-400 text-xs')
-      output << render_user_badge(actor, 'text-blue-700 font-medium')
+        content_tag(:div, class: 'flex items-center gap-2 flex-wrap') do
+          output = []
 
-      safe_join(output)
+          # Old value
+          output << if is_assignee_change && old_value.downcase != 'none'
+                      render_user_badge(old_value, 'line-through text-red-600')
+                    else
+                      content_tag(:span, old_value, class: 'px-2 py-0.5 bg-red-50 text-red-700 rounded line-through font-medium')
+                    end
+
+          # Arrow
+          output << content_tag(:span, '→', class: 'text-gray-400 font-bold')
+
+          # New value
+          output << if is_assignee_change && new_value.downcase != 'none'
+                      render_user_badge(new_value, 'text-green-700 font-medium')
+                    else
+                      content_tag(:span, new_value, class: 'px-2 py-0.5 bg-green-50 text-green-700 rounded font-medium')
+                    end
+
+          # Actor (by C)
+          output << content_tag(:span, 'by', class: 'text-gray-400 text-xs')
+          output << render_user_badge(actor, 'text-blue-700 font-medium')
+
+          safe_join(output)
+        end
+      else
+        # No pattern matched, show as-is
+        content_tag(:div, history_text, class: 'text-sm text-gray-700 dark:text-gray-300')
+      end
     end
   end
 

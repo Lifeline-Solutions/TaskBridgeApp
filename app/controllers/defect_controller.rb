@@ -1952,22 +1952,69 @@ class DefectController < ApplicationController
     # Track summary changes
     changes[:summary] = { from: defect.summary, to: params[:summary] } if params[:summary].present? && params[:summary] != defect.summary
 
-    # Track description changes
-    changes[:description] = { from: defect.description, to: params[:description] } if params[:description].present? && params[:description] != defect.description
+    # Track content/description changes (ActionText)
+    if params[:content].present?
+      current_content = defect.content&.body&.to_s || ''
+      new_content = params[:content].to_s
+      # Only track if content actually changed
+      if current_content != new_content && new_content.present?
+        # Keep HTML formatting for rich text display in history
+        # Convert to plain string for Sidekiq/JSON serialization
+        changes[:description] = { from: current_content.to_s, to: new_content.to_s }
+      end
+    end
 
     # Track priority changes
     changes[:priority] = { from: defect.priority, to: params[:priority] } if params[:priority].present? && params[:priority] != defect.priority
 
-    # Track status changes
-    changes[:status] = { from: defect.status, to: params[:status] } if params[:status].present? && params[:status] != defect.status
+    # Track status changes (using status_id)
+    if params[:status_id].present?
+      current_status_id = defect.statuses.first&.id.to_s
+      new_status_id = params[:status_id].to_s
+      if current_status_id != new_status_id
+        current_status_name = defect.statuses.first&.name || 'None'
+        new_status_name = Status.find_by(id: new_status_id)&.name || 'Unknown'
+        changes[:status] = { from: current_status_name, to: new_status_name }
+      end
+    end
 
-    # Track severity changes
-    changes[:severity] = { from: defect.severity, to: params[:severity] } if params[:severity].present? && params[:severity] != defect.severity
+    # Track banking type changes - only if value changed
+    if params[:banking_type_id].present?
+      current_banking_type_id = defect.banking_type_id.to_s
+      new_banking_type_id = params[:banking_type_id].to_s
+      if current_banking_type_id != new_banking_type_id
+        current_banking_type = defect.banking_type&.name || 'None'
+        new_banking_type = BankingType.find_by(id: new_banking_type_id)&.name || 'Unknown'
+        changes[:banking_type] = { from: current_banking_type, to: new_banking_type }
+      end
+    end
 
-    # Track label changes
+    # Track module changes - only if value changed
+    if params[:qa_module_id].present?
+      current_module_id = defect.qa_module_id.to_s
+      new_module_id = params[:qa_module_id].to_s
+      if current_module_id != new_module_id
+        current_module = defect.qa_module&.name || 'None'
+        new_module = QaModule.find_by(id: new_module_id)&.name || 'Unknown'
+        changes[:module] = { from: current_module, to: new_module }
+      end
+    end
+
+    # Track submodule changes - only if value changed
+    if params[:submodule_id].present?
+      current_submodule_id = defect.submodule_id.to_s
+      new_submodule_id = params[:submodule_id].to_s
+      if current_submodule_id != new_submodule_id
+        current_submodule = defect.submodule&.name || 'None'
+        new_submodule = QaModule.find_by(id: new_submodule_id)&.name || 'Unknown'
+        changes[:submodule] = { from: current_submodule, to: new_submodule }
+      end
+    end
+
+    # Track label changes - only if actually changed
     if params[:label_ids].present?
-      current_label_ids = defect.label_ids.sort
-      new_label_ids = params[:label_ids].map(&:to_i).sort
+      current_label_ids = defect.label_ids.map(&:to_s).sort
+      new_label_ids = params[:label_ids].reject(&:blank?).map(&:to_s).sort
       changes[:labels] = { from: current_label_ids, to: new_label_ids } if new_label_ids != current_label_ids
     end
 
@@ -1998,6 +2045,9 @@ class DefectController < ApplicationController
                      when :severity then 'Severity Updated'
                      when :labels then 'Labels Updated'
                      when :assignees then 'Assignees Updated'
+                     when :banking_type then 'Banking Type Updated'
+                     when :module then 'Module Updated'
+                     when :submodule then 'Submodule Updated'
                      else 'General Update'
                      end
 
@@ -2019,23 +2069,33 @@ class DefectController < ApplicationController
   def build_change_details(field, change_data)
     case field
     when :summary
-      "Summary changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
+      "#{change_data[:from]} → #{change_data[:to]}"
     when :description
-      'Description updated'
+      if change_data[:from].present? && change_data[:to].present?
+        "#{change_data[:from]} → #{change_data[:to]}"
+      else
+        'Description updated'
+      end
     when :priority
-      "Priority changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
+      "#{change_data[:from]} → #{change_data[:to]}"
     when :status
-      "Status changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
+      "#{change_data[:from]} → #{change_data[:to]}"
     when :severity
-      "Severity changed from '#{change_data[:from]}' to '#{change_data[:to]}'"
+      "#{change_data[:from]} → #{change_data[:to]}"
+    when :banking_type
+      "#{change_data[:from]} → #{change_data[:to]}"
+    when :module
+      "#{change_data[:from]} → #{change_data[:to]}"
+    when :submodule
+      "#{change_data[:from]} → #{change_data[:to]}"
     when :labels
       old_labels = Label.where(id: change_data[:from]).pluck(:name).join(', ')
       new_labels = Label.where(id: change_data[:to]).pluck(:name).join(', ')
-      "Labels changed from [#{old_labels}] to [#{new_labels}]"
+      "#{old_labels.presence || 'None'} → #{new_labels.presence || 'None'}"
     when :assignees
       old_users = User.where(id: change_data[:from]).pluck(:name).join(', ')
       new_users = User.where(id: change_data[:to]).pluck(:name).join(', ')
-      "Assignees changed from [#{old_users}] to [#{new_users}]"
+      "#{old_users.presence || 'None'} → #{new_users.presence || 'None'}"
     else
       "#{field.to_s.humanize} changed"
     end
@@ -2077,15 +2137,32 @@ class DefectController < ApplicationController
     # Get all users who should be notified (current assignees + watchers)
     notify_users = @defect.users.pluck(:email)
 
+    # Convert all values to plain strings for Sidekiq serialization
+    json_safe_changes = convert_to_json_safe(changes_hash)
+
     # Determine notification priority based on change types
-    high_priority_changes = %i[status priority assignees].any? { |field| changes_hash.key?(field) }
+    high_priority_changes = %i[status priority assignees].any? { |field| json_safe_changes.key?(field) }
 
     if high_priority_changes
-      # Send immediate high-priority notification
-      UserMailer.defect_priority_update_email(@defect, notify_users, current_user, changes_hash).deliver_now
+      # Send immediate high-priority notification (queued in background)
+      UserMailer.defect_priority_update_email(@defect, notify_users, current_user, json_safe_changes).deliver_later
     else
       # Send standard edit notification
-      UserMailer.defect_edit_notification_email(@defect, notify_users, current_user, changes_hash).deliver_later
+      UserMailer.defect_edit_notification_email(@defect, notify_users, current_user, json_safe_changes).deliver_later
+    end
+  end
+
+  # Convert SafeBuffer and other non-JSON types to plain strings
+  def convert_to_json_safe(hash)
+    hash.deep_transform_values do |value|
+      case value
+      when ActiveSupport::SafeBuffer
+        value.to_str  # Convert SafeBuffer to plain string
+      when String
+        value.to_s    # Ensure it's a plain string
+      else
+        value         # Keep other types as-is
+      end
     end
   end
 end
