@@ -1965,8 +1965,8 @@ class DefectController < ApplicationController
 
     # Track status changes (using status_id)
     if params[:status_id].present?
-      current_status_id = defect.statuses.first&.id
-      new_status_id = params[:status_id].to_i
+      current_status_id = defect.statuses.first&.id.to_s
+      new_status_id = params[:status_id].to_s
       if current_status_id != new_status_id
         current_status_name = defect.statuses.first&.name || 'None'
         new_status_name = Status.find_by(id: new_status_id)&.name || 'Unknown'
@@ -1974,10 +1974,10 @@ class DefectController < ApplicationController
       end
     end
 
-    # Track banking type changes
+    # Track banking type changes - only if value changed
     if params[:banking_type_id].present?
-      current_banking_type_id = defect.banking_type_id
-      new_banking_type_id = params[:banking_type_id].to_i
+      current_banking_type_id = defect.banking_type_id.to_s
+      new_banking_type_id = params[:banking_type_id].to_s
       if current_banking_type_id != new_banking_type_id
         current_banking_type = defect.banking_type&.name || 'None'
         new_banking_type = BankingType.find_by(id: new_banking_type_id)&.name || 'Unknown'
@@ -1985,10 +1985,10 @@ class DefectController < ApplicationController
       end
     end
 
-    # Track module changes
+    # Track module changes - only if value changed
     if params[:qa_module_id].present?
-      current_module_id = defect.qa_module_id
-      new_module_id = params[:qa_module_id].to_i
+      current_module_id = defect.qa_module_id.to_s
+      new_module_id = params[:qa_module_id].to_s
       if current_module_id != new_module_id
         current_module = defect.qa_module&.name || 'None'
         new_module = QaModule.find_by(id: new_module_id)&.name || 'Unknown'
@@ -1996,10 +1996,10 @@ class DefectController < ApplicationController
       end
     end
 
-    # Track submodule changes
+    # Track submodule changes - only if value changed
     if params[:submodule_id].present?
-      current_submodule_id = defect.submodule_id
-      new_submodule_id = params[:submodule_id].to_i
+      current_submodule_id = defect.submodule_id.to_s
+      new_submodule_id = params[:submodule_id].to_s
       if current_submodule_id != new_submodule_id
         current_submodule = defect.submodule&.name || 'None'
         new_submodule = QaModule.find_by(id: new_submodule_id)&.name || 'Unknown'
@@ -2007,10 +2007,10 @@ class DefectController < ApplicationController
       end
     end
 
-    # Track label changes
+    # Track label changes - only if actually changed
     if params[:label_ids].present?
-      current_label_ids = defect.label_ids.sort
-      new_label_ids = params[:label_ids].map(&:to_i).sort
+      current_label_ids = defect.label_ids.map(&:to_s).sort
+      new_label_ids = params[:label_ids].reject(&:blank?).map(&:to_s).sort
       changes[:labels] = { from: current_label_ids, to: new_label_ids } if new_label_ids != current_label_ids
     end
 
