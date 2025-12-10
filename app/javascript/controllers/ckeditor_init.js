@@ -30,6 +30,9 @@
     extraPlugins: 'pastefromword',
     pasteFromWordRemoveFontStyles: true,
     pasteFromWordRemoveStyles: false, // Keep some styles but clean them
+    // CRITICAL: Allow all content including inline styles
+    // This prevents CKEditor from stripping colors, backgrounds, etc.
+    allowedContent: true,
     // Comprehensive paste filter
     on: {
       paste: function (evt) {
