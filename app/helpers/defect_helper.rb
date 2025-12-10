@@ -81,8 +81,12 @@ module DefectHelper
             content_tag(:div, class: 'text-xs text-gray-500 dark:text-gray-400 mb-1') do
               'Before'
             end +
-            content_tag(:div, class: 'text-sm text-gray-700 dark:text-gray-300 bg-red-50 dark:bg-red-900/20 p-2 rounded') do
-              old_value
+            content_tag(:div, class: 'text-sm text-gray-700 dark:text-gray-300 bg-red-50 dark:bg-red-900/20 p-2 rounded prose dark:prose-invert max-w-none') do
+              # Sanitize and render HTML for rich text
+              ActionController::Base.helpers.sanitize(old_value,
+                tags: %w[strong em b i u p br span div ul ol li h1 h2 h3 h4 h5 h6 blockquote a],
+                attributes: %w[style class href]
+              ).html_safe
             end
           end
 
@@ -91,8 +95,12 @@ module DefectHelper
             content_tag(:div, class: 'text-xs text-gray-500 dark:text-gray-400 mb-1') do
               'After'
             end +
-            content_tag(:div, class: 'text-sm text-gray-700 dark:text-gray-300 bg-green-50 dark:bg-green-900/20 p-2 rounded') do
-              new_value
+            content_tag(:div, class: 'text-sm text-gray-700 dark:text-gray-300 bg-green-50 dark:bg-green-900/20 p-2 rounded prose dark:prose-invert max-w-none') do
+              # Sanitize and render HTML for rich text
+              ActionController::Base.helpers.sanitize(new_value,
+                tags: %w[strong em b i u p br span div ul ol li h1 h2 h3 h4 h5 h6 blockquote a],
+                attributes: %w[style class href]
+              ).html_safe
             end
           end
 
