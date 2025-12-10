@@ -1393,8 +1393,15 @@ class DefectController < ApplicationController
     end
 
     # Ordering and uniqueness
-    direction = %w[asc desc].include?(params[:order]) ? params[:order] : 'desc'
-    defects = defects.order(created_at: direction).distinct
+    # Sort by the numeric part of defect_unique (e.g. KCBL-123 -> 123) to ensure natural order
+    direction = %w[asc desc].include?(params[:order]) ? params[:order] : 'asc'
+    
+    # Fix PG::InvalidColumnReference: Use subquery to separate filtering (distinct) from ordering
+    filtered_ids = defects.except(:order).distinct.select(:id)
+    
+    defects = Defect.where(id: filtered_ids)
+                    .includes(:users, :qa_module, :labels, :banking_type, :statuses, product: %i[client groupwares])
+                    .order(Arel.sql("CAST(NULLIF(SPLIT_PART(defect_unique, '-', 2), '') AS INTEGER) #{direction}"))
 
     # Generate CSV
     csv_data = CSV.generate(headers: true) do |csv|
@@ -1404,7 +1411,7 @@ class DefectController < ApplicationController
         'Created At'
       ]
 
-      defects.find_each do |defect|
+      defects.each do |defect|
         client_and_groupware = [defect.product.client&.name, defect.product.groupwares.first&.name].compact.join(' - ')
         csv << [
           defect.defect_unique,
@@ -1541,8 +1548,15 @@ class DefectController < ApplicationController
     end
 
     # Ordering
-    direction = %w[asc desc].include?(params[:order]) ? params[:order] : 'desc'
-    defects = defects.order(created_at: direction).distinct
+    # Sort by the numeric part of defect_unique (e.g. KCBL-123 -> 123) to ensure natural order
+    direction = %w[asc desc].include?(params[:order]) ? params[:order] : 'asc'
+    
+    # Fix PG::InvalidColumnReference: Use subquery to separate filtering (distinct) from ordering
+    filtered_ids = defects.except(:order).distinct.select(:id)
+    
+    defects = Defect.where(id: filtered_ids)
+                    .includes(:users, :labels, :statuses, :qa_module, :submodule, :banking_type, product: %i[client groupwares])
+                    .order(Arel.sql("CAST(NULLIF(SPLIT_PART(defect_unique, '-', 2), '') AS INTEGER) #{direction}"))
 
     # Restrict for non-admin/observer/qa users (same as index_show)
     defects = defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa)
@@ -1570,7 +1584,7 @@ class DefectController < ApplicationController
         'Created At'
       ]
 
-      defects.find_each do |defect|
+      defects.each do |defect|
         client_name = defect.product&.client&.name
         groupware_name = defect.product&.groupwares&.first&.name
         client_and_groupware = [client_name, groupware_name].compact.join(' - ')
