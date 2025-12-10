@@ -317,6 +317,26 @@ class TicketsController < ApplicationController
             .send(queue: true)
         end
 
+      if @ticket.issue == 'BILLABLE FEATURE'
+        Messaging::EmailSender
+          .send_email(
+            "A new ticket has been edited with Ticket ID #{@ticket.unique_id}.",
+            to: ['cx@craftsilicon.com', 'finance@craftsilicon.com'],
+            actor: current_user,
+            priority: :normal,
+            type: 'ticket_create_change_request'
+          )
+          .use_template(
+            view: 'user_mailer/edit_ticket_email',
+            assigns: { ticket: @ticket, current_user: current_user, assigned_user: ['cx@craftsilicon.com','finance@craftsilicon.com'], project: @project, url: url }
+          )
+          .set_source('ticket', @ticket.id)
+          .set_party('user', current_user.id)
+          .send(queue: true)
+
+
+      end
+
         # Log the update event
         log_event(@ticket, current_user, 'update', "Ticket was updated. at #{Time.now.strftime('%H:%M of  %d-%m-%Y')} and assigned to #{assigned_user.name} ", assigned_user)
         activity('user_activity')
@@ -618,7 +638,7 @@ class TicketsController < ApplicationController
 
     if @ticket.update(issue: params[:ticket][:issue])
       respond_to do |format|
-        if @ticket.issue == 'NEW FEATURE'
+        if @ticket.issue == 'NEW FEATURE' or 'BILLABLE FEATURE'
           sla = SlaTicket.find_or_initialize_by(ticket_id: @ticket.id)
           sla.update!(
             sla_status: 'NO SLA',
@@ -633,6 +653,25 @@ class TicketsController < ApplicationController
 
         format.js
         format.html { redirect_to project_ticket_path(@ticket.project, @ticket), notice: 'Issue type updated successfully.' }
+      end
+
+      if @ticket.issue == 'BILLABLE FEATURE'
+        url = project_ticket_url(@ticket.project, @ticket)
+        Messaging::EmailSender
+          .send_email(
+            "A ticket with Billable Feature  with Ticket ID #{@ticket.unique_id}.",
+            to: ['cx@craftsilicon.com', 'finance@craftsilicon.com'],
+            actor: current_user,
+            priority: :normal,
+            type: 'ticket_create_change_request'
+          )
+          .use_template(
+            view: 'user_mailer/create_ticket_email',
+            assigns: { ticket: @ticket, current_user: current_user, assigned_user: ['cx@craftsilicon.com','finance@craftsilicon.com'], project: @project, url: url }
+          )
+          .set_source('ticket', @ticket.id)
+          .set_party('user', current_user.id)
+          .send(queue: true)
       end
     else
       respond_to do |format|
