@@ -162,24 +162,34 @@
     border-spacing: 0;
     margin-top: 0.75rem;
     margin-bottom: 0.75rem;
+    border: 1px solid #000 !important; /* Outer table border */
   }
 
   .prose th,
   .prose td {
     padding: 0.5rem 0.75rem;
-    border: 1px solid #000; /* black borders in light mode */
+    border: 1px solid #000 !important; /* black borders in light mode, use !important to override inline styles if needed */
     vertical-align: top;
   }
 
   /* Bold table headers */
   .prose th {
     font-weight: 700;
+    background-color: #f3f4f6; /* Light gray background for headers */
   }
 
   /* Dark mode: use a light border color (Tailwind slate-100 ~ #f1f5f9) */
+  .dark .prose table {
+    border-color: #f1f5f9 !important;
+  }
+
   .dark .prose th,
   .dark .prose td {
-    border-color: #f1f5f9;
+    border-color: #f1f5f9 !important;
+  }
+
+  .dark .prose th {
+    background-color: #374151; /* Dark gray background for headers in dark mode */
   }
 
   /* Optional nicer table appearance in prose */
@@ -187,6 +197,27 @@
     caption-side: top;
     font-weight: 600;
     margin-bottom: 0.5rem;
+  }
+
+  /* Support for tables with inline border styles */
+  .prose table[border],
+  .prose table[style*="border"] {
+    border-collapse: collapse !important;
+  }
+
+  .prose table[border] th,
+  .prose table[border] td,
+  .prose table[style*="border"] th,
+  .prose table[style*="border"] td {
+    border: 1px solid #000 !important;
+  }
+
+  /* Dark mode for tables with inline borders */
+  .dark .prose table[border] th,
+  .dark .prose table[border] td,
+  .dark .prose table[style*="border"] th,
+  .dark .prose table[style*="border"] td {
+    border-color: #f1f5f9 !important;
   }
 
   /* ===== LIST STYLING - Comprehensive fix for Word/Docs paste issues ===== */
