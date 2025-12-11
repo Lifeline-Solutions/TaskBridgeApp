@@ -20,13 +20,17 @@ FALLBACK_SUBMODULE_ID = CONFIG[:fallback_submodule_id]
 
 options = {
   dry_run: false,
-  project: 'KCBL'
+  project: nil,
+  defect_unique: nil,
+  all: false
 }
 
 OptionParser.new do |opts|
   opts.banner = 'Usage: rails runner scripts/fix_submodules.rb [options]'
   opts.on('--dry-run', 'Simulate changes') { options[:dry_run] = true }
-  opts.on('--project KEY', 'Project key (default KCBL)') { |v| options[:project] = v }
+  opts.on('--project KEY', 'Project key (e.g., KCBL, RMP, PSP, SMC)') { |v| options[:project] = v }
+  opts.on('--defect UNIQUE', 'Process a single defect by its unique ID (e.g., PSP-1, SMC-5)') { |v| options[:defect_unique] = v }
+  opts.on('--all', 'Process all defects across all projects') { options[:all] = true }
 end.parse!
 
 def log(msg)
@@ -68,6 +72,11 @@ def discover_custom_fields(project_key = 'RMP')
                  module: /^kenya\s+police\s+modules?$/i,
                  submodule: /^kenya\s+police\s+modules?\s*\/\s*sub\s*modules?$/i
                }
+             when 'SMC'
+               {
+                 module: /^components?\s*-\s*sofia\s+credit$/i,
+                 submodule: /^sofia\s+modules?\s*[_-]\s*submodules?$/i
+               }
              else
                {
                  module: /modules/i,
@@ -80,7 +89,7 @@ def discover_custom_fields(project_key = 'RMP')
     field_id = field['id']
     
     # Debug log for project fields
-    log "Found field: #{name} (#{field_id})" if name.include?('kcbl') || name.include?('kenya police')
+    log "Found field: #{name} (#{field_id})" if name.include?('kcbl') || name.include?('kenya police') || name.include?('sofia') || name.include?('components')
 
     case project_key.upcase
     when 'KCBL'
@@ -101,6 +110,14 @@ def discover_custom_fields(project_key = 'RMP')
       if name == 'rafiki modules'
         module_field = field_id
       elsif name.include?('rafiki modules') && (name.include?('submodules') || name.include?('sub-modules') || name.include?('sub modules'))
+        submodule_field = field_id
+        log "✓ Matched Submodule field: #{field['name']} (#{field_id})"
+      end
+    when 'SMC'
+      if name.include?('components') && name.include?('sofia credit')
+        module_field = field_id
+        log "✓ Matched Module field: #{field['name']} (#{field_id})"
+      elsif name.include?('sofia') && name.include?('modules') && name.include?('submodules')
         submodule_field = field_id
         log "✓ Matched Submodule field: #{field['name']} (#{field_id})"
       end
@@ -188,123 +205,183 @@ def find_or_create_modules(module_name:, submodule_name:, product_id:, created_b
 end
 
 # Main Execution
-log "Starting submodule fix script for project #{options[:project]} (Dry Run: #{options[:dry_run]})"
+log "Starting submodule fix script (Dry Run: #{options[:dry_run]})"
 
-module_field, submodule_field = discover_custom_fields(options[:project])
-log "Discovered fields - Module: #{module_field}, Submodule: #{submodule_field}"
-
-unless module_field && submodule_field
-  log 'ERROR: Could not find required custom fields. Exiting.'
+# Validate options
+if options[:all]
+  log "Processing ALL defects across all projects"
+elsif options[:project]
+  log "Processing project: #{options[:project]}"
+  if options[:defect_unique]
+    log "  Filtering to single defect: #{options[:defect_unique]}"
+  end
+else
+  log "ERROR: Must specify --project, --defect, or --all"
   exit 1
 end
 
-# Get all defects for the project
-defects = Defect.where('defect_unique LIKE ?', "#{options[:project]}-%")
-log "Found #{defects.count} defects to check."
+module_field = nil
+submodule_field = nil
 
-stats = { updated: 0, skipped: 0, errors: 0 }
+# Determine which projects to process
+projects_to_process = if options[:all]
+                        # Get all unique project keys from defects
+                        Defect.where.not(defect_unique: nil)
+                          .select('DISTINCT SUBSTRING(defect_unique FROM 1 FOR POSITION(\'-\' IN defect_unique) - 1) as project_key')
+                          .map(&:project_key)
+                          .compact
+                          .uniq
+                      elsif options[:project]
+                        [options[:project]]
+                      else
+                        []
+                      end
 
+log "Projects to process: #{projects_to_process.join(', ')}"
 
+projects_to_process.each do |project_key|
+  log "\n" + "=" * 80
+  log "Processing project: #{project_key}"
+  log "=" * 80
 
-defects.find_each do |defect|
-  begin
-    # Fetch from Jira
-    url = "#{JIRA_BASE_URL}/rest/api/3/issue/#{defect.defect_unique}"
-    uri = URI.parse(url)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = true
-    request = Net::HTTP::Get.new(uri.request_uri)
-    request['Accept'] = 'application/json'
-    request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
+  module_field, submodule_field = discover_custom_fields(project_key)
+  log "Discovered fields - Module: #{module_field}, Submodule: #{submodule_field}"
 
-    response = http.request(request)
-    unless response.is_a?(Net::HTTPSuccess)
-      log "Failed to fetch #{defect.defect_unique}: #{response.code}"
-      stats[:errors] += 1
+  unless module_field && submodule_field
+    log 'WARNING: Could not find required custom fields for this project. Skipping.'
+    next
+  end
+
+  # Get defects for this project
+  if options[:defect_unique]
+    # Single defect lookup
+    defects = Defect.where(defect_unique: options[:defect_unique])
+    unless defects.exists?
+      log "ERROR: Defect #{options[:defect_unique]} not found"
       next
     end
+  else
+    # All defects for the project
+    defects = Defect.where('defect_unique LIKE ?', "#{project_key}-%")
+  end
 
-    issue = JSON.parse(response.body)
-    fields = issue['fields'] || {}
+  log "Found #{defects.count} defect(s) to check."
 
-    raw_module = fields[module_field]
-    raw_submodule = fields[submodule_field]
+  stats = { updated: 0, skipped: 0, errors: 0 }
 
-    module_name = extract_custom_field_value(raw_module)
-    submodule_name = extract_custom_field_value(raw_submodule)
+  defects.find_each do |defect|
+    begin
+      # Fetch from Jira
+      url = "#{JIRA_BASE_URL}/rest/api/3/issue/#{defect.defect_unique}"
+      uri = URI.parse(url)
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+      request = Net::HTTP::Get.new(uri.request_uri)
+      request['Accept'] = 'application/json'
+      request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
 
-    if module_name.blank? && submodule_name.blank?
-      # log "  #{defect.defect_unique}: No module data found. Skipping."
-      stats[:skipped] += 1
-      next
-    end
-
-    # Apply parsing logic
-    if module_name.present? && submodule_name.to_s.strip.empty?
-      module_name, submodule_name = parse_module_and_submodule(module_name, submodule_name)
-    elsif module_name.present? && submodule_name.present?
-      # If submodule contains parent name, strip it
-      # Example: Module="Miscellaneous", Sub="Miscellaneous - Reports" -> Sub="Reports"
-      prefix_pattern = /^#{Regexp.escape(module_name)}\s*[-\u2013\u2014]\s*/i
-      if submodule_name.match?(prefix_pattern)
-        new_sub = submodule_name.sub(prefix_pattern, '')
-        # log "  Stripped parent from submodule: '#{submodule_name}' -> '#{new_sub}'"
-        submodule_name = new_sub
+      response = http.request(request)
+      unless response.is_a?(Net::HTTPSuccess)
+        log "Failed to fetch #{defect.defect_unique}: #{response.code}"
+        stats[:errors] += 1
+        next
       end
+
+      issue = JSON.parse(response.body)
+      fields = issue['fields'] || {}
+
+      raw_module = fields[module_field]
+      raw_submodule = fields[submodule_field]
+
+      module_name = extract_custom_field_value(raw_module)
+      submodule_name = extract_custom_field_value(raw_submodule)
+
+      if module_name.blank? && submodule_name.blank?
+        stats[:skipped] += 1
+        next
+      end
+
+      # Apply parsing logic
+      if module_name.present? && submodule_name.to_s.strip.empty?
+        module_name, submodule_name = parse_module_and_submodule(module_name, submodule_name)
+      elsif module_name.present? && submodule_name.present?
+        # If submodule contains parent name, strip it
+        prefix_pattern = /^#{Regexp.escape(module_name)}\s*[-\u2013\u2014]\s*/i
+        if submodule_name.match?(prefix_pattern)
+          new_sub = submodule_name.sub(prefix_pattern, '')
+          submodule_name = new_sub
+        end
+      end
+
+      # Check if update is needed
+      current_module = defect.qa_module&.name
+      current_submodule = defect.submodule&.name
+
+      if current_module == module_name && current_submodule == submodule_name
+        stats[:skipped] += 1
+        next
+      end
+
+      log "  #{defect.defect_unique}: Updating..."
+      log "    Old: Module='#{current_module}', Sub='#{current_submodule}'"
+      log "    New: Module='#{module_name}', Sub='#{submodule_name}'"
+
+      # Determine Product ID based on project
+      product_id = defect.product_id
+      case project_key.upcase
+      when 'KCBL'
+        product_id ||= 'c1469eb7-97d1-4611-9e67-3fce1d0bb1ac'
+      when 'PSP'
+        unless product_id
+          psp_product = Product.where('document_name ILIKE ?', '%Kenya Police%').first ||
+                        Product.where('jira_key ILIKE ?', '%PSP%').first
+          product_id = psp_product&.id
+        end
+      when 'SMC'
+        unless product_id
+          smc_product = Product.where('document_name ILIKE ?', '%Sofia%').first ||
+                        Product.where('jira_key ILIKE ?', '%SMC%').first
+          product_id = smc_product&.id
+        end
+      end
+      product_id ||= DEFAULT_PRODUCT_UUID
+
+      unless options[:dry_run]
+        parent, child = find_or_create_modules(
+          module_name: module_name,
+          submodule_name: submodule_name,
+          product_id: product_id,
+          created_by: defect.created_by || 1
+        )
+
+        defect.qa_module_id = parent&.id || FALLBACK_QA_MODULE_ID
+        defect.submodule_id = child&.id || FALLBACK_SUBMODULE_ID
+
+        # Project-specific banking type assignments
+        case project_key.upcase
+        when 'KCBL'
+          # Core Banking ID for KCBL product
+          defect.banking_type_id = '7fc78d1b-c21f-4077-a2b4-e8cad57ca71c'
+        when 'SMC'
+          # Sofia Credit specific banking type (if configured)
+          # defect.banking_type_id = 'SMC_BANKING_TYPE_UUID' # Update with actual UUID if needed
+        end
+
+        defect.save!
+        log '    ✅ Updated successfully'
+      end
+
+      stats[:updated] += 1
+    rescue StandardError => e
+      log "ERROR processing #{defect.defect_unique}: #{e.message}"
+      stats[:errors] += 1
     end
-
-    # Check if update is needed
-    current_module = defect.qa_module&.name
-    current_submodule = defect.submodule&.name
-
-    if current_module == module_name && current_submodule == submodule_name
-      # log "  #{defect.defect_unique}: No change needed"
-      stats[:skipped] += 1
-      next
-    end
-
-    log "  #{defect.defect_unique}: Updating..."
-    log "    Old: Module='#{current_module}', Sub='#{current_submodule}'"
-    log "    New: Module='#{module_name}', Sub='#{submodule_name}'"
-
-    # Determine Product ID
-    product_id = defect.product_id
-    if options[:project].upcase == 'KCBL' && product_id.blank?
-      product_id = 'c1469eb7-97d1-4611-9e67-3fce1d0bb1ac'
-    elsif options[:project].upcase == 'PSP' && product_id.blank?
-      # Get the first product with PSP in the key or name, or use a default
-      psp_product = Product.where('document_name ILIKE ?', '%Kenya Police%').first ||
-                    Product.where('jira_key ILIKE ?', '%PSP%').first
-      product_id = psp_product&.id if psp_product
-    end
-    product_id ||= DEFAULT_PRODUCT_UUID
-
-    unless options[:dry_run]
-      parent, child = find_or_create_modules(
-        module_name: module_name,
-        submodule_name: submodule_name,
-        product_id: product_id,
-        created_by: defect.created_by || 1
-      )
-
-    defect.qa_module_id = parent&.id || FALLBACK_QA_MODULE_ID
-    defect.submodule_id = child&.id || FALLBACK_SUBMODULE_ID
-    
-    # Fix for KCBL: Ensure Banking Type is set to 'Core Banking'
-    if options[:project] == 'KCBL'
-      # Core Banking ID for KCBL product
-      defect.banking_type_id = '7fc78d1b-c21f-4077-a2b4-e8cad57ca71c' 
-    end
-
-    defect.save!
-    log '    ✅ Updated successfully'
   end
 
-    stats[:updated] += 1
-  rescue StandardError => e
-    log "ERROR processing #{defect.defect_unique}: #{e.message}"
-    stats[:errors] += 1
-  end
+  log "\nProject #{project_key} Results:"
+  log "  Updated: #{stats[:updated]}, Skipped: #{stats[:skipped]}, Errors: #{stats[:errors]}"
 end
 
-log "Done! Updated: #{stats[:updated]}, Skipped: #{stats[:skipped]}, Errors: #{stats[:errors]}"
+log "\n" + "=" * 80
+log "Script completed!"
+log "=" * 80
