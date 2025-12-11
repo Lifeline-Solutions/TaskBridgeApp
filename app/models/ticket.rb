@@ -281,8 +281,6 @@ class Ticket < ApplicationRecord
       Date.new(2025, 12, 25), # Christmas
       Date.new(2025, 12, 26), # Boxing Day
       Date.new(2026, 1, 1) # New Year
-
-
     # Add more holidays as needed
     ]
 
