@@ -44,7 +44,7 @@ class TicketsController < ApplicationController
 
   # Render form for new ticket
   def new
-    confirmation_pending_status = Status.find_by(name: 'Client Confirmation Pending')
+    confirmation_pending_status = Status.find_by(name: 'Client Information Pending')
     non_open_status_names = %w[Closed Declined Resolved]
     non_open_statuses = Status.where(name: non_open_status_names)
 
@@ -69,7 +69,7 @@ class TicketsController < ApplicationController
     if open_tickets_count > 15 && current_user.has_role?(:client) && @tickets_count >= pending_limit
       redirect_to project_path(@project),
                   flash: {
-                    prompt: "You can have a maximum of #{pending_limit} pending tickets (50% of all tickets with open statuses). Please resolve at least one ticket under 'Client Confirmation Pending' to proceed."
+                    prompt: "You can have a maximum of #{pending_limit} pending tickets (50% of all tickets with open statuses). Please resolve at least one ticket under 'Client Information Pending' to proceed."
                   }
       return
     end
@@ -445,7 +445,7 @@ class TicketsController < ApplicationController
 
     # SLA updates... (skip SLA updates for NEW FEATURE tickets)
     unless @ticket.issue == 'NEW FEATURE'
-      if status.name == 'Client Confirmation Pending'
+      if status.name == 'Client Information Pending'
         sla_ticket = SlaTicket.find_or_initialize_by(ticket_id: @ticket.id)
         sla_ticket.update(sla_target_response_deadline: @ticket.sla_target_response_deadline)
       end
