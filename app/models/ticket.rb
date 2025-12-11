@@ -21,9 +21,7 @@ class Ticket < ApplicationRecord
   has_many :users, through: :roles, class_name: 'User', source: :users
   has_many :creators, -> { where(roles: { name: :creator }) }, class_name: 'User', through: :roles, source: :users
   has_many :editors, -> { where(roles: { name: :editor }) }, class_name: 'User', through: :roles, source: :users
-
   validate :content_length_within_limit
-
   validates :content, presence: true
   validates :unique_id, uniqueness: true
 
@@ -80,7 +78,6 @@ class Ticket < ApplicationRecord
 
   after_create :set_initial_response_time, :set_target_repair_deadline, :set_resolution_deadline, :ticket_unique_id
   attr_accessor :skip_sla_callbacks, :skip_history_logging
-
   after_update :set_target_repair_deadline, :set_resolution_deadline, :set_resolution_deadline, unless: :skip_callbacks
   def set_initial_response_time
     start_time = DateTime.now
