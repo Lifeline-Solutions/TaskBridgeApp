@@ -168,7 +168,7 @@ class Ticket < ApplicationRecord
       50
     when 'QA Testing'
       60
-    when 'Client Confirmation Pending'
+    when 'Client Information Pending'
       70
     when 'Awaiting Build'
       80
@@ -218,11 +218,11 @@ class Ticket < ApplicationRecord
 
   # SLA TWO
   def sla_breached?
-    statuses.any? { |status| status.name == 'Client Confirmation Pending' && target_repair_deadline < DateTime.now }
+    statuses.any? { |status| status.name == 'Client Information Pending' && target_repair_deadline < DateTime.now }
   end
 
   def sla_on_time?
-    statuses.any? { |status| status.name == 'Client Confirmation Pending' && target_repair_deadline > DateTime.now }
+    statuses.any? { |status| status.name == 'Client Information Pending' && target_repair_deadline > DateTime.now }
   end
 
   # SLA ONE
@@ -275,8 +275,15 @@ class Ticket < ApplicationRecord
       Date.new(2024, 12, 26), # Boxing Day
       Date.new(2025, 1, 1), # New Year's Day
       Date.new(2025, 10, 10), # Utamaduni!
-      Date.new(2025, 10, 20) # Mashujaa Day
-      # Add more holidays as needed
+      Date.new(2025, 10, 20), # Mashujaa Day
+      Date.new(2025, 12, 12), # Jamhuri!
+      Date.new(2025, 12, 12), # Utamaduni!
+      Date.new(2025, 12, 25), # Christmas
+      Date.new(2025, 12, 26), # Boxing Day
+      Date.new(2026, 1, 1) # New Year
+
+
+    # Add more holidays as needed
     ]
 
     remaining_duration = duration
