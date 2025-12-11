@@ -115,6 +115,7 @@ def discover_custom_fields(project_key = 'RMP')
     when 'KCBL'
       if name == 'kcbl modules'
         module_field = field_id
+        log "✓ Matched Module field: #{field['name']} (#{field_id})"
       elsif name.include?('kcbl modules') && (name.include?('submodules') || name.include?('sub-modules') || name.include?('sub modules'))
         submodule_field = field_id
         log "✓ Matched Submodule field: #{field['name']} (#{field_id})"
@@ -122,6 +123,7 @@ def discover_custom_fields(project_key = 'RMP')
     when 'PSP'
       if name == 'kenya police modules'
         module_field = field_id
+        log "✓ Matched Module field: #{field['name']} (#{field_id})"
       elsif name.include?('kenya police modules') && (name.include?('submodules') || name.include?('sub-modules') || name.include?('sub modules'))
         submodule_field = field_id
         log "✓ Matched Submodule field: #{field['name']} (#{field_id})"
@@ -129,6 +131,7 @@ def discover_custom_fields(project_key = 'RMP')
     when 'RMP'
       if name == 'rafiki modules'
         module_field = field_id
+        log "✓ Matched Module field: #{field['name']} (#{field_id})"
       elsif name.include?('rafiki modules') && (name.include?('submodules') || name.include?('sub-modules') || name.include?('sub modules'))
         submodule_field = field_id
         log "✓ Matched Submodule field: #{field['name']} (#{field_id})"
@@ -146,25 +149,30 @@ def discover_custom_fields(project_key = 'RMP')
         module_field = field_id
         log "✓ Matched Module field: #{field['name']} (#{field_id})"
       end
-      submodule_field = 'SKIP' # Skip submodule for SJP
+      # For SJP, we'll set a dummy submodule field to pass validation
+      # The actual submodule value will be ignored in processing
+      submodule_field ||= 'DUMMY'
     when 'KUP'
-      if name.include?('components') && (name.include?('k-unity') || name.include?('kunity'))
+      if name.include?('components') && (name.include?('k-unity') || name.include?('kunity') || name.include?('k unity'))
         module_field = field_id
         log "✓ Matched Module field: #{field['name']} (#{field_id})"
       end
-      submodule_field = 'SKIP' # Skip submodule for KUP
+      # For KUP, we'll set a dummy submodule field to pass validation
+      submodule_field ||= 'DUMMY'
     when 'GBCBS'
-      if name == 'module'
+      if name == 'module' || (name.include?('module') && !name.include?('submodule'))
         module_field = field_id
         log "✓ Matched Module field: #{field['name']} (#{field_id})"
       end
-      submodule_field = 'SKIP' # Skip submodule for GBCBS
+      # For GBCBS, we'll set a dummy submodule field to pass validation
+      submodule_field ||= 'DUMMY'
     when 'GBCBU2'
-      if name == 'components' || name.include?('components ')
+      if name == 'components' || (name == 'component')
         module_field = field_id
         log "✓ Matched Module field: #{field['name']} (#{field_id})"
       end
-      submodule_field = 'SKIP' # Skip submodule for GBCBU2
+      # For GBCBU2, we'll set a dummy submodule field to pass validation
+      submodule_field ||= 'DUMMY'
     end
   end
 
@@ -335,7 +343,8 @@ projects_to_process.each do |project_key|
       fields = issue['fields'] || {}
 
       raw_module = fields[module_field]
-      raw_submodule = fields[submodule_field]
+      # Only fetch submodule from JIRA if it's a real field (not 'DUMMY')
+      raw_submodule = (submodule_field && submodule_field != 'DUMMY') ? fields[submodule_field] : nil
 
       module_name = extract_custom_field_value(raw_module)
       submodule_name = extract_custom_field_value(raw_submodule)
