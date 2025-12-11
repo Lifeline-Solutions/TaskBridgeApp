@@ -63,6 +63,11 @@ def discover_custom_fields(project_key = 'RMP')
                  module: /^kcbl\s+modules?$/i,
                  submodule: /^kcbl\s+modules?\s*\/\s*submodules?$/i
                }
+             when 'PSP'
+               {
+                 module: /^kenya\s+police\s+modules?$/i,
+                 submodule: /^kenya\s+police\s+modules?\s*\/\s*sub\s*modules?$/i
+               }
              else
                {
                  module: /modules/i,
@@ -74,14 +79,31 @@ def discover_custom_fields(project_key = 'RMP')
     name = field['name']&.downcase || ''
     field_id = field['id']
     
-    # Debug log for KCBL fields
-    log "Found field: #{name} (#{field_id})" if name.include?('kcbl')
+    # Debug log for project fields
+    log "Found field: #{name} (#{field_id})" if name.include?('kcbl') || name.include?('kenya police')
 
-    if name == 'kcbl modules'
-      module_field = field_id
-    elsif name.include?('kcbl modules') && (name.include?('submodules') || name.include?('sub-modules') || name.include?('sub modules'))
-      submodule_field = field_id
-      log "✓ Matched Submodule field: #{field['name']} (#{field_id})"
+    case project_key.upcase
+    when 'KCBL'
+      if name == 'kcbl modules'
+        module_field = field_id
+      elsif name.include?('kcbl modules') && (name.include?('submodules') || name.include?('sub-modules') || name.include?('sub modules'))
+        submodule_field = field_id
+        log "✓ Matched Submodule field: #{field['name']} (#{field_id})"
+      end
+    when 'PSP'
+      if name == 'kenya police modules'
+        module_field = field_id
+      elsif name.include?('kenya police modules') && (name.include?('submodules') || name.include?('sub-modules') || name.include?('sub modules'))
+        submodule_field = field_id
+        log "✓ Matched Submodule field: #{field['name']} (#{field_id})"
+      end
+    when 'RMP'
+      if name == 'rafiki modules'
+        module_field = field_id
+      elsif name.include?('rafiki modules') && (name.include?('submodules') || name.include?('sub-modules') || name.include?('sub modules'))
+        submodule_field = field_id
+        log "✓ Matched Submodule field: #{field['name']} (#{field_id})"
+      end
     end
   end
 
@@ -249,6 +271,11 @@ defects.find_each do |defect|
     product_id = defect.product_id
     if options[:project].upcase == 'KCBL' && product_id.blank?
       product_id = 'c1469eb7-97d1-4611-9e67-3fce1d0bb1ac'
+    elsif options[:project].upcase == 'PSP' && product_id.blank?
+      # Get the first product with PSP in the key or name, or use a default
+      psp_product = Product.where('document_name ILIKE ?', '%Kenya Police%').first ||
+                    Product.where('jira_key ILIKE ?', '%PSP%').first
+      product_id = psp_product&.id if psp_product
     end
     product_id ||= DEFAULT_PRODUCT_UUID
 
