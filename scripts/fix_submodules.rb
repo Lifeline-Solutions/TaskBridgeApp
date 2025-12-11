@@ -77,6 +77,26 @@ def discover_custom_fields(project_key = 'RMP')
                  module: /^components?\s*-\s*sofia\s+credit$/i,
                  submodule: /^sofia\s+modules?\s*[_-]\s*submodules?$/i
                }
+             when 'SJP'
+               {
+                 module: /^modules?\s+sc\s+juza$/i,
+                 submodule: /^(ignore|empty)$/i
+               }
+             when 'KUP'
+               {
+                 module: /^components?\s*\(\s*k[\s-]?unity\s*\)$/i,
+                 submodule: /^(ignore|empty)$/i
+               }
+             when 'GBCBS'
+               {
+                 module: /^module$/i,
+                 submodule: /^(ignore|empty)$/i
+               }
+             when 'GBCBU2'
+               {
+                 module: /^components?$/i,
+                 submodule: /^(ignore|empty)$/i
+               }
              else
                {
                  module: /modules/i,
@@ -89,7 +109,7 @@ def discover_custom_fields(project_key = 'RMP')
     field_id = field['id']
     
     # Debug log for project fields
-    log "Found field: #{name} (#{field_id})" if name.include?('kcbl') || name.include?('kenya police') || name.include?('sofia') || name.include?('components')
+    log "Found field: #{name} (#{field_id})" if name.include?('kcbl') || name.include?('kenya police') || name.include?('sofia') || name.include?('components') || name.include?('modules sc juza') || name.include?('k-unity') || name.include?('k unity')
 
     case project_key.upcase
     when 'KCBL'
@@ -121,6 +141,30 @@ def discover_custom_fields(project_key = 'RMP')
         submodule_field = field_id
         log "✓ Matched Submodule field: #{field['name']} (#{field_id})"
       end
+    when 'SJP'
+      if name.include?('modules') && name.include?('sc juza')
+        module_field = field_id
+        log "✓ Matched Module field: #{field['name']} (#{field_id})"
+      end
+      submodule_field = 'SKIP' # Skip submodule for SJP
+    when 'KUP'
+      if name.include?('components') && (name.include?('k-unity') || name.include?('kunity'))
+        module_field = field_id
+        log "✓ Matched Module field: #{field['name']} (#{field_id})"
+      end
+      submodule_field = 'SKIP' # Skip submodule for KUP
+    when 'GBCBS'
+      if name == 'module'
+        module_field = field_id
+        log "✓ Matched Module field: #{field['name']} (#{field_id})"
+      end
+      submodule_field = 'SKIP' # Skip submodule for GBCBS
+    when 'GBCBU2'
+      if name == 'components' || name.include?('components ')
+        module_field = field_id
+        log "✓ Matched Module field: #{field['name']} (#{field_id})"
+      end
+      submodule_field = 'SKIP' # Skip submodule for GBCBU2
     end
   end
 
@@ -296,20 +340,37 @@ projects_to_process.each do |project_key|
       module_name = extract_custom_field_value(raw_module)
       submodule_name = extract_custom_field_value(raw_submodule)
 
-      if module_name.blank? && submodule_name.blank?
-        stats[:skipped] += 1
-        next
-      end
+      # For projects with no submodules, clear submodule_name
+      case project_key.upcase
+      when 'SJP'
+        module_name = 'Modules SC Juza'
+        submodule_name = '' # Always blank for SJP
+      when 'KUP'
+        module_name = 'Components (K-Unity)'
+        submodule_name = '' # Always blank for KUP
+      when 'GBCBS'
+        module_name = 'Module'
+        submodule_name = '' # Always blank for GBCBS
+      when 'GBCBU2'
+        module_name = 'Components'
+        submodule_name = '' # Always blank for GBCBU2
+      else
+        # For other projects, apply parsing logic
+        if module_name.blank? && submodule_name.blank?
+          stats[:skipped] += 1
+          next
+        end
 
-      # Apply parsing logic
-      if module_name.present? && submodule_name.to_s.strip.empty?
-        module_name, submodule_name = parse_module_and_submodule(module_name, submodule_name)
-      elsif module_name.present? && submodule_name.present?
-        # If submodule contains parent name, strip it
-        prefix_pattern = /^#{Regexp.escape(module_name)}\s*[-\u2013\u2014]\s*/i
-        if submodule_name.match?(prefix_pattern)
-          new_sub = submodule_name.sub(prefix_pattern, '')
-          submodule_name = new_sub
+        # Apply parsing logic
+        if module_name.present? && submodule_name.to_s.strip.empty?
+          module_name, submodule_name = parse_module_and_submodule(module_name, submodule_name)
+        elsif module_name.present? && submodule_name.present?
+          # If submodule contains parent name, strip it
+          prefix_pattern = /^#{Regexp.escape(module_name)}\s*[-\u2013\u2014]\s*/i
+          if submodule_name.match?(prefix_pattern)
+            new_sub = submodule_name.sub(prefix_pattern, '')
+            submodule_name = new_sub
+          end
         end
       end
 
@@ -342,6 +403,26 @@ projects_to_process.each do |project_key|
           smc_product = Product.where('document_name ILIKE ?', '%Sofia%').first ||
                         Product.where('jira_key ILIKE ?', '%SMC%').first
           product_id = smc_product&.id
+        end
+      when 'SJP'
+        unless product_id
+          sjp_product = Product.where('jira_key ILIKE ?', '%SJP%').first
+          product_id = sjp_product&.id
+        end
+      when 'KUP'
+        unless product_id
+          kup_product = Product.where('jira_key ILIKE ?', '%KUP%').first
+          product_id = kup_product&.id
+        end
+      when 'GBCBS'
+        unless product_id
+          gbcbs_product = Product.where('jira_key ILIKE ?', '%GBCBS%').first
+          product_id = gbcbs_product&.id
+        end
+      when 'GBCBU2'
+        unless product_id
+          gbcbu2_product = Product.where('jira_key ILIKE ?', '%GBCBU2%').first
+          product_id = gbcbu2_product&.id
         end
       end
       product_id ||= DEFAULT_PRODUCT_UUID
