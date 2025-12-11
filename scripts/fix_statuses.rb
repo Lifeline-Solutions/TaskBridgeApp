@@ -70,11 +70,25 @@ defects.find_each do |defect|
       next
     end
 
-    # Status Mapping
+    # Status Mapping - Maps JIRA status names to local database names
     status_map = {
       'Failed-QA' => 'Failed QA',
-      'QA Testing' => 'QA Testing', # Ensure exact match if needed
-      'Awaiting Build' => 'Awaiting Build'
+      'FAILED - QA' => 'Failed QA',
+      'Failed QA' => 'Failed QA',
+      'ON HOLD' => 'On-Hold',
+      'On-Hold' => 'On-Hold',
+      'On Hold' => 'On-Hold',
+      'QA Testing' => 'QA Testing',
+      'Awaiting Build' => 'Awaiting Build',
+      'TO DO' => 'TO DO',
+      'In Progress' => 'In Progress',
+      'Closed' => 'Closed',
+      'Resolved' => 'Resolved',
+      'Reopened' => 'Reopened',
+      'Blocked' => 'Blocked',
+      'Support Testing' => 'Support Testing',
+      'Awaiting Client Information' => 'Awaiting Client Information',
+      'Awaiting Client API' => 'Awaiting Client API'
     }
     
     mapped_status_name = status_map[jira_status_name] || jira_status_name
