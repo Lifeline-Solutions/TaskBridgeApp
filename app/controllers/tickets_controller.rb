@@ -169,7 +169,7 @@ class TicketsController < ApplicationController
                 type: 'ticket_create_change_request'
               )
               .use_template(
-                view: 'user_mailer/create_ticket_email',
+                view: 'user_mailer/billable_ticket_email',
                 assigns: { ticket: @ticket, current_user: current_user, assigned_user: ['cx@craftsilicon.com','finance@craftsilicon.com'], project: @project, url: url }
               )
               .set_source('ticket', @ticket.id)
@@ -327,7 +327,7 @@ class TicketsController < ApplicationController
             type: 'ticket_create_change_request'
           )
           .use_template(
-            view: 'user_mailer/edit_ticket_email',
+            view: 'user_mailer/billable_ticket_email',
             assigns: { ticket: @ticket, current_user: current_user, assigned_user: ['cx@craftsilicon.com','finance@craftsilicon.com'], project: @project, url: url }
           )
           .set_source('ticket', @ticket.id)
@@ -666,7 +666,7 @@ class TicketsController < ApplicationController
             type: 'ticket_create_change_request'
           )
           .use_template(
-            view: 'user_mailer/create_ticket_email',
+            view: 'user_mailer/billable_ticket_email',
             assigns: { ticket: @ticket, current_user: current_user, assigned_user: ['cx@craftsilicon.com','finance@craftsilicon.com'], project: @project, url: url }
           )
           .set_source('ticket', @ticket.id)

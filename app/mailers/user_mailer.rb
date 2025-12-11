@@ -35,6 +35,16 @@ class UserMailer < ApplicationMailer
     mail(to: recipient_email, subject: "A new ticket has been created with Ticket ID #{@ticket.unique_id}.")
   end
 
+  def billable_ticket_email(ticket, current_user, assigned_user, project)
+    @ticket = ticket
+    @current_user = current_user
+    @assigned_user = assigned_user
+    @project = project
+    @url = project_ticket_url(@ticket.project, @ticket)
+    recipient_email = assigned_user.respond_to?(:email) ? assigned_user.email : assigned_user
+    mail(to: recipient_email, subject: "Ticket ID #{@ticket.unique_id}. priority has been changed to a Billable Feature")
+  end
+
   def edit_ticket_email(user, ticket, current_user, assigned_user, project)
     @user = user
     @ticket = ticket
