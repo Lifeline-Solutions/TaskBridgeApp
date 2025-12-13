@@ -287,8 +287,35 @@
                     elsif field_key.include?('priority')
                       drill_down_params[:priority] = [label]
                     elsif field_key.include?('assignee')
-                      drill_down_params[:user_id] = [label] # Should ideally resolve to ID, but keeping as placeholder or fallback
-                      drill_down_params[:query] = label
+                      # Resolve Assignee ID by name (First Last)
+                      parts = label.split(' ')
+                      if parts.size >= 2
+                        first_name = parts[0]
+                        last_name = parts[1..-1].join(' ')
+                        users = User.where("first_name ILIKE ? AND last_name ILIKE ?", first_name, last_name)
+                        if users.exists?
+                           drill_down_params[:user_id] = users.pluck(:id)
+                        else
+                           drill_down_params[:query] = label
+                        end
+                      else
+                        drill_down_params[:query] = label
+                      end
+                    elsif field_key.include?('reporter')
+                       # Resolve Reporter ID by name
+                       parts = label.split(' ')
+                       if parts.size >= 2
+                         first_name = parts[0]
+                         last_name = parts[1..-1].join(' ')
+                         users = User.where("first_name ILIKE ? AND last_name ILIKE ?", first_name, last_name)
+                         if users.exists?
+                            drill_down_params[:reporter_id] = users.pluck(:id)
+                         else
+                            drill_down_params[:query] = label
+                         end
+                       else
+                         drill_down_params[:query] = label
+                       end
                     elsif field_key == 'qa_module' || field_key == 'module'
                       # Resolve Module ID
                       # Determine scope
