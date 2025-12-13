@@ -330,7 +330,7 @@ class DefectController < ApplicationController
 
       if qa_module_ids.any? && submodule_ids.any?
         # Both parent modules and submodules selected
-        submodule_defects = @defects.where(qa_module_id: submodule_ids)
+        submodule_defects = @defects.where(submodule_id: submodule_ids)
 
         # Check if there are any defects for the specific submodules
         if submodule_defects.exists?
@@ -363,7 +363,7 @@ class DefectController < ApplicationController
         end
       elsif submodule_ids.any?
         # Only submodules selected without parent modules
-        @defects = @defects.where(qa_module_id: submodule_ids)
+        @defects = @defects.where(submodule_id: submodule_ids)
       end
     rescue ActiveRecord::StatementInvalid
       # Module filtering not available, skip it

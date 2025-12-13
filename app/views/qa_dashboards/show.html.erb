@@ -275,18 +275,66 @@
                 <% chart_data.sort_by { |_k, v| -v }.each do |label, count| %>
                   <%
                     drill_down_params = { filter_open: true }
-                    if field.to_s.downcase == 'status'
+                    
+                    # Include current product scope in drill-down
+                    scope_product_ids = @selected_product_ids.any? ? @selected_product_ids : (@dashboard.defect_filter.product_id.present? ? [@dashboard.defect_filter.product_id] : [])
+                    drill_down_params[:product_id] = scope_product_ids if scope_product_ids.any?
+                    
+                    field_key = field.to_s.downcase.gsub(' ', '_')
+
+                    if field_key.include?('status')
                       drill_down_params[:status] = [label]
-                    elsif field.to_s.downcase == 'priority'
+                    elsif field_key.include?('priority')
                       drill_down_params[:priority] = [label]
-                    elsif field.to_s.downcase == 'assignee'
-                      drill_down_params[:user_id] = [label] # Note: requires user ID, generic query fallback might be safer if label is name
+                    elsif field_key.include?('assignee')
+                      drill_down_params[:user_id] = [label] # Should ideally resolve to ID, but keeping as placeholder or fallback
                       drill_down_params[:query] = label
+                    elsif field_key == 'qa_module' || field_key == 'module'
+                      # Resolve Module ID
+                      # Determine scope
+                      scope_product_ids = @selected_product_ids.any? ? @selected_product_ids : (@dashboard.defect_filter.product_id.present? ? [@dashboard.defect_filter.product_id] : [])
+                      
+                      modules = QaModule.where(name: label)
+                      modules = modules.where(product_id: scope_product_ids) if scope_product_ids.any?
+                      
+                      if modules.exists?
+                        drill_down_params[:qa_module_id] = modules.pluck(:id)
+                      else
+                        drill_down_params[:query] = label
+                      end
+                    elsif field_key == 'submodule'
+                      # Resolve Submodule ID
+                      scope_product_ids = @selected_product_ids.any? ? @selected_product_ids : (@dashboard.defect_filter.product_id.present? ? [@dashboard.defect_filter.product_id] : [])
+                      
+                      submodules = QaModule.where(name: label).where.not(parent_id: nil)
+                      submodules = submodules.where(product_id: scope_product_ids) if scope_product_ids.any?
+                      
+                      if submodules.exists?
+                        drill_down_params[:submodule_id] = submodules.pluck(:id)
+                      else
+                        drill_down_params[:query] = label
+                      end
+                    elsif field_key == 'banking_type'
+                       # Resolve Banking Type ID
+                       banking_types = BankingType.where(name: label)
+                       if banking_types.exists?
+                         drill_down_params[:banking_type_id] = banking_types.pluck(:id)
+                       else
+                         drill_down_params[:query] = label
+                       end
+                    elsif field_key == 'label'
+                       # Resolve Label ID
+                       labels = Label.where(name: label)
+                       if labels.exists?
+                         drill_down_params[:label_ids] = labels.pluck(:id)
+                       else
+                         drill_down_params[:query] = label
+                       end
                     else
                       drill_down_params[:query] = label
                     end
                   %>
-                  <%= link_to defect_index_path(drill_down_params), class: "block hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors group" do %>
+                  <%= link_to index_show_defect_index_path(drill_down_params), class: "block hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors group" do %>
                     <div class="flex items-center justify-between text-sm p-1">
                       <span class="text-gray-700 dark:text-gray-300 flex-1 truncate group-hover:underline group-hover:text-blue-600 dark:group-hover:text-blue-400">
                         <%= label.presence || '(Not Set)' %>
