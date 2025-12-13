@@ -330,7 +330,7 @@ class DefectController < ApplicationController
 
       if qa_module_ids.any? && submodule_ids.any?
         # Both parent modules and submodules selected
-        submodule_defects = @defects.where(qa_module_id: submodule_ids)
+        submodule_defects = @defects.where(submodule_id: submodule_ids)
 
         # Check if there are any defects for the specific submodules
         if submodule_defects.exists?
@@ -363,7 +363,7 @@ class DefectController < ApplicationController
         end
       elsif submodule_ids.any?
         # Only submodules selected without parent modules
-        @defects = @defects.where(qa_module_id: submodule_ids)
+        @defects = @defects.where(submodule_id: submodule_ids)
       end
     rescue ActiveRecord::StatementInvalid
       # Module filtering not available, skip it
@@ -424,9 +424,31 @@ class DefectController < ApplicationController
         # Skip if banking_types association not available
       end
 
-      # Use left_joins only if not already joined
-      @defects = @defects.left_joins(:users) unless @defects.to_sql.include?('INNER JOIN "users"')
-      @defects = @defects.left_joins(product: %i[client groupwares]).where(
+      # Use left_joins explicitly for searchable associations
+      @defects = @defects.left_joins(:users) unless @defects.to_sql.include?('JOIN "users"')
+      
+      # Always join product/client/groupwares as they are in the core search
+      @defects = @defects.left_joins(product: %i[client groupwares])
+
+      # Conditionally join qa_modules if we are searching it
+      begin
+        if search_conditions.any? { |c| c.include?('qa_modules.name') }
+           @defects = @defects.left_joins(:qa_module)
+        end
+      rescue StandardError
+        # Ignore if association doesn't exist
+      end
+
+      # Conditionally join banking_types if we are searching it
+      begin
+        if search_conditions.any? { |c| c.include?('banking_types.name') }
+           @defects = @defects.left_joins(:banking_type)
+        end
+      rescue StandardError
+        # Ignore if association doesn't exist
+      end
+
+      @defects = @defects.where(
         search_conditions.join(' OR '), q: q
       ).distinct
     end

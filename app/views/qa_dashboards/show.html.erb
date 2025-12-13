@@ -273,17 +273,107 @@
               <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Breakdown</h4>
               <div class="space-y-2 max-h-96 overflow-y-auto">
                 <% chart_data.sort_by { |_k, v| -v }.each do |label, count| %>
-                  <div class="flex items-center justify-between text-sm">
-                    <span class="text-gray-700 dark:text-gray-300 flex-1 truncate">
-                      <%= label.presence || '(Not Set)' %>
-                    </span>
-                    <span class="font-semibold text-gray-900 dark:text-white ml-2">
-                      <%= count %>
-                    </span>
-                    <span class="text-gray-500 dark:text-gray-400 ml-2 text-xs">
-                      <%= number_to_percentage((count.to_f / chart_data.values.sum * 100), precision: 1) %>
-                    </span>
-                  </div>
+                  <%
+                    drill_down_params = { filter_open: true }
+                    
+                    # Include current product scope in drill-down
+                    scope_product_ids = @selected_product_ids.any? ? @selected_product_ids : (@dashboard.defect_filter.product_id.present? ? [@dashboard.defect_filter.product_id] : [])
+                    drill_down_params[:product_id] = scope_product_ids if scope_product_ids.any?
+                    
+                    field_key = field.to_s.downcase.gsub(' ', '_')
+
+                    if field_key.include?('status')
+                      drill_down_params[:status] = [label]
+                    elsif field_key.include?('priority')
+                      drill_down_params[:priority] = [label]
+                    elsif field_key.include?('assignee')
+                      # Resolve Assignee ID by name (First Last)
+                      parts = label.split(' ')
+                      if parts.size >= 2
+                        first_name = parts[0]
+                        last_name = parts[1..-1].join(' ')
+                        users = User.where("first_name ILIKE ? AND last_name ILIKE ?", first_name, last_name)
+                        if users.exists?
+                           drill_down_params[:user_id] = users.pluck(:id)
+                        else
+                           drill_down_params[:query] = label
+                        end
+                      else
+                        drill_down_params[:query] = label
+                      end
+                    elsif field_key.include?('reporter')
+                       # Resolve Reporter ID by name
+                       parts = label.split(' ')
+                       if parts.size >= 2
+                         first_name = parts[0]
+                         last_name = parts[1..-1].join(' ')
+                         users = User.where("first_name ILIKE ? AND last_name ILIKE ?", first_name, last_name)
+                         if users.exists?
+                            drill_down_params[:reporter_id] = users.pluck(:id)
+                         else
+                            drill_down_params[:query] = label
+                         end
+                       else
+                         drill_down_params[:query] = label
+                       end
+                    elsif field_key == 'qa_module' || field_key == 'module'
+                      # Resolve Module ID
+                      # Determine scope
+                      scope_product_ids = @selected_product_ids.any? ? @selected_product_ids : (@dashboard.defect_filter.product_id.present? ? [@dashboard.defect_filter.product_id] : [])
+                      
+                      modules = QaModule.where(name: label)
+                      modules = modules.where(product_id: scope_product_ids) if scope_product_ids.any?
+                      
+                      if modules.exists?
+                        drill_down_params[:qa_module_id] = modules.pluck(:id)
+                      else
+                        drill_down_params[:query] = label
+                      end
+                    elsif field_key == 'submodule'
+                      # Resolve Submodule ID
+                      scope_product_ids = @selected_product_ids.any? ? @selected_product_ids : (@dashboard.defect_filter.product_id.present? ? [@dashboard.defect_filter.product_id] : [])
+                      
+                      submodules = QaModule.where(name: label).where.not(parent_id: nil)
+                      submodules = submodules.where(product_id: scope_product_ids) if scope_product_ids.any?
+                      
+                      if submodules.exists?
+                        drill_down_params[:submodule_id] = submodules.pluck(:id)
+                      else
+                        drill_down_params[:query] = label
+                      end
+                    elsif field_key == 'banking_type'
+                       # Resolve Banking Type ID
+                       banking_types = BankingType.where(name: label)
+                       if banking_types.exists?
+                         drill_down_params[:banking_type_id] = banking_types.pluck(:id)
+                       else
+                         drill_down_params[:query] = label
+                       end
+                    elsif field_key == 'label'
+                       # Resolve Label ID
+                       labels = Label.where(name: label)
+                       if labels.exists?
+                         drill_down_params[:label_ids] = labels.pluck(:id)
+                       else
+                         drill_down_params[:query] = label
+                       end
+                    else
+                      drill_down_params[:query] = label
+                    end
+                  %>
+                  <%= link_to index_show_defect_index_path(drill_down_params), class: "block hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors group" do %>
+                    <div class="flex items-center justify-between text-sm p-1">
+                      <span class="text-gray-700 dark:text-gray-300 flex-1 truncate group-hover:underline group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                        <%= label.presence || '(Not Set)' %>
+                      </span>
+                      <span class="font-semibold text-gray-900 dark:text-white ml-2">
+                        <%= count %>
+                      </span>
+                      <span class="text-gray-500 dark:text-gray-400 ml-2 text-xs">
+                        <%= number_to_percentage((count.to_f / chart_data.values.sum * 100), precision: 1) %>
+                      </span>
+                    </div>
+                  <% end %>
                 <% end %>
               </div>
             </div>
