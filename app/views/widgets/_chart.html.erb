@@ -30,6 +30,7 @@
       <canvas id="chart-<%= widget.id %>" 
               data-controller="chart"
               data-chart-type-value="<%= widget.chart_config[:chart_type] || 'bar' %>"
+              data-chart-grouping-value="<%= widget.chart_config[:grouping] || 'status' %>"
               data-chart-labels-value="<%= data.keys.to_json %>"
               data-chart-data-value="<%= data.values.to_json %>"
               class="max-h-80">
