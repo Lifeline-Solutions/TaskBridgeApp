@@ -794,28 +794,34 @@
   }
 
   function initializeSelectAllFunctionality() {
-    // Add event listeners to all "Select All" checkboxes
-    document.querySelectorAll('.select-all-checkbox').forEach(checkbox => {
-      checkbox.addEventListener('change', function(e) {
-        const target = this.dataset.target;
-        const checkboxes = document.querySelectorAll(`.${target}-checkbox`);
+    // Guard to prevent adding duplicate listeners on Turbo navigation
+    if (window.selectAllFunctionalityInitialized) return;
+    window.selectAllFunctionalityInitialized = true;
+
+    // Use event delegation on document to handle dynamic content updates
+    document.addEventListener('change', function(e) {
+      if (!e.target) return;
+
+      // 1. Handle "Select All" checkbox toggle
+      if (e.target.classList.contains('select-all-checkbox')) {
+        const target = e.target.dataset.target;
+        const checkboxes = document.querySelectorAll(`.${target}-checkbox:not(.select-all-checkbox)`);
         
         checkboxes.forEach(cb => {
-          if (cb !== e.target) {
+          // Only update if changed to avoid unnecessary events
+          if (cb.checked !== e.target.checked) {
             cb.checked = e.target.checked;
+            // Dispatch change event so other listeners (like submodule visibility) react
             cb.dispatchEvent(new Event('change', { bubbles: true }));
           }
         });
-      });
-    });
+      }
 
-    // Update "Select All" when individual checkboxes change
-    document.querySelectorAll('[class$="-checkbox"]').forEach(checkbox => {
-      if (!checkbox.classList.contains('select-all-checkbox')) {
-        checkbox.addEventListener('change', function() {
-          updateSelectAllState(this);
-          updateButtonText(this);
-        });
+      // 2. Handle individual checkbox change (Update "Select All" state & Button Text)
+      const hasCheckboxClass = Array.from(e.target.classList).some(cls => cls.endsWith('-checkbox'));
+      if (hasCheckboxClass && !e.target.classList.contains('select-all-checkbox')) {
+        updateSelectAllState(e.target);
+        updateButtonText(e.target);
       }
     });
   }
@@ -943,15 +949,19 @@
 
   // ========== MODULE AND SUBMODULE DYNAMIC FILTERING ==========
   function initializeModuleSubmoduleFiltering() {
-    // Add event listeners to module checkboxes to update submodule visibility
-    document.querySelectorAll('.module-checkbox').forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
-        updateSubmoduleVisibility();
-      });
-    });
-
-    // Initialize submodule visibility on page load
+    // Always initialize visibility on load (idempotent)
     updateSubmoduleVisibility();
+
+    // Guard for event listeners
+    if (window.moduleSubmoduleFilteringInitialized) return;
+    window.moduleSubmoduleFilteringInitialized = true;
+
+    // Delegated listener for module checkboxes
+    document.addEventListener('change', function(e) {
+      if (e.target.classList.contains('module-checkbox')) {
+        updateSubmoduleVisibility();
+      }
+    });
   }
 
   function updateSubmoduleVisibility() {
