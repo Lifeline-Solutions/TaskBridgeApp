@@ -51,15 +51,13 @@ end
 def parse_module_and_submodule(full_string)
   return [nil, nil] if full_string.blank?
 
-  # Expected format: "Module - Submodule" 
-  # Example: "Admin - Customer" or "Admin"
-  parts = full_string.split(/\s*-\s*/, 2)
+  # For SC Juza (SJP) we treat the entire custom field value as the module name
+  # and intentionally do NOT split on '-' to extract a submodule. This ensures
+  # the full name is preserved as the module and submodule is left blank.
+  module_name = full_string.to_s.strip
+  submodule_name = nil
 
-  module_name = parts[0]&.strip
-  submodule_name = parts[1]&.strip
-
-  # If only one part, treat it as Module with no Submodule
-  [module_name, submodule_name]
+  [module_name.presence, submodule_name]
 end
 
 def find_or_create_modules(module_name:, submodule_name:, product_id:, created_by:)
