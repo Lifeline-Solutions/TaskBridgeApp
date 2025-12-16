@@ -167,12 +167,12 @@ def discover_custom_fields(project_key = 'RMP')
       # For GBCBS, we'll set a dummy submodule field to pass validation
       submodule_field ||= 'DUMMY'
     when 'GBCBU2'
-      if name == 'components' || (name == 'component')
+      # GBCBU2 uses a single cascading select field named "Components" for module (parent) and submodule (child)
+      if name.strip == 'components' || name.strip == 'component'
         module_field = field_id
-        log "✓ Matched Module field: #{field['name']} (#{field_id})"
+        submodule_field = field_id # same field contains the child value
+        log "✓ Matched Cascading field for Module/Submodule: #{field['name']} (#{field_id})"
       end
-      # For GBCBU2, we'll set a dummy submodule field to pass validation
-      submodule_field ||= 'DUMMY'
     end
   end
 
@@ -361,8 +361,9 @@ projects_to_process.each do |project_key|
         module_name = 'Module'
         submodule_name = '' # Always blank for GBCBS
       when 'GBCBU2'
-        module_name = 'Components'
-        submodule_name = '' # Always blank for GBCBU2
+        # For GBCBU2, keep values from the cascading "Components" field:
+        # module_name from parent value and submodule_name from child value.
+        # Do not override with static values.
       else
         # For other projects, apply parsing logic
         if module_name.blank? && submodule_name.blank?
