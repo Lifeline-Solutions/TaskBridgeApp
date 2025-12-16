@@ -77,7 +77,7 @@ def fetch_jql_keys(jql)
 end
 
 def fetch_issue_details(key)
-  uri = URI("#{JIRA_BASE_URL}/rest/api/2/issue/#{key}")
+  uri = URI("#{JIRA_BASE_URL}/rest/api/2/issue/#{key}?expand=changelog")
   req = Net::HTTP::Get.new(uri)
   req.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
   req['Content-Type'] = 'application/json'
@@ -176,6 +176,59 @@ def sync_attachments(defect, attachments_data)
   end
 end
 
+def sync_history(defect, changelog)
+  return unless defect && changelog
+  
+  # Clear existing history to prevent duplicates and remove incorrect entries
+  DefectHistory.where(defect_id: defect.id).destroy_all
+
+  histories = changelog['histories'] || []
+  histories.each do |history_item|
+    author_data = history_item['author']
+    user = find_or_create_user(author_data)
+    created_at = DateTime.parse(history_item['created']) rescue Time.now
+
+    history_item['items'].each do |item|
+      field = item['field']
+      from_string = item['fromString']
+      to_string = item['toString']
+      
+      history_type = nil
+      history_text = nil
+      
+      case field.downcase
+      when 'assignee'
+        history_type = 'Assignee Changed'
+        history_text = "Assignee changed from #{from_string || 'Unassigned'} to #{to_string || 'Unassigned'} by #{user&.name || 'Unknown'}"
+      when 'status'
+        history_type = 'Status Changed'
+        history_text = "Status changed from #{from_string} to #{to_string} by #{user&.name || 'Unknown'}"
+      when 'priority'
+        history_type = 'Priority Updated'
+        history_text = "Priority changed from #{from_string} to #{to_string}"
+      when 'description'
+        history_type = 'Description Updated'
+        history_text = "Description updated by #{user&.name || 'Unknown'}"
+      when 'attachment'
+        history_type = 'Attachment Added'
+         # JIRA attachment history usually just says it was added. 
+         # We can try to construct a message. item['to'] usually contains local ID, toString filename
+         history_text = "Attachment #{to_string} added by #{user&.name || 'Unknown'}"
+      end
+
+      if history_type && history_text
+        DefectHistory.create!(
+          defect: defect, 
+          user: user || User.first, # Fallback to prevent validation error
+          history_type: history_type, 
+          history: history_text, 
+          created_at: created_at
+        )
+      end
+    end
+  end
+end
+
 def convert_jira_wiki_to_html(text)
   return "" if text.blank?
 
@@ -253,12 +306,16 @@ log "Syncing #{jira_keys.count} defects..."
 jira_keys.each_with_index do |key, idx|
   log "[#{idx+1}/#{jira_keys.count}] Processing #{key}..."
   
-  # Fetch full details
+  # Fetch full details including changelog
   jira_data = fetch_issue_details(key)
   unless jira_data
     log "  Skipping #{key} due to fetch error."
     next
   end
+
+  # Sync History (Changelog)
+  sync_history(Defect.find_by(defect_unique: key), jira_data['changelog']) if jira_data['changelog']
+
 
   fields = jira_data['fields']
   
