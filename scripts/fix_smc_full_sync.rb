@@ -191,7 +191,15 @@ defects.each do |defect|
     if status_name.present?
       # Map 'Done' to 'Closed' if preferred, or just sync correctly. 
       # User said Jira="Closed", System="Resolved". So we sync what Jira says.
-      status = Status.find_or_create_by(name: status_name)
+      # Fix: Status requires user_id. Use first user (Admin) or system default.
+      system_user_id = User.order(:created_at).first&.id || 'c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da'
+      
+      status = Status.find_or_create_by(name: status_name) do |s|
+        s.user_id = system_user_id
+        s.created_by = system_user_id
+        s.modified_by = system_user_id
+      end
+      
       if status
          defect.statuses = [status]
          log "    Status: #{status_name}"
