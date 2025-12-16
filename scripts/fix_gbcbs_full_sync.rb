@@ -83,13 +83,26 @@ def fetch_issue_details(key)
   req['Content-Type'] = 'application/json'
   req['Accept'] = 'application/json'
 
-  res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: (uri.scheme == 'https')) { |http| http.request(req) }
-  
-  if res.is_a?(Net::HTTPSuccess)
-    JSON.parse(res.body)
-  else
-    log "Error fetching #{key}: #{res.code} #{res.message}"
-    nil
+  retries = 0
+  loop do
+    begin
+      res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: (uri.scheme == 'https')) { |http| http.request(req) }
+      
+      if res.is_a?(Net::HTTPSuccess)
+        return JSON.parse(res.body)
+      elsif res.code == '429' && retries < 5
+        log "  ⚠️ Rate limited (429) on #{key}. Sleeping..."
+        sleep(2 ** retries)
+        retries += 1
+        next
+      else
+        log "Error fetching #{key}: #{res.code} #{res.message}"
+        return nil
+      end
+    rescue => e
+      log "  ❌ Exception fetching #{key}: #{e.message}"
+      return nil
+    end
   end
 end
 
