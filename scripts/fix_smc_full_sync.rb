@@ -9,6 +9,9 @@ require 'fileutils'
 require 'open-uri'
 require 'optparse'
 
+# Load Enhanced ADF Converter
+require_relative 'enhanced_adf_converter'
+
 # Configuration Setup
 APP_ROOT = Rails.root
 config_path = APP_ROOT.join('config', 'jira_import.yml')
@@ -22,10 +25,11 @@ PROJECT_KEY = 'SMC'
 MODULE_FIELD_ID = 'customfield_10156' # Sofia Modules_Submodules (Cascading)
 PRODUCT_ID = 'e618ac94-3d46-4e77-96c8-389d0a343652'
 
-options = { dry_run: false }
+options = { dry_run: false, specific: nil }
 OptionParser.new do |opts|
   opts.banner = 'Usage: rails runner scripts/fix_smc_full_sync.rb [options]'
   opts.on('--dry-run', 'Simulate changes') { options[:dry_run] = true }
+  opts.on('--specific KEY', 'Run for specific defect (e.g. SMC-1400)') { |v| options[:specific] = v }
 end.parse!
 
 def log(msg)
@@ -49,6 +53,7 @@ def fetch_issue_details(key)
   end
 end
 
+# Validated Intelligent Match + User Creation (Disabled)
 def normalize_email(display_name)
   name_parts = display_name.to_s.strip.split(/[\s\.]+/)
   return "unknown.user-#{SecureRandom.hex(4)}@craftsilicon.com" if name_parts.empty?
@@ -71,7 +76,7 @@ def find_or_create_user(jira_user_data)
   user = User.find_by('lower(email) = ?', email.downcase)
   
   unless user
-    log "    Creating user: #{display_name} (#{email})"
+    log "    -> [CREATE] Creating DISABLED user: #{display_name} (#{email})"
     password = SecureRandom.hex(12)
     user = User.new(
       first_name: display_name.split(' ').first,
@@ -79,17 +84,16 @@ def find_or_create_user(jira_user_data)
       email: email,
       password: password, 
       password_confirmation: password,
-      active: true,
+      active: false, # DISABLED
       confirmed_at: Time.now
     )
-    user.save!(validate: false) # Skip strict validation if needed
+    user.save!(validate: false)
   end
   user
 end
 
 def find_or_create_module(module_name)
   return nil if module_name.blank?
-  # Clean up module name (e.g., replace / with space or - if needed, but keeping original is safer for now)
   QaModule.find_or_create_by!(name: module_name, product_id: PRODUCT_ID)
 end
 
@@ -106,9 +110,7 @@ def sync_attachments(defect, attachments_data)
     url = att['content']
     mime_type = att['mimeType']
     
-    # Check if already attached to :attachments
     if defect.attachments.blobs.any? { |blob| blob.filename.to_s == filename }
-      log "      Attachment #{filename} exists. Skipping."
       next
     end
     
@@ -123,27 +125,37 @@ def sync_attachments(defect, attachments_data)
 end
 
 # Main Loop
-defects = Defect.where("defect_unique LIKE 'SMC-%'").order(:defect_unique)
-log "Found #{defects.count} SMC defects in DB."
+scope = if options[:specific]
+          Defect.where(defect_unique: options[:specific])
+        else
+          Defect.where("defect_unique LIKE 'SMC-%'").order(:defect_unique)
+        end
 
-defects.each do |defect|
+log "Found #{scope.count} SMC defects to sync."
+
+scope.each do |defect|
   log "Processing #{defect.defect_unique}..."
   
   jira_data = fetch_issue_details(defect.defect_unique)
   next unless jira_data
   
   fields = jira_data['fields']
+  changes = false
   
   # 1. Assignee
   if fields['assignee']
     assignee = find_or_create_user(fields['assignee'])
     if assignee
-      # Defect uses HABTM users for assignment. Replace existing assignees to match Jira.
-      defect.users = [assignee] 
+      current_ids = defect.user_ids
+      unless current_ids.include?(assignee.id)
+        defect.users = [assignee]
+        changes = true
+        log "    -> Set Assignee: #{assignee.name}"
+      end
     end
   end
   
-  # 2. Modules (Cascading Select)
+  # 2. Modules
   module_val = fields[MODULE_FIELD_ID]
   if module_val.present? && module_val.is_a?(Hash)
     parent_name = module_val['value']
@@ -152,72 +164,80 @@ defects.each do |defect|
     qa_module = find_or_create_module(parent_name)
     submodule = find_or_create_submodule(child_name, qa_module)
     
-    defect.qa_module = qa_module
-    defect.submodule = submodule
-    
-    log "    Module: #{parent_name} | Submodule: #{child_name}"
+    if defect.qa_module_id != qa_module.id || defect.submodule_id != submodule.id
+        defect.qa_module = qa_module
+        defect.submodule = submodule
+        changes = true
+        log "    -> Set Module: #{parent_name} | #{child_name}"
+    end
   end
   
   # 3. Dates
-  if fields['created']
-    defect.created_at = DateTime.parse(fields['created'])
+  j_created = DateTime.parse(fields['created'])
+  j_updated = DateTime.parse(fields['updated'])
+  
+  if (defect.created_at.to_i - j_created.to_i).abs > 5
+    defect.created_at = j_created 
+    changes = true
   end
-  if fields['updated']
-    defect.updated_at = DateTime.parse(fields['updated'])
+  if (defect.updated_at.to_i - j_updated.to_i).abs > 5
+    defect.updated_at = j_updated
+    changes = true
   end
   
-  # 4. Description (Basic ADF to text)
+  # 4. Description (Rich Text)
   if fields['description']
-     text = ""
+     html_content = ""
      if fields['description'].is_a?(Hash) && fields['description']['content']
-       fields['description']['content'].each do |block|
-         if block['type'] == 'paragraph' && block['content']
-           block['content'].each do |node|
-             text += node['text'] if node['type'] == 'text'
-           end
-           text += "\n\n"
-         end
-       end
+       # Use Enhanced Converter
+       html_content = convert_adf_to_html_enhanced(fields['description']['content'])
      elsif fields['description'].is_a?(String)
-       text = fields['description']
+       html_content = fields['description']
      end
-     # defect has_rich_text :content, not description column
-     defect.content = text if text.present?
+     
+     # Check if content changed (simple string match might fail due to HTML gen differences, so valid update may happen)
+     # We update if rich text body is different
+     current_body = defect.content.body.to_s rescue ""
+     
+     if html_content.present? && current_body != html_content
+        defect.content = html_content 
+        changes = true
+        log "    -> Updated Description (Rich Text)"
+     end
   end
 
   # 5. Status
   if fields['status']
     status_name = fields['status']['name']
     if status_name.present?
-      # Map 'Done' to 'Closed' if preferred, or just sync correctly. 
-      # User said Jira="Closed", System="Resolved". So we sync what Jira says.
-      # Fix: Status requires user_id. Use first user (Admin) or system default.
+      # Ensure status exists
       system_user_id = User.order(:created_at).first&.id || 'c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da'
       
-      status = Status.find_or_create_by(name: status_name) do |s|
-        s.user_id = system_user_id
-        s.created_by = system_user_id
-        s.modified_by = system_user_id
+      status = Status.where('lower(name) = ?', status_name.downcase).first
+      unless status
+         log "    -> Creating missing status: #{status_name}"
+         status = Status.create!(name: status_name, user_id: system_user_id, created_by: system_user_id, modified_by: system_user_id)
       end
       
-      if status
+      if status && !defect.statuses.include?(status)
          defect.statuses = [status]
-         log "    Status: #{status_name}"
+         changes = true
+         log "    -> Set Status: #{status.name}"
       end
     end
   end
 
   unless options[:dry_run]
-    if defect.changed?
-      log "    Updating defect keys: #{defect.changes.keys}"
+    if changes
       defect.save!(validate: false)
+      log "    ✅ Saved changes."
     else
       log "    No changes."
     end
     
-    # 5. Attachments
+    # 5. Attachments (Always run check)
     sync_attachments(defect, fields['attachment'])
   else
-    log "    [Dry Run] Changes: #{defect.changes}"
+    log "    [Dry Run] Changes detected: #{changes}"
   end
 end
