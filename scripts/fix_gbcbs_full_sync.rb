@@ -117,14 +117,18 @@ def normalize_email(display_name)
 end
 
 def find_or_create_user(jira_user_data)
-  return nil unless jira_user_data
+  # Handle nil data by falling back to a System user
+  unless jira_user_data
+    return find_or_create_system_user
+  end
   
   email = jira_user_data['emailAddress']
   display_name = jira_user_data['displayName']
   
-  # Normalize email if missing
+  # Normalize email if missing (JIRA Cloud privacy often hides email)
   email = normalize_email(display_name) if email.blank?
   
+  # Search by email (case insensitive)
   user = User.find_by('lower(email) = ?', email.downcase)
   
   unless user
@@ -139,7 +143,26 @@ def find_or_create_user(jira_user_data)
       active: false, # DISABLED
       confirmed_at: Time.now
     )
+    # Save with validation false to bypass strict password/other checks
     user.save!(validate: false)
+  end
+  user
+end
+
+def find_or_create_system_user
+  email = "jira.system@craftsilicon.com"
+  user = User.find_by(email: email)
+  unless user
+    password = SecureRandom.hex(12)
+    user = User.create!(
+      first_name: 'Jira',
+      last_name: 'System',
+      email: email,
+      password: password,
+      password_confirmation: password,
+      active: false,
+      confirmed_at: Time.now
+    )
   end
   user
 end
@@ -217,9 +240,12 @@ def sync_history(defect, changelog)
       end
 
       if history_type && history_text
+        # Ensure we have a user (find_or_create_user now guarantees return)
+        history_user = user || find_or_create_system_user
+
         DefectHistory.create!(
           defect: defect, 
-          user: user || User.first, # Fallback to prevent validation error
+          user: history_user,
           history_type: history_type, 
           history: history_text, 
           created_at: created_at
