@@ -1,5 +1,5 @@
 @import 'actiontext.css';
-@import "slim-select";
+@import "slim-select/dist/slimselect.css";
 
 @tailwind base;
 @tailwind components;
