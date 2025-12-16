@@ -8,7 +8,7 @@ require 'date'
 require 'fileutils'
 require 'open-uri'
 require 'optparse'
-
+                                                                                             
 # Load Enhanced ADF Converter
 require_relative 'enhanced_adf_converter'
 
@@ -164,7 +164,7 @@ scope.each do |defect|
     qa_module = find_or_create_module(parent_name)
     submodule = find_or_create_submodule(child_name, qa_module)
     
-    if defect.qa_module_id != qa_module.id || defect.submodule_id != submodule.id
+    if defect.qa_module_id != qa_module&.id || defect.submodule_id != submodule&.id
         defect.qa_module = qa_module
         defect.submodule = submodule
         changes = true
