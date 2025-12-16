@@ -1,5 +1,5 @@
 @import 'actiontext.css';
-@import "slim-select/dist/slimselect.css";
+@import url("https://cdn.jsdelivr.net/npm/slim-select@2.10.0/dist/slimselect.css");
 
 @tailwind base;
 @tailwind components;
