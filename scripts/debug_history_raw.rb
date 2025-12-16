@@ -18,8 +18,10 @@ def auth_header
   { 'Authorization' => "Basic #{auth}", 'Content-Type' => 'application/json' }
 end
 
-key = 'SMC-1400'
-url = URI("https://#{JIRA_DOMAIN}/rest/api/3/issue/#{key}?expand=changelog")
+# Test JQL Search
+jql = "key = GBCBS-3303"
+jql_enc = URI.encode_www_form_component(jql)
+url = URI("https://#{JIRA_DOMAIN}/rest/api/3/search?jql=#{jql_enc}&maxResults=1")
 http = Net::HTTP.new(url.host, url.port)
 http.use_ssl = true
 req = Net::HTTP::Get.new(url, auth_header)
@@ -27,14 +29,7 @@ res = http.request(req)
 
 if res.is_a?(Net::HTTPSuccess)
   data = JSON.parse(res.body)
-  puts "Changelog Entries: #{data['changelog']['histories'].count}"
-  data['changelog']['histories'].each do |h|
-    puts "---"
-    puts "Author: #{h['author']['displayName']}"
-    h['items'].each do |item|
-      puts "  Field: #{item['field']} | From: #{item['fromString']} | To: #{item['toString']}"
-    end
-  end
+  puts "Search Success! Found: #{data['total']}"
 else
-  puts "Error: #{res.code} #{res.message}"
+  puts "Search Error: #{res.code} #{res.message}"
 end
