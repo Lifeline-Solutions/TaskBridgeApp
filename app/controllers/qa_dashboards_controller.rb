@@ -11,7 +11,10 @@ class QaDashboardsController < ApplicationController
   def new
     @dashboard = Dashboard.new
     @saved_filters = current_user.defect_filters.active
-    @users = User.where.not(id: current_user.id).where(active: true) # For sharing
+    @users = User.where.not(id: current_user.id)
+                 .where(active: true)
+                 .where('email ILIKE ?', '%@craftsilicon%')
+                 .order(:first_name, :last_name) # For sharing
   end
 
   def create
@@ -90,7 +93,10 @@ class QaDashboardsController < ApplicationController
 
   def edit
     @saved_filters = current_user.defect_filters.active
-    @users = User.where.not(id: current_user.id).where(active: true) # For sharing
+    @users = User.where.not(id: current_user.id)
+                 .where(active: true)
+                 .where('email ILIKE ?', '%@craftsilicon%')
+                 .order(:first_name, :last_name) # For sharing
   end
 
   def update
