@@ -1,0 +1,1119 @@
+Starting Global Jira Comments Audit (Smart Match Enabled)...
+Found 7437 potential Jira defects locally.
+Processing 1/7437: CB-0001...
+Processing 51/7437: CS-0008...
+[DUPLICATE] GBCBS-1003: Found 2 copies of comment by User a4ac82e1-0812-4298-a390-eb72c4248f1a
+[DUPLICATE] GBCBS-1032: Found 2 copies of comment by User ab095b5d-9436-40ed-9c3b-c72d6c4a9db7
+[DUPLICATE] GBCBS-1033: Found 2 copies of comment by User ab095b5d-9436-40ed-9c3b-c72d6c4a9db7
+[DUPLICATE] GBCBS-1034: Found 2 copies of comment by User ab095b5d-9436-40ed-9c3b-c72d6c4a9db7
+Processing 101/7437: GBCBS-104...
+[WRONG AUTHOR] GBCBS-1043: Jira: 'gideon' (matched to Gideon Kyule) vs DB: 'Gideon Kyule' (ID: 52571260-7b31-40c3-83b7-ce286b4abf6e)
+[DUPLICATE] GBCBS-1047: Found 2 copies of comment by User f0f3bad6-8875-4221-8435-f997c39294a4
+[DUPLICATE] GBCBS-1048: Found 2 copies of comment by User ab095b5d-9436-40ed-9c3b-c72d6c4a9db7
+[WRONG AUTHOR] GBCBS-1057: Jira: 'Valerie Mugono' (matched to Valerie Mugono) vs DB: 'archana verma' (ID: 82048b2b-0bbd-40c4-a960-0a0b865334d4)
+[WRONG AUTHOR] GBCBS-1057: Jira: 'Valerie Mugono' (matched to Valerie Mugono) vs DB: 'archana verma' (ID: 1e58b9e9-6825-478e-a662-0c4dd5581b3d)
+[WRONG AUTHOR] GBCBS-1057: Jira: 'Valerie Mugono' (matched to Valerie Mugono) vs DB: 'archana verma' (ID: 82048b2b-0bbd-40c4-a960-0a0b865334d4)
+[WRONG AUTHOR] GBCBS-1057: Jira: 'Valerie Mugono' (matched to Valerie Mugono) vs DB: 'archana verma' (ID: 1e58b9e9-6825-478e-a662-0c4dd5581b3d)
+[DUPLICATE] GBCBS-1068: Found 2 copies of comment by User a4ac82e1-0812-4298-a390-eb72c4248f1a
+[DUPLICATE] GBCBS-1069: Found 2 copies of comment by User a4ac82e1-0812-4298-a390-eb72c4248f1a
+Processing 151/7437: GBCBS-1085...
+[WRONG AUTHOR] GBCBS-1087: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 90f503bb-6925-414b-a3b2-606c18aef134)
+[WRONG AUTHOR] GBCBS-109: Jira: 'Pramoda Kumar Sahoo' (matched to Pramoda Kumar Sahoo) vs DB: 'Pramoda Kumar' (ID: 38a28228-ecd4-4c78-8504-d84baa124990)
+[DUPLICATE] GBCBS-1090: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[DUPLICATE] GBCBS-1094: Found 2 copies of comment by User a4ac82e1-0812-4298-a390-eb72c4248f1a
+[DUPLICATE] GBCBS-1107: Found 2 copies of comment by User f0f3bad6-8875-4221-8435-f997c39294a4
+[DUPLICATE] GBCBS-1109: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[WRONG AUTHOR] GBCBS-111: Jira: 'swati mishra' (matched to Swati Mishra) vs DB: 'James Kithome' (ID: 50e684e9-4d05-4568-8821-9d26255276e8)
+[WRONG AUTHOR] GBCBS-1115: Jira: 'Nimrod Migossi Nzoberi' (matched to Nimrod Nzoberi) vs DB: 'Nimrod Migossi' (ID: ee3e27e4-5a4e-4d0d-b323-971d5c1f58fa)
+[DUPLICATE] GBCBS-1121: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[DUPLICATE] GBCBS-1122: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[DUPLICATE] GBCBS-1127: Found 2 copies of comment by User a4ac82e1-0812-4298-a390-eb72c4248f1a
+[DUPLICATE] GBCBS-1129: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+Processing 201/7437: GBCBS-1130...
+[WRONG AUTHOR] GBCBS-116: Jira: 'swati mishra' (matched to Swati Mishra) vs DB: 'archana verma' (ID: f1e476b0-89d7-452f-9c51-1b934c6c06dd)
+[DUPLICATE] GBCBS-1161: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[DUPLICATE] GBCBS-1163: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+Processing 251/7437: GBCBS-1176...
+[DUPLICATE] GBCBS-1178: Found 2 copies of comment by User f0f3bad6-8875-4221-8435-f997c39294a4
+[WRONG AUTHOR] GBCBS-118: Jira: 'swati mishra' (matched to Swati Mishra) vs DB: 'archana verma' (ID: 70b29885-7af3-4617-a8aa-2597b6f9139c)
+[DUPLICATE] GBCBS-1180: Found 2 copies of comment by User f0f3bad6-8875-4221-8435-f997c39294a4
+[DUPLICATE] GBCBS-1183: Found 2 copies of comment by User f0f3bad6-8875-4221-8435-f997c39294a4
+[WRONG AUTHOR] GBCBS-119: Jira: 'Polycarp Amenya' (matched to Polycarp Amenya) vs DB: 'archana verma' (ID: 713ed0f4-5a9c-488d-a9ab-d19218d2285e)
+[DUPLICATE] GBCBS-1212: Found 2 copies of comment by User 433031d2-e2ab-4029-a213-c9128173e21a
+[WRONG AUTHOR] GBCBS-1216: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 4e319b4f-7b2a-4b15-9c64-d8d61e23b5ed)
+Processing 301/7437: GBCBS-1221...
+[DUPLICATE] GBCBS-1231: Found 2 copies of comment by User 15a3151e-8624-4ee0-8c9d-248bcd128a65
+[DUPLICATE] GBCBS-1231: Found 2 copies of comment by User 433031d2-e2ab-4029-a213-c9128173e21a
+[DUPLICATE] GBCBS-1242: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[WRONG AUTHOR] GBCBS-1245: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Dennis Mugo' (ID: 1177fac5-c309-4e8b-88ff-eb2f6d03c074)
+[WRONG AUTHOR] GBCBS-1245: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Dennis Mugo' (ID: 0914330f-a6ad-473a-8c90-b7e0569ff671)
+[WRONG AUTHOR] GBCBS-1245: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 51a327ab-d607-417b-83ba-b602aaf77ce9)
+[WRONG AUTHOR] GBCBS-1245: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Dennis Mugo' (ID: 9ccbdeaf-c7ee-48e0-b4e9-483423fa1f10)
+[WRONG AUTHOR] GBCBS-1245: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Dennis Mugo' (ID: 84c3e87e-f0a6-4f09-8384-d4e448eb886f)
+[DUPLICATE] GBCBS-1245: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[DUPLICATE] GBCBS-1261: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[WRONG AUTHOR] GBCBS-1265: Jira: 'nicholas.mbithuka' (matched to nicholas Mbithuka) vs DB: 'Lupogo Lupogo' (ID: ce413127-aca9-416e-b6bf-62a31652c665)
+[DUPLICATE] GBCBS-1266: Found 2 copies of comment by User a4ac82e1-0812-4298-a390-eb72c4248f1a
+Processing 351/7437: GBCBS-1267...
+[DUPLICATE] GBCBS-1267: Found 2 copies of comment by User a4ac82e1-0812-4298-a390-eb72c4248f1a
+[DUPLICATE] GBCBS-1268: Found 2 copies of comment by User 433031d2-e2ab-4029-a213-c9128173e21a
+[DUPLICATE] GBCBS-1276: Found 2 copies of comment by User 433031d2-e2ab-4029-a213-c9128173e21a
+[WRONG AUTHOR] GBCBS-128: Jira: 'Polycarp Amenya' (matched to Polycarp Amenya) vs DB: 'archana verma' (ID: 19af7642-b26b-4003-a536-ffdca468744d)
+[DUPLICATE] GBCBS-1280: Found 2 copies of comment by User 433031d2-e2ab-4029-a213-c9128173e21a
+[DUPLICATE] GBCBS-1281: Found 2 copies of comment by User 3ae29672-63af-4856-85be-f0e39af6845e
+[DUPLICATE] GBCBS-1303: Found 2 copies of comment by User a4ac82e1-0812-4298-a390-eb72c4248f1a
+[DUPLICATE] GBCBS-1303: Found 2 copies of comment by User 36d5db86-7e08-43bf-b802-764b29c27b63
+Processing 401/7437: GBCBS-1313...
+[DUPLICATE] GBCBS-1325: Found 2 copies of comment by User 7d248b7b-a595-4c71-bec3-e28581c04643
+[WRONG AUTHOR] GBCBS-133: Jira: 'swati mishra' (matched to Swati Mishra) vs DB: 'archana verma' (ID: f47b3865-9240-4a93-a1bc-16278e2a39c7)
+[DUPLICATE] GBCBS-1333: Found 2 copies of comment by User 6da5bbbe-0890-4d0b-a645-cb0cf3451650
+[DUPLICATE] GBCBS-1338: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[DUPLICATE] GBCBS-1339: Found 2 copies of comment by User ec00aa25-3e63-4851-85e6-8e10021d780e
+[WRONG AUTHOR] GBCBS-134: Jira: 'Polycarp Amenya' (matched to Polycarp Amenya) vs DB: 'archana verma' (ID: 68cc3ddb-cdfb-4f32-a196-39e2bc7b8835)
+[DUPLICATE] GBCBS-1346: Found 2 copies of comment by User f0f3bad6-8875-4221-8435-f997c39294a4
+[DUPLICATE] GBCBS-1346: Found 2 copies of comment by User f0f3bad6-8875-4221-8435-f997c39294a4
+[WRONG AUTHOR - NO MATCH] GBCBS-1347: Jira: 'Ponic Kambi' vs DB: 'Mungai Stephen' (ID: f84c600c-3ebd-4206-859d-f2f9c866bfcc)
+[DUPLICATE] GBCBS-1348: Found 2 copies of comment by User b3c76b16-d852-47f5-9938-3ea6c20ac7a5
+[DUPLICATE] GBCBS-1348: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[DUPLICATE] GBCBS-1353: Found 2 copies of comment by User b3c76b16-d852-47f5-9938-3ea6c20ac7a5
+[DUPLICATE] GBCBS-1356: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+Processing 451/7437: GBCBS-1359...
+[WRONG AUTHOR] GBCBS-136: Jira: 'swati mishra' (matched to Swati Mishra) vs DB: 'archana verma' (ID: 241e907c-5a90-4afa-a48b-3c36706c70c6)
+[WRONG AUTHOR] GBCBS-136: Jira: 'swati mishra' (matched to Swati Mishra) vs DB: 'archana verma' (ID: 7df999a3-10a1-45d9-a87e-60a0d35c86ed)
+[DUPLICATE] GBCBS-1363: Found 2 copies of comment by User 6da5bbbe-0890-4d0b-a645-cb0cf3451650
+[WRONG AUTHOR] GBCBS-1400: Jira: 'Nimrod Migossi Nzoberi' (matched to Nimrod Nzoberi) vs DB: 'Nimrod Migossi' (ID: 289a05bd-07db-4a11-b304-e269fd7bd447)
+[WRONG AUTHOR] GBCBS-1400: Jira: 'Nimrod Migossi Nzoberi' (matched to Nimrod Nzoberi) vs DB: 'Nimrod Migossi' (ID: ed4b229b-1b18-4128-ad02-d905dd0fdcd7)
+Processing 501/7437: GBCBS-1404...
+[DUPLICATE] GBCBS-1405: Found 2 copies of comment by User 6da5bbbe-0890-4d0b-a645-cb0cf3451650
+[DUPLICATE] GBCBS-1413: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[DUPLICATE] GBCBS-1417: Found 2 copies of comment by User 06bc6791-938d-48db-82ec-55adfa0b1da4
+[WRONG AUTHOR] GBCBS-1418: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'archana verma' (ID: a8d19ea4-02b5-4d36-bef0-655630de77a1)
+[WRONG AUTHOR] GBCBS-1419: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'archana verma' (ID: e9d86e81-55b9-4aea-9d39-31c422c82404)
+[WRONG AUTHOR] GBCBS-1419: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'archana verma' (ID: 7e9ddbd7-6e77-4598-a4bb-4f59e532197a)
+[WRONG AUTHOR] GBCBS-1419: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'archana verma' (ID: c004b8a7-98b9-4047-b9d9-6847797a7918)
+[WRONG AUTHOR] GBCBS-1420: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'archana verma' (ID: 9f7ce6bc-f855-45bd-add3-bcca3d3c5b70)
+[WRONG AUTHOR] GBCBS-1420: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'archana verma' (ID: 4a94f47e-8db4-4429-8899-14f7710c8682)
+[WRONG AUTHOR] GBCBS-1420: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'archana verma' (ID: 13ad2494-1933-41ba-809a-8fddfdb31f40)
+[WRONG AUTHOR] GBCBS-1420: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'archana verma' (ID: 3309d05a-e7e3-43a0-9ba6-5442f1441705)
+[WRONG AUTHOR] GBCBS-1420: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'archana verma' (ID: 32209878-5717-482c-988e-0bef030010ee)
+[DUPLICATE] GBCBS-1420: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[DUPLICATE] GBCBS-1420: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[WRONG AUTHOR] GBCBS-1421: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'archana verma' (ID: 60794e3f-f8f1-4465-81b7-ad7e93c97cbf)
+[WRONG AUTHOR] GBCBS-1422: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'archana verma' (ID: 7e2a6e0b-0ca9-4753-afad-d4ff28fa3f72)
+[WRONG AUTHOR] GBCBS-1422: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'archana verma' (ID: 13e2510e-7bd2-442b-bc83-3e0aafc08e19)
+[DUPLICATE] GBCBS-1422: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[WRONG AUTHOR] GBCBS-1423: Jira: 'Nimrod Migossi Nzoberi' (matched to Nimrod Nzoberi) vs DB: 'Nimrod Migossi' (ID: 1fb48256-b499-49b9-9216-ff4a5491a1c4)
+[WRONG AUTHOR] GBCBS-1423: Jira: 'Nimrod Migossi Nzoberi' (matched to Nimrod Nzoberi) vs DB: 'Nimrod Migossi' (ID: 9e45b075-cb65-4e0e-959d-65d0b57c9bd8)
+[WRONG AUTHOR] GBCBS-1425: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'archana verma' (ID: 74c9e3d3-8ada-4d45-a728-91a40e671b56)
+[WRONG AUTHOR] GBCBS-1425: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'archana verma' (ID: a44daf5d-36ef-43b4-b727-ebcb5d93fd16)
+[WRONG AUTHOR] GBCBS-1425: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'archana verma' (ID: 622a0a15-b6a8-40b2-bd37-41449714ac1f)
+[WRONG AUTHOR] GBCBS-144: Jira: 'Pramoda Kumar Sahoo' (matched to Pramoda Kumar Sahoo) vs DB: 'Pramoda Kumar' (ID: 378755ef-b652-4391-851e-e1f3d9411ad1)
+[DUPLICATE] GBCBS-1443: Found 2 copies of comment by User 6da5bbbe-0890-4d0b-a645-cb0cf3451650
+Processing 551/7437: GBCBS-145...
+[DUPLICATE] GBCBS-1454: Found 2 copies of comment by User 36d5db86-7e08-43bf-b802-764b29c27b63
+[DUPLICATE] GBCBS-1457: Found 2 copies of comment by User 36d5db86-7e08-43bf-b802-764b29c27b63
+[DUPLICATE] GBCBS-1458: Found 2 copies of comment by User 36d5db86-7e08-43bf-b802-764b29c27b63
+[WRONG AUTHOR] GBCBS-1466: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'archana verma' (ID: dad6d58d-4c6d-48a7-81ae-20b224bc94a8)
+[DUPLICATE] GBCBS-1467: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[WRONG AUTHOR] GBCBS-1470: Jira: 'Nimrod Migossi Nzoberi' (matched to Nimrod Nzoberi) vs DB: 'Nimrod Migossi' (ID: 21379544-9fa8-4ad9-932d-b724b653744f)
+[WRONG AUTHOR - NO MATCH] GBCBS-1470: Jira: 'Ponic Kambi' vs DB: 'Mungai Stephen' (ID: e01e0dbe-4875-40d3-b79f-5a373b880152)
+[WRONG AUTHOR] GBCBS-1470: Jira: 'Nimrod Migossi Nzoberi' (matched to Nimrod Nzoberi) vs DB: 'Nimrod Migossi' (ID: d7b1e5ca-ad5a-454d-9d04-fe16c9ece850)
+[WRONG AUTHOR - NO MATCH] GBCBS-1470: Jira: 'Ponic Kambi' vs DB: 'Mungai Stephen' (ID: f444d79c-19f3-46c1-a80a-7c8ac4abb49d)
+[WRONG AUTHOR - NO MATCH] GBCBS-1470: Jira: 'Ponic Kambi' vs DB: 'Mungai Stephen' (ID: 9caca555-c100-4a9d-9d55-15b8c7f7a135)
+[DUPLICATE] GBCBS-1473: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[DUPLICATE] GBCBS-1473: Found 2 copies of comment by User 36d5db86-7e08-43bf-b802-764b29c27b63
+[DUPLICATE] GBCBS-1473: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[DUPLICATE] GBCBS-1473: Found 2 copies of comment by User 36d5db86-7e08-43bf-b802-764b29c27b63
+[DUPLICATE] GBCBS-1474: Found 2 copies of comment by User 36d5db86-7e08-43bf-b802-764b29c27b63
+[DUPLICATE] GBCBS-1475: Found 2 copies of comment by User 36d5db86-7e08-43bf-b802-764b29c27b63
+[DUPLICATE] GBCBS-1475: Found 2 copies of comment by User 36d5db86-7e08-43bf-b802-764b29c27b63
+[WRONG AUTHOR - NO MATCH] GBCBS-1477: Jira: 'JoeChris' vs DB: 'Mungai Stephen' (ID: c44af495-cd2b-4338-99ab-0e4c7c8b5631)
+[WRONG AUTHOR] GBCBS-1479: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'archana verma' (ID: 41e10569-8267-48db-944e-ae055dea3cff)
+[WRONG AUTHOR] GBCBS-1479: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'archana verma' (ID: 1b1dd964-a139-43b7-9644-0c61a1c1f2cf)
+[DUPLICATE] GBCBS-1480: Found 2 copies of comment by User 06bc6791-938d-48db-82ec-55adfa0b1da4
+[DUPLICATE] GBCBS-1481: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[DUPLICATE] GBCBS-1484: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[WRONG AUTHOR] GBCBS-1491: Jira: 'Martin Steven Odongo' (matched to Martin Odongo) vs DB: 'Martin Steven' (ID: 85da2007-d7e3-41f7-8393-6aa2063204e3)
+[WRONG AUTHOR] GBCBS-1491: Jira: 'Martin Steven Odongo' (matched to Martin Odongo) vs DB: 'Martin Steven' (ID: 2b73f6c3-6740-479e-ab2c-6a9b908a41fa)
+[DUPLICATE] GBCBS-1491: Found 2 copies of comment by User 60b79124-a043-40cd-a2fe-c43b856b2e67
+[WRONG AUTHOR] GBCBS-1493: Jira: 'Valerie Mugono' (matched to Valerie Mugono) vs DB: 'archana verma' (ID: f5224255-1dba-40f3-bff6-186fd5a7ecdd)
+[WRONG AUTHOR] GBCBS-1493: Jira: 'Valerie Mugono' (matched to Valerie Mugono) vs DB: 'archana verma' (ID: 405a5f49-c696-4111-8c04-2b2ab2ceba57)
+[WRONG AUTHOR] GBCBS-1493: Jira: 'Valerie Mugono' (matched to Valerie Mugono) vs DB: 'archana verma' (ID: d4cb78d2-7e90-4def-a612-d177f2066000)
+[WRONG AUTHOR] GBCBS-1493: Jira: 'Valerie Mugono' (matched to Valerie Mugono) vs DB: 'archana verma' (ID: f5224255-1dba-40f3-bff6-186fd5a7ecdd)
+[WRONG AUTHOR] GBCBS-1493: Jira: 'Valerie Mugono' (matched to Valerie Mugono) vs DB: 'archana verma' (ID: 405a5f49-c696-4111-8c04-2b2ab2ceba57)
+[WRONG AUTHOR] GBCBS-1493: Jira: 'Valerie Mugono' (matched to Valerie Mugono) vs DB: 'archana verma' (ID: d4cb78d2-7e90-4def-a612-d177f2066000)
+Processing 601/7437: GBCBS-1495...
+[WRONG AUTHOR] GBCBS-1495: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Amit Patel' (ID: 6eef0391-d64d-4078-bf30-7f90c4db3257)
+[WRONG AUTHOR] GBCBS-1495: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 65d2153c-a06f-4668-9e91-1311a96cb82d)
+[WRONG AUTHOR] GBCBS-1495: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Amit Patel' (ID: 4b9076f3-c8ef-4999-a5d8-78eded590062)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Amit Patel' (ID: bb6869ea-12a8-4e73-8f1d-6f364a928ed7)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Mitali Vaghela' (ID: 5ac1e161-fe19-4e3a-a1bc-c1a81e553a43)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Amit Patel' (ID: 5e35b5db-d8cb-4d0f-bc20-66ac1674e68e)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Mitali Vaghela' (ID: c7f091a5-ab9f-4670-9053-3b8acedbe692)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: 0389aad4-10d3-4dd9-a528-094af948d668)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Mitali Vaghela' (ID: aef4ac54-7502-4126-9298-561d36fea847)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Joseph Gichamba' (ID: 2c0f6705-62c2-40d7-b4a5-1b8d457cd572)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: 2127b6b9-4665-4b23-9f8f-7dd9dca19bf7)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Mitali Vaghela' (ID: 310d385a-3c24-40a0-ad1f-7db9492befcc)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Alfred Kingori' (ID: 8e00ad02-20fd-46aa-a814-e4d7cf6c346b)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: 3ca8c2d0-ba2c-4a42-b37f-93b59c03c780)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: 75298929-19ca-4f13-9167-a6bee8fb54f9)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: 1dab1a08-04db-4ac3-89fb-c1567a5b7938)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Mitali Vaghela' (ID: 4610e6e9-5393-4df3-a451-461f77f5af20)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 774b8195-1817-424e-9ab4-8e2f8fdefc7a)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Mitali Vaghela' (ID: ce0abcad-c236-492c-b698-8a58eb544721)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Mitali Vaghela' (ID: 709fe653-6e04-4d43-a89e-3db42a18a7ed)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: f687ffc7-1131-4b2b-9434-491237daa2be)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Mitali Vaghela' (ID: 00019079-ed34-47a8-9ee6-700d23fd8040)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Joseph Gichamba' (ID: b5cb61b0-a70f-42fd-8d73-80a8cc67f29f)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: 60d05afa-eece-41bc-892b-b74686e88068)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: 973c21b5-2a8e-42c6-8da3-09a9d47a0969)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Mitali Vaghela' (ID: b6f303e5-1113-40f7-934d-a91dc48877fc)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Mitali Vaghela' (ID: 4289e89b-2eaf-42e9-84c8-d19e2bf95596)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: fbb38b6f-e5ec-4853-b452-55a39cef14e6)
+[WRONG AUTHOR] GBCBS-1498: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: 92f4e7b2-f58b-47b9-8768-e69d6b91d2d2)
+[DUPLICATE] GBCBS-1498: Found 2 copies of comment by User 12dd9631-f614-4a30-8072-dd6d25226af9
+[WRONG AUTHOR] GBCBS-150: Jira: 'Polycarp Amenya' (matched to Polycarp Amenya) vs DB: 'Mungai Stephen' (ID: e16050b9-582c-4598-b511-9c25bf395360)
+[WRONG AUTHOR - NO MATCH] GBCBS-150: Jira: 'Lydia Okoth' vs DB: 'Mungai Stephen' (ID: e16050b9-582c-4598-b511-9c25bf395360)
+[WRONG AUTHOR] GBCBS-1504: Jira: 'charles.mirie' (matched to Charles Mirie) vs DB: 'Lupogo Lupogo' (ID: 73d1f38f-95b9-44f8-a330-2076cc385c29)
+[WRONG AUTHOR] GBCBS-1504: Jira: 'charles.mirie' (matched to Charles Mirie) vs DB: 'Lupogo Lupogo' (ID: c7224096-ccf6-4335-9b31-a25e623d57ce)
+[WRONG AUTHOR] GBCBS-1504: Jira: 'charles.mirie' (matched to Charles Mirie) vs DB: 'Lupogo Lupogo' (ID: 73d1f38f-95b9-44f8-a330-2076cc385c29)
+[WRONG AUTHOR] GBCBS-1504: Jira: 'charles.mirie' (matched to Charles Mirie) vs DB: 'Lupogo Lupogo' (ID: c7224096-ccf6-4335-9b31-a25e623d57ce)
+[DUPLICATE] GBCBS-1504: Found 2 copies of comment by User 0036ef68-1a55-4e06-8929-713eb5730f37
+[DUPLICATE] GBCBS-1507: Found 2 copies of comment by User 4a2a3dd6-d785-41ec-8c83-17551a110b04
+[DUPLICATE] GBCBS-1507: Found 2 copies of comment by User 4a2a3dd6-d785-41ec-8c83-17551a110b04
+[DUPLICATE] GBCBS-1508: Found 2 copies of comment by User 6da5bbbe-0890-4d0b-a645-cb0cf3451650
+[DUPLICATE] GBCBS-1509: Found 2 copies of comment by User 433031d2-e2ab-4029-a213-c9128173e21a
+[DUPLICATE] GBCBS-1516: Found 2 copies of comment by User 433031d2-e2ab-4029-a213-c9128173e21a
+[WRONG AUTHOR - NO MATCH] GBCBS-1523: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 0fe90738-0001-41a1-9b0e-495caacfc570)
+[WRONG AUTHOR - NO MATCH] GBCBS-1523: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 6326d5ce-26d8-48af-b098-dbf977778c46)
+[DUPLICATE] GBCBS-1523: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1524: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 16f28f86-aba0-4e0c-a3c3-20b2d7cdd0cd)
+[WRONG AUTHOR - NO MATCH] GBCBS-1524: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 55f3e856-67c3-4e17-8f05-4115afc986ad)
+[DUPLICATE] GBCBS-1524: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1529: Jira: 'ambadas.g' vs DB: 'Mungai Stephen' (ID: 36f7a56b-7490-404c-aa99-730fe0b25659)
+[WRONG AUTHOR - NO MATCH] GBCBS-1529: Jira: 'ambadas.g' vs DB: 'Mungai Stephen' (ID: d428a5e1-d398-49f0-9e5c-45297bb23581)
+[WRONG AUTHOR - NO MATCH] GBCBS-1529: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: b50f03a3-3ecc-4eac-aa12-80d733e83e12)
+[WRONG AUTHOR - NO MATCH] GBCBS-1529: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 02e6aa89-97fb-4ca1-9f4b-64edaf09c0e5)
+[DUPLICATE] GBCBS-1529: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1531: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[DUPLICATE] GBCBS-1533: Found 2 copies of comment by User 433031d2-e2ab-4029-a213-c9128173e21a
+[WRONG AUTHOR] GBCBS-1538: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'Edgar Kaptum' (ID: 67ead1bf-bdbc-41f3-a630-4dc529569494)
+[WRONG AUTHOR] GBCBS-1538: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'Edgar Kaptum' (ID: 2d5fc852-3e3a-45fc-99db-9a1e31324944)
+[DUPLICATE] GBCBS-1538: Found 2 copies of comment by User 06bc6791-938d-48db-82ec-55adfa0b1da4
+[WRONG AUTHOR] GBCBS-154: Jira: 'Polycarp Amenya' (matched to Polycarp Amenya) vs DB: 'Swati Mishra' (ID: 92f3e5e5-baf1-4c87-8d8d-0b85a7758347)
+[WRONG AUTHOR] GBCBS-154: Jira: 'Polycarp Amenya' (matched to Polycarp Amenya) vs DB: 'Manasseh Wanyoike' (ID: 748483d9-5068-44df-a1b5-1587b8afdf1a)
+[WRONG AUTHOR] GBCBS-154: Jira: 'Polycarp Amenya' (matched to Polycarp Amenya) vs DB: 'archana verma' (ID: 9491a01a-b386-4185-bafb-1736693e5aeb)
+Processing 651/7437: GBCBS-1540...
+[WRONG AUTHOR - NO MATCH] GBCBS-1541: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: cade83cf-f924-4f5f-b890-af6ba3a06c7f)
+[WRONG AUTHOR - NO MATCH] GBCBS-1541: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: b3d68d28-a397-4521-9395-2607dfe7c7e5)
+[DUPLICATE] GBCBS-1541: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1542: Found 2 copies of comment by User ec00aa25-3e63-4851-85e6-8e10021d780e
+[WRONG AUTHOR] GBCBS-1545: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Amit Patel' (ID: d04ec410-1257-40e2-a86a-c243c98bc9f1)
+[WRONG AUTHOR] GBCBS-1545: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Mungai Stephen' (ID: 7f87aa6c-202e-4673-a9b7-2a637afdc653)
+[WRONG AUTHOR] GBCBS-1545: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 6756846f-f2e1-4959-8d6f-274c54e00fea)
+[WRONG AUTHOR] GBCBS-1545: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Mungai Stephen' (ID: 2baacbb4-3cd7-40fa-a247-0a2f128c3f32)
+[WRONG AUTHOR - NO MATCH] GBCBS-1545: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 7f87aa6c-202e-4673-a9b7-2a637afdc653)
+[WRONG AUTHOR - NO MATCH] GBCBS-1545: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 2baacbb4-3cd7-40fa-a247-0a2f128c3f32)
+[DUPLICATE] GBCBS-1545: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1546: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 0057b194-3f86-4d16-a42d-d5ead55bcb46)
+[WRONG AUTHOR - NO MATCH] GBCBS-1546: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: ecb1bb87-b38c-4361-8583-49b325e4686f)
+[DUPLICATE] GBCBS-1546: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR] GBCBS-1553: Jira: 'Jonathan Mbuvi Ing'aa' (matched to Jonathan Ing'aa) vs DB: 'Jonathan Mbuvi' (ID: 589765a9-e742-48d7-b9f0-2de79176389d)
+[WRONG AUTHOR] GBCBS-1558: Jira: 'Dennis Mugo' (matched to Dennis Mugo) vs DB: 'archana verma' (ID: cda089a0-1a7a-4609-984d-8bcf24f7fb6c)
+[DUPLICATE] GBCBS-1562: Found 2 copies of comment by User 6da5bbbe-0890-4d0b-a645-cb0cf3451650
+[WRONG AUTHOR - NO MATCH] GBCBS-157: Jira: 'Lydia Okoth' vs DB: 'Mungai Stephen' (ID: ec12848e-8ca9-452f-9cac-36a47b9e3ff0)
+[WRONG AUTHOR - NO MATCH] GBCBS-157: Jira: 'Lydia Okoth' vs DB: 'Lupogo Lupogo' (ID: 106fa567-7b6c-4270-bcb1-d16af939f241)
+[WRONG AUTHOR - NO MATCH] GBCBS-157: Jira: 'Lydia Okoth' vs DB: 'Madhusudhan Vasa' (ID: 02f7d9ec-546e-4a24-9b5c-7dee3fa2277c)
+[WRONG AUTHOR - NO MATCH] GBCBS-157: Jira: 'Lydia Okoth' vs DB: 'Mungai Stephen' (ID: ec12848e-8ca9-452f-9cac-36a47b9e3ff0)
+[WRONG AUTHOR] GBCBS-1572: Jira: 'Jonathan Mbuvi Ing'aa' (matched to Jonathan Ing'aa) vs DB: 'Jonathan Mbuvi' (ID: 35d850bc-3943-4ab8-8805-3534d15c8818)
+[DUPLICATE] GBCBS-1574: Found 2 copies of comment by User 433031d2-e2ab-4029-a213-c9128173e21a
+[WRONG AUTHOR] GBCBS-158: Jira: 'Polycarp Amenya' (matched to Polycarp Amenya) vs DB: 'Lawrence Kimani' (ID: 96a00738-0100-4d09-ad8a-e23d66b42363)
+[WRONG AUTHOR] GBCBS-158: Jira: 'Polycarp Amenya' (matched to Polycarp Amenya) vs DB: 'Lawrence Kimani' (ID: 7cc6810a-8fda-47cf-8a63-d91b27a8be66)
+[WRONG AUTHOR] GBCBS-1582: Jira: 'Amit Patel' (matched to Amit Patel) vs DB: 'archana verma' (ID: 119cc1fd-2055-4ed0-a3a3-8860d4471d97)
+[WRONG AUTHOR] GBCBS-1582: Jira: 'Amit Patel' (matched to Amit Patel) vs DB: 'Mungai Stephen' (ID: 7dd08eef-a2e7-44f8-b85b-8f7ad4e70c61)
+[WRONG AUTHOR - NO MATCH] GBCBS-1582: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 7dd08eef-a2e7-44f8-b85b-8f7ad4e70c61)
+[DUPLICATE] GBCBS-1582: Found 2 copies of comment by User ec00aa25-3e63-4851-85e6-8e10021d780e
+[WRONG AUTHOR - NO MATCH] GBCBS-1583: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 4257c012-dd15-4045-9984-7474cdbb7030)
+[DUPLICATE] GBCBS-1583: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[WRONG AUTHOR - NO MATCH] GBCBS-1584: Jira: 'Pratik Mehta' vs DB: 'Amit Patel' (ID: e24bdaac-d097-40b7-a0d3-e0d4942b720f)
+[WRONG AUTHOR - NO MATCH] GBCBS-1584: Jira: 'Pratik Mehta' vs DB: 'Amit Patel' (ID: 75767a2c-ada0-4d3e-a6db-4f1cd853dbf6)
+[WRONG AUTHOR - NO MATCH] GBCBS-1584: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: c9e80787-e748-4433-b757-99eac93ea19e)
+[WRONG AUTHOR - NO MATCH] GBCBS-1584: Jira: 'Pratik Mehta' vs DB: 'Amit Patel' (ID: 1b2ba131-e42e-43ae-89f8-698fb62e2a00)
+[WRONG AUTHOR - NO MATCH] GBCBS-1584: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 108ccbf5-b84a-48a5-8798-971924d14741)
+[WRONG AUTHOR - NO MATCH] GBCBS-1584: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: 88e5ec33-657c-4400-80b7-6d67deba1cf4)
+[WRONG AUTHOR - NO MATCH] GBCBS-1584: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: ecca92a0-3357-4f4d-baf3-872367fcea98)
+[WRONG AUTHOR - NO MATCH] GBCBS-1584: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 504cfe67-db91-4e51-b2cc-a23e3feb8320)
+[WRONG AUTHOR - NO MATCH] GBCBS-1584: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 7dc53a48-839a-4933-8dac-de0095562bd9)
+[WRONG AUTHOR - NO MATCH] GBCBS-1584: Jira: 'Pratik Mehta' vs DB: 'Amit Patel' (ID: e24bdaac-d097-40b7-a0d3-e0d4942b720f)
+[WRONG AUTHOR - NO MATCH] GBCBS-1584: Jira: 'Pratik Mehta' vs DB: 'Amit Patel' (ID: 75767a2c-ada0-4d3e-a6db-4f1cd853dbf6)
+[WRONG AUTHOR - NO MATCH] GBCBS-1584: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: c9e80787-e748-4433-b757-99eac93ea19e)
+[WRONG AUTHOR - NO MATCH] GBCBS-1584: Jira: 'Pratik Mehta' vs DB: 'Amit Patel' (ID: 1b2ba131-e42e-43ae-89f8-698fb62e2a00)
+[WRONG AUTHOR - NO MATCH] GBCBS-1584: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 108ccbf5-b84a-48a5-8798-971924d14741)
+[WRONG AUTHOR - NO MATCH] GBCBS-1584: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: 88e5ec33-657c-4400-80b7-6d67deba1cf4)
+[WRONG AUTHOR - NO MATCH] GBCBS-1584: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: ecca92a0-3357-4f4d-baf3-872367fcea98)
+[WRONG AUTHOR - NO MATCH] GBCBS-1584: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 504cfe67-db91-4e51-b2cc-a23e3feb8320)
+[WRONG AUTHOR - NO MATCH] GBCBS-1584: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 7dc53a48-839a-4933-8dac-de0095562bd9)
+[WRONG AUTHOR - NO MATCH] GBCBS-1584: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 108ccbf5-b84a-48a5-8798-971924d14741)
+[WRONG AUTHOR - NO MATCH] GBCBS-1584: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 504cfe67-db91-4e51-b2cc-a23e3feb8320)
+[WRONG AUTHOR - NO MATCH] GBCBS-1584: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: c9e80787-e748-4433-b757-99eac93ea19e)
+[WRONG AUTHOR - NO MATCH] GBCBS-1584: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 7dc53a48-839a-4933-8dac-de0095562bd9)
+[DUPLICATE] GBCBS-1584: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1584: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1585: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 71b557ea-9bf0-4038-8112-7cf7aae88787)
+[WRONG AUTHOR - NO MATCH] GBCBS-1585: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 2737b68a-6958-4748-b5be-5a0e3faab76d)
+[DUPLICATE] GBCBS-1585: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+Processing 701/7437: GBCBS-1586...
+[WRONG AUTHOR - NO MATCH] GBCBS-1586: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: e5a48566-0459-4ef7-bb88-74fca674715c)
+[WRONG AUTHOR - NO MATCH] GBCBS-1586: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: f53c73e6-ba9c-47c9-9903-77e6fd7440bd)
+[DUPLICATE] GBCBS-1586: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR] GBCBS-1587: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Amit Patel' (ID: 41f21d77-7247-47bf-b029-46bdb315cbdb)
+[WRONG AUTHOR] GBCBS-1587: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Mungai Stephen' (ID: 2008461e-f2ab-496c-b03f-30d358d50c9e)
+[WRONG AUTHOR] GBCBS-1587: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Amit Patel' (ID: eb81b5e5-07d1-45cf-a9e4-4ea8c9838065)
+[WRONG AUTHOR] GBCBS-1587: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Amit Patel' (ID: c0a35b0c-74be-4d63-9116-ee89928ad413)
+[WRONG AUTHOR] GBCBS-1587: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: a2f9af1f-ea53-48a1-ae00-23533a6b35a6)
+[WRONG AUTHOR] GBCBS-1587: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Amit Patel' (ID: 9c36e6a6-0fc6-4835-bac4-6c40565e7e72)
+[WRONG AUTHOR] GBCBS-1587: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Amit Patel' (ID: debe9ba1-e6f0-437e-b00f-eb4fdbadc5ae)
+[WRONG AUTHOR] GBCBS-1587: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Mungai Stephen' (ID: b7466cd0-0d97-4145-9c13-c9a735f27a5c)
+[WRONG AUTHOR - NO MATCH] GBCBS-1587: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 2008461e-f2ab-496c-b03f-30d358d50c9e)
+[WRONG AUTHOR - NO MATCH] GBCBS-1587: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: b7466cd0-0d97-4145-9c13-c9a735f27a5c)
+[WRONG AUTHOR - NO MATCH] GBCBS-1588: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: c1fdbcf4-94a6-49b5-868d-7975454829d8)
+[WRONG AUTHOR - NO MATCH] GBCBS-1588: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 25649892-e000-47c8-a4d0-2460e3e3c8bf)
+[WRONG AUTHOR - NO MATCH] GBCBS-1588: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 55198bcb-0c56-43ae-a6d8-26dce6d92ca1)
+[WRONG AUTHOR - NO MATCH] GBCBS-1588: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 2efd1154-6104-414c-b789-410670b5beb3)
+[WRONG AUTHOR - NO MATCH] GBCBS-1588: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 9e6117d3-295b-4e82-b982-ffdd0de8fcb2)
+[WRONG AUTHOR - NO MATCH] GBCBS-1588: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 3787eb3c-67f8-435e-9a5a-58d7313b810a)
+[DUPLICATE] GBCBS-1588: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1588: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1589: Jira: 'ambadas.g' vs DB: 'Mungai Stephen' (ID: deb9e85f-c265-47aa-8f3b-87fb151cbda4)
+[WRONG AUTHOR - NO MATCH] GBCBS-1589: Jira: 'ambadas.g' vs DB: 'Mungai Stephen' (ID: c371cae8-2b60-4269-952f-167351dfaebc)
+[WRONG AUTHOR - NO MATCH] GBCBS-1589: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 66085eee-a958-4751-94e0-36919190387d)
+[WRONG AUTHOR - NO MATCH] GBCBS-1589: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: d3791aeb-3e56-4eb2-a4de-9d83655a59a7)
+[WRONG AUTHOR - NO MATCH] GBCBS-1589: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 52059256-6a3e-40b4-9818-2f5fa7cdb8e6)
+[WRONG AUTHOR - NO MATCH] GBCBS-1590: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 42d9ad05-e53c-49e6-a077-e083c2e4ffc4)
+[WRONG AUTHOR - NO MATCH] GBCBS-1592: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: dc21f2fc-1215-49f7-b930-3a1d0e57c9f9)
+[WRONG AUTHOR - NO MATCH] GBCBS-1592: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 88b09167-ca5d-46d5-a5aa-1668be89ec53)
+[DUPLICATE] GBCBS-1592: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1593: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[WRONG AUTHOR - NO MATCH] GBCBS-1599: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: ae9fb5ca-85a6-454e-994c-9462f568fd89)
+[WRONG AUTHOR - NO MATCH] GBCBS-1599: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 58422f12-20be-4a07-b657-9616fe70e145)
+[WRONG AUTHOR - NO MATCH] GBCBS-1600: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 464436f7-c3e8-4f97-9d84-c3bc46ec66e4)
+[WRONG AUTHOR - NO MATCH] GBCBS-1600: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: bc85f242-9124-4ff2-a363-a6745365a7f7)
+[DUPLICATE] GBCBS-1600: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1601: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: d7f36fa7-f75f-426a-acc4-92ac9e1dde00)
+[WRONG AUTHOR - NO MATCH] GBCBS-1601: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: b3fc935d-6bf7-4441-8cd8-fea75381879e)
+[DUPLICATE] GBCBS-1601: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1602: Found 2 copies of comment by User 7b5370b5-abcd-4ad2-908b-1791ca40d9c9
+[WRONG AUTHOR] GBCBS-1603: Jira: 'Nimrod Migossi Nzoberi' (matched to Nimrod Nzoberi) vs DB: 'Nimrod Migossi' (ID: f8d301ff-f388-4591-ba05-b42c5de3e036)
+[WRONG AUTHOR] GBCBS-1603: Jira: 'Nimrod Migossi Nzoberi' (matched to Nimrod Nzoberi) vs DB: 'Nimrod Migossi' (ID: 0f46f812-1464-4d75-98c1-62f103b293af)
+[DUPLICATE] GBCBS-1603: Found 2 copies of comment by User f0f3bad6-8875-4221-8435-f997c39294a4
+[WRONG AUTHOR - NO MATCH] GBCBS-1605: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 699c16b9-d939-42a0-ab6c-c9c73ced3b33)
+[WRONG AUTHOR - NO MATCH] GBCBS-1605: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 004da0d0-ce1f-4132-8c6b-48a590cd4068)
+[WRONG AUTHOR - NO MATCH] GBCBS-1616: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: df976366-8445-4248-8baa-07f82070509b)
+[WRONG AUTHOR - NO MATCH] GBCBS-1616: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: dc940945-0d42-43af-8e81-2e3f1c29a5ed)
+[WRONG AUTHOR - NO MATCH] GBCBS-1616: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: e4de4cdc-2024-498d-97e9-6f8d21693139)
+[DUPLICATE] GBCBS-1618: Found 2 copies of comment by User 982c17e9-dc39-4e79-a7d4-a4c7007dc7f3
+[WRONG AUTHOR] GBCBS-162: Jira: 'Polycarp Amenya' (matched to Polycarp Amenya) vs DB: 'archana verma' (ID: 48edcd52-be16-4d92-9b09-ae1a49d1f3ba)
+[WRONG AUTHOR] GBCBS-1623: Jira: 'Eva Karimi Njagi' (matched to Eva Njagi) vs DB: 'Eva Karimi' (ID: 756ae9a0-b173-4219-97f7-6e2df7fcf394)
+[WRONG AUTHOR] GBCBS-1623: Jira: 'Eva Karimi Njagi' (matched to Eva Njagi) vs DB: 'Eva Karimi' (ID: b50cd269-466c-45fd-bdb4-45d13fa220f6)
+[WRONG AUTHOR] GBCBS-1623: Jira: 'Jonathan Mbuvi Ing'aa' (matched to Jonathan Ing'aa) vs DB: 'Jonathan Mbuvi' (ID: 3498e172-890a-4306-84ef-55cb517822cf)
+[WRONG AUTHOR - NO MATCH] GBCBS-1626: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: d29e436d-d195-4ab8-a118-eaf27e8f7049)
+[WRONG AUTHOR - NO MATCH] GBCBS-1626: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: ae2ada1b-36ff-4187-a572-a2906e137eeb)
+[DUPLICATE] GBCBS-1626: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1627: Found 2 copies of comment by User 12dd9631-f614-4a30-8072-dd6d25226af9
+[WRONG AUTHOR - NO MATCH] GBCBS-1628: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 8382ca95-8a06-4ba0-af23-c4e311f66e1d)
+[WRONG AUTHOR - NO MATCH] GBCBS-1628: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 582f1109-55d8-4916-ab00-8cfde6fc04de)
+Processing 751/7437: GBCBS-1631...
+[WRONG AUTHOR - NO MATCH] GBCBS-1631: Jira: 'Ponic Kambi' vs DB: 'Mungai Stephen' (ID: 23a95069-208e-49bc-8137-e5aee348a10f)
+[WRONG AUTHOR - NO MATCH] GBCBS-1631: Jira: 'Ponic Kambi' vs DB: 'Mungai Stephen' (ID: ec8ee1d3-7d8c-43a9-a9a4-9f35f0247399)
+[DUPLICATE] GBCBS-1631: Found 2 copies of comment by User 6da5bbbe-0890-4d0b-a645-cb0cf3451650
+[WRONG AUTHOR] GBCBS-1632: Jira: 'martin njuguna' (matched to martin njuguna) vs DB: 'Mungai Stephen' (ID: 568ceba2-67cc-47c1-8fe9-fa1c7b0089dd)
+[WRONG AUTHOR] GBCBS-1632: Jira: 'martin njuguna' (matched to martin njuguna) vs DB: 'Mungai Stephen' (ID: 9fa15829-237a-4612-9848-09e98e419c59)
+[WRONG AUTHOR - NO MATCH] GBCBS-1632: Jira: 'Ponic Kambi' vs DB: 'Mungai Stephen' (ID: 568ceba2-67cc-47c1-8fe9-fa1c7b0089dd)
+[WRONG AUTHOR - NO MATCH] GBCBS-1632: Jira: 'Ponic Kambi' vs DB: 'Mungai Stephen' (ID: 9fa15829-237a-4612-9848-09e98e419c59)
+[WRONG AUTHOR - NO MATCH] GBCBS-1637: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: fb4bdf6b-c139-47b6-b04c-fc971dde9b09)
+[WRONG AUTHOR - NO MATCH] GBCBS-1637: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: c20f9258-5083-4091-a1d2-7746c6844442)
+[WRONG AUTHOR] GBCBS-1638: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: d2289cd2-a128-4e4d-8ff0-c6f0db31638a)
+[WRONG AUTHOR] GBCBS-1639: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: c13ec7ee-2154-4b17-a3de-ae225b1c0610)
+[WRONG AUTHOR - NO MATCH] GBCBS-1639: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: ca74dbbc-9072-4084-b0d3-d3f9c4e99290)
+[WRONG AUTHOR - NO MATCH] GBCBS-1639: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 17c9419c-3d8f-44ba-abea-9b2b079bff4f)
+[WRONG AUTHOR] GBCBS-1640: Jira: 'isaac.ngugi' (matched to Isaac Ngugi) vs DB: 'Lupogo Lupogo' (ID: e88b80d9-aedd-4893-917a-15f2d582e043)
+[WRONG AUTHOR] GBCBS-1640: Jira: 'isaac.ngugi' (matched to Isaac Ngugi) vs DB: 'Lupogo Lupogo' (ID: 081fbcd8-5b5c-4602-9f81-97cd8f5247e2)
+[WRONG AUTHOR] GBCBS-1640: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 51abc080-fb64-414f-8cfd-228e83cda0e8)
+[WRONG AUTHOR] GBCBS-1640: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 6c05226b-79db-4f8f-b4f9-cabc48f34487)
+[WRONG AUTHOR] GBCBS-1640: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 525bb4f3-e386-4ef1-b9c3-5ddcc6a62c00)
+[WRONG AUTHOR] GBCBS-1640: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: fbc0846e-20cc-444f-bef9-8d9f39cd6c77)
+[WRONG AUTHOR] GBCBS-1640: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 4c559759-4ab0-43f8-876f-fc0122c164fd)
+[WRONG AUTHOR - NO MATCH] GBCBS-1640: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: fb85248a-87c5-4f8c-8efb-6aad502be24b)
+[WRONG AUTHOR - NO MATCH] GBCBS-1640: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: ee73c4f7-2901-40bb-b506-18028c40f5d9)
+[WRONG AUTHOR] GBCBS-1641: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: ca60efd8-45bc-4de6-873b-257cdc554c16)
+[WRONG AUTHOR] GBCBS-1641: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 584cb49f-b8f4-45f3-8a22-c3b89948d1c8)
+[WRONG AUTHOR] GBCBS-1642: Jira: 'isaac.ngugi' (matched to Isaac Ngugi) vs DB: 'Lupogo Lupogo' (ID: a3bf99bf-b545-41c9-9f40-1282a843273f)
+[WRONG AUTHOR] GBCBS-1642: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 05b3f1ef-e454-491e-9a89-59136da50d51)
+[WRONG AUTHOR] GBCBS-1642: Jira: 'isaac.ngugi' (matched to Isaac Ngugi) vs DB: 'Lupogo Lupogo' (ID: fa3e4383-9de5-4d5d-8ce6-2edbc83b9a09)
+[WRONG AUTHOR] GBCBS-1642: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 80ffcf2c-f9ae-40e2-973d-b4c0e9abb0ee)
+[WRONG AUTHOR] GBCBS-1642: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: edda7b41-3d3f-44f8-a454-f84767f22bd8)
+[WRONG AUTHOR] GBCBS-1643: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: fddde26b-2bff-4941-bbd5-5d341cf55185)
+[WRONG AUTHOR] GBCBS-1644: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 3f40a1df-02f4-41f9-8449-b25ed5430cd8)
+[WRONG AUTHOR] GBCBS-1645: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: d4a07d93-5b4c-4bf5-8eea-7d36cc4e61e7)
+[WRONG AUTHOR] GBCBS-1645: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 32b90001-4217-4b34-904b-4d4e4f961cb7)
+[WRONG AUTHOR] GBCBS-1646: Jira: 'isaac.ngugi' (matched to Isaac Ngugi) vs DB: 'Lupogo Lupogo' (ID: 2fdb2ed3-097e-4aa9-82a5-7a3cb877335d)
+[WRONG AUTHOR - NO MATCH] GBCBS-1647: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: c1e0ce37-8cb6-455f-87c2-9cb5b9d5b163)
+[WRONG AUTHOR - NO MATCH] GBCBS-1647: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 15b9601f-109c-49a6-ac40-c53dd41bde56)
+[WRONG AUTHOR] GBCBS-1648: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 63c62343-c319-4440-a292-81cb3010d6f9)
+[WRONG AUTHOR - NO MATCH] GBCBS-1649: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: d625f250-7ed5-4f9d-97d2-ca4b1884c50b)
+[WRONG AUTHOR - NO MATCH] GBCBS-1649: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 04f66208-2a1c-484a-afa0-b5f4a5e99648)
+[WRONG AUTHOR] GBCBS-166: Jira: 'Polycarp Amenya' (matched to Polycarp Amenya) vs DB: 'archana verma' (ID: 3b898c1f-8482-4aac-91a3-95916199bf78)
+[WRONG AUTHOR] GBCBS-1666: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 9b3c852b-0e1e-49c9-a286-15edaf583fd7)
+[DUPLICATE] GBCBS-1666: Found 2 copies of comment by User 433031d2-e2ab-4029-a213-c9128173e21a
+[WRONG AUTHOR] GBCBS-1670: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 9c78f5fe-aeb8-4efa-abff-8e0e0ea48183)
+[WRONG AUTHOR] GBCBS-1670: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 52726943-66f9-4d19-af12-358a27712a94)
+[WRONG AUTHOR] GBCBS-1670: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 52726943-66f9-4d19-af12-358a27712a94)
+[WRONG AUTHOR] GBCBS-1670: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 8cff25d4-1c22-47f6-9ce2-ff5fb91cb61d)
+[DUPLICATE] GBCBS-1670: Found 2 copies of comment by User 433031d2-e2ab-4029-a213-c9128173e21a
+[DUPLICATE] GBCBS-1670: Found 2 copies of comment by User 433031d2-e2ab-4029-a213-c9128173e21a
+[WRONG AUTHOR] GBCBS-1672: Jira: 'Dennis Mugo' (matched to Dennis Mugo) vs DB: 'Lupogo Lupogo' (ID: a52273af-0c1c-4ff6-9365-cbc686fae401)
+[WRONG AUTHOR] GBCBS-1672: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: a52273af-0c1c-4ff6-9365-cbc686fae401)
+[DUPLICATE] GBCBS-1672: Found 2 copies of comment by User 433031d2-e2ab-4029-a213-c9128173e21a
+[WRONG AUTHOR] GBCBS-1674: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 72282f54-55e8-4138-8c9e-c15223588f5d)
+[WRONG AUTHOR] GBCBS-1674: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 21039946-c625-4dd7-9f30-9e43625df4b8)
+[WRONG AUTHOR] GBCBS-1674: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 354353ce-0bdd-49c6-9fcf-d7e7a2df44ec)
+[WRONG AUTHOR - NO MATCH] GBCBS-1675: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: 475747e8-d0d7-43c2-a259-ffcf734ab2e3)
+[WRONG AUTHOR - NO MATCH] GBCBS-1675: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 884f067b-1a9d-4026-8ec8-66b5a17eab9b)
+[WRONG AUTHOR - NO MATCH] GBCBS-1676: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: 33a6126a-ed43-4830-9006-b3ceffcd2014)
+[WRONG AUTHOR - NO MATCH] GBCBS-1676: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 51978322-9d40-47bb-8801-dfcc82dff3aa)
+Processing 801/7437: GBCBS-1677...
+[WRONG AUTHOR] GBCBS-1677: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: b57d9d01-49e0-4372-a50c-26d8ccb2fcd7)
+[WRONG AUTHOR] GBCBS-1677: Jira: 'isaac.ngugi' (matched to Isaac Ngugi) vs DB: 'Lupogo Lupogo' (ID: e6d6caf0-712c-4824-a7c7-1fe603bb1979)
+[WRONG AUTHOR] GBCBS-1677: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 15e5be06-ca43-4e40-80e0-ad6fab853163)
+[WRONG AUTHOR - NO MATCH] GBCBS-1678: Jira: 'Pratik Mehta' vs DB: 'Amit Patel' (ID: 6d6d9d05-4194-48ad-920b-0352fd3d48e6)
+[WRONG AUTHOR - NO MATCH] GBCBS-1678: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: f966cd4c-f098-4ee9-95b5-61cb6035944b)
+[WRONG AUTHOR - NO MATCH] GBCBS-1678: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: f02db2e1-beec-4c61-aa8a-6f46f14495de)
+[WRONG AUTHOR - NO MATCH] GBCBS-1678: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 93fa3cf0-7ac3-47ce-a094-e42f6c84e67c)
+[WRONG AUTHOR - NO MATCH] GBCBS-1678: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: f02db2e1-beec-4c61-aa8a-6f46f14495de)
+[WRONG AUTHOR - NO MATCH] GBCBS-1678: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 93fa3cf0-7ac3-47ce-a094-e42f6c84e67c)
+[WRONG AUTHOR] GBCBS-1679: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 13ff42b5-d6b1-4268-ac29-5fb083e93703)
+[WRONG AUTHOR] GBCBS-1680: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 2dc72420-b873-4324-9a2e-7f7b9b976c92)
+[WRONG AUTHOR] GBCBS-1680: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Amit Patel' (ID: 9194e7c1-ca62-411c-b611-d5d7df5ce379)
+[WRONG AUTHOR] GBCBS-1680: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: fb896c5e-8d38-490a-85c4-f3158560afa4)
+[WRONG AUTHOR] GBCBS-1680: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Amit Patel' (ID: 1c99144f-70d6-4e88-91da-24460d6e93f4)
+[WRONG AUTHOR] GBCBS-1680: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Amit Patel' (ID: 711800ff-5bbd-4463-9871-f5d109396170)
+[WRONG AUTHOR] GBCBS-1680: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 60d5c699-71c3-44af-934f-ebbabbedbc30)
+[WRONG AUTHOR] GBCBS-1680: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: e238dc04-318b-4e92-ae39-010edd92cfce)
+[WRONG AUTHOR] GBCBS-1680: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 618e6415-87c6-4859-8438-fd5f14f4adc4)
+[WRONG AUTHOR] GBCBS-1680: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Mungai Stephen' (ID: 602a0cb0-0634-413d-be0c-12a19d0c2411)
+[WRONG AUTHOR] GBCBS-1680: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Mungai Stephen' (ID: 2aca2ae6-ecaf-4de6-86f5-811645232453)
+[WRONG AUTHOR] GBCBS-1680: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Amit Patel' (ID: 6e7d4aaa-f71d-4e69-90bd-7c7f79ace514)
+[WRONG AUTHOR - NO MATCH] GBCBS-1680: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: 2dc72420-b873-4324-9a2e-7f7b9b976c92)
+[WRONG AUTHOR - NO MATCH] GBCBS-1680: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 602a0cb0-0634-413d-be0c-12a19d0c2411)
+[MISSING] GBCBS-1680: Comment by Amit Patel @ 2021-06-25T17:39:33+03:00
+[WRONG AUTHOR - NO MATCH] GBCBS-1680: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: fb896c5e-8d38-490a-85c4-f3158560afa4)
+[WRONG AUTHOR - NO MATCH] GBCBS-1680: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 2aca2ae6-ecaf-4de6-86f5-811645232453)
+[WRONG AUTHOR - NO MATCH] GBCBS-1680: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: 60d5c699-71c3-44af-934f-ebbabbedbc30)
+[WRONG AUTHOR - NO MATCH] GBCBS-1680: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: e238dc04-318b-4e92-ae39-010edd92cfce)
+[WRONG AUTHOR] GBCBS-1681: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 9d11dad9-f612-4976-8cfa-bafa623e782f)
+[WRONG AUTHOR] GBCBS-1681: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: cc08e8a1-da7d-4066-82ee-7b6560464a5f)
+[WRONG AUTHOR - NO MATCH] GBCBS-1682: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: a3474fb5-0968-49e7-b00d-c80876d23d95)
+[WRONG AUTHOR - NO MATCH] GBCBS-1682: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 065ff828-e604-4a1f-995f-9e97371b42c7)
+[WRONG AUTHOR] GBCBS-1683: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 14aee685-4dfa-47e5-99f6-c2cc79f1cade)
+[WRONG AUTHOR] GBCBS-1683: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: a9a80ff7-48db-4057-9365-e6860f02d175)
+[WRONG AUTHOR - NO MATCH] GBCBS-1684: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: cf7ef041-11d2-40c1-a9b5-ed6a26b77ee2)
+[WRONG AUTHOR - NO MATCH] GBCBS-1684: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 12908c5c-e1db-45de-b7c9-e5272896bf68)
+[WRONG AUTHOR] GBCBS-1685: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 63e96f25-396c-48b9-9d41-d50a52404b9d)
+[WRONG AUTHOR] GBCBS-1686: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 7a6caf26-edde-48f2-b5a1-49fa31f0e566)
+[WRONG AUTHOR] GBCBS-1687: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 2046303a-f70c-4257-af4c-9ad88871a617)
+[WRONG AUTHOR - NO MATCH] GBCBS-1688: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: f5322438-1622-4903-a302-ac79198336e6)
+[WRONG AUTHOR - NO MATCH] GBCBS-1688: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 44ca1dba-da66-4a39-9cce-66e42a6fb313)
+[WRONG AUTHOR] GBCBS-1689: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 8b7a4b1e-4bf3-4ffa-8b79-38826b957d54)
+[WRONG AUTHOR] GBCBS-1690: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 2c4f1419-0fda-46b6-b3ef-684035dd820a)
+[WRONG AUTHOR] GBCBS-1690: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 381c0ec3-f29f-473e-8b01-e163c55c9127)
+[WRONG AUTHOR - NO MATCH] GBCBS-1691: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: 53f375f2-8903-41cd-9b7d-5e35104a1da0)
+[WRONG AUTHOR - NO MATCH] GBCBS-1691: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 8b6e85b0-3841-4758-a2ac-3bc614833d9e)
+[WRONG AUTHOR - NO MATCH] GBCBS-1692: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: bda72513-1a66-4ec2-9533-be207da159b7)
+[WRONG AUTHOR - NO MATCH] GBCBS-1692: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: e3bfbdc8-f73b-458c-b04b-d5d779210618)
+[WRONG AUTHOR] GBCBS-1693: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 495eea18-5e5b-4ba2-a1f5-9e17e4cba29e)
+[WRONG AUTHOR - NO MATCH] GBCBS-1693: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: 6b6dc1b5-bab6-4072-912a-1a054f81a560)
+[WRONG AUTHOR - NO MATCH] GBCBS-1694: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: c19fce96-253d-448a-a786-4845f490bd7d)
+[WRONG AUTHOR - NO MATCH] GBCBS-1694: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 15d46ab0-9916-4e7b-911d-760df8afdc9b)
+[DUPLICATE] GBCBS-1694: Found 2 copies of comment by User ec00aa25-3e63-4851-85e6-8e10021d780e
+[WRONG AUTHOR] GBCBS-1695: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: fe7617fb-6cb0-4c0f-afd2-0b56e1e54e86)
+[WRONG AUTHOR] GBCBS-1695: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: a65f5898-bcb3-488c-aa94-1011edca9ff1)
+[WRONG AUTHOR] GBCBS-1696: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 58fe2122-f0f1-4a91-82ed-990c997a1d47)
+[WRONG AUTHOR] GBCBS-1697: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: be376014-79e2-4f9e-8a44-213cd0b3c02c)
+[WRONG AUTHOR] GBCBS-1698: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 23fe9076-5904-415f-b8cd-2cbdce4920e4)
+[WRONG AUTHOR] GBCBS-1699: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 2d713f03-be3d-40c8-8574-f3f7c8f7ca1b)
+[WRONG AUTHOR - NO MATCH] GBCBS-170: Jira: 'Lydia Okoth' vs DB: 'Mungai Stephen' (ID: 08d47569-a4a4-45ee-97d1-5200a04561ca)
+[MISSING] GBCBS-1700: Comment by KARTIKEYA SRIVASTAVA @ 2021-06-09T09:29:17+03:00
+[WRONG AUTHOR] GBCBS-1701: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 7c74364c-40f8-4d8e-af95-42230757c23a)
+[WRONG AUTHOR] GBCBS-1702: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 551fe766-1a90-4495-b853-479ef206a7b1)
+[WRONG AUTHOR] GBCBS-1702: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: b2433a7b-f87d-43a3-b825-6dccb5c31e7b)
+[WRONG AUTHOR] GBCBS-1702: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: f38dbdc2-3a8f-4e2f-8e8f-c7e1c6064e7d)
+[WRONG AUTHOR] GBCBS-1702: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: e0b19d9b-85f9-4427-bb69-9b83982c5e9e)
+[WRONG AUTHOR] GBCBS-1703: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Lupogo Lupogo' (ID: 7fba2de0-22d3-4cc9-8807-d66ba73280b3)
+[DUPLICATE] GBCBS-1704: Found 2 copies of comment by User 12dd9631-f614-4a30-8072-dd6d25226af9
+[DUPLICATE] GBCBS-1705: Found 2 copies of comment by User 12dd9631-f614-4a30-8072-dd6d25226af9
+[DUPLICATE] GBCBS-1706: Found 2 copies of comment by User 12dd9631-f614-4a30-8072-dd6d25226af9
+[DUPLICATE] GBCBS-1707: Found 2 copies of comment by User 12dd9631-f614-4a30-8072-dd6d25226af9
+[DUPLICATE] GBCBS-1708: Found 2 copies of comment by User 12dd9631-f614-4a30-8072-dd6d25226af9
+[DUPLICATE] GBCBS-1709: Found 2 copies of comment by User 12dd9631-f614-4a30-8072-dd6d25226af9
+[WRONG AUTHOR - NO MATCH] GBCBS-171: Jira: 'Lydia Okoth' vs DB: 'Mungai Stephen' (ID: e7e2062c-de4c-431e-af81-8cd5d96c837c)
+[DUPLICATE] GBCBS-1711: Found 2 copies of comment by User 12dd9631-f614-4a30-8072-dd6d25226af9
+[DUPLICATE] GBCBS-1712: Found 2 copies of comment by User 12dd9631-f614-4a30-8072-dd6d25226af9
+[WRONG AUTHOR - NO MATCH] GBCBS-1714: Jira: 'Pratik Mehta' vs DB: 'Lupogo Lupogo' (ID: 9f3c08e5-c30b-4bb8-b252-8555a7f76ba9)
+[WRONG AUTHOR - NO MATCH] GBCBS-1714: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: ede42db9-2b42-49ea-8711-e8ef82b3386b)
+[WRONG AUTHOR - NO MATCH] GBCBS-1715: Jira: 'ambadas.g' vs DB: 'Mungai Stephen' (ID: 8dbd7116-224b-4fd9-a9ea-da42cc252f90)
+[WRONG AUTHOR - NO MATCH] GBCBS-1715: Jira: 'ambadas.g' vs DB: 'Mungai Stephen' (ID: 50d920c6-c9b8-4a31-a2d0-566261827157)
+[WRONG AUTHOR - NO MATCH] GBCBS-1715: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 992b87f6-33ac-4428-8459-57fe400c9792)
+[WRONG AUTHOR - NO MATCH] GBCBS-1715: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: a718d58b-fc5a-4b8d-a7cb-87eb682b41d0)
+[WRONG AUTHOR - NO MATCH] GBCBS-1716: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 8556a4a3-8487-46be-b0f6-ca1eb627072d)
+[WRONG AUTHOR - NO MATCH] GBCBS-1716: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 2ec050d8-81fd-48dc-8dd0-4685e71a8e27)
+[WRONG AUTHOR - NO MATCH] GBCBS-1716: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 2156d591-ca3a-48bc-b95e-5b4edf97a3ff)
+[WRONG AUTHOR - NO MATCH] GBCBS-1717: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 155e2411-9a3a-4ca1-b497-2d280a21781a)
+[WRONG AUTHOR - NO MATCH] GBCBS-1717: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: f1931ce5-b871-46f6-8ec1-6933d25111db)
+[DUPLICATE] GBCBS-1717: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1718: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: f96f73ff-60c3-4758-97b7-2eb779a34e2f)
+[WRONG AUTHOR - NO MATCH] GBCBS-1719: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 1fbed7ff-3632-4b4b-947e-b0128c2e4ac8)
+[WRONG AUTHOR - NO MATCH] GBCBS-1720: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 682b9ae9-28c5-4bd9-be96-95ba0f501beb)
+[WRONG AUTHOR - NO MATCH] GBCBS-1720: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 43833b8c-7652-4287-8a9b-c6892bddff02)
+[WRONG AUTHOR - NO MATCH] GBCBS-1720: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: a5cd2204-2049-48a1-8f4e-34e524fab9c3)
+[WRONG AUTHOR - NO MATCH] GBCBS-1720: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 1b25e19a-b66a-4499-a4b9-d82fc39a38ea)
+[WRONG AUTHOR - NO MATCH] GBCBS-1720: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 682b9ae9-28c5-4bd9-be96-95ba0f501beb)
+[WRONG AUTHOR - NO MATCH] GBCBS-1720: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 43833b8c-7652-4287-8a9b-c6892bddff02)
+[WRONG AUTHOR - NO MATCH] GBCBS-1720: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: a5cd2204-2049-48a1-8f4e-34e524fab9c3)
+[WRONG AUTHOR - NO MATCH] GBCBS-1720: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 1b25e19a-b66a-4499-a4b9-d82fc39a38ea)
+[DUPLICATE] GBCBS-1720: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1720: Found 2 copies of comment by User ec00aa25-3e63-4851-85e6-8e10021d780e
+[DUPLICATE] GBCBS-1720: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1721: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: a89ab290-730e-4d4e-9d83-c6d3a130b716)
+[WRONG AUTHOR - NO MATCH] GBCBS-1721: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 8e6b6a5f-182a-4906-abd2-e18b9b686200)
+[DUPLICATE] GBCBS-1721: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+Processing 851/7437: GBCBS-1722...
+[WRONG AUTHOR] GBCBS-1723: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Amit Patel' (ID: 34b3562a-225d-45ff-aea5-2b91eb88aa3a)
+[WRONG AUTHOR] GBCBS-1723: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Amit Patel' (ID: 877d6d95-dec1-4802-af1c-48f3e88bb315)
+[WRONG AUTHOR] GBCBS-1723: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Amit Patel' (ID: 29724195-8ebe-4d70-b816-f7478cf4fc09)
+[DUPLICATE] GBCBS-1723: Found 2 copies of comment by User ec00aa25-3e63-4851-85e6-8e10021d780e
+[WRONG AUTHOR] GBCBS-1732: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: 4cc4d49d-0881-44c7-ad9f-31b2327693ba)
+[WRONG AUTHOR] GBCBS-1732: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: cb5a222a-c4bb-4a4a-950b-aeaddb039cf1)
+[WRONG AUTHOR] GBCBS-1732: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: 5b9e6432-f9a6-4340-93b0-784a56bce22a)
+[WRONG AUTHOR] GBCBS-1732: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: c85bd11b-33ae-4492-9645-f904e945df45)
+[WRONG AUTHOR] GBCBS-1732: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: ebc8e502-919a-40ec-b204-e3dbce37934a)
+[WRONG AUTHOR] GBCBS-1732: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: 9d333acb-8c66-4ac4-970c-fc615a3ba8f9)
+[WRONG AUTHOR] GBCBS-1732: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: a10ec531-4e31-4c83-89cb-e3c2cb045680)
+[WRONG AUTHOR] GBCBS-1733: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: 1413627b-286c-4f72-a590-0c2e9574c26b)
+[WRONG AUTHOR] GBCBS-1733: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: 70d3ca47-e77d-4def-a0aa-2225d78d7d77)
+[WRONG AUTHOR] GBCBS-1733: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: 63a776e7-007f-4d90-a27f-f1bdb53101be)
+[DUPLICATE] GBCBS-1733: Found 2 copies of comment by User 12dd9631-f614-4a30-8072-dd6d25226af9
+[WRONG AUTHOR - NO MATCH] GBCBS-1734: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 68606bf2-2539-4d01-8412-8c636eec0a8d)
+[WRONG AUTHOR - NO MATCH] GBCBS-1734: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 41c6743f-af8d-44e4-b648-3cc02ff59529)
+[DUPLICATE] GBCBS-1734: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR] GBCBS-1736: Jira: 'Eva Karimi Njagi' (matched to Eva Njagi) vs DB: 'Eva Karimi' (ID: 56e5286d-b82e-4234-8d9b-bf52a97ac070)
+[WRONG AUTHOR] GBCBS-1736: Jira: 'Eva Karimi Njagi' (matched to Eva Njagi) vs DB: 'Eva Karimi' (ID: 3600b4df-1303-42d5-aa60-d307a9f1dd2b)
+[WRONG AUTHOR] GBCBS-1736: Jira: 'Eva Karimi Njagi' (matched to Eva Njagi) vs DB: 'Eva Karimi' (ID: e5c8c899-3135-4cd5-8f36-2ff9fc5ee067)
+[WRONG AUTHOR] GBCBS-1736: Jira: 'Eva Karimi Njagi' (matched to Eva Njagi) vs DB: 'Eva Karimi' (ID: 5e8c3fcc-413e-41dc-83a8-0e7ded13e66b)
+[WRONG AUTHOR] GBCBS-1736: Jira: 'Pramoda Kumar Sahoo' (matched to Pramoda Kumar Sahoo) vs DB: 'Pramoda Kumar' (ID: 8b76126e-12c8-42a8-9d3d-8998ef9dd2a1)
+[WRONG AUTHOR] GBCBS-1736: Jira: 'Pramoda Kumar Sahoo' (matched to Pramoda Kumar Sahoo) vs DB: 'Pramoda Kumar' (ID: ec059027-4d2d-4223-8ec2-2a842df08c43)
+[WRONG AUTHOR] GBCBS-1736: Jira: 'ngugi' (matched to ngugi ngugi) vs DB: 'Mitali Vaghela' (ID: e2603fe1-2ced-4753-a569-07fa303341b9)
+[WRONG AUTHOR] GBCBS-1736: Jira: 'ngugi' (matched to ngugi ngugi) vs DB: 'Mitali Vaghela' (ID: ad4027f0-6522-4198-9dbe-a91241ab0846)
+[WRONG AUTHOR - NO MATCH] GBCBS-1737: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: cc165063-4ed1-478d-bc93-a4894331d76a)
+[WRONG AUTHOR - NO MATCH] GBCBS-1737: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 5e3e3ea8-f548-42f8-9386-446df87ce4c9)
+[DUPLICATE] GBCBS-1737: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1738: Found 2 copies of comment by User 12dd9631-f614-4a30-8072-dd6d25226af9
+[WRONG AUTHOR - NO MATCH] GBCBS-1739: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 8e3a9047-6355-40fa-ba55-35660357f8e8)
+[WRONG AUTHOR - NO MATCH] GBCBS-1739: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 7ebb7e8b-ee73-4be3-a8ef-89704cba78ab)
+[DUPLICATE] GBCBS-1739: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR] GBCBS-1740: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Mungai Stephen' (ID: 9d161449-f04b-43bc-86c4-9501e2c5383a)
+[WRONG AUTHOR] GBCBS-1740: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: d8d256a7-b023-4140-8b87-3bbcacb2380d)
+[WRONG AUTHOR] GBCBS-1740: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: 66060412-cf6e-418c-a12f-8e00c9415095)
+[WRONG AUTHOR] GBCBS-1740: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Amit Patel' (ID: b9ceb767-3a8f-4945-b193-175e8f0a7901)
+[WRONG AUTHOR] GBCBS-1740: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Mungai Stephen' (ID: a1baceee-c9a8-4041-9b08-7242ff06f89f)
+[WRONG AUTHOR] GBCBS-1740: Jira: 'archana.verma' (matched to archana verma) vs DB: 'KARTIKEYA SRIVASTAVA' (ID: 6c6d923e-f949-4808-811c-ac18b2e626a6)
+[WRONG AUTHOR - NO MATCH] GBCBS-1740: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 9d161449-f04b-43bc-86c4-9501e2c5383a)
+[WRONG AUTHOR - NO MATCH] GBCBS-1740: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: a1baceee-c9a8-4041-9b08-7242ff06f89f)
+[DUPLICATE] GBCBS-1740: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1740: Found 2 copies of comment by User 12dd9631-f614-4a30-8072-dd6d25226af9
+[WRONG AUTHOR - NO MATCH] GBCBS-1741: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: dfeacc0a-d3e3-4419-b3bd-52a90cb48feb)
+[WRONG AUTHOR - NO MATCH] GBCBS-1741: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: e3f3f35c-c524-4b3f-b4ee-096e82935c48)
+[DUPLICATE] GBCBS-1741: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1742: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 896d14b5-b5f2-4c2b-805c-4928f74841c5)
+[WRONG AUTHOR - NO MATCH] GBCBS-1742: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 6bb98e71-835a-4068-8175-4358948c062d)
+[WRONG AUTHOR - NO MATCH] GBCBS-1743: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 4be1793d-3037-42f2-a9a8-cb540d32127d)
+[WRONG AUTHOR - NO MATCH] GBCBS-1743: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: ec49cad6-cf07-4f51-ad8e-8c475346c708)
+[WRONG AUTHOR - NO MATCH] GBCBS-1743: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: ce3337ea-ff55-497f-9f66-987b2449cc06)
+[WRONG AUTHOR - NO MATCH] GBCBS-1744: Jira: 'Pratik Mehta' vs DB: 'Amit Patel' (ID: f2cdb4bd-d7a8-4b2b-a069-4368bdc6a041)
+[WRONG AUTHOR - NO MATCH] GBCBS-1744: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 726c85af-2640-43e0-8e6b-880e549d9406)
+[WRONG AUTHOR - NO MATCH] GBCBS-1745: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: f1035725-2de8-4613-8c92-6a239664fe46)
+[WRONG AUTHOR - NO MATCH] GBCBS-1745: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 513aeca8-bd2d-4fb9-92bd-ec196faae2ac)
+[DUPLICATE] GBCBS-1745: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1749: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: a92dba15-df46-4356-943f-09a60b5eb745)
+[WRONG AUTHOR - NO MATCH] GBCBS-1749: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 0aedf0f4-f372-4bb0-b82a-6c23a211c71d)
+[DUPLICATE] GBCBS-1749: Found 2 copies of comment by User ec00aa25-3e63-4851-85e6-8e10021d780e
+[DUPLICATE] GBCBS-1749: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR] GBCBS-175: Jira: 'Polycarp Amenya' (matched to Polycarp Amenya) vs DB: 'archana verma' (ID: 4cf407a6-bd99-4824-91d2-36f0da53483e)
+[DUPLICATE] GBCBS-1750: Found 2 copies of comment by User 12dd9631-f614-4a30-8072-dd6d25226af9
+[WRONG AUTHOR - NO MATCH] GBCBS-1751: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: d1feae48-d76d-475e-a701-b7bc57484602)
+[WRONG AUTHOR - NO MATCH] GBCBS-1751: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: ed1ceac1-414f-4563-9ffb-5be37048fbae)
+[DUPLICATE] GBCBS-1751: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1752: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: de1305a3-3f4b-4d34-8aec-0afc4717bc64)
+[WRONG AUTHOR - NO MATCH] GBCBS-1752: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 59575e59-fb4c-4c4b-b016-a779310c43f8)
+[WRONG AUTHOR - NO MATCH] GBCBS-1753: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 59a493d8-36d6-40ff-8156-07b3cea69cf8)
+[WRONG AUTHOR - NO MATCH] GBCBS-1754: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: cf0d5e9f-5f97-47a2-80d6-eb38732a37d0)
+[WRONG AUTHOR - NO MATCH] GBCBS-1754: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 1fee8fd1-effd-41b9-824e-6b973c83c912)
+[DUPLICATE] GBCBS-1754: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1757: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 0b75ed51-77a2-4174-a0ef-685f3dc0ab8a)
+[WRONG AUTHOR - NO MATCH] GBCBS-1757: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 3257909e-539c-471d-9b00-0bbc0ee4c789)
+[DUPLICATE] GBCBS-1757: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1758: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: c409b1d6-da82-4795-ab33-1fae024a7665)
+[WRONG AUTHOR - NO MATCH] GBCBS-1759: Jira: 'ambadas.g' vs DB: 'Mungai Stephen' (ID: 060e2e03-d257-4ae7-8a12-90e63dc70741)
+[WRONG AUTHOR - NO MATCH] GBCBS-1759: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 4171df87-b8aa-408c-afb0-f307b9103126)
+[WRONG AUTHOR - NO MATCH] GBCBS-176: Jira: 'Lydia Okoth' vs DB: 'Mungai Stephen' (ID: e7229889-5f1d-44d5-a351-c7a24241ce59)
+[WRONG AUTHOR - NO MATCH] GBCBS-176: Jira: 'Lydia Okoth' vs DB: 'Mungai Stephen' (ID: a639a076-8b9c-46f3-8b9f-0222c8c757bc)
+[WRONG AUTHOR - NO MATCH] GBCBS-176: Jira: 'Lydia Okoth' vs DB: 'Lupogo Lupogo' (ID: e8e0f3c9-807f-4145-bd04-91782f870fe4)
+[WRONG AUTHOR - NO MATCH] GBCBS-176: Jira: 'Lydia Okoth' vs DB: 'Mungai Stephen' (ID: a639a076-8b9c-46f3-8b9f-0222c8c757bc)
+[WRONG AUTHOR - NO MATCH] GBCBS-176: Jira: 'Lydia Okoth' vs DB: 'Mungai Stephen' (ID: e7229889-5f1d-44d5-a351-c7a24241ce59)
+[WRONG AUTHOR - NO MATCH] GBCBS-1760: Jira: 'ambadas.g' vs DB: 'Mungai Stephen' (ID: 2a451080-961c-4dd8-b77b-5701b4660738)
+[WRONG AUTHOR - NO MATCH] GBCBS-1760: Jira: 'ambadas.g' vs DB: 'Mungai Stephen' (ID: f3d06320-9e81-4aee-a4ef-7a314c94fbfb)
+[WRONG AUTHOR - NO MATCH] GBCBS-1760: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 75eac8c6-6f57-477e-961c-558449c89d01)
+[WRONG AUTHOR - NO MATCH] GBCBS-1761: Jira: 'ambadas.g' vs DB: 'Mungai Stephen' (ID: adebea94-ed62-46d3-b55f-bfe9fb26f8d6)
+[WRONG AUTHOR - NO MATCH] GBCBS-1762: Jira: 'ambadas.g' vs DB: 'Mungai Stephen' (ID: 751f97af-abe3-4a9a-aa82-6c47001f1143)
+[WRONG AUTHOR - NO MATCH] GBCBS-1762: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: ae354ccb-d810-4f8a-8e2c-b08c87a9d2ba)
+[WRONG AUTHOR - NO MATCH] GBCBS-1763: Jira: 'ambadas.g' vs DB: 'Mungai Stephen' (ID: 00b890ab-80a7-46a2-9bea-9138f96dba01)
+[WRONG AUTHOR - NO MATCH] GBCBS-1763: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 36a87aaf-9716-49ce-80ae-6ba5118b8402)
+[WRONG AUTHOR - NO MATCH] GBCBS-1764: Jira: 'ambadas.g' vs DB: 'Mungai Stephen' (ID: 8ec11245-8fcc-43f3-9605-cdd23f6fe1df)
+[WRONG AUTHOR - NO MATCH] GBCBS-1764: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 145ad0f8-55ac-4f06-997f-a1f975e2c59f)
+[WRONG AUTHOR - NO MATCH] GBCBS-1765: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: bfb878d5-d1ba-4549-93c6-5233de19e5da)
+[WRONG AUTHOR - NO MATCH] GBCBS-1765: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: c5421b1f-53cc-4a1e-8153-7f99950af62f)
+[DUPLICATE] GBCBS-1765: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1766: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 821c1df2-c1cb-48d1-8987-47349519c67e)
+[WRONG AUTHOR - NO MATCH] GBCBS-1766: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 3f75a7ab-a987-4f3e-8bce-28d8fed0299e)
+[DUPLICATE] GBCBS-1766: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1767: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 6d906d6b-de00-4ed4-9cfd-33f563e5da8a)
+[WRONG AUTHOR - NO MATCH] GBCBS-1767: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 342bfc4f-6a10-4d1a-a494-3e5b0df8eedf)
+[DUPLICATE] GBCBS-1767: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+Processing 901/7437: GBCBS-1768...
+[WRONG AUTHOR - NO MATCH] GBCBS-1768: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 6aaae76e-7248-49f7-9f33-2d73c4237779)
+[WRONG AUTHOR - NO MATCH] GBCBS-1768: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 4d0618e5-2ef3-4687-80fa-61d4436db481)
+[DUPLICATE] GBCBS-1768: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1769: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 4e228465-5312-4236-9d06-8e269b152009)
+[WRONG AUTHOR - NO MATCH] GBCBS-1769: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 04008d98-ddc4-4460-ac70-a2aa38ade7ab)
+[DUPLICATE] GBCBS-1769: Found 2 copies of comment by User ec00aa25-3e63-4851-85e6-8e10021d780e
+[DUPLICATE] GBCBS-1769: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1770: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: d7f6a1b1-e19a-4a7c-9fc3-a532d35ac7ce)
+[WRONG AUTHOR - NO MATCH] GBCBS-1770: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 36ee47cb-069c-4b52-a09e-0142e42675dc)
+[DUPLICATE] GBCBS-1770: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1771: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 44d67d2a-32d0-452e-8f8c-92bda184a564)
+[WRONG AUTHOR - NO MATCH] GBCBS-1771: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 6e7d8526-34bf-4ffd-a3e8-efbf622e993a)
+[WRONG AUTHOR - NO MATCH] GBCBS-1772: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: f5b5c3e2-0600-4dd9-8626-a1862f7ebce8)
+[WRONG AUTHOR - NO MATCH] GBCBS-1772: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: d5ac9afb-70d6-41e6-9c54-062e1e1d3e18)
+[WRONG AUTHOR - NO MATCH] GBCBS-1772: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 98f867f7-4780-4100-84ec-e9c14a46c0dd)
+[WRONG AUTHOR - NO MATCH] GBCBS-1772: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 45c00406-00cf-45ef-a52b-05db74b6ae81)
+[DUPLICATE] GBCBS-1772: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1772: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1773: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: eebb1617-29e7-4dcf-8632-608a5c833f9a)
+[WRONG AUTHOR - NO MATCH] GBCBS-1774: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: beb4646e-2671-4671-bd6a-984adb56fdaa)
+[WRONG AUTHOR - NO MATCH] GBCBS-1774: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 366076ae-a8e5-40d3-847e-faac91f664ba)
+[DUPLICATE] GBCBS-1774: Found 2 copies of comment by User ec00aa25-3e63-4851-85e6-8e10021d780e
+[DUPLICATE] GBCBS-1774: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1775: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 1f655f4c-8e44-407f-ab05-aaf1708546e6)
+[WRONG AUTHOR - NO MATCH] GBCBS-1775: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 71ee2238-9893-447e-9d94-4ceae17a7083)
+[WRONG AUTHOR - NO MATCH] GBCBS-1775: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 6cae412b-c26a-4145-aa97-31c63799ae78)
+[DUPLICATE] GBCBS-1775: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1776: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: d35f3c78-6cca-43e4-92a7-e16de80363b5)
+[WRONG AUTHOR - NO MATCH] GBCBS-1776: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: bd29fb04-11d5-48dc-b1c0-afc74a68882e)
+[DUPLICATE] GBCBS-1776: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1777: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: ac4601bf-f1fc-4956-9424-350a2e210703)
+[WRONG AUTHOR - NO MATCH] GBCBS-1777: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 2e91922b-8396-4ec6-9fe6-99fadb52628b)
+[DUPLICATE] GBCBS-1777: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1778: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 1cb1c42e-0807-4485-8550-a87b60528cc1)
+[WRONG AUTHOR - NO MATCH] GBCBS-1778: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 752dfd42-6e1c-4056-bd4f-3ce888dffe20)
+[MISSING] GBCBS-1778: Comment by Amit Patel @ 2021-06-21T16:20:43+03:00
+[WRONG AUTHOR - NO MATCH] GBCBS-1778: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 3f6171e9-3632-4392-844a-ed017ed2de0a)
+[WRONG AUTHOR - NO MATCH] GBCBS-1778: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 0b13c415-fa2a-48ab-a143-07aa1c5c7e2a)
+[WRONG AUTHOR - NO MATCH] GBCBS-1778: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: d4cf3612-fc4c-4e51-9dc1-85399d50ff62)
+[WRONG AUTHOR - NO MATCH] GBCBS-1778: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 4bb5b574-5e3f-4f48-8f7c-ca394ab309ed)
+[DUPLICATE] GBCBS-1778: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1778: Found 2 copies of comment by User 12dd9631-f614-4a30-8072-dd6d25226af9
+[DUPLICATE] GBCBS-1778: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1779: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 100a512d-4f14-469c-9354-98cab252f9e5)
+[WRONG AUTHOR - NO MATCH] GBCBS-1779: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: bba52472-78b9-46d8-af1b-05e92b0d434f)
+[DUPLICATE] GBCBS-1779: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1780: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: ddf2b5f3-50d2-4ebd-a09d-c714c81242d7)
+[WRONG AUTHOR - NO MATCH] GBCBS-1781: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 59cb07d4-f858-478d-a205-42d60e70327b)
+[WRONG AUTHOR - NO MATCH] GBCBS-1781: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 9e0eece1-998a-43ff-9bce-3a37046780a1)
+[DUPLICATE] GBCBS-1781: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1782: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 35fcdc36-a800-471f-a789-1240e7dfec58)
+[WRONG AUTHOR - NO MATCH] GBCBS-1782: Jira: 'Pratik Mehta' vs DB: 'Amit Patel' (ID: 772d3a3d-3ec1-447f-b218-6df082c9b0c1)
+[WRONG AUTHOR - NO MATCH] GBCBS-1783: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 3ea86074-56e5-46b3-8427-b1fee29a2317)
+[WRONG AUTHOR - NO MATCH] GBCBS-1783: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 19c49a21-f4a6-44cc-9061-1aca973382b3)
+[DUPLICATE] GBCBS-1783: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1784: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 1c26374a-7847-4b2a-b034-580ccb00bbcd)
+[WRONG AUTHOR - NO MATCH] GBCBS-1784: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 96cfafba-431f-4ffe-bb9f-265ac2bd35d3)
+[DUPLICATE] GBCBS-1784: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1785: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: f94863ec-294f-4c2a-83e4-bda1faa1945c)
+[WRONG AUTHOR - NO MATCH] GBCBS-1785: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 90e42cba-212f-496a-a213-e5366fa8a739)
+[WRONG AUTHOR - NO MATCH] GBCBS-1785: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: a34f9872-2651-430a-a05e-5c08cc4286a3)
+[DUPLICATE] GBCBS-1785: Found 2 copies of comment by User ec00aa25-3e63-4851-85e6-8e10021d780e
+[WRONG AUTHOR - NO MATCH] GBCBS-1786: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 12bffafe-8c00-4375-bdec-4a30c08820bc)
+[WRONG AUTHOR - NO MATCH] GBCBS-1786: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 044577d9-2872-41c6-841b-bd2fa20490b0)
+[DUPLICATE] GBCBS-1786: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1787: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: dcc37f83-20db-4704-b4be-e10818b30030)
+[WRONG AUTHOR - NO MATCH] GBCBS-1787: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 2169c474-36d3-4559-8506-2de365c12683)
+[WRONG AUTHOR - NO MATCH] GBCBS-1787: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 4ea7a0bd-4403-4355-80fa-655067584907)
+[WRONG AUTHOR - NO MATCH] GBCBS-1787: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 28a52435-7536-4d77-9627-2c5c96904439)
+[DUPLICATE] GBCBS-1787: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1787: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1788: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: c063a3a9-71e4-4bfe-b620-04eed0d06a95)
+[WRONG AUTHOR - NO MATCH] GBCBS-1788: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 9ab2e153-f2d0-416c-9f07-3f0a03131fd4)
+[DUPLICATE] GBCBS-1788: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1789: Jira: 'jndetei' vs DB: 'Mungai Stephen' (ID: 168f683d-6cd1-485d-bf2f-5ea418a2a038)
+[WRONG AUTHOR - NO MATCH] GBCBS-1789: Jira: 'jndetei' vs DB: 'Mungai Stephen' (ID: cb021741-b99c-44ef-b108-24b351e6f908)
+[WRONG AUTHOR - NO MATCH] GBCBS-1789: Jira: 'jndetei' vs DB: 'Mungai Stephen' (ID: 45677a03-39cd-4214-a249-ba9fa1764861)
+[WRONG AUTHOR - NO MATCH] GBCBS-1789: Jira: 'jndetei' vs DB: 'Mungai Stephen' (ID: 10c8b7a2-bc9d-4a80-822a-95260bf5614a)
+[WRONG AUTHOR] GBCBS-179: Jira: 'Polycarp Amenya' (matched to Polycarp Amenya) vs DB: 'Manasseh Wanyoike' (ID: e0555335-6b0e-47bd-935a-4927e9854c38)
+[WRONG AUTHOR - NO MATCH] GBCBS-1791: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 080211df-ba2a-44ce-b24b-1bf1a6c3245a)
+[WRONG AUTHOR - NO MATCH] GBCBS-1791: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 1a19011f-936d-4138-aca7-a18423aee72f)
+[DUPLICATE] GBCBS-1791: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1792: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 1055c7be-a1f4-470d-acff-8143d2543551)
+[WRONG AUTHOR - NO MATCH] GBCBS-1792: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 036fce2e-6035-442c-b53e-18253747fed6)
+[WRONG AUTHOR - NO MATCH] GBCBS-1792: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: f3f2b7e7-bd1f-441c-9dc9-bfed8de57c2b)
+[WRONG AUTHOR - NO MATCH] GBCBS-1792: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 5c4dcfa7-1294-4262-8b75-590f0d469361)
+[DUPLICATE] GBCBS-1792: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1793: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 752fb538-75be-40ac-b7d0-e580b40b8eb6)
+[WRONG AUTHOR - NO MATCH] GBCBS-1793: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: f4a3eb07-4a09-468f-bf97-acfe82008460)
+[WRONG AUTHOR - NO MATCH] GBCBS-1794: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 5afd1650-f5c1-4440-8efd-28fb1565c5bf)
+[WRONG AUTHOR - NO MATCH] GBCBS-1794: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 6dbffae2-4855-4a0f-b5ba-f0e6424707ff)
+[WRONG AUTHOR - NO MATCH] GBCBS-1794: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 94f6f97c-3f8b-4306-a3fe-962edf83c3be)
+[DUPLICATE] GBCBS-1794: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1794: Found 2 copies of comment by User ec00aa25-3e63-4851-85e6-8e10021d780e
+[WRONG AUTHOR - NO MATCH] GBCBS-1795: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 26ebbe84-4b75-4454-9e4f-05fc24a417ea)
+[WRONG AUTHOR - NO MATCH] GBCBS-1795: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 4eded759-b427-40ad-b105-ca7204a6cdb8)
+[DUPLICATE] GBCBS-1795: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1796: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 244c93d6-7cb1-4b8d-9c4d-a3c0537e0336)
+[WRONG AUTHOR - NO MATCH] GBCBS-1796: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: d020eced-7754-4502-b632-bf2840d691cf)
+[DUPLICATE] GBCBS-1796: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1797: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 86aa488d-151a-4d87-b7b0-9817df4170df)
+[WRONG AUTHOR - NO MATCH] GBCBS-1797: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: b0da23a5-df53-4791-9495-780bfaabb361)
+[DUPLICATE] GBCBS-1797: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1798: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: dd48f9b3-c60e-4aec-8681-c08b95cc66a0)
+[WRONG AUTHOR - NO MATCH] GBCBS-1798: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 796bdf0d-df0e-467c-91e3-815c9ac6c89c)
+[DUPLICATE] GBCBS-1798: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1799: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 09932181-9bc4-40db-a563-54164fb4dffd)
+[WRONG AUTHOR - NO MATCH] GBCBS-1799: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: edf59f6a-f83a-4166-9e60-37f08fa3cad1)
+[DUPLICATE] GBCBS-1799: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1800: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 61191848-bc0a-4281-8379-3f9dc80d76df)
+[WRONG AUTHOR - NO MATCH] GBCBS-1800: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 17911d75-07ca-4fd5-a385-50c23d5955ce)
+[DUPLICATE] GBCBS-1800: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1801: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 2ecfbe48-e434-41d2-a57d-d3ed963f3dca)
+[WRONG AUTHOR - NO MATCH] GBCBS-1801: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: c3b88d99-1f5d-4881-bdaa-8dd9ef8aa6e8)
+[DUPLICATE] GBCBS-1801: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1802: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 958b94c6-5ba6-4d22-ac8a-8eb19e6814e3)
+[WRONG AUTHOR - NO MATCH] GBCBS-1802: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: b7d50131-ea3a-4d48-84b3-7b5ff139fed5)
+[DUPLICATE] GBCBS-1802: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1803: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 4ad81091-01d1-4021-a826-45a5dc02ef6a)
+[WRONG AUTHOR - NO MATCH] GBCBS-1803: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 001fe7bb-a4c5-490e-92a0-2954a4aeba28)
+[DUPLICATE] GBCBS-1803: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1804: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 63c72ff9-632e-435b-90e4-fefb77b44528)
+[WRONG AUTHOR - NO MATCH] GBCBS-1804: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: e35b93b2-879b-4604-935f-17f94d26e317)
+[DUPLICATE] GBCBS-1804: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1805: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 95d80fdd-6688-4fbb-a0e5-ab972442db07)
+[WRONG AUTHOR - NO MATCH] GBCBS-1806: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 655580bc-4c45-45ce-a3ea-3a0aabc2dd43)
+[WRONG AUTHOR - NO MATCH] GBCBS-1806: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: a5346972-8776-43b9-8838-8fccc569c95e)
+[WRONG AUTHOR - NO MATCH] GBCBS-1806: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 5707f917-ca5b-4595-a297-f46dcb881456)
+[WRONG AUTHOR - NO MATCH] GBCBS-1806: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 11ca98b4-9679-4a4d-aee4-f5ba7447d078)
+[WRONG AUTHOR - NO MATCH] GBCBS-1807: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: bafbe012-8405-464e-a1d6-e016c2c60d84)
+[WRONG AUTHOR - NO MATCH] GBCBS-1807: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 8be55d5c-7d48-468a-aa19-890b1a65c469)
+[DUPLICATE] GBCBS-1807: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1808: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: b6d07132-221d-44ec-b720-f515d550829a)
+[WRONG AUTHOR - NO MATCH] GBCBS-1808: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 4aa107ec-e489-422c-891f-f1679b93e484)
+[WRONG AUTHOR - NO MATCH] GBCBS-1808: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 7fc0436a-1370-4b52-b03d-02fdbe06bcca)
+[WRONG AUTHOR - NO MATCH] GBCBS-1808: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 2999df43-5450-4deb-b08f-9c84bd1205a0)
+[DUPLICATE] GBCBS-1808: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1809: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 32e25792-f118-4713-9e13-1ee0a7f44a51)
+[WRONG AUTHOR - NO MATCH] GBCBS-1809: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 348d278d-ab2f-4745-8ff3-583795557497)
+[DUPLICATE] GBCBS-1809: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1810: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 6dfb74c2-8803-472c-895a-0fe2f3bf13ef)
+[WRONG AUTHOR - NO MATCH] GBCBS-1810: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: e85e5774-0983-45e8-b59c-3c770597c7c3)
+[WRONG AUTHOR - NO MATCH] GBCBS-1810: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: f63e8bcb-df56-4a3b-8861-9ae33b630d88)
+[WRONG AUTHOR - NO MATCH] GBCBS-1810: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: b39fd15a-0d93-4e64-8451-cc5cace0818f)
+[DUPLICATE] GBCBS-1810: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1811: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 64cd7fe8-e7bc-4d77-9a7f-4cf9c14253fe)
+[DUPLICATE] GBCBS-1811: Found 2 copies of comment by User ec00aa25-3e63-4851-85e6-8e10021d780e
+[WRONG AUTHOR - NO MATCH] GBCBS-1812: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: c2becc48-8bbc-485f-86cb-d82db93db554)
+[WRONG AUTHOR - NO MATCH] GBCBS-1812: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: f88d4c7e-f896-4fc5-a0a4-31afa34d1df2)
+[DUPLICATE] GBCBS-1812: Found 2 copies of comment by User ec00aa25-3e63-4851-85e6-8e10021d780e
+[DUPLICATE] GBCBS-1812: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+Processing 951/7437: GBCBS-1813...
+[WRONG AUTHOR - NO MATCH] GBCBS-1813: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 96488027-45c9-4e81-8448-0cc306832eeb)
+[WRONG AUTHOR - NO MATCH] GBCBS-1813: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 6600b684-0bab-4fc7-833f-464ba33b7a91)
+[DUPLICATE] GBCBS-1813: Found 2 copies of comment by User ec00aa25-3e63-4851-85e6-8e10021d780e
+[DUPLICATE] GBCBS-1813: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1814: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 15b282d7-9ad4-43ec-bf89-165911611000)
+[WRONG AUTHOR - NO MATCH] GBCBS-1814: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 2c311efb-aefd-49d1-a251-2eefd03f3486)
+[DUPLICATE] GBCBS-1814: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1814: Found 2 copies of comment by User ec00aa25-3e63-4851-85e6-8e10021d780e
+[WRONG AUTHOR - NO MATCH] GBCBS-1815: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 1277b389-bfeb-477e-86fe-5db1289b2ffa)
+[WRONG AUTHOR - NO MATCH] GBCBS-1816: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 55fa89c7-5373-4dbb-a579-69d13d137695)
+[WRONG AUTHOR - NO MATCH] GBCBS-1816: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 86744e7a-88f4-4431-b662-c77e51a33523)
+[DUPLICATE] GBCBS-1816: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1817: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 223a0688-87df-4bbc-b3c9-5e9c282cc5d7)
+[WRONG AUTHOR - NO MATCH] GBCBS-1817: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 778c5113-97dc-4c7b-9360-851a344c900f)
+[DUPLICATE] GBCBS-1817: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1818: Found 2 copies of comment by User 12dd9631-f614-4a30-8072-dd6d25226af9
+[DUPLICATE] GBCBS-1819: Found 2 copies of comment by User 12dd9631-f614-4a30-8072-dd6d25226af9
+[DUPLICATE] GBCBS-1820: Found 2 copies of comment by User 12dd9631-f614-4a30-8072-dd6d25226af9
+[WRONG AUTHOR - NO MATCH] GBCBS-1821: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 82cfb435-fe26-4b23-ac83-a0166cbf399d)
+[WRONG AUTHOR - NO MATCH] GBCBS-1821: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: d8a71e38-5165-4629-92d5-95a9f92e5a2e)
+[DUPLICATE] GBCBS-1821: Found 2 copies of comment by User ec00aa25-3e63-4851-85e6-8e10021d780e
+[DUPLICATE] GBCBS-1821: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1822: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: a8701fbe-ba86-45d9-9ded-bcb26fd6fd44)
+[WRONG AUTHOR - NO MATCH] GBCBS-1822: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: a959d806-ac48-4bb1-8953-02dd91f2658c)
+[WRONG AUTHOR - NO MATCH] GBCBS-1822: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 1b0cd2c9-c96a-4b0c-8d21-a666c18f977b)
+[WRONG AUTHOR - NO MATCH] GBCBS-1822: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: bfb395a2-faba-4ca0-aa2a-f5a92098c7c9)
+[DUPLICATE] GBCBS-1822: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1822: Found 2 copies of comment by User ec00aa25-3e63-4851-85e6-8e10021d780e
+[DUPLICATE] GBCBS-1822: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1823: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 795d9901-e655-49f7-8037-4205418ae0f1)
+[WRONG AUTHOR - NO MATCH] GBCBS-1823: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 4edd2035-1c29-4991-8af9-18d6545fcc22)
+[WRONG AUTHOR - NO MATCH] GBCBS-1823: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 2ee0a4f4-e6f2-4874-b2c6-765e74dd2494)
+[WRONG AUTHOR - NO MATCH] GBCBS-1823: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 39a1d2ea-dd1b-4b2a-aa39-f2a12699f3fe)
+[WRONG AUTHOR - NO MATCH] GBCBS-1823: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 795d9901-e655-49f7-8037-4205418ae0f1)
+[WRONG AUTHOR - NO MATCH] GBCBS-1823: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 4edd2035-1c29-4991-8af9-18d6545fcc22)
+[WRONG AUTHOR - NO MATCH] GBCBS-1823: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 2ee0a4f4-e6f2-4874-b2c6-765e74dd2494)
+[WRONG AUTHOR - NO MATCH] GBCBS-1823: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 39a1d2ea-dd1b-4b2a-aa39-f2a12699f3fe)
+[DUPLICATE] GBCBS-1823: Found 2 copies of comment by User ec00aa25-3e63-4851-85e6-8e10021d780e
+[DUPLICATE] GBCBS-1823: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1823: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1824: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 5ad78ede-5433-4294-92fd-60f184f9357f)
+[WRONG AUTHOR - NO MATCH] GBCBS-1824: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: e070fa9e-72d9-4460-9644-d91297fa7531)
+[WRONG AUTHOR - NO MATCH] GBCBS-1824: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: cabb1593-4635-4af9-bf9d-ec357ec4845b)
+[WRONG AUTHOR - NO MATCH] GBCBS-1824: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: b6a28928-050f-4148-a0e6-4684ab672b77)
+[DUPLICATE] GBCBS-1824: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1824: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1825: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 5b8249ed-b075-4cf5-b429-46ceef93a8cf)
+[WRONG AUTHOR - NO MATCH] GBCBS-1825: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 98fba579-bda8-4d9d-90a6-d94593471e1f)
+[DUPLICATE] GBCBS-1825: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1826: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 4b03e4a2-e67e-4f58-b4a3-9445fd1b4198)
+[WRONG AUTHOR - NO MATCH] GBCBS-1826: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 60e87755-9c01-4459-9036-dd5bcad775f9)
+[DUPLICATE] GBCBS-1826: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1827: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 72855ac5-3767-4696-a78c-9b622d6b378c)
+[WRONG AUTHOR - NO MATCH] GBCBS-1827: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: d96c80c0-6825-4efe-b991-4c4379a3b6e3)
+[WRONG AUTHOR - NO MATCH] GBCBS-1827: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 647eb73d-add1-4a97-a008-ad99f4e4c80d)
+[WRONG AUTHOR - NO MATCH] GBCBS-1827: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: f6f39932-2820-47da-ad38-a37da50c8e70)
+[WRONG AUTHOR - NO MATCH] GBCBS-1828: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 892572ed-b070-47eb-a631-c7ae29d33094)
+[WRONG AUTHOR - NO MATCH] GBCBS-1828: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 67b53db6-d309-4c61-a5be-610afaf83edf)
+[WRONG AUTHOR - NO MATCH] GBCBS-1828: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 2e309b79-95d3-42ac-8d1b-b9d31c2b1598)
+[WRONG AUTHOR - NO MATCH] GBCBS-1828: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: d842546c-fe62-4d98-94da-14940ecf24a0)
+[WRONG AUTHOR - NO MATCH] GBCBS-1828: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 1818292b-0a32-449a-aabb-4ab56a8c71d4)
+[WRONG AUTHOR - NO MATCH] GBCBS-1828: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 61d994f7-25fa-41e6-93cb-762037901029)
+[WRONG AUTHOR - NO MATCH] GBCBS-1828: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: c71add5f-63af-4d93-8ad9-e01d96820a6e)
+[DUPLICATE] GBCBS-1828: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1828: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1829: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 7e2d582c-469e-4a41-8d8b-7b1dde36aca9)
+[WRONG AUTHOR - NO MATCH] GBCBS-1830: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: e77cb7c3-6964-4ca9-b8c3-267315babb38)
+[WRONG AUTHOR - NO MATCH] GBCBS-1830: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 508a86b6-6e64-4ada-98f6-20e856c4e3a2)
+[WRONG AUTHOR - NO MATCH] GBCBS-1830: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: b7b5b51b-8d3c-4c67-ba33-459c93de79ae)
+[WRONG AUTHOR - NO MATCH] GBCBS-1830: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: b343759c-af4a-496a-a4ba-4348dc0193a4)
+[WRONG AUTHOR - NO MATCH] GBCBS-1830: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 9c0f40d7-0882-4794-be0c-42dbd0b061fd)
+[WRONG AUTHOR - NO MATCH] GBCBS-1830: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: ea4c7eea-abdb-43d3-a585-4e1809e2a21b)
+[DUPLICATE] GBCBS-1830: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1830: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1831: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 95b7bb14-254f-4646-b3de-af3076d8a57f)
+[WRONG AUTHOR - NO MATCH] GBCBS-1831: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 2b5db431-cbd7-4653-8e4a-934202080be4)
+[WRONG AUTHOR - NO MATCH] GBCBS-1831: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: a0617f08-b0bb-4781-890b-acf2bbc30473)
+[DUPLICATE] GBCBS-1831: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1832: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: ec767a40-c51a-46a0-be86-0fa6fe576cd6)
+[WRONG AUTHOR - NO MATCH] GBCBS-1832: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: ef1fdfae-6c31-4965-a9ee-754f76aa97d5)
+[DUPLICATE] GBCBS-1832: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1833: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 8ebceacf-a8cd-47d6-a074-41c51a865f33)
+[WRONG AUTHOR - NO MATCH] GBCBS-1833: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 81d41eb3-8cc7-4344-8522-91ff5de2543d)
+[DUPLICATE] GBCBS-1833: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1834: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: e141a3f5-6e12-4d19-81bf-b1aa4e7e53d5)
+[WRONG AUTHOR - NO MATCH] GBCBS-1834: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: c4068afa-e6b5-4841-bbfe-e50c98f87cb5)
+[WRONG AUTHOR - NO MATCH] GBCBS-1835: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: be65846a-7855-4ff1-bbe5-deb53ebd236d)
+[WRONG AUTHOR - NO MATCH] GBCBS-1835: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 647fb947-53ea-484b-be72-819f275a66fa)
+[DUPLICATE] GBCBS-1835: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1836: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 9aca39b0-948f-4f8f-9c91-33fc2450bb06)
+[WRONG AUTHOR - NO MATCH] GBCBS-1836: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: c5597846-e59c-4130-b7fc-be0de033b418)
+[DUPLICATE] GBCBS-1836: Found 2 copies of comment by User ec00aa25-3e63-4851-85e6-8e10021d780e
+[DUPLICATE] GBCBS-1836: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1837: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 2e53e4ff-5f1a-4d13-b18a-38aaf49aad6d)
+[WRONG AUTHOR - NO MATCH] GBCBS-1837: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: e52a20a5-a746-4343-8d15-dbdd9ee499d2)
+[DUPLICATE] GBCBS-1837: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1838: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 0dacd809-7ad8-482f-93dc-909e88e91add)
+[WRONG AUTHOR - NO MATCH] GBCBS-1839: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 5f05b11a-1361-49e9-86a3-c93c7c8ec25c)
+[WRONG AUTHOR - NO MATCH] GBCBS-1839: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 7994c31b-30dc-4b89-bbe6-4d6b62416bdb)
+[WRONG AUTHOR - NO MATCH] GBCBS-1839: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 44e7235f-3e58-4cf2-9d81-199239b79bd5)
+[WRONG AUTHOR - NO MATCH] GBCBS-1839: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 854c6d42-482f-4cec-b3e4-69b41bef2faa)
+[WRONG AUTHOR - NO MATCH] GBCBS-1839: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: dc80e472-a3c0-454f-8c05-ed5b797108ae)
+[WRONG AUTHOR - NO MATCH] GBCBS-1839: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: ea5be51e-faca-49dc-a7db-f35a28b083e5)
+[WRONG AUTHOR - NO MATCH] GBCBS-1839: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 234ea606-95dc-4230-9422-16f97063f973)
+[WRONG AUTHOR - NO MATCH] GBCBS-1839: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: e55f1b29-5a3a-49bd-ae5c-9c97130da2b3)
+[WRONG AUTHOR - NO MATCH] GBCBS-1839: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 670775f1-fdbe-46cb-aeb7-df83af289974)
+[WRONG AUTHOR - NO MATCH] GBCBS-1839: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 1dde444d-1508-4092-8b98-bb7ace195026)
+[WRONG AUTHOR - NO MATCH] GBCBS-1839: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: f049e0cb-d404-4e52-b01b-40bd501e6356)
+[WRONG AUTHOR - NO MATCH] GBCBS-1839: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: d729ba21-fb7f-416b-aa3d-a9ef9d481157)
+[DUPLICATE] GBCBS-1839: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1839: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1839: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-184: Jira: 'Lydia Okoth' vs DB: 'Lupogo Lupogo' (ID: bc3bef8c-8f4f-4b9f-a67c-0f8c74b02db6)
+[WRONG AUTHOR - NO MATCH] GBCBS-184: Jira: 'Lydia Okoth' vs DB: 'Mungai Stephen' (ID: 41cc955e-8307-4ca5-8ce2-4a2414cc99f2)
+[WRONG AUTHOR - NO MATCH] GBCBS-184: Jira: 'Lydia Okoth' vs DB: 'Mungai Stephen' (ID: 41cc955e-8307-4ca5-8ce2-4a2414cc99f2)
+[WRONG AUTHOR - NO MATCH] GBCBS-1841: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: d7ebee1b-b402-4624-a19c-e0a745d0b4dc)
+[WRONG AUTHOR - NO MATCH] GBCBS-1841: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 59e281f8-0bbb-441a-be88-60c01db34b38)
+[WRONG AUTHOR - NO MATCH] GBCBS-1841: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: fe7c3afc-80eb-4ea9-b02d-923a5501b280)
+[WRONG AUTHOR - NO MATCH] GBCBS-1841: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: e2616e45-d3ec-40ae-8628-a77d12440753)
+[WRONG AUTHOR - NO MATCH] GBCBS-1841: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: dde3a8d7-1900-45f8-8482-c73449248e6b)
+[WRONG AUTHOR - NO MATCH] GBCBS-1841: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 0a73dd2f-3caf-4a67-a3c5-7bf7cc6faf05)
+[WRONG AUTHOR - NO MATCH] GBCBS-1841: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: dcb809a2-77ba-4755-8d1a-d85cadc9fdd1)
+[WRONG AUTHOR - NO MATCH] GBCBS-1841: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 76a1bf8f-ea59-4a68-adba-158f54360c07)
+[DUPLICATE] GBCBS-1841: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1842: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 70286862-a916-4a39-84d5-d42ad93a2ce7)
+[DUPLICATE] GBCBS-1844: Found 2 copies of comment by User 6da5bbbe-0890-4d0b-a645-cb0cf3451650
+[DUPLICATE] GBCBS-1846: Found 2 copies of comment by User 982c17e9-dc39-4e79-a7d4-a4c7007dc7f3
+[DUPLICATE] GBCBS-1847: Found 2 copies of comment by User 4a2a3dd6-d785-41ec-8c83-17551a110b04
+[DUPLICATE] GBCBS-1851: Found 2 copies of comment by User 982c17e9-dc39-4e79-a7d4-a4c7007dc7f3
+Processing 1001/7437: GBCBS-1859...
+[WRONG AUTHOR - NO MATCH] GBCBS-1859: Jira: 'jndetei' vs DB: 'Mungai Stephen' (ID: f77783e6-b05d-4826-b12e-ff26dd27dd9e)
+[WRONG AUTHOR - NO MATCH] GBCBS-1859: Jira: 'jndetei' vs DB: 'Mungai Stephen' (ID: 62150869-1e1a-42ab-9328-300035dc734d)
+[WRONG AUTHOR] GBCBS-186: Jira: 'Madhusudhan Vasa' (matched to Madhusudhan Vasa) vs DB: 'Mungai Stephen' (ID: f759ee67-ed43-42c6-b4c1-9d1de62079fb)
+[WRONG AUTHOR - NO MATCH] GBCBS-186: Jira: 'Lydia Okoth' vs DB: 'Mungai Stephen' (ID: f759ee67-ed43-42c6-b4c1-9d1de62079fb)
+[DUPLICATE] GBCBS-1867: Found 2 copies of comment by User 982c17e9-dc39-4e79-a7d4-a4c7007dc7f3
+[WRONG AUTHOR - NO MATCH] GBCBS-1871: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 792c4d78-0361-46b9-8142-cd40e90029f7)
+[WRONG AUTHOR - NO MATCH] GBCBS-1871: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 5fb4e75b-a2c4-4dca-a348-63123a355b79)
+[DUPLICATE] GBCBS-1871: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1872: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 4c066957-9f36-492b-8a69-838dcaee84ad)
+[WRONG AUTHOR - NO MATCH] GBCBS-1873: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 23c2a9c1-58a7-4c32-b72e-6f521eb2e7a5)
+[WRONG AUTHOR - NO MATCH] GBCBS-1873: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: f98a947a-baa8-417c-b32f-8a293032b088)
+[DUPLICATE] GBCBS-1873: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1874: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 1dfbbc0f-c4f4-4019-bf9a-489301c02898)
+[WRONG AUTHOR - NO MATCH] GBCBS-1875: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: e34f407f-cc25-49bc-9d0e-548c67892568)
+[WRONG AUTHOR - NO MATCH] GBCBS-1875: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 5204abdf-88ae-4a40-9b47-ac6468419040)
+[DUPLICATE] GBCBS-1875: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1876: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: e2f70f2f-5d66-4257-950f-857be7af3026)
+[WRONG AUTHOR - NO MATCH] GBCBS-1876: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: c82e3314-f6b6-4e80-b673-f76cd5f8bed5)
+[WRONG AUTHOR - NO MATCH] GBCBS-1876: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: f1948c71-4d9d-463a-94c0-02be8652d908)
+[WRONG AUTHOR - NO MATCH] GBCBS-1876: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 462ca9ce-3b79-4c83-91e9-80c748265915)
+[WRONG AUTHOR - NO MATCH] GBCBS-1876: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 79a4bc3b-42c0-4dae-88c2-75ba914dd2b2)
+[DUPLICATE] GBCBS-1876: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1878: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: f3d8397d-444a-4c0c-817e-c91b81674fda)
+[WRONG AUTHOR - NO MATCH] GBCBS-1878: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 1e1e6e4a-9bb0-4b9c-b477-f5d1f9f9e4a3)
+[WRONG AUTHOR - NO MATCH] GBCBS-1879: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 34ff4753-3749-4651-9c2e-9fdc5b48cd13)
+[WRONG AUTHOR - NO MATCH] GBCBS-1880: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: f22c60da-ef6b-4921-b493-cdaf52ff6d12)
+[WRONG AUTHOR - NO MATCH] GBCBS-1880: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: d98b72a7-f9d0-4852-aafb-7aab17a08f54)
+[DUPLICATE] GBCBS-1880: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1881: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 739ada67-6212-414c-ad6e-8b344bcdf7bc)
+[WRONG AUTHOR - NO MATCH] GBCBS-1881: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: a872d649-0f61-4a35-89fd-a9a3b3f98553)
+[DUPLICATE] GBCBS-1881: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1882: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 23db8cd5-488c-42bc-8ac6-85d32cf20a72)
+[WRONG AUTHOR - NO MATCH] GBCBS-1883: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: d50f01e6-a6fe-4fe4-9003-c757675985ad)
+[DUPLICATE] GBCBS-1888: Found 2 copies of comment by User 4a2a3dd6-d785-41ec-8c83-17551a110b04
+[DUPLICATE] GBCBS-1893: Found 2 copies of comment by User 982c17e9-dc39-4e79-a7d4-a4c7007dc7f3
+[DUPLICATE] GBCBS-1894: Found 2 copies of comment by User 4a2a3dd6-d785-41ec-8c83-17551a110b04
+[DUPLICATE] GBCBS-1896: Found 2 copies of comment by User 4a2a3dd6-d785-41ec-8c83-17551a110b04
+[DUPLICATE] GBCBS-1898: Found 2 copies of comment by User 4a2a3dd6-d785-41ec-8c83-17551a110b04
+[DUPLICATE] GBCBS-1898: Found 2 copies of comment by User 4a2a3dd6-d785-41ec-8c83-17551a110b04
+[DUPLICATE] GBCBS-1899: Found 2 copies of comment by User 4a2a3dd6-d785-41ec-8c83-17551a110b04
+[WRONG AUTHOR - NO MATCH] GBCBS-190: Jira: 'Lydia Okoth' vs DB: 'Mungai Stephen' (ID: 3f8ee35c-fb9e-44ff-9b41-c9c98aae5b96)
+Processing 1051/7437: GBCBS-1904...
+[DUPLICATE] GBCBS-1919: Found 2 copies of comment by User 12dd9631-f614-4a30-8072-dd6d25226af9
+[DUPLICATE] GBCBS-1920: Found 2 copies of comment by User 12dd9631-f614-4a30-8072-dd6d25226af9
+[WRONG AUTHOR - NO MATCH] GBCBS-1921: Jira: 'jndetei' vs DB: 'Mungai Stephen' (ID: 525be772-67f6-4495-9f82-50741ed75e41)
+[WRONG AUTHOR - NO MATCH] GBCBS-1921: Jira: 'jndetei' vs DB: 'Mungai Stephen' (ID: c0c6b413-61a6-4e11-b6ee-6c94c88e1e4f)
+[WRONG AUTHOR - NO MATCH] GBCBS-1922: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 9db9dbf4-7f55-4d67-8d03-dd0582da4dc1)
+[WRONG AUTHOR - NO MATCH] GBCBS-1922: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: f26e7d4c-fb6d-41b1-a40f-fa1a5be59a48)
+[DUPLICATE] GBCBS-1922: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1932: Found 2 copies of comment by User ec00aa25-3e63-4851-85e6-8e10021d780e
+[WRONG AUTHOR] GBCBS-1938: Jira: 'Valerie Mugono' (matched to Valerie Mugono) vs DB: 'archana verma' (ID: 407c46cf-28ad-49a9-99e6-416dfa7ac8ff)
+[WRONG AUTHOR] GBCBS-1938: Jira: 'Valerie Mugono' (matched to Valerie Mugono) vs DB: 'archana verma' (ID: 30524e41-7a5d-4ba9-90b2-792eabc25075)
+[WRONG AUTHOR] GBCBS-1938: Jira: 'Valerie Mugono' (matched to Valerie Mugono) vs DB: 'archana verma' (ID: 9f978b64-eda0-4de4-9fac-bbb7f5f08272)
+[WRONG AUTHOR] GBCBS-1938: Jira: 'Valerie Mugono' (matched to Valerie Mugono) vs DB: 'archana verma' (ID: 407c46cf-28ad-49a9-99e6-416dfa7ac8ff)
+[WRONG AUTHOR] GBCBS-1938: Jira: 'Valerie Mugono' (matched to Valerie Mugono) vs DB: 'archana verma' (ID: 30524e41-7a5d-4ba9-90b2-792eabc25075)
+[WRONG AUTHOR] GBCBS-1938: Jira: 'Valerie Mugono' (matched to Valerie Mugono) vs DB: 'archana verma' (ID: 9f978b64-eda0-4de4-9fac-bbb7f5f08272)
+[WRONG AUTHOR] GBCBS-194: Jira: 'Polycarp Amenya' (matched to Polycarp Amenya) vs DB: 'archana verma' (ID: c114edcc-f3ad-40f5-a45c-1a76b7c50953)
+[WRONG AUTHOR - NO MATCH] GBCBS-1943: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 455dc67d-3e61-4871-b7ab-4948e06dd431)
+[WRONG AUTHOR - NO MATCH] GBCBS-1943: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 67c4fc39-5b49-4542-9a14-1f3ec4251549)
+[DUPLICATE] GBCBS-1943: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+Processing 1101/7437: GBCBS-195...
+[WRONG AUTHOR - NO MATCH] GBCBS-1956: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: ad309a70-1e04-4cf1-8c53-b49b03cb551e)
+[WRONG AUTHOR - NO MATCH] GBCBS-1956: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 09f0f088-4653-4b63-acd1-278f238686c1)
+[WRONG AUTHOR - NO MATCH] GBCBS-1958: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: dfa3fbf5-5ab5-4113-ac90-98419ee599d7)
+[WRONG AUTHOR - NO MATCH] GBCBS-1958: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: cf5da265-44e1-4402-8b31-c3fa8fb55b3d)
+[WRONG AUTHOR - NO MATCH] GBCBS-1958: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: e8c04459-cdbc-482d-ae8c-3a3183e594f6)
+[DUPLICATE] GBCBS-1958: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-196: Jira: 'Lydia Okoth' vs DB: 'Mungai Stephen' (ID: 4447605e-2562-4d2e-ae74-9ce06022e103)
+[WRONG AUTHOR - NO MATCH] GBCBS-1963: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: e4dd1404-f168-4d8a-b02c-da8c3bb888e1)
+[WRONG AUTHOR - NO MATCH] GBCBS-1963: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 529a82db-6049-460f-ade4-9ab203e0b44b)
+[DUPLICATE] GBCBS-1963: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1966: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 49eb74df-7441-4c5a-897a-5350765e127a)
+[WRONG AUTHOR - NO MATCH] GBCBS-1966: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 6b505c94-e192-41d4-a0b0-20664eb549bf)
+[WRONG AUTHOR - NO MATCH] GBCBS-1966: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: d5236e7c-7e34-4f2f-b8e8-e3c9531a4135)
+[WRONG AUTHOR - NO MATCH] GBCBS-1966: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 8fe0f183-c7c5-4da5-936a-5adb6b0459c7)
+[DUPLICATE] GBCBS-1966: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1966: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1967: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 96177bc3-c42d-4316-9360-df7e4d486512)
+[WRONG AUTHOR - NO MATCH] GBCBS-1967: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 75381c7c-2cdb-433f-a949-46f8849a2449)
+[DUPLICATE] GBCBS-1967: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1975: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 56aae60e-995b-4143-a5db-d32575e5177a)
+[WRONG AUTHOR - NO MATCH] GBCBS-1975: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 17fd6762-8092-4a8a-9aae-02600f7791d0)
+[DUPLICATE] GBCBS-1975: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1976: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: a2ad3b10-d21c-4018-8029-6fd1597758f3)
+[WRONG AUTHOR - NO MATCH] GBCBS-1976: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 3ccfdb99-3c3d-4a71-85ea-43a92e3f82b6)
+[DUPLICATE] GBCBS-1976: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1979: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 9fb8e59b-0764-4f06-97ac-3dc087aa2ac8)
+[WRONG AUTHOR - NO MATCH] GBCBS-1979: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 197958b2-b248-4b8c-942b-7050f3d6b68c)
+[WRONG AUTHOR - NO MATCH] GBCBS-1979: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 5b159327-54f9-49a9-afa9-bb0b12191819)
+[WRONG AUTHOR - NO MATCH] GBCBS-1979: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: e84b56f7-43f1-461c-a20b-6b8483a22989)
+[WRONG AUTHOR - NO MATCH] GBCBS-1979: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 9fb8e59b-0764-4f06-97ac-3dc087aa2ac8)
+[WRONG AUTHOR - NO MATCH] GBCBS-1979: Jira: 'Pratik Mehta' vs DB: 'Amit Patel' (ID: 90b9a44a-d54a-4b76-a899-30a303d27606)
+[WRONG AUTHOR - NO MATCH] GBCBS-1979: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 197958b2-b248-4b8c-942b-7050f3d6b68c)
+[WRONG AUTHOR - NO MATCH] GBCBS-1979: Jira: 'Pratik Mehta' vs DB: 'Amit Patel' (ID: c641a034-878c-4e7b-8761-95b5b9d3ce75)
+[WRONG AUTHOR - NO MATCH] GBCBS-1979: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: fd6e35ac-9661-4693-9e8e-c00137baf4c3)
+[WRONG AUTHOR - NO MATCH] GBCBS-1979: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: e84b56f7-43f1-461c-a20b-6b8483a22989)
+[WRONG AUTHOR - NO MATCH] GBCBS-1979: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: fd6e35ac-9661-4693-9e8e-c00137baf4c3)
+[DUPLICATE] GBCBS-1979: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1979: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-1979: Found 2 copies of comment by User ec00aa25-3e63-4851-85e6-8e10021d780e
+[WRONG AUTHOR - NO MATCH] GBCBS-1981: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 8c538a88-b5a8-487c-88e8-1ef2ae36c1c4)
+[WRONG AUTHOR - NO MATCH] GBCBS-1981: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: ede53991-67a1-4710-8abb-36669ac34299)
+[DUPLICATE] GBCBS-1981: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1982: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 8a31de9c-e512-4417-90b7-3b0ec58a76f1)
+[WRONG AUTHOR - NO MATCH] GBCBS-1982: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 4239b9ca-ec33-434a-8439-6527f03cb238)
+[DUPLICATE] GBCBS-1982: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1983: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 3c3e5396-a932-45df-923d-5b88aa73df63)
+[WRONG AUTHOR - NO MATCH] GBCBS-1983: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 10824c85-9621-4bec-ad4c-f1b263f9da87)
+[DUPLICATE] GBCBS-1983: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1984: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 61b13db4-c4d6-41bb-a4fe-b2303353b19c)
+[WRONG AUTHOR - NO MATCH] GBCBS-1984: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 9041c81a-679d-43ea-9471-553d67b8482b)
+[WRONG AUTHOR - NO MATCH] GBCBS-1985: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: f4108b13-abf8-4b3b-8325-68bcc659cc5d)
+[WRONG AUTHOR - NO MATCH] GBCBS-1985: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 90feeec3-4728-4eb0-9d48-8a40fd1fbdbc)
+[DUPLICATE] GBCBS-1985: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-1988: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 43fed3a0-95d9-4a3c-a5e9-c46889a6baa6)
+[WRONG AUTHOR - NO MATCH] GBCBS-1988: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 91d83e25-7243-42d7-93a4-14759bf03009)
+[WRONG AUTHOR - NO MATCH] GBCBS-1991: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 79461cea-a7d5-42be-84e8-b47fc82de798)
+[WRONG AUTHOR - NO MATCH] GBCBS-1991: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: a34cdd0c-5f03-47e8-b66e-cb3cfbf48735)
+[DUPLICATE] GBCBS-1991: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+Processing 1151/7437: GBCBS-1995...
+[WRONG AUTHOR - NO MATCH] GBCBS-2005: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: cdfd931c-3f38-46fd-8325-bd341699d394)
+[WRONG AUTHOR - NO MATCH] GBCBS-2005: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 09b92033-10d0-40d7-8f1c-7639aea4d154)
+[DUPLICATE] GBCBS-2005: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-2011: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: b93f1e7c-0013-4061-bd32-a3eae747382c)
+[WRONG AUTHOR - NO MATCH] GBCBS-2011: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 6314e958-256b-492a-a8a2-23eda86eb5e3)
+[DUPLICATE] GBCBS-2011: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-2012: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 18e8c8fb-29c9-440c-90de-edc83c07fdc7)
+[WRONG AUTHOR - NO MATCH] GBCBS-2012: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 73afd64f-3c12-4774-9673-3ebd1f31dd2b)
+[DUPLICATE] GBCBS-2012: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-2013: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 2b1c2de2-23be-4b31-94a3-2631c11734bb)
+[WRONG AUTHOR - NO MATCH] GBCBS-2013: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 8a3f3f8c-6558-4000-bfa5-d5111bdf54c7)
+[DUPLICATE] GBCBS-2013: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-2014: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: ad6c9003-b794-4a21-a727-037020ca21c1)
+[WRONG AUTHOR - NO MATCH] GBCBS-2014: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 1c1acdc9-365d-4e3d-9be4-9d4cc76a6ac8)
+[DUPLICATE] GBCBS-2014: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-2015: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 998a9a3a-e110-4d2e-b4bd-e18641ed2f61)
+[WRONG AUTHOR - NO MATCH] GBCBS-2015: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 0c14c2ff-81bf-4e6a-9a48-d29ae45eb8b7)
+[DUPLICATE] GBCBS-2015: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-2016: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 536d15fc-640d-46ad-981b-0492e28200f3)
+[WRONG AUTHOR - NO MATCH] GBCBS-2016: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 7f045daf-f031-41bf-ad96-08010d13af0e)
+[WRONG AUTHOR - NO MATCH] GBCBS-2016: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: b822396d-fac1-4a66-985d-b037d62ed603)
+[WRONG AUTHOR - NO MATCH] GBCBS-2016: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 668f802e-e890-45ea-8c5e-f060bae9656d)
+[DUPLICATE] GBCBS-2016: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-2016: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-2017: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: d95e0245-dc7f-4365-b8f3-42761b059b0a)
+[WRONG AUTHOR - NO MATCH] GBCBS-2017: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 55e12f18-eef3-4667-a83c-b9bda0c56628)
+[WRONG AUTHOR - NO MATCH] GBCBS-2018: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 03d1f335-4f8c-46f6-84fa-1c482232875b)
+[WRONG AUTHOR - NO MATCH] GBCBS-2018: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: ad00a15e-2f6b-4ebf-93df-6ea41d438c33)
+[DUPLICATE] GBCBS-2018: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-2019: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: d95677fd-793b-492e-b82f-bda2255b53ae)
+[WRONG AUTHOR] GBCBS-202: Jira: 'Polycarp Amenya' (matched to Polycarp Amenya) vs DB: 'Manasseh Wanyoike' (ID: 4db8835b-198f-498f-9a32-adc296f3f121)
+[WRONG AUTHOR] GBCBS-203: Jira: 'swati mishra' (matched to Swati Mishra) vs DB: 'archana verma' (ID: 812008ac-6c73-4cd1-9f67-6129dc62a415)
+[WRONG AUTHOR] GBCBS-203: Jira: 'swati mishra' (matched to Swati Mishra) vs DB: 'archana verma' (ID: 7c0960dc-beec-434d-8f95-f0fe83101fd0)
+[WRONG AUTHOR] GBCBS-203: Jira: 'swati mishra' (matched to Swati Mishra) vs DB: 'archana verma' (ID: 812008ac-6c73-4cd1-9f67-6129dc62a415)
+[WRONG AUTHOR] GBCBS-203: Jira: 'swati mishra' (matched to Swati Mishra) vs DB: 'archana verma' (ID: 7c0960dc-beec-434d-8f95-f0fe83101fd0)
+[WRONG AUTHOR] GBCBS-203: Jira: 'swati mishra' (matched to Swati Mishra) vs DB: 'archana verma' (ID: 7c0960dc-beec-434d-8f95-f0fe83101fd0)
+[DUPLICATE] GBCBS-203: Found 2 copies of comment by User b6ee224f-51c6-4d4f-9a8d-3df2fa74b72b
+[WRONG AUTHOR - NO MATCH] GBCBS-2035: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: e92b5f13-b405-45bf-81d3-6e4b095905a2)
+[WRONG AUTHOR - NO MATCH] GBCBS-2035: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 2ef78898-ca6b-4f33-8905-4063f039dfed)
+[DUPLICATE] GBCBS-2035: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-2037: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 6cfe673c-c511-48ee-9aff-943d2ddc4454)
+[WRONG AUTHOR - NO MATCH] GBCBS-2037: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: e7d2142e-5636-4ca0-84ec-c0f082bbeb32)
+[DUPLICATE] GBCBS-2037: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-2038: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 5e52964b-814b-4b82-972f-33ff2792261a)
+[WRONG AUTHOR - NO MATCH] GBCBS-2038: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: fd6e46c6-c2aa-473a-91b3-0f6ff1ce8f1c)
+[DUPLICATE] GBCBS-2038: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-2039: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: e4596cd7-7ade-43b2-9d9f-beb36346e071)
+[WRONG AUTHOR - NO MATCH] GBCBS-2039: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: b7ece6d5-6720-4b44-98b2-2315185e8a4f)
+[DUPLICATE] GBCBS-2039: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+Processing 1201/7437: GBCBS-2040...
+[WRONG AUTHOR - NO MATCH] GBCBS-2040: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: d3c65fe8-3fd0-478e-894a-1ed900268b01)
+[WRONG AUTHOR - NO MATCH] GBCBS-2041: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 463bc35a-628e-45bf-b45e-f18ce42bf16e)
+[WRONG AUTHOR - NO MATCH] GBCBS-2041: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 3080b4bd-86e4-4591-bfd5-523abbbc4082)
+[DUPLICATE] GBCBS-2041: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-205: Jira: 'Lydia Okoth' vs DB: 'Mungai Stephen' (ID: da283499-d0e5-498e-b3d6-2da82ebd5c04)
+[WRONG AUTHOR - NO MATCH] GBCBS-2050: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: e1743b77-2bf3-4b09-9101-f8996a7956c8)
+[WRONG AUTHOR - NO MATCH] GBCBS-2050: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: f6fa62f5-da82-43b1-b25e-5491304d5e72)
+[DUPLICATE] GBCBS-2050: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-2055: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: b2ed824b-7ad6-48f6-961e-75f6a2d16e76)
+[WRONG AUTHOR - NO MATCH] GBCBS-2055: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 8ec49b72-503f-4c4a-a7e7-89e918e0e843)
+[DUPLICATE] GBCBS-2055: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-2056: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 7086210a-5b7b-4e7f-a579-194d6651a5d8)
+[WRONG AUTHOR - NO MATCH] GBCBS-2056: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 25fc471a-5174-4063-9545-4a89625bf18c)
+[WRONG AUTHOR - NO MATCH] GBCBS-2056: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 49ae4af6-abcd-42da-824f-e8178f0b4c7c)
+[DUPLICATE] GBCBS-2056: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR] GBCBS-2058: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'Mungai Stephen' (ID: 44bbc675-bb49-4e48-b646-f9edc9f1746a)
+[WRONG AUTHOR] GBCBS-2058: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'Mungai Stephen' (ID: d9262902-f5d0-4e46-bb6c-96337383a117)
+[WRONG AUTHOR - NO MATCH] GBCBS-2058: Jira: 'Ponic Kambi' vs DB: 'Mungai Stephen' (ID: 44bbc675-bb49-4e48-b646-f9edc9f1746a)
+[WRONG AUTHOR - NO MATCH] GBCBS-2058: Jira: 'Ponic Kambi' vs DB: 'Mungai Stephen' (ID: d9262902-f5d0-4e46-bb6c-96337383a117)
+[WRONG AUTHOR] GBCBS-2059: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'Mungai Stephen' (ID: 4856f046-ba70-4947-b264-11a9a9af5782)
+[WRONG AUTHOR] GBCBS-2059: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'Mungai Stephen' (ID: 584fe466-d6d9-4653-9b5f-099f201b54d3)
+[WRONG AUTHOR - NO MATCH] GBCBS-2059: Jira: 'Ponic Kambi' vs DB: 'Mungai Stephen' (ID: 4856f046-ba70-4947-b264-11a9a9af5782)
+[WRONG AUTHOR - NO MATCH] GBCBS-2059: Jira: 'Ponic Kambi' vs DB: 'Mungai Stephen' (ID: 584fe466-d6d9-4653-9b5f-099f201b54d3)
+[WRONG AUTHOR] GBCBS-206: Jira: 'Polycarp Amenya' (matched to Polycarp Amenya) vs DB: 'Mungai Stephen' (ID: 84dc9a3a-3b40-4aa2-955c-0f78a3867dfc)
+[WRONG AUTHOR - NO MATCH] GBCBS-206: Jira: 'Lydia Okoth' vs DB: 'Mungai Stephen' (ID: 84dc9a3a-3b40-4aa2-955c-0f78a3867dfc)
+[WRONG AUTHOR] GBCBS-2060: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'Mungai Stephen' (ID: 5ee64e5c-ed7a-4ce3-93f9-75fa74550c14)
+[WRONG AUTHOR] GBCBS-2060: Jira: 'Danson' (matched to Danson mwangi) vs DB: 'Mungai Stephen' (ID: 52d64a7d-60f2-4868-919e-7b7a9b1beb29)
+[WRONG AUTHOR - NO MATCH] GBCBS-2060: Jira: 'Ponic Kambi' vs DB: 'Mungai Stephen' (ID: 5ee64e5c-ed7a-4ce3-93f9-75fa74550c14)
+[WRONG AUTHOR - NO MATCH] GBCBS-2060: Jira: 'Ponic Kambi' vs DB: 'Mungai Stephen' (ID: 52d64a7d-60f2-4868-919e-7b7a9b1beb29)
+[WRONG AUTHOR - NO MATCH] GBCBS-2066: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 2286da3d-77e4-41fa-b5b5-271849ec1272)
+[WRONG AUTHOR - NO MATCH] GBCBS-2066: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: dfb51268-f580-4c5c-ae33-c170725df9b3)
+[DUPLICATE] GBCBS-2066: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-2068: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: c0b901cc-b2bb-41a8-9a80-46a97eee5265)
+[WRONG AUTHOR - NO MATCH] GBCBS-2068: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 38912eb5-ac26-427a-9185-f716f44ec815)
+[DUPLICATE] GBCBS-2068: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-2069: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 369dfe94-19ba-4d5c-8a52-1f0bbedd8e6b)
+[WRONG AUTHOR - NO MATCH] GBCBS-2069: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: cbccbaa3-814d-41f7-8065-fe4b1f1c69a9)
+[DUPLICATE] GBCBS-2069: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-2070: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: f6d80909-604c-41a7-86f8-2bf167ac3930)
+[WRONG AUTHOR - NO MATCH] GBCBS-2070: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: cbf19c7a-4f89-4154-8ac6-8c6315b4f215)
+[DUPLICATE] GBCBS-2070: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-2071: Jira: 'ambadas.g' vs DB: 'Mungai Stephen' (ID: 9e0ac34b-f329-432c-a532-c142b032c940)
+[WRONG AUTHOR - NO MATCH] GBCBS-2071: Jira: 'ambadas.g' vs DB: 'Mungai Stephen' (ID: 82e82c6b-38d9-42ed-b6ea-8c1525b8961e)
+[WRONG AUTHOR - NO MATCH] GBCBS-2071: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 53d894b0-fe76-4559-91ba-b9451d81fa17)
+[WRONG AUTHOR - NO MATCH] GBCBS-2071: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 599ced68-a9ef-4782-810a-8649c48bc230)
+[DUPLICATE] GBCBS-2071: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-2072: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 086444c9-ed2a-4bf5-b392-627b12fe1c68)
+[WRONG AUTHOR - NO MATCH] GBCBS-2072: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 7b08dba6-91d8-4c88-a56b-4daa1eba9a27)
+[DUPLICATE] GBCBS-2072: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-2073: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: f5c807e0-101b-493d-ab90-5e50b572c854)
+[WRONG AUTHOR - NO MATCH] GBCBS-2073: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 0e7855d3-3b76-4872-8aa6-b6be06b213f4)
+[DUPLICATE] GBCBS-2073: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR - NO MATCH] GBCBS-2074: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 772b1ebc-5666-4d3d-abd7-d3ca5ae258f2)
+[WRONG AUTHOR - NO MATCH] GBCBS-2074: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: a466d8f8-2ad6-4690-ab00-40fb2d340e8c)
+[WRONG AUTHOR - NO MATCH] GBCBS-2074: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 9bb5285b-ec74-4a99-af21-c947787a64f1)
+[WRONG AUTHOR - NO MATCH] GBCBS-2074: Jira: 'Pratik Mehta' vs DB: 'Mungai Stephen' (ID: 5ac5632b-aab5-4e66-8b2c-916f47caec74)
+[DUPLICATE] GBCBS-2074: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[DUPLICATE] GBCBS-2074: Found 2 copies of comment by User b3613172-fc54-4742-b2ba-c10b97d15bf4
+[WRONG AUTHOR] GBCBS-2075: Jira: 'manasseh.wanyoike' (matched to Manasseh Wanyoike) vs DB: 'Mungai Stephen' (ID: 7297f434-1824-4fff-984a-634fafc7924d)
+[WRONG AUTHOR - NO MATCH] GBCBS-2076: Jira: 'Ponic Kambi' vs DB: 'Mungai Stephen' (ID: 69f1fa67-9fb8-4352-b83c-9a686643fca2)
+[WRONG AUTHOR - NO MATCH] GBCBS-2076: Jira: 'Ponic Kambi' vs DB: 'Mungai Stephen' (ID: 77964f60-d35d-4df5-945b-6a231c86a705)
+[DUPLICATE] GBCBS-2076: Found 2 copies of comment by User 36d5db86-7e08-43bf-b802-764b29c27b63
+[WRONG AUTHOR - NO MATCH] GBCBS-2077: Jira: 'Ponic Kambi' vs DB: 'Mungai Stephen' (ID: fb4abbfa-7547-45e1-b5bf-f1a5961917f3)
+[WRONG AUTHOR - NO MATCH] GBCBS-2077: Jira: 'Ponic Kambi' vs DB: 'Mungai Stephen' (ID: 8eebae03-7e6d-4057-bc06-576ab4b99037)
+[WRONG AUTHOR] GBCBS-2077: Jira: 'archana.verma' (matched to archana verma) vs DB: 'Mungai Stephen' (ID: ccb46131-c261-48bc-a498-2810791fd1dc)
+[WRONG AUTHOR - NO MATCH] GBCBS-2077: Jira: 'Ponic Kambi' vs DB: 'Mungai Stephen' (ID: 9889e84c-8bc5-49a8-8c22-ebf5e4049762)
+[WRONG AUTHOR - NO MATCH] GBCBS-2077: Jira: 'Ponic Kambi' vs DB: 'Mungai Stephen' (ID: 53c303c0-31df-4589-8415-0fda7409c9b7)
+[DUPLICATE] GBCBS-2077: Found 2 copies of comment by User 36d5db86-7e08-43bf-b802-764b29c27b63
+[WRONG AUTHOR - NO MATCH] GBCBS-2078: Jira: 'Ponic Kambi' vs DB: 'Mungai Stephen' (ID: eba06f93-042b-4597-882d-a05c8e96fd01)
+[WRONG AUTHOR - NO MATCH] GBCBS-2078: Jira: 'Ponic Kambi' vs DB: 'Mungai Stephen' (ID: f42434b6-a76b-4860-95f6-5c638d8ee52a)
+[DUPLICATE] GBCBS-2078: Found 2 copies of comment by User 36d5db86-7e08-43bf-b802-764b29c27b63
+Processing 1251/7437: GBCBS-2086...
+[WRONG AUTHOR] GBCBS-209: Jira: 'swati mishra' (matched to Swati Mishra) vs DB: 'archana verma' (ID: f249cdff-7bdd-46a2-9851-39c01857d469)
+[WRONG AUTHOR] GBCBS-209: Jira: 'swati mishra' (matched to Swati Mishra) vs DB: 'archana verma' (ID: 42045bb1-fb65-43ee-b926-d7dade5913a2)
+[WRONG AUTHOR] GBCBS-209: Jira: 'swati mishra' (matched to Swati Mishra) vs DB: 'archana verma' (ID: 42045bb1-fb65-43ee-b926-d7dade5913a2)
