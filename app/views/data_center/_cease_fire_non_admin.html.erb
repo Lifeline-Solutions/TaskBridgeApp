@@ -15,7 +15,7 @@
         <label for="searchStatus" class="capitalize text-sm font-bold w-full align-middle pt-3">Status</label>
         <input type="text" id="searchStatus" class="border border-[#3F8CFF] hover:border-[#3A81EB] border-2 rounded-lg bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-slate-100 w-full px-4 py-2" placeholder="Search Status...">
         <div id="statusDropdown" class="absolute top-20 left-0 w-full bg-white border border-[#3F8CFF] rounded-lg mt-1 shadow-lg max-h-60 overflow-y-auto hidden z-10">
-          <% ['New', 'Resolved', 'Closed', 'Reopened', 'Under Development', 'QA Testing', 'Awaiting Build', 'Client Confirmation Pending', 'On-Hold', 'Assigned', 'Declined', 'Work in Progress'].each do |status| %>
+          <% ['New', 'Resolved', 'Closed', 'Reopened', 'QA Testing', 'Awaiting Build', 'Client Information Pending', 'On-Hold', 'Assigned', 'Declined', 'Work in Progress'].each do |status| %>
             <div class="dropdown-item px-4 py-2 hover:bg-gray-100 cursor-pointer bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-slate-100">
               <label>
                 <input type="checkbox" value="<%= status %>" data-status-name="<%= status %>" class="status-checkbox mr-2 capitalize">

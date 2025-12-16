@@ -29,7 +29,7 @@
         <div class="mt-2 text-sm" data-type="tickets_from_inception_by_status" id="tickets_from_inception_by_status">
           <% if @stats[:tickets_from_inception_by_status].present? %>
             <%# Desired display order requested by user %>
-            <% desired_order = ['Assigned', 'Work in Progress', 'Under Development', 'QA Testing', 'Client Confirmation Pending', 'Reopened', 'On-Hold'] %>
+            <% desired_order = ['Assigned', 'Work in Progress', 'Under Development', 'QA Testing', 'Client Information Pending', 'Reopened', 'On-Hold'] %>
             <% ordered_statuses = desired_order.select { |s| @stats[:tickets_from_inception_by_status].key?(s) } + (@stats[:tickets_from_inception_by_status].keys - desired_order) %>
             <% ordered_statuses.each do |status| %>
               <div class="text-lg font-bold mb-2">
@@ -283,7 +283,7 @@
 
         if (statusData && Object.keys(statusData).length > 0) {
           // enforce the same desired order on the client
-          const desiredOrder = ['Assigned', 'Work in Progress', 'Under Development', 'QA Testing', 'Client Confirmation Pending', 'Reopened', 'On-Hold'];
+          const desiredOrder = ['Assigned', 'Work in Progress', 'Under Development', 'QA Testing', 'Client Information Pending', 'Reopened', 'On-Hold'];
           const allStatuses = Object.keys(statusData);
           const orderedStatuses = desiredOrder.filter(s => allStatuses.includes(s)).concat(allStatuses.filter(s => !desiredOrder.includes(s)));
           const statuses = orderedStatuses;
@@ -486,7 +486,7 @@
               case "Awaiting Build":
                 statusClass = "border-black dark:border-slate-100 text-black";
                 break;
-              case "Client Confirmation Pending":
+              case "Client Information Pending":
                 statusClass = "bg-purple-500 border-purple-600 text-white";
                 break;
               case "On-Hold":

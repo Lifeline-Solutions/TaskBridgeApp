@@ -564,7 +564,7 @@ class DataCenterController < ApplicationController
       'Work in Progress' => workbook.styles.add_style(bg_color: 'cccccc', sz: 9, border: { style: :thin, color: '000000' }), # Gray
       'QA Testing' => workbook.styles.add_style(bg_color: 'EC4899', sz: 9, border: { style: :thin, color: '000000' }), # Pink
       'Awaiting Build' => workbook.styles.add_style(bg_color: '1F2937', sz: 9, border: { style: :thin, color: '000000' }), # Dark Slate Gray
-      'Client Confirmation Pending' => workbook.styles.add_style(bg_color: 'FFF2CC', sz: 9, border: { style: :thin, color: '000000' }), # Purple
+      'Client Information Pending' => workbook.styles.add_style(bg_color: 'FFF2CC', sz: 9, border: { style: :thin, color: '000000' }), # Purple
       'On-Hold' => workbook.styles.add_style(bg_color: 'FF0000', sz: 9, border: { style: :thin, color: '000000' }), # Yellow
       'Assigned' => workbook.styles.add_style(bg_color: '1E40AF', fg_color: 'FFFFFF', sz: 9, border: { style: :thin, color: '000000' }), # Navy
       'Declined' => workbook.styles.add_style(bg_color: '000000', fg_color: 'FFFFFF', sz: 9, border: { style: :thin, color: '000000' }) # Dark Slate Gray
