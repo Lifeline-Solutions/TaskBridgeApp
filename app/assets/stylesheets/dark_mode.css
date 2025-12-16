@@ -5,51 +5,170 @@
     color-scheme: dark;
 }
 
-/* Force dark mode backgrounds */
-.dark .dark\:bg-gray-800,
-.dark .dark\:bg-gray-900,
-.dark .dark\:bg-slate-800 {
-    background-color: rgb(31 41 55) !important;
-}
-
-.dark .bg-white {
-    background-color: rgb(31 41 55) !important;
-}
-
+/* ===== BACKGROUNDS ===== */
+/* Force all white and light backgrounds to dark */
+.dark .bg-white,
+.dark .bg-slate-50,
 .dark .bg-slate-100,
 .dark .bg-gray-50,
-.dark .bg-gray-100 {
-    background-color: rgb(17 24 39) !important;
+.dark .bg-gray-100,
+.dark .bg-gray-200 {
+    background-color: rgb(31 41 55) !important;
+    /* gray-800 */
 }
 
-/* Force dark mode text colors */
+.dark .bg-blue-50,
+.dark .bg-blue-100 {
+    background-color: rgb(30 58 138) !important;
+    /* blue-900 */
+}
+
+.dark .bg-green-50,
+.dark .bg-green-100 {
+    background-color: rgb(20 83 45) !important;
+    /* green-900 */
+}
+
+.dark .bg-red-50,
+.dark .bg-red-100 {
+    background-color: rgb(127 29 29) !important;
+    /* red-900 */
+}
+
+.dark .bg-yellow-50,
+.dark .bg-yellow-100 {
+    background-color: rgb(113 63 18) !important;
+    /* yellow-900 */
+}
+
+/* Dark mode specific backgrounds */
+.dark .dark\:bg-gray-700,
+.dark .dark\:bg-gray-800,
+.dark .dark\:bg-gray-900 {
+    background-color: rgb(31 41 55) !important;
+}
+
+/* ===== TEXT COLORS ===== */
+/* Force all dark text to light */
 .dark .text-gray-900,
-.dark .dark\:text-white {
+.dark .text-gray-800,
+.dark .text-gray-700,
+.dark .text-black {
     color: rgb(241 245 249) !important;
+    /* slate-100 */
 }
 
-.dark .text-gray-700 {
+.dark .text-gray-600 {
     color: rgb(209 213 219) !important;
+    /* gray-300 */
 }
 
-.dark .text-gray-500 {
+.dark .text-gray-500,
+.dark .text-gray-400 {
     color: rgb(156 163 175) !important;
+    /* gray-400 */
 }
 
-/* Force dark mode borders */
-.dark .border-gray-200 {
-    border-color: rgb(55 65 81) !important;
+/* Ensure white text stays white */
+.dark .text-white,
+.dark .dark\:text-white {
+    color: rgb(255 255 255) !important;
 }
 
+/* ===== BORDERS ===== */
+.dark .border-gray-200,
 .dark .border-gray-300 {
+    border-color: rgb(55 65 81) !important;
+    /* gray-700 */
+}
+
+.dark .border-gray-100 {
+    border-color: rgb(75 85 99) !important;
+    /* gray-600 */
+}
+
+.dark .dark\:border-gray-700,
+.dark .dark\:border-gray-600 {
     border-color: rgb(75 85 99) !important;
 }
 
-/* Dark mode specific overrides for common components */
-.dark .shadow-sm {
-    --tw-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3) !important;
+/* ===== HOVER STATES ===== */
+.dark .hover\:bg-gray-50:hover,
+.dark .hover\:bg-gray-100:hover {
+    background-color: rgb(55 65 81) !important;
+    /* gray-700 */
 }
 
-.dark .shadow {
-    --tw-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.26) !important;
+.dark .dark\:hover\:bg-gray-700:hover {
+    background-color: rgb(55 65 81) !important;
+}
+
+.dark .hover\:text-gray-900:hover {
+    color: rgb(241 245 249) !important;
+}
+
+/* ===== PLACEHOLDERS ===== */
+.dark input::placeholder,
+.dark textarea::placeholder {
+    color: rgb(156 163 175) !important;
+    /* gray-400 */
+}
+
+/* ===== FORMS ===== */
+.dark input,
+.dark textarea,
+.dark select {
+    background-color: rgb(55 65 81) !important;
+    /* gray-700 */
+    color: rgb(241 245 249) !important;
+    border-color: rgb(75 85 99) !important;
+    /* gray-600 */
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+    background-color: rgb(55 65 81) !important;
+    border-color: rgb(96 165 250) !important;
+    /* blue-400 */
+}
+
+/* ===== SHADOWS ===== */
+.dark .shadow-sm {
+    --tw-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.5) !important;
+}
+
+.dark .shadow,
+.dark .shadow-md {
+    --tw-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.36) !important;
+}
+
+.dark .shadow-lg {
+    --tw-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* ===== CARDS & CONTAINERS ===== */
+.dark [class*="bg-white"],
+.dark [class*="bg-gray-50"],
+.dark [class*="bg-slate"] {
+    background-color: rgb(31 41 55) !important;
+}
+
+/* ===== SPECIFIC OVERRIDES ===== */
+/* Tables */
+.dark table {
+    background-color: rgb(31 41 55) !important;
+    color: rgb(241 245 249) !important;
+}
+
+.dark th,
+.dark td {
+    border-color: rgb(75 85 99) !important;
+}
+
+/* Modals */
+.dark .modal,
+.dark [role="dialog"] {
+    background-color: rgb(31 41 55) !important;
+    color: rgb(241 245 249) !important;
 }
