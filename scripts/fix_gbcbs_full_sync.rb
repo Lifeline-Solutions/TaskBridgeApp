@@ -176,7 +176,7 @@ def sync_attachments(defect, attachments_data)
   end
 end
 
-MODULE_FIELD_ID = 'customfield_10156' # Copied from reference
+MODULE_FIELD_ID = 'customfield_10103' # Corrected via inspection
 
 log "Starting GBCBS Sync..."
 log "Product ID resolving to: #{PRODUCT_ID}"

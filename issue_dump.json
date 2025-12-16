@@ -1,0 +1,254 @@
+{
+  "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+  "id": "28701",
+  "self": "https://craftsilicon.atlassian.net/rest/api/2/issue/28701",
+  "key": "GBCBS-3247",
+  "fields": {
+    "statuscategorychangedate": "2021-12-09T12:23:43.328+0300",
+    "issuetype": {
+      "self": "https://craftsilicon.atlassian.net/rest/api/2/issuetype/10511",
+      "id": "10511",
+      "description": "Defect",
+      "iconUrl": "https://craftsilicon.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10304?size=medium",
+      "name": "Defect",
+      "subtask": false,
+      "avatarId": 10304,
+      "entityId": "4936bc33-a192-495f-8c40-6a34038134d7",
+      "hierarchyLevel": 0
+    },
+    "parent": {
+      "id": "14028",
+      "key": "GBCBS-17",
+      "self": "https://craftsilicon.atlassian.net/rest/api/2/issue/14028",
+      "fields": {
+        "summary": "Core Banking Upgrade",
+        "status": {
+          "self": "https://craftsilicon.atlassian.net/rest/api/2/status/10105",
+          "description": "",
+          "iconUrl": "https://craftsilicon.atlassian.net/",
+          "name": "To Do",
+          "id": "10105",
+          "statusCategory": {
+            "self": "https://craftsilicon.atlassian.net/rest/api/2/statuscategory/2",
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "To Do"
+          }
+        },
+        "priority": {
+          "self": "https://craftsilicon.atlassian.net/rest/api/2/priority/3",
+          "iconUrl": "https://craftsilicon.atlassian.net/images/icons/priorities/medium.svg",
+          "name": "Severity 3",
+          "id": "3"
+        },
+        "issuetype": {
+          "self": "https://craftsilicon.atlassian.net/rest/api/2/issuetype/10075",
+          "id": "10075",
+          "description": "Track large pieces of work.",
+          "iconUrl": "https://craftsilicon.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10307?size=medium",
+          "name": "Epic",
+          "subtask": false,
+          "avatarId": 10307,
+          "entityId": "dfe82835-cd93-45e2-946d-5f3cdb88214a",
+          "hierarchyLevel": 1
+        }
+      }
+    },
+    "components": [],
+    "timespent": null,
+    "timeoriginalestimate": null,
+    "project": {
+      "self": "https://craftsilicon.atlassian.net/rest/api/2/project/10035",
+      "id": "10035",
+      "key": "GBCBS",
+      "name": "Guardian Bank Project Desk",
+      "projectTypeKey": "software",
+      "simplified": true,
+      "avatarUrls": {
+        "48x48": "https://craftsilicon.atlassian.net/rest/api/2/universal_avatar/view/type/project/avatar/10525",
+        "24x24": "https://craftsilicon.atlassian.net/rest/api/2/universal_avatar/view/type/project/avatar/10525?size=small",
+        "16x16": "https://craftsilicon.atlassian.net/rest/api/2/universal_avatar/view/type/project/avatar/10525?size=xsmall",
+        "32x32": "https://craftsilicon.atlassian.net/rest/api/2/universal_avatar/view/type/project/avatar/10525?size=medium"
+      },
+      "projectCategory": {
+        "self": "https://craftsilicon.atlassian.net/rest/api/2/projectCategory/10003",
+        "id": "10003",
+        "description": "Alternate Channel",
+        "name": "BREFT"
+      }
+    },
+    "customfield_10031": null,
+    "description": "Multiple defects noted in BRNet-CBK Main Reports ,some  reports are Missing either Report name, Institution Name, Financial year input field , or wrong Report date or all  Input fields are missing.\n\n*The Reports affected are:*\n\n1)PR21 Profit Loss Statement ( Missing Financial Year and wrong report date.)\n\n2)Central Bank report PR3 ( Missing Financial year and Report Date)\n\n3)CBK 4 2 Loan and OD Performance ( Missing Financial year and Report Date)\n\n4)CBK PR3 Form B(Missing Financial Year)\n\n5)CBK PR5-1 Maturity Analysis of Assets and Liability( Missing Financial year and Report Date)\n\n6)Geographical Distribution Of Bank Branches, Deposits, Loans & Non-Performing Loans ( Missing Institution, Missing Financial year and Report Date)\n\n7)Central Bank Report PR6. ( Missing Financial year and Report Date)\n\n8.Table C: Part IV: Analysis Of Maturities Of Securities(Table A, Item 2 & 8( Report Name Missing and the Amount in Kshs Divider i.e Amount in Kshs(000) is missing)\n\n*Expectation* for these reports is to have these data such as name, Institution, Financial Year  and  Report Date displayed on the respective since the reports are Statutory reports required by CBK on  specific dates each Month.",
+    "fixVersions": [],
+    "aggregatetimespent": null,
+    "statusCategory": {
+      "self": "https://craftsilicon.atlassian.net/rest/api/2/statuscategory/2",
+      "id": 2,
+      "key": "new",
+      "colorName": "blue-gray",
+      "name": "To Do"
+    },
+    "resolution": null,
+    "customfield_10157": null,
+    "timetracking": {},
+    "customfield_10015": null,
+    "security": null,
+    "attachment": [
+      {
+        "self": "https://craftsilicon.atlassian.net/rest/api/2/attachment/28962",
+        "id": "28962",
+        "filename": "Multiple defects noted in BRNet CBK Reports.docx",
+        "author": {
+          "self": "https://craftsilicon.atlassian.net/rest/api/2/user?accountId=5fb22cda47ac91006f45808f",
+          "accountId": "5fb22cda47ac91006f45808f",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/252779b7f1df6ba2b6f797787e9ea73e?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FN-0.png",
+            "24x24": "https://secure.gravatar.com/avatar/252779b7f1df6ba2b6f797787e9ea73e?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FN-0.png",
+            "16x16": "https://secure.gravatar.com/avatar/252779b7f1df6ba2b6f797787e9ea73e?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FN-0.png",
+            "32x32": "https://secure.gravatar.com/avatar/252779b7f1df6ba2b6f797787e9ea73e?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FN-0.png"
+          },
+          "displayName": "nicholas.mbithuka",
+          "active": true,
+          "timeZone": "Asia/Baghdad",
+          "accountType": "atlassian"
+        },
+        "created": "2021-12-09T12:32:45.647+0300",
+        "size": 1264573,
+        "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "content": "https://craftsilicon.atlassian.net/rest/api/2/attachment/content/28962"
+      }
+    ],
+    "aggregatetimeestimate": null,
+    "resolutiondate": null,
+    "workratio": -1,
+    "summary": "Defect#2317-Multiple observations noted in several reports under BRNet-CBK Main Reports where some vital details are missing.",
+    "issuerestriction": {
+      "issuerestrictions": {},
+      "shouldDisplay": true
+    },
+    "watches": {
+      "self": "https://craftsilicon.atlassian.net/rest/api/2/issue/GBCBS-3247/watchers",
+      "watchCount": 1,
+      "isWatching": false
+    },
+    "lastViewed": null,
+    "creator": {
+      "self": "https://craftsilicon.atlassian.net/rest/api/2/user?accountId=5fb22cda47ac91006f45808f",
+      "accountId": "5fb22cda47ac91006f45808f",
+      "avatarUrls": {
+        "48x48": "https://secure.gravatar.com/avatar/252779b7f1df6ba2b6f797787e9ea73e?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FN-0.png",
+        "24x24": "https://secure.gravatar.com/avatar/252779b7f1df6ba2b6f797787e9ea73e?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FN-0.png",
+        "16x16": "https://secure.gravatar.com/avatar/252779b7f1df6ba2b6f797787e9ea73e?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FN-0.png",
+        "32x32": "https://secure.gravatar.com/avatar/252779b7f1df6ba2b6f797787e9ea73e?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FN-0.png"
+      },
+      "displayName": "nicholas.mbithuka",
+      "active": true,
+      "timeZone": "Asia/Baghdad",
+      "accountType": "atlassian"
+    },
+    "subtasks": [],
+    "created": "2021-12-09T12:23:43.198+0300",
+    "customfield_10021": [
+      {
+        "id": 85,
+        "name": "GBBCBU Sprint",
+        "state": "active",
+        "boardId": 23,
+        "goal": "",
+        "startDate": "2020-12-09T05:00:00.000Z",
+        "endDate": "2021-09-30T14:00:00.000Z"
+      }
+    ],
+    "reporter": {
+      "self": "https://craftsilicon.atlassian.net/rest/api/2/user?accountId=5fb22cda47ac91006f45808f",
+      "accountId": "5fb22cda47ac91006f45808f",
+      "avatarUrls": {
+        "48x48": "https://secure.gravatar.com/avatar/252779b7f1df6ba2b6f797787e9ea73e?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FN-0.png",
+        "24x24": "https://secure.gravatar.com/avatar/252779b7f1df6ba2b6f797787e9ea73e?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FN-0.png",
+        "16x16": "https://secure.gravatar.com/avatar/252779b7f1df6ba2b6f797787e9ea73e?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FN-0.png",
+        "32x32": "https://secure.gravatar.com/avatar/252779b7f1df6ba2b6f797787e9ea73e?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FN-0.png"
+      },
+      "displayName": "nicholas.mbithuka",
+      "active": true,
+      "timeZone": "Asia/Baghdad",
+      "accountType": "atlassian"
+    },
+    "customfield_10022": "1|i01ypz:",
+    "aggregateprogress": {
+      "progress": 0,
+      "total": 0
+    },
+    "priority": {
+      "self": "https://craftsilicon.atlassian.net/rest/api/2/priority/3",
+      "iconUrl": "https://craftsilicon.atlassian.net/images/icons/priorities/medium.svg",
+      "name": "Severity 3",
+      "id": "3"
+    },
+    "customfield_10103": {
+      "self": "https://craftsilicon.atlassian.net/rest/api/2/customFieldOption/10208",
+      "value": "Reports",
+      "id": "10208"
+    },
+    "labels": [
+      "CBSUpgrade"
+    ],
+    "environment": null,
+    "timeestimate": null,
+    "aggregatetimeoriginalestimate": null,
+    "versions": [],
+    "duedate": null,
+    "progress": {
+      "progress": 0,
+      "total": 0
+    },
+    "issuelinks": [],
+    "votes": {
+      "self": "https://craftsilicon.atlassian.net/rest/api/2/issue/GBCBS-3247/votes",
+      "votes": 0,
+      "hasVoted": false
+    },
+    "comment": {
+      "comments": [],
+      "self": "https://craftsilicon.atlassian.net/rest/api/2/issue/28701/comment",
+      "maxResults": 0,
+      "total": 0,
+      "startAt": 0
+    },
+    "assignee": {
+      "self": "https://craftsilicon.atlassian.net/rest/api/2/user?accountId=5cd52ef225d61c0dc614f0d0",
+      "accountId": "5cd52ef225d61c0dc614f0d0",
+      "avatarUrls": {
+        "48x48": "https://secure.gravatar.com/avatar/14b777d399e77e95b4b7eb99a0c6c708?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FN-1.png",
+        "24x24": "https://secure.gravatar.com/avatar/14b777d399e77e95b4b7eb99a0c6c708?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FN-1.png",
+        "16x16": "https://secure.gravatar.com/avatar/14b777d399e77e95b4b7eb99a0c6c708?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FN-1.png",
+        "32x32": "https://secure.gravatar.com/avatar/14b777d399e77e95b4b7eb99a0c6c708?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FN-1.png"
+      },
+      "displayName": "ngugi",
+      "active": true,
+      "timeZone": "Asia/Baghdad",
+      "accountType": "atlassian"
+    },
+    "worklog": {
+      "startAt": 0,
+      "maxResults": 20,
+      "total": 0,
+      "worklogs": []
+    },
+    "updated": "2022-01-03T10:26:26.433+0300",
+    "status": {
+      "self": "https://craftsilicon.atlassian.net/rest/api/2/status/10105",
+      "description": "",
+      "iconUrl": "https://craftsilicon.atlassian.net/",
+      "name": "To Do",
+      "id": "10105",
+      "statusCategory": {
+        "self": "https://craftsilicon.atlassian.net/rest/api/2/statuscategory/2",
+        "id": 2,
+        "key": "new",
+        "colorName": "blue-gray",
+        "name": "To Do"
+      }
+    }
+  }
+}
