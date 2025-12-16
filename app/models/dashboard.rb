@@ -41,6 +41,7 @@ class Dashboard < ApplicationRecord
   validates :name, presence: true, length: { maximum: 200 }
   validates :user, presence: true
   validates :defect_filter, presence: true
+  validates :auto_refresh_interval, numericality: { greater_than_or_equal_to: 300, allow_nil: true }
   validate :validate_widgets_structure
   validate :validate_custom_fields
 
