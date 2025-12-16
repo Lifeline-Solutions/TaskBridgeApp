@@ -1,0 +1,12 @@
+Enhanced ADF converter loaded with:
+  ✅ Improved table handling (thead/tbody, colspan, rowspan, colors)
+  ✅ More ADF node types (media, expand, status, date)
+  ✅ Better error handling for missing content
+  ✅ Placeholder support for empty tables
+
+Use show_placeholders: true to see placeholders for missing tables
+[07:45:15] Found 1 SMC defects to sync.
+[07:45:15] Processing SMC-1400...
+[07:45:16]     -> Set Module: WorkFlow Loan  | Loan Sanction
+[07:45:17]     -> Updated Description (Rich Text)
+[07:45:17]     [Dry Run] Changes detected: true
