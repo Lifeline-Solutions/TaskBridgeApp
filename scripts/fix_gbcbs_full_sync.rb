@@ -176,6 +176,51 @@ def sync_attachments(defect, attachments_data)
   end
 end
 
+def convert_jira_wiki_to_html(text)
+  return "" if text.blank?
+
+  # Escape HTML characters first
+  html = CGI.escapeHTML(text)
+
+  # 1. Colors {color:red}text{color} or {color:#hex}text{color}
+  # The JIRA format is often {color:red} text {color}
+  html.gsub!(/\{color:([^}]+)\}(.*?)\{color\}/m) do
+    color = $1
+    content = $2
+    "<span style='color: #{color}'>#{content}</span>"
+  end
+
+  # 2. Text Effects
+  html.gsub!(/\*([^*\n]+)\*/) { "<strong>#{$1}</strong>" } # *bold*
+  html.gsub!(/\_([^\_\n]+)\_/) { "<em>#{$1}</em>" }       # _italic_
+  html.gsub!(/\+([^\+\n]+)\+/) { "<u>#{$1}</u>" }         # +underline+
+  html.gsub!(/\{\{([^}]+)\}\}/) { "<code>#{$1}</code>" }  # {{monospace}}
+  
+  # 3. Headings
+  html.gsub!(/^h(\d)\.\s+(.*)$/) { "<h#{$1}>#{$2}</h#{$1}>" }
+
+  # 4. Links [text|url] or [url]
+  html.gsub!(/\[([^|\]]+)\|([^\]]+)\]/) { "<a href='#{$2}'>#{$1}</a>" }
+  html.gsub!(/\[([^\]]+)\]/) do
+    match = $1
+    if match =~ URI::regexp
+      "<a href='#{match}'>#{match}</a>"
+    else
+      match # It might be a citation or something else, leave as is if not URL
+    end
+  end
+
+  # 5. Lists (Simple handling)
+  # Convert * Item to <li>Item</li>, need to wrap in <ul> if multiple?
+  # For simplicity, let's just use <br/> for newlines and maybe bullets to &bull;
+  html.gsub!(/^(\*|-)\s+(.*)$/) { "<li>#{$2}</li>" }
+  
+  # 6. Newlines to <br>
+  html.gsub!("\n", "<br>")
+
+  html
+end
+
 MODULE_FIELD_ID = 'customfield_10103' # Corrected via inspection
 
 log "Starting GBCBS Sync..."
@@ -295,7 +340,7 @@ jira_keys.each_with_index do |key, idx|
      if fields['description'].is_a?(Hash) && fields['description']['content']
        html_content = convert_adf_to_html_enhanced(fields['description']['content'])
      elsif fields['description'].is_a?(String)
-       html_content = fields['description']
+       html_content = convert_jira_wiki_to_html(fields['description'])
      end
      
      current_body = defect.content.body.to_s rescue ""
