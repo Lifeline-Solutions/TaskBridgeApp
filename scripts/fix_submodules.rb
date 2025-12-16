@@ -179,15 +179,22 @@ def discover_custom_fields(project_key = 'RMP')
   [module_field, submodule_field]
 end
 
-def extract_custom_field_value(field_data)
+def extract_custom_field_value(field_data, extract_child: false)
   return '' if field_data.nil?
   return field_data.to_s.strip if field_data.is_a?(String)
 
   if field_data.is_a?(Hash)
     # Special handling for Cascading Select fields (parent/child)
-    return field_data['child']['value'].to_s.strip if field_data['child'].is_a?(Hash) && field_data['child']['value'].present?
+    # When extract_child is true, return the child value
+    # When extract_child is false, return the parent value ONLY (ignore child)
+    if extract_child
+      return field_data['child']['value'].to_s.strip if field_data['child'].is_a?(Hash) && field_data['child']['value'].present?
+      return '' # No child available
+    else
+      # Extract parent value only, ignore child
+      return field_data['value'].to_s.strip if field_data['value'].present?
+    end
 
-    return field_data['value'].to_s.strip if field_data['value'].present?
     return field_data['name'].to_s.strip if field_data['name'].present?
     return field_data['key'].to_s.strip if field_data['key'].present?
     return field_data['id'].to_s.strip if field_data['id'].present?
@@ -195,7 +202,7 @@ def extract_custom_field_value(field_data)
 
   if field_data.is_a?(Array) && field_data.any?
     first_item = field_data.first
-    return extract_custom_field_value(first_item) if first_item.is_a?(Hash)
+    return extract_custom_field_value(first_item, extract_child: extract_child) if first_item.is_a?(Hash)
 
     return first_item.to_s.strip
 
@@ -346,8 +353,15 @@ projects_to_process.each do |project_key|
       # Only fetch submodule from JIRA if it's a real field (not 'DUMMY')
       raw_submodule = (submodule_field && submodule_field != 'DUMMY') ? fields[submodule_field] : nil
 
-      module_name = extract_custom_field_value(raw_module)
-      submodule_name = extract_custom_field_value(raw_submodule)
+      # For GBCBU2, both module and submodule come from the same cascading field
+      # Extract parent value for module, child value for submodule
+      if project_key.upcase == 'GBCBU2' && module_field == submodule_field
+        module_name = extract_custom_field_value(raw_module, extract_child: false)
+        submodule_name = extract_custom_field_value(raw_module, extract_child: true)
+      else
+        module_name = extract_custom_field_value(raw_module, extract_child: false)
+        submodule_name = extract_custom_field_value(raw_submodule, extract_child: false)
+      end
 
       # For projects with no submodules, clear submodule_name
       case project_key.upcase
@@ -361,9 +375,10 @@ projects_to_process.each do |project_key|
         module_name = 'Module'
         submodule_name = '' # Always blank for GBCBS
       when 'GBCBU2'
-        # For GBCBU2, keep values from the cascading "Components" field:
-        # module_name from parent value and submodule_name from child value.
-        # Do not override with static values.
+        # For GBCBU2, values come from the cascading "Components" field
+        # module_name is already set to parent value, submodule_name to child value
+        # Keep them as-is, no overrides needed
+        # If submodule_name is blank, that's fine - it means no child was selected
       else
         # For other projects, apply parsing logic
         if module_name.blank? && submodule_name.blank?
