@@ -21,6 +21,9 @@ class Dashboard < ApplicationRecord
   belongs_to :defect_filter
   belongs_to :created_by, class_name: 'User', foreign_key: 'created_by', optional: true
   belongs_to :modified_by, class_name: 'User', foreign_key: 'modified_by', optional: true
+  
+  has_many :dashboard_shares, dependent: :destroy
+  has_many :shared_users, through: :dashboard_shares, source: :user
 
   # Visualization types (same as old DashboardWidget)
   VISUALIZATION_TYPES = {
@@ -37,10 +40,23 @@ class Dashboard < ApplicationRecord
     qa_module submodule banking_type label
   ].freeze
 
-  # Validations
-  validates :name, presence: true, length: { maximum: 200 }
-  validates :user, presence: true
-  validates :defect_filter, presence: true
+  # Visibility
+  enum visibility: { private_access: 0, public_access: 1, shared_access: 2 }
+
+  # Scopes
+  scope :active, -> { where(deleted_on: nil, archive_status: false) }
+  scope :for_user, ->(user) { where(user: user) }
+  
+  scope :visible_to, ->(user) {
+    left_joins(:dashboard_shares)
+      .where(
+        "dashboards.user_id = :user_id OR 
+         dashboards.visibility = 1 OR 
+         (dashboards.visibility = 2 AND dashboard_shares.user_id = :user_id)",
+        user_id: user.id
+      ).distinct
+  }
+  validates :auto_refresh_interval, numericality: { greater_than_or_equal_to: 300, allow_nil: true }
   validate :validate_widgets_structure
   validate :validate_custom_fields
 

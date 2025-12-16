@@ -64,6 +64,104 @@
       </p>
     </div>
 
+    <!-- Visibility & Sharing -->
+    <div class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+      <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4">Visibility & Sharing</h3>
+      
+      <div class="space-y-4">
+        <div class="flex flex-col space-y-2">
+           <% Dashboard.visibilities.keys.each do |visibility| %>
+            <label class="inline-flex items-center cursor-pointer">
+              <%= f.radio_button :visibility, visibility, class: "form-radio h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500" %>
+              <span class="ml-2 text-gray-700 dark:text-gray-300 capitalize"><%= visibility.humanize.gsub(' access', '') %></span>
+            </label>
+          <% end %>
+        </div>
+
+        <div id="shared-users-section" class="<%= 'hidden' unless dashboard.shared_access? %> pl-6">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Share with Users</label>
+          
+          <div class="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-700">
+            <!-- Search Input -->
+            <div class="p-2 border-b border-gray-200 dark:border-gray-600">
+              <input type="text" 
+                     id="user-search-input" 
+                     placeholder="Search users..." 
+                     class="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-500 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white">
+            </div>
+            
+            <!-- Users List -->
+            <div id="users-list-container" class="max-h-48 overflow-y-auto p-2 space-y-1">
+              <%= f.collection_check_boxes :shared_user_ids, @users || [], :id, :name do |b| %>
+                <div class="user-item flex items-center p-1 hover:bg-gray-50 dark:hover:bg-gray-600 rounded">
+                  <%= b.check_box class: "h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-500 mr-2" %>
+                  <%= b.label class: "text-sm text-gray-700 dark:text-gray-200 cursor-pointer w-full" %>
+                </div>
+              <% end %>
+              <% if @users.blank? %>
+                <p class="text-xs text-gray-500 p-2 text-center">No other active users found.</p>
+              <% end %>
+            </div>
+          </div>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Select users who can view this dashboard.</p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function() {
+        function setupVisibilityUI() {
+          const visibilityRadios = document.querySelectorAll('input[name="dashboard[visibility]"]');
+          const sharedSection = document.getElementById('shared-users-section');
+          const searchInput = document.getElementById('user-search-input');
+          const userItems = document.querySelectorAll('.user-item');
+          
+          if (!visibilityRadios.length || !sharedSection) return;
+
+          // toggle visibility section
+          function toggleSharedSection() {
+            const selected = document.querySelector('input[name="dashboard[visibility]"]:checked');
+            if (selected && selected.value === 'shared_access') {
+              sharedSection.classList.remove('hidden');
+            } else {
+              sharedSection.classList.add('hidden');
+            }
+          }
+
+          visibilityRadios.forEach(radio => {
+            radio.removeEventListener('change', toggleSharedSection);
+            radio.addEventListener('change', toggleSharedSection);
+          });
+          
+          toggleSharedSection();
+
+          // User search functionality
+          if (searchInput && userItems.length > 0) {
+            searchInput.addEventListener('input', function(e) {
+              const term = e.target.value.toLowerCase();
+              userItems.forEach(item => {
+                const label = item.querySelector('label').textContent.toLowerCase();
+                if (label.includes(term)) {
+                  item.classList.remove('hidden');
+                } else {
+                  item.classList.add('hidden');
+                }
+              });
+            });
+          }
+        }
+        
+        // Run on load and Turbo navigation
+        document.addEventListener('turbo:load', setupVisibilityUI);
+        
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', setupVisibilityUI);
+        } else {
+          setupVisibilityUI();
+        }
+      })();
+    </script>
+
     <!-- Custom Fields Selection -->
     <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
       <div class="flex items-start mb-4">
