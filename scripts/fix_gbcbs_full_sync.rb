@@ -213,6 +213,8 @@ def sync_history(defect, changelog)
 
     history_item['items'].each do |item|
       field = item['field']
+      log "    [History Check] Field found: '#{field}' (Type: #{item['fieldtype']})"
+      
       from_string = item['fromString']
       to_string = item['toString']
       
@@ -238,7 +240,7 @@ def sync_history(defect, changelog)
       when 'resolution'
         history_type = 'Resolution Changed'
         history_text = "Resolution changed from #{from_string || 'Unresolved'} to #{to_string}"
-      when 'parent'
+      when 'parent', 'issueparentassociation'
         history_type = 'Parent Changed'
         history_text = "Parent changed from #{from_string || 'None'} to #{to_string || 'None'}"
       when 'link', 'issuelink'
@@ -320,29 +322,24 @@ log "Product ID resolving to: #{PRODUCT_ID}"
 # 1. Fetch valid keys from JIRA
 jira_keys = fetch_jql_keys(JQL_QUERY)
 log "Found #{jira_keys.count} valid defects in JIRA."
-
 # 2. Cleanup Local Defects
 local_defects = Defect.where("defect_unique LIKE 'GBCBS-%'")
-local_keys = local_defects.pluck(:defect_unique)
-
-to_delete = local_keys - jira_keys
+to_delete = local_defects.pluck(:defect_unique) - jira_keys
 log "Found #{to_delete.count} local defects that are NOT in JIRA filter (to be deleted)."
 
-if to_delete.any?
-  if options[:dry_run]
-    log "  [Dry Run] Would delete: #{to_delete.first(5).join(', ')}..."
-  else
-    log "  Deleting #{to_delete.count} defects..."
-    Defect.where(defect_unique: to_delete).destroy_all
-    log "  ✅ Deletion complete."
-  end
+if to_delete.any? && !options[:dry_run]
+   log "   Deleting #{to_delete.count} defects..."
+   Defect.where(defect_unique: to_delete).destroy_all
 end
 
 # 3. Sync/Update Valid Defects
 log "Syncing #{jira_keys.count} defects..."
 
-jira_keys.each_with_index do |key, idx|
-  log "[#{idx+1}/#{jira_keys.count}] Processing #{key}..."
+# Initialize Defect objects map for performance
+existing_local_defects = Defect.where(defect_unique: jira_keys).index_by(&:defect_unique)
+
+jira_keys.each_with_index do |key, index|
+  log "[#{index+1}/#{jira_keys.count}] Processing #{key}..."
   
   # Fetch full details including changelog
   jira_data = fetch_issue_details(key)
