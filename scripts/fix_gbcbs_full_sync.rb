@@ -298,10 +298,13 @@ jira_keys.each_with_index do |key, idx|
     if status_name.present?
       system_user_id = User.order(:created_at).first&.id || 'c5d5cc2c-5ab2-4301-811a-5b6e8e4f61da'
       
-      status = Status.where('lower(name) = ?', status_name.downcase).first
+      # Normalize status name (e.g. "ON HOLD" -> "ON-HOLD")
+      status_name_normalized = status_name.upcase == 'ON HOLD' ? 'ON-HOLD' : status_name
+
+      status = Status.where('lower(name) = ?', status_name_normalized.downcase).first
       unless status
-         log "    -> Creating missing status: #{status_name}"
-         status = Status.create!(name: status_name, user_id: system_user_id, created_by: system_user_id, modified_by: system_user_id, product_id: PRODUCT_ID)
+         log "    -> Creating missing status: #{status_name_normalized}"
+         status = Status.create!(name: status_name_normalized, user_id: system_user_id, created_by: system_user_id, modified_by: system_user_id)
       end
       
       if status && !defect.statuses.include?(status)
