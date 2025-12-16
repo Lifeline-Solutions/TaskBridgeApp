@@ -1,0 +1,55 @@
+/* Custom Dark Mode Override - Forces dark mode to use .dark class */
+
+/* Override all dark: classes to work with .dark class on html element */
+:root.dark {
+    color-scheme: dark;
+}
+
+/* Force dark mode backgrounds */
+.dark .dark\:bg-gray-800,
+.dark .dark\:bg-gray-900,
+.dark .dark\:bg-slate-800 {
+    background-color: rgb(31 41 55) !important;
+}
+
+.dark .bg-white {
+    background-color: rgb(31 41 55) !important;
+}
+
+.dark .bg-slate-100,
+.dark .bg-gray-50,
+.dark .bg-gray-100 {
+    background-color: rgb(17 24 39) !important;
+}
+
+/* Force dark mode text colors */
+.dark .text-gray-900,
+.dark .dark\:text-white {
+    color: rgb(241 245 249) !important;
+}
+
+.dark .text-gray-700 {
+    color: rgb(209 213 219) !important;
+}
+
+.dark .text-gray-500 {
+    color: rgb(156 163 175) !important;
+}
+
+/* Force dark mode borders */
+.dark .border-gray-200 {
+    border-color: rgb(55 65 81) !important;
+}
+
+.dark .border-gray-300 {
+    border-color: rgb(75 85 99) !important;
+}
+
+/* Dark mode specific overrides for common components */
+.dark .shadow-sm {
+    --tw-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark .shadow {
+    --tw-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.26) !important;
+}
