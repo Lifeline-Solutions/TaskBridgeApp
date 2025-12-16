@@ -232,6 +232,18 @@ def sync_history(defect, changelog)
       when 'description'
         history_type = 'Description Updated'
         history_text = "Description updated by #{user&.name || 'Unknown'}"
+      when 'summary'
+        history_type = 'Summary Updated'
+        history_text = "Summary updated from \"#{from_string}\" to \"#{to_string}\""
+      when 'resolution'
+        history_type = 'Resolution Changed'
+        history_text = "Resolution changed from #{from_string || 'Unresolved'} to #{to_string}"
+      when 'parent'
+        history_type = 'Parent Changed'
+        history_text = "Parent changed from #{from_string || 'None'} to #{to_string || 'None'}"
+      when 'link', 'issuelink'
+        history_type = 'Link Changed'
+        history_text = "Link #{to_string} #{from_string ? 'removed' : 'added'}"
       when 'attachment'
         history_type = 'Attachment Added'
          # JIRA attachment history usually just says it was added. 
