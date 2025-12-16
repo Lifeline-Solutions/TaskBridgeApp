@@ -13,7 +13,7 @@
   <%= stylesheet_link_tag "application", "mobile_responsive", "data-turbo-track": "reload" %>
   <%= javascript_include_tag 'controllers/ckeditor_init' %>
   <%= javascript_importmap_tags %>
-  
+
   <style>
     /* Hide CKEditor security warning banner */
     .cke_notification_warning,
@@ -40,7 +40,7 @@
     />
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
+
   <script>
     // Theme initialization - must run before body loads to prevent flash
     (function() {
@@ -48,16 +48,16 @@
       const savedTheme = localStorage.getItem('theme') || 'system';
       const html = document.documentElement;
       const body = document.body;
-      
+
       // console.log('Initial theme load:', savedTheme);
-      
+
       function forceApplyTheme(theme) {
         // Remove all possible theme classes
         html.classList.remove('dark', 'light');
         if (body) {
           body.classList.remove('dark', 'light');
         }
-        
+
         if (theme === 'dark') {
           html.classList.add('dark');
           if (body) body.classList.add('dark');
@@ -78,13 +78,13 @@
             html.style.colorScheme = 'light';
           }
         }
-        
+
         // console.log('Applied theme:', theme, 'HTML classes:', html.className);
       }
-      
+
       // Apply theme immediately
       forceApplyTheme(savedTheme);
-      
+
       // Make the function available globally
       window.forceApplyTheme = forceApplyTheme;
     })();
@@ -95,7 +95,7 @@
   <% if current_user && user_signed_in?  %>
     <!-- Sidebar -->
     <%= render 'layouts/sidebar' %>
-    
+
     <!-- Main Content -->
     <div id="mainContent" class="transition-all duration-300 bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-slate-100 ml-16 lg:ml-64 min-h-screen">
       <%= turbo_frame_tag "modal" %>
@@ -107,7 +107,7 @@
   <% else %>
     <main class="mx-auto bg-slate-100 dark:bg-gray-900 text-gray-900 dark:text-slate-100">
       <%= render 'layouts/sidebar' %>
-      
+
       <%= render 'layouts/topbar' %>
       <div class="p-2">
         <%= yield %>
@@ -123,7 +123,7 @@
 <script>
   // Define the dropdown initialization function globally
   window.initSearchableDropdowns = function() {
-    
+
     // ===== Projects ====
     const projectInput = document.getElementById("project-search");
     const projectResults = document.getElementById("project-results");
@@ -183,7 +183,7 @@
         }
       });
     }
-      
+
     // ===== Banking Type Search =====
     const bankingTypeInput = document.getElementById("banking-type-search");
     const bankingTypeResults = document.getElementById("banking-type-results");
@@ -239,7 +239,7 @@
           bankingTypeResults.classList.add("hidden");
         }
       });
-      
+
     }
 
     // ===== Assignee Search =====
@@ -298,32 +298,32 @@
         }
       });
     }
-    
+
   };
 
   // Listen for Turbo Frame loads
   document.addEventListener('turbo:frame-load', function(event) {
-    
+
     const bankingTypeContainer = document.querySelector('[data-banking-types]');
-    
+
     if (!bankingTypeContainer) {
-      
+
       return;
     }
-    
-    
+
+
     try {
       window.bankingTypesData = JSON.parse(bankingTypeContainer.dataset.bankingTypes || '[]');
       window.assigneeUsersData = JSON.parse(bankingTypeContainer.dataset.assigneeUsers || '[]');
       window.projectsData = JSON.parse(bankingTypeContainer.dataset.projects || '[]');
-      
-      
-      
-      
+
+
+
+
       // Initialize the dropdowns
       if (typeof window.initSearchableDropdowns === 'function') {
         window.initSearchableDropdowns();
-        
+
       }
     } catch (e) {
       // Silently handle errors
