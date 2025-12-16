@@ -1,15 +1,17 @@
 # QA Dashboards Controller - Manages dashboards with embedded widgets
 class QaDashboardsController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_dashboard, only: %i[show edit update destroy]
+  before_action :set_dashboard, only: %i[edit update destroy]
+  before_action :set_accessible_dashboard, only: %i[show]
 
   def index
-    @dashboards = current_user.dashboards.active.includes(:defect_filter)
+    @dashboards = Dashboard.active.visible_to(current_user).includes(:defect_filter)
   end
 
   def new
     @dashboard = Dashboard.new
     @saved_filters = current_user.defect_filters.active
+    @users = User.where.not(id: current_user.id).where(active: true) # For sharing
   end
 
   def create
@@ -88,6 +90,7 @@ class QaDashboardsController < ApplicationController
 
   def edit
     @saved_filters = current_user.defect_filters.active
+    @users = User.where.not(id: current_user.id).where(active: true) # For sharing
   end
 
   def update
@@ -121,7 +124,15 @@ class QaDashboardsController < ApplicationController
   end
 
   def set_dashboard
+    # Restrict edit/update/destroy to owner only
     @dashboard = current_user.dashboards.find(params[:id])
+  end
+
+  def set_accessible_dashboard
+    # Restrict show to owner OR shared OR public
+    @dashboard = Dashboard.active.visible_to(current_user).find(params[:id])
+  rescue ActiveRecord::RecordNotFound
+    redirect_to qa_dashboards_path, alert: 'You do not have permission to view this dashboard.'
   end
 
   def dashboard_params
@@ -130,8 +141,10 @@ class QaDashboardsController < ApplicationController
       :description,
       :defect_filter_id,
       :auto_refresh_interval,
+      :visibility,
       custom_fields: [],
-      widgets: %i[name group_by_field visualization_type position]
+      widgets: %i[name group_by_field visualization_type position],
+      shared_user_ids: []
     )
   end
 

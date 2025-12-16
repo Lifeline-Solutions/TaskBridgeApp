@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_12_08_073721) do
+ActiveRecord::Schema[7.2].define(version: 2025_12_16_011928) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -227,6 +227,15 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_08_073721) do
     t.index ["user_id"], name: "index_commonly_selected_clients_on_user_id"
   end
 
+  create_table "dashboard_shares", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "dashboard_id", null: false
+    t.uuid "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["dashboard_id"], name: "index_dashboard_shares_on_dashboard_id"
+    t.index ["user_id"], name: "index_dashboard_shares_on_user_id"
+  end
+
   create_table "dashboard_widgets", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", limit: 200, null: false
     t.uuid "user_id", null: false
@@ -261,6 +270,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_08_073721) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.jsonb "custom_fields", default: [], comment: "Array of custom field names selected for distribution visualization (status, reporter, assignee, labels, modules, submodules, banking_types)"
+    t.integer "visibility", default: 0
     t.index ["custom_fields"], name: "index_dashboards_on_custom_fields", using: :gin
     t.index ["defect_filter_id"], name: "index_dashboards_on_defect_filter_id"
     t.index ["user_id", "deleted_on"], name: "index_dashboards_on_user_id_and_deleted_on"
@@ -1163,6 +1173,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_08_073721) do
   add_foreign_key "comments", "users"
   add_foreign_key "commonly_selected_clients", "clients"
   add_foreign_key "commonly_selected_clients", "users"
+  add_foreign_key "dashboard_shares", "dashboards"
+  add_foreign_key "dashboard_shares", "users"
   add_foreign_key "dashboard_widgets", "defect_filters"
   add_foreign_key "dashboard_widgets", "users"
   add_foreign_key "dashboard_widgets", "users", column: "created_by"
