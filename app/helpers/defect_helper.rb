@@ -85,112 +85,76 @@ module DefectHelper
     end
   end
 
-  def format_history_with_highlights(defect_history)
-    return defect_history.history unless defect_history.history.present?
+  def parse_history_item(content)
+    # Default fallback
+    result = { action: 'updated', field: nil, from: nil, to: nil }
 
-    history_text = defect_history.history
+    return result if content.blank?
 
-    # Check if it's the new arrow format (X → Y)
-    if history_text.include?('→')
-      # Split on arrow to get before and after
-      parts = history_text.split('→').map(&:strip)
-
+    # Pattern 1: "State changed from X to Y" (Standard)
+    # Regex handles "Status changed from Open to Done" or "Priority changed from High to Low"
+    if match = content.match(/^(.+?)\s+(?:changed|updated)\s+from\s+(.+?)\s+to\s+(.+?)(?:\s+by\s+.+)?$/i)
+      result[:field] = match[1].strip
+      result[:action] = "changed the #{result[:field]}"
+      result[:from] = match[2].strip
+      result[:to] = match[3].strip
+    
+    # Pattern 2: "X -> Y" (Arrow format)
+    elsif content.include?('→')
+      parts = content.split('→').map(&:strip)
       if parts.length == 2
-        old_value = parts[0]
-        new_value = parts[1]
-
-        # Display in 2-column layout
-        content_tag(:div, class: 'grid grid-cols-2 gap-4 mt-2') do
-          output = []
-
-          # Before column
-          output << content_tag(:div, class: 'border-l-4 border-red-400 pl-3') do
-            content_tag(:div, class: 'text-xs text-gray-500 dark:text-gray-400 mb-1') do
-              'Before'
-            end +
-            content_tag(:div, class: 'prose prose-sm max-w-none dark:prose-invert bg-red-50 dark:bg-red-900/20 p-2 rounded prose-ul:list-disc prose-ol:list-decimal prose-li:my-1') do
-              # Sanitize and render HTML for rich text - strip style attributes to let Tailwind work
-              ActionController::Base.helpers.sanitize(old_value,
-                tags: %w[strong em b i u p br span div ul ol li h1 h2 h3 h4 h5 h6 blockquote a],
-                attributes: %w[class href]  # Removed style to prevent inline override
-              ).html_safe
-            end
-          end
-
-          # After column
-          output << content_tag(:div, class: 'border-l-4 border-green-400 pl-3') do
-            content_tag(:div, class: 'text-xs text-gray-500 dark:text-gray-400 mb-1') do
-              'After'
-            end +
-            content_tag(:div, class: 'prose prose-sm max-w-none dark:prose-invert bg-green-50 dark:bg-green-900/20 p-2 rounded prose-ul:list-disc prose-ol:list-decimal prose-li:my-1') do
-              # Sanitize and render HTML for rich text - strip style attributes to let Tailwind work
-              ActionController::Base.helpers.sanitize(new_value,
-                tags: %w[strong em b i u p br span div ul ol li h1 h2 h3 h4 h5 h6 blockquote a],
-                attributes: %w[class href]  # Removed style to prevent inline override
-              ).html_safe
-            end
-          end
-
-          safe_join(output)
-        end
-      else
-        # If split didn't work as expected, show as plain text
-        content_tag(:div, history_text, class: 'text-sm text-gray-700 dark:text-gray-300')
+        result[:field] = 'Item' # Generic if not specified
+        result[:action] = 'updated'
+        result[:from] = parts[0]
+        result[:to] = parts[1]
       end
+
+    # Pattern 3: "Added attachment: X"
+    elsif match = content.match(/^Added attachment:\s*(.+)$/i)
+      result[:action] = 'attached'
+      result[:field] = 'Attachment'
+      result[:to] = match[1].strip
+      
+    # Pattern 4: "Created the Work item"
+    elsif content.match?(/created/i)
+      result[:action] = 'created'
+      result[:field] = 'Defect'
+    
     else
-      # Old format fallback - try to match "from X to Y by Z" pattern
-      match = history_text.match(/(.+?)\s+from\s+(.+?)\s+to\s+(.+?)\s+by\s+(.+)$/i)
+      # Fallback for plain text updates
+      result[:action] = 'updated'
+      result[:field] = 'Info'
+      result[:to] = content
+    end
 
-      if match
-        action = match[1]
-        old_value = match[2].strip
-        new_value = match[3].strip
-        actor = match[4].strip
+    result
+  end
 
-        # Check if values are user names (for assignee changes)
-        is_assignee_change = action.downcase.include?('assignee')
-
-        content_tag(:div, class: 'flex items-center gap-2 flex-wrap') do
-          output = []
-
-          # Old value
-          output << if is_assignee_change && old_value.downcase != 'none'
-                      render_user_badge(old_value, 'line-through text-red-600')
-                    else
-                      content_tag(:span, old_value, class: 'px-2 py-0.5 bg-red-50 text-red-700 rounded line-through font-medium')
-                    end
-
-          # Arrow
-          output << content_tag(:span, '→', class: 'text-gray-400 font-bold')
-
-          # New value
-          output << if is_assignee_change && new_value.downcase != 'none'
-                      render_user_badge(new_value, 'text-green-700 font-medium')
-                    else
-                      content_tag(:span, new_value, class: 'px-2 py-0.5 bg-green-50 text-green-700 rounded font-medium')
-                    end
-
-          # Actor (by C)
-          output << content_tag(:span, 'by', class: 'text-gray-400 text-xs')
-          output << render_user_badge(actor, 'text-blue-700 font-medium')
-
-          safe_join(output)
-        end
-      else
-        # No pattern matched, show as-is
-        content_tag(:div, history_text, class: 'text-sm text-gray-700 dark:text-gray-300')
-      end
+  def history_badge_class(value, type = :neutral)
+    base = "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium "
+    case type
+    when :old
+      base + "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 line-through"
+    when :new
+      base + "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+    else
+      base + "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
     end
   end
 
-  def render_user_badge(name, additional_classes = '')
-    initials = name.split.map(&:first).join.upcase[0..1]
-
-    avatar = content_tag(:span, initials, class: 'inline-flex items-center justify-center w-5 h-5 bg-blue-600 text-white text-xs rounded-full')
-    name_span = content_tag(:span, name, class: 'text-sm')
-
-    content_tag(:span, class: "inline-flex items-center gap-1 #{additional_classes}") do
-      avatar + name_span
+  def render_user_avatar(user, size_class = "w-8 h-8")
+    return nil unless user
+    initials = user.name.split.map(&:first).join.upcase[0..1]
+    color_class = "bg-blue-600 dark:bg-blue-500" # Could be randomized based on ID
+    
+    content_tag(:div, class: "#{size_class} rounded-full #{color_class} flex items-center justify-center text-white font-medium text-xs ring-2 ring-white dark:ring-gray-800") do
+      initials
     end
+  end
+
+  # Keep old method for backward compatibility if needed, but alias or deprecate
+  def format_history_with_highlights(defect_history)
+    # Placeholder to prevent breaking old views if partially deployed
+    defect_history.history
   end
 end

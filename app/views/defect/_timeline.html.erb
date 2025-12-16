@@ -1,105 +1,90 @@
-<% if @defects_history.present? %>
-  <div class="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-    <!-- Header -->
-    <div class="px-3 sm:px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-      <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Activity</h3>
-    </div>
+<% if @defects_history.present? || @defect.creator.present? %>
+  <div class="space-y-6 px-2 sm:px-0">
+    <!-- Combined Stream: History + Creation -->
+    <% 
+      # Combine history and creation event, sort by date desc
+      creation_event = if @defect.creator
+        OpenStruct.new(
+          user: @defect.creator,
+          history: "created the Work item",
+          created_at: @defect.created_at,
+          history_type: "Created"
+        )
+      else
+        nil
+      end
+      
+      all_events = (@defects_history.to_a + [creation_event]).compact
+      # Sort by created_at DESC (newest top)
+      all_events.sort_by! { |e| e.created_at }.reverse! 
+    %>
 
-    <!-- Timeline -->
-    <div class="p-3 sm:p-4">
-      <div class="space-y-4">
-        <% @defects_history.each do |defect| %>
-          <div class="flex gap-2 sm:gap-3">
-            <!-- Avatar -->
-            <div class="flex-shrink-0">
-              <div class="w-7 h-7 bg-blue-600 dark:bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
-                <%= render 'defect/defect_user_initials', defect: defect %>
-              </div>
-            </div>
+    <% all_events.each do |event| %>
+      <% 
+        parsed = parse_history_item(event.history)
+        user = event.user
+      %>
+      <div class="flex gap-4 group">
+        <!-- Avatar Column -->
+        <div class="flex-shrink-0 pt-1">
+          <%= render_user_avatar(user, "w-8 h-8") %>
+        </div>
 
-            <!-- Content -->
-            <div class="flex-1 min-w-0">
-              <div class="text-sm">
-                <span class="font-medium text-gray-900 dark:text-gray-100"><%= defect.user.name %></span>
-                <span class="text-gray-500 dark:text-gray-400 ml-1"><%= defect.history_type.present? ? defect.history_type.downcase : 'updated' %></span>
-                <span class="text-gray-400 dark:text-gray-500 text-xs ml-2"><%= defect.created_at.strftime('%d-%m-%Y') %></span>
-              </div>
+        <!-- Content Column -->
+        <div class="flex-1 min-w-0">
+          <!-- Header: User Action Date -->
+          <div class="flex items-center gap-2 mb-1">
+            <span class="font-semibold text-gray-900 dark:text-gray-100 text-sm">
+              <%= user&.name || 'System' %>
+            </span>
+            <span class="text-sm text-gray-600 dark:text-gray-400">
+              <%= parsed[:action] %>
+            </span>
+            <% if parsed[:field].present? && !parsed[:action].include?(parsed[:field]) && parsed[:field] != 'Info' %>
+               <!-- Redundant if action is "changed the Status", but good fallback -->
+            <% end %>
+          </div>
+          
+          <div class="text-xs text-gray-400 dark:text-gray-500 mb-2">
+            <%= event.created_at.strftime('%B %d, %Y at %l:%M %p') %>
+          </div>
 
-              <!-- History Text with Highlights -->
-              <% if defect.history.present? %>
-                <div class="mt-2">
-                  <%= format_history_with_highlights(defect) %>
+          <!-- Diff Block -->
+          <% if parsed[:from].present? || parsed[:to].present? %>
+            <div class="flex items-center gap-3 text-sm">
+              <% if parsed[:from].present? %>
+                <div class="<%= history_badge_class(parsed[:from], :old) %>">
+                  <%= parsed[:from] %>
+                </div>
+                <div class="text-gray-400">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                  </svg>
+                </div>
+              <% end %>
+              
+              <% if parsed[:to].present? %>
+                <div class="<%= history_badge_class(parsed[:to], :new) %>">
+                  <%= parsed[:to] %>
                 </div>
               <% end %>
             </div>
-          </div>
-        <% end %>
+          <% end %>
 
-        <!-- Defect Created Entry (at the bottom) -->
-        <div class="flex gap-2 sm:gap-3">
-          <!-- Avatar -->
-          <div class="flex-shrink-0">
-            <div class="w-7 h-7 bg-green-600 dark:bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
-              <% if @defect.creator.present? %>
-                <%= @defect.creator.name.split.map(&:first).join.upcase %>
-              <% else %>
-                ?
-              <% end %>
-            </div>
-          </div>
+          <!-- Attachment or Info specific rendering -->
+          <% if parsed[:field] == 'Attachment' %>
+             <div class="mt-1 text-sm text-blue-600 dark:text-blue-400 flex items-center gap-1">
+               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+               <%= parsed[:to] %>
+             </div>
+          <% end %>
 
-          <!-- Content -->
-          <div class="flex-1 min-w-0">
-            <div class="text-sm">
-              <span class="font-medium text-gray-900 dark:text-gray-100">
-                <%= @defect.creator.present? ? @defect.creator.name : 'Unknown' %>
-              </span>
-              <span class="text-gray-500 dark:text-gray-400 ml-1">created this defect</span>
-              <span class="text-gray-400 dark:text-gray-500 text-xs ml-2"><%= @defect.created_at.strftime('%d-%m-%Y')%></span>
-            </div>
-          </div>
         </div>
       </div>
-    </div>
+    <% end %>
   </div>
 <% else %>
-  <!-- Empty State -->
-  <div class="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-    <div class="px-3 sm:px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-      <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300">Activity</h3>
-    </div>
-    <div class="p-3 sm:p-4">
-      <div class="space-y-4">
-        <!-- No activity message -->
-        <div class="p-4 text-center">
-          <p class="text-gray-400 dark:text-gray-500 text-sm">No activity yet</p>
-        </div>
-
-        <!-- Defect Created Entry (at the bottom) -->
-        <div class="flex gap-2 sm:gap-3">
-          <!-- Avatar -->
-          <div class="flex-shrink-0">
-            <div class="w-7 h-7 bg-green-600 dark:bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
-              <% if @defect.creator.present? %>
-                <%= @defect.creator.name.split.map(&:first).join.upcase %>
-              <% else %>
-                ?
-              <% end %>
-            </div>
-          </div>
-
-          <!-- Content -->
-          <div class="flex-1 min-w-0">
-            <div class="text-sm">
-              <span class="font-medium text-gray-900 dark:text-gray-100">
-                <%= @defect.creator.present? ? @defect.creator.name : 'Unknown' %>
-              </span>
-              <span class="text-gray-500 dark:text-gray-400 ml-1">created this defect</span>
-              <span class="text-gray-400 dark:text-gray-500 text-xs ml-2"><%= @defect.created_at.strftime('%d-%m-%Y') %></span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+  <div class="p-8 text-center text-gray-500 dark:text-gray-400">
+    No history available.
   </div>
 <% end %>
