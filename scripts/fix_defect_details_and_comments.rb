@@ -147,45 +147,48 @@ def download_attachment(att)
   max_retries = 4
   attempts = 0
   
-  begin
+  loop do
     attempts += 1
     
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = true
-    http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-    
-    # Increased timeouts for large video files
-    http.open_timeout = 60
-    http.read_timeout = 600 # 10 minutes
-    
-    req = Net::HTTP::Get.new(uri, auth_header)
-    
-    res = http.request(req)
-    
-    if res.is_a?(Net::HTTPRedirection)
-      location = res['location']
-      uri = URI(location)
-      if attempts < max_retries
-        log "      [REDIRECT] Following redirect for #{filename}..."
-        retry
+    begin
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+      http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      
+      # Increased timeouts for large video files
+      http.open_timeout = 60
+      http.read_timeout = 600 # 10 minutes
+      
+      req = Net::HTTP::Get.new(uri, auth_header)
+      
+      res = http.request(req)
+      
+      if res.is_a?(Net::HTTPRedirection)
+        location = res['location']
+        if attempts < max_retries
+          log "      [REDIRECT] Following redirect for #{filename}..."
+          uri = URI(location)
+          next
+        end
       end
-    end
-    
-    unless res.is_a?(Net::HTTPSuccess)
-      log "      [ERROR] HTTP #{res.code} for #{filename}"
-      return nil
-    end
-    
-    res.body
-  rescue StandardError => e
-    if attempts < max_retries
-      wait_time = attempts * 3
-      log "      [RETRY] Error downloading #{filename} (#{e.class}: #{e.message}). Retrying in #{wait_time}s..."
-      sleep wait_time
-      retry
-    else
-      log "      [FAIL] Failed to download #{filename} after #{max_retries} attempts."
-      return nil 
+      
+      unless res.is_a?(Net::HTTPSuccess)
+        log "      [ERROR] HTTP #{res.code} for #{filename}"
+        return nil
+      end
+      
+      return res.body
+
+    rescue StandardError => e
+      if attempts < max_retries
+        wait_time = attempts * 3
+        log "      [RETRY] Error downloading #{filename} (#{e.class}: #{e.message}). Retrying in #{wait_time}s..."
+        sleep wait_time
+        next
+      else
+        log "      [FAIL] Failed to download #{filename} after #{max_retries} attempts."
+        return nil 
+      end
     end
   end
 end
