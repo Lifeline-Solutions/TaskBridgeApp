@@ -1,0 +1,161 @@
+<!-- app/views/user_mailer/sla_daily_summary.html.erb -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+</head>
+<body class="bg-gray-100">
+  <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-md overflow-hidden my-8">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-8 text-center">
+      <h1 class="text-3xl font-bold m-0">📊 Daily SLA Performance Report</h1>
+      <p class="mt-2 mb-0 opacity-90"><%= @team.name %> - <%= @report_date.strftime('%B %d, %Y') %></p>
+    </div>
+
+    <!-- Content -->
+    <div class="px-8 py-6">
+      <p>Hello <strong><%= @user&.name || @user&.email || 'Team Lead' %></strong>,</p>
+      <p>Here's your daily SLA performance summary:</p>
+
+      <!-- Performance Metrics Grid -->
+      <div class="grid grid-cols-2 gap-4 my-6">
+        <div class="bg-gray-50 rounded-lg p-5 text-center border-2 border-gray-200">
+          <div class="text-sm text-gray-600 uppercase">Total Tickets</div>
+          <div class="text-4xl font-bold text-blue-600 my-2"><%= @summary_data[:total_tickets] %></div>
+        </div>
+
+        <div class="bg-gray-50 rounded-lg p-5 text-center border-2 border-gray-200">
+          <div class="text-sm text-gray-600 uppercase">On Time</div>
+          <div class="text-4xl font-bold text-green-600 my-2"><%= @summary_data[:on_time_count] %></div>
+        </div>
+
+        <div class="bg-gray-50 rounded-lg p-5 text-center border-2 border-gray-200">
+          <div class="text-sm text-gray-600 uppercase">Breached</div>
+          <div class="text-4xl font-bold text-red-600 my-2"><%= @summary_data[:breached_count] %></div>
+        </div>
+
+        <div class="bg-gray-50 rounded-lg p-5 text-center border-2 border-gray-200">
+          <div class="text-sm text-gray-600 uppercase">At Risk</div>
+          <div class="text-4xl font-bold text-yellow-600 my-2"><%= @summary_data[:at_risk_count] %></div>
+        </div>
+      </div>
+
+      <!-- SLA Compliance Rate -->
+      <% compliance = @summary_data[:performance_metrics][:compliance_rate] %>
+      <div class="text-center my-8">
+        <h3 class="m-0 text-lg font-semibold">SLA Compliance Rate</h3>
+        <div class="text-5xl font-bold my-3 <%= compliance >= 90 ? 'text-green-600' : compliance >= 75 ? 'text-yellow-600' : 'text-red-600' %>">
+          <%= compliance %>%
+        </div>
+        <span class="inline-block px-4 py-2 rounded-full text-sm font-semibold <%=
+          if compliance >= 95
+            'bg-green-100 text-green-800'
+          elsif compliance >= 85
+            'bg-blue-100 text-blue-800'
+          elsif compliance >= 70
+            'bg-yellow-100 text-yellow-800'
+          else
+            'bg-red-100 text-red-800'
+          end
+        %>">
+          <%= if compliance >= 95
+                'Excellent Performance'
+              elsif compliance >= 85
+                'Good Performance'
+              elsif compliance >= 70
+                'Needs Improvement'
+              else
+                'Critical - Action Required'
+              end %>
+        </span>
+      </div>
+
+      <!-- Breach Breakdown by Type -->
+      <h2 class="text-xl text-gray-700 mt-8 mb-4 pb-2 border-b-2 border-purple-600">Breach Breakdown by Type</h2>
+      <table class="w-full border-collapse mb-6">
+        <thead>
+          <tr class="bg-gray-50 border-b-2 border-gray-300">
+            <th class="px-3 py-3 text-left font-semibold text-gray-700">SLA Type</th>
+            <th class="px-3 py-3 text-left font-semibold text-gray-700">Breached Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b border-gray-200 hover:bg-gray-50">
+            <td class="px-3 py-3">Initial Response</td>
+            <td class="px-3 py-3"><strong><%= @summary_data[:breach_by_type][:initial_response] %></strong></td>
+          </tr>
+          <tr class="border-b border-gray-200 hover:bg-gray-50">
+            <td class="px-3 py-3">Target Repair</td>
+            <td class="px-3 py-3"><strong><%= @summary_data[:breach_by_type][:target_repair] %></strong></td>
+          </tr>
+          <tr class="border-b border-gray-200 hover:bg-gray-50">
+            <td class="px-3 py-3">Resolution</td>
+            <td class="px-3 py-3"><strong><%= @summary_data[:breach_by_type][:resolution] %></strong></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Breach Breakdown by Severity -->
+      <% if @summary_data[:breach_by_severity].any? %>
+        <h2 class="text-xl text-gray-700 mt-8 mb-4 pb-2 border-b-2 border-purple-600">Breach Breakdown by Severity</h2>
+        <table class="w-full border-collapse mb-6">
+          <thead>
+            <tr class="bg-gray-50 border-b-2 border-gray-300">
+              <th class="px-3 py-3 text-left font-semibold text-gray-700">Priority Level</th>
+              <th class="px-3 py-3 text-left font-semibold text-gray-700">Breached Count</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @summary_data[:breach_by_severity].each do |severity, count| %>
+              <tr class="border-b border-gray-200 hover:bg-gray-50">
+                <td class="px-3 py-3"><%= severity || 'Not Set' %></td>
+                <td class="px-3 py-3"><strong><%= count %></strong></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% end %>
+
+      <!-- At-Risk Tickets -->
+      <% if @summary_data[:at_risk_tickets].any? %>
+        <h2 class="text-xl text-gray-700 mt-8 mb-4 pb-2 border-b-2 border-purple-600">⚠️ Tickets At Risk (Next 2 Hours)</h2>
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+          <p class="mt-0 mb-4"><strong>The following tickets require immediate attention:</strong></p>
+          <table class="w-full border-collapse">
+            <thead>
+              <tr class="bg-gray-50 border-b-2 border-gray-300">
+                <th class="px-3 py-3 text-left font-semibold text-gray-700">Ticket ID</th>
+                <th class="px-3 py-3 text-left font-semibold text-gray-700">Project</th>
+                <th class="px-3 py-3 text-left font-semibold text-gray-700">Subject</th>
+                <th class="px-3 py-3 text-left font-semibold text-gray-700">Priority</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @summary_data[:at_risk_tickets].each do |ticket| %>
+                <tr class="border-b border-gray-200 hover:bg-gray-50">
+                  <td class="px-3 py-3"><strong><%= ticket.unique_id %></strong></td>
+                  <td class="px-3 py-3"><%= ticket.project&.title %></td>
+                  <td class="px-3 py-3"><%= ticket.subject.truncate(40) %></td>
+                  <td class="px-3 py-3"><%= ticket.priority %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="bg-green-100 border-l-4 border-green-500 p-4 my-6">
+          <p class="m-0 text-green-800"><strong>✅ Great news!</strong> No tickets are currently at risk of SLA breach.</p>
+        </div>
+      <% end %>
+
+      <p class="mt-8">For detailed ticket information, please visit the TaskBridge dashboard.</p>
+    </div>
+
+    <!-- Footer -->
+    <div class="bg-gray-50 px-8 py-5 text-center text-xs text-gray-600">
+      <p class="mb-1">This is an automated daily report from the TaskBridge SLA Monitoring System</p>
+      <p class="m-0">© <%= Date.today.year %> TaskBridge Support Team</p>
+    </div>
+  </div>
+</body>
+</html>
