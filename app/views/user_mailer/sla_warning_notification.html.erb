@@ -80,7 +80,7 @@
       <div class="bg-blue-50 border-l-4 border-blue-600 p-4 mb-6">
         <h3 class="mt-0 mb-3 text-blue-900 font-semibold">Recommended Actions</h3>
         <ul class="my-0 pl-5 text-gray-800">
-          <%= case @sla_type
+          <% case @sla_type
               when :initial_response %>
                 <li>Assign the ticket to a team member immediately</li>
                 <li>Send an initial response acknowledging the issue</li>
@@ -104,8 +104,7 @@
       <p class="mb-6">Please act promptly to avoid an SLA breach.</p>
 
       <div class="text-center">
-        <%= link_to 'Take Action Now', project_ticket_url(@ticket.project, @ticket),
-            class: 'inline-block bg-orange-500 text-white px-8 py-3 rounded no-underline font-semibold hover:bg-orange-600' %>
+        <%= link_to 'Take Action Now', project_ticket_url(@ticket.project, @ticket), class: 'inline-block bg-orange-500 text-white px-8 py-3 rounded no-underline font-semibold hover:bg-orange-600' %>
       </div>
     </div>
 
