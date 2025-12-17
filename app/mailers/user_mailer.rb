@@ -341,4 +341,75 @@ class UserMailer < ApplicationMailer
       format.text { render 'defect_edit_notification_email' }
     end
   end
+
+  # SLA Monitoring Notification Methods
+  def sla_breach_notification(ticket, breach_type, recipients)
+    return if recipients.blank?
+
+    @ticket = ticket
+    @breach_type = breach_type
+
+    breach_label = case breach_type
+                   when :initial_response_breach
+                     'Initial Response'
+                   when :target_repair_breach
+                     'Target Repair'
+                   when :resolution_breach
+                     'Resolution'
+                   else
+                     'SLA'
+                   end
+
+    subject_text = "[SLA BREACH] #{breach_label} SLA Breached - Ticket #{@ticket.unique_id}"
+
+    mail(to: recipients, subject: subject_text) do |format|
+      format.html { render 'sla_breach_notification' }
+      format.text { render plain: "SLA Breach Alert: #{breach_label} SLA has been breached for ticket #{@ticket.unique_id}" }
+    end
+  end
+
+  def sla_warning_notification(ticket, sla_type, time_remaining, recipients)
+    return if recipients.blank?
+
+    @ticket = ticket
+    @sla_type = sla_type
+    @time_remaining = time_remaining
+
+    type_label = case sla_type
+                 when :initial_response
+                   'Initial Response'
+                 when :target_repair
+                   'Target Repair'
+                 when :resolution
+                   'Resolution'
+                 else
+                   'SLA'
+                 end
+
+    subject_text = "[SLA WARNING] #{type_label} SLA expires in #{time_remaining} - Ticket #{@ticket.unique_id}"
+
+    mail(to: recipients, subject: subject_text) do |format|
+      format.html { render 'sla_warning_notification' }
+      format.text { render plain: "SLA Warning: #{type_label} SLA expires in #{time_remaining} for ticket #{@ticket.unique_id}" }
+    end
+  end
+
+  def sla_daily_summary(user, summary_data, team, report_date = Date.today)
+    return if user.blank?
+
+    recipient_email = user.respond_to?(:email) ? user.email : user
+    return if recipient_email.blank?
+
+    @user = user
+    @summary_data = summary_data
+    @team = team
+    @report_date = report_date
+
+    subject_text = "Daily SLA Summary Report - #{team.name} - #{report_date.strftime('%B %d, %Y')}"
+
+    mail(to: recipient_email, subject: subject_text) do |format|
+      format.html { render 'sla_daily_summary' }
+      format.text { render plain: subject_text }
+    end
+  end
 end
