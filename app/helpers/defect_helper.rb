@@ -85,6 +85,20 @@ module DefectHelper
     end
   end
 
+  # Sanitize HTML for safe rendering in history display
+  # Preserves formatting like lists, tables, bold, italic, etc.
+  def strip_html_for_history(content)
+    return content if content.blank?
+
+    # Check if content contains HTML tags
+    if content.include?('<')
+      # Sanitize HTML to allow safe formatting tags
+      sanitize_rich_text(content)
+    else
+      content
+    end
+  end
+
   def parse_history_item(content)
     # Default fallback
     result = { action: 'updated', field: nil, from: nil, to: nil }
@@ -93,20 +107,20 @@ module DefectHelper
 
     # Pattern 1: "State changed from X to Y" (Standard)
     # Regex handles "Status changed from Open to Done" or "Priority changed from High to Low"
-    if match = content.match(/^(.+?)\s+(?:changed|updated)\s+from\s+(.+?)\s+to\s+(.+?)(?:\s+by\s+.+)?$/i)
+    if match = content.match(/^(.+?)\s+(?:changed|updated)\s+from\s+(.+?)\s+to\s+(.+?)(?:\s+(?:by|at)|$)/i)
       result[:field] = match[1].strip
       result[:action] = "changed the #{result[:field]}"
-      result[:from] = match[2].strip
-      result[:to] = match[3].strip
-    
+      result[:from] = strip_html_for_history(match[2].strip)
+      result[:to] = strip_html_for_history(match[3].strip)
+
     # Pattern 2: "X -> Y" (Arrow format)
     elsif content.include?('→')
       parts = content.split('→').map(&:strip)
       if parts.length == 2
-        result[:field] = 'Item' # Generic if not specified
-        result[:action] = 'updated'
-        result[:from] = parts[0]
-        result[:to] = parts[1]
+        result[:field] = 'Description' # Likely description if using arrow format
+        result[:action] = 'updated the Description'
+        result[:from] = strip_html_for_history(parts[0])
+        result[:to] = strip_html_for_history(parts[1])
       end
 
     # Pattern 3: "Added attachment: X"
@@ -114,17 +128,17 @@ module DefectHelper
       result[:action] = 'attached'
       result[:field] = 'Attachment'
       result[:to] = match[1].strip
-      
+
     # Pattern 4: "Created the Work item"
     elsif content.match?(/created/i)
       result[:action] = 'created'
       result[:field] = 'Defect'
-    
+
     else
       # Fallback for plain text updates
       result[:action] = 'updated'
       result[:field] = 'Info'
-      result[:to] = content
+      result[:to] = strip_html_for_history(content)
     end
 
     result
@@ -146,7 +160,7 @@ module DefectHelper
     return nil unless user
     initials = user.name.split.map(&:first).join.upcase[0..1]
     color_class = "bg-blue-600 dark:bg-blue-500" # Could be randomized based on ID
-    
+
     content_tag(:div, class: "#{size_class} rounded-full #{color_class} flex items-center justify-center text-white font-medium text-xs ring-2 ring-white dark:ring-gray-800") do
       initials
     end
