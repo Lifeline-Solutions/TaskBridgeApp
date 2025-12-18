@@ -27,7 +27,7 @@ append :linked_dirs,
 set :default_env, {
   'RAILS_ENV' => 'staging',
   'SMTP_USERNAME' => 'cspm@craftsilicon.com',
-  'SMTP_PASSWORD' => '#cspm@123#'
+  'SMTP_PASSWORD' => 'Cspm@2025!'
 }
 
 # Optional niceties
