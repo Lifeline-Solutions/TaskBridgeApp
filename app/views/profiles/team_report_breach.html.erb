@@ -86,7 +86,7 @@
           <div class="flex justify-between items-center">
             <div>
               <h3 class="text-lg font-semibold <%= @overall_breach_percentage >= 80 ? 'text-green-800' : @overall_breach_percentage >= 50 ? 'text-yellow-800' : 'text-red-800' %> mb-1">Overall Performance Score</h3>
-              <p class="text-sm text-gray-600">Tickets of Tickets not Breached: <%= @total_tickets  -  @total_breached_count %> of <%= @total_tickets %></p>
+              <p class="text-sm text-gray-600">Total Tickets not Breached: <%= @total_tickets  -  @total_breached_count %> of <%= @total_tickets %></p>
 
             </div>
             <div class="text-right">
