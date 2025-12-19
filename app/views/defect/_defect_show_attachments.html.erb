@@ -541,29 +541,124 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         })
         .then(result => {
+          // Create page-like container
           const preview = document.createElement('div');
-          preview.className = 'bg-white text-gray-900 p-8 overflow-y-auto overflow-x-auto';
+          preview.className = 'bg-gray-200 p-8 overflow-y-auto overflow-x-auto';
           preview.style.maxHeight = '80vh';
           preview.style.maxWidth = '90vw';
           preview.style.width = 'auto';
-          preview.innerHTML = result.value;
 
-          // Add styling for Word document structure
+          // Create document page wrapper
+          const docPage = document.createElement('div');
+          docPage.className = 'bg-white text-gray-900 mx-auto shadow-lg';
+          docPage.style.maxWidth = '210mm'; // A4 width
+          docPage.style.minHeight = '297mm'; // A4 height
+          docPage.style.padding = '25mm 20mm'; // Standard Word margins
+          docPage.style.boxShadow = '0 0 10px rgba(0,0,0,0.1)';
+
+          // Insert converted HTML content
+          docPage.innerHTML = result.value;
+
+          // Add comprehensive Word document styling
           const style = document.createElement('style');
           style.textContent = `
-            #previewContent p { margin-bottom: 1em; line-height: 1.6; }
-            #previewContent h1 { font-size: 2em; font-weight: bold; margin: 1em 0 0.5em; }
-            #previewContent h2 { font-size: 1.5em; font-weight: bold; margin: 1em 0 0.5em; }
-            #previewContent h3 { font-size: 1.25em; font-weight: bold; margin: 1em 0 0.5em; }
-            #previewContent ul, #previewContent ol { margin-left: 2em; margin-bottom: 1em; }
-            #previewContent li { margin-bottom: 0.5em; }
-            #previewContent table { border-collapse: collapse; width: 100%; margin: 1em 0; }
-            #previewContent th, #previewContent td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            #previewContent th { background-color: #f3f4f6; font-weight: bold; }
-            #previewContent strong { font-weight: bold; }
-            #previewContent em { font-style: italic; }
+            /* Page layout */
+            #previewContent .bg-gray-200 {
+              background-color: #e5e7eb;
+            }
+
+            /* Typography */
+            #previewContent p {
+              margin-bottom: 0.5em;
+              line-height: 1.15;
+              font-size: 11pt;
+              font-family: 'Calibri', 'Arial', sans-serif;
+            }
+            #previewContent h1 {
+              font-size: 16pt;
+              font-weight: bold;
+              margin: 12pt 0 6pt;
+              line-height: 1.15;
+            }
+            #previewContent h2 {
+              font-size: 13pt;
+              font-weight: bold;
+              margin: 10pt 0 6pt;
+              line-height: 1.15;
+            }
+            #previewContent h3 {
+              font-size: 11pt;
+              font-weight: bold;
+              margin: 8pt 0 4pt;
+              line-height: 1.15;
+            }
+
+            /* Lists */
+            #previewContent ul, #previewContent ol {
+              margin-left: 1.5em;
+              margin-bottom: 0.5em;
+              padding-left: 0.5em;
+            }
+            #previewContent li {
+              margin-bottom: 0.25em;
+              line-height: 1.15;
+            }
+
+            /* Tables */
+            #previewContent table {
+              border-collapse: collapse;
+              width: 100%;
+              margin: 8pt 0;
+              font-size: 11pt;
+            }
+            #previewContent th, #previewContent td {
+              border: 1px solid #bbb;
+              padding: 4pt 6pt;
+              text-align: left;
+            }
+            #previewContent th {
+              background-color: #f3f4f6;
+              font-weight: bold;
+            }
+
+            /* Text formatting */
+            #previewContent strong, #previewContent b {
+              font-weight: bold;
+            }
+            #previewContent em, #previewContent i {
+              font-style: italic;
+            }
+            #previewContent u {
+              text-decoration: underline;
+            }
+
+            /* Page breaks */
+            #previewContent hr {
+              page-break-after: always;
+              border: none;
+              border-top: 1px dashed #999;
+              margin: 20mm 0;
+              position: relative;
+            }
+            #previewContent hr::after {
+              content: '--- Page Break ---';
+              display: block;
+              text-align: center;
+              color: #999;
+              font-size: 9pt;
+              margin-top: 4pt;
+            }
+
+            /* Spacing adjustments */
+            #previewContent > div > *:first-child {
+              margin-top: 0;
+            }
+            #previewContent > div > *:last-child {
+              margin-bottom: 0;
+            }
           `;
           preview.appendChild(style);
+          preview.appendChild(docPage);
 
           content.innerHTML = '';
           content.appendChild(preview);
