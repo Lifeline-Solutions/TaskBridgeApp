@@ -240,9 +240,9 @@
 <div id="previewModal" class="hidden fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
   <!-- Close Button -->
   <button id="closePreviewBtn"
-          class="absolute top-4 right-4 z-50 w-12 h-12 flex items-center justify-center rounded-full bg-gray-800 bg-opacity-75 hover:bg-opacity-100 text-white hover:text-red-400 transition-all duration-200 group"
-          title="Close preview">
-    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          class="absolute top-4 right-4 z-50 w-14 h-14 flex items-center justify-center rounded-full bg-white bg-opacity-90 hover:bg-red-500 text-gray-800 hover:text-white transition-all duration-200 shadow-lg cursor-pointer"
+          title="Close preview (ESC)">
+    <svg class="w-8 h-8 font-bold" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
     </svg>
   </button>
@@ -646,12 +646,18 @@ document.addEventListener('DOMContentLoaded', function() {
     modal.classList.remove('hidden');
   });
 
-  // Close button
-  const closeBtn = document.getElementById('closePreview');
+  // Close button - using correct ID
+  const closeBtn = document.getElementById('closePreviewBtn');
   if (closeBtn) {
-    closeBtn.addEventListener('click', function() {
+    closeBtn.addEventListener('click', function(e) {
+      e.stopPropagation(); // Prevent event bubbling
       const modal = document.getElementById('previewModal');
-      if (modal) modal.classList.add('hidden');
+      if (modal) {
+        modal.classList.add('hidden');
+        // Clear content to stop video/audio playback
+        const content = document.getElementById('previewContent');
+        if (content) content.innerHTML = '';
+      }
     });
   }
 
