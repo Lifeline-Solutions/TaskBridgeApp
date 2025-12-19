@@ -480,7 +480,8 @@
 
 <!-- Simple Working Preview Script -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+// Support both normal page load and Turbo navigation
+function initializePreview() {
 
   // Handle all preview triggers
   document.addEventListener('click', function(e) {
@@ -514,7 +515,11 @@ document.addEventListener('DOMContentLoaded', function() {
       const preview = document.createElement('video');
       preview.src = url;
       preview.controls = true;
-      preview.className = 'max-w-full max-h-full';
+      preview.style.maxWidth = '90vw';
+      preview.style.maxHeight = '75vh';
+      preview.style.width = 'auto';
+      preview.style.height = 'auto';
+      preview.style.display = 'block';
       content.appendChild(preview);
     } else if (type === 'application/pdf') {
       const preview = document.createElement('iframe');
@@ -824,5 +829,20 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
-});
+}
+
+// Initialize on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', initializePreview);
+
+// Also initialize on Turbo load (for Rails with Turbo)
+document.addEventListener('turbo:load', initializePreview);
+
+// Fallback: run immediately if DOMContentLoaded already fired
+if (document.readyState === 'loading') {
+  // Still loading, listeners above will handle it
+} else {
+  // DOM already loaded, initialize now
+  initializePreview();
+}
+
 </script>
