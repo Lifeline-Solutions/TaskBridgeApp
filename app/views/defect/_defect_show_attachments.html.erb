@@ -482,54 +482,170 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   console.log("Preview script loaded");
-  
+
   // Handle all preview triggers
   document.addEventListener('click', function(e) {
     const trigger = e.target.closest('[data-action="click->preview#open"]');
     if (!trigger) return;
-    
+
     e.preventDefault();
     const url = trigger.dataset.url;
     const type = trigger.dataset.type;
-    
+
     if (!url) return;
-    
+
     const modal = document.getElementById('previewModal');
     const content = document.getElementById('previewContent');
-    
+
     if (!modal || !content) {
       console.error("Modal elements missing");
       return;
     }
-    
+
     // Clear previous content
     content.innerHTML = '';
-    
+
     // Create preview based on type
-    let preview;
     if (type.startsWith('image/')) {
-      preview = document.createElement('img');
+      const preview = document.createElement('img');
       preview.src = url;
       preview.className = 'max-w-full max-h-full';
+      content.appendChild(preview);
     } else if (type.startsWith('video/')) {
-      preview = document.createElement('video');
+      const preview = document.createElement('video');
       preview.src = url;
       preview.controls = true;
       preview.className = 'max-w-full max-h-full';
+      content.appendChild(preview);
     } else if (type === 'application/pdf') {
-      preview = document.createElement('iframe');
+      const preview = document.createElement('iframe');
       preview.src = url;
-      preview.className = 'w-full h-full';
+      preview.className = 'bg-white';
+      preview.style.width = '90vw';
+      preview.style.height = '90vh';
+      preview.style.border = 'none';
+      content.appendChild(preview);
+    } else if (type.includes('wordprocessing') || type === 'application/msword') {
+      // Word document preview with Mammoth.js
+      const loading = document.createElement('div');
+      loading.className = 'text-white p-8';
+      loading.innerHTML = '<p>Loading Word document...</p>';
+      content.appendChild(loading);
+
+      fetch(url)
+        .then(res => res.arrayBuffer())
+        .then(arrayBuffer => {
+          if (typeof mammoth !== 'undefined') {
+            return mammoth.convertToHtml({arrayBuffer: arrayBuffer});
+          } else {
+            throw new Error('Mammoth.js not loaded');
+          }
+        })
+        .then(result => {
+          const preview = document.createElement('div');
+          preview.className = 'bg-white text-gray-900 p-8 overflow-y-auto overflow-x-auto';
+          preview.style.maxHeight = '80vh';
+          preview.style.maxWidth = '90vw';
+          preview.style.width = 'auto';
+          preview.innerHTML = result.value;
+
+          // Add styling for Word document structure
+          const style = document.createElement('style');
+          style.textContent = `
+            #previewContent p { margin-bottom: 1em; line-height: 1.6; }
+            #previewContent h1 { font-size: 2em; font-weight: bold; margin: 1em 0 0.5em; }
+            #previewContent h2 { font-size: 1.5em; font-weight: bold; margin: 1em 0 0.5em; }
+            #previewContent h3 { font-size: 1.25em; font-weight: bold; margin: 1em 0 0.5em; }
+            #previewContent ul, #previewContent ol { margin-left: 2em; margin-bottom: 1em; }
+            #previewContent li { margin-bottom: 0.5em; }
+            #previewContent table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+            #previewContent th, #previewContent td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            #previewContent th { background-color: #f3f4f6; font-weight: bold; }
+            #previewContent strong { font-weight: bold; }
+            #previewContent em { font-style: italic; }
+          `;
+          preview.appendChild(style);
+
+          content.innerHTML = '';
+          content.appendChild(preview);
+        })
+        .catch(err => {
+          console.error('Word preview error:', err);
+          content.innerHTML = '<div class="text-white p-8"><p>Could not preview Word document.</p><p class="mt-4"><a href="' + url + '" class="text-blue-400 underline">Download file</a></p></div>';
+        });
+    } else if (type.includes('spreadsheet') || type === 'application/vnd.ms-excel') {
+      // Excel preview with SheetJS
+      const loading = document.createElement('div');
+      loading.className = 'text-white p-8';
+      loading.innerHTML = '<p>Loading Excel file...</p>';
+      content.appendChild(loading);
+
+      fetch(url)
+        .then(res => res.arrayBuffer())
+        .then(arrayBuffer => {
+          if (typeof XLSX !== 'undefined') {
+            const workbook = XLSX.read(arrayBuffer, {type: 'array'});
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const html = XLSX.utils.sheet_to_html(firstSheet);
+
+            const preview = document.createElement('div');
+            preview.className = 'bg-white text-gray-900 p-8 overflow-y-auto overflow-x-auto';
+            preview.style.maxHeight = '80vh';
+            preview.style.maxWidth = '90vw';
+            preview.style.width = 'auto';
+            preview.innerHTML = '<h3 class="text-lg font-bold mb-4 text-gray-900">Sheet: ' + workbook.SheetNames[0] + '</h3>' + html;
+
+            // Add Excel table styling
+            const style = document.createElement('style');
+            style.textContent = `
+              #previewContent table {
+                border-collapse: collapse;
+                width: max-content;
+                min-width: 100%;
+                margin: 1em 0;
+                font-size: 14px;
+              }
+              #previewContent th, #previewContent td {
+                border: 1px solid #d1d5db;
+                padding: 8px 12px;
+                text-align: left;
+                white-space: nowrap;
+              }
+              #previewContent th {
+                background-color: #f3f4f6;
+                font-weight: 600;
+                position: sticky;
+                top: 0;
+                z-index: 10;
+              }
+              #previewContent tr:nth-child(even) {
+                background-color: #f9fafb;
+              }
+              #previewContent tr:hover {
+                background-color: #e5e7eb;
+              }
+            `;
+            preview.appendChild(style);
+
+            content.innerHTML = '';
+            content.appendChild(preview);
+          } else {
+            throw new Error('SheetJS not loaded');
+          }
+        })
+        .catch(err => {
+          console.error('Excel preview error:', err);
+          content.innerHTML = '<div class="text-white p-8"><p>Could not preview Excel file.</p><p class="mt-4"><a href="' + url + '" class="text-blue-400 underline">Download file</a></p></div>';
+        });
     } else {
-      preview = document.createElement('div');
+      const preview = document.createElement('div');
       preview.className = 'text-white p-8';
       preview.innerHTML = '<p>Preview not available for this file type.</p><p class="mt-4"><a href="' + url + '" class="text-blue-400 underline">Download file</a></p>';
+      content.appendChild(preview);
     }
-    
-    content.appendChild(preview);
     modal.classList.remove('hidden');
   });
-  
+
   // Close button
   const closeBtn = document.getElementById('closePreview');
   if (closeBtn) {
@@ -538,7 +654,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (modal) modal.classList.add('hidden');
     });
   }
-  
+
   // ESC key
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
@@ -548,7 +664,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   });
-  
+
   // Click outside
   const modal = document.getElementById('previewModal');
   if (modal) {
