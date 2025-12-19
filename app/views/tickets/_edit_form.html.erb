@@ -12,9 +12,31 @@
       <div class="relative z-0 w-[100%] mb-6 group">
         <%= f.label :issue, ('issue *'), class: "capitalize block mb-1 text-sm font-medium"  %><br />
         <% if @project.special %>
-          <%= f.select :issue, options_for_select(['SUPPORT', 'NEW FEATURE', 'BUG', 'REQUEST', 'INCIDENT', 'CHANGE REQUEST', 'BILLABLE FEATURE']), {}, class: "border border-gray-300 The Issue', required: truerounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:text-white" %>
+          <%= f.select :issue,
+                       options_for_select([
+                                            ['SUPPORT', 'SUPPORT'],
+                                            ['NEW FEATURE', 'NEW FEATURE'],
+                                            ['BUG', 'BUG'],
+                                            %w[REQUEST/TASK REQUEST],
+                                            ['INCIDENT', 'INCIDENT'],
+                                            ['CHANGE REQUEST', 'CHANGE REQUEST'],
+                                            ['BILLABLE FEATURE', 'BILLABLE FEATURE']
+                                          ]),
+                       {},
+                       class: "border border-gray-300 The Issue', required: truerounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:text-white" %>
         <% else %>
-          <%= f.select :issue, options_for_select(['SUPPORT', 'NEW FEATURE', 'BUG', 'REQUEST', 'INCIDENT', 'BILLABLE FEATURE']), {}, class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:text-white", placeholder: 'Select The Issue' %>
+          <%= f.select :issue,
+                       options_for_select([
+                                            ['SUPPORT', 'SUPPORT'],
+                                            ['NEW FEATURE', 'NEW FEATURE'],
+                                            ['BUG', 'BUG'],
+                                            %w[REQUEST/TASK REQUEST],
+                                            ['INCIDENT', 'INCIDENT'],
+                                            ['BILLABLE FEATURE', 'BILLABLE FEATURE']
+                                          ]),
+                       {},
+                       class: "border border-gray-300 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500 dark:text-white",
+                       placeholder: 'Select The Issue' %>
         <% end %>
       </div>
 

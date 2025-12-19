@@ -26,7 +26,9 @@
                       class: "#{text_class} hover:opacity-80 transition-opacity" %>
                 </span>
                 <span class="text-sm opacity-60 hidden sm:inline">•</span>
-                <span class="text-xs sm:text-sm opacity-80 truncate hidden sm:inline"><%= ticket.issue %></span>
+                <span class="text-xs sm:text-sm opacity-80 truncate hidden sm:inline">
+                  <%= ticket.issue == 'REQUEST' ? 'REQUEST/TASK' : ticket.issue %>
+                </span>
               </div>
               <div class="flex items-center space-x-2 flex-shrink-0">
                 <span class="text-xs sm:text-sm opacity-80">
@@ -124,7 +126,7 @@
 
               <!-- Issue Type -->
               <td class="px-3 py-3 whitespace-nowrap text-white text-xs font-medium hidden xl:table-cell">
-                <%= link_to ticket.issue, project_ticket_path(ticket.project, ticket), 
+                <%= link_to ticket.issue == 'REQUEST' ? 'REQUEST/TASK' : ticket.issue, project_ticket_path(ticket.project, ticket),
                     class: "text-white hover:text-gray-200 transition-colors" %>
               </td>
 
