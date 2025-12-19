@@ -15,7 +15,7 @@
         </thead>
         <tbody>
         <% @attachments.each do |attachment| %>
-          <% 
+          <%
             # Check if user is admin
             user_is_admin = current_user.has_role?(:admin)
 
@@ -26,41 +26,85 @@
             # ActionText attachments are of class ActionText::Attachment
             # Regular attachments are ActiveStorage::Attachment
             is_from_comments = attachment.is_a?(ActionText::Attachment)
-            
+
             # Show delete for admin users OR creator, but not for attachments from comments
             show_delete = (user_is_admin || user_is_creator) && !is_from_comments
           %>
-          
+
           <tr class="bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg">
             <!-- Icon + Filename -->
             <td class="py-3 px-4 flex items-center space-x-2">
-              <% 
+              <%
                  # Safe URL generation for both ActiveStorage::Attachment and ActionText::Attachment
                  blob = attachment.respond_to?(:blob) ? attachment.blob : attachment
                  safe_url = begin
-                              rails_blob_url(blob, disposition: "attachment")
+                              rails_blob_url(blob, disposition: "inline")
                             rescue => e
                               nil
                             end
+                 # Separate download URL with 'attachment' disposition
+                 download_url = begin
+                                  rails_blob_url(blob, disposition: "attachment")
+                                rescue => e
+                                  safe_url
+                                end
               %>
-              <% if safe_url && attachment.content_type.to_s.start_with?('image/') %>
+              <%
+                 # Detect Office file types
+                 content_type = attachment.content_type.to_s
+                 is_word = content_type.include?('wordprocessing') || content_type == 'application/msword'
+                 is_excel = content_type.include?('spreadsheet') || content_type == 'application/vnd.ms-excel'
+                 is_powerpoint = content_type.include?('presentation') || content_type == 'application/vnd.ms-powerpoint'
+              %>
+
+              <% if safe_url && content_type.start_with?('image/') %>
                 <%= image_tag safe_url,
                               class: "w-6 h-6 rounded cursor-pointer hover:opacity-80",
-                              data: { action: "click->preview#open", url: safe_url, type: attachment.content_type } %>
-              <% elsif safe_url && attachment.content_type.to_s.start_with?('video/') %>
+                              data: { action: "click->preview#open", url: safe_url, type: content_type } %>
+              <% elsif safe_url && content_type.start_with?('video/') %>
                 <svg class="w-6 h-6 text-gray-400 cursor-pointer hover:text-gray-600"
                      fill="currentColor" viewBox="0 0 24 24"
                      data-action="click->preview#open"
                      data-url="<%= safe_url %>"
-                     data-type="<%= attachment.content_type %>">
+                     data-type="<%= content_type %>">
                   <path d="M17 10.5V7c0-1.1-.9-2-2-2H5C3.9 5 3 5.9 3 7v10c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2v-3.5l4 4v-11l-4 4z"/>
+                </svg>
+              <% elsif safe_url && is_word %>
+                <!-- Word Document Icon -->
+                <svg class="w-6 h-6 text-blue-600 cursor-pointer hover:text-blue-800"
+                     fill="currentColor" viewBox="0 0 24 24"
+                     data-action="click->preview#open"
+                     data-url="<%= safe_url %>"
+                     data-type="<%= content_type %>">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+                  <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="white" stroke-width="1"/>
+                </svg>
+              <% elsif safe_url && is_excel %>
+                <!-- Excel Spreadsheet Icon -->
+                <svg class="w-6 h-6 text-green-600 cursor-pointer hover:text-green-800"
+                     fill="currentColor" viewBox="0 0 24 24"
+                     data-action="click->preview#open"
+                     data-url="<%= safe_url %>"
+                     data-type="<%= content_type %>">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+                  <path d="M14 2v6h6M10 15l4-4M10 11l4 4" stroke="white" stroke-width="1.5"/>
+                </svg>
+              <% elsif safe_url && is_powerpoint %>
+                <!-- PowerPoint Presentation Icon -->
+                <svg class="w-6 h-6 text-orange-600 cursor-pointer hover:text-orange-800"
+                     fill="currentColor" viewBox="0 0 24 24"
+                     data-action="click->preview#open"
+                     data-url="<%= safe_url %>"
+                     data-type="<%= content_type %>">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+                  <path d="M14 2v6h6M9 13h1.5a1.5 1.5 0 0 1 0 3H9v-3zm0 0v5" stroke="white" stroke-width="1.5" fill="none"/>
                 </svg>
               <% else %>
                 <svg class="w-6 h-6 text-gray-400 cursor-pointer hover:text-gray-600"
                      fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
                      data-action="click->preview#open"
                      data-url="<%= safe_url %>"
-                     data-type="<%= attachment.content_type %>">
+                     data-type="<%= content_type %>">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.4a1 1 0 00-.3-.7L13.3 3.3A1 1 0 0012.6 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                 </svg>
               <% end %>
@@ -97,7 +141,7 @@
 
             <!-- Date Added -->
             <td class="py-3 px-4 whitespace-nowrap">
-              <% 
+              <%
                  created_at = if attachment.respond_to?(:created_at)
                                 attachment.created_at
                               elsif attachment.respond_to?(:attachable) && attachment.attachable&.respond_to?(:created_at)
@@ -111,8 +155,9 @@
 
             <!-- Actions -->
             <td class="py-3 px-4 flex space-x-3">
-              <%= link_to safe_url,
-                          class: "text-blue-600 dark:text-blue-500 hover:text-blue-800" do %>
+              <%= link_to download_url,
+                          class: "text-blue-600 dark:text-blue-500 hover:text-blue-800",
+                          title: "Download" do %>
                 <svg xmlns="http://www.w3.org/2000/svg"
                      width="20" height="20" viewBox="0 0 24 24"
                      fill="none" stroke="currentColor" stroke-width="2"
@@ -180,7 +225,7 @@
         <%= file_field_tag 'attachments[]',
                            multiple: true,
                            direct_upload: true,
-                           accept: 'image/*,video/*,audio/*,application/pdf,.doc,.docx,.xls,.xlsx',
+                           accept: 'image/*,video/*,audio/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx',
                            class: "block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" %>
 
         <%= submit_tag 'Upload',
@@ -193,7 +238,14 @@
 
 <!-- Fullscreen Preview Modal -->
 <div id="previewModal" class="hidden fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
-  <button id="closePreviewBtn" class="absolute top-5 right-5 text-white text-3xl">&times;</button>
+  <!-- Close Button -->
+  <button id="closePreviewBtn"
+          class="absolute top-4 right-4 z-50 w-12 h-12 flex items-center justify-center rounded-full bg-gray-800 bg-opacity-75 hover:bg-opacity-100 text-white hover:text-red-400 transition-all duration-200 group"
+          title="Close preview">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+    </svg>
+  </button>
   <div id="previewContent" class="max-h-full max-w-full"></div>
 </div>
 
@@ -221,10 +273,24 @@
     }
 </style>
 
+<!-- Load client-side Office preview libraries from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 <!-- Script for Preview -->
 <script>
   function safePreview(url, type) {
     const container = document.createElement("div");
+
+    // Helper function to check if file is Office document
+    const isOfficeDoc = (mimeType) => {
+      return mimeType.includes('wordprocessing') ||
+             mimeType === 'application/msword' ||
+             mimeType.includes('spreadsheet') ||
+             mimeType === 'application/vnd.ms-excel' ||
+             mimeType.includes('presentation') ||
+             mimeType === 'application/vnd.ms-powerpoint';
+    };
 
     if (type.startsWith("image/")) {
       const img = document.createElement("img");
@@ -255,6 +321,90 @@
       iframe.className = "w-[90vw] h-[90vh] rounded bg-white shadow-lg";
       iframe.setAttribute("sandbox", "allow-same-origin allow-scripts allow-popups");
       container.appendChild(iframe);
+    } else if (isOfficeDoc(type)) {
+      // Office documents (Word, Excel, PowerPoint) - Client-side preview
+      const loadingDiv = document.createElement("div");
+      loadingDiv.className = "p-6 bg-white dark:bg-gray-800 rounded shadow-lg text-center";
+      loadingDiv.innerHTML = \`
+        <div class="mb-4">
+          <svg class="animate-spin h-8 w-8 mx-auto text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+        <p class="text-gray-700 dark:text-gray-300">Loading document...</p>
+      \`;
+      container.appendChild(loadingDiv);
+
+      const isWord = type.includes('wordprocessing') || type === 'application/msword';
+      const isExcel = type.includes('spreadsheet') || type === 'application/vnd.ms-excel';
+      const isPowerPoint = type.includes('presentation') || type === 'application/vnd.ms-powerpoint';
+
+      if (isPowerPoint) {
+        container.innerHTML = \`
+          <div class="p-6 bg-white dark:bg-gray-800 rounded shadow-lg text-center">
+            <p class="mb-4 text-gray-700 dark:text-gray-300">PowerPoint preview not available</p>
+            <a href="\${url}" download class="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700">Download File</a>
+          </div>
+        \`;
+      } else {
+        fetch(url)
+          .then(response => response.arrayBuffer())
+          .then(arrayBuffer => {
+            if (isWord && typeof mammoth !== 'undefined') {
+              mammoth.convertToHtml({ arrayBuffer: arrayBuffer })
+                .then(result => {
+                  loadingDiv.remove();
+                  const previewDiv = document.createElement("div");
+                  previewDiv.className = "bg-white dark:bg-gray-800 p-8 rounded shadow-lg max-w-4xl max-h-[90vh] overflow-auto";
+                  previewDiv.innerHTML = \`<div class="prose dark:prose-invert max-w-none">\${result.value}</div>\`;
+                  container.appendChild(previewDiv);
+                })
+                .catch(error => {
+                  container.innerHTML = \`<div class="p-6 bg-white dark:bg-gray-800 rounded shadow-lg text-center">
+                    <p class="mb-4 text-gray-700 dark:text-gray-300">Preview failed</p>
+                    <a href="\${url}" download class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Download File</a>
+                  </div>\`;
+                });
+            } else if (isExcel && typeof XLSX !== 'undefined') {
+              try {
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                loadingDiv.remove();
+                const previewDiv = document.createElement("div");
+                previewDiv.className = "bg-white dark:bg-gray-800 p-6 rounded shadow-lg max-w-[90vw] max-h-[90vh] overflow-auto";
+                let html = '<div class="space-y-6">';
+                workbook.SheetNames.forEach((sheetName) => {
+                  const worksheet = workbook.Sheets[sheetName];
+                  const htmlTable = XLSX.utils.sheet_to_html(worksheet);
+                  html += \`<div><h3 class="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">\${sheetName}</h3><div class="overflow-x-auto">\${htmlTable}</div></div>\`;
+                });
+                html += '</div>';
+                previewDiv.innerHTML = html;
+                const tables = previewDiv.querySelectorAll('table');
+                tables.forEach(table => {
+                  table.className = 'min-w-full border-collapse border border-gray-300 dark:border-gray-600';
+                 const cells = table.querySelectorAll('td, th');
+                  cells.forEach(cell => {
+                    cell.className = 'border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm text-gray-700 dark:text-gray-300';
+                  });
+                });
+                container.appendChild(previewDiv);
+              } catch (error) {
+                container.innerHTML = \`<div class="p-6 bg-white dark:bg-gray-800 rounded shadow-lg text-center">
+                  <p class="mb-4 text-gray-700 dark:text-gray-300">Preview failed</p>
+                  <a href="\${url}" download class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Download File</a>
+                </div>\`;
+              }
+            }
+          })
+          .catch(error => {
+            container.innerHTML = \`<div class="p-6 bg-white dark:bg-gray-800 rounded shadow-lg text-center">
+              <p class="mb-4 text-gray-700 dark:text-gray-300">Failed to load document</p>
+              <a href="\${url}" download class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Download File</a>
+            </div>\`;
+          });
+      }
+    }
     } else if (type === "text/html" || type === "application/xhtml+xml") {
       // If the attachment is an HTML file, fetch and render table content safely
       fetch(url)
@@ -264,10 +414,10 @@
         });
     } else {
       const fallback = document.createElement("div");
-      fallback.className = "p-6 bg-white rounded shadow-lg text-center";
+      fallback.className = "p-6 bg-white dark:bg-gray-800 rounded shadow-lg text-center";
       fallback.innerHTML = `
-        <p class="mb-4">Preview not available for this file type.</p>
-        <a href="${url}" target="_blank" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Download</a>
+        <p class="mb-4 text-gray-700 dark:text-gray-300">Preview not available for this file type.</p>
+        <a href="${url}" download class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Download</a>
       `;
       container.appendChild(fallback);
     }
@@ -292,10 +442,38 @@
     modal.classList.remove("hidden");
   });
 
-  document.getElementById("closePreviewBtn").addEventListener("click", () => {
+  // Close modal function
+  const closeModal = () => {
     const modal = document.getElementById("previewModal");
     const previewContent = document.getElementById("previewContent");
     modal.classList.add("hidden");
     previewContent.innerHTML = "";
+
+    // Stop any playing videos/audio when closing
+    const videos = previewContent.querySelectorAll('video, audio');
+    videos.forEach(media => {
+      media.pause();
+      media.src = '';
+    });
+  };
+
+  // Close button click
+  document.getElementById("closePreviewBtn").addEventListener("click", closeModal);
+
+  // ESC key to close
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      const modal = document.getElementById("previewModal");
+      if (!modal.classList.contains("hidden")) {
+        closeModal();
+      }
+    }
+  });
+
+  // Click outside to close
+  document.getElementById("previewModal").addEventListener("click", (e) => {
+    if (e.target.id === "previewModal") {
+      closeModal();
+    }
   });
 </script>
