@@ -426,7 +426,7 @@ class DefectController < ApplicationController
 
       # Use left_joins explicitly for searchable associations
       @defects = @defects.left_joins(:users) unless @defects.to_sql.include?('JOIN "users"')
-      
+
       # Always join product/client/groupwares as they are in the core search
       @defects = @defects.left_joins(product: %i[client groupwares])
 
@@ -1417,10 +1417,10 @@ class DefectController < ApplicationController
     # Ordering and uniqueness
     # Sort by the numeric part of defect_unique (e.g. KCBL-123 -> 123) to ensure natural order
     direction = %w[asc desc].include?(params[:order]) ? params[:order] : 'asc'
-    
+
     # Fix PG::InvalidColumnReference: Use subquery to separate filtering (distinct) from ordering
     filtered_ids = defects.except(:order).distinct.select(:id)
-    
+
     defects = Defect.where(id: filtered_ids)
                     .includes(:users, :qa_module, :labels, :banking_type, :statuses, product: %i[client groupwares])
                     .order(Arel.sql("CAST(NULLIF(SPLIT_PART(defect_unique, '-', 2), '') AS INTEGER) #{direction}"))
@@ -1572,10 +1572,10 @@ class DefectController < ApplicationController
     # Ordering
     # Sort by the numeric part of defect_unique (e.g. KCBL-123 -> 123) to ensure natural order
     direction = %w[asc desc].include?(params[:order]) ? params[:order] : 'asc'
-    
+
     # Fix PG::InvalidColumnReference: Use subquery to separate filtering (distinct) from ordering
     filtered_ids = defects.except(:order).distinct.select(:id)
-    
+
     defects = Defect.where(id: filtered_ids)
                     .includes(:users, :labels, :statuses, :qa_module, :submodule, :banking_type, product: %i[client groupwares])
                     .order(Arel.sql("CAST(NULLIF(SPLIT_PART(defect_unique, '-', 2), '') AS INTEGER) #{direction}"))
@@ -1992,8 +1992,13 @@ class DefectController < ApplicationController
     if params[:content].present?
       current_content = defect.content&.body&.to_s || ''
       new_content = params[:content].to_s
-      # Only track if content actually changed
-      if current_content != new_content && new_content.present?
+
+      # Normalize HTML for semantic comparison (ignore whitespace/formatting differences)
+      normalized_current = normalize_html(current_content)
+      normalized_new = normalize_html(new_content)
+
+      # Only track if content actually changed semantically
+      if normalized_current != normalized_new && normalized_new.present?
         # Keep HTML formatting for rich text display in history
         # Convert to plain string for Sidekiq/JSON serialization
         changes[:description] = { from: current_content.to_s, to: new_content.to_s }
@@ -2199,6 +2204,36 @@ class DefectController < ApplicationController
       else
         value         # Keep other types as-is
       end
+    end
+  end
+
+  # Normalize HTML content for semantic comparison
+  # Converts HTML to plain text to detect actual content changes
+  # This ignores formatting, whitespace, and HTML structure differences
+  def normalize_html(html_string)
+    return '' if html_string.blank?
+
+    begin
+      # Convert to string and add spaces around block-level tags to preserve word boundaries
+      html = html_string.to_s
+
+      # Add space around block-level tags so content doesn't merge when tags are removed
+      html = html.gsub(/<\/(p|div|li|ul|ol|h1|h2|h3|h4|h5|h6|br)>/i, ' ')
+      html = html.gsub(/<(p|div|li|ul|ol|h1|h2|h3|h4|h5|h6|br)[^>]*>/i, ' ')
+
+      # Strip all HTML tags
+      plain_text = ActionView::Base.full_sanitizer.sanitize(html)
+
+      # Decode HTML entities
+      plain_text = CGI.unescapeHTML(plain_text)
+
+      # Normalize whitespace: collapse multiple spaces, remove newlines, trim
+      plain_text.gsub(/\s+/, ' ')
+        .strip
+        .downcase
+    rescue => e
+      Rails.logger.error "Error normalizing HTML: #{e.message}"
+      html_string.to_s.gsub(/\s+/, ' ').strip.downcase
     end
   end
 end
