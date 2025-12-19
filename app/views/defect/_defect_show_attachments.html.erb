@@ -481,7 +481,6 @@
 <!-- Simple Working Preview Script -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  console.log("Preview script loaded");
 
   // Handle all preview triggers
   document.addEventListener('click', function(e) {
@@ -498,7 +497,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const content = document.getElementById('previewContent');
 
     if (!modal || !content) {
-      console.error("Modal elements missing");
+      
       return;
     }
 
@@ -570,7 +569,7 @@ document.addEventListener('DOMContentLoaded', function() {
           content.appendChild(preview);
         })
         .catch(err => {
-          console.error('Word preview error:', err);
+          
           content.innerHTML = '<div class="text-white p-8"><p>Could not preview Word document.</p><p class="mt-4"><a href="' + url + '" class="text-blue-400 underline">Download file</a></p></div>';
         });
     } else if (type.includes('spreadsheet') || type === 'application/vnd.ms-excel') {
@@ -634,7 +633,7 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         })
         .catch(err => {
-          console.error('Excel preview error:', err);
+          
           content.innerHTML = '<div class="text-white p-8"><p>Could not preview Excel file.</p><p class="mt-4"><a href="' + url + '" class="text-blue-400 underline">Download file</a></p></div>';
         });
     } else {
