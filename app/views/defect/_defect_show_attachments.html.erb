@@ -477,3 +477,86 @@
     }
   });
 </script>
+
+<!-- Simple Working Preview Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  console.log("Preview script loaded");
+  
+  // Handle all preview triggers
+  document.addEventListener('click', function(e) {
+    const trigger = e.target.closest('[data-action="click->preview#open"]');
+    if (!trigger) return;
+    
+    e.preventDefault();
+    const url = trigger.dataset.url;
+    const type = trigger.dataset.type;
+    
+    if (!url) return;
+    
+    const modal = document.getElementById('previewModal');
+    const content = document.getElementById('previewContent');
+    
+    if (!modal || !content) {
+      console.error("Modal elements missing");
+      return;
+    }
+    
+    // Clear previous content
+    content.innerHTML = '';
+    
+    // Create preview based on type
+    let preview;
+    if (type.startsWith('image/')) {
+      preview = document.createElement('img');
+      preview.src = url;
+      preview.className = 'max-w-full max-h-full';
+    } else if (type.startsWith('video/')) {
+      preview = document.createElement('video');
+      preview.src = url;
+      preview.controls = true;
+      preview.className = 'max-w-full max-h-full';
+    } else if (type === 'application/pdf') {
+      preview = document.createElement('iframe');
+      preview.src = url;
+      preview.className = 'w-full h-full';
+    } else {
+      preview = document.createElement('div');
+      preview.className = 'text-white p-8';
+      preview.innerHTML = '<p>Preview not available for this file type.</p><p class="mt-4"><a href="' + url + '" class="text-blue-400 underline">Download file</a></p>';
+    }
+    
+    content.appendChild(preview);
+    modal.classList.remove('hidden');
+  });
+  
+  // Close button
+  const closeBtn = document.getElementById('closePreview');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function() {
+      const modal = document.getElementById('previewModal');
+      if (modal) modal.classList.add('hidden');
+    });
+  }
+  
+  // ESC key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('previewModal');
+      if (modal && !modal.classList.contains('hidden')) {
+        modal.classList.add('hidden');
+      }
+    }
+  });
+  
+  // Click outside
+  const modal = document.getElementById('previewModal');
+  if (modal) {
+    modal.addEventListener('click', function(e) {
+      if (e.target.id === 'previewModal') {
+        modal.classList.add('hidden');
+      }
+    });
+  }
+});
+</script>
