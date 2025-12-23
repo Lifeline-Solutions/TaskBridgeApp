@@ -26,6 +26,9 @@
         <%= @defect.retest_count || '0' %>
       </span>
     </div>
+    <div class="font-bold capitalize">Reopened Count:
+        <%= render "defect/defect_reopened_count" %>
+    </div>
   </div>
 </div>
 

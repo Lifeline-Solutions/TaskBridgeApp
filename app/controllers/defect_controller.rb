@@ -1091,6 +1091,7 @@ class DefectController < ApplicationController
         current_user,
         'Status Changed',
         "Status changed from #{old_status_name} to #{status.name} by #{current_user.name}"
+
       )
     end
 
