@@ -27,7 +27,7 @@
       </span>
     </div>
     <div class="font-bold capitalize">Reopened Count:
-        <%= render "defect/defect_reopened_count" %>
+        <%= render "defect/defect_reopened_count", locals: { defect: @defect } %>
     </div>
   </div>
 </div>

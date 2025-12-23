@@ -2,9 +2,10 @@
 <!-- For the defect we check the number of time the status.name == reopened has appeared on the defectHistorys -->
 <div class="font-bold capitalize flex">
   <div class="font-medium ml-1 space-y-1">
-    <%= DefectHistory.where(history_type: "Status Changed")
+    <%= DefectHistory.where(defect_id: @defect.id, history_type: "Status Changed")
                      .where("history LIKE ?", "%to Reopened%")
                      .count %>
+
 
   </div>
 </div>
