@@ -26,6 +26,9 @@
         <%= @defect.retest_count || '0' %>
       </span>
     </div>
+    <div>
+        <%= render "defect/defect_reopened_count", locals: { defect: @defect } %>
+    </div>
   </div>
 </div>
 
