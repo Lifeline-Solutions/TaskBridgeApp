@@ -104,7 +104,7 @@
         </td>
         <td class="px-3 py-2 text-center border-r border-gray-200 dark:border-gray-700">
           <span class="px-2 py-1 text-xs font-medium rounded">
-            <%= (@reopened_counts_index || {})[defect.id].to_i %>
+            <%= (@reopened_counts || {})[defect.id].to_i %>
           </span>
         </td>
 
