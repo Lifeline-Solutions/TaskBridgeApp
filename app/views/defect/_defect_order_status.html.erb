@@ -15,6 +15,7 @@
       <th scope="col" class="px-3 py-2 border-r border-gray-200 dark:border-gray-600">Reporter</th>
       <th scope="col" class="px-3 py-2 border-r border-gray-200 dark:border-gray-600">Created At</th>
       <th scope="col" class="px-3 py-2 border-r border-gray-200 dark:border-gray-600">Retest Count</th>
+      <th scope="col" class="px-3 py-2 border-r border-gray-200 dark:border-gray-600">Reopened Count</th>
       <th scope="col" class="px-3 py-2 border-r border-gray-200 dark:border-gray-600">Project</th>
       <th scope="col" class="px-3 py-2">Actions</th>
     </tr>
@@ -99,6 +100,11 @@
         <td class="px-3 py-2 text-center border-r border-gray-200 dark:border-gray-700">
           <span class="px-2 py-1 text-xs font-medium rounded">
             <%= defect.retest_count %>
+          </span>
+        </td>
+        <td class="px-3 py-2 text-center border-r border-gray-200 dark:border-gray-700">
+          <span class="px-2 py-1 text-xs font-medium rounded">
+            <%= (@reopened_counts_index || {})[defect.id].to_i %>
           </span>
         </td>
 

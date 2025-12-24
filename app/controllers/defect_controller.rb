@@ -600,6 +600,17 @@ class DefectController < ApplicationController
     @end_count = [@page * @per_page, @total_count].min
     @defects = @defects.offset((@page - 1) * @per_page).limit(@per_page)
 
+    # Compute reopened count per defect for the defects on the current page
+    defect_ids_for_page = @defects.map(&:id)
+    @reopened_counts_index = if defect_ids_for_page.any?
+      DefectHistory.where(defect_id: defect_ids_for_page, history_type: 'Status Changed')
+                   .where("history LIKE ?", "%to Reopened%")
+                   .group(:defect_id)
+                   .count
+    else
+      {}
+    end
+
     render :index_show
   end
 
@@ -607,6 +618,10 @@ class DefectController < ApplicationController
     redirect_to defect_index_path, alert: 'You are not authorized to view this defect.' and return unless current_user.has_any_role?(:admin, :observer, :qa, :agent) || Defect.joins(:users).where(id: params[:id], users: { id: current_user.id }).exists?
 
     @defect = Defect.find(params[:id])
+
+    @reopened_count = DefectHistory.where(defect_id: @defect.id, history_type: "Status Changed")
+                                   .select { |history| history.new_value == "Reopened" }
+                                   .size
 
     # Preserve product_id for back navigation
     @product_id = params[:product_id] || @defect.product_id
