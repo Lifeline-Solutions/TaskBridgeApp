@@ -602,9 +602,9 @@ class DefectController < ApplicationController
 
     # Compute reopened count per defect for the defects on the current page
     defect_ids_for_page = @defects.map(&:id)
-    @reopened_counts_index = if defect_ids_for_page.any?
+    @reopened_counts = if defect_ids_for_page.any?
       DefectHistory.where(defect_id: defect_ids_for_page, history_type: 'Status Changed')
-                   .where("history LIKE ?", "%to Reopened%")
+                   .where("history ILIKE ?", "%to Reopened%")
                    .group(:defect_id)
                    .count
     else
@@ -1032,6 +1032,17 @@ class DefectController < ApplicationController
       .select('DISTINCT created_by'))
       .order(:first_name, :last_name)
 
+    # Compute reopened count per defect for the defects on the current page
+    defect_ids_for_page = @defects.map(&:id)
+    @reopened_counts = if defect_ids_for_page.any?
+      DefectHistory.where(defect_id: defect_ids_for_page, history_type: 'Status Changed')
+                   .where("history ILIKE ?", "%to Reopened%")
+                   .group(:defect_id)
+                   .count
+    else
+      {}
+    end
+
     render :index_show
   end
 
@@ -1440,17 +1451,27 @@ class DefectController < ApplicationController
     defects = Defect.where(id: filtered_ids)
                     .includes(:users, :qa_module, :labels, :banking_type, :statuses, product: %i[client groupwares])
                     .order(Arel.sql("CAST(NULLIF(SPLIT_PART(defect_unique, '-', 2), '') AS INTEGER) #{direction}"))
+    defect_ids = defects.map(&:id)
+    reopened_counts = if defect_ids.any?
+                        DefectHistory.where(defect_id: defect_ids, history_type: 'Status Changed')
+                                     .where("history ILIKE ?", "%to Reopened%")
+                                     .group(:defect_id)
+                                     .count
+                      else
+                        {}
+                      end
 
     # Generate CSV
     csv_data = CSV.generate(headers: true) do |csv|
       csv << [
         'Defect ID', 'Status', 'Summary', 'Priority', 'Module', 'Sub Module',
         'Banking Types', 'Labels', 'Assignee', 'Reporter', 'Project',
-        'Created At'
+        'Created At', 'Retest Count', 'Reopened Count'
       ]
 
       defects.each do |defect|
         client_and_groupware = [defect.product.client&.name, defect.product.groupwares.first&.name].compact.join(' - ')
+        reopened_count = reopened_counts[defect.id] || 0
         csv << [
           defect.defect_unique,
           defect.statuses.map(&:name).join(', '),
@@ -1463,7 +1484,11 @@ class DefectController < ApplicationController
           defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', '),
           defect.creator&.name,
           client_and_groupware,
-          defect.created_at.strftime('%Y-%m-%d %H:%M')
+          defect.created_at.strftime('%Y-%m-%d %H:%M'),
+          defect.retest_count,
+          reopened_count
+
+
         ]
       end
     end
@@ -1599,6 +1624,17 @@ class DefectController < ApplicationController
     # Restrict for non-admin/observer/qa users (same as index_show)
     defects = defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa)
 
+    # Precompute reopened counts for all defects to avoid N+1 queries
+    defect_ids = defects.map(&:id)
+    reopened_counts = if defect_ids.any?
+      DefectHistory.where(defect_id: defect_ids, history_type: 'Status Changed')
+                   .where("history ILIKE ?", "%to Reopened%")
+                   .group(:defect_id)
+                   .count
+    else
+      {}
+    end
+
     # Build Excel via Axlsx (caxlsx)
     package = Axlsx::Package.new
     workbook = package.workbook
@@ -1615,6 +1651,7 @@ class DefectController < ApplicationController
         'Sub Module', # From submodule association
         'Banking Type', # From banking_type association
         'Retest Count',
+        'Reopened Count',
         'Labels',
         'Assignee',
         'Reporter',
@@ -1626,6 +1663,7 @@ class DefectController < ApplicationController
         client_name = defect.product&.client&.name
         groupware_name = defect.product&.groupwares&.first&.name
         client_and_groupware = [client_name, groupware_name].compact.join(' - ')
+        reopened_count = reopened_counts[defect.id] || 0
 
         sheet.add_row [
           defect.defect_unique,
@@ -1637,6 +1675,7 @@ class DefectController < ApplicationController
           defect.submodule&.name, # New association (submodule QaModule)
           defect.banking_type&.name, # New association
           defect.retest_count,
+          reopened_count,
           defect.labels.map(&:name).join(', '),
           defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', '),
           defect.creator&.name,
