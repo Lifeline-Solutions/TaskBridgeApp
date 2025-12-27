@@ -141,7 +141,22 @@ class DefectMessagesController < ApplicationController
     action_name = history_type.parameterize.underscore
 
     # Send async notification
-    UserMailer.defect_action_email(defect, recipients, user, action_name).deliver_later
+    recipients.each do |email|
+      recipient_user = User.find_by(email: email)
+      title = UserMailer::ACTION_TITLES[action_name] || action_name.titleize
+      subject_text = "[Defect #{defect.defect_unique}] #{title} by #{user.name}"
+
+      Messaging::EmailSender.send_email(
+        subject_text,
+        to: [email],
+        actor: user,
+        priority: :normal,
+        type: 'defect_action'
+      ).use_template(
+        view: 'user_mailer/defect_action_email',
+        assigns: { defect: defect, actor: user, action_name: action_name }
+      ).set_source('defect', defect.id).set_party('user', recipient_user&.id).send(queue: true)
+    end
   end
 
   def authorize_message_owner

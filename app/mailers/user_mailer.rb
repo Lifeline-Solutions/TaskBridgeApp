@@ -226,18 +226,18 @@ class UserMailer < ApplicationMailer
     mail(to: @assigned_user.email, subject: 'Milestone Payment Status Updated')
   end
 
-  def new_defect_email(defect, assigned_emails, creator)
+  def new_defect_email(defect, recipient_email, creator)
     @defect = defect
     @creator = creator
     @url = defect_url(@defect, Rails.application.config.action_mailer.default_url_options)
-    mail(to: assigned_emails + [creator.email], subject: 'New Defect')
+    mail(to: recipient_email, subject: 'New Defect')
   end
 
-  def edit_defect_email(defect, assigned_emails, creator)
+  def edit_defect_email(defect, recipient_email, creator)
     @defect = defect
     @creator = creator
     @url = defect_url(@defect, Rails.application.config.action_mailer.default_url_options)
-    mail(to: assigned_emails + [creator.email], subject: 'Edit Defect')
+    mail(to: recipient_email, subject: 'Edit Defect')
   end
 
   def defect_mention_notification(user, defect, current_user, content, context_type = 'message')
@@ -255,10 +255,10 @@ class UserMailer < ApplicationMailer
     mail(to: @user.email, subject: subject)
   end
 
-  def defect_deleted_email(defect, assigned_emails, current_user)
+  def defect_deleted_email(defect, recipient_email, current_user)
     @defect = defect
     @current_user = current_user
-    mail(to: assigned_emails, subject: "Defect with Defect ID #{@defect.defect_unique} deleted")
+    mail(to: recipient_email, subject: "Defect with Defect ID #{@defect.defect_unique} deleted")
   end
 
   def add_user_defect_email(defect, user, current_user)
@@ -284,8 +284,8 @@ class UserMailer < ApplicationMailer
     'message_updated' => 'Message Updated'
   }.freeze
 
-  def defect_action_email(defect, recipient_emails, actor, action_name)
-    return if recipient_emails.blank?
+  def defect_action_email(defect, recipient_email, actor, action_name)
+    return if recipient_email.blank?
 
     @defect = defect
     @actor = actor
@@ -296,14 +296,14 @@ class UserMailer < ApplicationMailer
     title = ACTION_TITLES[action_name] || action_name.titleize
     subject_text = "[Defect #{@defect.defect_unique}] #{title} by #{@actor.name}"
 
-    mail(to: recipient_emails, subject: subject_text) do |format|
+    mail(to: recipient_email, subject: subject_text) do |format|
       format.html { render 'defect_action_email' }
       format.text { render plain: "Defect #{@defect.defect_unique} - #{@action_name} by #{@actor.name}" }
     end
   end
 
-  def defect_priority_update_email(defect, recipient_emails, actor, changes_hash)
-    return if recipient_emails.blank?
+  def defect_priority_update_email(defect, recipient_email, actor, changes_hash)
+    return if recipient_email.blank?
 
     @defect = defect
     @actor = actor
@@ -318,14 +318,14 @@ class UserMailer < ApplicationMailer
 
     subject_text = "[URGENT] Defect #{@defect.defect_unique} - #{change_types.join(', ')} Updated by #{@actor.name}"
 
-    mail(to: recipient_emails, subject: subject_text) do |format|
+    mail(to: recipient_email, subject: subject_text) do |format|
       format.html { render 'defect_priority_update_email' }
       format.text { render 'defect_priority_update_email' }
     end
   end
 
-  def defect_edit_notification_email(defect, recipient_emails, actor, changes_hash)
-    return if recipient_emails.blank?
+  def defect_edit_notification_email(defect, recipient_email, actor, changes_hash)
+    return if recipient_email.blank?
 
     @defect = defect
     @actor = actor
@@ -336,7 +336,7 @@ class UserMailer < ApplicationMailer
     change_count = @changes.keys.size
     subject_text = "[Defect #{@defect.defect_unique}] #{change_count} update#{'s' if change_count > 1} by #{@actor.name}"
 
-    mail(to: recipient_emails, subject: subject_text) do |format|
+    mail(to: recipient_email, subject: subject_text) do |format|
       format.html { render 'defect_edit_notification_email' }
       format.text { render 'defect_edit_notification_email' }
     end

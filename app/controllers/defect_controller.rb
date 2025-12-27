@@ -763,8 +763,20 @@ class DefectController < ApplicationController
 
         redirect_to @defect, notice: 'Defect was successfully created.'
         # Send An email to the creator and the assignee
+        # Send An email to the creator and the assignee
         # app/controllers/defects_controller.rb
-        UserMailer.new_defect_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
+        @defect.users.each do |user|
+          Messaging::EmailSender.send_email(
+            'New Defect',
+            to: [user.email],
+            actor: current_user,
+            priority: :normal,
+            type: 'new_defect'
+          ).use_template(
+            view: 'user_mailer/new_defect_email',
+            assigns: { defect: @defect, creator: current_user }
+          ).set_source('defect', @defect.id).set_party('user', user.id).send(queue: true)
+        end
       end
     else
       set_form_data
@@ -928,7 +940,18 @@ class DefectController < ApplicationController
         .performed_on(@defect)
         .event('defect.soft_delete')
         .log("Soft-deleted Defect ##{@defect.id}")
-      UserMailer.defect_deleted_email(@defect, @defect.users.pluck(:email), current_user).deliver_later
+      @defect.users.each do |user|
+        Messaging::EmailSender.send_email(
+          "Defect with Defect ID #{@defect.defect_unique} deleted",
+          to: [user.email],
+          actor: current_user,
+          priority: :normal,
+          type: 'defect_deleted'
+        ).use_template(
+          view: 'user_mailer/defect_deleted_email',
+          assigns: { defect: @defect, current_user: current_user }
+        ).set_source('defect', @defect.id).set_party('user', user.id).send(queue: true)
+      end
     else
       @defect.destroy
       activity('user_activity')
@@ -1979,7 +2002,21 @@ class DefectController < ApplicationController
     # Convert history_type to a clean action name (e.g., "Priority Updated" -> "priority_updated")
     action_name = history_type.parameterize.underscore
 
-    UserMailer.defect_action_email(defect, defect.users.pluck(:email), user, action_name).deliver_later
+    defect.users.each do |recipient|
+      title = UserMailer::ACTION_TITLES[action_name] || action_name.titleize
+      subject_text = "[Defect #{defect.defect_unique}] #{title} by #{user.name}"
+
+      Messaging::EmailSender.send_email(
+        subject_text,
+        to: [recipient.email],
+        actor: user,
+        priority: :normal,
+        type: 'defect_action'
+      ).use_template(
+        view: 'user_mailer/defect_action_email',
+        assigns: { defect: defect, actor: user, action_name: action_name }
+      ).set_source('defect', defect.id).set_party('user', recipient.id).send(queue: true)
+    end
   end
 
   def track_defect_changes(defect, params)
@@ -2181,10 +2218,43 @@ class DefectController < ApplicationController
 
     if high_priority_changes
       # Send immediate high-priority notification (queued in background)
-      UserMailer.defect_priority_update_email(@defect, notify_users, current_user, json_safe_changes).deliver_later
+      change_types = []
+      change_types << 'Status' if json_safe_changes.key?(:status)
+      change_types << 'Priority' if json_safe_changes.key?(:priority)
+      change_types << 'Assignees' if json_safe_changes.key?(:assignees)
+      subject_text = "[URGENT] Defect #{@defect.defect_unique} - #{change_types.join(', ')} Updated by #{current_user.name}"
+
+      notify_users.each do |email|
+        user = User.find_by(email: email)
+        Messaging::EmailSender.send_email(
+          subject_text,
+          to: [email],
+          actor: current_user,
+          priority: :important,
+          type: 'defect_priority_update'
+        ).use_template(
+          view: 'user_mailer/defect_priority_update_email',
+          assigns: { defect: @defect, actor: current_user, changes_hash: json_safe_changes }
+        ).set_source('defect', @defect.id).set_party('user', user&.id).send(queue: true)
+      end
     else
       # Send standard edit notification
-      UserMailer.defect_edit_notification_email(@defect, notify_users, current_user, json_safe_changes).deliver_later
+      change_count = json_safe_changes.keys.size
+      subject_text = "[Defect #{@defect.defect_unique}] #{change_count} update#{'s' if change_count > 1} by #{current_user.name}"
+
+      notify_users.each do |email|
+        user = User.find_by(email: email)
+        Messaging::EmailSender.send_email(
+          subject_text,
+          to: [email],
+          actor: current_user,
+          priority: :normal,
+          type: 'defect_edit_notification'
+        ).use_template(
+          view: 'user_mailer/defect_edit_notification_email',
+          assigns: { defect: @defect, actor: current_user, changes_hash: json_safe_changes }
+        ).set_source('defect', @defect.id).set_party('user', user&.id).send(queue: true)
+      end
     end
   end
 
