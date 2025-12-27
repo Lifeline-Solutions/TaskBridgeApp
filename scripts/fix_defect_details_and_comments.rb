@@ -39,7 +39,7 @@ options = { dry_run: false }
 OptionParser.new do |opts|
   opts.banner = "Usage: fix_defect_details_and_comments.rb [options]"
   opts.on("-d", "--dry-run", "Run without making changes") { options[:dry_run] = true }
-  opts.on("-u", "--defect-unique DEFECT_ID", "Run for a specific defect only") { |v| options[:specific] = v }
+  opts.on('--defect-unique KEY1,KEY2', Array, 'Check specific defects') { |v| options[:defect_unique] = v }
   opts.on("-p", "--project PROJECT_KEY", "Run for a specific project") { |v| options[:project] = v }
   opts.on("-a", "--check-all", "Run for all defects") { options[:check_all] = true }
 end.parse!
