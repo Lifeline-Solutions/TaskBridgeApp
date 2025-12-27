@@ -31,7 +31,16 @@ class MessagesController < ApplicationController
         .log("Created Message ##{@message.id} on Task ##{@task.id}")
       selected_users = User.where(id: message_params[:user_ids])
       selected_users.each do |message_user|
-        UserMailer.new_message_email(message_user, @message, current_user).deliver_later
+        Messaging::EmailSender.send_email(
+          'New Message on Task',
+          to: [message_user.email],
+          actor: current_user,
+          priority: :normal,
+          type: 'new_message'
+        ).use_template(
+          view: 'user_mailer/new_message_email',
+          assigns: { message_user: message_user, message: @message, current_user: current_user }
+        ).set_source('task', @task.id).set_party('user', message_user.id).send(queue: true)
       end
       @messages = @task.messages.includes(:author, :users).order(created_at: :desc)
       render :index, notice: 'Message was successfully assigned.'
