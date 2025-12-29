@@ -86,7 +86,7 @@ class SlaWarningJob < ApplicationJob
         warning_subject(ticket, sla_type, time_remaining),
         to: recipients,
         actor: nil,
-        priority: :high,
+        priority: :important,
         type: 'sla_warning_notification'
       )
       .use_template(
