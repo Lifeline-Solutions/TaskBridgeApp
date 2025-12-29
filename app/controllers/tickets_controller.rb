@@ -126,7 +126,7 @@ class TicketsController < ApplicationController
         end
 
         # Set SLA for new feature or regular ticket
-        if @ticket.issue == 'NEW FEATURE' or @ticket.issue == 'BILLABLE FEATURE' or @ticket.issue == 'REQUEST'
+        if ['NEW FEATURE', 'BILLABLE FEATURE', 'REQUEST'].include?(@ticket.issue)
           SlaTicket.find_or_create_by!(ticket_id: @ticket.id) do |sla|
             sla.sla_status = 'NO SLA'
             sla.sla_target_response_deadline = 'NO SLA'
@@ -269,7 +269,7 @@ class TicketsController < ApplicationController
         end
 
         # Set SLA for new feature or regular ticket
-        if @ticket.issue == 'NEW FEATURE' or "BILLABLE FEATURE" or "REQUEST"
+        if ['NEW FEATURE', 'BILLABLE FEATURE', 'REQUEST'].include?(@ticket.issue)
           SlaTicket.find_or_create_by!(ticket_id: @ticket.id) do |sla|
             sla.sla_status = 'NO SLA'
             sla.sla_target_response_deadline = 'NO SLA'
@@ -444,7 +444,7 @@ class TicketsController < ApplicationController
     end
 
     # SLA updates... (skip SLA updates for NEW FEATURE tickets)
-    unless @ticket.issue == 'NEW FEATURE'
+    unless ['NEW FEATURE', 'BILLABLE FEATURE', 'REQUEST'].include?(@ticket.issue)
       if status.name == 'Client Information Pending'
         sla_ticket = SlaTicket.find_or_initialize_by(ticket_id: @ticket.id)
         sla_ticket.update(sla_target_response_deadline: @ticket.sla_target_response_deadline)
@@ -478,7 +478,7 @@ class TicketsController < ApplicationController
 
     # Emails + logs...
     # Set SLA for the ticket (do not modify SLA for NEW FEATURE tickets)
-    if @ticket.issue == 'NEW FEATURE'
+    if ['NEW FEATURE', 'BILLABLE FEATURE', 'REQUEST'].include?(@ticket.issue)
       # For NEW FEATURE tickets, preserve existing SLA values (or use NO SLA if set elsewhere)
       sla_target_response_deadline = SlaTicket.find_by(ticket_id: @ticket.id)&.sla_target_response_deadline || 'NO SLA'
       sla_target_resolution_deadline = SlaTicket.find_by(ticket_id: @ticket.id)&.sla_resolution_deadline || 'NO SLA'
@@ -634,11 +634,12 @@ class TicketsController < ApplicationController
   def update_issue_type
     @ticket = Ticket.find(params[:id])
 
-    @ticket.skip_sla_callbacks = params[:ticket][:issue] != 'NEW FEATURE'
+    @ticket.skip_sla_callbacks = params[:ticket][:issue] != ['NEW FEATURE', 'BILLABLE FEATURE', 'REQUEST']
 
     if @ticket.update(issue: params[:ticket][:issue])
       respond_to do |format|
-        if @ticket.issue == 'NEW FEATURE' or 'BILLABLE FEATURE' or "REQUEST"
+        if ['NEW FEATURE', 'BILLABLE FEATURE', 'REQUEST'].include?(@ticket.issue)
+          # No SLA for these issue types
           sla = SlaTicket.find_or_initialize_by(ticket_id: @ticket.id)
           sla.update!(
             sla_status: 'NO SLA',
@@ -646,9 +647,13 @@ class TicketsController < ApplicationController
             sla_resolution_deadline: 'NO SLA'
           )
         else
-          SlaTicket.find_or_create_by!(ticket_id: @ticket.id) do |sla_ticket|
-            sla_ticket.sla_status = @ticket.sla_status
-          end
+          # For other issue types, create/update with the ticket's SLA values
+          sla = SlaTicket.find_or_initialize_by(ticket_id: @ticket.id)
+          sla.update!(
+            sla_status: @ticket.sla_status,
+            sla_target_response_deadline: @ticket.sla_target_response_deadline,
+            sla_resolution_deadline: @ticket.sla_resolution_deadline
+          )
         end
 
         format.js

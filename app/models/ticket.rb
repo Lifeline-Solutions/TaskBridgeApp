@@ -117,9 +117,7 @@ class Ticket < ApplicationRecord
   end
 
   def sla_status
-    return 'Not Breached' if on_time?
-
-    'Breached' if breached?
+    return 'Not Breached'
   end
 
   def sla_target_response_deadline
