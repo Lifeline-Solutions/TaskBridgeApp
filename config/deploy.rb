@@ -61,5 +61,5 @@ set :whenever_environment, -> { fetch(:stage, 'production').to_s }
 # Identifier to namespace cron jobs (prevents conflicts between environments)
 set :whenever_identifier, -> { "#{fetch(:application)}_#{fetch(:stage, 'production')}" }
 
-# Use rbenv with bundle (standard Capistrano pattern)
-set :whenever_command, -> { "cd #{release_path} && #{fetch(:rbenv_path)}/bin/rbenv exec bundle exec whenever" }
+# Use rbenv with bundle - whenever's capistrano task already handles the directory context
+set :whenever_command, -> { "#{fetch(:rbenv_path)}/bin/rbenv exec bundle exec whenever" }
