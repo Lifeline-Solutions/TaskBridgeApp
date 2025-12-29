@@ -42,7 +42,3 @@ Dir.glob('lib/capistrano/tasks/*.rake').each { |r| import r }
 
 set :rbenv_type, :user
 set :rbenv_ruby, '3.3.5'
-
-# Configure SSHKit to use rbenv for bundle commands
-# This ensures 'bundle' is available when whenever runs
-SSHKit.config.command_map[:bundle] = "#{fetch(:rbenv_prefix)} bundle"
