@@ -43,6 +43,4 @@ Dir.glob('lib/capistrano/tasks/*.rake').each { |r| import r }
 set :rbenv_type, :user
 set :rbenv_ruby, '3.3.5'
 
-# Whenever configuration - use lambda, not defer
-set :whenever_environment, -> { fetch(:stage).to_s }
-set :whenever_command, -> { "bundle exec whenever --update-crontab #{fetch(:application)}_#{fetch(:stage)} --set environment=#{fetch(:stage)}" }
+# Whenever configuration is handled in config/deploy.rb
