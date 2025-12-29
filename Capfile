@@ -35,10 +35,13 @@ install_plugin Capistrano::SCM::Git
 require 'capistrano/rbenv'
 require 'capistrano/rails'
 require 'capistrano/passenger'
-# require "whenever/capistrano"  # Disabled - whenever doesn't work with bundler deployment mode
+require "whenever/capistrano"
 
 # Load custom tasks from `lib/capistrano/tasks` if you have any defined
 Dir.glob('lib/capistrano/tasks/*.rake').each { |r| import r }
 
 set :rbenv_type, :user
 set :rbenv_ruby, '3.3.5'
+set :whenever_environment, defer { fetch(:staging)}
+set :whenever_command, "bundle exec whenever --update-crontab #{fetch(:application)}_#{fetch(:staging)} --set environment=#{fetch(:staging)}"
+``
