@@ -56,14 +56,20 @@ set :application, 'CSPM' unless fetch(:application, nil)
 set :linked_dirs, fetch(:linked_dirs, []) | %w[log tmp/pids tmp/cache tmp/sockets vendor/bundle public/system storage]
 
 # ========================================
-# Whenever Cron Job Configuration
+# Manual Cron Job Configuration
 # ========================================
-# Set environment based on deployment stage
-# Set environment based on deployment stage (supports staging, production, etc.)
-set :whenever_environment, -> { fetch(:stage, 'staging').to_s }
+namespace :deploy do
+  desc 'Update cron jobs manually'
+  task :update_cron do
+    on roles(:app) do
+      within release_path do
+        with rails_env: fetch(:rails_env) do
+          # Explicitly run whenever with rbenv and bundle exec
+          execute :bundle, :exec, :whenever, "--update-crontab #{fetch(:application)}_#{fetch(:stage)}", "--set environment=#{fetch(:stage)}"
+        end
+      end
+    end
+  end
+end
 
-# Namespace cron jobs by application and stage
-set :whenever_identifier, -> { "#{fetch(:application)}_#{fetch(:stage, 'staging')}" }
-
-# Use rbenv prefix to ensure bundle is found, and bundle exec to find the gem
-set :whenever_command, -> { "#{fetch(:rbenv_prefix)} bundle exec whenever -e #{fetch(:whenever_environment)}" }
+after 'deploy:published', 'deploy:update_cron'
