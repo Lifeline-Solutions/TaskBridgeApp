@@ -21,8 +21,6 @@ class SlaBreachCheckJob < ApplicationJob
                     .where.not(sla_tickets: { sla_status: 'Breached' })
                     .where('tickets.initial_response_deadline IS NOT NULL')
 
-    Rails.logger.info "[SlaBreachCheckJob] Found #{tickets.count} tickets with initial response SLA breach"
-
     tickets.find_each do |ticket|
       sla_ticket = ticket.sla_ticket
       next unless sla_ticket
@@ -32,8 +30,6 @@ class SlaBreachCheckJob < ApplicationJob
 
       # Send notification to stakeholders
       notify_stakeholders(ticket, :initial_response_breach)
-
-      Rails.logger.info "[SlaBreachCheckJob] Marked ticket #{ticket.unique_id} as breached (Initial Response)"
     end
   end
 
@@ -44,8 +40,6 @@ class SlaBreachCheckJob < ApplicationJob
                     .where.not(sla_tickets: { sla_target_response_deadline: 'Breached' })
                     .where('tickets.target_repair_deadline IS NOT NULL')
 
-    Rails.logger.info "[SlaBreachCheckJob] Found #{tickets.count} tickets with target repair SLA breach"
-
     tickets.find_each do |ticket|
       sla_ticket = ticket.sla_ticket
       next unless sla_ticket
@@ -55,8 +49,6 @@ class SlaBreachCheckJob < ApplicationJob
 
       # Send notification to stakeholders
       notify_stakeholders(ticket, :target_repair_breach)
-
-      Rails.logger.info "[SlaBreachCheckJob] Marked ticket #{ticket.unique_id} as breached (Target Repair)"
     end
   end
 
@@ -67,8 +59,6 @@ class SlaBreachCheckJob < ApplicationJob
                     .where.not(sla_tickets: { sla_resolution_deadline: 'Breached' })
                     .where('tickets.resolution_deadline IS NOT NULL')
 
-    Rails.logger.info "[SlaBreachCheckJob] Found #{tickets.count} tickets with resolution SLA breach"
-
     tickets.find_each do |ticket|
       sla_ticket = ticket.sla_ticket
       next unless sla_ticket
@@ -78,21 +68,20 @@ class SlaBreachCheckJob < ApplicationJob
 
       # Send notification to stakeholders
       notify_stakeholders(ticket, :resolution_breach)
-
-      Rails.logger.info "[SlaBreachCheckJob] Marked ticket #{ticket.unique_id} as breached (Resolution)"
     end
   end
 
   def notify_stakeholders(ticket, breach_type)
-    # Get recipient emails
     recipients = collect_recipients(ticket)
-    return if recipients.empty?
+    to_list = recipients[:to]
+    cc_list = recipients[:cc]
+    return if to_list.empty? && cc_list.empty?
 
-    # Send email notification using Messaging::EmailSender
     Messaging::EmailSender
       .send_email(
         breach_subject(ticket, breach_type),
-        to: recipients,
+        to: to_list,
+        cc: cc_list,
         actor: nil,
         priority: :important,
         type: 'sla_breach_notification'
@@ -104,32 +93,35 @@ class SlaBreachCheckJob < ApplicationJob
       )
       .set_source('ticket', ticket.id)
       .send(queue: true)
-
-    Rails.logger.info "[SlaBreachCheckJob] Sent #{breach_type} notification for ticket #{ticket.unique_id} to #{recipients.join(', ')}"
-  rescue StandardError => e
-    Rails.logger.error "[SlaBreachCheckJob] Failed to send notification for ticket #{ticket.unique_id}: #{e.message}"
   end
 
   def collect_recipients(ticket)
-    recipients = []
+    # Primary recipients: assigned users excluding client/ceo roles
+    assigned_users_scope = ticket.users.joins(:roles)
+    primary_scope = assigned_users_scope.where.not(roles: { name: %w[client ceo] }).distinct
+    to_emails = primary_scope.pluck(:email).compact.reject(&:blank?)
 
-    # Add project manager
-    project = ticket.project
-    if project
-      # Get project managers from the project
-      project_managers = project.users.joins(:roles).where(roles: { name: 'project manager' }).distinct
-      recipients += project_managers.pluck(:email)
-    end
+    # CC: HODs tagged on the ticket, HODs on the project, and the project owner/user (if any), all excluding client/ceo
+    hod_role_scope = User.joins(:roles).where(roles: { name: 'hod' })
 
-    # Add assigned users (tagged users)
-    assigned_users = ticket.users.pluck(:email)
-    recipients += assigned_users
+    ticket_hod_emails = assigned_users_scope.merge(hod_role_scope).pluck(:email)
+    project_hod_emails = if ticket.project
+                           ticket.project.users.merge(hod_role_scope).pluck(:email)
+                         else
+                           []
+                         end
 
-    # Add ticket creator
-    recipients << ticket.user.email if ticket.user&.email
+    project_owner_email = ticket.project&.user&.email
+    cc_emails = (ticket_hod_emails + project_hod_emails)
+    cc_emails << project_owner_email if project_owner_email.present?
 
-    # Remove duplicates and blank emails
-    recipients.uniq.compact.reject(&:blank?)
+    # Finalize cc list by excluding client/ceo roles and removing blanks/duplicates
+    cc_emails = User.where(email: cc_emails.compact.uniq)
+                    .joins(:roles)
+                    .where.not(roles: { name: %w[client ceo] })
+                    .pluck(:email)
+
+    { to: to_emails.uniq, cc: cc_emails.uniq }
   end
 
   def breach_subject(ticket, breach_type)
