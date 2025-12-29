@@ -94,7 +94,7 @@ class SlaBreachCheckJob < ApplicationJob
         breach_subject(ticket, breach_type),
         to: recipients,
         actor: nil,
-        priority: :high,
+        priority: :important,
         type: 'sla_breach_notification'
       )
       .use_template(
