@@ -55,11 +55,11 @@ set :application, 'CSPM' unless fetch(:application, nil)
 # Make sure public/system is a shared (linked) dir so Nginx can find the file
 set :linked_dirs, fetch(:linked_dirs, []) | %w[log tmp/pids tmp/cache tmp/sockets vendor/bundle public/system storage]
 
-# Set the environment for whenever cron jobs (production/staging)
-set :whenever_environment, -> { fetch(:rails_env, 'production') }
+# Set the environment based on deployment stage (production/staging)
+set :whenever_environment, -> { fetch(:stage, 'production').to_s }
 
-# Namespace cron jobs by application name to avoid conflicts
-set :whenever_identifier, -> { "#{fetch(:application)}_#{fetch(:rails_env, 'production')}" }
+# Identifier to namespace cron jobs (prevents conflicts between environments)
+set :whenever_identifier, -> { "#{fetch(:application)}_#{fetch(:stage, 'production')}" }
 
-# Use bundle exec for whenever commands
+# Use bundler to ensure gems are available
 set :whenever_command, "bundle exec whenever"
