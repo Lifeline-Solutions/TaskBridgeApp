@@ -60,10 +60,10 @@ set :linked_dirs, fetch(:linked_dirs, []) | %w[log tmp/pids tmp/cache tmp/socket
 # ========================================
 # Set environment based on deployment stage
 # Set environment based on deployment stage (supports staging, production, etc.)
-set :whenever_environment, -> { fetch(:stage, 'production').to_s }
+set :whenever_environment, -> { fetch(:stage, 'staging').to_s }
 
 # Namespace cron jobs by application and stage
-set :whenever_identifier, -> { "#{fetch(:application)}_#{fetch(:stage, 'production')}" }
+set :whenever_identifier, -> { "#{fetch(:application)}_#{fetch(:stage, 'staging')}" }
 
 # Use rbenv prefix to ensure bundle is found, and bundle exec to find the gem
-set :whenever_command, -> { "#{fetch(:rbenv_prefix)} bundle exec whenever" }
+set :whenever_command, -> { "#{fetch(:rbenv_prefix)} bundle exec whenever -e #{fetch(:whenever_environment)}" }
