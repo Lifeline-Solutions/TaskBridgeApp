@@ -32,3 +32,25 @@ set :environment, 'development'
 every 1.day, at: '18:20 pm' do
   runner "DailyReportJob.perform_later"
 end
+
+# ========================================
+# SLA Monitoring Jobs
+# ========================================
+
+# Check for SLA breaches every 15 minutes during business hours
+# This helps catch breaches quickly and update the database
+every 15.minutes do
+  runner "SlaBreachCheckJob.perform_later"
+end
+
+# Send warning notifications every 30 minutes
+# Provides proactive alerts before SLA deadlines are missed
+every 30.minutes do
+  runner "SlaWarningJob.perform_later"
+end
+
+# Daily SLA summary report at 8:00 AM
+# Sends comprehensive performance metrics to team leads and management
+every 1.day, at: '8:00 am' do
+  runner "SlaSummaryReportJob.perform_later"
+end
