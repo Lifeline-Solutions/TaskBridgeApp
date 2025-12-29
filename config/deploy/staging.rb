@@ -33,4 +33,6 @@ set :default_env, {
 # Optional niceties
 set :assets_roles, %i[web app]
 set :keep_releases, 5
-set :conditionally_migrate, true
+# Ensure whenever runs with staging environment
+set :whenever_environment, 'staging'
+set :whenever_identifier, -> { "#{fetch(:application)}_staging" }
