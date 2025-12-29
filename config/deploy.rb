@@ -61,5 +61,5 @@ set :whenever_environment, -> { fetch(:stage, 'production').to_s }
 # Identifier to namespace cron jobs (prevents conflicts between environments)
 set :whenever_identifier, -> { "#{fetch(:application)}_#{fetch(:stage, 'production')}" }
 
-# Use bundler to ensure gems are available
+# Use bundler to run whenever (rbenv is handled by SSHKit command map in Capfile)
 set :whenever_command, "bundle exec whenever"
