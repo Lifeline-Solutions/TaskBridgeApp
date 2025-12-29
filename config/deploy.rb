@@ -59,14 +59,11 @@ set :linked_dirs, fetch(:linked_dirs, []) | %w[log tmp/pids tmp/cache tmp/socket
 # Whenever Cron Job Configuration
 # ========================================
 # Set environment based on deployment stage
+# Set environment based on deployment stage (supports staging, production, etc.)
 set :whenever_environment, -> { fetch(:stage, 'production').to_s }
 
 # Namespace cron jobs by application and stage
 set :whenever_identifier, -> { "#{fetch(:application)}_#{fetch(:stage, 'production')}" }
 
-# Use direct gem path to avoid bundler exec issues
-set :whenever_command, -> do
-  bundle_path = fetch(:bundle_path, -> { shared_path.join('bundle') })
-  ruby_version = fetch(:rbenv_ruby, '3.3.5')
-  "#{bundle_path}/ruby/#{ruby_version}/bin/whenever"
-end
+# Use rbenv prefix to ensure bundle is found, and bundle exec to find the gem
+set :whenever_command, -> { "#{fetch(:rbenv_prefix)} bundle exec whenever" }
