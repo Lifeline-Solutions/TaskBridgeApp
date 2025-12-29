@@ -39,7 +39,8 @@
             <%= @defect.creator.name.split.map { |n| n[0] }.join.upcase %>
           </div>
           <!-- Full name -->
-          <span class="text-gray-800 flex flex-wrap"><%= @defect.creator.name %><% if @defect.creator.active == true %>
+          <span class="text-gray-800 flex flex-wrap"><%= @defect.creator.name %>
+            <% if @defect.creator.active == true %>
                 <span class="text-xs ml-1 bg-green-100 lowercase rounded">
                   active
                 </span>
