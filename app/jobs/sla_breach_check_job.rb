@@ -29,7 +29,8 @@ class SlaBreachCheckJob < ApplicationJob
       sla_ticket.update(sla_status: 'Breached')
 
       # Send notification to stakeholders
-      notify_stakeholders(ticket, :initial_response_breach)
+      # DISABLED: SLA automation emails
+      # notify_stakeholders(ticket, :initial_response_breach)
     end
   end
 
@@ -48,7 +49,8 @@ class SlaBreachCheckJob < ApplicationJob
       sla_ticket.update(sla_target_response_deadline: 'Breached')
 
       # Send notification to stakeholders
-      notify_stakeholders(ticket, :target_repair_breach)
+      # DISABLED: SLA automation emails
+      # notify_stakeholders(ticket, :target_repair_breach)
     end
   end
 
@@ -67,7 +69,8 @@ class SlaBreachCheckJob < ApplicationJob
       sla_ticket.update(sla_resolution_deadline: 'Breached')
 
       # Send notification to stakeholders
-      notify_stakeholders(ticket, :resolution_breach)
+      # DISABLED: SLA automation emails
+      # notify_stakeholders(ticket, :resolution_breach)
     end
   end
 
