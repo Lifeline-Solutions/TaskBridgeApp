@@ -16,10 +16,14 @@ class SlaBreachCheckJob < ApplicationJob
   def check_initial_response_sla
     # Find tickets where initial response deadline has passed
     # and SLA status has not been marked as breached yet
+    # CRITICAL: Only process open tickets (exclude Closed, Resolved, Declined)
     tickets = Ticket.joins(:sla_ticket)
+                    .joins(:statuses)
+                    .where.not(statuses: { name: ['Closed', 'Resolved', 'Declined'] })
                     .where('tickets.initial_response_deadline < ?', Time.current)
                     .where.not(sla_tickets: { sla_status: 'Breached' })
                     .where('tickets.initial_response_deadline IS NOT NULL')
+                    .distinct
 
     tickets.find_each do |ticket|
       sla_ticket = ticket.sla_ticket
@@ -36,10 +40,14 @@ class SlaBreachCheckJob < ApplicationJob
 
   def check_target_repair_sla
     # Find tickets where target repair deadline has passed
+    # CRITICAL: Only process open tickets (exclude Closed, Resolved, Declined)
     tickets = Ticket.joins(:sla_ticket)
+                    .joins(:statuses)
+                    .where.not(statuses: { name: ['Closed', 'Resolved', 'Declined'] })
                     .where('tickets.target_repair_deadline < ?', Time.current)
                     .where.not(sla_tickets: { sla_target_response_deadline: 'Breached' })
                     .where('tickets.target_repair_deadline IS NOT NULL')
+                    .distinct
 
     tickets.find_each do |ticket|
       sla_ticket = ticket.sla_ticket
@@ -56,10 +64,14 @@ class SlaBreachCheckJob < ApplicationJob
 
   def check_resolution_sla
     # Find tickets where resolution deadline has passed
+    # CRITICAL: Only process open tickets (exclude Closed, Resolved, Declined)
     tickets = Ticket.joins(:sla_ticket)
+                    .joins(:statuses)
+                    .where.not(statuses: { name: ['Closed', 'Resolved', 'Declined'] })
                     .where('tickets.resolution_deadline < ?', Time.current)
                     .where.not(sla_tickets: { sla_resolution_deadline: 'Breached' })
                     .where('tickets.resolution_deadline IS NOT NULL')
+                    .distinct
 
     tickets.find_each do |ticket|
       sla_ticket = ticket.sla_ticket
