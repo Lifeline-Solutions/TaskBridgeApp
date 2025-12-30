@@ -47,7 +47,7 @@ module Admin
           sent: record.sent_count,
           total: record.total_count
         }
-      end
+      end.sort_by { |row| -row[:total] }
     end
 
     private
