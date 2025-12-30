@@ -1,58 +1,109 @@
-<h1>Email Analysis Report</h1>
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-200">Email Analysis Report</h1>
+    <span class="text-sm text-gray-500">Overview of email delivery performance</span>
+  </div>
 
-<div style="margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
-  <%= form_with url: admin_email_reports_path, method: :get, local: true, class: "form-inline" do |f| %>
-    <div style="display: flex; gap: 10px; align-items: flex-end;">
+  <!-- Filters -->
+  <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-8">
+    <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">Filter Reports</h2>
+    <%= form_with url: admin_email_reports_path, method: :get, local: true, class: "space-y-4 md:space-y-0 md:flex md:items-end md:gap-4" do |f| %>
       <div>
-        <%= f.label :retried_at, "Retried At:", style: "display: block;" %>
-        <%= f.date_field :retried_at, value: @retried_at, class: "form-control" %>
+        <%= f.label :retried_at, "Retried At", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+        <%= f.date_field :retried_at, value: @retried_at, class: "w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" %>
       </div>
       <div>
-        <%= f.label :failed_at, "Failed At:", style: "display: block;" %>
-        <%= f.date_field :failed_at, value: @failed_at, class: "form-control" %>
+        <%= f.label :failed_at, "Failed At", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+        <%= f.date_field :failed_at, value: @failed_at, class: "w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" %>
       </div>
       <div>
-        <%= f.label :sent_at, "Sent At:", style: "display: block;" %>
-        <%= f.date_field :sent_at, value: @sent_at, class: "form-control" %>
+        <%= f.label :sent_at, "Sent At", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+        <%= f.date_field :sent_at, value: @sent_at, class: "w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" %>
       </div>
       <div>
-        <%= f.label :created_on, "Created On:", style: "display: block;" %>
-        <%= f.date_field :created_on, value: @created_on, class: "form-control" %>
+        <%= f.label :created_on, "Created On", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+        <%= f.date_field :created_on, value: @created_on, class: "w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" %>
       </div>
-      <div>
-        <%= f.submit "Filter", class: "btn btn-primary" %>
-        <%= link_to "Clear", admin_email_reports_path, class: "btn btn-secondary" %>
+      <div class="flex gap-2">
+        <%= f.submit "Filter", class: "px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors" %>
+        <%= link_to "Clear", admin_email_reports_path, class: "px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600" %>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Summary Card -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+      <div class="px-4 py-5 sm:p-6">
+        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+          Total Emails (Filtered)
+        </dt>
+        <dd class="mt-1 text-3xl font-semibold text-gray-900 dark:text-white">
+          <%= @total_emails %>
+        </dd>
       </div>
     </div>
-  <% end %>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+    <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+      <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+        Detailed Breakdown
+      </h3>
+    </div>
+    <div class="p-4">
+      <table id="email-reports-table" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <thead class="bg-gray-50 dark:bg-gray-900">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email Type</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Failed</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sent</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Success Rate</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          <% @report_data.each do |row| %>
+            <tr>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white"><%= row[:email_type] || 'N/A' %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-semibold"><%= row[:failed] %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-semibold"><%= row[:sent] %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"><%= row[:total] %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                <% rate = row[:total].to_i > 0 ? (row[:sent].to_f / row[:total].to_f * 100).round(1) : 0 %>
+                <div class="flex items-center">
+                  <span class="mr-2"><%= rate %>%</span>
+                  <div class="w-24 bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                    <div class="bg-blue-600 h-2.5 rounded-full" style="width: <%= rate %>%"></div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
-<div style="margin-bottom: 15px;">
-  <strong>Total Emails per Day (Filtered Range):</strong> <%= @total_emails %>
-</div>
-
-<table class="table table-bordered table-striped">
-  <thead>
-    <tr>
-      <th>Email Type</th>
-      <th>Failed</th>
-      <th>Sent</th>
-      <th>Total</th>
-    </tr>
-  </thead>
-  <tbody>
-    <% @report_data.each do |row| %>
-      <tr>
-        <td><%= row[:email_type] || 'N/A' %></td>
-        <td><%= row[:failed] %></td>
-        <td><%= row[:sent] %></td>
-        <td><%= row[:total] %></td>
-      </tr>
-    <% end %>
-    <% if @report_data.empty? %>
-      <tr>
-        <td colspan="4" class="text-center">No data found for the selected criteria.</td>
-      </tr>
-    <% end %>
-  </tbody>
-</table>
+<script>
+  $(document).ready(function() {
+    if ($.fn.DataTable) {
+      $('#email-reports-table').DataTable({
+        responsive: true,
+        order: [[3, 'desc']], // Sort by Total (index 3) descending by default
+        pageLength: 25,
+        dom: '<"flex justify-between items-center mb-4"lf>rtip',
+        language: {
+          searchPlaceholder: "Search types...",
+          search: "",
+        }
+      });
+      
+      // Add Tailwind classes to DataTables elements for better integration
+      $('.dataTables_length select').addClass('mx-2 form-select rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white');
+      $('.dataTables_filter input').addClass('form-input rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white');
+    }
+  });
+</script>
