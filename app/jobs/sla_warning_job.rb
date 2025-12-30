@@ -31,7 +31,8 @@ class SlaWarningJob < ApplicationJob
         time_remaining = calculate_time_remaining(ticket.initial_response_deadline)
         next if already_warned?(ticket, :initial_response, threshold_minutes)
 
-        send_warning_notification(ticket, :initial_response, time_remaining)
+        # DISABLED: SLA automation emails
+        # send_warning_notification(ticket, :initial_response, time_remaining)
         mark_as_warned(ticket, :initial_response, threshold_minutes)
       end
     end
@@ -51,7 +52,8 @@ class SlaWarningJob < ApplicationJob
         time_remaining = calculate_time_remaining(ticket.target_repair_deadline)
         next if already_warned?(ticket, :target_repair, threshold_minutes)
 
-        send_warning_notification(ticket, :target_repair, time_remaining)
+        # DISABLED: SLA automation emails
+        # send_warning_notification(ticket, :target_repair, time_remaining)
         mark_as_warned(ticket, :target_repair, threshold_minutes)
       end
     end
@@ -71,7 +73,8 @@ class SlaWarningJob < ApplicationJob
         time_remaining = calculate_time_remaining(ticket.resolution_deadline)
         next if already_warned?(ticket, :resolution, threshold_minutes)
 
-        send_warning_notification(ticket, :resolution, time_remaining)
+        # DISABLED: SLA automation emails
+        # send_warning_notification(ticket, :resolution, time_remaining)
         mark_as_warned(ticket, :resolution, threshold_minutes)
       end
     end

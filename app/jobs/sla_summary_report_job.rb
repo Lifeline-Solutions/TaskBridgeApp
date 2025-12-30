@@ -28,9 +28,10 @@ class SlaSummaryReportJob < ApplicationJob
     return if recipients.empty?
 
     # Send individual reports to each recipient
-    recipients.each do |recipient|
-      send_summary_email(recipient, summary_data, team)
-    end
+    # DISABLED: SLA automation emails
+    # recipients.each do |recipient|
+    #   send_summary_email(recipient, summary_data, team)
+    # end
   end
 
   def build_summary_data(user_ids)
