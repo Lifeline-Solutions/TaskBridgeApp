@@ -35,9 +35,13 @@ class SlaSummaryReportJob < ApplicationJob
   end
 
   def build_summary_data(user_ids)
+    # CRITICAL: Only process open tickets (exclude Closed, Resolved, Declined)
     base_scope = Ticket.joins(:users, :sla_ticket)
+                       .joins(:statuses)
+                       .where.not(statuses: { name: ['Closed', 'Resolved', 'Declined'] })
                        .where(users: { id: user_ids })
                        .where('tickets.created_at >= ?', 1.day.ago)
+                       .distinct
 
     {
       total_tickets: base_scope.distinct.count,
@@ -71,7 +75,10 @@ class SlaSummaryReportJob < ApplicationJob
     # Tickets approaching SLA deadline (within next 2 hours)
     threshold = 2.hours.from_now
 
+    # CRITICAL: Only process open tickets (exclude Closed, Resolved, Declined)
     Ticket.joins(:users, :sla_ticket)
+          .joins(:statuses)
+          .where.not(statuses: { name: ['Closed', 'Resolved', 'Declined'] })
           .where(users: { id: user_ids })
           .where(
             '(tickets.initial_response_deadline BETWEEN ? AND ?) OR '\
@@ -104,7 +111,10 @@ class SlaSummaryReportJob < ApplicationJob
   def get_at_risk_tickets(user_ids)
     threshold = 2.hours.from_now
 
+    # CRITICAL: Only process open tickets (exclude Closed, Resolved, Declined)
     Ticket.joins(:users, :sla_ticket, :project)
+          .joins(:statuses)
+          .where.not(statuses: { name: ['Closed', 'Resolved', 'Declined'] })
           .where(users: { id: user_ids })
           .where(
             '(tickets.initial_response_deadline BETWEEN ? AND ?) OR '\
