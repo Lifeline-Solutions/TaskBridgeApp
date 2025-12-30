@@ -21,11 +21,15 @@ class SlaWarningJob < ApplicationJob
       threshold_time = Time.current + threshold_minutes.minutes
 
       # Find tickets approaching initial response deadline
+      # CRITICAL: Only process open tickets (exclude Closed, Resolved, Declined)
       tickets = Ticket.joins(:sla_ticket)
+                      .joins(:statuses)
+                      .where.not(statuses: { name: ['Closed', 'Resolved', 'Declined'] })
                       .where('tickets.initial_response_deadline BETWEEN ? AND ?',
                              Time.current, threshold_time)
                       .where(sla_tickets: { sla_status: 'Not Breached' })
                       .where('tickets.initial_response_deadline IS NOT NULL')
+                      .distinct
 
       tickets.find_each do |ticket|
         time_remaining = calculate_time_remaining(ticket.initial_response_deadline)
@@ -42,11 +46,15 @@ class SlaWarningJob < ApplicationJob
     WARNING_THRESHOLDS.each do |threshold_minutes|
       threshold_time = Time.current + threshold_minutes.minutes
 
+      # CRITICAL: Only process open tickets (exclude Closed, Resolved, Declined)
       tickets = Ticket.joins(:sla_ticket)
+                      .joins(:statuses)
+                      .where.not(statuses: { name: ['Closed', 'Resolved', 'Declined'] })
                       .where('tickets.target_repair_deadline BETWEEN ? AND ?',
                              Time.current, threshold_time)
                       .where(sla_tickets: { sla_target_response_deadline: 'Not Breached' })
                       .where('tickets.target_repair_deadline IS NOT NULL')
+                      .distinct
 
       tickets.find_each do |ticket|
         time_remaining = calculate_time_remaining(ticket.target_repair_deadline)
@@ -63,11 +71,15 @@ class SlaWarningJob < ApplicationJob
     WARNING_THRESHOLDS.each do |threshold_minutes|
       threshold_time = Time.current + threshold_minutes.minutes
 
+      # CRITICAL: Only process open tickets (exclude Closed, Resolved, Declined)
       tickets = Ticket.joins(:sla_ticket)
+                      .joins(:statuses)
+                      .where.not(statuses: { name: ['Closed', 'Resolved', 'Declined'] })
                       .where('tickets.resolution_deadline BETWEEN ? AND ?',
                              Time.current, threshold_time)
                       .where(sla_tickets: { sla_resolution_deadline: 'Not Breached' })
                       .where('tickets.resolution_deadline IS NOT NULL')
+                      .distinct
 
       tickets.find_each do |ticket|
         time_remaining = calculate_time_remaining(ticket.resolution_deadline)
