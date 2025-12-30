@@ -46,12 +46,12 @@ class Email < ApplicationRecord
   end
 
   def mark_sent!(message_id:)
-    update_columns(status: 'sent', message_id: message_id, dated: Time.current, modified_on: Time.current)
+    update_columns(status: 'sent', message_id: message_id, dated: Time.current, modified_on: Time.current, sent_at: Time.current)
   end
 
   def mark_failed!(reason:)
     extras = (extra || {}).merge(failure_reason: reason.to_s, failed_at: Time.current)
-    update_columns(status: 'failed', extra: extras, modified_on: Time.current)
+    update_columns(status: 'failed', extra: extras, modified_on: Time.current, failed_at: Time.current, failed_count: failed_count + 1)
   end
 
   private
