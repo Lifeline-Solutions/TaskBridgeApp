@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_12_16_011928) do
+ActiveRecord::Schema[7.2].define(version: 2025_12_30_082738) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -528,6 +528,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_16_011928) do
     t.datetime "read_on"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "retried_at"
+    t.integer "retried_count", default: 0
+    t.datetime "sent_at"
+    t.datetime "failed_at"
+    t.integer "failed_count", default: 0
     t.index ["created_at"], name: "index_emails_on_created_at"
     t.index ["mail_id"], name: "index_emails_on_mail_id", unique: true
     t.index ["message_id"], name: "index_emails_on_message_id"

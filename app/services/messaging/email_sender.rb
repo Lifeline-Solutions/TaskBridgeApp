@@ -36,7 +36,12 @@ module Messaging
           email_type: type,
           from_address: from,
           created_on: Time.current,
-          modified_on: Time.current
+          modified_on: Time.current,
+          retried_at: nil,
+          retried_count: 0,
+          sent_at: nil,
+          failed_at: nil,
+          failed_count: 0,
         )
         @actor = actor
         # Apply recipient filtering up-front: drop deactivated users

@@ -1,0 +1,58 @@
+<h1>Email Analysis Report</h1>
+
+<div style="margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
+  <%= form_with url: admin_email_reports_path, method: :get, local: true, class: "form-inline" do |f| %>
+    <div style="display: flex; gap: 10px; align-items: flex-end;">
+      <div>
+        <%= f.label :retried_at, "Retried At:", style: "display: block;" %>
+        <%= f.date_field :retried_at, value: @retried_at, class: "form-control" %>
+      </div>
+      <div>
+        <%= f.label :failed_at, "Failed At:", style: "display: block;" %>
+        <%= f.date_field :failed_at, value: @failed_at, class: "form-control" %>
+      </div>
+      <div>
+        <%= f.label :sent_at, "Sent At:", style: "display: block;" %>
+        <%= f.date_field :sent_at, value: @sent_at, class: "form-control" %>
+      </div>
+      <div>
+        <%= f.label :created_on, "Created On:", style: "display: block;" %>
+        <%= f.date_field :created_on, value: @created_on, class: "form-control" %>
+      </div>
+      <div>
+        <%= f.submit "Filter", class: "btn btn-primary" %>
+        <%= link_to "Clear", admin_email_reports_path, class: "btn btn-secondary" %>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<div style="margin-bottom: 15px;">
+  <strong>Total Emails per Day (Filtered Range):</strong> <%= @total_emails %>
+</div>
+
+<table class="table table-bordered table-striped">
+  <thead>
+    <tr>
+      <th>Email Type</th>
+      <th>Failed</th>
+      <th>Sent</th>
+      <th>Total</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @report_data.each do |row| %>
+      <tr>
+        <td><%= row[:email_type] || 'N/A' %></td>
+        <td><%= row[:failed] %></td>
+        <td><%= row[:sent] %></td>
+        <td><%= row[:total] %></td>
+      </tr>
+    <% end %>
+    <% if @report_data.empty? %>
+      <tr>
+        <td colspan="4" class="text-center">No data found for the selected criteria.</td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

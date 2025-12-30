@@ -8,6 +8,10 @@ Rails.application.routes.draw do
   get "/crash", to: "test#crash"
   get '/health', to: 'health#index'
 
+  namespace :admin do
+    resources :email_reports, only: [:index]
+  end
+
   devise_for :users, controllers: { invitations: 'invitations' }
 
   # Global search routes
