@@ -17,8 +17,8 @@
         </div>
       </td>
       <td scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-        <div class="relative w-full flex justify-center">  
-          <%= link_to ticket.issue, project_ticket_path(ticket.project, ticket) %>
+        <div class="relative w-full flex justify-center">
+          <%= link_to ticket.issue == 'REQUEST' ? 'REQUEST/TASK' : ticket.issue, project_ticket_path(ticket.project, ticket) %>
         </div>
       </td>
       

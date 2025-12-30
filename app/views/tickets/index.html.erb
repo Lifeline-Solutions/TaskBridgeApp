@@ -115,7 +115,7 @@
           <%= link_to ticket.project.title, project_ticket_path(ticket.project, ticket) %>
         </th>
         <th scope="row" class="px-2 py-2 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-          <%= link_to ticket.issue, project_ticket_path(ticket.project, ticket) %>
+          <%= link_to ticket.issue == 'REQUEST' ? 'REQUEST/TASK' : ticket.issue, project_ticket_path(ticket.project, ticket) %>
         </th>
         <!-- Priority and severity -->
         <td class="px-2 py-2">

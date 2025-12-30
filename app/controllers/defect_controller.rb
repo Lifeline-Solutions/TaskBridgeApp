@@ -426,7 +426,7 @@ class DefectController < ApplicationController
 
       # Use left_joins explicitly for searchable associations
       @defects = @defects.left_joins(:users) unless @defects.to_sql.include?('JOIN "users"')
-      
+
       # Always join product/client/groupwares as they are in the core search
       @defects = @defects.left_joins(product: %i[client groupwares])
 
@@ -600,6 +600,17 @@ class DefectController < ApplicationController
     @end_count = [@page * @per_page, @total_count].min
     @defects = @defects.offset((@page - 1) * @per_page).limit(@per_page)
 
+    # Compute reopened count per defect for the defects on the current page
+    defect_ids_for_page = @defects.map(&:id)
+    @reopened_counts = if defect_ids_for_page.any?
+      DefectHistory.where(defect_id: defect_ids_for_page, history_type: 'Status Changed')
+                   .where("history ILIKE ?", "%to Reopened%")
+                   .group(:defect_id)
+                   .count
+    else
+      {}
+    end
+
     render :index_show
   end
 
@@ -607,6 +618,10 @@ class DefectController < ApplicationController
     redirect_to defect_index_path, alert: 'You are not authorized to view this defect.' and return unless current_user.has_any_role?(:admin, :observer, :qa, :agent) || Defect.joins(:users).where(id: params[:id], users: { id: current_user.id }).exists?
 
     @defect = Defect.find(params[:id])
+
+    @reopened_count = DefectHistory.where(defect_id: @defect.id, history_type: "Status Changed")
+                                   .select { |history| history.new_value == "Reopened" }
+                                   .size
 
     # Preserve product_id for back navigation
     @product_id = params[:product_id] || @defect.product_id
@@ -1040,6 +1055,17 @@ class DefectController < ApplicationController
       .select('DISTINCT created_by'))
       .order(:first_name, :last_name)
 
+    # Compute reopened count per defect for the defects on the current page
+    defect_ids_for_page = @defects.map(&:id)
+    @reopened_counts = if defect_ids_for_page.any?
+      DefectHistory.where(defect_id: defect_ids_for_page, history_type: 'Status Changed')
+                   .where("history ILIKE ?", "%to Reopened%")
+                   .group(:defect_id)
+                   .count
+    else
+      {}
+    end
+
     render :index_show
   end
 
@@ -1114,6 +1140,7 @@ class DefectController < ApplicationController
         current_user,
         'Status Changed',
         "Status changed from #{old_status_name} to #{status.name} by #{current_user.name}"
+
       )
     end
 
@@ -1440,24 +1467,34 @@ class DefectController < ApplicationController
     # Ordering and uniqueness
     # Sort by the numeric part of defect_unique (e.g. KCBL-123 -> 123) to ensure natural order
     direction = %w[asc desc].include?(params[:order]) ? params[:order] : 'asc'
-    
+
     # Fix PG::InvalidColumnReference: Use subquery to separate filtering (distinct) from ordering
     filtered_ids = defects.except(:order).distinct.select(:id)
-    
+
     defects = Defect.where(id: filtered_ids)
                     .includes(:users, :qa_module, :labels, :banking_type, :statuses, product: %i[client groupwares])
                     .order(Arel.sql("CAST(NULLIF(SPLIT_PART(defect_unique, '-', 2), '') AS INTEGER) #{direction}"))
+    defect_ids = defects.map(&:id)
+    reopened_counts = if defect_ids.any?
+                        DefectHistory.where(defect_id: defect_ids, history_type: 'Status Changed')
+                                     .where("history ILIKE ?", "%to Reopened%")
+                                     .group(:defect_id)
+                                     .count
+                      else
+                        {}
+                      end
 
     # Generate CSV
     csv_data = CSV.generate(headers: true) do |csv|
       csv << [
         'Defect ID', 'Status', 'Summary', 'Priority', 'Module', 'Sub Module',
         'Banking Types', 'Labels', 'Assignee', 'Reporter', 'Project',
-        'Created At'
+        'Created At', 'Retest Count', 'Reopened Count'
       ]
 
       defects.each do |defect|
         client_and_groupware = [defect.product.client&.name, defect.product.groupwares.first&.name].compact.join(' - ')
+        reopened_count = reopened_counts[defect.id] || 0
         csv << [
           defect.defect_unique,
           defect.statuses.map(&:name).join(', '),
@@ -1470,7 +1507,11 @@ class DefectController < ApplicationController
           defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', '),
           defect.creator&.name,
           client_and_groupware,
-          defect.created_at.strftime('%Y-%m-%d %H:%M')
+          defect.created_at.strftime('%Y-%m-%d %H:%M'),
+          defect.retest_count,
+          reopened_count
+
+
         ]
       end
     end
@@ -1595,16 +1636,27 @@ class DefectController < ApplicationController
     # Ordering
     # Sort by the numeric part of defect_unique (e.g. KCBL-123 -> 123) to ensure natural order
     direction = %w[asc desc].include?(params[:order]) ? params[:order] : 'asc'
-    
+
     # Fix PG::InvalidColumnReference: Use subquery to separate filtering (distinct) from ordering
     filtered_ids = defects.except(:order).distinct.select(:id)
-    
+
     defects = Defect.where(id: filtered_ids)
                     .includes(:users, :labels, :statuses, :qa_module, :submodule, :banking_type, product: %i[client groupwares])
                     .order(Arel.sql("CAST(NULLIF(SPLIT_PART(defect_unique, '-', 2), '') AS INTEGER) #{direction}"))
 
     # Restrict for non-admin/observer/qa users (same as index_show)
     defects = defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa)
+
+    # Precompute reopened counts for all defects to avoid N+1 queries
+    defect_ids = defects.map(&:id)
+    reopened_counts = if defect_ids.any?
+      DefectHistory.where(defect_id: defect_ids, history_type: 'Status Changed')
+                   .where("history ILIKE ?", "%to Reopened%")
+                   .group(:defect_id)
+                   .count
+    else
+      {}
+    end
 
     # Build Excel via Axlsx (caxlsx)
     package = Axlsx::Package.new
@@ -1622,6 +1674,7 @@ class DefectController < ApplicationController
         'Sub Module', # From submodule association
         'Banking Type', # From banking_type association
         'Retest Count',
+        'Reopened Count',
         'Labels',
         'Assignee',
         'Reporter',
@@ -1633,6 +1686,7 @@ class DefectController < ApplicationController
         client_name = defect.product&.client&.name
         groupware_name = defect.product&.groupwares&.first&.name
         client_and_groupware = [client_name, groupware_name].compact.join(' - ')
+        reopened_count = reopened_counts[defect.id] || 0
 
         sheet.add_row [
           defect.defect_unique,
@@ -1644,6 +1698,7 @@ class DefectController < ApplicationController
           defect.submodule&.name, # New association (submodule QaModule)
           defect.banking_type&.name, # New association
           defect.retest_count,
+          reopened_count,
           defect.labels.map(&:name).join(', '),
           defect.users.map { |u| "#{u.first_name} #{u.last_name}" }.join(', '),
           defect.creator&.name,
@@ -2029,8 +2084,13 @@ class DefectController < ApplicationController
     if params[:content].present?
       current_content = defect.content&.body&.to_s || ''
       new_content = params[:content].to_s
-      # Only track if content actually changed
-      if current_content != new_content && new_content.present?
+
+      # Normalize HTML for semantic comparison (ignore whitespace/formatting differences)
+      normalized_current = normalize_html(current_content)
+      normalized_new = normalize_html(new_content)
+
+      # Only track if content actually changed semantically
+      if normalized_current != normalized_new && normalized_new.present?
         # Keep HTML formatting for rich text display in history
         # Convert to plain string for Sidekiq/JSON serialization
         changes[:description] = { from: current_content.to_s, to: new_content.to_s }
@@ -2269,6 +2329,36 @@ class DefectController < ApplicationController
       else
         value         # Keep other types as-is
       end
+    end
+  end
+
+  # Normalize HTML content for semantic comparison
+  # Converts HTML to plain text to detect actual content changes
+  # This ignores formatting, whitespace, and HTML structure differences
+  def normalize_html(html_string)
+    return '' if html_string.blank?
+
+    begin
+      # Convert to string and add spaces around block-level tags to preserve word boundaries
+      html = html_string.to_s
+
+      # Add space around block-level tags so content doesn't merge when tags are removed
+      html = html.gsub(/<\/(p|div|li|ul|ol|h1|h2|h3|h4|h5|h6|br)>/i, ' ')
+      html = html.gsub(/<(p|div|li|ul|ol|h1|h2|h3|h4|h5|h6|br)[^>]*>/i, ' ')
+
+      # Strip all HTML tags
+      plain_text = ActionView::Base.full_sanitizer.sanitize(html)
+
+      # Decode HTML entities
+      plain_text = CGI.unescapeHTML(plain_text)
+
+      # Normalize whitespace: collapse multiple spaces, remove newlines, trim
+      plain_text.gsub(/\s+/, ' ')
+        .strip
+        .downcase
+    rescue => e
+      Rails.logger.error "Error normalizing HTML: #{e.message}"
+      html_string.to_s.gsub(/\s+/, ' ').strip.downcase
     end
   end
 end

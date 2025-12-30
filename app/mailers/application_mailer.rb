@@ -1,7 +1,13 @@
 class ApplicationMailer < ActionMailer::Base
   # default from: 'from@example.com'
   # layout 'mailer'
-  default from: 'cspm@craftsilicon.com'
+  default from: (
+    if Rails.env.staging?
+      'taskbridgestaging@craftsilicon.com'
+    elsif Rails.env.production? or Rails.env.development?
+      'cspm@craftsilicon.com'
+    end
+  )
 
   def reset_password_instructions(record, token, opts = {})
     super

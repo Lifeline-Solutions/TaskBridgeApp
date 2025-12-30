@@ -27,10 +27,10 @@ append :linked_dirs,
 set :default_env, {
   'RAILS_ENV' => 'staging',
   'SMTP_USERNAME' => 'cspm@craftsilicon.com',
-  'SMTP_PASSWORD' => '#cspm@123#'
+  'SMTP_PASSWORD' => 'Cspm@2025!'
 }
 
 # Optional niceties
 set :assets_roles, %i[web app]
 set :keep_releases, 5
-set :conditionally_migrate, true
+# Whenever config removed - using manual task in deploy.rb
