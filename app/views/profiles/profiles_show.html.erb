@@ -68,10 +68,54 @@
         </div>
         <div class="col-span-1">
           <%= pie_chart [
-                          ["Met Deadline", @users.sum { |user| user.tickets.count { |ticket| SlaTicket.find_by(ticket_id: ticket.id)&.sla_target_response_deadline == "Not Breached" } }],
-                          ["Missed Deadline", @users.sum { |user| user.tickets.count { |ticket| SlaTicket.find_by(ticket_id: ticket.id)&.sla_target_response_deadline == "Breached" } }],
-                          ["Pending", @users.sum { |user| user.tickets.count { |ticket| SlaTicket.find_by(ticket_id: ticket.id)&.sla_target_response_deadline.nil? } }]
-                        ] %>
+                          ["Not Breached", @deadline_not_breached_count || 0],
+                          ["Breached", @deadline_breached_count || 0],
+                          ["No SLA", @deadline_no_sla_count || 0]
+                        ],
+                        library: {
+                          title: { text: "Target Resolution Deadline Status" },
+                          colors: ['#10B981', '#EF4444', '#9CA3AF']
+                        } %>
+
+          <% if Rails.env.development? && @deadline_debug_info.present? %>
+            <div class="mt-4 p-3 bg-yellow-50 dark:bg-gray-800 text-xs border border-yellow-200 rounded">
+              <strong class="text-sm">🔍 Debug Info (Dev Only)</strong>
+
+              <strong class="text-xs">Sample Tickets (first 5):</strong>
+              <ul class="mt-2 space-y-2">
+                <% @deadline_debug_info.first(5).each do |info| %>
+                  <li class="border border-gray-300 dark:border-gray-600 p-2 rounded bg-white dark:bg-gray-700">
+                    <div><strong>Ticket:</strong> <%= info[:ticket_id] %> <span class="text-gray-500 text-xs">(ID: <%= info[:ticket_uuid].to_s.first(8) %>...)</span></div>
+                    <div><strong>Deadline String:</strong> <code class="bg-gray-100 dark:bg-gray-600 px-1"><%= info[:deadline_str] %></code></div>
+                    <div><strong>Status:</strong>
+                      <span class="font-bold <%=
+                        case info[:status]
+                        when 'breached' then 'text-red-600'
+                        when 'not_breached' then 'text-green-600'
+                        else 'text-gray-600'
+                        end %>">
+                        <%= info[:status].upcase %>
+                      </span>
+                    </div>
+                    <div><strong>Parsed As:</strong> <%= info[:parsed] || 'FAILED TO PARSE' %></div>
+                    <% if info[:parsed] %>
+                      <div class="text-xs text-gray-600">
+                        <% if info[:status] == 'breached' %>
+                          ⚠️ Deadline was <%= ((Time.current - DateTime.parse(info[:parsed])) / 1.day).round %> days ago
+                        <% elsif info[:status] == 'not_breached' %>
+                          ✅ Deadline is <%= ((DateTime.parse(info[:parsed]) - Time.current) / 1.day).round %> days from now
+                        <% end %>
+                      </div>
+                    <% end %>
+                    <div class="text-xs text-gray-500 mt-1"><strong>Details:</strong> <%= info[:full_details_preview] %></div>
+                  </li>
+                <% end %>
+                <% if @deadline_debug_info.size > 5 %>
+                  <li class="text-gray-500 text-center italic">... and <%= @deadline_debug_info.size - 5 %> more tickets</li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
         </div>
       </div>
     </div>

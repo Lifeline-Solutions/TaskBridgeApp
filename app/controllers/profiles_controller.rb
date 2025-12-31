@@ -352,6 +352,125 @@ class ProfilesController < ApplicationController
       @avg_assignment_to_resolved_human = nil
     end
 
+    # Calculate deadline breach status for pie chart
+    # Count DISTINCT tickets based on their Target Resolution Deadline from latest event
+    @deadline_not_breached_count = 0
+    @deadline_breached_count = 0
+    @deadline_no_sla_count = 0
+    @deadline_debug_info = [] if Rails.env.development?
+
+    # Track processed tickets to ensure uniqueness
+    processed_ticket_ids = Set.new
+
+    if @selected_user
+      @tickets.each do |ticket|
+        # Skip if already processed (ensure distinct count)
+        next if processed_ticket_ids.include?(ticket.id)
+
+        # Get all events for this ticket where the selected user was assigned
+        ticket_events = @all_ticket_events_by_ticket[ticket.id] || []
+        user_assignment_events = ticket_events.select { |e| e.assigned_user_id == @selected_user.id }
+
+        next if user_assignment_events.empty?
+
+        # Mark ticket as processed
+        processed_ticket_ids.add(ticket.id)
+
+        # Get the LATEST assignment event for this user on this ticket
+        latest_assignment = user_assignment_events.max_by(&:created_at)
+        info = parse_assignment_details(latest_assignment.details)
+
+        deadline_status = 'no_sla'
+        deadline_str = info[:target_deadline].to_s.strip
+        parsed_deadline = nil
+        full_details = latest_assignment.details.to_s
+
+        if info[:target_deadline].present? && deadline_str.present?
+          # Check if the deadline string is already a status word (common case)
+          deadline_str_lower = deadline_str.downcase
+          if deadline_str_lower.include?('breached') || deadline_str_lower == 'breached'
+            @deadline_breached_count += 1
+            deadline_status = 'Breached'
+          elsif deadline_str_lower.include?('not breached') || deadline_str_lower == 'not breached'
+            @deadline_not_breached_count += 1
+            deadline_status = 'Not Breached'
+          elsif deadline_str_lower.include?('no sla') || deadline_str_lower == 'no sla'
+            @deadline_no_sla_count += 1
+            deadline_status = 'No SLA'
+          else
+            # Try to parse as datetime
+            begin
+              # Strategy 1: Direct parsing
+              parsed_deadline = DateTime.parse(deadline_str)
+            rescue ArgumentError, TypeError
+              # Strategy 2: Extract datetime patterns from the string
+              # Pattern 1: YYYY-MM-DD HH:MM:SS or YYYY-MM-DD
+              if deadline_str =~ /(\d{4}-\d{2}-\d{2}(?:\s+\d{2}:\d{2}(?::\d{2})?)?)/
+                begin
+                  parsed_deadline = DateTime.parse($1)
+                rescue => e2
+                  Rails.logger.debug "Pattern 1 parse failed: #{e2.message}" if Rails.env.development?
+                end
+              # Pattern 2: DD/MM/YYYY or DD-MM-YYYY
+              elsif deadline_str =~ /(\d{2}[-\/]\d{2}[-\/]\d{4}(?:\s+\d{2}:\d{2}(?::\d{2})?)?)/
+                begin
+                  parsed_deadline = DateTime.parse($1)
+                rescue => e2
+                  Rails.logger.debug "Pattern 2 parse failed: #{e2.message}" if Rails.env.development?
+                end
+              # Pattern 3: Month DD, YYYY (e.g., "December 31, 2025")
+              elsif deadline_str =~ /([A-Za-z]+\s+\d{1,2},?\s+\d{4}(?:\s+\d{2}:\d{2}(?::\d{2})?)?)/
+                begin
+                  parsed_deadline = DateTime.parse($1)
+                rescue => e2
+                  Rails.logger.debug "Pattern 3 parse failed: #{e2.message}" if Rails.env.development?
+                end
+              # Pattern 4: Look for any date-like string in the full details
+              elsif full_details =~ /(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})/
+                begin
+                  parsed_deadline = DateTime.parse($1)
+                rescue => e2
+                  Rails.logger.debug "Pattern 4 parse failed: #{e2.message}" if Rails.env.development?
+                end
+              end
+            end
+
+            if parsed_deadline
+              # Successfully parsed - check if breached
+              if Time.current > parsed_deadline
+                @deadline_breached_count += 1
+                deadline_status = 'Breached'
+              else
+                @deadline_not_breached_count += 1
+                deadline_status = 'Not Breached'
+              end
+            else
+              # Could not parse deadline
+              @deadline_no_sla_count += 1
+              deadline_status = 'parse_error'
+            end
+          end
+        else
+          # No deadline found in event details
+          @deadline_no_sla_count += 1
+          deadline_status = 'no_deadline'
+        end
+
+        # Store debug info in development
+        if Rails.env.development?
+          @deadline_debug_info << {
+            ticket_id: ticket.unique_id,
+            ticket_uuid: ticket.id,
+            deadline_str: deadline_str.presence || 'N/A',
+            full_details_preview: full_details.truncate(100),
+            status: deadline_status,
+            parsed: parsed_deadline&.strftime('%Y-%m-%d %H:%M:%S'),
+            current_time: Time.current.strftime('%Y-%m-%d %H:%M:%S')
+          }
+        end
+      end
+    end
+
     respond_to do |format|
       format.html
       format.csv { send_data generate_user_csv(@users), filename: (@selected_user ? "#{@selected_user.first_name}_#{@selected_user.last_name}_#{Date.today}.csv" : "user_report_#{Date.today}.csv") }
@@ -647,15 +766,16 @@ class ProfilesController < ApplicationController
 
     assigned_to = normalized[/\A\s*(.+?)\s+was assigned to the ticket/i, 1]&.strip
 
-    # Extract SLA Status with same pattern as deadlines
-    sla_status = normalized[/Status:\s*(.+?)(?:,|and|\z)/i, 1]&.strip
+    # Extract SLA Status - capture everything after "Status:" until "and" or end
+    sla_status = normalized[/Status:\s*(.+?)(?:\s+and\s+|\z)/i, 1]&.strip
 
-    # Extract Target Resolution Deadline instead of Response Deadline
-    target_deadline = normalized[/Target Resolution Deadline\s*(.+?)(?:,|and|\z)/i, 1]&.strip
+    # Extract Target Resolution Deadline (case-insensitive, handles both "deadline" and "Deadline")
+    # Pattern: "Target Resolution deadline YYYY-MM-DD HH:MM:SS" or similar
+    target_deadline = normalized[/Target Resolution (?:deadline|Deadline)[:\s]*(.+?)(?:\s*and\s+|\z)/i, 1]&.strip
 
     # If not found, try alternative patterns
-    target_deadline ||= normalized[/Resolution Deadline[:\s]+(.+?)(?:,|and|\z)/i, 1]&.strip
-    target_deadline ||= normalized[/sla_target_resolution_deadline[:\s]+(.+?)(?:,|and|\z)/i, 1]&.strip
+    target_deadline ||= normalized[/Resolution (?:deadline|Deadline)[:\s]+(.+?)(?:\s*and\s+|\z)/i, 1]&.strip
+    target_deadline ||= normalized[/sla_target_resolution_deadline[:\s]+(.+?)(?:\s*and\s+|\z)/i, 1]&.strip
 
     {
       assigned_to: assigned_to,
