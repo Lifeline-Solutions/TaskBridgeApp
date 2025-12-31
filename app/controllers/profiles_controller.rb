@@ -223,72 +223,22 @@ class ProfilesController < ApplicationController
     @selected_user = @users.first
 
     # Robust date parsing
-    if params[:start_date].present? && params[:end_date].present?
-      begin
-        start_date = Date.parse(params[:start_date])
-        end_date = Date.parse(params[:end_date])
-      rescue ArgumentError
-        start_date = nil
-        end_date = nil
-      end
-    else
-      start_date = if params[:start_date].present?
-                     begin
-                       Date.parse(params[:start_date])
-                     rescue StandardError
-                       nil
-                     end
-                   end
-      end_date = if params[:end_date].present?
-                   begin
-                     Date.parse(params[:end_date])
-                   rescue StandardError
-                     nil
-                   end
-                 end
-    end
+    from_time, to_time = parse_date_range_for_report(params[:start_date], params[:end_date])
 
-    from_time = start_date&.beginning_of_day
-    to_time = end_date&.end_of_day
-
-    # Assignment events: either textual match or assigned_user_id
-    assignment_events_scope = Event.where('events.details ILIKE ?', '%was assigned to the ticket%')
-    assignment_events_scope = assignment_events_scope.or(Event.where(assigned_user_id: @selected_user.id)) if @selected_user.present? && Event.column_names.include?('assigned_user_id')
+    # Assignment events: using assigned_user_id
+    assignment_events_scope = Event.where.not(assigned_user_id: nil)
 
     if @selected_user.present?
-      display_name = [@selected_user.first_name, @selected_user.last_name].compact.join(' ').strip
-      if display_name.present?
-        escaped_for_regex = Regexp.escape(display_name)
-        regex_name = escaped_for_regex.gsub(/\s+/, '\\s+')
-        regex = "#{regex_name}\\s*was assigned to the ticket"
-        reversed_name = [@selected_user.last_name, @selected_user.first_name].compact.join(' ').strip
-        escaped_reversed = Regexp.escape(reversed_name)
-        regex_reversed = "#{escaped_reversed.gsub(/\s+/, '\\s+')}\\s*was assigned to the ticket"
-        ilike_safe = ActiveRecord::Base.sanitize_sql_like(display_name)
-        # Add textual name filters (do NOT reduce existing assigned_user_id matches)
-        assignment_events_scope = if Event.column_names.include?('assigned_user_id')
-                                    assignment_events_scope.where(
-                                      'assigned_user_id = :uid OR events.details ~* :r1 OR events.details ~* :r2 OR events.details ILIKE :like',
-                                      uid: @selected_user.id, r1: regex, r2: regex_reversed, like: "%#{ilike_safe}%"
-                                    )
-                                  else
-                                    assignment_events_scope.where(
-                                      'events.details ~* :r1 OR events.details ~* :r2 OR events.details ILIKE :like',
-                                      r1: regex, r2: regex_reversed, like: "%#{ilike_safe}%"
-                                    )
-                                  end
-      end
+      assignment_events_scope = assignment_events_scope.where(assigned_user_id: @selected_user.id)
     end
 
-    if from_time || to_time
-      from_time ||= Time.at(0)
-      to_time ||= Time.current
+    if from_time && to_time
       assignment_events_scope = assignment_events_scope.where(created_at: from_time..to_time)
     end
 
     assignment_ticket_ids = assignment_events_scope.where.not(ticket_id: nil).pluck(:ticket_id)
 
-    # Tickets where user is tagged (assuming taggings join) and reported tickets by user
+    # Tickets where user is tagged and reported tickets by user
     tagged_ticket_ids = if @selected_user
                           Ticket.joins(:taggings).where(taggings: { user_id: @selected_user.id }).pluck(:id)
                         else
@@ -311,7 +261,7 @@ class ProfilesController < ApplicationController
     end
 
     # Apply date window to tickets if provided
-    if from_time || to_time
+    if from_time && to_time
       scoped_ids = Ticket.where(id: all_ticket_ids)
       scoped_ids = scoped_ids.where('tickets.created_at >= ?', from_time) if from_time
       scoped_ids = scoped_ids.where('tickets.created_at <= ?', to_time) if to_time
@@ -324,9 +274,9 @@ class ProfilesController < ApplicationController
 
     # All events for these tickets (not only assignments) within date window if given
     all_events_scope = Event.where(ticket_id: all_ticket_ids)
-    all_events_scope = all_events_scope.where(created_at: from_time..to_time) if from_time || to_time
+    all_events_scope = all_events_scope.where(created_at: from_time..to_time) if from_time && to_time
     @all_ticket_events_by_ticket = all_events_scope
-      .select(:ticket_id, :details, :created_at, :id, (:assigned_user_id if Event.column_names.include?('assigned_user_id')))
+      .select(:ticket_id, :details, :created_at, :id, :assigned_user_id)
       .order(:created_at)
       .group_by(&:ticket_id)
 
@@ -347,51 +297,30 @@ class ProfilesController < ApplicationController
     @events = @assignment_events.to_a
 
     @issues = Issue.where(ticket_id: all_ticket_ids)
-    @issues = @issues.where(created_at: from_time..to_time) if from_time || to_time
+    @issues = @issues.where(created_at: from_time..to_time) if from_time && to_time
     @issues = @issues.includes(:ticket).to_a
-
-    all_users_cache = User.all.to_a
-
-    # Enrich ALL events (not only assignments) for UI transparency
-    @enriched_events = all_events_scope.order(:created_at).map do |evt|
-      assigned_user = resolve_assigned_user(evt, all_users_cache)
-      parsed = parse_assignment_details(evt.details.to_s)
-      {
-        event_id: evt.id,
-        ticket_id: evt.ticket_id,
-        created_at: evt.created_at,
-        classification: classify_event(evt.details.to_s),
-        details: evt.details,
-        assigned_user_id: assigned_user&.id || (evt.respond_to?(:assigned_user_id) ? evt.assigned_user_id : nil),
-        assigned_user_name: assigned_user&.name,
-        parsed_assigned_to: parsed[:assigned_to],
-        parsed_sla_status: parsed[:sla_status],
-        parsed_target_deadline: parsed[:target_deadline]
-      }
-    end
-
-    # Preserve enriched assignment subset for compatibility
-    @enriched_assignment_events = @enriched_events.select { |h| h[:classification] == 'assignment' }
 
     # Hold time calculations across all tickets regardless of status
     @total_hold_times = {}
     @ticket_hold_time_total_seconds = {}
     if @selected_user
-      selected_name = [@selected_user.first_name, @selected_user.last_name].compact.join(' ').strip
       @tickets.each do |ticket|
         events = (@all_ticket_events_by_ticket[ticket.id] || []).sort_by(&:created_at)
         assignment_like_events = events.select do |e|
-          e.details.to_s.include?('was assigned to the ticket') || (e.respond_to?(:assigned_user_id) && e.assigned_user_id.present?)
+          e.details.to_s.include?('was assigned to the ticket') || e.assigned_user_id.present?
         end
         handovers = events.select { |e| e.details.to_s.include?('was handed over') }
         hold_periods = []
+
         # Filter assignments for selected user
         user_assignments = assignment_like_events.select do |e|
-          (e.respond_to?(:assigned_user_id) && e.assigned_user_id == @selected_user.id) || parse_assignment_details(e.details)[:assigned_to].to_s.strip.casecmp?(selected_name)
+          e.assigned_user_id == @selected_user.id
         end
+
         user_handovers = handovers.select do |e|
-          e.details.to_s.include?(selected_name) || (e.respond_to?(:assigned_user_id) && e.assigned_user_id == @selected_user.id)
+          e.assigned_user_id == @selected_user.id
         end
+
         user_assignments.each do |assign_event|
           assigned_at = assign_event.created_at
           next_assignment = assignment_like_events.find { |a| a.created_at > assign_event.created_at }
@@ -423,13 +352,132 @@ class ProfilesController < ApplicationController
       @avg_assignment_to_resolved_human = nil
     end
 
+    # Calculate deadline breach status for pie chart
+    # Count DISTINCT tickets based on their Target Resolution Deadline from latest event
+    @deadline_not_breached_count = 0
+    @deadline_breached_count = 0
+    @deadline_no_sla_count = 0
+    @deadline_debug_info = [] if Rails.env.development?
+
+    # Track processed tickets to ensure uniqueness
+    processed_ticket_ids = Set.new
+
+    if @selected_user
+      @tickets.each do |ticket|
+        # Skip if already processed (ensure distinct count)
+        next if processed_ticket_ids.include?(ticket.id)
+
+        # Get all events for this ticket where the selected user was assigned
+        ticket_events = @all_ticket_events_by_ticket[ticket.id] || []
+        user_assignment_events = ticket_events.select { |e| e.assigned_user_id == @selected_user.id }
+
+        next if user_assignment_events.empty?
+
+        # Mark ticket as processed
+        processed_ticket_ids.add(ticket.id)
+
+        # Get the LATEST assignment event for this user on this ticket
+        latest_assignment = user_assignment_events.max_by(&:created_at)
+        info = parse_assignment_details(latest_assignment.details)
+
+        deadline_status = 'no_sla'
+        deadline_str = info[:target_deadline].to_s.strip
+        parsed_deadline = nil
+        full_details = latest_assignment.details.to_s
+
+        if info[:target_deadline].present? && deadline_str.present?
+          # Check if the deadline string is already a status word (common case)
+          deadline_str_lower = deadline_str.downcase
+          if deadline_str_lower.include?('breached') || deadline_str_lower == 'breached'
+            @deadline_breached_count += 1
+            deadline_status = 'Breached'
+          elsif deadline_str_lower.include?('not breached') || deadline_str_lower == 'not breached'
+            @deadline_not_breached_count += 1
+            deadline_status = 'Not Breached'
+          elsif deadline_str_lower.include?('no sla') || deadline_str_lower == 'no sla'
+            @deadline_no_sla_count += 1
+            deadline_status = 'No SLA'
+          else
+            # Try to parse as datetime
+            begin
+              # Strategy 1: Direct parsing
+              parsed_deadline = DateTime.parse(deadline_str)
+            rescue ArgumentError, TypeError
+              # Strategy 2: Extract datetime patterns from the string
+              # Pattern 1: YYYY-MM-DD HH:MM:SS or YYYY-MM-DD
+              if deadline_str =~ /(\d{4}-\d{2}-\d{2}(?:\s+\d{2}:\d{2}(?::\d{2})?)?)/
+                begin
+                  parsed_deadline = DateTime.parse($1)
+                rescue => e2
+                  Rails.logger.debug "Pattern 1 parse failed: #{e2.message}" if Rails.env.development?
+                end
+              # Pattern 2: DD/MM/YYYY or DD-MM-YYYY
+              elsif deadline_str =~ /(\d{2}[-\/]\d{2}[-\/]\d{4}(?:\s+\d{2}:\d{2}(?::\d{2})?)?)/
+                begin
+                  parsed_deadline = DateTime.parse($1)
+                rescue => e2
+                  Rails.logger.debug "Pattern 2 parse failed: #{e2.message}" if Rails.env.development?
+                end
+              # Pattern 3: Month DD, YYYY (e.g., "December 31, 2025")
+              elsif deadline_str =~ /([A-Za-z]+\s+\d{1,2},?\s+\d{4}(?:\s+\d{2}:\d{2}(?::\d{2})?)?)/
+                begin
+                  parsed_deadline = DateTime.parse($1)
+                rescue => e2
+                  Rails.logger.debug "Pattern 3 parse failed: #{e2.message}" if Rails.env.development?
+                end
+              # Pattern 4: Look for any date-like string in the full details
+              elsif full_details =~ /(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})/
+                begin
+                  parsed_deadline = DateTime.parse($1)
+                rescue => e2
+                  Rails.logger.debug "Pattern 4 parse failed: #{e2.message}" if Rails.env.development?
+                end
+              end
+            end
+
+            if parsed_deadline
+              # Successfully parsed - check if breached
+              if Time.current > parsed_deadline
+                @deadline_breached_count += 1
+                deadline_status = 'Breached'
+              else
+                @deadline_not_breached_count += 1
+                deadline_status = 'Not Breached'
+              end
+            else
+              # Could not parse deadline
+              @deadline_no_sla_count += 1
+              deadline_status = 'parse_error'
+            end
+          end
+        else
+          # No deadline found in event details
+          @deadline_no_sla_count += 1
+          deadline_status = 'no_deadline'
+        end
+
+        # Store debug info in development
+        if Rails.env.development?
+          @deadline_debug_info << {
+            ticket_id: ticket.unique_id,
+            ticket_uuid: ticket.id,
+            deadline_str: deadline_str.presence || 'N/A',
+            full_details_preview: full_details.truncate(100),
+            status: deadline_status,
+            parsed: parsed_deadline&.strftime('%Y-%m-%d %H:%M:%S'),
+            current_time: Time.current.strftime('%Y-%m-%d %H:%M:%S')
+          }
+        end
+      end
+    end
+
     respond_to do |format|
       format.html
       format.csv { send_data generate_user_csv(@users), filename: (@selected_user ? "#{@selected_user.first_name}_#{@selected_user.last_name}_#{Date.today}.csv" : "user_report_#{Date.today}.csv") }
     end
   end
 
-  helper_method :parse_assignment_details, :assigned_at_for, :resolved_at_for, :resolution_duration_for, :format_full_duration
+  helper_method :parse_assignment_details, :assigned_at_for, :resolved_at_for, :resolution_duration_for, :format_full_duration, :format_full_duration_human
 
   # Formats total seconds as a human string with years, months, days, hours, minutes, and seconds
   def format_full_duration(total_seconds)
@@ -443,6 +491,11 @@ class ProfilesController < ApplicationController
       value = parts[key].to_i
       value.positive? ? "#{value} #{key.to_s.singularize}#{'s' if value != 1}" : nil
     end.compact.join(' ')
+  end
+
+  # Alias for format_full_duration for compatibility
+  def format_full_duration_human(total_seconds)
+    format_full_duration(total_seconds)
   end
 
   def profiles_show_user
@@ -704,18 +757,32 @@ class ProfilesController < ApplicationController
     end
   end
 
-  # Parse "Assigned To", "SLA Status", "Target Response Deadline" from details text
-  # Example: "#{user.first_name} #{user.last_name}was assigned to the ticket, with Status:  #{sla_ticket.sla_status} and Target Response Deadline #{sla_target_response_deadline}"
+  # Parse "Assigned To", "SLA Status", "Target Resolution Deadline" from details text
+  # Returns the parsed fields plus the whole details
   def parse_assignment_details(details)
-    return { assigned_to: nil, sla_status: nil, target_deadline: nil } if details.blank?
+    return { assigned_to: nil, sla_status: nil, target_deadline: nil, details: nil } if details.blank?
 
     normalized = details.to_s.gsub('was assigned', ' was assigned')
 
     assigned_to = normalized[/\A\s*(.+?)\s+was assigned to the ticket/i, 1]&.strip
-    sla_status = normalized[/Status:\s*([^,]+)/i, 1]&.strip
-    target_deadline = normalized[/Target Response Deadline\s*(.+)\z/i, 1]&.strip
 
-    { assigned_to: assigned_to, sla_status: sla_status, target_deadline: target_deadline }
+    # Extract SLA Status - capture everything after "Status:" until "and" or end
+    sla_status = normalized[/Status:\s*(.+?)(?:\s+and\s+|\z)/i, 1]&.strip
+
+    # Extract Target Resolution Deadline (case-insensitive, handles both "deadline" and "Deadline")
+    # Pattern: "Target Resolution deadline YYYY-MM-DD HH:MM:SS" or similar
+    target_deadline = normalized[/Target Resolution (?:deadline|Deadline)[:\s]*(.+?)(?:\s*and\s+|\z)/i, 1]&.strip
+
+    # If not found, try alternative patterns
+    target_deadline ||= normalized[/Resolution (?:deadline|Deadline)[:\s]+(.+?)(?:\s*and\s+|\z)/i, 1]&.strip
+    target_deadline ||= normalized[/sla_target_resolution_deadline[:\s]+(.+?)(?:\s*and\s+|\z)/i, 1]&.strip
+
+    {
+      assigned_to: assigned_to,
+      sla_status: sla_status,
+      target_deadline: target_deadline,
+      details: details.to_s
+    }
   end
 
   # First assignment timestamp for the selected user on this ticket
@@ -899,6 +966,83 @@ class ProfilesController < ApplicationController
           row[:resolution_deadline_breached],
           row[:any_breached],
           row[:breach_percentage]
+        ]
+      end
+    end
+  end
+
+  # Parse date range from params
+  def parse_date_range_for_report(start_date_param, end_date_param)
+    start_date = nil
+    end_date = nil
+
+    if start_date_param.present?
+      begin
+        start_date = Date.parse(start_date_param).beginning_of_day
+      rescue ArgumentError, TypeError
+        start_date = nil
+      end
+    end
+
+    if end_date_param.present?
+      begin
+        end_date = Date.parse(end_date_param).end_of_day
+      rescue ArgumentError, TypeError
+        end_date = nil
+      end
+    end
+
+    [start_date, end_date]
+  end
+
+  # Extract status from event details text
+  # Looks for common status patterns in event details
+  def extract_status_from_event_details(details)
+    return nil if details.blank?
+
+    details_text = details.to_s
+
+    # Check for status patterns
+    # Pattern 1: "Status: <status>"
+    if details_text =~ /Status:\s*([^,\n]+)/i
+      return $1.strip
+    end
+
+    # Pattern 2: "status changed to <status>"
+    if details_text =~ /status\s+(?:changed|updated|set)\s+to\s+([^,\n]+)/i
+      return $1.strip
+    end
+
+    # Pattern 3: "from <old> to <new>"
+    if details_text =~ /from\s+\w+\s+to\s+([^,\n]+)/i
+      return $1.strip
+    end
+
+    # Pattern 4: Check for common status keywords
+    status_keywords = ['Open', 'In Progress', 'Pending', 'Resolved', 'Closed', 'Declined',
+                       'On Hold', 'Waiting', 'Assigned', 'New', 'Reopened']
+
+    status_keywords.each do |keyword|
+      return keyword if details_text =~ /\b#{Regexp.escape(keyword)}\b/i
+    end
+
+    nil
+  end
+
+  # Generate CSV for user report based on report_data
+  def generate_report_csv(report_data)
+    CSV.generate(headers: true) do |csv|
+      csv << ['Event ID', 'Assigned User ID', 'Ticket ID', 'Ticket Unique ID', 'Status', 'Created At', 'Details']
+
+      report_data.each do |row|
+        csv << [
+          row[:event_id],
+          row[:assigned_user_id],
+          row[:ticket_id],
+          row[:ticket_unique_id],
+          row[:status] || 'N/A',
+          row[:created_at]&.strftime('%Y-%m-%d %H:%M:%S'),
+          row[:details]&.truncate(100)
         ]
       end
     end

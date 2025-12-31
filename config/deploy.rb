@@ -58,18 +58,18 @@ set :linked_dirs, fetch(:linked_dirs, []) | %w[log tmp/pids tmp/cache tmp/socket
 # ========================================
 # Manual Cron Job Configuration
 # ========================================
-namespace :deploy do
-  desc 'Update cron jobs manually'
-  task :update_cron do
-    on roles(:app) do
-      within release_path do
-        with rails_env: fetch(:rails_env) do
-          # Explicitly run whenever with rbenv and bundle exec
-          execute :bundle, :exec, :whenever, "--update-crontab #{fetch(:application)}_#{fetch(:stage)}", "--set environment=#{fetch(:stage)}"
-        end
-      end
-    end
-  end
-end
+#namespace :deploy do
+#  desc 'Update cron jobs manually'
+#  task :update_cron do
+#    on roles(:app) do
+#      within release_path do
+#        with rails_env: fetch(:rails_env) do
+#          # Explicitly run whenever with rbenv and bundle exec
+#          execute :bundle, :exec, :whenever, "--update-crontab #{fetch(:application)}_#{fetch(:stage)}", "--set environment=#{fetch(:stage)}"
+#        end
+#      end
+#    end
+#  end
+#end
 
-after 'deploy:published', 'deploy:update_cron'
+#after 'deploy:published', 'deploy:update_cron'
