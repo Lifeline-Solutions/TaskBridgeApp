@@ -387,16 +387,17 @@ class ProfilesController < ApplicationController
 
         if info[:target_deadline].present? && deadline_str.present?
           # Check if the deadline string is already a status word (common case)
+          # IMPORTANT: Check "not breached" BEFORE "breached" to avoid substring matching issues
           deadline_str_lower = deadline_str.downcase
-          if deadline_str_lower.include?('breached') || deadline_str_lower == 'breached'
-            @deadline_breached_count += 1
-            deadline_status = 'Breached'
-          elsif deadline_str_lower.include?('not breached') || deadline_str_lower == 'not breached'
+          if deadline_str_lower.include?('not breached') || deadline_str_lower == 'not breached'
             @deadline_not_breached_count += 1
             deadline_status = 'Not Breached'
           elsif deadline_str_lower.include?('no sla') || deadline_str_lower == 'no sla'
             @deadline_no_sla_count += 1
             deadline_status = 'No SLA'
+          elsif deadline_str_lower.include?('breached') || deadline_str_lower == 'breached'
+            @deadline_breached_count += 1
+            deadline_status = 'Breached'
           else
             # Try to parse as datetime
             begin
@@ -766,8 +767,9 @@ class ProfilesController < ApplicationController
 
     assigned_to = normalized[/\A\s*(.+?)\s+was assigned to the ticket/i, 1]&.strip
 
-    # Extract SLA Status - capture everything after "Status:" until "and" or end
-    sla_status = normalized[/Status:\s*(.+?)(?:\s+and\s+|\z)/i, 1]&.strip
+    # Extract SLA Status - handle newlines and multiple whitespace
+    # Match "Status:" followed by any whitespace, then capture text until "and" or end
+    sla_status = normalized[/Status:\s*\n?\s*(.+?)(?:\s+and\s+|\z)/im, 1]&.strip
 
     # Extract Target Resolution Deadline (case-insensitive, handles both "deadline" and "Deadline")
     # Pattern: "Target Resolution deadline YYYY-MM-DD HH:MM:SS" or similar
