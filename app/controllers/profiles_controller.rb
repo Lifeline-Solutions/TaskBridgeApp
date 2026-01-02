@@ -640,6 +640,16 @@ class ProfilesController < ApplicationController
           .pluck(:ticket_id)
           .uniq
 
+        #Create current user tagged tickets add
+
+        current_user_tagged_tickets = Ticket.joins(:statuses, :taggings)
+                                            .where(taggings: { user_id: user.id })
+                                            .where.not(statuses: { name: ['Closed', 'Resolved', 'Declined'] })
+                                            .pluck(:id)
+                                            .uniq
+
+        current_user_tagged = current_user_tagged_tickets.count
+
         user_tickets = @tickets.where(id: user_ticket_ids)
         user_total = user_tickets.count
 
@@ -684,7 +694,8 @@ class ProfilesController < ApplicationController
           resolution_deadline_breached: user_resolution_deadline_breached,
           any_breached: user_any_breached,
           non_breached: user_total - user_any_breached,
-          breach_percentage: user_breach_rate
+          breach_percentage: user_breach_rate,
+          current_user_tagged: current_user_tagged
         }
       end
 

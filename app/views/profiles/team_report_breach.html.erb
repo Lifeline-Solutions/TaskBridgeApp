@@ -1,7 +1,6 @@
 <div class="mx-auto px-4 py-8">
   <div class="bg-white shadow-md rounded-lg p-6">
     <h1 class="text-3xl font-bold text-gray-800 mb-6">Team Breach Report</h1>
-
     <!-- Filter Form -->
     <div class="bg-gray-50 p-4 rounded-lg mb-6">
       <%= form_with url: team_report_breach_path, method: :get, local: true, class: "space-y-4" do |f| %>
@@ -116,7 +115,6 @@
                 <th class="px-4 py-3 text-right text-xs font-medium text-purple-700 uppercase tracking-wider border-b">Initial Response Time</th>
                 <th class="px-4 py-3 text-right text-xs font-medium text-orange-700 uppercase tracking-wider border-b">Target Repair Time</th>
                 <th class="px-4 py-3 text-right text-xs font-medium text-red-700 uppercase tracking-wider border-b">Target Resolution Time</th>
-                <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Any Breach</th>
                 <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Score %</th>
               </tr>
             </thead>
@@ -129,7 +127,6 @@
                   <td class="px-4 py-3 whitespace-nowrap text-sm text-purple-600 text-center"><%= row[:sla_status_breached] %></td>
                   <td class="px-4 py-3 whitespace-nowrap text-sm text-orange-600 text-center"><%= row[:response_deadline_breached] %></td>
                   <td class="px-4 py-3 whitespace-nowrap text-sm text-red-600 text-center"><%= row[:resolution_deadline_breached] %></td>
-                  <td class="px-4 py-3 whitespace-nowrap text-sm text-red-700 text-center font-semibold"><%= row[:any_breached] %></td>
                   <td class="px-4 py-3 whitespace-nowrap text-center">
                     <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
                           <%= row[:breach_percentage] >= 80 ? 'bg-green-100 text-green-800' : row[:breach_percentage] >= 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800' %>">
@@ -146,7 +143,6 @@
                 <td class="px-4 py-3 whitespace-nowrap text-sm text-purple-600 text-center"><%= @sla_status_breached_count %></td>
                 <td class="px-4 py-3 whitespace-nowrap text-sm text-orange-600 text-center"><%= @response_deadline_breached_count %></td>
                 <td class="px-4 py-3 whitespace-nowrap text-sm text-red-600 text-center"><%= @resolution_deadline_breached_count %></td>
-                <td class="px-4 py-3 whitespace-nowrap text-sm text-red-700 text-center"><%= @total_breached_count %></td>
                 <td class="px-4 py-3 whitespace-nowrap text-center">
                   <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
                         <%= @overall_breach_percentage >= 80 ? 'bg-green-100 text-green-800' : @overall_breach_percentage >= 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800' %>">
@@ -170,12 +166,12 @@
                 <tr>
                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Team Member</th>
                   <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Total</th>
-                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Total (Open)</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Total Open Tagged </th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Current Ticket Assigned</th>
                   <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Non-Breach</th>
                   <!--<th class="px-4 py-3 text-right text-xs font-medium text-purple-700 uppercase tracking-wider border-b">Initial Response Time</th> -->
                   <th class="px-4 py-3 text-right text-xs font-medium text-orange-700 uppercase tracking-wider border-b">Target Repair Time</th>
                   <th class="px-4 py-3 text-right text-xs font-medium text-red-700 uppercase tracking-wider border-b">Target Resolution Time</th>
-                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Any Breach</th>
                   <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider border-b">Score %</th>
                 </tr>
               </thead>
@@ -187,13 +183,13 @@
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 text-center font-semibold"><%= row[:total] %></td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 text-center font-semibold"><%= row[:total_open] %></td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 text-center font-semibold"><%= row[:current_user_tagged] %></td>
 
 
                     <td class="px-4 py-3 whitespace-nowrap text-sm text-green-600 text-center font-semibold"><%= row[:non_breached] %></td>
                     <!-- <td class="px-4 py-3 whitespace-nowrap text-sm text-purple-600 text-center"><%#= row[:sla_status_breached] %></td> -->
                     <td class="px-4 py-3 whitespace-nowrap text-sm text-orange-600 text-center"><%= row[:response_deadline_breached] %></td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm text-red-600 text-center"><%= row[:resolution_deadline_breached] %></td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-red-700 text-center font-semibold"><%= row[:any_breached] %></td>
                     <td class="px-4 py-3 whitespace-nowrap text-center">
                       <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
                             <%= row[:breach_percentage] >= 80 ? 'bg-green-100 text-green-800' : row[:breach_percentage] >= 50 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800' %>">
