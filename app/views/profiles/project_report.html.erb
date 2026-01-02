@@ -96,14 +96,10 @@
         <th class="border border-gray-300 px-4 py-2">Work in Progress</th>
         <th class="border border-gray-300 px-4 py-2">QA Testing</th>
         <th class="border border-gray-300 px-4 py-2">On Hold</th>
-        <th class="border border-gray-300 px-4 py-2">Under Development</th>
         <th class="border border-gray-300 px-4 py-2">Client Information Pending</th>
         <th class="border border-gray-300 px-4 py-2">Awaiting Build</th>
         <th class="border border-gray-300 px-4 py-2">Reopened</th>
-        <!-- NEW COLUMNS -->
-        <th class="border border-gray-300 px-4 py-2">Total Tickets Ever Assigned</th>
-        <th class="border border-gray-300 px-4 py-2">Total Breached Tickets</th>
-        <th class="border border-gray-300 px-4 py-2">Breach Percentage (%)</th>
+        <!-- Breach columns -->
         <th class="border border-gray-300 px-4 py-2">View</th>
       </tr>
       </thead>
@@ -113,16 +109,12 @@
       <% total_wip = @team_members.sum { |user| (@organized_tickets[user.id] || {})['Work in Progress'].to_i } %>
       <% total_qa = @team_members.sum { |user| (@organized_tickets[user.id] || {})['QA Testing'].to_i } %>
       <% total_oh = @team_members.sum { |user| (@organized_tickets[user.id] || {})['On-Hold'].to_i } %>
-      <% total_ud = @team_members.sum { |user| (@organized_tickets[user.id] || {})['Under Development'].to_i } %>
       <% total_ccp = @team_members.sum { |user| (@organized_tickets[user.id] || {})['Client Information Pending'].to_i } %>
       <% total_ab = @team_members.sum { |user| (@organized_tickets[user.id] || {})['Awaiting Build'].to_i } %>
       <% total_re = @team_members.sum { |user| (@organized_tickets[user.id] || {})['Reopened'].to_i } %>
       <% total_total = @team_members.sum { |user| (@organized_tickets[user.id] || {})[:total].to_i } %>
       <% total_open = @team_members.sum { |user| (@tickets_chart_data[user.name] || 0).to_i } %>
-      <!-- NEW TOTALS -->
-      <% total_ever_assigned = @team_members.sum { |user| (@user_total_assigned_tickets[user.id] || 0).to_i } %>
-      <% total_breached = @team_members.sum { |user| (@user_breached_tickets[user.id] || 0).to_i } %>
-      <% overall_breach_percentage = total_ever_assigned > 0 ? ((total_breached.to_f / total_ever_assigned) * 100).round(2) : 0.0 %>
+      <!-- Breached tickets totals -->
 
       <tr class="font-bold">
         <td class="border border-gray-300 px-4 py-2">Total</td>
@@ -132,15 +124,10 @@
         <td class="border border-gray-300 px-4 py-2"><%= total_wip %></td>
         <td class="border border-gray-300 px-4 py-2"><%= total_qa %></td>
         <td class="border border-gray-300 px-4 py-2"><%= total_oh %></td>
-        <td class="border border-gray-300 px-4 py-2"><%= total_ud %></td>
         <td class="border border-gray-300 px-4 py-2"><%= total_ccp %></td>
         <td class="border border-gray-300 px-4 py-2"><%= total_ab %></td>
         <td class="border border-gray-300 px-4 py-2"><%= total_re %></td>
-        <!-- NEW TOTAL CELLS -->
-        <td class="border border-gray-300 px-4 py-2"><%= total_ever_assigned %></td>
-        <td class="border border-gray-300 px-4 py-2"><%= total_breached %></td>
-        <td class="border border-gray-300 px-4 py-2"><%= overall_breach_percentage %>%
-        </td>
+        <!-- Breached total -->
       </tr>
 
       <% sorted_team_members = @team_members.sort_by { |user| -(@tickets_chart_data[user.name] || 0) } %>
@@ -154,22 +141,12 @@
           <td class="border border-gray-300 px-4 py-2"><%= ticket_data['Work in Progress'] || 0 %></td>
           <td class="border border-gray-300 px-4 py-2"><%= ticket_data['QA Testing'] || 0 %></td>
           <td class="border border-gray-300 px-4 py-2"><%= ticket_data['On-Hold'] || 0 %></td>
-          <td class="border border-gray-300 px-4 py-2"><%= ticket_data['Under Development'] || 0 %></td>
           <td class="border border-gray-300 px-4 py-2"><%= ticket_data['Client Information Pending'] || 0 %></td>
           <td class="border border-gray-300 px-4 py-2"><%= ticket_data['Awaiting Build'] || 0 %></td>
           <td class="border border-gray-300 px-4 py-2"><%= ticket_data['Reopened'] || 0 %></td>
-          <!-- NEW USER CELLS -->
-          <td class="border border-gray-300 px-4 py-2"><%= @user_total_assigned_tickets[user.id] || 0 %></td>
-          <td class="border border-gray-300 px-4 py-2"><%= @user_breached_tickets[user.id] || 0 %></td>
-          <td class="border border-gray-300 px-4 py-2"><%= @user_breach_percentage[user.id] || 0 %>%</td>
           <td class="border border-gray-300 px-4 py-2 font-bold">
             <%= link_to "View", assigned_tickets_path(team_id: @team.id, user_id: user.id, start_date: params[:start_date], end_date: params[:end_date]), class: 'bg-[#3A81EB] p-2 rounded font-bold rounded-lg text-slate-100' %>
           </td>
-          <!--
-          <td class="border border-gray-300 px-4 py-2">
-            <%# ticket_ids = @user_total_assigned_tickets[user.id] ? @user_total_assigned_tickets[user.id] : [] %>
-          </td>
-          -->
         </tr>
       <% end %>
       </tbody>
