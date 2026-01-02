@@ -43,6 +43,17 @@
         </dd>
       </div>
     </div>
+    
+    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+      <div class="px-4 py-5 sm:p-6">
+        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+          Total Retries (Sidekiq Estimates)
+        </dt>
+        <dd class="mt-1 text-3xl font-semibold text-indigo-600">
+          <%= @report_data.sum { |d| d[:retries] } %>
+        </dd>
+      </div>
+    </div>
   </div>
 
   <!-- Table -->
@@ -58,6 +69,7 @@
           <tr>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email Type</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Failed</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Retries</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sent</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Success Rate</th>
@@ -68,6 +80,7 @@
             <tr>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white"><%= row[:email_type] || 'N/A' %></td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-semibold"><%= row[:failed] %></td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-indigo-600 font-semibold"><%= row[:retries] %></td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-semibold"><%= row[:sent] %></td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"><%= row[:total] %></td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">

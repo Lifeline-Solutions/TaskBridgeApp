@@ -466,13 +466,43 @@ class TicketsController < ApplicationController
     # Send status update emails
     if status.name != 'Reopened'
       @ticket.users.each do |ticket_user|
-        UserMailer.status_update_email(ticket_user, @ticket, current_user, @project, assigned_user).deliver_later
+        Messaging::EmailSender.send_email(
+          "Ticket assigned with Ticket ID #{@ticket.unique_id}.",
+          to: ticket_user.email,
+          actor: current_user,
+          priority: :normal,
+          type: 'status_update'
+        ).use_template(
+          view: 'user_mailer/status_update_email',
+          assigns: {
+            user: ticket_user,
+            ticket: @ticket,
+            current_user: current_user,
+            project: @project,
+            assigned_user: assigned_user
+          }
+        ).set_source('ticket', @ticket.id).send(queue: true)
       end
     end
 
     if status.name == 'Reopened'
       @project.users.each do |project_user|
-        UserMailer.status_update_email(project_user, @ticket, current_user, @project, assigned_user).deliver_later
+        Messaging::EmailSender.send_email(
+          "Ticket assigned with Ticket ID #{@ticket.unique_id}.",
+          to: project_user.email,
+          actor: current_user,
+          priority: :normal,
+          type: 'status_update'
+        ).use_template(
+          view: 'user_mailer/status_update_email',
+          assigns: {
+            user: project_user,
+            ticket: @ticket,
+            current_user: current_user,
+            project: @project,
+            assigned_user: assigned_user
+          }
+        ).set_source('ticket', @ticket.id).send(queue: true)
       end
     end
 
