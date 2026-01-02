@@ -32,13 +32,23 @@ class EmailDispatchJob < ApplicationJob
       .performed_on(email)
       .with_properties({ message_id: message_id, to: email.to_list, subject: email.subject })
       .log("Email sent #{email.subject}")
-  rescue StandardError => e
+      .log("Email sent #{email.subject}")
+  rescue Net::SMTPFatalError, Net::SMTPSyntaxError, ActiveModel::ValidationError => e
+    # Permanent failures: Mark failed and DO NOT retry
     email&.mark_failed!(reason: e.message)
     Activities.activity
-      .event('email_failed')
+      .event('email_failed_permanent')
       .performed_on(email || Email.new)
       .with_properties({ error: e.class.name, message: e.message })
-      .log("Email failed #{email&.subject}")
-    raise e if ENV['EMAIL_RAISE_ON_FAIL'] == 'true'
+      .log("Email failed permanently (no retry) #{email&.subject}")
+  rescue StandardError => e
+    # Transient failures: Mark failed (will be retried)
+    email&.mark_failed!(reason: e.message)
+    Activities.activity
+      .event('email_failed_retry')
+      .performed_on(email || Email.new)
+      .with_properties({ error: e.class.name, message: e.message })
+      .log("Email failed (will retry) #{email&.subject}")
+    raise e # Trigger Sidekiq retry
   end
 end

@@ -43,11 +43,14 @@ class EmailRetryMiddleware
       Rails.logger.warn("SMTP connection refused (#{e.message}), will retry with backoff")
       raise # Let Sidekiq handle the retry
     else
-      # Other SMTP errors should also retry
-      Rails.logger.error("SMTP error: #{e.class} - #{e.message}")
-      raise
+      # Permanent 5xx error - DO NOT RETRY
+      Rails.logger.error("Permanent SMTP error: #{e.class} - #{e.message}. Job will NOT be retried.")
+      # Swallow the exception so Sidekiq considers the job "complete" (failed)
     end
-  rescue Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED => e
+  rescue Net::SMTPSyntaxError => e
+    # Permanent syntax error - DO NOT RETRY
+    Rails.logger.error("SMTP Syntax error: #{e.class} - #{e.message}. Job will NOT be retried.")
+  rescue Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED, Net::SMTPServerBusy => e
     # Network-related errors should retry
     Rails.logger.warn("Network error sending email: #{e.class} - #{e.message}, will retry")
     raise
