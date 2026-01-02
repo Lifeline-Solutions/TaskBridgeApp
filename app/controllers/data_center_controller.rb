@@ -421,10 +421,30 @@ class DataCenterController < ApplicationController
           .distinct
 
         if tagged_tickets.any?
-          UserMailer.daily_ticket_email(user, tagged_tickets.to_a, mail_options).deliver_later
+          Messaging::EmailSender.send_email(
+            "Daily Ticket Report for #{user.name || user.email}",
+            to: user.email,
+            cc: mail_options[:cc],
+            actor: current_user,
+            priority: :normal,
+            type: 'daily_report'
+          ).use_template(
+            view: 'user_mailer/daily_ticket_email',
+            assigns: { user: user, tickets: tagged_tickets.to_a, mail_options: mail_options }
+          ).set_source('team', team.id).send(queue: true)
         elsif report_type == 'closed'
           # Send an empty notice for the user with no closed/resolved/declined tickets
-          UserMailer.daily_ticket_email(user, [], mail_options).deliver_later
+          Messaging::EmailSender.send_email(
+            "Daily Ticket Report for #{user.name || user.email}",
+            to: user.email,
+            cc: mail_options[:cc],
+            actor: current_user,
+            priority: :normal,
+            type: 'daily_report'
+          ).use_template(
+            view: 'user_mailer/daily_ticket_email',
+            assigns: { user: user, tickets: [], mail_options: mail_options }
+          ).set_source('team', team.id).send(queue: true)
         end
       end
 
@@ -448,7 +468,18 @@ class DataCenterController < ApplicationController
 
     team.users.each do |user|
       user_tickets = base_scope.where(taggings: { user_id: user.id }).distinct
-      UserMailer.morning_ticket_email(user, user_tickets.to_a).deliver_later if user_tickets.any?
+      if user_tickets.any?
+        Messaging::EmailSender.send_email(
+          "Start of Day Ticket Report for #{user.name || user.email}",
+          to: user.email,
+          actor: current_user,
+          priority: :normal,
+          type: 'morning_report'
+        ).use_template(
+          view: 'user_mailer/morning_ticket_email',
+          assigns: { user: user, tickets: user_tickets.to_a, mail_options: {} }
+        ).set_source('team', team.id).send(queue: true)
+      end
     end
 
     redirect_back fallback_location: root_path, notice: 'Ticket emails sent to team members.'
