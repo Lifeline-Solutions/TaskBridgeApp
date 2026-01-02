@@ -97,7 +97,7 @@
         <th class="border border-gray-300 px-4 py-2">QA Testing</th>
         <th class="border border-gray-300 px-4 py-2">On Hold</th>
         <th class="border border-gray-300 px-4 py-2">Under Development</th>
-        <th class="border border-gray-300 px-4 py-2">Client Confirmation Pending</th>
+        <th class="border border-gray-300 px-4 py-2">Client Information Pending</th>
         <th class="border border-gray-300 px-4 py-2">Awaiting Build</th>
         <th class="border border-gray-300 px-4 py-2">Reopened</th>
         <!-- NEW COLUMNS -->
@@ -114,7 +114,7 @@
       <% total_qa = @team_members.sum { |user| (@organized_tickets[user.id] || {})['QA Testing'].to_i } %>
       <% total_oh = @team_members.sum { |user| (@organized_tickets[user.id] || {})['On-Hold'].to_i } %>
       <% total_ud = @team_members.sum { |user| (@organized_tickets[user.id] || {})['Under Development'].to_i } %>
-      <% total_ccp = @team_members.sum { |user| (@organized_tickets[user.id] || {})['Client Confirmation Pending'].to_i } %>
+      <% total_ccp = @team_members.sum { |user| (@organized_tickets[user.id] || {})['Client Information Pending'].to_i } %>
       <% total_ab = @team_members.sum { |user| (@organized_tickets[user.id] || {})['Awaiting Build'].to_i } %>
       <% total_re = @team_members.sum { |user| (@organized_tickets[user.id] || {})['Reopened'].to_i } %>
       <% total_total = @team_members.sum { |user| (@organized_tickets[user.id] || {})[:total].to_i } %>
@@ -155,7 +155,7 @@
           <td class="border border-gray-300 px-4 py-2"><%= ticket_data['QA Testing'] || 0 %></td>
           <td class="border border-gray-300 px-4 py-2"><%= ticket_data['On-Hold'] || 0 %></td>
           <td class="border border-gray-300 px-4 py-2"><%= ticket_data['Under Development'] || 0 %></td>
-          <td class="border border-gray-300 px-4 py-2"><%= ticket_data['Client Confirmation Pending'] || 0 %></td>
+          <td class="border border-gray-300 px-4 py-2"><%= ticket_data['Client Information Pending'] || 0 %></td>
           <td class="border border-gray-300 px-4 py-2"><%= ticket_data['Awaiting Build'] || 0 %></td>
           <td class="border border-gray-300 px-4 py-2"><%= ticket_data['Reopened'] || 0 %></td>
           <!-- NEW USER CELLS -->
