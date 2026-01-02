@@ -9,7 +9,19 @@
             <div class="w-6 h-6 flex items-center justify-center rounded-full bg-indigo-900 text-white text-xs font-semibold">
               <%= user.name.split.map { |n| n[0] }.join.upcase %>
             </div>
-            <span class="text-gray-800"><%= user.name %></span>
+            <span class="text-gray-800"><%= user.name %>
+
+              <% if user.active == true %>
+                <span class="text-xs ml-2 bg-green-100 lowercase">
+                  active
+                </span>
+              <% else %>
+                <span class="text-xs ml-2 p-1 bg-red-100 lowercase rounded text-center">
+                  inactive
+                </span>
+              <% end %>
+
+            </span>
           </div>
         <% end %>
       <% else %>
@@ -21,13 +33,24 @@
     <div class="flex items-center gap-2 cursor-pointer" data-action="click->assignee-editor#openInput">
       <span class="text-gray-600 w-24">Reporter</span>
       <% if @defect.creator.present? %>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1">
           <!-- Avatar circle with initials -->
           <div class="w-6 h-6 flex items-center justify-center rounded-full bg-green-700 text-white text-xs font-semibold">
             <%= @defect.creator.name.split.map { |n| n[0] }.join.upcase %>
           </div>
           <!-- Full name -->
-          <span class="text-gray-800"><%= @defect.creator.name %></span>
+          <span class="text-gray-800 flex flex-wrap"><%= @defect.creator.name %>
+            <% if @defect.creator.active == true %>
+                <span class="text-xs ml-1 bg-green-100 lowercase rounded">
+                  active
+                </span>
+            <% else %>
+                <span class="text-xs ml-1 bg-red-100 lowercase rounded text-center">
+                  inactive
+                </span>
+            <% end %>
+
+          </span>
         </div>
       <% else %>
         <p class="text-red-500 text-sm">No reporter set</p>

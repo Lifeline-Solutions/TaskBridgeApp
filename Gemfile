@@ -104,6 +104,6 @@ gem 'redis'
 gem 'rolify', '~> 6.0'
 gem 'sentry-rails'
 gem 'sentry-ruby'
-gem 'sidekiq'
+gem 'sidekiq', '~> 8.1'
 gem 'stackprof'
 gem 'whenever', require: false

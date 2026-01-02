@@ -1,0 +1,114 @@
+<!-- app/views/user_mailer/sla_breach_notification.html.erb -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+</head>
+<body class="bg-gray-100">
+  <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md overflow-hidden my-8">
+    <!-- Header -->
+    <div class="bg-red-600 text-white px-8 py-6 text-center">
+      <h1 class="text-2xl font-bold m-0">⚠️ SLA BREACH ALERT</h1>
+    </div>
+
+    <!-- Content -->
+    <div class="px-8 py-6">
+      <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+        <strong>Action Required!</strong> An SLA deadline has been breached and requires immediate attention.
+      </div>
+
+      <!-- Breach Info -->
+      <div class="bg-red-50 border border-red-200 rounded p-4 mb-6">
+        <div class="text-lg font-bold text-red-900 mb-2">
+          <%= case @breach_type
+              when :initial_response_breach
+                '🔴 Initial Response SLA Breached'
+              when :target_repair_breach
+                '🔴 Target Repair SLA Breached'
+              when :resolution_breach
+                '🔴 Resolution SLA Breached'
+              else
+                '🔴 SLA Breached'
+              end %>
+        </div>
+        <p class="m-0 text-red-900">
+          <%= case @breach_type
+              when :initial_response_breach
+                'This ticket has not received an initial response within the required timeframe.'
+              when :target_repair_breach
+                'This ticket has not progressed to client confirmation within the target repair deadline.'
+              when :resolution_breach
+                'This ticket has not been resolved within the resolution deadline.'
+              else
+                'This ticket has breached its SLA deadline.'
+              end %>
+        </p>
+      </div>
+
+      <!-- Ticket Details -->
+      <div class="bg-gray-50 rounded p-4 mb-6">
+        <h2 class="mt-0 mb-4 text-gray-800 font-semibold">Ticket Details</h2>
+
+        <div class="mb-3">
+          <span class="inline-block w-36 font-semibold text-gray-600">Ticket ID:</span>
+          <span class="text-gray-800"><strong><%= @ticket.unique_id %></strong></span>
+        </div>
+
+        <div class="mb-3">
+          <span class="inline-block w-36 font-semibold text-gray-600">Subject:</span>
+          <span class="text-gray-800"><%= @ticket.subject %></span>
+        </div>
+
+        <div class="mb-3">
+          <span class="inline-block w-36 font-semibold text-gray-600">Priority:</span>
+          <span class="text-gray-800"><strong><%= @ticket.priority %></strong></span>
+        </div>
+
+        <div class="mb-3">
+          <span class="inline-block w-36 font-semibold text-gray-600">Project:</span>
+          <span class="text-gray-800"><%= @ticket.project&.title %></span>
+        </div>
+
+        <div class="mb-3">
+          <span class="inline-block w-36 font-semibold text-gray-600">Current Status:</span>
+          <span class="text-gray-800"><%= @ticket.statuses.first&.name || 'N/A' %></span>
+        </div>
+
+        <% if @ticket.initial_response_deadline %>
+          <div class="mb-3">
+            <span class="inline-block w-36 font-semibold text-gray-600">Response Deadline:</span>
+            <span class="text-gray-800"><%= @ticket.initial_response_deadline.strftime('%b %d, %Y %I:%M %p') %></span>
+          </div>
+        <% end %>
+
+        <% if @ticket.target_repair_deadline %>
+          <div class="mb-3">
+            <span class="inline-block w-36 font-semibold text-gray-600">Target Repair:</span>
+            <span class="text-gray-800"><%= @ticket.target_repair_deadline.strftime('%b %d, %Y %I:%M %p') %></span>
+          </div>
+        <% end %>
+
+        <% if @ticket.resolution_deadline %>
+          <div class="mb-3">
+            <span class="inline-block w-36 font-semibold text-gray-600">Resolution Deadline:</span>
+            <span class="text-gray-800"><%= @ticket.resolution_deadline.strftime('%b %d, %Y %I:%M %p') %></span>
+          </div>
+        <% end %>
+      </div>
+
+      <p class="mb-6">Please take immediate action on this ticket to prevent further SLA violations.</p>
+
+      <div class="text-center">
+        <%= link_to 'View Ticket', project_ticket_url(@ticket.project, @ticket),
+            class: 'inline-block bg-blue-600 text-white px-8 py-3 rounded no-underline font-semibold hover:bg-blue-700' %>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="bg-gray-50 px-8 py-5 text-center text-xs text-gray-600">
+      <p class="mb-1">This is an automated alert from the TaskBridge SLA Monitoring System</p>
+      <p class="m-0">© <%= Date.today.year %> TaskBridge Support Team</p>
+    </div>
+  </div>
+</body>
+</html>

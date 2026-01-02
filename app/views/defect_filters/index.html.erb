@@ -9,8 +9,8 @@
 
   <!-- Intro Text -->
   <div class="p-4 mb-6 text-center text-gray-500 bg-gray-50 rounded">
-    Please configure your metrics and click "Apply" to generate the report.  
-    Note: the dropdowns only show items related to the selected project.  
+    Please configure your metrics and click "Apply" to generate the report.
+    Note: the dropdowns only show items related to the selected project.
     If you don't see all statuses, it means those are the only ones available across the defects.
   </div>
 
@@ -44,7 +44,7 @@
                     <%= form.submit 'Rename', class: 'ml-2 px-2 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600' %>
                   <% end %>
                 </td>
-                <td class="px-3 py-2"><%= f.product&.document_name || 'All Projects' %></td>
+                <td class="px-3 py-2"><%= f.product_names %></td>
                 <td class="px-3 py-2 text-right">
                   <%= link_to 'Apply',
                     index_show_defect_index_path(f.sanitized_filters_string_keys.merge('product_id' => f.product_id, 'filter_id' => f.id).compact),
@@ -55,7 +55,7 @@
                   <%= link_to 'Delete',
                     defect_filter_path(f),
                     method: :delete,
-                    data: { 
+                    data: {
                       confirm: "Are you sure you want to delete the filter '#{f.name}'? This action cannot be undone.",
                       turbo_confirm: "Are you sure you want to delete the filter '#{f.name}'? This action cannot be undone.",
                       turbo_method: :delete
@@ -111,7 +111,7 @@
                   <%= link_to 'Delete',
                     defect_filter_path(d),
                     method: :delete,
-                    data: { 
+                    data: {
                       confirm: "Are you sure you want to delete the dashboard '#{d.name}'? This action cannot be undone.",
                       turbo_confirm: "Are you sure you want to delete the dashboard '#{d.name}'? This action cannot be undone.",
                       turbo_method: :delete

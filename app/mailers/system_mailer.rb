@@ -1,6 +1,8 @@
 class SystemMailer < ApplicationMailer
   default from: ENV.fetch('MAIL_FROM', 'cspm@craftsilicon.com')
 
+
+
   def generic(email_id)
     @email = Email.find(email_id)
 

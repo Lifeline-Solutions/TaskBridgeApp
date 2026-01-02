@@ -1,7 +1,7 @@
 <% if @defects_history.present? || @defect.creator.present? %>
   <div class="space-y-6 px-2 sm:px-0">
     <!-- Combined Stream: History + Creation -->
-    <% 
+    <%
       # Combine history and creation event, sort by date desc
       creation_event = if @defect.creator
         OpenStruct.new(
@@ -13,14 +13,14 @@
       else
         nil
       end
-      
+
       all_events = (@defects_history.to_a + [creation_event]).compact
       # Sort by created_at DESC (newest top)
-      all_events.sort_by! { |e| e.created_at }.reverse! 
+      all_events.sort_by! { |e| e.created_at }.reverse!
     %>
 
     <% all_events.each do |event| %>
-      <% 
+      <%
         parsed = parse_history_item(event.history)
         user = event.user
       %>
@@ -44,31 +44,71 @@
                <!-- Redundant if action is "changed the Status", but good fallback -->
             <% end %>
           </div>
-          
+
           <div class="text-xs text-gray-400 dark:text-gray-500 mb-2">
             <%= event.created_at.strftime('%B %d, %Y at %l:%M %p') %>
           </div>
 
           <!-- Diff Block -->
           <% if parsed[:from].present? || parsed[:to].present? %>
-            <div class="flex items-center gap-3 text-sm">
-              <% if parsed[:from].present? %>
-                <div class="<%= history_badge_class(parsed[:from], :old) %>">
-                  <%= parsed[:from] %>
+            <% if parsed[:field] == 'Description' %>
+              <!-- For descriptions, show compressed side-by-side comparison using flex -->
+              <!-- Allow horizontal scroll if container is too narrow -->
+              <div class="w-full overflow-x-auto -mx-2 px-2">
+                <div class="flex gap-2 items-start min-w-max">
+                  <!-- Previous Content (Left) -->
+                  <% if parsed[:from].present? %>
+                    <div class="w-80 flex-shrink-0 border-l-2 border-red-400 pl-2 py-1 bg-red-50 dark:bg-red-900/20 rounded text-xs max-h-96 overflow-y-auto">
+                      <div class="font-semibold text-red-700 dark:text-red-400 mb-1 text-[10px] uppercase tracking-wide">Previous</div>
+                      <div class="prose-compact text-xs leading-tight [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0 [&_p]:my-1 [&_table]:text-xs break-words">
+                        <%= parsed[:from] %>
+                      </div>
+                    </div>
+                  <% else %>
+                    <div class="w-80 flex-shrink-0"></div>
+                  <% end %>
+
+                  <!-- Arrow (Center) -->
+                  <div class="flex items-center justify-center pt-4 flex-shrink-0">
+                    <svg class="w-5 h-5 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                    </svg>
+                  </div>
+
+                  <!-- New Content (Right) -->
+                  <% if parsed[:to].present? %>
+                    <div class="w-80 flex-shrink-0 border-l-2 border-green-400 pl-2 py-1 bg-green-50 dark:bg-green-900/20 rounded text-xs max-h-96 overflow-y-auto">
+                      <div class="font-semibold text-green-700 dark:text-green-400 mb-1 text-[10px] uppercase tracking-wide">New</div>
+                      <div class="prose-compact text-xs leading-tight [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0 [&_p]:my-1 [&_table]:text-xs break-words">
+                        <%= parsed[:to] %>
+                      </div>
+                    </div>
+                  <% else %>
+                    <div class="w-80 flex-shrink-0"></div>
+                  <% end %>
                 </div>
-                <div class="text-gray-400">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-                  </svg>
-                </div>
-              <% end %>
-              
-              <% if parsed[:to].present? %>
-                <div class="<%= history_badge_class(parsed[:to], :new) %>">
-                  <%= parsed[:to] %>
-                </div>
-              <% end %>
-            </div>
+              </div>
+            <% else %>
+              <!-- For other fields, use inline badges -->
+              <div class="flex items-center gap-3 text-sm">
+                <% if parsed[:from].present? %>
+                  <div class="<%= history_badge_class(parsed[:from], :old) %>">
+                    <%= parsed[:from] %>
+                  </div>
+                  <div class="text-gray-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                    </svg>
+                  </div>
+                <% end %>
+
+                <% if parsed[:to].present? %>
+                  <div class="<%= history_badge_class(parsed[:to], :new) %>">
+                    <%= parsed[:to] %>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
           <% end %>
 
           <!-- Attachment or Info specific rendering -->
