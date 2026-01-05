@@ -251,6 +251,27 @@ class HomeController < ApplicationController
       # Count of all the inactive users
       @all_inactive_users_count = User.where(active: false).distinct.count
 
+      # QA Defects counts for current user
+      # Total defects assigned to current user (excluding soft-deleted)
+      @total_defects_for_current_user_count = current_user.defects
+        .where(deleted_on: nil)
+        .distinct
+        .count
+
+      # Open defects for current user (excluding Closed, Resolved, Declined)
+      @open_defects_for_current_user_count = current_user.defects
+        .joins(:statuses)
+        .where.not(statuses: { name: %w[Closed Resolved Declined] })
+        .where(deleted_on: nil)
+        .distinct
+        .count
+
+      # High priority defects for current user
+      @high_priority_defects_for_current_user_count = current_user.defects
+        .where(priority: 'High', deleted_on: nil)
+        .distinct
+        .count
+
       # Show all products for only the user has been assigned to the product
       @tasks_per_project = current_user.products
         .joins(:tasks, :statuses)
