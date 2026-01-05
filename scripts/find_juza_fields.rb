@@ -34,9 +34,7 @@ def discover_juza_fields
 
   fields.each do |field|
     name = field['name']
-    if name.to_s.downcase.include?('juza')
-      puts "FOUND: Name='#{name}', ID='#{field['id']}', Schema=#{field['schema']}"
-    end
+    puts "FOUND: Name='#{name}', ID='#{field['id']}', Schema=#{field['schema']}" if name.to_s.downcase.include?('juza')
   end
 end
 

@@ -160,21 +160,21 @@ class TicketsController < ApplicationController
             .send(queue: true)
 
         elsif @ticket.issue == 'BILLABLE FEATURE'
-            Messaging::EmailSender
-              .send_email(
-                "A new ticket has been created with Ticket ID #{@ticket.unique_id}.",
-                to: ['cx@craftsilicon.com', 'finance@craftsilicon.com'],
-                actor: current_user,
-                priority: :normal,
-                type: 'ticket_create_change_request'
-              )
-              .use_template(
-                view: 'user_mailer/billable_ticket_email',
-                assigns: { ticket: @ticket, current_user: current_user, assigned_user: ['cx@craftsilicon.com','finance@craftsilicon.com'], project: @project, url: url }
-              )
-              .set_source('ticket', @ticket.id)
-              .set_party('user', current_user.id)
-              .send(queue: true)
+          Messaging::EmailSender
+            .send_email(
+              "A new ticket has been created with Ticket ID #{@ticket.unique_id}.",
+              to: ['cx@craftsilicon.com', 'finance@craftsilicon.com'],
+              actor: current_user,
+              priority: :normal,
+              type: 'ticket_create_change_request'
+            )
+            .use_template(
+              view: 'user_mailer/billable_ticket_email',
+              assigns: { ticket: @ticket, current_user: current_user, assigned_user: ['cx@craftsilicon.com', 'finance@craftsilicon.com'], project: @project, url: url }
+            )
+            .set_source('ticket', @ticket.id)
+            .set_party('user', current_user.id)
+            .send(queue: true)
         else
           # Notify only the current assignee and the project owner (if different)
           if assigned_user.present?
@@ -317,25 +317,24 @@ class TicketsController < ApplicationController
             .send(queue: true)
         end
 
-      if @ticket.issue == 'BILLABLE FEATURE'
-        Messaging::EmailSender
-          .send_email(
-            "A new ticket has been edited with Ticket ID #{@ticket.unique_id}.",
-            to: ['cx@craftsilicon.com', 'finance@craftsilicon.com'],
-            actor: current_user,
-            priority: :normal,
-            type: 'ticket_create_change_request'
-          )
-          .use_template(
-            view: 'user_mailer/billable_ticket_email',
-            assigns: { ticket: @ticket, current_user: current_user, assigned_user: ['cx@craftsilicon.com','finance@craftsilicon.com'], project: @project, url: url }
-          )
-          .set_source('ticket', @ticket.id)
-          .set_party('user', current_user.id)
-          .send(queue: true)
+        if @ticket.issue == 'BILLABLE FEATURE'
+          Messaging::EmailSender
+            .send_email(
+              "A new ticket has been edited with Ticket ID #{@ticket.unique_id}.",
+              to: ['cx@craftsilicon.com', 'finance@craftsilicon.com'],
+              actor: current_user,
+              priority: :normal,
+              type: 'ticket_create_change_request'
+            )
+            .use_template(
+              view: 'user_mailer/billable_ticket_email',
+              assigns: { ticket: @ticket, current_user: current_user, assigned_user: ['cx@craftsilicon.com', 'finance@craftsilicon.com'], project: @project, url: url }
+            )
+            .set_source('ticket', @ticket.id)
+            .set_party('user', current_user.id)
+            .send(queue: true)
 
-
-      end
+        end
 
         # Log the update event
         log_event(@ticket, current_user, 'update', "Ticket was updated. at #{Time.now.strftime('%H:%M of  %d-%m-%Y')} and assigned to #{assigned_user.name} ", assigned_user)
@@ -668,9 +667,9 @@ class TicketsController < ApplicationController
 
     if @ticket.update(issue: params[:ticket][:issue])
       respond_to do |format|
+        sla = SlaTicket.find_or_initialize_by(ticket_id: @ticket.id)
         if ['NEW FEATURE', 'BILLABLE FEATURE', 'REQUEST'].include?(@ticket.issue)
           # No SLA for these issue types
-          sla = SlaTicket.find_or_initialize_by(ticket_id: @ticket.id)
           sla.update!(
             sla_status: 'NO SLA',
             sla_target_response_deadline: 'NO SLA',
@@ -678,7 +677,6 @@ class TicketsController < ApplicationController
           )
         else
           # For other issue types, create/update with the ticket's SLA values
-          sla = SlaTicket.find_or_initialize_by(ticket_id: @ticket.id)
           sla.update!(
             sla_status: @ticket.sla_status,
             sla_target_response_deadline: @ticket.sla_target_response_deadline,
@@ -702,7 +700,7 @@ class TicketsController < ApplicationController
           )
           .use_template(
             view: 'user_mailer/billable_ticket_email',
-            assigns: { ticket: @ticket, current_user: current_user, assigned_user: ['cx@craftsilicon.com','finance@craftsilicon.com'], project: @project, url: url }
+            assigns: { ticket: @ticket, current_user: current_user, assigned_user: ['cx@craftsilicon.com', 'finance@craftsilicon.com'], project: @project, url: url }
           )
           .set_source('ticket', @ticket.id)
           .set_party('user', current_user.id)

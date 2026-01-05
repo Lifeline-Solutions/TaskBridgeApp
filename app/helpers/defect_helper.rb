@@ -56,24 +56,23 @@ module DefectHelper
     # Use Rails' built-in sanitize but with extended allowed attributes
     # This preserves the style attribute which contains colors, backgrounds, etc.
     ActionController::Base.helpers.sanitize(content.to_s,
-      tags: %w[
-        strong em b i u s strike del ins mark sub sup
-        p br span div
-        h1 h2 h3 h4 h5 h6
-        blockquote pre code
-        ul ol li
-        a
-        table thead tbody tfoot tr th td caption colgroup col
-        figure figcaption
-        hr
-      ],
-      attributes: %w[
-        href style class title id
-        colspan rowspan scope align valign
-        cellpadding cellspacing border
-        width height bgcolor
-      ]
-    ).html_safe
+                                            tags: %w[
+                                              strong em b i u s strike del ins mark sub sup
+                                              p br span div
+                                              h1 h2 h3 h4 h5 h6
+                                              blockquote pre code
+                                              ul ol li
+                                              a
+                                              table thead tbody tfoot tr th td caption colgroup col
+                                              figure figcaption
+                                              hr
+                                            ],
+                                            attributes: %w[
+                                              href style class title id
+                                              colspan rowspan scope align valign
+                                              cellpadding cellspacing border
+                                              width height bgcolor
+                                            ]).html_safe
   end
 
   def priority_badge_class(priority)
@@ -107,7 +106,7 @@ module DefectHelper
 
     # Pattern 1: "State changed from X to Y" (Standard)
     # Regex handles "Status changed from Open to Done" or "Priority changed from High to Low"
-    if match = content.match(/^(.+?)\s+(?:changed|updated)\s+from\s+(.+?)\s+to\s+(.+?)(?:\s+(?:by|at)|$)/i)
+    if (match = content.match(/^(.+?)\s+(?:changed|updated)\s+from\s+(.+?)\s+to\s+(.+?)(?:\s+(?:by|at)|$)/i))
       result[:field] = match[1].strip
       result[:action] = "changed the #{result[:field]}"
       result[:from] = strip_html_for_history(match[2].strip)
@@ -124,7 +123,7 @@ module DefectHelper
       end
 
     # Pattern 3: "Added attachment: X"
-    elsif match = content.match(/^Added attachment:\s*(.+)$/i)
+    elsif (match = content.match(/^Added attachment:\s*(.+)$/i))
       result[:action] = 'attached'
       result[:field] = 'Attachment'
       result[:to] = match[1].strip
@@ -144,22 +143,23 @@ module DefectHelper
     result
   end
 
-  def history_badge_class(value, type = :neutral)
-    base = "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium "
+  def history_badge_class(_value, type = :neutral)
+    base = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium '
     case type
     when :old
-      base + "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 line-through"
+      "#{base}bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 line-through"
     when :new
-      base + "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+      "#{base}bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400"
     else
-      base + "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+      "#{base}bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
     end
   end
 
-  def render_user_avatar(user, size_class = "w-8 h-8")
+  def render_user_avatar(user, size_class = 'w-8 h-8')
     return nil unless user
+
     initials = user.name.split.map(&:first).join.upcase[0..1]
-    color_class = "bg-blue-600 dark:bg-blue-500" # Could be randomized based on ID
+    color_class = 'bg-blue-600 dark:bg-blue-500' # Could be randomized based on ID
 
     content_tag(:div, class: "#{size_class} rounded-full #{color_class} flex items-center justify-center text-white font-medium text-xs ring-2 ring-white dark:ring-gray-800") do
       initials

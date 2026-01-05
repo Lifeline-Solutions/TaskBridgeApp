@@ -21,14 +21,18 @@ class SlaWarningJob < ApplicationJob
       threshold_time = Time.current + threshold_minutes.minutes
 
       # Find tickets approaching initial response deadline
+      # CRITICAL: Only process open tickets (exclude Closed, Resolved, Declined)
       tickets = Ticket.joins(:sla_ticket)
-                      .where('tickets.initial_response_deadline BETWEEN ? AND ?',
-                             Time.current, threshold_time)
-                      .where(sla_tickets: { sla_status: 'Not Breached' })
-                      .where('tickets.initial_response_deadline IS NOT NULL')
+        .joins(:statuses)
+        .where.not(statuses: { name: %w[Closed Resolved Declined] })
+        .where('tickets.initial_response_deadline BETWEEN ? AND ?',
+               Time.current, threshold_time)
+        .where(sla_tickets: { sla_status: 'Not Breached' })
+        .where('tickets.initial_response_deadline IS NOT NULL')
+        .distinct
 
       tickets.find_each do |ticket|
-        time_remaining = calculate_time_remaining(ticket.initial_response_deadline)
+        calculate_time_remaining(ticket.initial_response_deadline)
         next if already_warned?(ticket, :initial_response, threshold_minutes)
 
         # DISABLED: SLA automation emails
@@ -42,14 +46,18 @@ class SlaWarningJob < ApplicationJob
     WARNING_THRESHOLDS.each do |threshold_minutes|
       threshold_time = Time.current + threshold_minutes.minutes
 
+      # CRITICAL: Only process open tickets (exclude Closed, Resolved, Declined)
       tickets = Ticket.joins(:sla_ticket)
-                      .where('tickets.target_repair_deadline BETWEEN ? AND ?',
-                             Time.current, threshold_time)
-                      .where(sla_tickets: { sla_target_response_deadline: 'Not Breached' })
-                      .where('tickets.target_repair_deadline IS NOT NULL')
+        .joins(:statuses)
+        .where.not(statuses: { name: %w[Closed Resolved Declined] })
+        .where('tickets.target_repair_deadline BETWEEN ? AND ?',
+               Time.current, threshold_time)
+        .where(sla_tickets: { sla_target_response_deadline: 'Not Breached' })
+        .where('tickets.target_repair_deadline IS NOT NULL')
+        .distinct
 
       tickets.find_each do |ticket|
-        time_remaining = calculate_time_remaining(ticket.target_repair_deadline)
+        calculate_time_remaining(ticket.target_repair_deadline)
         next if already_warned?(ticket, :target_repair, threshold_minutes)
 
         # DISABLED: SLA automation emails
@@ -63,14 +71,18 @@ class SlaWarningJob < ApplicationJob
     WARNING_THRESHOLDS.each do |threshold_minutes|
       threshold_time = Time.current + threshold_minutes.minutes
 
+      # CRITICAL: Only process open tickets (exclude Closed, Resolved, Declined)
       tickets = Ticket.joins(:sla_ticket)
-                      .where('tickets.resolution_deadline BETWEEN ? AND ?',
-                             Time.current, threshold_time)
-                      .where(sla_tickets: { sla_resolution_deadline: 'Not Breached' })
-                      .where('tickets.resolution_deadline IS NOT NULL')
+        .joins(:statuses)
+        .where.not(statuses: { name: %w[Closed Resolved Declined] })
+        .where('tickets.resolution_deadline BETWEEN ? AND ?',
+               Time.current, threshold_time)
+        .where(sla_tickets: { sla_resolution_deadline: 'Not Breached' })
+        .where('tickets.resolution_deadline IS NOT NULL')
+        .distinct
 
       tickets.find_each do |ticket|
-        time_remaining = calculate_time_remaining(ticket.resolution_deadline)
+        calculate_time_remaining(ticket.resolution_deadline)
         next if already_warned?(ticket, :resolution, threshold_minutes)
 
         # DISABLED: SLA automation emails
@@ -135,7 +147,7 @@ class SlaWarningJob < ApplicationJob
     hours = seconds / 3600
     minutes = (seconds % 3600) / 60
 
-    if hours > 0
+    if hours.positive?
       "#{hours} hour#{'s' if hours > 1} #{minutes} minute#{'s' if minutes != 1}"
     else
       "#{minutes} minute#{'s' if minutes != 1}"

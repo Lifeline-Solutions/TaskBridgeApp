@@ -77,19 +77,19 @@ class MentionNotificationService
       priority: :normal,
       type: 'defect_mention'
     )
-    .use_template(
-      view: 'user_mailer/defect_mention_notification',
-      assigns: {
-        user: user,
-        defect: @defect,
-        current_user: @current_user,
-        content: @content,
-        context_type: @context_type
-      }
-    )
-    .set_source('defect', @defect.id)
-    .set_party('user', user.id)
-    .send(queue: true)
+      .use_template(
+        view: 'user_mailer/defect_mention_notification',
+        assigns: {
+          user: user,
+          defect: @defect,
+          current_user: @current_user,
+          content: @content,
+          context_type: @context_type
+        }
+      )
+      .set_source('defect', @defect.id)
+      .set_party('user', user.id)
+      .send(queue: true)
   rescue StandardError => e
     Rails.logger.error "Failed to send mention notification to #{user.email}: #{e.message}"
     ErrorLogger.log(e, context: {

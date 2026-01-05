@@ -41,7 +41,7 @@ module Messaging
           retried_count: 0,
           sent_at: nil,
           failed_at: nil,
-          failed_count: 0,
+          failed_count: 0
         )
         @actor = actor
         # Apply recipient filtering up-front: drop deactivated users

@@ -40,7 +40,7 @@ count = 0
 
 defects.find_each do |defect|
   count += 1
-  log "Processed #{count} defects..." if count % 50 == 0
+  log "Processed #{count} defects..." if (count % 50).zero?
   sleep 0.2 # Avoid rate limiting
   begin
     # Fetch from Jira
@@ -61,9 +61,9 @@ defects.find_each do |defect|
 
     issue = JSON.parse(response.body)
     fields = issue['fields'] || {}
-    
+
     jira_status_name = fields.dig('status', 'name')
-    
+
     if jira_status_name.blank?
       log "  #{defect.defect_unique}: No status found in Jira. Skipping."
       stats[:skipped] += 1
@@ -90,12 +90,12 @@ defects.find_each do |defect|
       'Awaiting Client Information' => 'Awaiting Client Information',
       'Awaiting Client API' => 'Awaiting Client API'
     }
-    
+
     mapped_status_name = status_map[jira_status_name] || jira_status_name
 
     # Find local status
     # Try exact match first, then case-insensitive
-    local_status = Status.find_by(name: mapped_status_name) || 
+    local_status = Status.find_by(name: mapped_status_name) ||
                    Status.where('lower(name) = ?', mapped_status_name.downcase).first
 
     unless local_status
@@ -106,7 +106,7 @@ defects.find_each do |defect|
 
     # Check if update is needed
     current_statuses = defect.statuses
-    if current_statuses.count == 1 && current_statuses.first.id == local_status.id
+    if current_statuses.one? && current_statuses.first.id == local_status.id
       # log "  #{defect.defect_unique}: Status match ('#{jira_status_name}'). No change."
       stats[:skipped] += 1
       next

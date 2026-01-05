@@ -3,7 +3,6 @@ require 'net/http'
 require 'uri'
 require 'json'
 require 'yaml'
-require 'set'
 
 # Configuration Setup
 APP_ROOT = Rails.root
@@ -15,7 +14,7 @@ JIRA_API_USER = ENV.fetch('JIRA_API_USER', CONFIG[:jira_api_user] || 'boniface.n
 JIRA_API_TOKEN = ENV.fetch('JIRA_API_TOKEN') { CONFIG[:jira_api_token] }
 
 # JQL provided by user
-JQL = 'project = SMC AND issuetype = Task AND labels = QA AND "BankingType[Dropdown]" = "Core Banking" order by created DESC'
+JQL = 'project = SMC AND issuetype = Task AND labels = QA AND "BankingType[Dropdown]" = "Core Banking" order by created DESC'.freeze
 
 def log(msg)
   puts "[#{Time.now.strftime('%H:%M:%S')}] #{msg}"
@@ -25,16 +24,16 @@ def fetch_all_jira_keys
   keys = Set.new
   next_page_token = nil
   base_url = "#{JIRA_BASE_URL}/rest/api/3/search/jql"
-  
+
   loop do
-    log "Fetching Jira issues..."
+    log 'Fetching Jira issues...'
     uri = URI(base_url)
-    
+
     req = Net::HTTP::Post.new(uri)
     req.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
     req['Content-Type'] = 'application/json'
     req['Accept'] = 'application/json'
-    
+
     payload = { jql: JQL, maxResults: 100, fields: ['key'] }
     payload[:nextPageToken] = next_page_token if next_page_token
 
@@ -52,17 +51,14 @@ def fetch_all_jira_keys
 
     json = JSON.parse(res.body)
     issues = json['issues'] || []
-    
+
     if issues.empty?
-       log "No issues found in response."
-       break 
+      log 'No issues found in response.'
+      break
     end
 
     # DEBUG: Print first issue structure
-    if keys.empty?
-      log "DEBUG: First issue structure: #{issues.first.inspect}"
-    end
-
+    log "DEBUG: First issue structure: #{issues.first.inspect}" if keys.empty?
 
     # Fix: Correctly add keys to Set
     issues.each { |i| keys.add(i['key']) }
@@ -71,11 +67,11 @@ def fetch_all_jira_keys
     next_page_token = json['nextPageToken']
     break unless next_page_token
   end
-  
+
   keys
 end
 
-log "Starting SMC Analysis..."
+log 'Starting SMC Analysis...'
 jira_keys = fetch_all_jira_keys
 log "Total Jira Issues (Truth): #{jira_keys.size}"
 
@@ -85,13 +81,9 @@ log "Total TaskBridge Defects: #{db_defects.size}"
 extra_in_db = db_defects - jira_keys
 missing_in_db = jira_keys - db_defects
 
-log "--- Analysis Results ---"
+log '--- Analysis Results ---'
 log "Present in DB but NOT in Jira Filter (Extras): #{extra_in_db.size}"
-if extra_in_db.any?
-  log "Sample Extras: #{extra_in_db.to_a.first(10).join(', ')}"
-end
+log "Sample Extras: #{extra_in_db.to_a.first(10).join(', ')}" if extra_in_db.any?
 
 log "Present in Jira but NOT in DB (Missing): #{missing_in_db.size}"
-if missing_in_db.any?
-  log "Sample Missing: #{missing_in_db.to_a.first(10).join(', ')}"
-end
+log "Sample Missing: #{missing_in_db.to_a.first(10).join(', ')}" if missing_in_db.any?

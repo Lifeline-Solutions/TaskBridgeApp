@@ -12,7 +12,7 @@ JIRA_BASE_URL = ENV.fetch('JIRA_BASE_URL', CONFIG[:jira_base_url] || 'https://cr
 JIRA_API_USER = ENV.fetch('JIRA_API_USER', CONFIG[:jira_api_user] || 'boniface.nemwel@craftsilicon.com')
 JIRA_API_TOKEN = ENV.fetch('JIRA_API_TOKEN') { CONFIG[:jira_api_token] }
 
-puts "Fetching all fields..."
+puts 'Fetching all fields...'
 url = "#{JIRA_BASE_URL}/rest/api/3/field"
 uri = URI.parse(url)
 http = Net::HTTP.new(uri.host, uri.port)
@@ -26,13 +26,11 @@ response = http.request(request)
 if response.is_a?(Net::HTTPSuccess)
   fields = JSON.parse(response.body)
   puts "Found #{fields.count} fields. Searching for 'component'..."
-  
+
   fields.each do |field|
     name = field['name']
     id = field['id']
-    if name.downcase.include?('component') || name.downcase.include?('kunity') || name.downcase.include?('k-unity')
-      puts "MATCH: #{name} (ID: #{id})"
-    end
+    puts "MATCH: #{name} (ID: #{id})" if name.downcase.include?('component') || name.downcase.include?('kunity') || name.downcase.include?('k-unity')
   end
 else
   puts "Error: #{response.code} #{response.body}"

@@ -26,13 +26,17 @@ def fetch_issue(key)
   end
 end
 
-puts "Fetching SMC-1..."
+puts 'Fetching SMC-1...'
 data = fetch_issue('SMC-1')
 
 if data
-  fields = data['fields']
-  puts "=== FINDING COMMENTS ==="
-  comments = data['fields']['comment']['comments'] rescue []
+  data['fields']
+  puts '=== FINDING COMMENTS ==='
+  comments = begin
+    data['fields']['comment']['comments']
+  rescue StandardError
+    []
+  end
   comments.each do |c|
     author = c['author']
     puts "Author: #{author['displayName']} | Email: #{author['emailAddress']} | AccountID: #{author['accountId']}"

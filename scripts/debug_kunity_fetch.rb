@@ -28,25 +28,25 @@ request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
 begin
   response = http.request(request)
   puts "Response Code: #{response.code}"
-  
+
   if response.is_a?(Net::HTTPSuccess)
     issue = JSON.parse(response.body)
     fields = issue['fields'] || {}
 
     target_field_id = 'customfield_10152'
     puts "Components (K-Unity) Field Raw: #{fields[target_field_id].inspect}"
-    
+
     val = fields[target_field_id]
     if val.is_a?(Hash) && val['value']
-        puts "Value: #{val['value']}"
+      puts "Value: #{val['value']}"
     elsif val.is_a?(Array) && val.first.is_a?(Hash) && val.first['value']
-        puts "Value (from array): #{val.first['value']}"
+      puts "Value (from array): #{val.first['value']}"
     else
-        puts "Value: #{val}"
+      puts "Value: #{val}"
     end
   else
     puts "Error body: #{response.body}"
   end
-rescue => e
+rescue StandardError => e
   puts "Exception: #{e.message}"
 end

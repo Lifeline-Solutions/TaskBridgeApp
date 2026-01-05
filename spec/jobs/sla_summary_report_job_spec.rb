@@ -16,9 +16,7 @@ RSpec.describe SlaSummaryReportJob, type: :job do
     it 'processes each team in the system' do
       team_count = Team.count
 
-      if team_count > 0
-        expect(Rails.logger).to receive(:info).at_least(team_count).times
-      end
+      expect(Rails.logger).to receive(:info).at_least(team_count).times if team_count > 0
 
       SlaSummaryReportJob.new.perform
     end

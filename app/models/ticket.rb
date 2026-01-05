@@ -78,6 +78,7 @@ class Ticket < ApplicationRecord
 
   after_create :set_initial_response_time, :set_target_repair_deadline, :set_resolution_deadline, :ticket_unique_id
   attr_accessor :skip_sla_callbacks, :skip_history_logging
+
   after_update :set_target_repair_deadline, :set_resolution_deadline, :set_resolution_deadline, unless: :skip_callbacks
   def set_initial_response_time
     start_time = DateTime.now
@@ -117,7 +118,7 @@ class Ticket < ApplicationRecord
   end
 
   def sla_status
-    return 'Not Breached'
+    'Not Breached'
   end
 
   def sla_target_response_deadline
@@ -276,7 +277,7 @@ class Ticket < ApplicationRecord
       Date.new(2025, 12, 25), # Christmas
       Date.new(2025, 12, 26), # Boxing Day
       Date.new(2026, 1, 1) # New Year
-    # Add more holidays as needed
+      # Add more holidays as needed
     ]
 
     remaining_duration = duration
