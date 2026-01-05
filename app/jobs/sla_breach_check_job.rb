@@ -1,5 +1,5 @@
 class SlaBreachCheckJob < ApplicationJob
-  queue_as :default
+  queue_as :sla_jobs
 
   def perform
     Rails.logger.info "[SlaBreachCheckJob] Starting SLA breach check at #{Time.current}"
