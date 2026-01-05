@@ -1,5 +1,5 @@
 class SlaWarningJob < ApplicationJob
-  queue_as :default
+  queue_as :sla_jobs
 
   # Warning thresholds in minutes
   WARNING_THRESHOLDS = [30, 60, 120].freeze

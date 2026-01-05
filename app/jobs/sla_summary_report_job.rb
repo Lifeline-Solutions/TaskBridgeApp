@@ -1,5 +1,5 @@
 class SlaSummaryReportJob < ApplicationJob
-  queue_as :default
+  queue_as :sla_jobs
 
   def perform
     Rails.logger.info "[SlaSummaryReportJob] Starting daily SLA summary report at #{Time.current}"
