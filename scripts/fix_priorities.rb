@@ -40,7 +40,7 @@ count = 0
 
 defects.find_each do |defect|
   count += 1
-  log "Processed #{count} defects..." if count % 50 == 0
+  log "Processed #{count} defects..." if (count % 50).zero?
   sleep 0.2 # Avoid rate limiting
   begin
     # Fetch from Jira
@@ -61,9 +61,9 @@ defects.find_each do |defect|
 
     issue = JSON.parse(response.body)
     fields = issue['fields'] || {}
-    
+
     jira_priority_name = fields.dig('priority', 'name')
-    
+
     if jira_priority_name.blank?
       log "  #{defect.defect_unique}: No priority found in Jira. Skipping."
       stats[:skipped] += 1
@@ -72,7 +72,7 @@ defects.find_each do |defect|
 
     # Check if update is needed
     current_priority = defect.priority
-    
+
     # Simple string comparison (case-insensitive just in case)
     if current_priority&.downcase == jira_priority_name.downcase
       # log "  #{defect.defect_unique}: Priority match ('#{jira_priority_name}'). No change."

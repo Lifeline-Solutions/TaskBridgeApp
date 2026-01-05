@@ -127,52 +127,52 @@ def discover_custom_fields(project_key)
   project_patterns = {
     'RMF' => {
       module_pattern: /^Rafiki\s+Modules?$/i,
-      submodule_pattern: /^Rafiki\s+Modules?\s*\/\s*Sub\s*Modules?$/i
+      submodule_pattern: %r{^Rafiki\s+Modules?\s*/\s*Sub\s*Modules?$}i
     },
     'RMP' => {
       module_pattern: /^Imarisha\s+Mobile\s+Banking\s+Modules?$/i,
-      submodule_pattern: /^Imarisha\s+Mobile\s+Banking\s+Modules?\s*\/\s*Sub-Modules?$/i
+      submodule_pattern: %r{^Imarisha\s+Mobile\s+Banking\s+Modules?\s*/\s*Sub-Modules?$}i
     },
     'KCBL' => {
       module_pattern: /^KCBL\s+Modules?$/i,
-      submodule_pattern: /^KCBL\s+Modules?\s*\/\s*Submodules?$/i
+      submodule_pattern: %r{^KCBL\s+Modules?\s*/\s*Submodules?$}i
     },
     'NCBA' => {
       module_pattern: /^NCBA\s+Modules?$/i,
-      submodule_pattern: /^NCBA\s+Modules?\s*\/\s*Sub-Modules?$/i
+      submodule_pattern: %r{^NCBA\s+Modules?\s*/\s*Sub-Modules?$}i
     },
     'ISP' => {
       module_pattern: /^Imarisha\s+Internet\s+Banking\s+Modules?$/i,
-      submodule_pattern: /^Imarisha\s+Internet\s+Banking\s+Modules?\s*\/\s*Sub-Modules?$/i
+      submodule_pattern: %r{^Imarisha\s+Internet\s+Banking\s+Modules?\s*/\s*Sub-Modules?$}i
     },
     'IAB' => {
       module_pattern: /^Imarisha\s+Agency\s+Banking\s+Modules?$/i,
-      submodule_pattern: /^Imarisha\s+Agency\s+Banking\s+Modules?\s*\/\s*Sub-Modules?$/i
+      submodule_pattern: %r{^Imarisha\s+Agency\s+Banking\s+Modules?\s*/\s*Sub-Modules?$}i
     },
     'IEP' => {
       module_pattern: /^Imarisha\s+ERP\s+Modules?$/i,
-      submodule_pattern: /^Imarisha\s+ERP\s+Modules?\s*\/\s*Sub-Modules?$/i
+      submodule_pattern: %r{^Imarisha\s+ERP\s+Modules?\s*/\s*Sub-Modules?$}i
     },
     'KPS' => {
       module_pattern: /^Kenya\s+Police\s+Modules?$/i,
-      submodule_pattern: /^Kenya\s+Police\s+Modules?\s*\/\s*Sub-Modules?$/i
+      submodule_pattern: %r{^Kenya\s+Police\s+Modules?\s*/\s*Sub-Modules?$}i
     },
     'AUD' => {
       module_pattern: /^Imarisha\s+Audit\s+Modules?$/i,
-      submodule_pattern: /^Imarisha\s+Audit\s+Modules?\s*\/\s*Sub-Modules?$/i
+      submodule_pattern: %r{^Imarisha\s+Audit\s+Modules?\s*/\s*Sub-Modules?$}i
     }
   }
 
   # Get patterns for this project
   # Special handling: treat any RMP-like project keys as Rafiki projects
-  if project_key.to_s.upcase.start_with?('RMP')
-    patterns = {
-      module_pattern: /^Rafiki\s+Modules?$/i,
-      submodule_pattern: /^Rafiki\s+Modules?\s*\/\s*Sub\s*Modules?$/i
-    }
-  else
-    patterns = project_patterns[project_key] || {}
-  end
+  patterns = if project_key.to_s.upcase.start_with?('RMP')
+               {
+                 module_pattern: /^Rafiki\s+Modules?$/i,
+                 submodule_pattern: %r{^Rafiki\s+Modules?\s*/\s*Sub\s*Modules?$}i
+               }
+             else
+               project_patterns[project_key] || {}
+             end
 
   # Collect all matching fields for debugging
   all_module_fields = []
@@ -344,6 +344,7 @@ def extract_custom_field_value(field_data)
   if field_data.is_a?(Array) && field_data.any?
     first_item = field_data.first
     return extract_custom_field_value(first_item) if first_item.is_a?(Hash)
+
     return first_item.to_s.strip
   end
 
@@ -508,8 +509,8 @@ def find_or_create_modules(module_name:, submodule_name:, product_id:, created_b
       parent = QaModule.create!(name: module_name.strip, product_id: product_id)
       parent.update_columns(created_by: created_by, modified_by: created_by) if parent.respond_to?(:created_by)
       vputs "[MODULE-CREATE] Created parent module '#{module_name}' -> #{parent.id}"
-    else
-      vputs "[MODULE-MATCH] Found parent module '#{module_name}' -> #{parent.id}" if parent
+    elsif parent
+      vputs "[MODULE-MATCH] Found parent module '#{module_name}' -> #{parent.id}"
     end
   end
 
@@ -521,8 +522,8 @@ def find_or_create_modules(module_name:, submodule_name:, product_id:, created_b
         child = QaModule.create!(name: submodule_name.strip, parent_id: parent.id, product_id: product_id)
         child.update_columns(created_by: created_by, modified_by: created_by) if child.respond_to?(:created_by)
         vputs "[SUBMODULE-CREATE] Created submodule '#{submodule_name}' -> #{child.id}"
-      else
-        vputs "[SUBMODULE-MATCH] Found submodule '#{submodule_name}' -> #{child.id}" if child
+      elsif child
+        vputs "[SUBMODULE-MATCH] Found submodule '#{submodule_name}' -> #{child.id}"
       end
     else
       child = QaModule.where('lower(name) = ? AND parent_id IS NOT NULL AND product_id = ?', submodule_name.strip.downcase, product_id).first
@@ -610,7 +611,7 @@ def sync_defect_metadata(defect, jira_issue, custom_fields, product_id)
   labels_array = (fields['labels'] || []).compact.map(&:to_s).map(&:strip).reject(&:empty?)
 
   # Debug: Show extracted values
-  vputs "[DEBUG] Extracted values:"
+  vputs '[DEBUG] Extracted values:'
   vputs "  Module: '#{module_name}'"
   vputs "  Submodule: '#{submodule_name}'"
   vputs "  Banking type: '#{banking_type_name}'"
@@ -637,27 +638,27 @@ def sync_defect_metadata(defect, jira_issue, custom_fields, product_id)
     )
 
     if parent_module
-      if defect.qa_module_id != parent_module.id
+      if defect.qa_module_id == parent_module.id
+        vputs "[KEEP] Module already set to '#{parent_module.name}' for #{issue_key}"
+      else
         defect.qa_module_id = parent_module.id
         updated = true
         info "[UPDATE] Updated module for #{issue_key}: #{parent_module.name}"
-      else
-        vputs "[KEEP] Module already set to '#{parent_module.name}' for #{issue_key}"
       end
     end
 
     if child_module
-      if defect.submodule_id != child_module.id
+      if defect.submodule_id == child_module.id
+        vputs "[KEEP] Submodule already set to '#{child_module.name}' for #{issue_key}"
+      else
         defect.submodule_id = child_module.id
         updated = true
         info "[UPDATE] Updated submodule for #{issue_key}: #{child_module.name}"
-      else
-        vputs "[KEEP] Submodule already set to '#{child_module.name}' for #{issue_key}"
       end
     end
   elsif submodule_name.present?
     # Handle case where only submodule is provided
-    parent_module, child_module = find_or_create_modules(
+    _, child_module = find_or_create_modules(
       module_name: module_name,
       submodule_name: submodule_name,
       product_id: product_id,
@@ -665,12 +666,12 @@ def sync_defect_metadata(defect, jira_issue, custom_fields, product_id)
     )
 
     if child_module
-      if defect.submodule_id != child_module.id
+      if defect.submodule_id == child_module.id
+        vputs "[KEEP] Submodule already set to '#{child_module.name}' for #{issue_key}"
+      else
         defect.submodule_id = child_module.id
         updated = true
         info "[UPDATE] Updated submodule for #{issue_key}: #{child_module.name}"
-      else
-        vputs "[KEEP] Submodule already set to '#{child_module.name}' for #{issue_key}"
       end
     end
   end
@@ -679,12 +680,12 @@ def sync_defect_metadata(defect, jira_issue, custom_fields, product_id)
   if banking_type_name.present?
     banking = find_or_create_banking_type(banking_type_name, product_id: product_id, created_by: created_by_uid)
     if banking
-      if defect.banking_type_id != banking.id
+      if defect.banking_type_id == banking.id
+        vputs "[KEEP] Banking type already set to '#{banking.name}' for #{issue_key}"
+      else
         defect.banking_type_id = banking.id
         updated = true
         info "[UPDATE] Updated banking type for #{issue_key}: #{banking.name}"
-      else
-        vputs "[KEEP] Banking type already set to '#{banking.name}' for #{issue_key}"
       end
     end
   end
@@ -732,7 +733,7 @@ begin
   info "  Module: #{custom_fields[:module_field] || 'Not found'}"
   info "  Submodule: #{custom_fields[:submodule_field] || 'Not found'}"
   info "  Banking Type: #{custom_fields[:banking_type_field] || 'Not found'}"
-  info ""
+  info ''
 
   # Get product ID
   product_id = PROJECT_UUID_MAP[options[:project]] || DEFAULT_PRODUCT_UUID
@@ -861,7 +862,7 @@ begin
   end
 
   # Summary Statistics
-  info "\n" + ('=' * 80)
+  info "\n#{'=' * 80}"
   info '📊 SYNC SUMMARY'
   info '=' * 80
   info "Total defects processed: #{stats[:total]}"
@@ -869,8 +870,8 @@ begin
   info "  ⏭️  No changes: #{stats[:no_change]}"
   info "  ⚠️  Not found in DB: #{stats[:not_found]}"
   info "  ❌ Errors: #{stats[:errors]}"
-  info ""
-  info "Metadata Statistics:"
+  info ''
+  info 'Metadata Statistics:'
   info "  📦 Modules synced: #{stats[:modules_updated]}"
   info "  📂 Submodules synced: #{stats[:submodules_updated]}"
   info "  🏦 Banking types synced: #{stats[:banking_types_updated]}"
@@ -880,7 +881,7 @@ begin
 
   # Detailed Report
   if detailed_report.any?
-    info "\n" + ('=' * 80)
+    info "\n#{'=' * 80}"
     info '📋 DETAILED REPORT'
     info '=' * 80
 
@@ -893,12 +894,12 @@ begin
       info "\n✅ UPDATED DEFECTS (#{updated_items.length}):"
       info '-' * 80
       updated_items.each do |report|
-        info "#{report[:defect_unique]}"
+        info report[:defect_unique].to_s
         info "  Module: #{report[:module]}"
         info "  Submodule: #{report[:submodule]}"
         info "  Banking Type: #{report[:banking_type]}"
         info "  Labels: #{report[:labels]} (#{report[:labels_added]} new)"
-        info ""
+        info ''
       end
     end
 
@@ -908,7 +909,7 @@ begin
       no_change_items.each do |report|
         vputs "#{report[:defect_unique]} - Module: #{report[:module]}, Submodule: #{report[:submodule]}, Banking: #{report[:banking_type]}, Labels: #{report[:labels]}"
       end
-      info ""
+      info ''
     end
 
     if error_items.any?
@@ -917,7 +918,7 @@ begin
       error_items.each do |report|
         info "#{report[:defect_unique]}: #{report[:error]}"
       end
-      info ""
+      info ''
     end
 
     info '=' * 80

@@ -56,58 +56,58 @@ def discover_custom_fields(project_key = 'RMP')
   submodule_field = nil
 
   # Define field patterns per project
-  patterns = case project_key.upcase
-             when 'RMP'
-               {
-                 module: /^rafiki\s+modules?$/i,
-                 submodule: /^rafiki\s+modules?\s*\/\s*sub\s*modules?$/i
-               }
-             when 'KCBL'
-               {
-                 module: /^kcbl\s+modules?$/i,
-                 submodule: /^kcbl\s+modules?\s*\/\s*submodules?$/i
-               }
-             when 'PSP'
-               {
-                 module: /^kenya\s+police\s+modules?$/i,
-                 submodule: /^kenya\s+police\s+modules?\s*\/\s*sub\s*modules?$/i
-               }
-             when 'SMC'
-               {
-                 module: /^components?\s*-\s*sofia\s+credit$/i,
-                 submodule: /^sofia\s+modules?\s*[_-]\s*submodules?$/i
-               }
-             when 'SJP'
-               {
-                 module: /^modules?\s+sc\s+juza$/i,
-                 submodule: /^(ignore|empty)$/i
-               }
-             when 'KUP'
-               {
-                 module: /^components?\s*\(\s*k[\s-]?unity\s*\)$/i,
-                 submodule: /^(ignore|empty)$/i
-               }
-             when 'GBCBS'
-               {
-                 module: /^module$/i,
-                 submodule: /^(ignore|empty)$/i
-               }
-             when 'GBCBU2'
-               {
-                 module: /^components?$/i,
-                 submodule: /^(ignore|empty)$/i
-               }
-             else
-               {
-                 module: /modules/i,
-                 submodule: /sub.*module/i
-               }
-             end
+  case project_key.upcase
+  when 'RMP'
+    {
+      module: /^rafiki\s+modules?$/i,
+      submodule: %r{^rafiki\s+modules?\s*/\s*sub\s*modules?$}i
+    }
+  when 'KCBL'
+    {
+      module: /^kcbl\s+modules?$/i,
+      submodule: %r{^kcbl\s+modules?\s*/\s*submodules?$}i
+    }
+  when 'PSP'
+    {
+      module: /^kenya\s+police\s+modules?$/i,
+      submodule: %r{^kenya\s+police\s+modules?\s*/\s*sub\s*modules?$}i
+    }
+  when 'SMC'
+    {
+      module: /^components?\s*-\s*sofia\s+credit$/i,
+      submodule: /^sofia\s+modules?\s*[_-]\s*submodules?$/i
+    }
+  when 'SJP'
+    {
+      module: /^modules?\s+sc\s+juza$/i,
+      submodule: /^(ignore|empty)$/i
+    }
+  when 'KUP'
+    {
+      module: /^components?\s*\(\s*k[\s-]?unity\s*\)$/i,
+      submodule: /^(ignore|empty)$/i
+    }
+  when 'GBCBS'
+    {
+      module: /^module$/i,
+      submodule: /^(ignore|empty)$/i
+    }
+  when 'GBCBU2'
+    {
+      module: /^components?$/i,
+      submodule: /^(ignore|empty)$/i
+    }
+  else
+    {
+      module: /modules/i,
+      submodule: /sub.*module/i
+    }
+  end
 
   fields.each do |field|
     name = field['name']&.downcase || ''
     field_id = field['id']
-    
+
     # Debug log for project fields
     log "Found field: #{name} (#{field_id})" if name.include?('kcbl') || name.include?('kenya police') || name.include?('sofia') || name.include?('components') || name.include?('modules sc juza') || name.include?('k-unity') || name.include?('k unity')
 
@@ -168,7 +168,7 @@ def discover_custom_fields(project_key = 'RMP')
       submodule_field ||= 'DUMMY'
     when 'GBCBU2'
       # GBCBU2 uses a single cascading select field named "Components" for module (parent) and submodule (child)
-      if name.strip == 'components' || name.strip == 'component'
+      if %w[components component].include?(name.strip)
         module_field = field_id
         submodule_field = field_id # same field contains the child value
         log "✓ Matched Cascading field for Module/Submodule: #{field['name']} (#{field_id})"
@@ -189,10 +189,11 @@ def extract_custom_field_value(field_data, extract_child: false)
     # When extract_child is false, return the parent value ONLY (ignore child)
     if extract_child
       return field_data['child']['value'].to_s.strip if field_data['child'].is_a?(Hash) && field_data['child']['value'].present?
+
       return '' # No child available
-    else
+    elsif field_data['value'].present?
       # Extract parent value only, ignore child
-      return field_data['value'].to_s.strip if field_data['value'].present?
+      return field_data['value'].to_s.strip
     end
 
     return field_data['name'].to_s.strip if field_data['name'].present?
@@ -268,14 +269,12 @@ log "Starting submodule fix script (Dry Run: #{options[:dry_run]})"
 
 # Validate options
 if options[:all]
-  log "Processing ALL defects across all projects"
+  log 'Processing ALL defects across all projects'
 elsif options[:project]
   log "Processing project: #{options[:project]}"
-  if options[:defect_unique]
-    log "  Filtering to single defect: #{options[:defect_unique]}"
-  end
+  log "  Filtering to single defect: #{options[:defect_unique]}" if options[:defect_unique]
 else
-  log "ERROR: Must specify --project, --defect, or --all"
+  log 'ERROR: Must specify --project, --defect, or --all'
   exit 1
 end
 
@@ -299,9 +298,9 @@ projects_to_process = if options[:all]
 log "Projects to process: #{projects_to_process.join(', ')}"
 
 projects_to_process.each do |project_key|
-  log "\n" + "=" * 80
+  log "\n#{'=' * 80}"
   log "Processing project: #{project_key}"
-  log "=" * 80
+  log '=' * 80
 
   module_field, submodule_field = discover_custom_fields(project_key)
   log "Discovered fields - Module: #{module_field}, Submodule: #{submodule_field}"
@@ -329,165 +328,162 @@ projects_to_process.each do |project_key|
   stats = { updated: 0, skipped: 0, errors: 0 }
 
   defects.find_each do |defect|
-    begin
-      # Fetch from Jira
-      url = "#{JIRA_BASE_URL}/rest/api/3/issue/#{defect.defect_unique}"
-      uri = URI.parse(url)
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
-      request = Net::HTTP::Get.new(uri.request_uri)
-      request['Accept'] = 'application/json'
-      request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
+    # Fetch from Jira
+    url = "#{JIRA_BASE_URL}/rest/api/3/issue/#{defect.defect_unique}"
+    uri = URI.parse(url)
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    request = Net::HTTP::Get.new(uri.request_uri)
+    request['Accept'] = 'application/json'
+    request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
 
-      response = http.request(request)
-      unless response.is_a?(Net::HTTPSuccess)
-        log "Failed to fetch #{defect.defect_unique}: #{response.code}"
-        stats[:errors] += 1
-        next
-      end
+    response = http.request(request)
+    unless response.is_a?(Net::HTTPSuccess)
+      log "Failed to fetch #{defect.defect_unique}: #{response.code}"
+      stats[:errors] += 1
+      next
+    end
 
-      issue = JSON.parse(response.body)
-      fields = issue['fields'] || {}
+    issue = JSON.parse(response.body)
+    fields = issue['fields'] || {}
 
-      raw_module = fields[module_field]
-      # Only fetch submodule from JIRA if it's a real field (not 'DUMMY')
-      raw_submodule = (submodule_field && submodule_field != 'DUMMY') ? fields[submodule_field] : nil
+    raw_module = fields[module_field]
+    # Only fetch submodule from JIRA if it's a real field (not 'DUMMY')
+    raw_submodule = submodule_field && submodule_field != 'DUMMY' ? fields[submodule_field] : nil
 
-      # For GBCBU2, both module and submodule come from the same cascading field
-      # Extract parent value for module, child value for submodule
-      if project_key.upcase == 'GBCBU2' && module_field == submodule_field
-        module_name = extract_custom_field_value(raw_module, extract_child: false)
-        submodule_name = extract_custom_field_value(raw_module, extract_child: true)
-      else
-        module_name = extract_custom_field_value(raw_module, extract_child: false)
-        submodule_name = extract_custom_field_value(raw_submodule, extract_child: false)
-      end
+    # For GBCBU2, both module and submodule come from the same cascading field
+    # Extract parent value for module, child value for submodule
+    module_name = extract_custom_field_value(raw_module, extract_child: false)
+    submodule_name = if project_key.upcase == 'GBCBU2' && module_field == submodule_field
+                       extract_custom_field_value(raw_module, extract_child: true)
+                     else
+                       extract_custom_field_value(raw_submodule, extract_child: false)
+                     end
 
-      # For projects with no submodules, clear submodule_name
-      case project_key.upcase
-      when 'SJP'
-        module_name = 'Modules SC Juza'
-        submodule_name = '' # Always blank for SJP
-      when 'KUP'
-        module_name = 'Components (K-Unity)'
-        submodule_name = '' # Always blank for KUP
-      when 'GBCBS'
-        module_name = 'Module'
-        submodule_name = '' # Always blank for GBCBS
-      when 'GBCBU2'
-        # For GBCBU2, values come from the cascading "Components" field
-        # module_name is already set to parent value, submodule_name to child value
-        # Keep them as-is, no overrides needed
-        # If submodule_name is blank, that's fine - it means no child was selected
-      else
-        # For other projects, apply parsing logic
-        if module_name.blank? && submodule_name.blank?
-          stats[:skipped] += 1
-          next
-        end
-
-        # Apply parsing logic
-        if module_name.present? && submodule_name.to_s.strip.empty?
-          module_name, submodule_name = parse_module_and_submodule(module_name, submodule_name)
-        elsif module_name.present? && submodule_name.present?
-          # If submodule contains parent name, strip it
-          prefix_pattern = /^#{Regexp.escape(module_name)}\s*[-\u2013\u2014]\s*/i
-          if submodule_name.match?(prefix_pattern)
-            new_sub = submodule_name.sub(prefix_pattern, '')
-            submodule_name = new_sub
-          end
-        end
-      end
-
-      # Check if update is needed
-      current_module = defect.qa_module&.name
-      current_submodule = defect.submodule&.name
-
-      if current_module == module_name && current_submodule == submodule_name
+    # For projects with no submodules, clear submodule_name
+    case project_key.upcase
+    when 'SJP'
+      module_name = 'Modules SC Juza'
+      submodule_name = '' # Always blank for SJP
+    when 'KUP'
+      module_name = 'Components (K-Unity)'
+      submodule_name = '' # Always blank for KUP
+    when 'GBCBS'
+      module_name = 'Module'
+      submodule_name = '' # Always blank for GBCBS
+    when 'GBCBU2'
+      # For GBCBU2, values come from the cascading "Components" field
+      # module_name is already set to parent value, submodule_name to child value
+      # Keep them as-is, no overrides needed
+      # If submodule_name is blank, that's fine - it means no child was selected
+    else
+      # For other projects, apply parsing logic
+      if module_name.blank? && submodule_name.blank?
         stats[:skipped] += 1
         next
       end
 
-      log "  #{defect.defect_unique}: Updating..."
-      log "    Old: Module='#{current_module}', Sub='#{current_submodule}'"
-      log "    New: Module='#{module_name}', Sub='#{submodule_name}'"
+      # Apply parsing logic
+      if module_name.present? && submodule_name.to_s.strip.empty?
+        module_name, submodule_name = parse_module_and_submodule(module_name, submodule_name)
+      elsif module_name.present? && submodule_name.present?
+        # If submodule contains parent name, strip it
+        prefix_pattern = /^#{Regexp.escape(module_name)}\s*[-\u2013\u2014]\s*/i
+        if submodule_name.match?(prefix_pattern)
+          new_sub = submodule_name.sub(prefix_pattern, '')
+          submodule_name = new_sub
+        end
+      end
+    end
 
-      # Determine Product ID based on project
-      product_id = defect.product_id
+    # Check if update is needed
+    current_module = defect.qa_module&.name
+    current_submodule = defect.submodule&.name
+
+    if current_module == module_name && current_submodule == submodule_name
+      stats[:skipped] += 1
+      next
+    end
+
+    log "  #{defect.defect_unique}: Updating..."
+    log "    Old: Module='#{current_module}', Sub='#{current_submodule}'"
+    log "    New: Module='#{module_name}', Sub='#{submodule_name}'"
+
+    # Determine Product ID based on project
+    product_id = defect.product_id
+    case project_key.upcase
+    when 'KCBL'
+      product_id ||= 'c1469eb7-97d1-4611-9e67-3fce1d0bb1ac'
+    when 'PSP'
+      unless product_id
+        psp_product = Product.where('document_name ILIKE ?', '%Kenya Police%').first ||
+                      Product.where('jira_key ILIKE ?', '%PSP%').first
+        product_id = psp_product&.id
+      end
+    when 'SMC'
+      unless product_id
+        smc_product = Product.where('document_name ILIKE ?', '%Sofia%').first ||
+                      Product.where('jira_key ILIKE ?', '%SMC%').first
+        product_id = smc_product&.id
+      end
+    when 'SJP'
+      unless product_id
+        sjp_product = Product.where('jira_key ILIKE ?', '%SJP%').first
+        product_id = sjp_product&.id
+      end
+    when 'KUP'
+      unless product_id
+        kup_product = Product.where('jira_key ILIKE ?', '%KUP%').first
+        product_id = kup_product&.id
+      end
+    when 'GBCBS'
+      unless product_id
+        gbcbs_product = Product.where('jira_key ILIKE ?', '%GBCBS%').first
+        product_id = gbcbs_product&.id
+      end
+    when 'GBCBU2'
+      unless product_id
+        gbcbu2_product = Product.where('jira_key ILIKE ?', '%GBCBU2%').first
+        product_id = gbcbu2_product&.id
+      end
+    end
+    product_id ||= DEFAULT_PRODUCT_UUID
+
+    unless options[:dry_run]
+      parent, child = find_or_create_modules(
+        module_name: module_name,
+        submodule_name: submodule_name,
+        product_id: product_id,
+        created_by: defect.created_by || 1
+      )
+
+      defect.qa_module_id = parent&.id || FALLBACK_QA_MODULE_ID
+      defect.submodule_id = child&.id || FALLBACK_SUBMODULE_ID
+
+      # Project-specific banking type assignments
       case project_key.upcase
       when 'KCBL'
-        product_id ||= 'c1469eb7-97d1-4611-9e67-3fce1d0bb1ac'
-      when 'PSP'
-        unless product_id
-          psp_product = Product.where('document_name ILIKE ?', '%Kenya Police%').first ||
-                        Product.where('jira_key ILIKE ?', '%PSP%').first
-          product_id = psp_product&.id
-        end
+        # Core Banking ID for KCBL product
+        defect.banking_type_id = '7fc78d1b-c21f-4077-a2b4-e8cad57ca71c'
       when 'SMC'
-        unless product_id
-          smc_product = Product.where('document_name ILIKE ?', '%Sofia%').first ||
-                        Product.where('jira_key ILIKE ?', '%SMC%').first
-          product_id = smc_product&.id
-        end
-      when 'SJP'
-        unless product_id
-          sjp_product = Product.where('jira_key ILIKE ?', '%SJP%').first
-          product_id = sjp_product&.id
-        end
-      when 'KUP'
-        unless product_id
-          kup_product = Product.where('jira_key ILIKE ?', '%KUP%').first
-          product_id = kup_product&.id
-        end
-      when 'GBCBS'
-        unless product_id
-          gbcbs_product = Product.where('jira_key ILIKE ?', '%GBCBS%').first
-          product_id = gbcbs_product&.id
-        end
-      when 'GBCBU2'
-        unless product_id
-          gbcbu2_product = Product.where('jira_key ILIKE ?', '%GBCBU2%').first
-          product_id = gbcbu2_product&.id
-        end
-      end
-      product_id ||= DEFAULT_PRODUCT_UUID
-
-      unless options[:dry_run]
-        parent, child = find_or_create_modules(
-          module_name: module_name,
-          submodule_name: submodule_name,
-          product_id: product_id,
-          created_by: defect.created_by || 1
-        )
-
-        defect.qa_module_id = parent&.id || FALLBACK_QA_MODULE_ID
-        defect.submodule_id = child&.id || FALLBACK_SUBMODULE_ID
-
-        # Project-specific banking type assignments
-        case project_key.upcase
-        when 'KCBL'
-          # Core Banking ID for KCBL product
-          defect.banking_type_id = '7fc78d1b-c21f-4077-a2b4-e8cad57ca71c'
-        when 'SMC'
-          # Sofia Credit specific banking type (if configured)
-          # defect.banking_type_id = 'SMC_BANKING_TYPE_UUID' # Update with actual UUID if needed
-        end
-
-        defect.save!
-        log '    ✅ Updated successfully'
+        # Sofia Credit specific banking type (if configured)
+        # defect.banking_type_id = 'SMC_BANKING_TYPE_UUID' # Update with actual UUID if needed
       end
 
-      stats[:updated] += 1
-    rescue StandardError => e
-      log "ERROR processing #{defect.defect_unique}: #{e.message}"
-      stats[:errors] += 1
+      defect.save!
+      log '    ✅ Updated successfully'
     end
+
+    stats[:updated] += 1
+  rescue StandardError => e
+    log "ERROR processing #{defect.defect_unique}: #{e.message}"
+    stats[:errors] += 1
   end
 
   log "\nProject #{project_key} Results:"
   log "  Updated: #{stats[:updated]}, Skipped: #{stats[:skipped]}, Errors: #{stats[:errors]}"
 end
 
-log "\n" + "=" * 80
-log "Script completed!"
-log "=" * 80
+log "\n#{'=' * 80}"
+log 'Script completed!'
+log '=' * 80

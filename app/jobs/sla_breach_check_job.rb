@@ -5,8 +5,10 @@ class SlaBreachCheckJob < ApplicationJob
     Rails.logger.info "[SlaBreachCheckJob] Starting SLA breach check at #{Time.current}"
 
     check_initial_response_sla
-    check_target_repair_sla
-    check_resolution_sla
+    check_thirty_days_cip
+    check_thirty_days_resolved
+    # check_target_repair_sla
+    # check_resolution_sla
 
     Rails.logger.info "[SlaBreachCheckJob] Completed SLA breach check at #{Time.current}"
   end
@@ -17,20 +19,22 @@ class SlaBreachCheckJob < ApplicationJob
     # Find tickets where initial response deadline has passed
     # and SLA status has not been marked as breached yet
     # CRITICAL: Only process open tickets (exclude Closed, Resolved, Declined)
-    tickets = Ticket.joins(:sla_ticket)
-                    .joins(:statuses)
-                    .where.not(statuses: { name: ['Closed', 'Resolved', 'Declined'] })
-                    .where('tickets.initial_response_deadline < ?', Time.current)
-                    .where.not(sla_tickets: { sla_status: 'Breached' })
-                    .where('tickets.initial_response_deadline IS NOT NULL')
-                    .distinct
+    #
+    #     if ['NEW FEATURE', 'BILLABLE FEATURE', 'REQUEST'].include?(@ticket.issue)
+    # This checks the ticket.issue all tickets with NO SLA should be ignore
+    tickets = Ticket.where.not(issue: ['NEW FEATURE', 'BILLABLE FEATURE', 'REQUEST']).joins(:sla_ticket, :statuses)
+      .where.not(statuses: { name: %w[Closed Resolved Declined] })
+      .where(sla_tickets: { sla_resolution_deadline: nil })
+      .where('tickets.resolution_deadline < ?', Time.current)
+      .where('tickets.resolution_deadline IS NOT NULL')
+      .distinct
 
     tickets.find_each do |ticket|
       sla_ticket = ticket.sla_ticket
       next unless sla_ticket
 
       # Update SLA status
-      sla_ticket.update(sla_status: 'Breached')
+      sla_ticket.update(sla_resolution_deadline: 'Breached')
 
       # Send notification to stakeholders
       # DISABLED: SLA automation emails
@@ -38,53 +42,89 @@ class SlaBreachCheckJob < ApplicationJob
     end
   end
 
-  def check_target_repair_sla
-    # Find tickets where target repair deadline has passed
-    # CRITICAL: Only process open tickets (exclude Closed, Resolved, Declined)
-    tickets = Ticket.joins(:sla_ticket)
-                    .joins(:statuses)
-                    .where.not(statuses: { name: ['Closed', 'Resolved', 'Declined'] })
-                    .where('tickets.target_repair_deadline < ?', Time.current)
-                    .where.not(sla_tickets: { sla_target_response_deadline: 'Breached' })
-                    .where('tickets.target_repair_deadline IS NOT NULL')
+  def check_thirty_days_cip
+    # Find tickets that have been in 'Client Information Pending' status for 30+ days
+    resolved_status = Status.find_by(name: 'Resolved')
+    return unless resolved_status
+
+    tickets = Ticket.joins(:add_statuses, :statuses)
+                    .joins('INNER JOIN statuses ON statuses.id = add_statuses.status_id')
+                    .where(statuses: { name: 'Client Information Pending' })
+                    .where('add_statuses.updated_at <= ?', 30.days.ago)
                     .distinct
 
+
     tickets.find_each do |ticket|
-      sla_ticket = ticket.sla_ticket
-      next unless sla_ticket
-
-      # Update SLA target response deadline status
-      sla_ticket.update(sla_target_response_deadline: 'Breached')
-
-      # Send notification to stakeholders
-      # DISABLED: SLA automation emails
-      # notify_stakeholders(ticket, :target_repair_breach)
+      # Update status to Resolved
+      ticket.statuses.clear
+      ticket.statuses << resolved_status
     end
   end
 
-  def check_resolution_sla
-    # Find tickets where resolution deadline has passed
-    # CRITICAL: Only process open tickets (exclude Closed, Resolved, Declined)
-    tickets = Ticket.joins(:sla_ticket)
-                    .joins(:statuses)
-                    .where.not(statuses: { name: ['Closed', 'Resolved', 'Declined'] })
-                    .where('tickets.resolution_deadline < ?', Time.current)
-                    .where.not(sla_tickets: { sla_resolution_deadline: 'Breached' })
-                    .where('tickets.resolution_deadline IS NOT NULL')
+  def check_thirty_days_resolved
+    # Find tickets that have been in 'Client Information Pending' status for 30+ days
+    closed_status = Status.find_by(name: 'Closed')
+    return unless closed_status
+
+    tickets = Ticket.joins(:add_statuses, :statuses)
+                    .joins('INNER JOIN statuses ON statuses.id = add_statuses.status_id')
+                    .where(statuses: { name: 'Resolved' })
+                    .where('add_statuses.updated_at <= ?', 30.days.ago)
                     .distinct
 
+
     tickets.find_each do |ticket|
-      sla_ticket = ticket.sla_ticket
-      next unless sla_ticket
-
-      # Update SLA resolution deadline status
-      sla_ticket.update(sla_resolution_deadline: 'Breached')
-
-      # Send notification to stakeholders
-      # DISABLED: SLA automation emails
-      # notify_stakeholders(ticket, :resolution_breach)
+      # Update status to Resolved
+      ticket.statuses.clear
+      ticket.statuses << closed_status
     end
   end
+
+  # def check_target_repair_sla
+  # Find tickets where target repair deadline has passed
+  # CRITICAL: Only process open tickets (exclude Closed, Resolved, Declined)
+  # tickets = Ticket.where.not(issue: ['NEW FEATURE', 'BILLABLE FEATURE', 'REQUEST']).joins(sla_ticket: :statuses)
+  #    .where.not(statuses: { name: %w[Closed Resolved Declined] })
+  #    .where('tickets.target_repair_deadline < ?', Time.current)
+  #    .where.not(sla_tickets: { sla_target_response_deadline: 'Breached' })
+  #    .where('tickets.target_repair_deadline IS NOT NULL')
+  #    .distinct
+
+  #  tickets.find_each do |ticket|
+  #    sla_ticket = ticket.sla_ticket
+  #    next unless sla_ticket
+
+  # Update SLA target response deadline status
+  #   sla_ticket.update(sla_target_response_deadline: 'Breached')
+
+  # Send notification to stakeholders
+  # DISABLED: SLA automation emails
+  # notify_stakeholders(ticket, :target_repair_breach)
+  #  end
+  # end
+
+  # def check_resolution_sla
+  # Find tickets where resolution deadline has passed
+  # CRITICAL: Only process open tickets (exclude Closed, Resolved, Declined)
+  #  tickets = Ticket.where.not(issue: ['NEW FEATURE', 'BILLABLE FEATURE', 'REQUEST']).joins(sla_ticket: :statuses)
+  #    .where.not(statuses: { name: %w[Closed Resolved Declined] })
+  #    .where('tickets.resolution_deadline < ?', Time.current)
+  #    .where.not(sla_tickets: { sla_resolution_deadline: 'Breached' })
+  #    .where('tickets.resolution_deadline IS NOT NULL')
+  #    .distinct
+
+  #  tickets.find_each do |ticket|
+  #    sla_ticket = ticket.sla_ticket
+  #    next unless sla_ticket
+
+  # Update SLA resolution deadline status
+  #    sla_ticket.update(sla_resolution_deadline: 'Breached')
+
+  # Send notification to stakeholders
+  # DISABLED: SLA automation emails
+  # notify_stakeholders(ticket, :resolution_breach)
+  #  end
+  # end
 
   def notify_stakeholders(ticket, breach_type)
     recipients = collect_recipients(ticket)
@@ -132,9 +172,9 @@ class SlaBreachCheckJob < ApplicationJob
 
     # Finalize cc list by excluding client/ceo roles and removing blanks/duplicates
     cc_emails = User.where(email: cc_emails.compact.uniq)
-                    .joins(:roles)
-                    .where.not(roles: { name: %w[client ceo] })
-                    .pluck(:email)
+      .joins(:roles)
+      .where.not(roles: { name: %w[client ceo] })
+      .pluck(:email)
 
     { to: to_emails.uniq, cc: cc_emails.uniq }
   end

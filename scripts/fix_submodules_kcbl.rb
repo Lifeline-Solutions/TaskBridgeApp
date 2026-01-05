@@ -56,12 +56,12 @@ def discover_custom_fields(project_key = 'RMP')
              when 'RMP'
                {
                  module: /^rafiki\s+modules?$/i,
-                 submodule: /^rafiki\s+modules?\s*\/\s*sub\s*modules?$/i
+                 submodule: %r{^rafiki\s+modules?\s*/\s*sub\s*modules?$}i
                }
              when 'KCBL'
                {
                  module: /^kcbl\s+modules?$/i,
-                 submodule: /^kcbl\s+modules?\s*\/\s*submodules?$/i
+                 submodule: %r{^kcbl\s+modules?\s*/\s*submodules?$}i
                }
              else
                {
@@ -73,7 +73,7 @@ def discover_custom_fields(project_key = 'RMP')
   fields.each do |field|
     name = field['name']&.downcase || ''
     field_id = field['id']
-    
+
     # Debug log for module fields
     log "Found field: #{name} (#{field_id})" if name.include?('module')
 
@@ -188,13 +188,13 @@ kcbl_module = nil
 kcbl_submodule = nil
 
 if options[:project].upcase == 'KCBL'
-  log "Setting up KCBL Modules/Submodules..."
+  log 'Setting up KCBL Modules/Submodules...'
 
   # Find or create parent module: KCBL Modules/Submodules
   kcbl_module = QaModule.where('lower(name) = ? AND parent_id IS NULL', 'kcbl modules/submodules'.downcase).first
   unless kcbl_module
     product_id = DEFAULT_PRODUCT_UUID
-    log "  Creating parent module: KCBL Modules/Submodules"
+    log '  Creating parent module: KCBL Modules/Submodules'
     kcbl_module = QaModule.create!(name: 'KCBL Modules/Submodules', product_id: product_id)
   end
   log "  ✓ Parent Module: #{kcbl_module.name} (#{kcbl_module.id})"
@@ -205,104 +205,102 @@ if options[:project].upcase == 'KCBL'
 end
 
 defects.find_each do |defect|
-  begin
-    # For KCBL: directly assign the pre-configured modules
-    if options[:project].upcase == 'KCBL'
-      if defect.qa_module_id == kcbl_module.id && defect.submodule_id == kcbl_submodule.id
-        # log "  #{defect.defect_unique}: Already has correct modules. Skipping."
-        stats[:skipped] += 1
-        next
-      end
-
-      log "  #{defect.defect_unique}: Updating to KCBL Modules/Submodules..."
-      unless options[:dry_run]
-        defect.qa_module_id = kcbl_module.id
-        defect.submodule_id = kcbl_submodule.id
-        defect.save!
-        log '    ✅ Updated successfully'
-      end
-      stats[:updated] += 1
-      next
-    end
-
-    # For other projects (RMP, etc.): Fetch from Jira
-    url = "#{JIRA_BASE_URL}/rest/api/3/issue/#{defect.defect_unique}"
-    uri = URI.parse(url)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = true
-    request = Net::HTTP::Get.new(uri.request_uri)
-    request['Accept'] = 'application/json'
-    request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
-
-    response = http.request(request)
-    unless response.is_a?(Net::HTTPSuccess)
-      log "Failed to fetch #{defect.defect_unique}: #{response.code}"
-      stats[:errors] += 1
-      next
-    end
-
-    issue = JSON.parse(response.body)
-    fields = issue['fields'] || {}
-
-    raw_module = fields[module_field]
-    raw_submodule = fields[submodule_field]
-
-    module_name = extract_custom_field_value(raw_module)
-    submodule_name = extract_custom_field_value(raw_submodule)
-
-    if module_name.blank? && submodule_name.blank?
-      # log "  #{defect.defect_unique}: No module data found. Skipping."
+  # For KCBL: directly assign the pre-configured modules
+  if options[:project].upcase == 'KCBL'
+    if defect.qa_module_id == kcbl_module.id && defect.submodule_id == kcbl_submodule.id
+      # log "  #{defect.defect_unique}: Already has correct modules. Skipping."
       stats[:skipped] += 1
       next
     end
 
-    # Apply parsing logic
-    if module_name.present? && submodule_name.to_s.strip.empty?
-      module_name, submodule_name = parse_module_and_submodule(module_name, submodule_name)
-    elsif module_name.present? && submodule_name.present?
-      # If submodule contains parent name, strip it
-      # Example: Module="Miscellaneous", Sub="Miscellaneous - Reports" -> Sub="Reports"
-      prefix_pattern = /^#{Regexp.escape(module_name)}\s*[-\u2013\u2014]\s*/i
-      if submodule_name.match?(prefix_pattern)
-        new_sub = submodule_name.sub(prefix_pattern, '')
-        # log "  Stripped parent from submodule: '#{submodule_name}' -> '#{new_sub}'"
-        submodule_name = new_sub
-      end
-    end
-
-    # Check if update is needed
-    current_module = defect.qa_module&.name
-    current_submodule = defect.submodule&.name
-
-    if current_module == module_name && current_submodule == submodule_name
-      # log "  #{defect.defect_unique}: No change needed"
-      stats[:skipped] += 1
-      next
-    end
-
-    log "  #{defect.defect_unique}: Updating..."
-    log "    Old: Module='#{current_module}', Sub='#{current_submodule}'"
-    log "    New: Module='#{module_name}', Sub='#{submodule_name}'"
-
+    log "  #{defect.defect_unique}: Updating to KCBL Modules/Submodules..."
     unless options[:dry_run]
-      parent, child = find_or_create_modules(
-        module_name: module_name,
-        submodule_name: submodule_name,
-        product_id: defect.product_id || DEFAULT_PRODUCT_UUID,
-        created_by: defect.created_by || 1
-      )
-
-      defect.qa_module_id = parent&.id || FALLBACK_QA_MODULE_ID
-      defect.submodule_id = child&.id || FALLBACK_SUBMODULE_ID
+      defect.qa_module_id = kcbl_module.id
+      defect.submodule_id = kcbl_submodule.id
       defect.save!
       log '    ✅ Updated successfully'
     end
-
     stats[:updated] += 1
-  rescue StandardError => e
-    log "ERROR processing #{defect.defect_unique}: #{e.message}"
-    stats[:errors] += 1
+    next
   end
+
+  # For other projects (RMP, etc.): Fetch from Jira
+  url = "#{JIRA_BASE_URL}/rest/api/3/issue/#{defect.defect_unique}"
+  uri = URI.parse(url)
+  http = Net::HTTP.new(uri.host, uri.port)
+  http.use_ssl = true
+  request = Net::HTTP::Get.new(uri.request_uri)
+  request['Accept'] = 'application/json'
+  request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
+
+  response = http.request(request)
+  unless response.is_a?(Net::HTTPSuccess)
+    log "Failed to fetch #{defect.defect_unique}: #{response.code}"
+    stats[:errors] += 1
+    next
+  end
+
+  issue = JSON.parse(response.body)
+  fields = issue['fields'] || {}
+
+  raw_module = fields[module_field]
+  raw_submodule = fields[submodule_field]
+
+  module_name = extract_custom_field_value(raw_module)
+  submodule_name = extract_custom_field_value(raw_submodule)
+
+  if module_name.blank? && submodule_name.blank?
+    # log "  #{defect.defect_unique}: No module data found. Skipping."
+    stats[:skipped] += 1
+    next
+  end
+
+  # Apply parsing logic
+  if module_name.present? && submodule_name.to_s.strip.empty?
+    module_name, submodule_name = parse_module_and_submodule(module_name, submodule_name)
+  elsif module_name.present? && submodule_name.present?
+    # If submodule contains parent name, strip it
+    # Example: Module="Miscellaneous", Sub="Miscellaneous - Reports" -> Sub="Reports"
+    prefix_pattern = /^#{Regexp.escape(module_name)}\s*[-\u2013\u2014]\s*/i
+    if submodule_name.match?(prefix_pattern)
+      new_sub = submodule_name.sub(prefix_pattern, '')
+      # log "  Stripped parent from submodule: '#{submodule_name}' -> '#{new_sub}'"
+      submodule_name = new_sub
+    end
+  end
+
+  # Check if update is needed
+  current_module = defect.qa_module&.name
+  current_submodule = defect.submodule&.name
+
+  if current_module == module_name && current_submodule == submodule_name
+    # log "  #{defect.defect_unique}: No change needed"
+    stats[:skipped] += 1
+    next
+  end
+
+  log "  #{defect.defect_unique}: Updating..."
+  log "    Old: Module='#{current_module}', Sub='#{current_submodule}'"
+  log "    New: Module='#{module_name}', Sub='#{submodule_name}'"
+
+  unless options[:dry_run]
+    parent, child = find_or_create_modules(
+      module_name: module_name,
+      submodule_name: submodule_name,
+      product_id: defect.product_id || DEFAULT_PRODUCT_UUID,
+      created_by: defect.created_by || 1
+    )
+
+    defect.qa_module_id = parent&.id || FALLBACK_QA_MODULE_ID
+    defect.submodule_id = child&.id || FALLBACK_SUBMODULE_ID
+    defect.save!
+    log '    ✅ Updated successfully'
+  end
+
+  stats[:updated] += 1
+rescue StandardError => e
+  log "ERROR processing #{defect.defect_unique}: #{e.message}"
+  stats[:errors] += 1
 end
 
 log "Done! Updated: #{stats[:updated]}, Skipped: #{stats[:skipped]}, Errors: #{stats[:errors]}"

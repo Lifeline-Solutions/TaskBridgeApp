@@ -21,7 +21,7 @@ class Dashboard < ApplicationRecord
   belongs_to :defect_filter
   belongs_to :created_by, class_name: 'User', foreign_key: 'created_by', optional: true
   belongs_to :modified_by, class_name: 'User', foreign_key: 'modified_by', optional: true
-  
+
   has_many :dashboard_shares, dependent: :destroy
   has_many :shared_users, through: :dashboard_shares, source: :user
 
@@ -46,12 +46,12 @@ class Dashboard < ApplicationRecord
   # Scopes
   scope :active, -> { where(deleted_on: nil, archive_status: false) }
   scope :for_user, ->(user) { where(user: user) }
-  
-  scope :visible_to, ->(user) {
+
+  scope :visible_to, lambda { |user|
     left_joins(:dashboard_shares)
       .where(
-        "dashboards.user_id = :user_id OR 
-         dashboards.visibility = 1 OR 
+        "dashboards.user_id = :user_id OR
+         dashboards.visibility = 1 OR
          (dashboards.visibility = 2 AND dashboard_shares.user_id = :user_id)",
         user_id: user.id
       ).distinct

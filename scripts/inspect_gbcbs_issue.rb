@@ -13,7 +13,7 @@ JIRA_BASE_URL = ENV.fetch('JIRA_BASE_URL', CONFIG[:jira_base_url] || 'https://cr
 JIRA_API_USER = ENV.fetch('JIRA_API_USER', CONFIG[:jira_api_user] || 'boniface.nemwel@craftsilicon.com')
 JIRA_API_TOKEN = ENV.fetch('JIRA_API_TOKEN') { CONFIG[:jira_api_token] }
 
-key = "GBCBS-3247" # Using a known key from the logs
+key = 'GBCBS-3247' # Using a known key from the logs
 
 def fetch_issue_details(key)
   uri = URI("#{JIRA_BASE_URL}/rest/api/2/issue/#{key}")
@@ -23,7 +23,7 @@ def fetch_issue_details(key)
   req['Accept'] = 'application/json'
 
   res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: (uri.scheme == 'https')) { |http| http.request(req) }
-  
+
   if res.is_a?(Net::HTTPSuccess)
     JSON.parse(res.body)
   else
@@ -33,6 +33,4 @@ def fetch_issue_details(key)
 end
 
 data = fetch_issue_details(key)
-if data
-  puts JSON.pretty_generate(data)
-end
+puts JSON.pretty_generate(data) if data

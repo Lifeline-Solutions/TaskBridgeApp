@@ -12,32 +12,24 @@ module Admin
 
       scope = Email.all
 
-      if @retried_at.present?
-        scope = scope.where(retried_at: Date.parse(@retried_at).all_day)
-      end
+      scope = scope.where(retried_at: Date.parse(@retried_at).all_day) if @retried_at.present?
 
-      if @failed_at.present?
-        scope = scope.where(failed_at: Date.parse(@failed_at).all_day)
-      end
+      scope = scope.where(failed_at: Date.parse(@failed_at).all_day) if @failed_at.present?
 
-      if @sent_at.present?
-        scope = scope.where(sent_at: Date.parse(@sent_at).all_day)
-      end
+      scope = scope.where(sent_at: Date.parse(@sent_at).all_day) if @sent_at.present?
 
-      if @created_on.present?
-        scope = scope.where(created_on: Date.parse(@created_on).all_day)
-      end
+      scope = scope.where(created_on: Date.parse(@created_on).all_day) if @created_on.present?
 
       # Totals for the header/summary
       @total_emails = scope.count
 
       # Data for the table: Group by email_type (which seems to be `email_type` column based on schema)
       # We need counts of failed, sent, and total for each type.
-      
+
       # We can use aggregation.
       @report_data = scope.group(:email_type).select(
-        "email_type",
-        "COUNT(*) as total_count",
+        'email_type',
+        'COUNT(*) as total_count',
         "COUNT(CASE WHEN status = 'failed' THEN 1 END) as failed_count",
         "COUNT(CASE WHEN status = 'sent' THEN 1 END) as sent_count"
       ).map do |record|
@@ -53,9 +45,9 @@ module Admin
     private
 
     def ensure_admin
-      unless current_user&.has_role?(:admin)
-        redirect_to root_path, alert: 'Access denied.'
-      end
+      return if current_user&.has_role?(:admin)
+
+      redirect_to root_path, alert: 'Access denied.'
     end
   end
 end

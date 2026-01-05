@@ -21,11 +21,11 @@ class SlaSummaryReportJob < ApplicationJob
     return if user_ids.empty?
 
     # Collect SLA summary data for team's tickets
-    summary_data = build_summary_data(user_ids)
+    build_summary_data(user_ids)
 
     # Get recipients (team leads, HODs, project managers)
     recipients = collect_report_recipients(team)
-    return if recipients.empty?
+    nil if recipients.empty?
 
     # Send individual reports to each recipient
     # DISABLED: SLA automation emails
@@ -37,11 +37,11 @@ class SlaSummaryReportJob < ApplicationJob
   def build_summary_data(user_ids)
     # CRITICAL: Only process open tickets (exclude Closed, Resolved, Declined)
     base_scope = Ticket.joins(:users, :sla_ticket)
-                       .joins(:statuses)
-                       .where.not(statuses: { name: ['Closed', 'Resolved', 'Declined'] })
-                       .where(users: { id: user_ids })
-                       .where('tickets.created_at >= ?', 1.day.ago)
-                       .distinct
+      .joins(:statuses)
+      .where.not(statuses: { name: %w[Closed Resolved Declined] })
+      .where(users: { id: user_ids })
+      .where('tickets.created_at >= ?', 1.day.ago)
+      .distinct
 
     {
       total_tickets: base_scope.distinct.count,
@@ -57,18 +57,18 @@ class SlaSummaryReportJob < ApplicationJob
 
   def count_breached_tickets(scope)
     scope.where(sla_tickets: { sla_status: 'Breached' })
-         .or(scope.where(sla_tickets: { sla_target_response_deadline: 'Breached' }))
-         .or(scope.where(sla_tickets: { sla_resolution_deadline: 'Breached' }))
-         .distinct
-         .count
+      .or(scope.where(sla_tickets: { sla_target_response_deadline: 'Breached' }))
+      .or(scope.where(sla_tickets: { sla_resolution_deadline: 'Breached' }))
+      .distinct
+      .count
   end
 
   def count_on_time_tickets(scope)
     scope.where(sla_tickets: { sla_status: 'Not Breached' })
-         .where(sla_tickets: { sla_target_response_deadline: 'Not Breached' })
-         .where(sla_tickets: { sla_resolution_deadline: 'Not Breached' })
-         .distinct
-         .count
+      .where(sla_tickets: { sla_target_response_deadline: 'Not Breached' })
+      .where(sla_tickets: { sla_resolution_deadline: 'Not Breached' })
+      .distinct
+      .count
   end
 
   def count_at_risk_tickets(user_ids)
@@ -77,20 +77,20 @@ class SlaSummaryReportJob < ApplicationJob
 
     # CRITICAL: Only process open tickets (exclude Closed, Resolved, Declined)
     Ticket.joins(:users, :sla_ticket)
-          .joins(:statuses)
-          .where.not(statuses: { name: ['Closed', 'Resolved', 'Declined'] })
-          .where(users: { id: user_ids })
-          .where(
-            '(tickets.initial_response_deadline BETWEEN ? AND ?) OR '\
-            '(tickets.target_repair_deadline BETWEEN ? AND ?) OR '\
-            '(tickets.resolution_deadline BETWEEN ? AND ?)',
-            Time.current, threshold,
-            Time.current, threshold,
-            Time.current, threshold
-          )
-          .where(sla_tickets: { sla_status: 'Not Breached' })
-          .distinct
-          .count
+      .joins(:statuses)
+      .where.not(statuses: { name: %w[Closed Resolved Declined] })
+      .where(users: { id: user_ids })
+      .where(
+        '(tickets.initial_response_deadline BETWEEN ? AND ?) OR ' \
+        '(tickets.target_repair_deadline BETWEEN ? AND ?) OR ' \
+        '(tickets.resolution_deadline BETWEEN ? AND ?)',
+        Time.current, threshold,
+        Time.current, threshold,
+        Time.current, threshold
+      )
+      .where(sla_tickets: { sla_status: 'Not Breached' })
+      .distinct
+      .count
   end
 
   def breach_breakdown(scope)
@@ -103,9 +103,9 @@ class SlaSummaryReportJob < ApplicationJob
 
   def severity_breakdown(scope)
     scope.joins(:sla_ticket)
-         .where.not(sla_tickets: { sla_status: 'Not Breached' })
-         .group(:priority)
-         .count
+      .where.not(sla_tickets: { sla_status: 'Not Breached' })
+      .group(:priority)
+      .count
   end
 
   def get_at_risk_tickets(user_ids)
@@ -113,21 +113,21 @@ class SlaSummaryReportJob < ApplicationJob
 
     # CRITICAL: Only process open tickets (exclude Closed, Resolved, Declined)
     Ticket.joins(:users, :sla_ticket, :project)
-          .joins(:statuses)
-          .where.not(statuses: { name: ['Closed', 'Resolved', 'Declined'] })
-          .where(users: { id: user_ids })
-          .where(
-            '(tickets.initial_response_deadline BETWEEN ? AND ?) OR '\
-            '(tickets.target_repair_deadline BETWEEN ? AND ?) OR '\
-            '(tickets.resolution_deadline BETWEEN ? AND ?)',
-            Time.current, threshold,
-            Time.current, threshold,
-            Time.current, threshold
-          )
-          .where(sla_tickets: { sla_status: 'Not Breached' })
-          .select('tickets.*, projects.title as project_title')
-          .distinct
-          .limit(10)
+      .joins(:statuses)
+      .where.not(statuses: { name: %w[Closed Resolved Declined] })
+      .where(users: { id: user_ids })
+      .where(
+        '(tickets.initial_response_deadline BETWEEN ? AND ?) OR ' \
+        '(tickets.target_repair_deadline BETWEEN ? AND ?) OR ' \
+        '(tickets.resolution_deadline BETWEEN ? AND ?)',
+        Time.current, threshold,
+        Time.current, threshold,
+        Time.current, threshold
+      )
+      .where(sla_tickets: { sla_status: 'Not Breached' })
+      .select('tickets.*, projects.title as project_title')
+      .distinct
+      .limit(10)
   end
 
   def calculate_performance_metrics(scope)

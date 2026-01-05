@@ -14,7 +14,7 @@ JIRA_API_USER = ENV.fetch('JIRA_API_USER', CONFIG[:jira_api_user] || 'boniface.n
 JIRA_API_TOKEN = ENV.fetch('JIRA_API_TOKEN') { CONFIG[:jira_api_token] }
 
 # KUnity Product ID from previous analysis
-KUNITY_PRODUCT_ID = '4dd0b55f-e02f-4973-93e1-f3ef040b7167' 
+KUNITY_PRODUCT_ID = '4dd0b55f-e02f-4973-93e1-f3ef040b7167'.freeze
 CREATE_MISSING_MODULES = CONFIG.fetch(:create_missing_modules, true)
 FALLBACK_QA_MODULE_ID = CONFIG[:fallback_qa_module_id]
 FALLBACK_SUBMODULE_ID = CONFIG[:fallback_submodule_id]
@@ -75,96 +75,93 @@ end
 log "Starting KUnity module migration (Dry Run: #{options[:dry_run]})"
 
 # Get all KUnity defects
-defects = Defect.where('defect_unique LIKE ?', "KUP-%")
+defects = Defect.where('defect_unique LIKE ?', 'KUP-%')
 log "Found #{defects.count} defects to check."
 
 stats = { updated: 0, skipped: 0, errors: 0 }
 
 defects.find_each do |defect|
-  begin
-    # Fetch from Jira
-    url = "#{JIRA_BASE_URL}/rest/api/3/issue/#{defect.defect_unique}"
-    uri = URI.parse(url)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = true
-    request = Net::HTTP::Get.new(uri.request_uri)
-    request['Accept'] = 'application/json'
-    request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
+  # Fetch from Jira
+  url = "#{JIRA_BASE_URL}/rest/api/3/issue/#{defect.defect_unique}"
+  uri = URI.parse(url)
+  http = Net::HTTP.new(uri.host, uri.port)
+  http.use_ssl = true
+  request = Net::HTTP::Get.new(uri.request_uri)
+  request['Accept'] = 'application/json'
+  request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
 
-    response = http.request(request)
-    unless response.is_a?(Net::HTTPSuccess)
-      log "Failed to fetch #{defect.defect_unique}: #{response.code}"
-      stats[:errors] += 1
-      next
-    end
-
-    issue = JSON.parse(response.body)
-    fields = issue['fields'] || {}
-    
-    # Check 'Components (K-Unity)' custom field
-    # ID: customfield_10152
-    field_data = fields['customfield_10152']
-    
-    component_name = nil
-    if field_data.is_a?(Hash)
-      component_name = field_data['value'].to_s.strip
-    elsif field_data.is_a?(String)
-      component_name = field_data.strip
-    end
-    
-    if component_name.blank?
-      # log "  #{defect.defect_unique}: No KUnity component found. Skipping."
-      stats[:skipped] += 1
-      next
-    end
-
-    # Parse Module - Submodule
-    # Expected format: "Admin Portal-Customer Management"
-    parts = component_name.split('-', 2)
-    
-    if parts.length == 2
-      module_name = parts[0].strip
-      submodule_name = parts[1].strip
-    else
-      # Fallback if no dash: treat as Module, no submodule
-      module_name = parts[0].strip
-      submodule_name = nil
-    end
-
-    # Check if update is needed
-    current_module = defect.qa_module&.name
-    current_submodule = defect.submodule&.name
-
-    if current_module == module_name && current_submodule == submodule_name
-      # log "  #{defect.defect_unique}: No change needed"
-      stats[:skipped] += 1
-      next
-    end
-
-    log "  #{defect.defect_unique}: Updating..."
-    log "    Source Component: '#{component_name}'"
-    log "    Old: Module='#{current_module}', Sub='#{current_submodule}'"
-    log "    New: Module='#{module_name}', Sub='#{submodule_name}'"
-
-    unless options[:dry_run]
-      parent, child = find_or_create_modules(
-        module_name: module_name,
-        submodule_name: submodule_name,
-        product_id: KUNITY_PRODUCT_ID,
-        created_by: defect.created_by || 1
-      )
-
-      defect.qa_module_id = parent&.id || FALLBACK_QA_MODULE_ID
-      defect.submodule_id = child&.id || FALLBACK_SUBMODULE_ID
-      defect.save!
-      log '    ✅ Updated successfully'
-    end
-
-    stats[:updated] += 1
-  rescue StandardError => e
-    log "ERROR processing #{defect.defect_unique}: #{e.message}"
+  response = http.request(request)
+  unless response.is_a?(Net::HTTPSuccess)
+    log "Failed to fetch #{defect.defect_unique}: #{response.code}"
     stats[:errors] += 1
+    next
   end
+
+  issue = JSON.parse(response.body)
+  fields = issue['fields'] || {}
+
+  # Check 'Components (K-Unity)' custom field
+  # ID: customfield_10152
+  field_data = fields['customfield_10152']
+
+  component_name = nil
+  if field_data.is_a?(Hash)
+    component_name = field_data['value'].to_s.strip
+  elsif field_data.is_a?(String)
+    component_name = field_data.strip
+  end
+
+  if component_name.blank?
+    # log "  #{defect.defect_unique}: No KUnity component found. Skipping."
+    stats[:skipped] += 1
+    next
+  end
+
+  # Parse Module - Submodule
+  # Expected format: "Admin Portal-Customer Management"
+  parts = component_name.split('-', 2)
+
+  module_name = parts[0].strip
+  submodule_name = if parts.length == 2
+                     parts[1].strip
+                   else
+                     # Fallback if no dash: treat as Module, no submodule
+                     nil
+                   end
+
+  # Check if update is needed
+  current_module = defect.qa_module&.name
+  current_submodule = defect.submodule&.name
+
+  if current_module == module_name && current_submodule == submodule_name
+    # log "  #{defect.defect_unique}: No change needed"
+    stats[:skipped] += 1
+    next
+  end
+
+  log "  #{defect.defect_unique}: Updating..."
+  log "    Source Component: '#{component_name}'"
+  log "    Old: Module='#{current_module}', Sub='#{current_submodule}'"
+  log "    New: Module='#{module_name}', Sub='#{submodule_name}'"
+
+  unless options[:dry_run]
+    parent, child = find_or_create_modules(
+      module_name: module_name,
+      submodule_name: submodule_name,
+      product_id: KUNITY_PRODUCT_ID,
+      created_by: defect.created_by || 1
+    )
+
+    defect.qa_module_id = parent&.id || FALLBACK_QA_MODULE_ID
+    defect.submodule_id = child&.id || FALLBACK_SUBMODULE_ID
+    defect.save!
+    log '    ✅ Updated successfully'
+  end
+
+  stats[:updated] += 1
+rescue StandardError => e
+  log "ERROR processing #{defect.defect_unique}: #{e.message}"
+  stats[:errors] += 1
 end
 
 log "Done! Updated: #{stats[:updated]}, Skipped: #{stats[:skipped]}, Errors: #{stats[:errors]}"

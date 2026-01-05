@@ -38,7 +38,7 @@ if PROJECT_OR_TICKET.present?
     puts "Target: Project: #{PROJECT_OR_TICKET} (all defects)"
   end
 else
-  puts "Target: All defects"
+  puts 'Target: All defects'
 end
 puts "\n"
 
@@ -70,7 +70,7 @@ if defects.empty?
       puts "❌ No defects found with project key: #{PROJECT_OR_TICKET}"
     end
   else
-    puts "❌ No defects found"
+    puts '❌ No defects found'
   end
   puts 'Please check the project key or defect key and try again.'
   exit 1
@@ -132,7 +132,7 @@ if duplicates_removed.empty?
       puts "Target: Project #{PROJECT_OR_TICKET} is clean!"
     end
   else
-    puts "Target: All defects are clean!"
+    puts 'Target: All defects are clean!'
   end
 else
   puts 'Defects with duplicates removed:'

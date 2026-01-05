@@ -432,18 +432,14 @@ class DefectController < ApplicationController
 
       # Conditionally join qa_modules if we are searching it
       begin
-        if search_conditions.any? { |c| c.include?('qa_modules.name') }
-           @defects = @defects.left_joins(:qa_module)
-        end
+        @defects = @defects.left_joins(:qa_module) if search_conditions.any? { |c| c.include?('qa_modules.name') }
       rescue StandardError
         # Ignore if association doesn't exist
       end
 
       # Conditionally join banking_types if we are searching it
       begin
-        if search_conditions.any? { |c| c.include?('banking_types.name') }
-           @defects = @defects.left_joins(:banking_type)
-        end
+        @defects = @defects.left_joins(:banking_type) if search_conditions.any? { |c| c.include?('banking_types.name') }
       rescue StandardError
         # Ignore if association doesn't exist
       end
@@ -603,13 +599,13 @@ class DefectController < ApplicationController
     # Compute reopened count per defect for the defects on the current page
     defect_ids_for_page = @defects.map(&:id)
     @reopened_counts = if defect_ids_for_page.any?
-      DefectHistory.where(defect_id: defect_ids_for_page, history_type: 'Status Changed')
-                   .where("history ILIKE ?", "%to Reopened%")
-                   .group(:defect_id)
-                   .count
-    else
-      {}
-    end
+                         DefectHistory.where(defect_id: defect_ids_for_page, history_type: 'Status Changed')
+                           .where('history ILIKE ?', '%to Reopened%')
+                           .group(:defect_id)
+                           .count
+                       else
+                         {}
+                       end
 
     render :index_show
   end
@@ -619,9 +615,9 @@ class DefectController < ApplicationController
 
     @defect = Defect.find(params[:id])
 
-    @reopened_count = DefectHistory.where(defect_id: @defect.id, history_type: "Status Changed")
-                                   .select { |history| history.new_value == "Reopened" }
-                                   .size
+    @reopened_count = DefectHistory.where(defect_id: @defect.id, history_type: 'Status Changed')
+      .select { |history| history.new_value == 'Reopened' }
+      .size
 
     # Preserve product_id for back navigation
     @product_id = params[:product_id] || @defect.product_id
@@ -1058,13 +1054,13 @@ class DefectController < ApplicationController
     # Compute reopened count per defect for the defects on the current page
     defect_ids_for_page = @defects.map(&:id)
     @reopened_counts = if defect_ids_for_page.any?
-      DefectHistory.where(defect_id: defect_ids_for_page, history_type: 'Status Changed')
-                   .where("history ILIKE ?", "%to Reopened%")
-                   .group(:defect_id)
-                   .count
-    else
-      {}
-    end
+                         DefectHistory.where(defect_id: defect_ids_for_page, history_type: 'Status Changed')
+                           .where('history ILIKE ?', '%to Reopened%')
+                           .group(:defect_id)
+                           .count
+                       else
+                         {}
+                       end
 
     render :index_show
   end
@@ -1140,7 +1136,6 @@ class DefectController < ApplicationController
         current_user,
         'Status Changed',
         "Status changed from #{old_status_name} to #{status.name} by #{current_user.name}"
-
       )
     end
 
@@ -1472,14 +1467,14 @@ class DefectController < ApplicationController
     filtered_ids = defects.except(:order).distinct.select(:id)
 
     defects = Defect.where(id: filtered_ids)
-                    .includes(:users, :qa_module, :labels, :banking_type, :statuses, product: %i[client groupwares])
-                    .order(Arel.sql("CAST(NULLIF(SPLIT_PART(defect_unique, '-', 2), '') AS INTEGER) #{direction}"))
+      .includes(:users, :qa_module, :labels, :banking_type, :statuses, product: %i[client groupwares])
+      .order(Arel.sql("CAST(NULLIF(SPLIT_PART(defect_unique, '-', 2), '') AS INTEGER) #{direction}"))
     defect_ids = defects.map(&:id)
     reopened_counts = if defect_ids.any?
                         DefectHistory.where(defect_id: defect_ids, history_type: 'Status Changed')
-                                     .where("history ILIKE ?", "%to Reopened%")
-                                     .group(:defect_id)
-                                     .count
+                          .where('history ILIKE ?', '%to Reopened%')
+                          .group(:defect_id)
+                          .count
                       else
                         {}
                       end
@@ -1510,7 +1505,6 @@ class DefectController < ApplicationController
           defect.created_at.strftime('%Y-%m-%d %H:%M'),
           defect.retest_count,
           reopened_count
-
 
         ]
       end
@@ -1641,8 +1635,8 @@ class DefectController < ApplicationController
     filtered_ids = defects.except(:order).distinct.select(:id)
 
     defects = Defect.where(id: filtered_ids)
-                    .includes(:users, :labels, :statuses, :qa_module, :submodule, :banking_type, product: %i[client groupwares])
-                    .order(Arel.sql("CAST(NULLIF(SPLIT_PART(defect_unique, '-', 2), '') AS INTEGER) #{direction}"))
+      .includes(:users, :labels, :statuses, :qa_module, :submodule, :banking_type, product: %i[client groupwares])
+      .order(Arel.sql("CAST(NULLIF(SPLIT_PART(defect_unique, '-', 2), '') AS INTEGER) #{direction}"))
 
     # Restrict for non-admin/observer/qa users (same as index_show)
     defects = defects.joins(:users).where(users: { id: current_user.id }) unless current_user.has_any_role?(:admin, :observer, :qa)
@@ -1650,13 +1644,13 @@ class DefectController < ApplicationController
     # Precompute reopened counts for all defects to avoid N+1 queries
     defect_ids = defects.map(&:id)
     reopened_counts = if defect_ids.any?
-      DefectHistory.where(defect_id: defect_ids, history_type: 'Status Changed')
-                   .where("history ILIKE ?", "%to Reopened%")
-                   .group(:defect_id)
-                   .count
-    else
-      {}
-    end
+                        DefectHistory.where(defect_id: defect_ids, history_type: 'Status Changed')
+                          .where('history ILIKE ?', '%to Reopened%')
+                          .group(:defect_id)
+                          .count
+                      else
+                        {}
+                      end
 
     # Build Excel via Axlsx (caxlsx)
     package = Axlsx::Package.new
@@ -2082,7 +2076,7 @@ class DefectController < ApplicationController
 
     # Track content/description changes (ActionText)
     if params[:content].present?
-      current_content = defect.content&.body&.to_s || ''
+      current_content = defect.content&.body.to_s
       new_content = params[:content].to_s
 
       # Normalize HTML for semantic comparison (ignore whitespace/formatting differences)
@@ -2236,27 +2230,25 @@ class DefectController < ApplicationController
 
   def build_edit_summary(changes_hash)
     change_count = changes_hash.keys.size
-    change_types = []
-
-    changes_hash.keys.each do |field|
-      change_types << case field
-                      when :summary
-                        'summary'
-                      when :description
-                        'description'
-                      when :priority
-                        'priority'
-                      when :status
-                        'status'
-                      when :severity
-                        'severity'
-                      when :labels
-                        'labels'
-                      when :assignees
-                        'assignees'
-                      else
-                        field.to_s.humanize.downcase
-                      end
+    change_types = changes_hash.keys.map do |field|
+      case field
+      when :summary
+        'summary'
+      when :description
+        'description'
+      when :priority
+        'priority'
+      when :status
+        'status'
+      when :severity
+        'severity'
+      when :labels
+        'labels'
+      when :assignees
+        'assignees'
+      else
+        field.to_s.humanize.downcase
+      end
     end
 
     if change_count == 1
@@ -2323,11 +2315,11 @@ class DefectController < ApplicationController
     hash.deep_transform_values do |value|
       case value
       when ActiveSupport::SafeBuffer
-        value.to_str  # Convert SafeBuffer to plain string
+        value.to_str # Convert SafeBuffer to plain string
       when String
-        value.to_s    # Ensure it's a plain string
+        value.to_s # Ensure it's a plain string
       else
-        value         # Keep other types as-is
+        value # Keep other types as-is
       end
     end
   end
@@ -2343,7 +2335,7 @@ class DefectController < ApplicationController
       html = html_string.to_s
 
       # Add space around block-level tags so content doesn't merge when tags are removed
-      html = html.gsub(/<\/(p|div|li|ul|ol|h1|h2|h3|h4|h5|h6|br)>/i, ' ')
+      html = html.gsub(%r{</(p|div|li|ul|ol|h1|h2|h3|h4|h5|h6|br)>}i, ' ')
       html = html.gsub(/<(p|div|li|ul|ol|h1|h2|h3|h4|h5|h6|br)[^>]*>/i, ' ')
 
       # Strip all HTML tags
@@ -2356,7 +2348,7 @@ class DefectController < ApplicationController
       plain_text.gsub(/\s+/, ' ')
         .strip
         .downcase
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error "Error normalizing HTML: #{e.message}"
       html_string.to_s.gsub(/\s+/, ' ').strip.downcase
     end

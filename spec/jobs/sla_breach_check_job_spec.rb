@@ -17,7 +17,7 @@ RSpec.describe SlaBreachCheckJob, type: :job do
         allow(Rails.logger).to receive(:info)
 
         # Count how many tickets would be processed
-        initial_breached = Ticket.joins(:sla_ticket)
+        Ticket.joins(:sla_ticket)
           .where('tickets.initial_response_deadline < ?', Time.current)
           .where.not(sla_tickets: { sla_status: 'Breached' })
           .where('tickets.initial_response_deadline IS NOT NULL')

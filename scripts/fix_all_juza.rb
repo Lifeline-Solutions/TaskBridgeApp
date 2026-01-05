@@ -14,9 +14,9 @@ JIRA_API_USER = ENV.fetch('JIRA_API_USER', CONFIG[:jira_api_user] || 'boniface.n
 JIRA_API_TOKEN = ENV.fetch('JIRA_API_TOKEN') { CONFIG[:jira_api_token] }
 
 # SC Juza Configuration
-PROJECT_KEY = 'SJP'
-PRODUCT_ID = 'c7961971-c399-4f00-a2f7-df2d8a3f96e4'
-MODULE_FIELD_ID = 'customfield_10136' # "Module - SC Juza"
+PROJECT_KEY = 'SJP'.freeze
+PRODUCT_ID = 'c7961971-c399-4f00-a2f7-df2d8a3f96e4'.freeze
+MODULE_FIELD_ID = 'customfield_10136'.freeze # "Module - SC Juza"
 FALLBACK_QA_MODULE_ID = CONFIG[:fallback_qa_module_id]
 FALLBACK_SUBMODULE_ID = CONFIG[:fallback_submodule_id]
 CREATE_MISSING_MODULES = true
@@ -95,71 +95,69 @@ log "Found #{defects.count} defects to check."
 stats = { updated: 0, skipped: 0, errors: 0 }
 
 defects.find_each do |defect|
-  begin
-    # Fetch from Jira
-    url = "#{JIRA_BASE_URL}/rest/api/3/issue/#{defect.defect_unique}"
-    uri = URI.parse(url)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = true
-    request = Net::HTTP::Get.new(uri.request_uri)
-    request['Accept'] = 'application/json'
-    request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
+  # Fetch from Jira
+  url = "#{JIRA_BASE_URL}/rest/api/3/issue/#{defect.defect_unique}"
+  uri = URI.parse(url)
+  http = Net::HTTP.new(uri.host, uri.port)
+  http.use_ssl = true
+  request = Net::HTTP::Get.new(uri.request_uri)
+  request['Accept'] = 'application/json'
+  request.basic_auth(JIRA_API_USER, JIRA_API_TOKEN)
 
-    response = http.request(request)
-    unless response.is_a?(Net::HTTPSuccess)
-      log "Failed to fetch #{defect.defect_unique}: #{response.code}"
-      stats[:errors] += 1
-      next
-    end
-
-    issue = JSON.parse(response.body)
-    fields = issue['fields'] || {}
-
-    raw_val = fields[MODULE_FIELD_ID]
-    full_string = extract_custom_field_value(raw_val)
-
-    if full_string.blank?
-      # log "  #{defect.defect_unique}: No module data found (Field #{MODULE_FIELD_ID} empty). Skipping."
-      stats[:skipped] += 1
-      next
-    end
-
-    module_name, submodule_name = parse_module_and_submodule(full_string)
-
-    current_module = defect.qa_module&.name
-    current_submodule = defect.submodule&.name
-
-    if current_module == module_name && current_submodule == submodule_name
-      # log "  #{defect.defect_unique}: No change needed"
-      stats[:skipped] += 1
-      next
-    end
-
-    log "  #{defect.defect_unique}: Updating..."
-    log "    Source: '#{full_string}'"
-    log "    Old: Module='#{current_module}', Sub='#{current_submodule}'"
-    log "    New: Module='#{module_name}', Sub='#{submodule_name}'"
-
-    unless options[:dry_run]
-      parent, child = find_or_create_modules(
-        module_name: module_name,
-        submodule_name: submodule_name,
-        product_id: PRODUCT_ID,
-        created_by: defect.created_by || 1
-      )
-
-      defect.qa_module_id = parent&.id || FALLBACK_QA_MODULE_ID
-      defect.submodule_id = child&.id || FALLBACK_SUBMODULE_ID
-      defect.save!
-      log '    ✅ Updated successfully'
-    end
-
-    stats[:updated] += 1
-  rescue StandardError => e
-    log "ERROR processing #{defect.defect_unique}: #{e.message}"
-    log e.backtrace.join("\n")
+  response = http.request(request)
+  unless response.is_a?(Net::HTTPSuccess)
+    log "Failed to fetch #{defect.defect_unique}: #{response.code}"
     stats[:errors] += 1
+    next
   end
+
+  issue = JSON.parse(response.body)
+  fields = issue['fields'] || {}
+
+  raw_val = fields[MODULE_FIELD_ID]
+  full_string = extract_custom_field_value(raw_val)
+
+  if full_string.blank?
+    # log "  #{defect.defect_unique}: No module data found (Field #{MODULE_FIELD_ID} empty). Skipping."
+    stats[:skipped] += 1
+    next
+  end
+
+  module_name, submodule_name = parse_module_and_submodule(full_string)
+
+  current_module = defect.qa_module&.name
+  current_submodule = defect.submodule&.name
+
+  if current_module == module_name && current_submodule == submodule_name
+    # log "  #{defect.defect_unique}: No change needed"
+    stats[:skipped] += 1
+    next
+  end
+
+  log "  #{defect.defect_unique}: Updating..."
+  log "    Source: '#{full_string}'"
+  log "    Old: Module='#{current_module}', Sub='#{current_submodule}'"
+  log "    New: Module='#{module_name}', Sub='#{submodule_name}'"
+
+  unless options[:dry_run]
+    parent, child = find_or_create_modules(
+      module_name: module_name,
+      submodule_name: submodule_name,
+      product_id: PRODUCT_ID,
+      created_by: defect.created_by || 1
+    )
+
+    defect.qa_module_id = parent&.id || FALLBACK_QA_MODULE_ID
+    defect.submodule_id = child&.id || FALLBACK_SUBMODULE_ID
+    defect.save!
+    log '    ✅ Updated successfully'
+  end
+
+  stats[:updated] += 1
+rescue StandardError => e
+  log "ERROR processing #{defect.defect_unique}: #{e.message}"
+  log e.backtrace.join("\n")
+  stats[:errors] += 1
 end
 
 log "Done! Updated: #{stats[:updated]}, Skipped: #{stats[:skipped]}, Errors: #{stats[:errors]}"
