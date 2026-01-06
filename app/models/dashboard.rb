@@ -89,6 +89,11 @@ class Dashboard < ApplicationRecord
     self.widgets = widgets.map.with_index { |w, i| w.merge(position: i) }
   end
 
+  # Check if a user owns this dashboard
+  def owned_by?(user)
+    self.user_id == user.id
+  end
+
   # Get filtered defects based on the saved filter
   def filtered_defects
     defect_filter.apply_to(Defect.published)
