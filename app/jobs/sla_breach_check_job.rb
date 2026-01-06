@@ -57,7 +57,7 @@ class SlaBreachCheckJob < ApplicationJob
     tickets = Ticket.joins(:add_statuses, :statuses)
                     .joins('INNER JOIN statuses ON statuses.id = add_statuses.status_id')
                     .where(statuses: { name: 'Client Information Pending' })
-                    .where('add_statuses.updated_at <= ?', 1.months.ago)
+                    .where('add_statuses.updated_at <= ?', 1.month.ago)
                     .distinct
 
     tickets.find_each do |ticket|
@@ -79,7 +79,7 @@ class SlaBreachCheckJob < ApplicationJob
     tickets = Ticket.joins(:add_statuses, :statuses)
                     .joins('INNER JOIN statuses ON statuses.id = add_statuses.status_id')
                     .where(statuses: { name: 'Resolved' })
-                    .where('add_statuses.updated_at <= ?', 1.months.ago)
+                    .where('add_statuses.updated_at <= ?', 1.month.ago)
                     .distinct
 
     tickets.find_each do |ticket|
