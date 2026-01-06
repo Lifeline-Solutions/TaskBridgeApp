@@ -15,7 +15,7 @@ end
 
 # Check for SLA breaches every 15 minutes
 # Detects tickets that have passed their SLA deadlines
-every 15.minutes do
+every 2.hours do
   runner "SlaBreachCheckJob.perform_later"
 end
 

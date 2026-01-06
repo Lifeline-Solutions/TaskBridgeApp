@@ -46,6 +46,7 @@ module Activities
     def log(description)
       @attrs[:description] = description
       save!
+      self
     end
 
     private
