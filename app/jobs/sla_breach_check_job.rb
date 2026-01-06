@@ -34,11 +34,18 @@ class SlaBreachCheckJob < ApplicationJob
       next unless sla_ticket
 
       # Update SLA status
-      sla_ticket.update(sla_resolution_deadline: 'Breached')
+      if sla_ticket.update(sla_resolution_deadline: 'Breached')
+        assigned_user = ticket.users.first
+        details = "The SLA Target Resolution is Breached, Target Resolution Deadline: #{ticket.resolution_deadline.strftime('%m/%d/%Y %H:%M') || 'N/A'}, This process was automated!"
+        log_event(ticket, nil, 'sla_breach', details, assigned_user)
+      end
+
+      #Log Event to show update
 
       # Send notification to stakeholders
       # DISABLED: SLA automation emails
       # notify_stakeholders(ticket, :initial_response_breach)
+      #
     end
   end
 
@@ -50,14 +57,17 @@ class SlaBreachCheckJob < ApplicationJob
     tickets = Ticket.joins(:add_statuses, :statuses)
                     .joins('INNER JOIN statuses ON statuses.id = add_statuses.status_id')
                     .where(statuses: { name: 'Client Information Pending' })
-                    .where('add_statuses.updated_at <= ?', 30.days.ago)
+                    .where('add_statuses.updated_at <= ?', 1.months.ago)
                     .distinct
-
 
     tickets.find_each do |ticket|
       # Update status to Resolved
       ticket.statuses.clear
       ticket.statuses << resolved_status
+
+      assigned_user = ticket.users.first
+      details = "Status was changed to #{resolved_status.name} currently assigned to #{assigned_user&.name || 'Unassigned'}, This process was automated"
+      log_event(ticket, nil, 'status_change', details, assigned_user)
     end
   end
 
@@ -69,14 +79,17 @@ class SlaBreachCheckJob < ApplicationJob
     tickets = Ticket.joins(:add_statuses, :statuses)
                     .joins('INNER JOIN statuses ON statuses.id = add_statuses.status_id')
                     .where(statuses: { name: 'Resolved' })
-                    .where('add_statuses.updated_at <= ?', 30.days.ago)
+                    .where('add_statuses.updated_at <= ?', 1.months.ago)
                     .distinct
 
-
     tickets.find_each do |ticket|
-      # Update status to Resolved
       ticket.statuses.clear
       ticket.statuses << closed_status
+
+      assigned_user = ticket.users.first
+      details = "Status was changed to #{closed_status.name} currently assigned to #{assigned_user&.name || 'Unassigned'},\n" \
+                "Target Resolution deadline: #{ticket.resolution_deadline.strftime('%m/%d/%Y %H:%M') || 'N/A'}, This process was automated!"
+      log_event(ticket, nil, 'status_change', details, assigned_user)
     end
   end
 
@@ -192,5 +205,15 @@ class SlaBreachCheckJob < ApplicationJob
                  end
 
     "[SLA BREACH] #{type_label} SLA Breached - Ticket #{ticket.unique_id}"
+  end
+
+  def log_event(ticket, user, event_type, details, assigned_user)
+    event = Event.create(ticket: ticket, user: user, event_type: event_type, details: details, assigned_user_id: assigned_user&.id)
+    if event.persisted?
+      Rails.logger.info "[SlaBreachCheckJob] Event #{event.id} created for ticket #{ticket.unique_id}"
+    else
+      Rails.logger.error "[SlaBreachCheckJob] Failed to create event for ticket #{ticket.unique_id}: #{event.errors.full_messages.join(', ')}"
+    end
+    event
   end
 end
