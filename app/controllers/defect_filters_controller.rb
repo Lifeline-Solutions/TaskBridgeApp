@@ -22,18 +22,59 @@ class DefectFiltersController < ApplicationController
   end
 
   def edit
-    # Load all necessary data for the edit form
-    @qa_products = Product
-      .includes(:client, :groupwares, :statuses)
-      .joins(:statuses)
-      .where(statuses: { name: ['Pre Quality Assurance', 'End Of Quality Assurance'] })
-      .where('products.deleted_on IS NULL')
-      .distinct
-      .order('products.document_name ASC')
+    # Determine which product(s) are relevant to this filter
+    filter_product_ids = Array(@defect_filter.product_id).compact
+    saved_filter_product_ids = Array(@defect_filter.filters['product_id']).compact
+    relevant_product_ids = (filter_product_ids + saved_filter_product_ids).uniq.compact
 
-    # Load users, modules, statuses, and labels for filter options
-    @users = User.where(active: true).order(:first_name, :last_name)
-    @modules = QaModule.includes(:children, :parent).distinct.order(:name)
+    # Load products scoped to this filter
+    @qa_products = if relevant_product_ids.any?
+      # Show only the specific product(s) associated with this filter
+      Product
+        .where(id: relevant_product_ids)
+        .includes(:client, :groupwares, :statuses)
+        .where('products.deleted_on IS NULL')
+        .order('products.document_name ASC')
+    else
+      # Fallback: show all QA products if no specific product is set
+      Product
+        .includes(:client, :groupwares, :statuses)
+        .joins(:statuses)
+        .where(statuses: { name: ['Pre Quality Assurance', 'End Of Quality Assurance'] })
+        .where('products.deleted_on IS NULL')
+        .distinct
+        .order('products.document_name ASC')
+    end
+
+    # Scope other data to the relevant products
+    if relevant_product_ids.any?
+      # Load users who have access to these products
+      @users = User
+        .joins(:products)
+        .where(products: { id: relevant_product_ids }, active: true)
+        .distinct
+        .order(:first_name, :last_name)
+
+      # Load modules for these products
+      @modules = QaModule
+        .joins(:product)
+        .where(products: { id: relevant_product_ids })
+        .includes(:children, :parent)
+        .distinct
+        .order(:name)
+
+      # Load banking types for these products
+      @banking_types = BankingType
+        .for_product(relevant_product_ids)
+        .active
+    else
+      # Fallback: load all active users and modules
+      @users = User.where(active: true).order(:first_name, :last_name)
+      @modules = QaModule.includes(:children, :parent).distinct.order(:name)
+      @banking_types = BankingType.active.order(:name)
+    end
+
+    # Statuses and labels are global, so no scoping needed
     @statuses = Status.distinct.order(:name)
     @labels = Label.distinct.order(:name)
 
