@@ -259,11 +259,14 @@ class HomeController < ApplicationController
         .count
 
       # Open defects for current user (excluding Closed, Resolved, Declined)
+      # Uses OR logic - counts defects with AT LEAST ONE open status
+      open_status_ids = Status.where.not(name: %w[Closed Resolved Declined]).pluck(:id)
       @open_defects_for_current_user_count = current_user.defects
-        .joins(:statuses)
-        .where.not(statuses: { name: %w[Closed Resolved Declined] })
         .where(deleted_on: nil)
-        .distinct
+        .where(
+          "defects.id IN (SELECT DISTINCT defect_id FROM defect_statuses WHERE status_id IN (?))",
+          open_status_ids
+        )
         .count
 
       # High priority defects for current user
