@@ -33,7 +33,7 @@
           <%= image_tag 'default.png', class: 'w-16' %>
         <% end %>
       </div>
-      <div id="imageModal" class="modal" data-controller="image-modal" data-image-modal-target="modal">
+      <div id="ticketImageModal" class="modal" data-controller="image-modal" data-image-modal-target="modal">
         <span class="close" data-action="click->image-modal#closeModal" data-image-modal-target="closeButton">&times;</span>
         <img class="modal-content" id="fullImage" data-image-modal-target="modalImage" alt='show image'>
       </div>
@@ -140,34 +140,48 @@
 </style>
 
 <script>
-
   document.addEventListener('turbo:load', function() {
-    const modal = document.getElementById('imageModal');
+    const modal = document.getElementById('ticketImageModal');
     const modalImg = document.getElementById('fullImage');
     const closeBtn = document.querySelector('.close');
 
-    // Use event delegation for dynamically added images
-    document.addEventListener('click', function(event) {
-      const target = event.target;
-
-      if (target.classList.contains('zoomable-image')) {
-        modal.style.display = 'block';
-        modalImg.src = target.src;
-      }
-    });
-
+    // Set up close button
     if (closeBtn) {
       closeBtn.onclick = function() {
-        modal.style.display = 'none';
-      }
+        if (modal) {
+          modal.style.display = 'none';
+        }
+      };
     }
 
+    // Close modal when clicking on the modal background
     if (modal) {
-      modal.onclick = function() {
-        modal.style.display = 'none';
+      modal.onclick = function(event) {
+        if (event.target === modal) {
+          modal.style.display = 'none';
+        }
+      };
+    }
+  });
+
+  // Use event delegation on document for all image clicks
+  // This runs once and handles all clicks, even for dynamically added images
+  document.addEventListener('click', function(event) {
+    const target = event.target;
+
+    // Check if clicked element is a zoomable image
+    if (target.classList && target.classList.contains('zoomable-image')) {
+      const modal = document.getElementById('ticketImageModal');
+      const modalImg = document.getElementById('fullImage');
+
+      if (modal && modalImg) {
+        modal.style.display = 'flex';
+        modalImg.src = target.src;
+        event.stopPropagation(); // Prevent the click from bubbling
       }
     }
   });
+
 
   function openCity(evt, cityName) {
     const tabcontent = document.getElementsByClassName("tabcontent");

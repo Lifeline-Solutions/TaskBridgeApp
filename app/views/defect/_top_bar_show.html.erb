@@ -1547,12 +1547,6 @@
       if (checkbox.dataset.initialized) return;
 
       const changeHandler = function(e) {
-        // Prevent any default behavior and event bubbling
-        if (e) {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-
         const target = this.dataset.target;
         const isChecked = this.checked;
 

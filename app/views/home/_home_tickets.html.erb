@@ -244,7 +244,10 @@
       </span>
     </div>
   <% end %>
-  <%= link_to index_show_defect_index_path(user_id: current_user.id, status: 'open'), class: 'flex items-center justify-between w-full' do %>
+  <%
+    open_statuses = Status.where.not(name: %w[Closed Resolved Declined]).pluck(:name)
+  %>
+  <%= link_to index_show_defect_index_path(user_id: current_user.id, status: open_statuses), class: 'flex items-center justify-between w-full' do %>
     <div class="col-span-1 flex items-center dark:bg-gray-700 justify-between p-3 sm:p-4 h-20 sm:h-24 rounded shadow hover:shadow-lg w-full border border-gray-200 dark:border-gray-500 hover:border-blue-400 hover:ring-2 hover:ring-blue-200 transition-all duration-200">
       <p class="text-xs sm:text-sm truncate">
         My Open QA Defects
