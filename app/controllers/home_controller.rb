@@ -269,7 +269,7 @@ class HomeController < ApplicationController
         )
         .count
 
-      # High priority defects for current user
+      # High priority defects for current user 
       @high_priority_defects_for_current_user_count = current_user.defects
         .where(priority: 'High', deleted_on: nil)
         .distinct
