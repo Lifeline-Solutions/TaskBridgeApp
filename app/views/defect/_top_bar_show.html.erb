@@ -90,7 +90,7 @@
           </button>
 
           <!-- Filter Dropdown Menu -->
-          <div id="filterDropdown" class="hidden absolute bg-white dark:bg-gray-700 right-0 mt-2 w-64 origin-top-right rounded-md shadow-lg border border-gray-200 z-10">
+          <div id="filterDropdown" class="hidden absolute bg-white dark:bg-gray-700 right-0 mt-2 w-64 max-h-[80vh] overflow-y-auto origin-top-right rounded-md shadow-lg border border-gray-200 z-10">
             <%= form_with url: index_show_defect_index_path, method: :get, class: 'p-2 space-y-2', id: 'index-show-filter-form' do |f| %>
               <!-- Hidden fields to preserve context -->
               <% Array(params[:product_id]).each do |product_id| %>
