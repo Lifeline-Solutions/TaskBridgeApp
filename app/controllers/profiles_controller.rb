@@ -176,14 +176,11 @@ class ProfilesController < ApplicationController
 
     # Assignment events: using assigned_user_id
     assignment_events_scope = Event.where.not(assigned_user_id: nil)
+                                   .where.not(event_type: ['created and assign', 'Updated Issue', 'Priority Updated'])
 
-    if @selected_user.present?
-      assignment_events_scope = assignment_events_scope.where(assigned_user_id: @selected_user.id)
-    end
+    assignment_events_scope = assignment_events_scope.where(assigned_user_id: @selected_user.id) if @selected_user.present?
 
-    if from_time && to_time
-      assignment_events_scope = assignment_events_scope.where(created_at: from_time..to_time)
-    end
+    assignment_events_scope = assignment_events_scope.where(created_at: from_time..to_time) if from_time && to_time
 
     assignment_ticket_ids = assignment_events_scope.where.not(ticket_id: nil).pluck(:ticket_id)
 
@@ -222,7 +219,7 @@ class ProfilesController < ApplicationController
       .distinct
 
     # All events for these tickets (not only assignments) within date window if given
-    all_events_scope = Event.where(ticket_id: all_ticket_ids)
+    all_events_scope = Event.where(ticket_id: all_ticket_ids).where.not(event_type: ['created and assign', 'Updated Issue', 'Priority Updated'])
     all_events_scope = all_events_scope.where(created_at: from_time..to_time) if from_time && to_time
     @all_ticket_events_by_ticket = all_events_scope
       .select(:ticket_id, :details, :created_at, :id, :assigned_user_id)
@@ -495,7 +492,7 @@ class ProfilesController < ApplicationController
 
       # Get all tickets that were assigned to team members (past or current) via events.assigned_user_id
       # Filter by ticket creation date
-      assigned_ticket_ids = Event.where(assigned_user_id: team_member_ids)
+      assigned_ticket_ids = Event.where(assigned_user_id: team_member_ids).where.not(event_type: ['created and assign', 'Updated Issue', 'Priority Updated'])
         .where.not(ticket_id: nil)
         .pluck(:ticket_id)
         .uniq
@@ -637,8 +634,9 @@ class ProfilesController < ApplicationController
       @team_members.each do |user|
         # Tickets that this user touched (via events.assigned_user_id)
         user_ticket_ids = Event.where(assigned_user_id: user.id, ticket_id: assigned_ticket_ids)
-          .pluck(:ticket_id)
-          .uniq
+                               .where.not(event_type: ['created and assign', 'Updated Issue', 'Priority Updated'])
+                               .pluck(:ticket_id)
+                               .uniq
 
         #Create current user tagged tickets add
 
@@ -1023,19 +1021,13 @@ class ProfilesController < ApplicationController
 
     # Check for status patterns
     # Pattern 1: "Status: <status>"
-    if details_text =~ /Status:\s*([^,\n]+)/i
-      return $1.strip
-    end
+    return $1.strip if details_text =~ /Status:\s*([^,\n]+)/i
 
     # Pattern 2: "status changed to <status>"
-    if details_text =~ /status\s+(?:changed|updated|set)\s+to\s+([^,\n]+)/i
-      return $1.strip
-    end
+    return $1.strip if details_text =~ /status\s+(?:changed|updated|set)\s+to\s+([^,\n]+)/i
 
     # Pattern 3: "from <old> to <new>"
-    if details_text =~ /from\s+\w+\s+to\s+([^,\n]+)/i
-      return $1.strip
-    end
+    return $1.strip if details_text =~ /from\s+\w+\s+to\s+([^,\n]+)/i
 
     # Pattern 4: Check for common status keywords
     status_keywords = ['Open', 'In Progress', 'Pending', 'Resolved', 'Closed', 'Declined',
