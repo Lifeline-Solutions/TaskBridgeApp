@@ -808,7 +808,7 @@ class DefectController < ApplicationController
   end
 
   def edit
-    @defect = Defect.find(params[:id])
+    # @defect is already set by set_defect before_action
 
     @products = Product.with_quality_assurance_status
 
