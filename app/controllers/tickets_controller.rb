@@ -561,11 +561,21 @@ class TicketsController < ApplicationController
         format.js
         format.html { redirect_back fallback_location: project_ticket_path(@project, @ticket), notice: 'Due date updated successfully.' }
       end
+
     else
       respond_to do |format|
         format.js
         format.html { render :edit, alert: 'Failed to update due date.' }
       end
+    end
+    assigned_user = @ticket.users.first || @project.user
+
+    if current_user.present?
+      log_event(@ticket, current_user, 'Update due date',
+                "Ticket's Due Date was updated to <b>#{@ticket.due_date.strftime('%B %d, %Y')}</b> by #{current_user.name}  at #{Time.now.strftime('%H:%M of  %B %d, %Y')} while  assigned to #{assigned_user.name} ",
+                assigned_user)
+    else
+      log_event(@ticket, current_user, 'Update due date', "Ticket was updated but no assigned user at #{Time.now.strftime('%H:%M of  %B %d, %Y')}", nil)
     end
   end
 
@@ -586,6 +596,14 @@ class TicketsController < ApplicationController
         format.js
         format.html { render :edit, alert: 'Failed to update priority.' }
       end
+    end
+    assigned_user = @ticket.users.first || @project.user
+    if current_user.present?
+      log_event(@ticket, current_user, 'Priority Updated',
+                "Ticket's Severity Level was updated to <b>#{@ticket.priority}</b> by #{current_user.name}  at #{Time.now.strftime('%H:%M of  %B %d, %Y')} while  assigned to #{assigned_user.name} ",
+                assigned_user)
+    else
+      log_event(@ticket, current_user, 'Priority Update', "Ticket was updated but no assigned user at #{Time.now.strftime('%H:%M of  %B %d, %Y')}", nil)
     end
   end
 
@@ -712,6 +730,16 @@ class TicketsController < ApplicationController
         format.html { render :edit, alert: 'Failed to update issue type.' }
       end
     end
+    assigned_user = @ticket.users.first || @project.user
+
+    if current_user.present?
+      log_event(@ticket, current_user, 'Updated Issue',
+                "Ticket Issue Type was updated to <b>#{@ticket.issue}</b> by #{current_user.name}  at #{Time.now.strftime('%H:%M of  %B %d, %Y')} while  assigned to #{assigned_user.name} ",
+                assigned_user)
+    else
+      log_event(@ticket, current_user, 'Priority Update', "Ticket was updated but no assigned user at #{Time.now.strftime('%H:%M of  %B %d, %Y')}", nil)
+    end
+
   end
 
   # List tickets with non-breached SLA for a project
