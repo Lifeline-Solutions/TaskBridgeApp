@@ -132,6 +132,15 @@ class QaDashboardsController < ApplicationController
   def set_dashboard
     # Restrict edit/update/destroy to owner only
     @dashboard = current_user.dashboards.find(params[:id])
+  rescue ActiveRecord::RecordNotFound
+    # Check if dashboard exists but belongs to someone else
+    dashboard = Dashboard.active.find_by(id: params[:id])
+    if dashboard
+      redirect_to qa_dashboards_path,
+        alert: 'You cannot edit or delete dashboards that you do not own. This dashboard is shared with you as read-only.'
+    else
+      redirect_to qa_dashboards_path, alert: 'Dashboard not found.'
+    end
   end
 
   def set_accessible_dashboard
