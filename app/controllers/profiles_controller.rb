@@ -175,7 +175,8 @@ class ProfilesController < ApplicationController
     from_time, to_time = parse_date_range_for_report(params[:start_date], params[:end_date])
 
     # Assignment events: using assigned_user_id
-    assignment_events_scope = Event.where.not(assigned_user_id: nil, event_type: ['created and assign', 'Updated Issue','Priority Updated'])
+    assignment_events_scope = Event.where.not(assigned_user_id: nil)
+                                   .where.not(event_type: ['created and assign', 'Updated Issue', 'Priority Updated'])
 
     assignment_events_scope = assignment_events_scope.where(assigned_user_id: @selected_user.id) if @selected_user.present?
 
@@ -218,7 +219,7 @@ class ProfilesController < ApplicationController
       .distinct
 
     # All events for these tickets (not only assignments) within date window if given
-    all_events_scope = Event.where(ticket_id: all_ticket_ids)
+    all_events_scope = Event.where(ticket_id: all_ticket_ids).where.not(event_type: ['created and assign', 'Updated Issue', 'Priority Updated'])
     all_events_scope = all_events_scope.where(created_at: from_time..to_time) if from_time && to_time
     @all_ticket_events_by_ticket = all_events_scope
       .select(:ticket_id, :details, :created_at, :id, :assigned_user_id)
@@ -491,7 +492,7 @@ class ProfilesController < ApplicationController
 
       # Get all tickets that were assigned to team members (past or current) via events.assigned_user_id
       # Filter by ticket creation date
-      assigned_ticket_ids = Event.where(assigned_user_id: team_member_ids)
+      assigned_ticket_ids = Event.where(assigned_user_id: team_member_ids).where.not(event_type: ['created and assign', 'Updated Issue', 'Priority Updated'])
         .where.not(ticket_id: nil)
         .pluck(:ticket_id)
         .uniq
@@ -633,8 +634,9 @@ class ProfilesController < ApplicationController
       @team_members.each do |user|
         # Tickets that this user touched (via events.assigned_user_id)
         user_ticket_ids = Event.where(assigned_user_id: user.id, ticket_id: assigned_ticket_ids)
-          .pluck(:ticket_id)
-          .uniq
+                               .where.not(event_type: ['created and assign', 'Updated Issue', 'Priority Updated'])
+                               .pluck(:ticket_id)
+                               .uniq
 
         #Create current user tagged tickets add
 
