@@ -1999,17 +1999,26 @@ class DefectController < ApplicationController
   end
 
   def set_defect
-    defect_id = params[:defect_id] || params[:id]
-    # Try to find by defect_unique (bug number like "ISP-0045") first
+    defect_id = (params[:defect_id] || params[:id]).to_s.strip
+
+    # First, try to find by defect_unique (bug number like "ISP-0045")
     @defect = Defect.find_by(defect_unique: defect_id)
 
-    # Fall back to database ID only if it's a valid integer
-    if @defect.nil? && defect_id.to_i.to_s == defect_id
-      @defect = Defect.find(defect_id)
+    # If not found, check if it looks like a UUID (contains hyphens)
+    if @defect.nil? && defect_id.include?('-')
+      # Clean up malformed UUID (remove trailing characters)
+      # UUID format: 8-4-4-4-12 characters
+      uuid_pattern = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i
+      if defect_id.match?(uuid_pattern)
+        clean_uuid = defect_id.match(uuid_pattern)[1]
+        @defect = Defect.find_by(id: clean_uuid)
+      end
     end
 
-    # Raise 404 if still not found
-    raise ActiveRecord::RecordNotFound if @defect.nil?
+    # If still not found, use find! to raise proper Rails 404
+    if @defect.nil?
+      Defect.find(defect_id)
+    end
   end
 
   def defect_params
