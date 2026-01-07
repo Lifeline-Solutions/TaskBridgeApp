@@ -171,7 +171,23 @@ class DefectMessagesController < ApplicationController
   end
 
   def set_defect
-    @defect = Defect.find(params[:defect_id])
+    defect_id = params[:defect_id]
+
+    # Try to find by defect_unique (bug number) first
+    @defect = Defect.find_by(defect_unique: defect_id)
+
+    # If not found, check if it looks like a UUID (contains hyphens)
+    if @defect.nil? && defect_id.include?('-')
+      # Clean up malformed UUID (remove trailing characters)
+      uuid_pattern = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i
+      if defect_id.match?(uuid_pattern)
+        clean_uuid = defect_id.match(uuid_pattern)[1]
+        @defect = Defect.find_by(id: clean_uuid)
+      end
+    end
+
+    # If still not found, raise 404
+    @defect || raise(ActiveRecord::RecordNotFound)
   end
 
   def set_defect_message
