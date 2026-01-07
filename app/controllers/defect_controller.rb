@@ -612,8 +612,7 @@ class DefectController < ApplicationController
 
   def show
     # @defect is already set by set_defect before_action
-    # Check authorization using the loaded defect
-    redirect_to defect_index_path, alert: 'You are not authorized to view this defect.' and return unless current_user.has_any_role?(:admin, :observer, :qa, :agent) || @defect.users.include?(current_user)
+    # Authorization is handled by CanCanCan ability system
 
     @reopened_count = DefectHistory.where(defect_id: @defect.id, history_type: 'Status Changed')
       .select { |history| history.new_value == 'Reopened' }
