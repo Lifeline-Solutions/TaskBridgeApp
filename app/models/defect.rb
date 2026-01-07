@@ -107,6 +107,13 @@ class Defect < ApplicationRecord
     User.where('email LIKE ANY (array[?, ?, ?]) AND active = ?', '%@craftsilicon.com', '%@craftsilicon.co.tz', '%@little.africa', true)
   end
 
+  # Override to_param to use defect_unique in URLs (e.g., /defect/ISP-0045)
+  # This allows users to see bug numbers in URLs and edit them to navigate to different bugs
+  # Falls back to database ID if defect_unique is not set (e.g., for drafts)
+  def to_param
+    defect_unique.presence || id.to_s
+  end
+
   scope :drafts, -> { where(draft: true) }
   scope :published, -> { where(draft: false) }
 
