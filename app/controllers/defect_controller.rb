@@ -611,9 +611,9 @@ class DefectController < ApplicationController
   end
 
   def show
-    redirect_to defect_index_path, alert: 'You are not authorized to view this defect.' and return unless current_user.has_any_role?(:admin, :observer, :qa, :agent) || Defect.joins(:users).where(id: params[:id], users: { id: current_user.id }).exists?
-
-    @defect = Defect.find(params[:id])
+    # @defect is already set by set_defect before_action
+    # Check authorization using the loaded defect
+    redirect_to defect_index_path, alert: 'You are not authorized to view this defect.' and return unless current_user.has_any_role?(:admin, :observer, :qa, :agent) || @defect.users.include?(current_user)
 
     @reopened_count = DefectHistory.where(defect_id: @defect.id, history_type: 'Status Changed')
       .select { |history| history.new_value == 'Reopened' }
@@ -2001,7 +2001,16 @@ class DefectController < ApplicationController
 
   def set_defect
     defect_id = params[:defect_id] || params[:id]
-    @defect = Defect.find(defect_id)
+    # Try to find by defect_unique (bug number like "ISP-0045") first
+    @defect = Defect.find_by(defect_unique: defect_id)
+
+    # Fall back to database ID only if it's a valid integer
+    if @defect.nil? && defect_id.to_i.to_s == defect_id
+      @defect = Defect.find(defect_id)
+    end
+
+    # Raise 404 if still not found
+    raise ActiveRecord::RecordNotFound if @defect.nil?
   end
 
   def defect_params
