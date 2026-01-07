@@ -737,7 +737,7 @@ class TicketsController < ApplicationController
                 "Ticket Issue Type was updated to <b>#{@ticket.issue}</b> by #{current_user.name}  at #{Time.now.strftime('%H:%M of  %B %d, %Y')} while  assigned to #{assigned_user.name} ",
                 assigned_user)
     else
-      log_event(@ticket, current_user, 'Priority Update', "Ticket was updated but no assigned user at #{Time.now.strftime('%H:%M of  %B %d, %Y')}", nil)
+      log_event(@ticket, current_user, 'Updated Issue', "Ticket was updated but no assigned user at #{Time.now.strftime('%H:%M of  %B %d, %Y')}", nil)
     end
 
   end
