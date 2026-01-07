@@ -3,8 +3,8 @@
     <!-- Top row: Back button and Action buttons -->
     <div class="flex items-center justify-between mb-3">
       <!-- Back button -->
-      <%= link_to @return_path, 
-          data: { turbo: false }, 
+      <%= link_to @return_path,
+          data: { turbo: false },
           class: 'inline-flex items-center gap-2 px-4 py-2 bg-[#3F8CFF] hover:bg-[#3A81EB] text-white rounded-lg font-medium transition-all duration-200' do %>
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
@@ -19,7 +19,7 @@
           <span class="px-3 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
             📝 DRAFT
           </span>
-          
+
           <%= link_to edit_defect_path(@defect),
               class: "inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 shadow-sm" do %>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -38,6 +38,21 @@
               <span>Publish</span>
             <% end %>
           <% end %>
+
+          <% if can?(:delete, @defect) || can?(:edit, @defect) %>
+            <%= button_to defect_path(@defect),
+                method: :delete,
+                data: {
+                  'turbo-method': :delete,
+                  'turbo-confirm': 'Are you sure you want to delete this draft? This action cannot be undone.'
+                },
+                class: "inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-all duration-200 shadow-sm" do %>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+              <span>Delete</span>
+            <% end %>
+          <% end %>
         </div>
       <% end %>
     </div>
@@ -48,13 +63,13 @@
         <span class="font-semibold text-gray-900 dark:text-white">
           BUG ID: <%= @defect.defect_unique %>
         </span>
-        
+
         <span class="text-gray-400">/</span>
-        
+
         <span class="px-2 py-1 text-xs font-medium rounded <%= priority_badge_class(@defect.priority) %>">
           <%= @defect.priority %>
         </span>
-        
+
         <% if @defect.creator.present? %>
           <span class="text-gray-400">/</span>
           <div class="flex items-center gap-2">
