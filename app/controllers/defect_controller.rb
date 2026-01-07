@@ -611,9 +611,8 @@ class DefectController < ApplicationController
   end
 
   def show
-    redirect_to defect_index_path, alert: 'You are not authorized to view this defect.' and return unless current_user.has_any_role?(:admin, :observer, :qa, :agent) || Defect.joins(:users).where(id: params[:id], users: { id: current_user.id }).exists?
-
-    @defect = Defect.find(params[:id])
+    # @defect is already set by set_defect before_action
+    # Authorization is handled by CanCanCan ability system
 
     @reopened_count = DefectHistory.where(defect_id: @defect.id, history_type: 'Status Changed')
       .select { |history| history.new_value == 'Reopened' }
@@ -809,7 +808,7 @@ class DefectController < ApplicationController
   end
 
   def edit
-    @defect = Defect.find(params[:id])
+    # @defect is already set by set_defect before_action
 
     @products = Product.with_quality_assurance_status
 
@@ -2000,8 +1999,26 @@ class DefectController < ApplicationController
   end
 
   def set_defect
-    defect_id = params[:defect_id] || params[:id]
-    @defect = Defect.find(defect_id)
+    defect_id = (params[:defect_id] || params[:id]).to_s.strip
+
+    # First, try to find by defect_unique (bug number like "ISP-0045")
+    @defect = Defect.find_by(defect_unique: defect_id)
+
+    # If not found, check if it looks like a UUID (contains hyphens)
+    if @defect.nil? && defect_id.include?('-')
+      # Clean up malformed UUID (remove trailing characters)
+      # UUID format: 8-4-4-4-12 characters
+      uuid_pattern = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i
+      if defect_id.match?(uuid_pattern)
+        clean_uuid = defect_id.match(uuid_pattern)[1]
+        @defect = Defect.find_by(id: clean_uuid)
+      end
+    end
+
+    # If still not found, use find! to raise proper Rails 404
+    if @defect.nil?
+      Defect.find(defect_id)
+    end
   end
 
   def defect_params
