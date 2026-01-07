@@ -1434,9 +1434,13 @@
 
   // Cleanup function for proper memory management
   function cleanupFilterEvents() {
-    eventListeners.forEach((listener, element) => {
+    eventListeners.forEach((listeners, element) => {
       if (element && typeof element.removeEventListener === 'function') {
-        element.removeEventListener(listener.event, listener.handler);
+        // Handle both array of listeners and single listener (backwards compatibility)
+        const listenerArray = Array.isArray(listeners) ? listeners : [listeners];
+        listenerArray.forEach(listener => {
+          element.removeEventListener(listener.event, listener.handler);
+        });
       }
     });
     eventListeners.clear();
@@ -1446,8 +1450,18 @@
   function addManagedEventListener(element, event, handler, options = {}) {
     if (!element) return;
 
+    // Check if this exact handler already exists
+    const existingListeners = eventListeners.get(element) || [];
+    const isDuplicate = existingListeners.some(l => l.event === event && l.handler === handler);
+
+    if (isDuplicate) {
+      console.log('Duplicate listener prevented for', element, event);
+      return;
+    }
+
     element.addEventListener(event, handler, options);
-    eventListeners.set(element, { event, handler });
+    existingListeners.push({ event, handler });
+    eventListeners.set(element, existingListeners);
   }
 
   // Main filter initialization with proper cleanup
