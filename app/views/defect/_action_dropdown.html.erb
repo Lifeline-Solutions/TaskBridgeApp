@@ -7,7 +7,7 @@
       aria-expanded="false"
       aria-haspopup="true"
       data-action="click->dropdown#toggle">
-      
+
       <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
       </svg>
@@ -18,7 +18,7 @@
        data-dropdown-target="menu"
        class="hidden z-40 p-4 origin-top-right absolute right-0 mt-2 w-44 bg-white dark:bg-gray-600 rounded-md shadow-lg focus:outline-none"
        style="max-height: calc(100vh - 100px); overflow-y: auto;">
-       
+
     <div class="flex flex-col space-y-2" role="none">
       <div class="flex items-center gap-2">
         <svg xmlns="http://www.w3.org/2000/svg"
@@ -56,11 +56,11 @@
                 d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
         </svg>
         <%= link_to 'VIEW',
-                    defect_path(defect.id),
+                    defect_path(defect),
                     class: 'text-sm hover:text-blue-600 hover:underline' %>
       </div>
 
-    
+
         <% if can? :edit, defect %>
           <div class="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg"
