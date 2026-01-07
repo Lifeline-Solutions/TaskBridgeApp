@@ -109,9 +109,10 @@ class Defect < ApplicationRecord
 
   # Override to_param to use defect_unique in URLs (e.g., /defect/ISP-0045)
   # This allows users to see bug numbers in URLs and edit them to navigate to different bugs
-  # Falls back to database ID if defect_unique is not set (e.g., for drafts)
+  # Falls back to database ID if defect_unique is not set (for any defect, not just drafts)
   def to_param
-    defect_unique.presence || id.to_s
+    return super unless persisted? # Use Rails default for new records
+    defect_unique.presence&.to_s || id.to_s
   end
 
   scope :drafts, -> { where(draft: true) }
