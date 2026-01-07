@@ -35,7 +35,7 @@
 
 
         <%= link_to 'QUICK VIEW',
-                    defect_modal_show_path(defect.id),
+                    defect_modal_show_path(defect),
                     data: {
                       turbo_frame: "modal",
                       action: "click->dropdown#hide contextmenu->dropdown#prevent"
