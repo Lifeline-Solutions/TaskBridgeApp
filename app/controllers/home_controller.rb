@@ -39,12 +39,24 @@ class HomeController < ApplicationController
         .group('projects.title')
         .count('tickets.id')
 
-      # Count issues created by the current user per project (duplicate, can be removed)
+      # Count open tickets (not Declined, Resolved, Closed) per project for current user's projects
       @issues_count_per_project_for_current_user = current_user.projects
         .joins(tickets: :statuses)
         .where.not(statuses: { name: %w[Declined Resolved Closed] })
         .group('projects.title')
         .count('tickets.id')
+
+      # Count open tickets for current user's teams
+      team_projects = current_user.teams.joins(users: :projects).distinct.pluck('projects.id')
+      @team_tickets_count_per_project = if team_projects.any?
+                                          Project.where(id: team_projects)
+                                            .joins(tickets: :statuses)
+                                            .where.not(statuses: { name: %w[Declined Resolved Closed] })
+                                            .group('projects.title')
+                                            .count('tickets.id')
+                                        else
+                                           {}
+                                        end
 
       # Count all tickets per project (duplicate, can be removed)
       @tickets_count_per_project = current_user.projects
