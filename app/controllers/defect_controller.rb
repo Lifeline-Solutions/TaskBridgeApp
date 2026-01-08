@@ -614,6 +614,12 @@ class DefectController < ApplicationController
     # @defect is already set by set_defect before_action
     # Authorization is handled by CanCanCan ability system
 
+    # Prevent viewing drafts created by other users
+    if @defect.draft? && @defect.created_by != current_user.id
+      redirect_to defect_index_path, alert: 'You do not have permission to view this draft defect.'
+      return
+    end
+
     @reopened_count = DefectHistory.where(defect_id: @defect.id, history_type: 'Status Changed')
       .select { |history| history.new_value == 'Reopened' }
       .size
@@ -810,6 +816,12 @@ class DefectController < ApplicationController
   def edit
     # @defect is already set by set_defect before_action
 
+    # Prevent editing drafts created by other users
+    if @defect.draft? && @defect.created_by != current_user.id
+      redirect_to defect_index_path, alert: 'You do not have permission to edit this draft defect.'
+      return
+    end
+
     @products = Product.with_quality_assurance_status
 
     # QA users (get their IDs)
@@ -879,6 +891,12 @@ class DefectController < ApplicationController
   end
 
   def update
+    # Prevent updating drafts created by other users
+    if @defect.draft? && @defect.created_by != current_user.id
+      redirect_to defect_index_path, alert: 'You do not have permission to update this draft defect.'
+      return
+    end
+
     audit_on_update(@defect)
 
     # Track changes before update for detailed notifications
@@ -1007,7 +1025,11 @@ class DefectController < ApplicationController
   end
 
   def drafts
-    @defects = Defect.drafts.includes(:users, :qa_module, :submodule).order(updated_at: :desc)
+    # Only show drafts created by the current user
+    @defects = Defect.drafts
+      .where(created_by: current_user.id)
+      .includes(:users, :qa_module, :submodule)
+      .order(updated_at: :desc)
 
     @labels = Label.all.order(:name)
 
@@ -1066,6 +1088,12 @@ class DefectController < ApplicationController
 
   def publish
     @defect = Defect.find(params[:id])
+
+    # Only allow publishing drafts created by the current user
+    if @defect.draft? && @defect.created_by != current_user.id
+      redirect_to defect_index_path, alert: 'You do not have permission to publish this draft defect.'
+      return
+    end
     if @defect.update(draft: false)
       log_event(
         @defect,
