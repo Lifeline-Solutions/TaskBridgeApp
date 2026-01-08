@@ -112,6 +112,7 @@ class Defect < ApplicationRecord
   # Falls back to database ID if defect_unique is not set (for any defect, not just drafts)
   def to_param
     return super unless persisted? # Use Rails default for new records
+
     defect_unique.presence&.to_s || id.to_s
   end
 

@@ -11,11 +11,11 @@ class Event < ApplicationRecord
 
   def set_system_user_if_nil
     # If no user is provided (e.g., from a background job), use the system user
-    if user_id.blank?
-      system_user = User.find_by(id: SystemActivity::SYSTEM_USER_ID) ||
-                    User.find_by(email: 'system@taskbridge.local') ||
-                    User.first
-      self.user_id = system_user.id if system_user.present?
-    end
+    return unless user_id.blank?
+
+    system_user = User.find_by(id: SystemActivity::SYSTEM_USER_ID) ||
+                  User.find_by(email: 'system@taskbridge.local') ||
+                  User.first
+    self.user_id = system_user.id if system_user.present?
   end
 end

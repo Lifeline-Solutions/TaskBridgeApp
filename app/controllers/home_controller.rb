@@ -46,16 +46,22 @@ class HomeController < ApplicationController
         .group('projects.title')
         .count('tickets.id')
 
-      # Count open tickets for current user's teams
-      team_projects = current_user.teams.joins(users: :projects).distinct.pluck('projects.id')
-      @team_tickets_count_per_project = if team_projects.any?
-                                          Project.where(id: team_projects)
-                                            .joins(tickets: :statuses)
+      # Count open tickets per project for teams the current user belongs to
+      @team_tickets_count_per_project = if current_user.team_ids.any?
+                                          # Users who share a team with current_user
+                                          team_member_ids = User.joins(:teams)
+                                            .where(teams: { id: current_user.team_ids })
+                                            .distinct
+                                            .pluck(:id)
+
+                                          # Only count tickets assigned to those team members (exclude Declined/Resolved/Closed)
+                                          Project.joins(tickets: %i[statuses users])
+                                            .where(users: { id: team_member_ids })
                                             .where.not(statuses: { name: %w[Declined Resolved Closed] })
                                             .group('projects.title')
-                                            .count('tickets.id')
+                                            .count('DISTINCT tickets.id')
                                         else
-                                           {}
+                                          {}
                                         end
 
       # Count all tickets per project (duplicate, can be removed)
@@ -276,7 +282,7 @@ class HomeController < ApplicationController
       @open_defects_for_current_user_count = current_user.defects
         .where(deleted_on: nil)
         .where(
-          "defects.id IN (SELECT DISTINCT defect_id FROM defect_statuses WHERE status_id IN (?))",
+          'defects.id IN (SELECT DISTINCT defect_id FROM defect_statuses WHERE status_id IN (?))',
           open_status_ids
         )
         .count

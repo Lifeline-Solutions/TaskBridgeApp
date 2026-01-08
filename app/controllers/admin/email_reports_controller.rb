@@ -32,7 +32,7 @@ module Admin
         'COUNT(*) as total_count',
         "COUNT(CASE WHEN status = 'failed' THEN 1 END) as failed_count",
         "COUNT(CASE WHEN status = 'sent' THEN 1 END) as sent_count",
-        "SUM(retried_count) as total_retries"
+        'SUM(retried_count) as total_retries'
       ).map do |record|
         {
           email_type: record.email_type,

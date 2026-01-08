@@ -468,18 +468,18 @@ class DataCenterController < ApplicationController
 
     team.users.each do |user|
       user_tickets = base_scope.where(taggings: { user_id: user.id }).distinct
-      if user_tickets.any?
-        Messaging::EmailSender.send_email(
-          "Start of Day Ticket Report for #{user.name || user.email}",
-          to: user.email,
-          actor: current_user,
-          priority: :normal,
-          type: 'morning_report'
-        ).use_template(
-          view: 'user_mailer/morning_ticket_email',
-          assigns: { user: user, tickets: user_tickets.to_a, mail_options: {} }
-        ).set_source('team', team.id).send(queue: true)
-      end
+      next unless user_tickets.any?
+
+      Messaging::EmailSender.send_email(
+        "Start of Day Ticket Report for #{user.name || user.email}",
+        to: user.email,
+        actor: current_user,
+        priority: :normal,
+        type: 'morning_report'
+      ).use_template(
+        view: 'user_mailer/morning_ticket_email',
+        assigns: { user: user, tickets: user_tickets.to_a, mail_options: {} }
+      ).set_source('team', team.id).send(queue: true)
     end
 
     redirect_back fallback_location: root_path, notice: 'Ticket emails sent to team members.'

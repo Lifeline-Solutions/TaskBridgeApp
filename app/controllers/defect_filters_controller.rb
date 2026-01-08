@@ -29,22 +29,22 @@ class DefectFiltersController < ApplicationController
 
     # Load products scoped to this filter
     @qa_products = if relevant_product_ids.any?
-      # Show only the specific product(s) associated with this filter
-      Product
-        .where(id: relevant_product_ids)
-        .includes(:client, :groupwares, :statuses)
-        .where('products.deleted_on IS NULL')
-        .order('products.document_name ASC')
-    else
-      # Fallback: show all QA products if no specific product is set
-      Product
-        .includes(:client, :groupwares, :statuses)
-        .joins(:statuses)
-        .where(statuses: { name: ['Pre Quality Assurance', 'End Of Quality Assurance'] })
-        .where('products.deleted_on IS NULL')
-        .distinct
-        .order('products.document_name ASC')
-    end
+                     # Show only the specific product(s) associated with this filter
+                     Product
+                       .where(id: relevant_product_ids)
+                       .includes(:client, :groupwares, :statuses)
+                       .where('products.deleted_on IS NULL')
+                       .order('products.document_name ASC')
+                   else
+                     # Fallback: show all QA products if no specific product is set
+                     Product
+                       .includes(:client, :groupwares, :statuses)
+                       .joins(:statuses)
+                       .where(statuses: { name: ['Pre Quality Assurance', 'End Of Quality Assurance'] })
+                       .where('products.deleted_on IS NULL')
+                       .distinct
+                       .order('products.document_name ASC')
+                   end
 
     # Scope other data to the relevant products
     if relevant_product_ids.any?

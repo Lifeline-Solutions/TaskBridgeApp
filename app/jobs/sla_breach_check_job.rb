@@ -40,7 +40,7 @@ class SlaBreachCheckJob < ApplicationJob
         log_event(ticket, nil, 'sla_breach', details, assigned_user)
       end
 
-      #Log Event to show update
+      # Log Event to show update
 
       # Send notification to stakeholders
       # DISABLED: SLA automation emails
@@ -55,10 +55,10 @@ class SlaBreachCheckJob < ApplicationJob
     return unless resolved_status
 
     tickets = Ticket.joins(:add_statuses, :statuses)
-                    .joins('INNER JOIN statuses ON statuses.id = add_statuses.status_id')
-                    .where(statuses: { name: 'Client Information Pending' })
-                    .where('add_statuses.updated_at <= ?', 1.month.ago)
-                    .distinct
+      .joins('INNER JOIN statuses ON statuses.id = add_statuses.status_id')
+      .where(statuses: { name: 'Client Information Pending' })
+      .where('add_statuses.updated_at <= ?', 1.month.ago)
+      .distinct
 
     tickets.find_each do |ticket|
       # Update status to Resolved
@@ -77,10 +77,10 @@ class SlaBreachCheckJob < ApplicationJob
     return unless closed_status
 
     tickets = Ticket.joins(:add_statuses, :statuses)
-                    .joins('INNER JOIN statuses ON statuses.id = add_statuses.status_id')
-                    .where(statuses: { name: 'Resolved' })
-                    .where('add_statuses.updated_at <= ?', 1.month.ago)
-                    .distinct
+      .joins('INNER JOIN statuses ON statuses.id = add_statuses.status_id')
+      .where(statuses: { name: 'Resolved' })
+      .where('add_statuses.updated_at <= ?', 1.month.ago)
+      .distinct
 
     tickets.find_each do |ticket|
       ticket.statuses.clear

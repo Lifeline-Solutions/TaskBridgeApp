@@ -2044,9 +2044,9 @@ class DefectController < ApplicationController
     end
 
     # If still not found, use find! to raise proper Rails 404
-    if @defect.nil?
-      Defect.find(defect_id)
-    end
+    return unless @defect.nil?
+
+    Defect.find(defect_id)
   end
 
   def defect_params

@@ -137,7 +137,7 @@ class QaDashboardsController < ApplicationController
     dashboard = Dashboard.active.find_by(id: params[:id])
     if dashboard
       redirect_to qa_dashboards_path,
-        alert: 'You cannot edit or delete dashboards that you do not own. This dashboard is shared with you as read-only.'
+                  alert: 'You cannot edit or delete dashboards that you do not own. This dashboard is shared with you as read-only.'
     else
       redirect_to qa_dashboards_path, alert: 'Dashboard not found.'
     end

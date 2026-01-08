@@ -70,7 +70,6 @@ class ProfilesController < ApplicationController
       @all_users = User.all.to_a
       @tickets.pluck(:id)
 
-
       respond_to do |format|
         format.html
         team_name = @team.name
@@ -176,7 +175,7 @@ class ProfilesController < ApplicationController
 
     # Assignment events: using assigned_user_id
     assignment_events_scope = Event.where.not(assigned_user_id: nil)
-                                   .where.not(event_type: ['created and assign', 'Updated Issue', 'Priority Updated'])
+      .where.not(event_type: ['created and assign', 'Updated Issue', 'Priority Updated'])
 
     assignment_events_scope = assignment_events_scope.where(assigned_user_id: @selected_user.id) if @selected_user.present?
 
@@ -354,29 +353,29 @@ class ProfilesController < ApplicationController
               # Pattern 1: YYYY-MM-DD HH:MM:SS or YYYY-MM-DD
               if deadline_str =~ /(\d{4}-\d{2}-\d{2}(?:\s+\d{2}:\d{2}(?::\d{2})?)?)/
                 begin
-                  parsed_deadline = DateTime.parse($1)
-                rescue => e2
+                  parsed_deadline = DateTime.parse(::Regexp.last_match(1))
+                rescue StandardError => e2
                   Rails.logger.debug "Pattern 1 parse failed: #{e2.message}" if Rails.env.development?
                 end
               # Pattern 2: DD/MM/YYYY or DD-MM-YYYY
-              elsif deadline_str =~ /(\d{2}[-\/]\d{2}[-\/]\d{4}(?:\s+\d{2}:\d{2}(?::\d{2})?)?)/
+              elsif deadline_str =~ %r{(\d{2}[-/]\d{2}[-/]\d{4}(?:\s+\d{2}:\d{2}(?::\d{2})?)?)}
                 begin
-                  parsed_deadline = DateTime.parse($1)
-                rescue => e2
+                  parsed_deadline = DateTime.parse(::Regexp.last_match(1))
+                rescue StandardError => e2
                   Rails.logger.debug "Pattern 2 parse failed: #{e2.message}" if Rails.env.development?
                 end
               # Pattern 3: Month DD, YYYY (e.g., "December 31, 2025")
               elsif deadline_str =~ /([A-Za-z]+\s+\d{1,2},?\s+\d{4}(?:\s+\d{2}:\d{2}(?::\d{2})?)?)/
                 begin
-                  parsed_deadline = DateTime.parse($1)
-                rescue => e2
+                  parsed_deadline = DateTime.parse(::Regexp.last_match(1))
+                rescue StandardError => e2
                   Rails.logger.debug "Pattern 3 parse failed: #{e2.message}" if Rails.env.development?
                 end
               # Pattern 4: Look for any date-like string in the full details
               elsif full_details =~ /(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})/
                 begin
-                  parsed_deadline = DateTime.parse($1)
-                rescue => e2
+                  parsed_deadline = DateTime.parse(::Regexp.last_match(1))
+                rescue StandardError => e2
                   Rails.logger.debug "Pattern 4 parse failed: #{e2.message}" if Rails.env.development?
                 end
               end
@@ -404,17 +403,17 @@ class ProfilesController < ApplicationController
         end
 
         # Store debug info in development
-        if Rails.env.development?
-          @deadline_debug_info << {
-            ticket_id: ticket.unique_id,
-            ticket_uuid: ticket.id,
-            deadline_str: deadline_str.presence || 'N/A',
-            full_details_preview: full_details.truncate(100),
-            status: deadline_status,
-            parsed: parsed_deadline&.strftime('%Y-%m-%d %H:%M:%S'),
-            current_time: Time.current.strftime('%Y-%m-%d %H:%M:%S')
-          }
-        end
+        next unless Rails.env.development?
+
+        @deadline_debug_info << {
+          ticket_id: ticket.unique_id,
+          ticket_uuid: ticket.id,
+          deadline_str: deadline_str.presence || 'N/A',
+          full_details_preview: full_details.truncate(100),
+          status: deadline_status,
+          parsed: parsed_deadline&.strftime('%Y-%m-%d %H:%M:%S'),
+          current_time: Time.current.strftime('%Y-%m-%d %H:%M:%S')
+        }
       end
     end
 
@@ -526,9 +525,9 @@ class ProfilesController < ApplicationController
         .pluck(:id)
 
       no_sla_tickets = @tickets.joins(:sla_tickets)
-                               .where(sla_tickets: { sla_resolution_deadline: 'NO SLA' })
-                               .distinct
-                               .pluck(:id)
+        .where(sla_tickets: { sla_resolution_deadline: 'NO SLA' })
+        .distinct
+        .pluck(:id)
 
       # Any ticket breached in at least one category
       all_breached_ids = (sla_status_breached_ids + response_deadline_breached_ids + resolution_deadline_breached_ids).uniq
@@ -604,7 +603,7 @@ class ProfilesController < ApplicationController
                              end
 
         # Check if this status is open or closed
-        closed_statuses = ['Closed', 'Resolved', 'Declined']
+        closed_statuses = %w[Closed Resolved Declined]
         total_open = closed_statuses.include?(status_name) ? 0 : count
 
         @status_table_data << {
@@ -634,17 +633,17 @@ class ProfilesController < ApplicationController
       @team_members.each do |user|
         # Tickets that this user touched (via events.assigned_user_id)
         user_ticket_ids = Event.where(assigned_user_id: user.id, ticket_id: assigned_ticket_ids)
-                               .where.not(event_type: ['created and assign', 'Updated Issue', 'Priority Updated'])
-                               .pluck(:ticket_id)
-                               .uniq
+          .where.not(event_type: ['created and assign', 'Updated Issue', 'Priority Updated'])
+          .pluck(:ticket_id)
+          .uniq
 
-        #Create current user tagged tickets add
+        # Create current user tagged tickets add
 
         current_user_tagged_tickets = Ticket.joins(:statuses, :taggings)
-                                            .where(taggings: { user_id: user.id })
-                                            .where.not(statuses: { name: ['Closed', 'Resolved', 'Declined'] })
-                                            .pluck(:id)
-                                            .uniq
+          .where(taggings: { user_id: user.id })
+          .where.not(statuses: { name: %w[Closed Resolved Declined] })
+          .pluck(:id)
+          .uniq
 
         current_user_tagged = current_user_tagged_tickets.count
 
@@ -652,7 +651,7 @@ class ProfilesController < ApplicationController
         user_total = user_tickets.count
 
         # Count only open tickets (excluding Closed, Resolved, Declined)
-        closed_statuses = ['Closed', 'Resolved', 'Declined']
+        closed_statuses = %w[Closed Resolved Declined]
         user_total_open = user_tickets.joins(:statuses)
           .where.not(statuses: { name: closed_statuses })
           .distinct
@@ -1021,13 +1020,13 @@ class ProfilesController < ApplicationController
 
     # Check for status patterns
     # Pattern 1: "Status: <status>"
-    return $1.strip if details_text =~ /Status:\s*([^,\n]+)/i
+    return ::Regexp.last_match(1).strip if details_text =~ /Status:\s*([^,\n]+)/i
 
     # Pattern 2: "status changed to <status>"
-    return $1.strip if details_text =~ /status\s+(?:changed|updated|set)\s+to\s+([^,\n]+)/i
+    return ::Regexp.last_match(1).strip if details_text =~ /status\s+(?:changed|updated|set)\s+to\s+([^,\n]+)/i
 
     # Pattern 3: "from <old> to <new>"
-    return $1.strip if details_text =~ /from\s+\w+\s+to\s+([^,\n]+)/i
+    return ::Regexp.last_match(1).strip if details_text =~ /from\s+\w+\s+to\s+([^,\n]+)/i
 
     # Pattern 4: Check for common status keywords
     status_keywords = ['Open', 'In Progress', 'Pending', 'Resolved', 'Closed', 'Declined',

@@ -91,7 +91,7 @@ class Dashboard < ApplicationRecord
 
   # Check if a user owns this dashboard
   def owned_by?(user)
-    self.user_id == user.id
+    user_id == user.id
   end
 
   # Get filtered defects based on the saved filter

@@ -739,7 +739,6 @@ class TicketsController < ApplicationController
     else
       log_event(@ticket, current_user, 'Updated Issue', "Ticket was updated but no assigned user at #{Time.now.strftime('%H:%M of  %B %d, %Y')}", nil)
     end
-
   end
 
   # List tickets with non-breached SLA for a project
