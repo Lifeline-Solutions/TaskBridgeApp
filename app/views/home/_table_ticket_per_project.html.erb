@@ -9,16 +9,23 @@
           <th scope="col" class="mr-2 px-2 sm:px-4 py-2 sm:py-3 text-left whitespace-nowrap">
             Open Tickets
           </th>
+          <th scope="col" class="mr-2 px-2 sm:px-4 py-2 sm:py-3 text-left whitespace-nowrap">
+            Open For My Team
+          </th>
         </tr>
       </thead>
       <tbody>
         <% @issues_count_per_project_for_current_user.each do |project_title, issue_count| %>
+          <% team_count = @team_tickets_count_per_project[project_title] || 0 %>
           <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
             <th scope="row" class="text-left capitalize px-2 sm:px-4 py-2 sm:py-4 font-medium whitespace-nowrap">
               <%= link_to project_title, project_path(Project.find_by(title: project_title)), class: "block truncate max-w-[120px] sm:max-w-none" %>
             </th>
             <td class="text-left px-2 sm:px-4 py-2 sm:py-4">
               <%= issue_count %>
+            </td>
+            <td class="text-left px-2 sm:px-4 py-2 sm:py-4">
+              <%= team_count %>
             </td>
           </tr>
         <% end %>
