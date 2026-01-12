@@ -67,6 +67,9 @@ class QaDashboardsController < ApplicationController
     @total_count = result[:total_count]
     @filter_params = @dashboard.defect_filter.sanitized_filters
 
+    # Generate retest count metrics
+    @retest_metrics = generate_retest_metrics(@defects)
+
     # Resolve current project names for display
     @current_project_names = resolve_project_names(product_ids_to_filter)
 
@@ -116,6 +119,60 @@ class QaDashboardsController < ApplicationController
   end
 
   private
+
+  def generate_retest_metrics(defects)
+    # Remove any existing ORDER BY to avoid PostgreSQL DISTINCT issues
+    defects = defects.unscope(:order) if defects.respond_to?(:unscope)
+
+    # Step 1: Get defect IDs with retest counts using raw SQL to avoid Rails complexities
+    defect_ids = defects.pluck(:id)
+    return { distribution: {}, top_defects: [], total_with_retests: 0, total_defects: defects.count } if defect_ids.empty?
+
+    # Use raw SQL to get counts and avoid PostgreSQL grouping issues
+    sql = <<~SQL
+      SELECT d.id, COUNT(dfr.id) as retest_count
+      FROM defects d
+      LEFT JOIN defect_failure_reports dfr ON d.id = dfr.defect_id
+      WHERE d.id IN (#{defect_ids.map { |id| "'#{id}'" }.join(',')})
+      GROUP BY d.id
+      HAVING COUNT(dfr.id) > 0
+      ORDER BY COUNT(dfr.id) DESC
+    SQL
+
+    results = ActiveRecord::Base.connection.execute(sql)
+
+    # Calculate distribution from results
+    retest_distribution = {}
+    results.each do |row|
+      count = row['retest_count']
+      retest_distribution[count] = (retest_distribution[count] || 0) + 1
+    end
+    retest_distribution = retest_distribution.sort_by { |count, _| -count }.to_h
+
+    # Get the defect IDs with retests in order
+    defect_ids_with_retests = results.map { |row| row['id'] }
+
+    # Load full defect records in the correct order
+    top_defects_with_retests = if defect_ids_with_retests.any?
+      Defect.where(id: defect_ids_with_retests)
+        .includes(:users, :product, :statuses, :qa_module, :banking_type)
+        .index_by(&:id)
+        .values_at(*defect_ids_with_retests)
+        .each_with_index do |defect, index|
+          # Add the retest_count as an attribute
+          defect.define_singleton_method(:retest_count) { results[index]['retest_count'] }
+        end
+    else
+      []
+    end
+
+    {
+      distribution: retest_distribution,
+      top_defects: top_defects_with_retests.first(50),
+      total_with_retests: defect_ids_with_retests.count,
+      total_defects: defects.count
+    }
+  end
 
   def generate_custom_field_charts(defects)
     charts = {}
