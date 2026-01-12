@@ -154,17 +154,17 @@ class QaDashboardsController < ApplicationController
 
     # Load full defect records in the correct order
     top_defects_with_retests = if defect_ids_with_retests.any?
-      Defect.where(id: defect_ids_with_retests)
-        .includes(:users, :product, :statuses, :qa_module, :banking_type)
-        .index_by(&:id)
-        .values_at(*defect_ids_with_retests)
-        .each_with_index do |defect, index|
-          # Add the retest_count as an attribute
-          defect.define_singleton_method(:retest_count) { results[index]['retest_count'] }
-        end
-    else
-      []
-    end
+                                 Defect.where(id: defect_ids_with_retests)
+                                   .includes(:users, :product, :statuses, :qa_module, :banking_type)
+                                   .index_by(&:id)
+                                   .values_at(*defect_ids_with_retests)
+                                   .each_with_index do |defect, index|
+                                     # Add the retest_count as an attribute
+                                     defect.define_singleton_method(:retest_count) { results[index]['retest_count'] }
+                                   end
+                               else
+                                 []
+                               end
 
     {
       distribution: retest_distribution,
