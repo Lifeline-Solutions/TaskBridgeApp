@@ -70,6 +70,12 @@ class MentionNotificationService
     context_text = @context_type == 'message' ? 'comment' : 'defect'
     subject = "You were mentioned in a #{context_text} on defect #{@defect.defect_unique}"
 
+    # Generate the defect URL using the configured default URL options
+    defect_url = Rails.application.routes.url_helpers.defect_url(
+      @defect,
+      Rails.application.config.action_mailer.default_url_options
+    )
+
     Messaging::EmailSender.send_email(
       subject,
       to: [user.email],
@@ -84,7 +90,8 @@ class MentionNotificationService
           defect: @defect,
           current_user: @current_user,
           content: @content,
-          context_type: @context_type
+          context_type: @context_type,
+          url: defect_url
         }
       )
       .set_source('defect', @defect.id)
