@@ -1,0 +1,153 @@
+<% if @retest_metrics.present? && @retest_metrics[:total_with_retests] > 0 %>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+    <div class="mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+        <svg class="w-6 h-6 mr-3 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        Retest Count Metrics
+      </h2>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+        Track defects that have been failed multiple times during QA testing
+      </p>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+        <h3 class="text-sm font-medium text-blue-700 dark:text-blue-300 mb-1">Total Defects</h3>
+        <p class="text-3xl font-bold text-blue-900 dark:text-blue-100"><%= @retest_metrics[:total_defects] %></p>
+      </div>
+      <div class="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-lg p-4 border border-orange-200 dark:border-orange-800">
+        <h3 class="text-sm font-medium text-orange-700 dark:text-orange-300 mb-1">Defects with Retests</h3>
+        <p class="text-3xl font-bold text-orange-900 dark:text-orange-100"><%= @retest_metrics[:total_with_retests] %></p>
+      </div>
+      <div class="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-lg p-4 border border-red-200 dark:border-red-800">
+        <h3 class="text-sm font-medium text-red-700 dark:text-red-300 mb-1">Retest Percentage</h3>
+        <p class="text-3xl font-bold text-red-900 dark:text-red-100">
+          <%= number_to_percentage((@retest_metrics[:total_with_retests].to_f / @retest_metrics[:total_defects] * 100), precision: 1) %>
+        </p>
+      </div>
+    </div>
+
+    <!-- Retest Distribution Summary Table -->
+    <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-6">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Retest Distribution Summary</h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead class="bg-gray-100 dark:bg-gray-800">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              Failed Count
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              Number of Defects
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              Percentage
+            </th>
+          </tr>
+          </thead>
+          <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          <% @retest_metrics[:distribution].each do |count, defect_count| %>
+            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= count >= 3 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' %>">
+                        <%= count %> <%= count == 1 ? 'time' : 'times' %>
+                      </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 font-semibold">
+                <%= defect_count %> <%= defect_count == 1 ? 'defect' : 'defects' %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                <%= number_to_percentage((defect_count.to_f / @retest_metrics[:total_defects] * 100), precision: 1) %>
+              </td>
+            </tr>
+          <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Detailed Defects List -->
+    <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Defects by Retest Count (Top 5)</h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead class="bg-gray-100 dark:bg-gray-800">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              ID
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              Summary
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              Status
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              Priority
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              Failed Count
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              Actions
+            </th>
+          </tr>
+          </thead>
+          <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          <% @retest_metrics[:top_defects].last(5).each do |defect| %>
+            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                #<%= defect.id.to_s.first(8) %>
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                <%= truncate(defect.summary.presence || defect.name.presence || 'No summary', length: 50) %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm">
+                <% if defect.respond_to?(:statuses) && defect.statuses.any? %>
+                        <span class="px-2 py-1 rounded-full text-xs font-medium <%= status_badge_class(defect.statuses.first.name) %>">
+                          <%= defect.statuses.first.name %>
+                        </span>
+                <% elsif defect.status.present? %>
+                        <span class="px-2 py-1 rounded-full text-xs font-medium <%= status_badge_class(defect.status) %>">
+                          <%= defect.status %>
+                        </span>
+                <% else %>
+                        <span class="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                          Unknown
+                        </span>
+                <% end %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm">
+                <% if defect.priority.present? %>
+                        <span class="px-2 py-1 rounded-full text-xs font-medium <%= priority_badge_class(defect.priority) %>">
+                          <%= defect.priority %>
+                        </span>
+                <% else %>
+                  <span class="text-gray-500 dark:text-gray-400">-</span>
+                <% end %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm">
+                      <span class="<%= defect.retest_count.to_i >= 3 ? 'text-red-600 dark:text-red-400 font-bold text-lg' : 'text-orange-600 dark:text-orange-400 font-semibold' %>">
+                        <%= defect.retest_count %>
+                      </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm">
+                <%= link_to defect_path(defect), class: 'text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center' do %>
+                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  View
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+<% end %>
