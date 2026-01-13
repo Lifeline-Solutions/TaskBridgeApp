@@ -72,6 +72,13 @@ class UsersController < ApplicationController
                         .where('sign_in_count > ?', 0)
                         .count / per_page.to_f).ceil
     @current_page = page
+
+    respond_to do |format|
+      format.html
+      format.csv do
+        send_data generate_csv(@active_users), filename: "active_users_#{Date.today}.csv"
+      end
+    end
   end
 
   def client_active
@@ -91,6 +98,13 @@ class UsersController < ApplicationController
                         .where('sign_in_count > ?', 0)
                         .count / per_page.to_f).ceil
     @current_page = page
+
+    respond_to do |format|
+      format.html
+      format.csv do
+        send_data generate_csv(@active_users_clients), filename: "active_client_users_#{Date.today}.csv"
+      end
+    end
   end
 
   def manager_active
@@ -110,6 +124,13 @@ class UsersController < ApplicationController
                         .where('sign_in_count > ?', 0)
                         .count / per_page.to_f).ceil
     @current_page = page
+
+    respond_to do |format|
+      format.html
+      format.csv do
+        send_data generate_csv(@active_users_manager), filename: "active_manager_users_#{Date.today}.csv"
+      end
+    end
   end
 
   def agent_active
@@ -128,6 +149,13 @@ class UsersController < ApplicationController
                         .where('sign_in_count > ?', 0)
                         .count / per_page.to_f).ceil
     @current_page = page
+
+    respond_to do |format|
+      format.html
+      format.csv do
+        send_data generate_csv(@active_users_agent), filename: "active_agent_users_#{Date.today}.csv"
+      end
+    end
   end
 
   def reset_user_password
@@ -164,6 +192,22 @@ class UsersController < ApplicationController
         if params[:role_ids].present? && (admin_role = Role.find_by(name: 'admin'))
           params[:role_ids] -= [admin_role.id.to_s]
         end
+      end
+    end
+  end
+
+  def generate_csv(users)
+    require 'csv'
+    CSV.generate(headers: true) do |csv|
+      csv << ['First Name', 'Last Name', 'Email', 'Teams', 'Sign-In Count']
+      users.each do |user|
+        csv << [
+          user.first_name,
+          user.last_name,
+          user.email,
+          user.teams.pluck(:name).join(', '),
+          user.sign_in_count
+        ]
       end
     end
   end
