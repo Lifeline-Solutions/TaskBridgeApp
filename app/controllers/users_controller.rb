@@ -56,103 +56,112 @@ class UsersController < ApplicationController
   end
 
   def active
-    per_page = 50
+    per_page = 1000
     page = params[:page].to_i.positive? ? params[:page].to_i : 1 # Default to page 1 if no page is provided
 
-    @active_users = User.joins(:roles)
+    # Base query for all active users
+    base_query = User.joins(:roles)
       .where(roles: { name: ['client', 'project manager', 'admin', 'agent', 'observer'] })
       .where('sign_in_count > ?', 0)
       .distinct
       .order(sign_in_count: :desc)
-      .limit(per_page)
-      .offset((page - 1) * per_page)
-
-    @total_pages = (User.joins(:roles)
-                        .where(roles: { name: ['client', 'project manager', 'admin', 'agent', 'observer'] })
-                        .where('sign_in_count > ?', 0)
-                        .count / per_page.to_f).ceil
-    @current_page = page
 
     respond_to do |format|
-      format.html
+      format.html do
+        @active_users = base_query
+          .limit(per_page)
+          .offset((page - 1) * per_page)
+
+        @total_pages = (base_query.count / per_page.to_f).ceil
+        @current_page = page
+      end
       format.csv do
+        # Download ALL users, not just the current page
+        @active_users = base_query
         send_data generate_csv(@active_users), filename: "active_users_#{Date.today}.csv"
       end
     end
   end
 
   def client_active
-    per_page = 50
+    per_page = 1000
     page = params[:page].to_i.positive? ? params[:page].to_i : 1
 
-    @active_users_clients = User.joins(:roles)
+    # Base query for all client users
+    base_query = User.joins(:roles)
       .where(roles: { name: 'client' })
+      .where('sign_in_count > ?', 0)
       .distinct
       .order(sign_in_count: :desc)
-      .where('sign_in_count > ?', 0)
-      .limit(per_page)
-      .offset((page - 1) * per_page)
-
-    @total_pages = (User.joins(:roles)
-                        .where(roles: { name: 'client' })
-                        .where('sign_in_count > ?', 0)
-                        .count / per_page.to_f).ceil
-    @current_page = page
 
     respond_to do |format|
-      format.html
+      format.html do
+        @active_users_clients = base_query
+          .limit(per_page)
+          .offset((page - 1) * per_page)
+
+        @total_pages = (base_query.count / per_page.to_f).ceil
+        @current_page = page
+      end
       format.csv do
+        # Download ALL client users, not just the current page
+        @active_users_clients = base_query
         send_data generate_csv(@active_users_clients), filename: "active_client_users_#{Date.today}.csv"
       end
     end
   end
 
   def manager_active
-    per_page = 50
+    per_page = 1000
     page = params[:page].to_i.positive? ? params[:page].to_i : 1
 
-    @active_users_manager = User.joins(:roles)
+    # Base query for all manager users
+    base_query = User.joins(:roles)
       .where(roles: { name: 'project manager' })
-      .distinct
       .where('sign_in_count > ?', 0)
+      .distinct
       .order(sign_in_count: :desc)
-      .limit(per_page)
-      .offset((page - 1) * per_page)
-
-    @total_pages = (User.joins(:roles)
-                        .where(roles: { name: 'project manager' })
-                        .where('sign_in_count > ?', 0)
-                        .count / per_page.to_f).ceil
-    @current_page = page
 
     respond_to do |format|
-      format.html
+      format.html do
+        @active_users_manager = base_query
+          .limit(per_page)
+          .offset((page - 1) * per_page)
+
+        @total_pages = (base_query.count / per_page.to_f).ceil
+        @current_page = page
+      end
       format.csv do
+        # Download ALL manager users, not just the current page
+        @active_users_manager = base_query
         send_data generate_csv(@active_users_manager), filename: "active_manager_users_#{Date.today}.csv"
       end
     end
   end
 
   def agent_active
-    per_page = 50
+    per_page = 1000
     page = params[:page].to_i.positive? ? params[:page].to_i : 1
 
-    @active_users_agent = User.joins(:roles).where(roles: { name: 'agent' })
-      .distinct
+    # Base query for all agent users
+    base_query = User.joins(:roles)
+      .where(roles: { name: 'agent' })
       .where('sign_in_count > ?', 0)
+      .distinct
       .order(sign_in_count: :desc)
-      .limit(per_page)
-      .offset((page - 1) * per_page)
-
-    @total_pages = (User.joins(:roles)
-                        .where(roles: { name: 'agent' })
-                        .where('sign_in_count > ?', 0)
-                        .count / per_page.to_f).ceil
-    @current_page = page
 
     respond_to do |format|
-      format.html
+      format.html do
+        @active_users_agent = base_query
+          .limit(per_page)
+          .offset((page - 1) * per_page)
+
+        @total_pages = (base_query.count / per_page.to_f).ceil
+        @current_page = page
+      end
       format.csv do
+        # Download ALL agent users, not just the current page
+        @active_users_agent = base_query
         send_data generate_csv(@active_users_agent), filename: "active_agent_users_#{Date.today}.csv"
       end
     end
