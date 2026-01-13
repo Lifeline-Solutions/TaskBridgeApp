@@ -92,6 +92,33 @@ class QaDashboardsController < ApplicationController
     @dashboard.widgets.each_with_index do |_widget, index|
       @widget_data[index] = @dashboard.generate_widget_data(index)
     end
+
+    @defects = Defect.where(product_id: params[:product_id]) if params[:product_id].present?
+    @defects = @defects.where(retest_count: params[:retest_count]) if params[:retest_count].present?
+
+
+    # show the number of reopened defects this from the defect History
+
+    defect_ids_for_page = @defects.map(&:id)
+    @reopened_defects_count = if defect_ids_for_page.any?
+                                DefectHistory.where(defect_id: defect_ids_for_page, history_type: 'Status Changed')
+                                  .where('history ILIKE ?', '%to Reopened%')
+                                  .count
+
+                              end
+    @reopened_defect_count_per_defect = if defect_ids_for_page.any?
+                                          DefectHistory.where(defect_id: defect_ids_for_page, history_type: 'Status Changed')
+                                            .where('history ILIKE ?', '%to Reopened%')
+                                            .count
+
+                                        end
+
+    # Calculate the number of defects for the current product_id
+    @defects_with_current_product_id = if params[:product_id].present?
+                                         Defect.where(product_id: params[:product_id]).count
+                                       else
+                                         0
+                                       end
   end
 
   def edit
