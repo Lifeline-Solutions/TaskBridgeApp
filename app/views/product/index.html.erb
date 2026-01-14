@@ -11,8 +11,17 @@
 <% end %>
 
 <%= render 'product/product_index_topbar' %>
-<%= render partial: 'product/product_grid', locals: {
-  product: @product,
-  chosen_software_id: @chosen_software_id,
-  selected_groupware_id: @selected_groupware_id
-} %>
+
+<% if @view_mode == 'list' %>
+  <%= render partial: 'product/product_list', locals: {
+    product: @product,
+    chosen_software_id: @chosen_software_id,
+    selected_groupware_id: @selected_groupware_id
+  } %>
+<% else %>
+  <%= render partial: 'product/product_grid', locals: {
+    product: @product,
+    chosen_software_id: @chosen_software_id,
+    selected_groupware_id: @selected_groupware_id
+  } %>
+<% end %>
