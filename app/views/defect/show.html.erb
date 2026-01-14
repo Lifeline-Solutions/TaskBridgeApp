@@ -1,3 +1,11 @@
+<!-- Clear draft localStorage FIRST, before any controllers initialize -->
+<% if flash[:clear_draft].present? %>
+  <script>
+    localStorage.removeItem('defect_<%= flash[:clear_draft] %>_draft_message');
+    console.log('Draft localStorage cleared for defect <%= flash[:clear_draft] %>');
+  </script>
+<% end %>
+
 <div class="container p-2">
   <%= render 'defect/defect_show_top_bar', defect: @defect %>
 
@@ -30,7 +38,7 @@
 
     <%= render 'defect/defect_sidebar' %>
   </div>
-  
+
   <!-- Defect Timeline History -->
   <div class="mt-6">
     <%#= render 'defect/defect_timeline' %>
