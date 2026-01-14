@@ -1,101 +1,200 @@
-<div class="overflow-x-auto shadow-md sm:rounded-lg h-full">
-  <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-    <thead class="text-xs uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400 w-[100%]">
-    <tr>
-      <th scope="col" class="px-2 sm:px-6 py-2 sm:py-3">
-        Name of Project
-      </th>
-      <th scope="col" class="hidden sm:table-cell px-2 sm:px-6 py-2 sm:py-3">
-        Production Description
-      </th>
-      <th scope="col" class="hidden md:table-cell px-2 sm:px-6 py-2 sm:py-3">
-        Start Date
-      </th>
-      <th scope="col" class="hidden md:table-cell px-2 sm:px-6 py-2 sm:py-3">
-        End Date
-      </th>
-      <th scope="col" class="hidden sm:table-cell px-2 sm:px-6 py-2 sm:py-3">
-        Assignee
-      </th>
-      <th scope="col" class="hidden lg:table-cell px-2 sm:px-6 py-2 sm:py-3">
-        Product Category
-      </th>
-      <th scope="col" class="hidden md:table-cell px-2 sm:px-6 py-2 sm:py-3">
-        Clients
-      </th>
-      <th scope="col" class="px-2 sm:px-6 py-2 sm:py-3">
-        Actions
-      </th>
-    </tr>
-    </thead>
-    <tbody class="text-xs sm:text-sm font-normal text-gray-900 dark:text-gray-400">
-    <% @product.each do |product|  %>
-      <% if product.added_to?(current_user) or current_user.has_role?(:admin) %>
-        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 h-10 sm:h-12 text-left">
-          <th scope="row" class="px-2 sm:px-6 py-2 sm:py-4 font-medium whitespace-nowrap text-left">
-            <%= link_to product.name, product_path(product.id) %>
-          </th>
-          <td class="hidden sm:table-cell px-2 sm:px-6 py-2 sm:py-4">
-            <%= product.description.truncate(50) %>
-          </td>
-          <td class="hidden md:table-cell px-2 sm:px-6 py-2 sm:py-4">
-            <%= product.start_date.strftime("%d-%b-%y") %>
-          </td>
-          <td class="hidden md:table-cell px-2 sm:px-6 py-2 sm:py-4">
-            <% if product.end_date.present? %>
-              <% if product.end_date <= Date.today %>
-                <p class="text-red-900 p-1 rounded font-bold">
-                  <%= product.end_date.strftime("%d-%b-%y") %>
-                </p>
+<div class="mt-6">
+  <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+    <!-- Table Header -->
+    <div class="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 border-b-2 border-gray-300 dark:border-gray-600">
+      <div class="grid grid-cols-12 gap-3 px-6 py-4 text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
+        <div class="col-span-12 sm:col-span-4 md:col-span-3">Project Name</div>
+        <div class="col-span-6 sm:col-span-3 md:col-span-2 hidden sm:block">Client</div>
+        <div class="col-span-6 sm:col-span-3 md:col-span-2 hidden md:block">Groupware</div>
+        <div class="col-span-4 sm:col-span-2 md:col-span-1 hidden lg:block">Status</div>
+        <div class="col-span-4 sm:col-span-2 md:col-span-1 text-center hidden lg:block">Tasks</div>
+        <div class="col-span-4 sm:col-span-2 md:col-span-1 text-center hidden xl:block">Budget</div>
+        <div class="col-span-4 sm:col-span-2 md:col-span-1 text-center hidden xl:block">Due Date</div>
+        <div class="col-span-4 sm:col-span-2 md:col-span-1 hidden xl:block">Team</div>
+      </div>
+    </div>
+
+    <!-- Table Body -->
+    <div class="divide-y divide-gray-200 dark:divide-gray-700">
+      <% @product.each_with_index do |product, index| %>
+        <div class="grid grid-cols-12 gap-3 px-6 py-5 hover:bg-blue-50 dark:hover:bg-gray-750 transition-all duration-200 cursor-pointer items-center <%= index.even? ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-850' %> group"
+             onclick="window.location='<%= product_path(product.id) %>'">
+          
+          <!-- Project Name with Image -->
+          <div class="col-span-12 sm:col-span-8 md:col-span-3 flex items-center gap-4 pr-2">
+            <div class="flex-shrink-0">
+              <% if product.image.present? %>
+                <%= image_tag(product.image, class: 'w-12 h-12 rounded-lg object-cover shadow-md border-2 border-gray-200 dark:border-gray-600 group-hover:border-blue-400 transition-colors') %>
               <% else %>
-                <p class="bg-red-green p-1 rounded">
-                  <%= product.end_date.strftime("%d-%b-%y") %>
-                </p>
+                <%= image_tag 'default.png', class: 'w-12 h-12 rounded-lg object-cover shadow-md border-2 border-gray-200 dark:border-gray-600 group-hover:border-blue-400 transition-colors' %>
+              <% end %>
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-bold text-gray-900 dark:text-white break-words line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                <%= product.document_name || 'Untitled Project' %>
+              </p>
+            </div>
+            <% if current_user.has_role?(:admin) && can?(:edit, product) %>
+              <%= link_to edit_product_path(product), 
+                    class: "p-2 rounded-lg hover:bg-blue-100 dark:hover:bg-gray-600 text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400 flex-shrink-0 transition-all",
+                    data: { turbo: false },
+                    onclick: "event.stopPropagation();" do %>
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 3.487a2.25 2.25 0 1 1 3.182 3.182L7.5 19.213l-4.182.545a.75.75 0 0 1-.83-.83l.545-4.182 12.829-12.829z" />
+                </svg>
               <% end %>
             <% end %>
-          </td>
-          <td class="hidden sm:table-cell px-2 sm:px-6 py-2 sm:py-4">
-            <%= product.user.name %>
-          </td>
-          <td class="hidden lg:table-cell px-2 sm:px-6 py-2 sm:py-4 capitalize">
-            <% product.softwares.each do |software| %>  <!-- Iterate through software for the current project -->
-              <%= software.name %>
-            <% end %>
-          </td>
-          <td class="hidden md:table-cell px-2 sm:px-6 py-2 sm:py-4 capitalize">
-            <% if product.client.present? && product.client.name.present? %>
-              <%= product.client.name %>
-            <% end %>
-          </td>
+          </div>
 
-          <!-- Actions -->
-          <td class="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap font-medium text-right" data-controller="dropdown" data-dropdown-ticket-id-value="<%= product.id %>">
-            <div class="relative w-full flex justify-start">
-              <%= render partial: 'product/action_dropdown', locals: { product: product } %>
+          <!-- Client -->
+          <div class="col-span-6 sm:col-span-4 md:col-span-2 hidden sm:block">
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-gray-400 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
+              </svg>
+              <p class="text-sm text-gray-700 dark:text-gray-300 font-medium truncate">
+                <%= product.client.present? ? product.client.name : 'No Client' %>
+              </p>
             </div>
-          </td>
-        </tr>
+          </div>
+
+          <!-- Groupware -->
+          <div class="col-span-6 sm:col-span-4 md:col-span-2 hidden md:block">
+            <div class="flex flex-wrap gap-1">
+              <% groupwares = product.groupwares.map(&:name) %>
+              <% if groupwares.present? %>
+                <% groupwares.first(2).each do |gw| %>
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 border border-purple-200 dark:border-purple-700">
+                    <%= gw %>
+                  </span>
+                <% end %>
+                <% if groupwares.count > 2 %>
+                  <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                    +<%= groupwares.count - 2 %>
+                  </span>
+                <% end %>
+              <% else %>
+                <span class="text-sm text-gray-400 dark:text-gray-500">N/A</span>
+              <% end %>
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="col-span-4 sm:col-span-2 md:col-span-1 hidden lg:block">
+            <% status_name = product.statuses.first&.name || 'N/A' %>
+            <% status_colors = {
+              'Pre Quality Assurance' => 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 border-yellow-300 dark:border-yellow-700',
+              'In Progress' => 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700',
+              'Completed' => 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border-green-300 dark:border-green-700',
+              'On Hold' => 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-300 dark:border-gray-600'
+            } %>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold <%= status_colors[status_name] || 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-700' %> border shadow-sm">
+              <span class="w-1.5 h-1.5 rounded-full <%= status_name == 'Completed' ? 'bg-green-600' : 'bg-current' %> animate-pulse"></span>
+              <%= status_name %>
+            </div>
+          </div>
+
+          <!-- Tasks -->
+          <div class="col-span-4 sm:col-span-2 md:col-span-1 text-center hidden lg:block">
+            <% total_tasks = product.tasks.count %>
+            <% completed_tasks = product.tasks.joins(:statuses).where(statuses: { name: 'Done' }).count %>
+            <% pending_tasks = total_tasks - completed_tasks %>
+            <% progress_percentage = total_tasks > 0 ? (completed_tasks.to_f / total_tasks * 100).round : 0 %>
+            <div class="flex flex-col items-center gap-1">
+              <p class="text-sm font-bold text-gray-900 dark:text-white">
+                <%= pending_tasks %>/<%= total_tasks %>
+              </p>
+              <div class="w-full max-w-[60px] bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                <div class="<%= progress_percentage == 100 ? 'bg-green-500' : 'bg-blue-500' %> h-1.5 rounded-full transition-all duration-300" style="width: <%= progress_percentage %>%"></div>
+              </div>
+              <span class="text-xs text-gray-500 dark:text-gray-400"><%= progress_percentage %>%</span>
+            </div>
+          </div>
+
+          <!-- Budget -->
+          <div class="col-span-4 sm:col-span-2 md:col-span-1 text-center hidden xl:block">
+            <div class="flex flex-col items-center">
+              <p class="text-sm font-bold text-gray-900 dark:text-white">
+                <%= number_to_currency(product.budget || 0, unit: '$', precision: 0, delimiter: ',') %>
+              </p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">USD</p>
+            </div>
+          </div>
+
+          <!-- Due Date -->
+          <div class="col-span-4 sm:col-span-2 md:col-span-1 text-center hidden xl:block">
+            <% if product.end_date.present? %>
+              <% days_left = (product.end_date - Date.today).to_i %>
+              <div class="flex flex-col items-center gap-1">
+                <p class="text-sm font-semibold <%= days_left < 0 ? 'text-red-600 dark:text-red-400' : days_left < 7 ? 'text-orange-600 dark:text-orange-400' : 'text-gray-700 dark:text-gray-300' %>">
+                  <%= product.end_date.strftime('%d %b %y') %>
+                </p>
+                <% if days_left < 0 %>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
+                    <%= days_left.abs %> days overdue
+                  </span>
+                <% elsif days_left < 7 %>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200">
+                    <%= days_left %> days left
+                  </span>
+                <% else %>
+                  <span class="text-xs text-gray-500 dark:text-gray-400">
+                    <%= days_left %> days
+                  </span>
+                <% end %>
+              </div>
+            <% else %>
+              <p class="text-sm text-gray-400 dark:text-gray-500 italic">No deadline</p>
+            <% end %>
+          </div>
+
+          <!-- Team Members -->
+          <div class="col-span-4 sm:col-span-2 md:col-span-1 hidden xl:block">
+            <div class="flex items-center justify-start">
+              <div class="flex -space-x-2.5">
+                <% product.users.limit(4).each do |user| %>
+                  <% if user.profile_picture.present? %>
+                    <%= image_tag user.profile_picture, 
+                        class: "inline-block h-9 w-9 rounded-full ring-2 ring-white dark:ring-gray-800 hover:z-10 transition-transform hover:scale-110 shadow-md",
+                        title: "#{user.first_name} #{user.last_name}" %>
+                  <% else %>
+                    <div class="inline-flex items-center justify-center h-9 w-9 rounded-full ring-2 ring-white dark:ring-gray-800 bg-gradient-to-br from-blue-400 to-purple-500 text-white text-xs font-bold hover:z-10 transition-transform hover:scale-110 shadow-md"
+                         title="<%= "#{user.first_name} #{user.last_name}" %>">
+                      <%= user.first_name&.first&.upcase %><%= user.last_name&.first&.upcase %>
+                    </div>
+                  <% end %>
+                <% end %>
+                <% if product.users.count > 4 %>
+                  <div class="inline-flex items-center justify-center h-9 w-9 rounded-full ring-2 ring-white dark:ring-gray-800 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 text-xs font-bold hover:z-10 transition-transform hover:scale-110 shadow-md"
+                       title="<%= product.users.count - 4 %> more members">
+                    +<%= product.users.count - 4 %>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
       <% end %>
-    <% end %>
-    </tbody>
-  </table>
-</div>
-<div class="flex flex-wrap justify-center sm:justify-start gap-4 sm:gap-10 mt-4 sm:mt-5 px-2 sm:px-0">
-  <!-- Pagination Controls -->
-  <div class="pagination flex items-center flex-wrap gap-2 sm:gap-4">
-    <% if @page > 1 %>
-      <%= link_to 'Previous', product_index_path(@product, page: @page - 1, query: params[:query]), class: 'mb-4 h-8 sm:h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] px-2 sm:p-3 py-1 text-xs sm:text-sm rounded font-bold rounded-lg text-slate-100' %>
-    <% end %>
-    <span class="text-xs sm:text-sm">Page <%= @page %> of <%= @total_pages %></span>
-    <% if @page < @total_pages %>
-      <%= link_to 'Next', product_index_path(@product, page: @page + 1, query: params[:query]), class: 'mb-4 h-8 sm:h-12 bg-[#3F8CFF] hover:bg-[#3A81EB] px-2 sm:p-3 py-1 text-xs sm:text-sm rounded font-bold rounded-lg text-slate-100' %>
+    </div>
+
+    <!-- Empty State -->
+    <% if @product.empty? %>
+      <div class="px-6 py-16 text-center">
+        <svg class="mx-auto h-16 w-16 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
+        </svg>
+        <h3 class="mt-4 text-lg font-semibold text-gray-900 dark:text-white">No projects found</h3>
+        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Get started by creating a new project.</p>
+      </div>
     <% end %>
   </div>
 </div>
 
+<%= render partial: 'product/grid_pagination' %>
+
 <script>
   document.addEventListener("turbo:load", function() {
-    const sidebar = document.getElementById("sidebar"); // Ensure sidebar has this ID
+    const sidebar = document.getElementById("sidebar");
     const tableColumns = document.querySelectorAll(".hide-in-sidebar");
 
     function toggleColumns() {
