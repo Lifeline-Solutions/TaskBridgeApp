@@ -11,6 +11,9 @@
           <% if params[:status].present? %>
             <input type="hidden" name="status" value="<%= params[:status] %>">
           <% end %>
+          <% if params[:view].present? %>
+            <input type="hidden" name="view" value="<%= params[:view] %>">
+          <% end %>
           <input 
             type="text" 
             name="query" 
@@ -28,6 +31,9 @@
       <!-- Category Dropdown -->
       <div class="filter-dropdown relative w-full min-w-[120px] sm:w-auto">
         <form action="<%= product_index_path %>" method="get">
+          <% if params[:view].present? %>
+            <input type="hidden" name="view" value="<%= params[:view] %>">
+          <% end %>
           <div class="dropdown-label flex items-center gap-2 text-gray-700 dark:text-gray-300">
             <label for="status" class="dark:text-white">Category</label>
             <select 
@@ -66,6 +72,9 @@
           <% if params[:query].present? %>
             <input type="hidden" name="query" value="<%= params[:query] %>">
           <% end %>
+          <% if params[:view].present? %>
+            <input type="hidden" name="view" value="<%= params[:view] %>">
+          <% end %>
           <div class="dropdown-label flex items-center gap-2 text-gray-700 dark:text-gray-300">
             <select 
               id="sort_by" 
@@ -73,6 +82,7 @@
               onchange="this.form.submit()" 
               class="dropdown-select border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 px-3 py-2 text-sm w-full min-w-[90px] focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
             >
+              <option value="alphabetical" <%= 'selected' if params[:sort_by] == 'alphabetical' %>>Sort by: Alphabetical</option>
               <option value="upcoming" <%= 'selected' if params[:sort_by] == 'upcoming' %>>Sort by: Upcoming</option>
               <option value="recent" <%= 'selected' if params[:sort_by] == 'recent' %>>Sort by: Recent</option>
             </select>
@@ -81,10 +91,28 @@
       </div>
     </div>
 
-    <!-- Right side - Add New Project button -->
-    <div class="right-controls w-full md:w-auto md:ml-6">
+    <!-- Right side - View Toggle and Add New Project button -->
+    <div class="right-controls flex flex-col sm:flex-row gap-2 w-full md:w-auto md:ml-6">
+      <!-- View Toggle Buttons -->
+      <div class="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-md p-1">
+        <a href="<%= product_index_path(view: 'grid', query: params[:query], status: params[:status], sort_by: params[:sort_by]) %>" 
+           class="<%= @view_mode == 'grid' ? 'bg-white dark:bg-gray-600 shadow' : '' %> px-3 py-2 rounded text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-600 transition no-underline flex items-center gap-1"
+           title="Grid View">
+          <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+          </svg>
+        </a>
+        <a href="<%= product_index_path(view: 'list', query: params[:query], status: params[:status], sort_by: params[:sort_by]) %>" 
+           class="<%= @view_mode == 'list' ? 'bg-white dark:bg-gray-600 shadow' : '' %> px-3 py-2 rounded text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-600 transition no-underline flex items-center gap-1"
+           title="List View">
+          <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+          </svg>
+        </a>
+      </div>
+      
       <% if can? :create, Product %>
-        <a href="<%= new_product_path %>" class="add-button flex items-center justify-center gap-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-md px-4 py-2 text-sm w-full max-w-[160px] shadow transition no-underline">
+        <a href="<%= new_product_path %>" class="add-button flex items-center justify-center gap-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-md px-4 py-2 text-sm w-full sm:w-auto max-w-[160px] shadow transition no-underline">
           <span class="add-icon text-lg">＋</span>
           <span>Add New</span>
         </a>
