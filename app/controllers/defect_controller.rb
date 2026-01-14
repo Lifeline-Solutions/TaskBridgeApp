@@ -596,9 +596,6 @@ class DefectController < ApplicationController
     @end_count = [@page * @per_page, @total_count].min
     @defects = @defects.offset((@page - 1) * @per_page).limit(@per_page)
 
-    # All details show all
-    @defects = Defect.where(product_id: params[:product_id]) if params[:product_id].present?
-    @defects = @defects.where(retest_count: params[:retest_count]) if params[:retest_count].present?
 
 
     # Compute reopened count per defect for the defects on the current page
