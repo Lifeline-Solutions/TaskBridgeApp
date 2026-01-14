@@ -4,6 +4,10 @@ class ProductController < ApplicationController
   load_and_authorize_resource
 
   def index
+    # Handle view mode (grid or list)
+    @view_mode = params[:view] || session[:product_view_mode] || 'grid'
+    session[:product_view_mode] = @view_mode
+
     # Base product query
     @product = Product.active
       .includes(softwares: :groupwares)
@@ -44,6 +48,8 @@ class ProductController < ApplicationController
     @product = case params[:sort_by]
                when 'upcoming'
                  @product.order(end_date: :asc)
+               when 'alphabetical'
+                 @product.order(document_name: :asc)
                else
                  @product.order(created_at: :desc)
                end
