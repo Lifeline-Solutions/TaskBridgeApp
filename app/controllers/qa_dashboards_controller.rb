@@ -92,6 +92,63 @@ class QaDashboardsController < ApplicationController
     @dashboard.widgets.each_with_index do |_widget, index|
       @widget_data[index] = @dashboard.generate_widget_data(index)
     end
+
+    @defects = Defect.where(product_id: params[:product_id]) if params[:product_id].present?
+    @defects = @defects.where(retest_count: params[:retest_count]) if params[:retest_count].present?
+
+
+    # show the number of reopened defects this from the defect History
+
+    defect_ids_for_page = @defects.map(&:id)
+    @reopened_defect_count_per_defect = if defect_ids_for_page.any?
+                                          DefectHistory.where(defect_id: defect_ids_for_page, history_type: 'Status Changed')
+                                            .where('history ILIKE ?', '%to Reopened%')
+                                            .count
+
+                                        end
+    # Total Defects with Reopened
+    @reopened_defects_count = if defect_ids_for_page.any?
+                                DefectHistory.where(defect_id: defect_ids_for_page, history_type: 'Status Changed')
+                                             .where('history ILIKE ?', '%to Reopened%')
+                                             .distinct
+                                             .count(:defect_id)
+                              else
+                                0
+                              end
+
+    #Show the total number of reopened per project for the current filter
+    @reopened_defects_total = if defect_ids_for_page.any?
+                                DefectHistory.where(defect_id: defect_ids_for_page, history_type: 'Status Changed')
+                                             .where('history ILIKE ?', '%to Reopened%')
+                                             .count
+                              else
+                                0
+                              end
+
+    # Calculate the number of defects for the current product_id
+    @reopened_percentage = (@reopened_defects_count.to_f / @total_count * 100).round(1)
+
+    #Show the following for the defects on Reopened
+    # 1. Display the list with frequency show the number of times a defect has been opened,
+    #     i.e. 1 time 2 times 3 times e.t.c
+    #     2. Show the top 5 defects with the highest number of times reopened
+
+    # Calculate the frequency of "Reopened" for each defect
+    @reopened_frequency = if defect_ids_for_page.any?
+                            DefectHistory.where(defect_id: defect_ids_for_page, history_type: 'Status Changed')
+                                         .where('history ILIKE ?', '%to Reopened%')
+                                         .group(:defect_id)
+                                         .count
+                          else
+                            {}
+                          end
+
+    # Group the defects by the count of times reopened
+    @grouped_reopened_frequency = @reopened_frequency.values.group_by(&:itself).transform_values(&:count)
+
+    # Sort the grouped counts in descending order
+    @sorted_grouped_reopened_frequency = @grouped_reopened_frequency.sort_by { |count, _frequency| -count }.to_h
+
   end
 
   def edit
