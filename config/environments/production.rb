@@ -89,7 +89,7 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions
 
-  config.action_mailer.default_url_options = { host: 'https://taskbridge.craftsilicon.com/', protocol: 'https' }
+  config.action_mailer.default_url_options = { host: 'taskbridge.craftsilicon.com', protocol: 'https' }
   config.action_controller.raise_on_missing_callback_actions = true
   #config.action_mailer.default_url_options = { host: '172.17.40.11', port: 3000 }
   config.active_storage.variant_processor = :mini_magick
