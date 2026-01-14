@@ -56,11 +56,19 @@ class DefectMessagesController < ApplicationController
       respond_to do |format|
         format.turbo_stream do
           # Just replace the entire defect-messages section - it will re-check for drafts
-          render turbo_stream: turbo_stream.replace('defect-messages',
-                                                    partial: 'defect_messages/defect_messages',
-                                                    locals: { defect: @defect, timeline_items: @defect.timeline_items })
+          render turbo_stream: [
+            turbo_stream.replace('defect-messages',
+                                partial: 'defect_messages/defect_messages',
+                                locals: { defect: @defect, timeline_items: @defect.timeline_items }),
+            # Clear localStorage to prevent stale draft notifications
+            turbo_stream.append('body',
+              "<script>localStorage.removeItem('defect_#{@defect.id}_draft_message'); console.log('Draft localStorage cleared for defect #{@defect.id}');</script>")
+          ]
         end
-        format.html { redirect_to defect_path(@defect), notice: 'Message posted!' }
+        format.html do
+          flash[:clear_draft] = @defect.id
+          redirect_to defect_path(@defect), notice: 'Message posted!'
+        end
       end
     else
       respond_to do |format|
