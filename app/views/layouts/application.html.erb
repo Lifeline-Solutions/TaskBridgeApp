@@ -21,9 +21,9 @@
       display: none !important;
     }
   </style>
-  <%# if defined?(Sentry) && ENV["SENTRY_DSN"].present? %>
-    <%#= Sentry.get_trace_propagation_meta.html_safe %>
-  <%# end %>
+  <% if defined?(Sentry) && ENV["SENTRY_DSN"].present? %>
+    <%= Sentry.get_trace_propagation_meta.html_safe %>
+  <% end %>
   <%= javascript_include_tag "loading" %>
   <%= javascript_include_tag "chartkick" %>
   <%= javascript_include_tag "Chart.bundle" %>
