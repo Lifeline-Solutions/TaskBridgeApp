@@ -153,11 +153,7 @@
 
                 <span class="flex-1 ms-3 whitespace-nowrap group-hover:text-blue-700 dark:group-hover:text-blue-800 <%= 'text-blue-700 dark:text-blue-800 font-medium' if request.path.start_with?('/defect_filters') %>">Saved Filters (QA)</span>
                 <span class="inline-flex items-center justify-center w-3 h-3 p-4 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300">
-                  <% if current_user.has_role?(:admin) %>
-                    <%= DefectFilter.count %>
-                  <% else %>
-                    <%= current_user.defect_filters.count %>
-                  <% end %>
+                  <%= current_user.defect_filters.active.count %>
                 </span>
                 </div>
               </li>
@@ -179,11 +175,7 @@
 
                 <span class="flex-1 ms-3 whitespace-nowrap group-hover:text-blue-700 dark:group-hover:text-blue-800 <%= 'text-blue-700 dark:text-blue-800 font-medium' if request.path.start_with?('/qa/dashboards') %>">QA Dashboard</span>
                 <span class="inline-flex items-center justify-center w-3 h-3 p-4 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300">
-                  <% if current_user.has_role?(:admin) %>
-                    <%= Dashboard.active.count %>
-                  <% else %>
-                    <%= current_user.dashboards.active.count %>
-                  <% end %>
+                  <%= current_user.dashboards.active.count %>
                 </span>
                 </div>
               </li>
