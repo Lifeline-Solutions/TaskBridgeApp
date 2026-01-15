@@ -101,7 +101,7 @@
             <th scope="col" class="hidden xl:table-cell px-3 sm:px-6 py-3 font-medium text-center">Due Date</th>
             <th scope="col" class="hidden xl:table-cell px-3 sm:px-6 py-3 font-medium">Team</th>
             <% if current_user.has_role?(:admin) && can?(:edit, @product) %>
-              <th scope="col" class="px-3 sm:px-6 py-3 font-medium text-center">Actions</th>
+              <th scope="col" class="px-3 sm:px-6 py-3 font-medium text-center">Edit</th>
             <% end %>
           </tr>
         </thead>
