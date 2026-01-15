@@ -100,6 +100,10 @@ class ProjectController < ApplicationController
       # All open tickets for all users
       @ticket = @ticket.joins(:users, :statuses).where(statuses: { name: %w[Closed Resolved Declined] }) if params[:filter] == 'Closed_for_all'
 
+      current_user_team_ids = current_user.teams.pluck(:id)
+      team_users = Team.where(id: current_user_team_ids).joins(:users).pluck('users.id').uniq
+      @ticket = @ticket.joins(:users, :statuses).where(users: { id: team_users }).where.not(statuses: { name: %w[Closed Resolved Declined] }) if params[:filter] == 'Team_tickets'
+
       # All closed tickets for tickets closed by the current user
 
       # Ordering
@@ -148,6 +152,11 @@ class ProjectController < ApplicationController
       @closed_tickets = @project.tickets.joins(:statuses).where(statuses: { name: %w[Closed Resolved] }).count
       @breached_target_tickets_count = @project.tickets.count_target_breached_sla
       @total_tickets_open = @project.tickets.joins(:statuses).where.not(statuses: { name: %w[Closed Resolved Declined] }).count
+      # Total team tickets,
+      # 1. filter to show the tickets belong to the current user team
+      current_user_team_ids = current_user.teams.pluck(:id)
+      team_users = Team.where(id: current_user_team_ids).joins(:users).pluck('users.id').uniq
+      @total_team_tickets = @project.tickets.joins(:users, :statuses).where.not(statuses: { name: %w[Closed Resolved Declined] }).where(users: { id: team_users }).distinct.count
     else
       redirect_to root_path, alert: 'You are not authorized to view this content.'
     end
