@@ -135,15 +135,6 @@
                   </svg>
 
                 <span class="flex-1 ms-3 whitespace-nowrap group-hover:text-blue-700 dark:group-hover:text-blue-800 <%= 'text-blue-700 dark:text-blue-800 font-medium' if request.path.start_with?('/defect') %>">Quality Assurance</span>
-                <span class="inline-flex items-center justify-center w-3 h-3 p-4 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300">
-                  <% if current_user.defects.published.exists?  %>
-                    <%= current_user.defects.published.count %>
-                  <% elsif current_user.has_role?(:admin) %>
-                    <%= Defect.published.count %>
-                  <% else %>
-                    0
-                  <% end %>
-                </span>
                 </div>
               </li>
             <% end %>
@@ -162,12 +153,10 @@
 
                 <span class="flex-1 ms-3 whitespace-nowrap group-hover:text-blue-700 dark:group-hover:text-blue-800 <%= 'text-blue-700 dark:text-blue-800 font-medium' if request.path.start_with?('/defect_filters') %>">Saved Filters (QA)</span>
                 <span class="inline-flex items-center justify-center w-3 h-3 p-4 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300">
-                  <% if current_user.defect_filters.exists?  %>
-                    <%= current_user.defect_filters.count %>
-                  <% elsif current_user.has_role?(:admin) %>
+                  <% if current_user.has_role?(:admin) %>
                     <%= DefectFilter.count %>
                   <% else %>
-                    0
+                    <%= current_user.defect_filters.count %>
                   <% end %>
                 </span>
                 </div>
@@ -190,7 +179,11 @@
 
                 <span class="flex-1 ms-3 whitespace-nowrap group-hover:text-blue-700 dark:group-hover:text-blue-800 <%= 'text-blue-700 dark:text-blue-800 font-medium' if request.path.start_with?('/qa/dashboards') %>">QA Dashboard</span>
                 <span class="inline-flex items-center justify-center w-3 h-3 p-4 ms-3 text-sm font-medium text-blue-800 bg-blue-100 rounded-full dark:bg-blue-900 dark:text-blue-300">
-                  <%= current_user.dashboards.active.count %>
+                  <% if current_user.has_role?(:admin) %>
+                    <%= Dashboard.active.count %>
+                  <% else %>
+                    <%= current_user.dashboards.active.count %>
+                  <% end %>
                 </span>
                 </div>
               </li>
