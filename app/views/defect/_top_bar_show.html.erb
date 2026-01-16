@@ -1411,8 +1411,35 @@
 
     Array.from(items).forEach(item => {
       const text = item.textContent.toLowerCase().trim();
-      item.style.display = text.includes(searchTerm) ? 'flex' : 'none';
+      const matchesSearch = text.includes(searchTerm);
+      
+      // For submodule items, also check module filter
+      if (item.classList.contains('submodule-item')) {
+        const selectedModuleIds = [];
+        const moduleCheckboxes = document.querySelectorAll('.module-checkbox:not(.select-all-checkbox):checked');
+        
+        moduleCheckboxes.forEach(checkbox => {
+          const moduleId = checkbox.dataset.moduleId || checkbox.value;
+          if (moduleId) {
+            selectedModuleIds.push(moduleId.toString());
+          }
+        });
+        
+        const parentId = item.dataset.parentId;
+        const matchesModule = selectedModuleIds.length === 0 || selectedModuleIds.includes(parentId?.toString());
+        
+        // Show only if matches both search AND module filter
+        item.style.display = (matchesSearch && matchesModule) ? 'flex' : 'none';
+      } else {
+        // For non-submodule items, just use search filter
+        item.style.display = matchesSearch ? 'flex' : 'none';
+      }
     });
+    
+    // Update submodule select all state after filtering
+    if (itemsContainerId === 'submoduleItems') {
+      updateSubmoduleSelectAllState();
+    }
   }
 
 
@@ -1446,7 +1473,7 @@
     const isDuplicate = existingListeners.some(l => l.event === event && l.handler === handler);
 
     if (isDuplicate) {
-      console.log('Duplicate listener prevented for', element, event);
+      // console.log('Duplicate listener prevented for', element, event);
       return;
     }
 
@@ -1555,12 +1582,12 @@
         const target = this.dataset.target;
         const isChecked = this.checked;
 
-        console.log(`Select All for ${target} clicked, checked: ${isChecked}`);
+        // console.log(`Select All for ${target} clicked, checked: ${isChecked}`);
 
         // Query for all checkboxes with the target class
         const allCheckboxes = document.querySelectorAll(`.${target}-checkbox:not(.select-all-checkbox)`);
 
-        console.log(`Found ${allCheckboxes.length} checkboxes for ${target}`);
+        // console.log(`Found ${allCheckboxes.length} checkboxes for ${target}`);
 
         // Counter for debugging
         let checkedCount = 0;
@@ -1574,12 +1601,11 @@
             // Set checked state directly
             cb.checked = isChecked;
             checkedCount++;
-            console.log(`Checkbox ${index}: set to ${isChecked}`);
+            // console.log(`Checkbox ${index}: set to ${isChecked}`);
           }
         });
 
-        console.log(`Total checkboxes updated: ${checkedCount}`);
-
+        // console.log(`Total checkboxes updated: ${checkedCount}`);
         // Update button text and states after all updates complete
         setTimeout(() => {
           updateButtonTextForFilter(target);
@@ -1641,27 +1667,44 @@
       }
     });
 
-    console.log('Selected module IDs:', selectedModuleIds);
+    // console.log('Selected module IDs:', selectedModuleIds);
 
     // Get all submodule items
     const allSubmoduleItems = document.querySelectorAll('.submodule-item');
     
+    // Get search term if any
+    const submoduleSearch = document.getElementById('submoduleSearch');
+    const searchTerm = submoduleSearch ? submoduleSearch.value.toLowerCase().trim() : '';
+    
     if (selectedModuleIds.length === 0) {
-      // If no modules selected, show ALL submodules
+      // If no modules selected, show ALL submodules (filtered by search only)
       // console.log('No modules selected, showing all', allSubmoduleItems.length, 'submodules');
       allSubmoduleItems.forEach(item => {
-        item.style.display = 'flex';
-        // Make sure the item is visible
-        item.classList.remove('hidden');
+        // Check if matches search term
+        const text = item.textContent.toLowerCase().trim();
+        const matchesSearch = searchTerm === '' || text.includes(searchTerm);
+        
+        if (matchesSearch) {
+          item.style.display = 'flex';
+          item.classList.remove('hidden');
+        } else {
+          item.style.display = 'none';
+        }
       });
     } else {
-      // Show only submodules that belong to selected modules
+      // Show only submodules that belong to selected modules AND match search
       let visibleCount = 0;
       let hiddenCount = 0;
       
       allSubmoduleItems.forEach(item => {
         const parentId = item.dataset.parentId;
-        const shouldShow = selectedModuleIds.includes(parentId?.toString());
+        const shouldShowByModule = selectedModuleIds.includes(parentId?.toString());
+        
+        // Check if matches search term
+        const text = item.textContent.toLowerCase().trim();
+        const matchesSearch = searchTerm === '' || text.includes(searchTerm);
+        
+        const shouldShow = shouldShowByModule && matchesSearch;
         
         if (shouldShow) {
           item.style.display = 'flex';
