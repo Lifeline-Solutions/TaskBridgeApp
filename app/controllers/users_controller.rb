@@ -56,7 +56,7 @@ class UsersController < ApplicationController
   end
 
   def active
-    per_page = 1000
+    per_page = 50
     page = params[:page].to_i.positive? ? params[:page].to_i : 1 # Default to page 1 if no page is provided
 
     # Base query for all active users
@@ -84,7 +84,7 @@ class UsersController < ApplicationController
   end
 
   def client_active
-    per_page = 1000
+    per_page = 50
     page = params[:page].to_i.positive? ? params[:page].to_i : 1
 
     # Base query for all client users
@@ -112,7 +112,7 @@ class UsersController < ApplicationController
   end
 
   def manager_active
-    per_page = 1000
+    per_page = 50
     page = params[:page].to_i.positive? ? params[:page].to_i : 1
 
     # Base query for all manager users
@@ -140,7 +140,7 @@ class UsersController < ApplicationController
   end
 
   def agent_active
-    per_page = 1000
+    per_page = 50
     page = params[:page].to_i.positive? ? params[:page].to_i : 1
 
     # Base query for all agent users
