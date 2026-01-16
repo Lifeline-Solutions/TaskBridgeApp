@@ -2111,7 +2111,7 @@ class DefectController < ApplicationController
         type: 'defect_action'
       ).use_template(
         view: 'user_mailer/defect_action_email',
-        assigns: { defect: defect, actor: user, action_name: action_name }
+        assigns: { defect: defect, actor: user, action_name: action_name, url: defect_url(@defect, Rails.application.config.action_mailer.default_url_options) }
       ).set_source('defect', defect.id).set_party('user', recipient.id).send(queue: true)
     end
   end
