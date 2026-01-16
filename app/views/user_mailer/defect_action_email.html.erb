@@ -54,9 +54,7 @@
 
   <p>
     <% if @url.present? %>
-      Click <%= link_to 'here', @url, target: '_blank', rel: 'noopener noreferrer nofollow' %> to view the defect.
-    <% else %>
-      Click here to view the defect (link unavailable).
+      Click <a href="<%= @url %>">here</a> to view the defect.
     <% end %>
   </p>
 
