@@ -62,7 +62,7 @@ class DefectMessagesController < ApplicationController
                                 locals: { defect: @defect, timeline_items: @defect.timeline_items }),
             # Clear localStorage to prevent stale draft notifications
             turbo_stream.append('body',
-              "<script>localStorage.removeItem('defect_#{@defect.id}_draft_message'); console.log('Draft localStorage cleared for defect #{@defect.id}');</script>")
+              "<script>localStorage.removeItem('defect_#{@defect.id}_draft_message');</script>")
           ]
         end
         format.html do
@@ -162,7 +162,7 @@ class DefectMessagesController < ApplicationController
         type: 'defect_action'
       ).use_template(
         view: 'user_mailer/defect_action_email',
-        assigns: { defect: defect, actor: user, action_name: action_name }
+        assigns: { defect: defect, actor: user, action_name: action_name, url: defect_url(defect, Rails.application.config.action_mailer.default_url_options) }
       ).set_source('defect', defect.id).set_party('user', recipient_user&.id).send(queue: true)
     end
   end
