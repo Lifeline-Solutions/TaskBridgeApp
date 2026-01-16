@@ -1,5 +1,22 @@
 <% provide(:title, "Quality Assurance") %>
 
+<script>
+  // Force page reload on every Turbo visit to this page
+  (function() {
+    const hasReloaded = sessionStorage.getItem('qa_index_reloaded_' + window.location.search);
+
+    if (!hasReloaded) {
+      // Mark that we're about to reload
+      sessionStorage.setItem('qa_index_reloaded_' + window.location.search, 'true');
+      // Force a hard reload
+      window.location.reload(true);
+    } else {
+      // Clear the flag after successful load
+      sessionStorage.removeItem('qa_index_reloaded_' + window.location.search);
+    }
+  })();
+</script>
+
 <% if flash[:notice] %>
   <div class="bg-[#1a237e] border border-[#4caf50] text-white px-4 py-3 rounded mb-4 shadow-md">
     <p><%= flash[:notice] %></p>
@@ -17,5 +34,3 @@
 <div class="mb-4 h-full">
   <%= render 'defect/defect_order_status' %>
 </div>
-
-
