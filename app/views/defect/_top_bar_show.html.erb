@@ -1647,31 +1647,46 @@
     const allSubmoduleItems = document.querySelectorAll('.submodule-item');
     
     if (selectedModuleIds.length === 0) {
-      // If no modules selected, show all submodules
+      // If no modules selected, show ALL submodules
+      // console.log('No modules selected, showing all', allSubmoduleItems.length, 'submodules');
       allSubmoduleItems.forEach(item => {
         item.style.display = 'flex';
+        // Make sure the item is visible
+        item.classList.remove('hidden');
       });
-      console.log('No modules selected, showing all submodules');
     } else {
       // Show only submodules that belong to selected modules
+      let visibleCount = 0;
+      let hiddenCount = 0;
+      
       allSubmoduleItems.forEach(item => {
         const parentId = item.dataset.parentId;
         const shouldShow = selectedModuleIds.includes(parentId?.toString());
-        item.style.display = shouldShow ? 'flex' : 'none';
         
-        // Uncheck hidden submodules
-        if (!shouldShow) {
+        if (shouldShow) {
+          item.style.display = 'flex';
+          item.classList.remove('hidden');
+          visibleCount++;
+        } else {
+          item.style.display = 'none';
+          hiddenCount++;
+          
+          // Uncheck hidden submodules
           const checkbox = item.querySelector('.submodule-checkbox');
           if (checkbox && checkbox.checked) {
             checkbox.checked = false;
           }
         }
       });
-      console.log('Filtered submodules based on selected modules');
+      
+      // console.log(`Filtered submodules: ${visibleCount} visible, ${hiddenCount} hidden`);
     }
 
     // Update the select all state for submodules
     updateSubmoduleSelectAllState();
+    
+    // Update button text to reflect visible submodules
+    updateButtonTextForFilter('submodule');
   }
 
   // Function to update the "Select All" state for submodules
