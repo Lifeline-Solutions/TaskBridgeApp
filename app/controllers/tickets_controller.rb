@@ -478,7 +478,8 @@ class TicketsController < ApplicationController
             ticket: @ticket,
             current_user: current_user,
             project: @project,
-            assigned_user: assigned_user
+            assigned_user: assigned_user,
+            url: project_ticket_url(@project, @ticket)
           }
         ).set_source('ticket', @ticket.id).send(queue: true)
       end
@@ -499,7 +500,10 @@ class TicketsController < ApplicationController
             ticket: @ticket,
             current_user: current_user,
             project: @project,
-            assigned_user: assigned_user
+            assigned_user: assigned_user,
+            # This line of code was ommited this led to emails not having a link
+            url: project_ticket_url(@project, @ticket)
+
           }
         ).set_source('ticket', @ticket.id).send(queue: true)
       end

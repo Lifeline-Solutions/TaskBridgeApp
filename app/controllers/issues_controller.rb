@@ -67,7 +67,7 @@ class IssuesController < ApplicationController
                 type: 'issue_created'
               )
               .use_template(view: 'user_mailer/issue_created_email', assigns: { user: target, issue: @issue, project: @project, ticket: @ticket,
-                                                                                current_user: Current.user })
+                                                                                current_user: Current.user, url: project_ticket_url(@project, @ticket) })
               .set_source('ticket', @ticket.id)
               .set_party('user', Current.user&.id)
               .send(queue: true)
