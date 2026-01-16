@@ -473,7 +473,7 @@
                                               selected_modules.include?(module_item.id.to_s),
                                               id: "module_#{module_item.id}",
                                               class: "mr-2 module-checkbox",
-                                              data: { "parent-id": module_item.id } %>
+                                              data: { "module-id": module_item.id } %>
                             <%= label_tag "module_#{module_item.id}", module_item.name, class: "text-sm" %>
                           </div>
                         <% end %>
@@ -1565,28 +1565,26 @@
         // Counter for debugging
         let checkedCount = 0;
 
-        // Use requestAnimationFrame to batch DOM updates and ensure they complete
-        requestAnimationFrame(() => {
-          // Update all visible checkboxes
-          allCheckboxes.forEach((cb, index) => {
-            const parentItem = cb.closest('.dropdown-item');
-            const isVisible = !parentItem || parentItem.style.display !== 'none';
+        // Update all visible checkboxes immediately without requestAnimationFrame
+        allCheckboxes.forEach((cb, index) => {
+          const parentItem = cb.closest('.dropdown-item');
+          const isVisible = !parentItem || parentItem.style.display !== 'none';
 
-            if (isVisible) {
-              cb.checked = isChecked;
-              // Dispatch change event to update individual checkbox state
-              cb.dispatchEvent(new Event('change', { bubbles: false }));
-              checkedCount++;
-              console.log(`Checkbox ${index}: set to ${isChecked}`);
-            }
-          });
+          if (isVisible) {
+            // Set checked state directly
+            cb.checked = isChecked;
+            checkedCount++;
+            console.log(`Checkbox ${index}: set to ${isChecked}`);
+          }
+        });
 
-          console.log(`Total checkboxes updated: ${checkedCount}`);
+        console.log(`Total checkboxes updated: ${checkedCount}`);
 
-          // Update button text and states after all updates complete
+        // Update button text and states after all updates complete
+        setTimeout(() => {
           updateButtonTextForFilter(target);
           updateFilterButtonStates();
-        });
+        }, 50);
       };
 
       addManagedEventListener(checkbox, 'change', changeHandler);
@@ -1601,6 +1599,11 @@
         updateSelectAllState(this);
         updateButtonTextForCheckbox(this);
         updateFilterButtonStates();
+        
+        // If this is a submodule checkbox, also update the submodule select all state
+        if (this.classList.contains('submodule-checkbox')) {
+          updateSubmoduleSelectAllState();
+        }
       };
 
       addManagedEventListener(checkbox, 'change', changeHandler);
@@ -1615,18 +1618,6 @@
 
       const changeHandler = function() {
         updateSubmoduleVisibility();
-
-        // Optional: Auto-expand submodules when parent is selected
-        if (this.checked) {
-          const moduleId = this.dataset.parentId || this.value;
-          const submodules = document.querySelectorAll(`.submodule-checkbox[data-parent-id="${moduleId}"]`);
-          submodules.forEach(sub => {
-            if (!sub.checked) {
-              sub.checked = true;
-              sub.dispatchEvent(new Event('change'));
-            }
-          });
-        }
       };
 
       addManagedEventListener(checkbox, 'change', changeHandler);
@@ -1635,6 +1626,83 @@
 
     // Initialize visibility on page load
     updateSubmoduleVisibility();
+  }
+
+  // Function to update submodule visibility based on selected modules
+  function updateSubmoduleVisibility() {
+    const selectedModuleIds = [];
+    const moduleCheckboxes = document.querySelectorAll('.module-checkbox:not(.select-all-checkbox):checked');
+    
+    // Collect all selected module IDs
+    moduleCheckboxes.forEach(checkbox => {
+      const moduleId = checkbox.dataset.moduleId || checkbox.value;
+      if (moduleId) {
+        selectedModuleIds.push(moduleId.toString());
+      }
+    });
+
+    console.log('Selected module IDs:', selectedModuleIds);
+
+    // Get all submodule items
+    const allSubmoduleItems = document.querySelectorAll('.submodule-item');
+    
+    if (selectedModuleIds.length === 0) {
+      // If no modules selected, show all submodules
+      allSubmoduleItems.forEach(item => {
+        item.style.display = 'flex';
+      });
+      console.log('No modules selected, showing all submodules');
+    } else {
+      // Show only submodules that belong to selected modules
+      allSubmoduleItems.forEach(item => {
+        const parentId = item.dataset.parentId;
+        const shouldShow = selectedModuleIds.includes(parentId?.toString());
+        item.style.display = shouldShow ? 'flex' : 'none';
+        
+        // Uncheck hidden submodules
+        if (!shouldShow) {
+          const checkbox = item.querySelector('.submodule-checkbox');
+          if (checkbox && checkbox.checked) {
+            checkbox.checked = false;
+          }
+        }
+      });
+      console.log('Filtered submodules based on selected modules');
+    }
+
+    // Update the select all state for submodules
+    updateSubmoduleSelectAllState();
+  }
+
+  // Function to update the "Select All" state for submodules
+  function updateSubmoduleSelectAllState() {
+    const selectAllSubmodule = document.getElementById('select_all_submodule');
+    if (!selectAllSubmodule) return;
+
+    const visibleSubmodules = Array.from(document.querySelectorAll('.submodule-checkbox:not(.select-all-checkbox)'))
+      .filter(cb => {
+        const parentItem = cb.closest('.submodule-item');
+        return parentItem && parentItem.style.display !== 'none';
+      });
+
+    if (visibleSubmodules.length === 0) {
+      selectAllSubmodule.checked = false;
+      selectAllSubmodule.indeterminate = false;
+      return;
+    }
+
+    const checkedCount = visibleSubmodules.filter(cb => cb.checked).length;
+    
+    if (checkedCount === 0) {
+      selectAllSubmodule.checked = false;
+      selectAllSubmodule.indeterminate = false;
+    } else if (checkedCount === visibleSubmodules.length) {
+      selectAllSubmodule.checked = true;
+      selectAllSubmodule.indeterminate = false;
+    } else {
+      selectAllSubmodule.checked = false;
+      selectAllSubmodule.indeterminate = true;
+    }
   }
 
   // Enhanced dropdown management with proper state tracking
