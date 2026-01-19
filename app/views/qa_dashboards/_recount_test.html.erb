@@ -61,14 +61,12 @@
           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
 
           <% @retest_metrics[:distribution].each do |count, defect_count| %>
-            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer" onclick="window.location='<%= index_show_defect_index_path(product_id: (@product_scope.presence || @dashboard.defect_filter.product_id), retest_count: count) %>'">
 
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-left">
-                <%= link_to index_show_defect_index_path(product_id: (@product_scope.presence || @dashboard.defect_filter.product_id), retest_count: count)  do %>
                   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= count >= 3 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' %>">
                       <%= count %> <%= count == 1 ? 'time' : 'times' %>
                   </span>
-                <% end %>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-left font-semibold">
                 <%= defect_count %> <%= defect_count == 1 ? 'defect' : 'defects' %>
