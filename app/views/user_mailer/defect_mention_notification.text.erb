@@ -5,7 +5,7 @@ Hi <%= @user.first_name %>,
 <%= @current_user.first_name %> <%= @current_user.last_name %> mentioned you in a <%= @context_text %>.
 
 Defect: <%= @defect.defect_unique %> - <%= @defect.summary %>
-Project: <%= @defect.product&.document_name || 'N/A' %>
+Project: <%= @defect.product&.client&.name || 'N/A' %>
 Priority: <%= @defect.priority %>
 
 <% if @content.present? %>

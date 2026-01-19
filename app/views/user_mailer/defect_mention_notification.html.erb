@@ -7,7 +7,7 @@
 
   <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px; margin: 16px 0;">
     <p><strong>Defect:</strong> <%= @defect.defect_unique %> - <%= @defect.summary %></p>
-    <p><strong>Project:</strong> <%= @defect.product&.document_name || 'N/A' %></p>
+    <p><strong>Project:</strong> <%= @defect.product&.client&.name || 'N/A' %></p>
     <p><strong>Priority:</strong> <%= @defect.priority %></p>
     
     <% if @content.present? %>
