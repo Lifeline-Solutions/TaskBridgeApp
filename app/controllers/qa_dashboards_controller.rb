@@ -38,7 +38,7 @@ class QaDashboardsController < ApplicationController
     end
 
     # Initialize product filter variables
-    @selected_product_ids = params[:product_id] || []
+    @selected_product_ids = Array(params[:product_id]).reject(&:blank?)
 
     # Load products with QA statuses (similar to reports_controller approach)
     products = Product.qa_projects.active.includes(:client, :groupwares)
@@ -59,6 +59,7 @@ class QaDashboardsController < ApplicationController
                             else
                               []
                             end
+    @product_scope = product_ids_to_filter
 
     # Generate automatic charts for active filter parameters with product filtering
     result = DashboardDataGenerator.new(@dashboard, product_ids: product_ids_to_filter).generate
@@ -93,8 +94,10 @@ class QaDashboardsController < ApplicationController
       @widget_data[index] = @dashboard.generate_widget_data(index)
     end
 
-    @defects = Defect.where(product_id: params[:product_id]) if params[:product_id].present?
+    #@defects = Defect.where(product_id: params[:product_id]) if params[:product_id].present?
+    #@defects = @defects.where(retest_count: params[:retest_count]) if params[:retest_count].present?
     @defects = @defects.where(retest_count: params[:retest_count]) if params[:retest_count].present?
+
 
 
     # show the number of reopened defects this from the defect History
