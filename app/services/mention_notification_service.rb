@@ -91,6 +91,7 @@ class MentionNotificationService
           current_user: @current_user,
           content: @content,
           context_type: @context_type,
+          context_text: context_text,
           url: defect_url
         }
       )

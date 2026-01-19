@@ -3,34 +3,32 @@
 
   <p>Hi <%= @user.first_name %>,</p>
 
-  <p><strong><%= @current_user.first_name %> <%= @current_user.last_name %></strong> mentioned you in a <%= @context_text %> on defect:</p>
+  <p><%= @current_user.first_name %> <%= @current_user.last_name %> mentioned you in a <%= @context_text %>:</p>
 
   <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px; margin: 16px 0;">
-    <h3 style="margin-top: 0; color: #1f2937;"><%= @defect.defect_unique %>: <%= @defect.summary %></h3>
+    <p><strong>Defect:</strong> <%= @defect.defect_unique %> - <%= @defect.summary %></p>
+    <p><strong>Project:</strong> <%= @defect.product&.client&.name || 'N/A' %></p>
     <p><strong>Priority:</strong> <%= @defect.priority %></p>
-    <p><strong>Product:</strong> <%= @defect.product&.document_name || 'Unknown Product' %></p>
     
     <% if @content.present? %>
-      <% content_text = strip_tags(@content.to_s).gsub(/@[^\s]+/, '').gsub(/#[^\s]+/, '').strip %>
-      <% if content_text.present? %>
-        <% preview = content_text.length > 200 ? "#{content_text[0..197]}..." : content_text %>
-        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;">
-          <p style="font-style: italic; margin: 0;"><%= preview %></p>
+      <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;">
+        <p style="margin: 0;"><strong>Message:</strong></p>
+        <div style="margin-top: 8px; padding: 12px; background-color: #ffffff; border-left: 3px solid #2563eb; line-height: 1.6;">
+          <%= sanitize(@content, 
+                tags: %w[p br strong em u b i ul ol li h1 h2 h3 h4 h5 h6 blockquote code pre a img div span hr table thead tbody tr th td],
+                attributes: %w[href src alt title style class target rel]) %>
         </div>
-      <% end %>
+      </div>
     <% end %>
   </div>
 
-  <div style="margin: 8px 0;">
-    <p> 
-      Click <a href="<%= @url %>" style="background-color: #2563eb; color: white; padding: 2px; text-decoration: none; border-radius: 4px; display: inline-block;">here</a> to view the ticket.
-      </p>
-  </div>
+  <p>
+    <a href="<%= @url %>" style="background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">View Defect</a>
+  </p>
 
   <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
 
   <p style="font-size: 12px; color: #6b7280;">
-    This notification was sent because you were mentioned in TaskBridge.
-    <br>Reply directly to this email or click the link above to respond.
+    You received this notification because you were mentioned in TaskBridge.
   </p>
 </div>
