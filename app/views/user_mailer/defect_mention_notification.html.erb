@@ -13,8 +13,10 @@
     <% if @content.present? %>
       <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;">
         <p style="margin: 0;"><strong>Message:</strong></p>
-        <div style="margin-top: 8px; padding: 12px; background-color: #ffffff; border-left: 3px solid #2563eb;">
-          <%= sanitize(@content, tags: %w[p br strong em u], attributes: []) %>
+        <div style="margin-top: 8px; padding: 12px; background-color: #ffffff; border-left: 3px solid #2563eb; line-height: 1.6;">
+          <%= sanitize(@content, 
+                tags: %w[p br strong em u b i ul ol li h1 h2 h3 h4 h5 h6 blockquote code pre a img div span hr table thead tbody tr th td],
+                attributes: %w[href src alt title style class target rel]) %>
         </div>
       </div>
     <% end %>
