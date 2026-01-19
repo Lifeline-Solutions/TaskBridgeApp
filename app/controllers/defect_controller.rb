@@ -1112,28 +1112,7 @@ class DefectController < ApplicationController
 
   def defect_status
     # Check if defect is blocked by another defect
-    if @defect.blocked?
-      respond_to do |format|
-        format.turbo_stream do
-          render turbo_stream: turbo_stream.replace(
-            'modal',
-            partial: 'defect/blocked_status_modal',
-            locals: { defect: @defect }
-          )
-        end
-        format.html do
-          redirect_to defect_path(@defect),
-                      alert: "Cannot change status: This defect is blocked by #{@defect.blocking_defect_names}. Please unlink blocking defects first."
-        end
-        format.json do
-          render json: {
-            success: false,
-            message: "Cannot change status: This defect is blocked by #{@defect.blocking_defect_names}"
-          }
-        end
-      end
-      return
-    end
+    # Removed blocking check - users can now change status even when defects are blocked
 
     status = Status.find(params[:status_id])
 
