@@ -48,12 +48,30 @@ class DefectFiltersController < ApplicationController
 
     # Scope other data to the relevant products
     if relevant_product_ids.any?
-      # Load users who have access to these products
-      @users = User
-        .joins(:products)
-        .where(products: { id: relevant_product_ids }, active: true)
-        .distinct
-        .order(:first_name, :last_name)
+      # Get saved user IDs from the filter and validate they are UUIDs
+      saved_user_ids = Array(@defect_filter.filters['user_id']).compact
+      saved_reporter_ids = Array(@defect_filter.filters['reporter_id']).compact
+      all_saved_user_ids = (saved_user_ids + saved_reporter_ids).uniq
+
+      # Filter to only valid UUID format (reject integers or non-UUID strings)
+      uuid_pattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      valid_user_ids = all_saved_user_ids.select { |id| id.to_s.match?(uuid_pattern) }
+
+      # Load users who have access to these products OR are in the saved filter
+      @users = if valid_user_ids.any?
+                 User
+                   .left_joins(:products)
+                   .where('(products.id IN (?) OR users.id IN (?)) AND users.active = ?',
+                          relevant_product_ids, valid_user_ids, true)
+                   .distinct
+                   .order(:first_name, :last_name)
+               else
+                 User
+                   .joins(:products)
+                   .where(products: { id: relevant_product_ids }, active: true)
+                   .distinct
+                   .order(:first_name, :last_name)
+               end
 
       # Load modules for these products
       @modules = QaModule
