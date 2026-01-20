@@ -141,7 +141,7 @@ class Ticket < ApplicationRecord
         "SUM(CASE WHEN statuses.name NOT IN ('Closed', 'Resolved', 'Declined') THEN 1 ELSE 0 END) AS open_tickets",
         "SUM(CASE WHEN statuses.name = 'Closed' THEN 1 ELSE 0 END) AS closed",
         "SUM(CASE WHEN statuses.name = 'Resolved' THEN 1 ELSE 0 END) AS resolved",
-        "SUM(CASE WHEN statuses.name IN ('On-Hold', 'Client Confirmation Pending') THEN 1 ELSE 0 END) AS with_client"
+        "SUM(CASE WHEN statuses.name IN ('On-Hold', 'Client Infromation Pending') THEN 1 ELSE 0 END) AS with_client"
       )
       .order('date ASC')
   end
