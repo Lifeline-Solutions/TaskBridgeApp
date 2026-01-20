@@ -4,12 +4,6 @@
       <div class="px-6 py-4 border-b border-gray-200">
         <h1 class="text-2xl font-bold text-gray-900">Edit Filter: <%= @defect_filter.name %></h1>
         <p class="text-gray-600 mt-1">Modify your saved filter criteria</p>
-        
-        <% if Rails.env.development? %>
-          <div class="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
-            <strong>Debug - Current Filters:</strong> <%= @current_filters.inspect %>
-          </div>
-        <% end %>
       </div>
 
       <div class="p-6">
@@ -22,17 +16,9 @@
             </div>
           </div>
 
-          <!-- Hidden field to store filters JSON -->
-          <!-- Note: Filters are submitted directly via form fields, not as JSON -->
-
           <!-- Projects -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Projects</label>
-            <% if Rails.env.development? %>
-              <div class="mb-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                <strong>Debug Products:</strong> <%= @current_filters['product_id'].inspect %>
-              </div>
-            <% end %>
             <input type="text"
                    id="projectSearch"
                    placeholder="Search projects..."
@@ -55,11 +41,6 @@
           <!-- Status -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-            <% if Rails.env.development? %>
-              <div class="mb-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                <strong>Debug Status:</strong> <%= @current_filters['status'].inspect %>
-              </div>
-            <% end %>
             <input type="text"
                    id="statusSearch"
                    placeholder="Search statuses..."
@@ -79,18 +60,10 @@
           <!-- Priority -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
-            <% if Rails.env.development? %>
-              <div class="mb-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                <strong>Debug Priority:</strong> <%= @current_filters['priority'].inspect %>
-              </div>
-            <% end %>
             <div class="flex flex-wrap gap-2">
               <% %w[Severity\ 1 Severity\ 2 Severity\ 3 Severity\ 4].each do |priority| %>
                 <% stored_priorities = Array(@current_filters['priority']).map { |p| p.to_s.upcase } %>
                 <% is_checked = stored_priorities.include?(priority.upcase) %>
-                <% if Rails.env.development? %>
-                  <!-- Checking: <%= priority.upcase %> against <%= stored_priorities.inspect %> = <%= is_checked %> -->
-                <% end %>
                 <label class="flex items-center space-x-2">
                   <%= check_box_tag 'priority[]', priority, is_checked,
                       class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500 filter-checkbox' %>
@@ -103,12 +76,6 @@
           <!-- Assignees -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Assignees</label>
-            <% if Rails.env.development? %>
-              <div class="mb-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                <strong>Debug Assignees:</strong> <%= @current_filters['user_id'].inspect %> | 
-                <strong>Users Count:</strong> <%= @users.count %>
-              </div>
-            <% end %>
             <input type="text"
                    id="assigneeSearch"
                    placeholder="Search assignees..."
