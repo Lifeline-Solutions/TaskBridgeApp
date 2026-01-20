@@ -164,31 +164,42 @@ class DefectFiltersController < ApplicationController
   end
 
   def update
-    # Store old filters for comparison
-    @defect_filter.filters.dup
+    # Collect filter parameters from the form
+    # The form submits filter fields directly, not nested under defect_filter[filters]
+    raw_filters = {
+      'product_id' => params[:product_id],
+      'status' => params[:status],
+      'priority' => params[:priority],
+      'user_id' => params[:user_id],
+      'reporter_id' => params[:reporter_id],
+      'qa_module_id' => params[:qa_module_id],
+      'submodule_id' => params[:submodule_id],
+      'label_ids' => params[:label_ids],
+      'banking_type_id' => params[:banking_type_id],
+      'query' => params[:query],
+      'start_date' => params[:start_date],
+      'end_date' => params[:end_date],
+      'filter_open' => params[:filter_open]
+    }.compact
 
-    if params.dig(:defect_filter, :filters).present?
-      raw_filters = parse_filters_param(params.dig(:defect_filter, :filters))
-      @defect_filter.filters = permit_filter_keys(raw_filters)
-    end
-
+    # Update filter attributes
+    @defect_filter.name = params.dig(:defect_filter, :name) if params.dig(:defect_filter, :name).present?
+    @defect_filter.filters = permit_filter_keys(raw_filters)
     @defect_filter.modified_by = current_user
-
-    # Always update the timestamp to show it was just modified
     @defect_filter.updated_at = Time.current
 
     if @defect_filter.save
-      # Redirect to the filter with updated params and filter_id to show the update button
-      redirect_to index_show_defect_index_path(
-        product_id: @defect_filter.product_id,
-        filter_id: @defect_filter.id,
-        **@defect_filter.filters.symbolize_keys
-      ), notice: 'Filter updated successfully!'
+      redirect_to defect_filters_path, notice: 'Filter updated successfully!'
     else
-      redirect_back(
-        fallback_location: defect_filters_path,
-        alert: @defect_filter.errors.full_messages.to_sentence
-      )
+      @qa_products = Product.qa_projects.active
+      @users = User.where(active: true).order(:first_name, :last_name)
+      @modules = QaModule.includes(:children, :parent).distinct.order(:name)
+      @statuses = Status.distinct.order(:name)
+      @labels = Label.distinct.order(:name)
+      @banking_types = BankingType.active.order(:name)
+      @current_filters = @defect_filter.sanitized_filters_string_keys
+
+      render :edit, status: :unprocessable_entity
     end
   end
 
