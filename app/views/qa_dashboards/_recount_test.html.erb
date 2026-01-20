@@ -11,7 +11,6 @@
         Track defects that have been Reopened
       </p>
     </div>
-
     <!-- Summary Cards -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
       <div class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
@@ -62,7 +61,6 @@
 
           <% @retest_metrics[:distribution].each do |count, defect_count| %>
             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer" onclick="window.location='<%= index_show_defect_index_path(product_id: (@product_scope.presence || @dashboard.defect_filter.product_id), retest_count: count) %>'">
-
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-left">
                   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= count >= 3 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' %>">
                       <%= count %> <%= count == 1 ? 'time' : 'times' %>

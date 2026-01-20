@@ -587,6 +587,23 @@ class DefectController < ApplicationController
     # Load default defect assignee
     @default_defect_assignee = DefaultDefectAssignee.where(archive_status: false).first
 
+    # APPLY detail-level filters BEFORE pagination so counts/pages are correct
+    @defects = @defects.where(retest_count: params[:retest_count]) if params[:retest_count].present?
+
+    if params[:reopened_count].present?
+      # Filter defects by the exact number of times they were moved to "Reopened"
+      # Use a subquery to avoid loading IDs into Ruby and to keep it DB-side
+      desired_count = params[:reopened_count].to_i
+      filtered_ids_subquery = DefectHistory
+        .where(history_type: 'Status Changed')
+        .where('history ILIKE ?', '%to Reopened%')
+        .where(defect_id: @defects.except(:select, :order, :limit, :offset).select(:id))
+        .group(:defect_id)
+        .having('COUNT(*) = ?', desired_count)
+        .select(:defect_id)
+      @defects = @defects.where(id: filtered_ids_subquery)
+    end
+
     # Pagination
     @per_page = 20
     @page = (params[:page] || 1).to_i
@@ -597,7 +614,9 @@ class DefectController < ApplicationController
     @defects = @defects.offset((@page - 1) * @per_page).limit(@per_page)
 
     # All details show all
-    @defects = @defects.where(retest_count: params[:retest_count]) if params[:retest_count].present?
+    # (moved to above pagination)
+    # @defects = @defects.where(retest_count: params[:retest_count]) if params[:retest_count].present?
+    # @defects = @defects.where(reopened_count: params[:reopened_count]) if params[:reopened_count].present?
 
     # Compute reopened count per defect for the defects on the current page
     defect_ids_for_page = @defects.map(&:id)

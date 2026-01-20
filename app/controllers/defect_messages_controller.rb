@@ -58,11 +58,11 @@ class DefectMessagesController < ApplicationController
           # Just replace the entire defect-messages section - it will re-check for drafts
           render turbo_stream: [
             turbo_stream.replace('defect-messages',
-                                partial: 'defect_messages/defect_messages',
-                                locals: { defect: @defect, timeline_items: @defect.timeline_items }),
+                                 partial: 'defect_messages/defect_messages',
+                                 locals: { defect: @defect, timeline_items: @defect.timeline_items }),
             # Clear localStorage to prevent stale draft notifications
             turbo_stream.append('body',
-              "<script>localStorage.removeItem('defect_#{@defect.id}_draft_message');</script>")
+                                "<script>localStorage.removeItem('defect_#{@defect.id}_draft_message');</script>")
           ]
         end
         format.html do
