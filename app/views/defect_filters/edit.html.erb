@@ -252,9 +252,6 @@
                 class: 'px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500' %>
             <%= link_to 'Cancel', defect_filters_path,
                 class: 'px-6 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500' %>
-            <%= link_to 'Apply Updated Filter', '#',
-                id: 'apply-updated-filter',
-                class: 'px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500' %>
           </div>
         <% end %>
       </div>
@@ -264,9 +261,6 @@
 
 <script>
   document.addEventListener("turbo:load", function() {
-    const form = document.querySelector('form');
-    const applyButton = document.getElementById('apply-updated-filter');
-
     // Initialize search functionality for filter sections
     function initializeSearch(inputId, listId, itemClass) {
       const searchInput = document.getElementById(inputId);
@@ -291,27 +285,5 @@
     initializeSearch('moduleSearch', 'moduleList', 'module-item');
     initializeSearch('labelSearch', 'labelList', 'label-item');
     initializeSearch('bankingTypeSearch', 'bankingTypeList', 'banking-type-item');
-
-    // Apply updated filter button functionality
-    if (form && applyButton) {
-      applyButton.addEventListener('click', function(e) {
-        e.preventDefault();
-
-        // Collect all form data
-        const formData = new FormData(form);
-        const params = new URLSearchParams();
-
-        // Add all form fields as URL parameters (skip the filter name)
-        for (let [key, value] of formData) {
-          if (value && value !== '' && key !== 'defect_filter[name]') {
-            params.append(key, value);
-          }
-        }
-
-        // Redirect to defect index with filter parameters
-        const url = '<%= index_show_defect_index_path %>' + '?' + params.toString();
-        window.location.href = url;
-      });
-    }
   });
 </script>
