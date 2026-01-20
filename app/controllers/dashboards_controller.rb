@@ -30,6 +30,26 @@ class DashboardsController < ApplicationController
         .group('statuses.name')
         .count
 
+      # Calculate SLA breakdown for tickets from inception (using sla_target_response_deadline)
+      # NO SLA: Use LEFT JOIN to catch tickets without SLA records OR with NO SLA explicitly marked
+      tickets_from_inception_no_sla = tickets_from_inception
+        .joins('LEFT OUTER JOIN sla_tickets ON sla_tickets.ticket_id = tickets.id')
+        .where('sla_tickets.sla_target_response_deadline = ? OR sla_tickets.id IS NULL', 'NO SLA')
+        .distinct
+        .count
+
+      tickets_from_inception_response_breached = tickets_from_inception
+        .joins(:sla_tickets)
+        .where(sla_tickets: { sla_resolution_deadline: 'Breached' })
+        .distinct
+        .count
+
+      tickets_from_inception_response_not_breached = tickets_from_inception
+        .joins(:sla_tickets)
+        .where(sla_tickets: { sla_resolution_deadline: nil })
+        .distinct
+        .count
+
       tickets_last_30_days = Ticket.joins(:users)
         .where(users: { id: user_ids })
         .where('tickets.created_at >= ?', 30.days.ago)
@@ -139,7 +159,10 @@ class DashboardsController < ApplicationController
         breached_resolution_resolved_tickets_per_project: breached_resolution_resolved_tickets_per_project,
         ticket_details: ticket_details,
         tickets_from_inception_count: tickets_from_inception_count,
-        tickets_from_inception_by_status: tickets_from_inception_by_status
+        tickets_from_inception_by_status: tickets_from_inception_by_status,
+        tickets_from_inception_no_sla: tickets_from_inception_no_sla,
+        tickets_from_inception_response_breached: tickets_from_inception_response_breached,
+        tickets_from_inception_response_not_breached: tickets_from_inception_response_not_breached
       }
 
       render json: stats
@@ -213,9 +236,36 @@ class DashboardsController < ApplicationController
         # === CHANGE END
       when 'tickets_from_inception_count'
         # Show all tickets from the team that are not closed, resolved or declined
-        @tickets = Ticket.joins(:statuses, :users, :taggings)
+        @tickets = Ticket.joins(:statuses, :users)
           .where(users: { id: user_ids })
           .where.not(statuses: { name: %w[Declined Closed Resolved] })
+
+      when 'tickets_from_inception_no_sla'
+        # Show tickets from inception with NO SLA for sla_target_response_deadline
+        # Use LEFT JOIN to catch tickets without SLA records OR with NO SLA explicitly marked
+        @tickets = Ticket.joins(:statuses, :users)
+          .joins('LEFT OUTER JOIN sla_tickets ON sla_tickets.ticket_id = tickets.id')
+          .where(users: { id: user_ids })
+          .where.not(statuses: { name: %w[Declined Closed Resolved] })
+          .where('sla_tickets.sla_resolution_deadline = ? OR sla_tickets.id IS NULL', 'NO SLA')
+          .distinct
+
+      when 'tickets_from_inception_response_breached'
+        # Show tickets from inception with Breached sla_target_response_deadline
+        @tickets = Ticket.joins(:statuses, :users, :sla_tickets)
+          .where(users: { id: user_ids })
+          .where.not(statuses: { name: %w[Declined Closed Resolved] })
+          .where(sla_tickets: { sla_resolution_deadline: 'Breached' })
+          .distinct
+
+      when 'tickets_from_inception_response_not_breached'
+        # Show tickets from inception with Not Breached sla_target_response_deadline
+        @tickets = Ticket.joins(:statuses, :users, :sla_tickets)
+          .where(users: { id: user_ids })
+          .where.not(statuses: { name: %w[Declined Closed Resolved] })
+          .where(sla_tickets: { sla_resolution_deadline: nil })
+          .distinct
+
       when 'total_tickets_last_30_days'
         # No additional filtering needed
       end
@@ -261,13 +311,19 @@ class DashboardsController < ApplicationController
       {
         total_tickets_last_30_days: Ticket.where(user_id: user_ids).where('created_at >= ?', 30.days.ago).count,
         tickets_from_inception: 0,
-        tickets_from_inception_by_status: {}
+        tickets_from_inception_by_status: {},
+        tickets_from_inception_no_sla: 0,
+        tickets_from_inception_response_breached: 0,
+        tickets_from_inception_response_not_breached: 0
       }
     else
       {
         total_tickets_last_30_days: 0,
         tickets_from_inception: 0,
-        tickets_from_inception_by_status: {}
+        tickets_from_inception_by_status: {},
+        tickets_from_inception_no_sla: 0,
+        tickets_from_inception_response_breached: 0,
+        tickets_from_inception_response_not_breached: 0
       }
     end
   end
