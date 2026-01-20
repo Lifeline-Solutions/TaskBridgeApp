@@ -48,12 +48,30 @@ class DefectFiltersController < ApplicationController
 
     # Scope other data to the relevant products
     if relevant_product_ids.any?
-      # Load users who have access to these products
-      @users = User
-        .joins(:products)
-        .where(products: { id: relevant_product_ids }, active: true)
-        .distinct
-        .order(:first_name, :last_name)
+      # Get saved user IDs from the filter and validate they are UUIDs
+      saved_user_ids = Array(@defect_filter.filters['user_id']).compact
+      saved_reporter_ids = Array(@defect_filter.filters['reporter_id']).compact
+      all_saved_user_ids = (saved_user_ids + saved_reporter_ids).uniq
+
+      # Filter to only valid UUID format (reject integers or non-UUID strings)
+      uuid_pattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      valid_user_ids = all_saved_user_ids.select { |id| id.to_s.match?(uuid_pattern) }
+
+      # Load users who have access to these products OR are in the saved filter
+      @users = if valid_user_ids.any?
+                 User
+                   .left_joins(:products)
+                   .where('(products.id IN (?) OR users.id IN (?)) AND users.active = ?',
+                          relevant_product_ids, valid_user_ids, true)
+                   .distinct
+                   .order(:first_name, :last_name)
+               else
+                 User
+                   .joins(:products)
+                   .where(products: { id: relevant_product_ids }, active: true)
+                   .distinct
+                   .order(:first_name, :last_name)
+               end
 
       # Load modules for these products
       @modules = QaModule
@@ -80,6 +98,19 @@ class DefectFiltersController < ApplicationController
 
     # Parse existing filter criteria for the form
     @current_filters = @defect_filter.sanitized_filters_string_keys
+
+    # Ensure product_id is included in current_filters for proper pre-selection
+    if @defect_filter.product_id.present? && @current_filters['product_id'].blank?
+      @current_filters['product_id'] = [@defect_filter.product_id.to_s]
+    elsif @current_filters['product_id'].present?
+      # Normalize to array of strings
+      @current_filters['product_id'] = Array(@current_filters['product_id']).map(&:to_s)
+    end
+
+    # Normalize all array-based filter values to strings for consistent comparison
+    %w[user_id reporter_id qa_module_id submodule_id label_ids status priority banking_type_id].each do |key|
+      @current_filters[key] = Array(@current_filters[key]).map(&:to_s) if @current_filters[key].present?
+    end
   end
 
   def create
@@ -133,31 +164,42 @@ class DefectFiltersController < ApplicationController
   end
 
   def update
-    # Store old filters for comparison
-    @defect_filter.filters.dup
+    # Collect filter parameters from the form
+    # The form submits filter fields directly, not nested under defect_filter[filters]
+    raw_filters = {
+      'product_id' => params[:product_id],
+      'status' => params[:status],
+      'priority' => params[:priority],
+      'user_id' => params[:user_id],
+      'reporter_id' => params[:reporter_id],
+      'qa_module_id' => params[:qa_module_id],
+      'submodule_id' => params[:submodule_id],
+      'label_ids' => params[:label_ids],
+      'banking_type_id' => params[:banking_type_id],
+      'query' => params[:query],
+      'start_date' => params[:start_date],
+      'end_date' => params[:end_date],
+      'filter_open' => params[:filter_open]
+    }.compact
 
-    if params.dig(:defect_filter, :filters).present?
-      raw_filters = parse_filters_param(params.dig(:defect_filter, :filters))
-      @defect_filter.filters = permit_filter_keys(raw_filters)
-    end
-
+    # Update filter attributes
+    @defect_filter.name = params.dig(:defect_filter, :name) if params.dig(:defect_filter, :name).present?
+    @defect_filter.filters = permit_filter_keys(raw_filters)
     @defect_filter.modified_by = current_user
-
-    # Always update the timestamp to show it was just modified
     @defect_filter.updated_at = Time.current
 
     if @defect_filter.save
-      # Redirect to the filter with updated params and filter_id to show the update button
-      redirect_to index_show_defect_index_path(
-        product_id: @defect_filter.product_id,
-        filter_id: @defect_filter.id,
-        **@defect_filter.filters.symbolize_keys
-      ), notice: 'Filter updated successfully!'
+      redirect_to defect_filters_path, notice: 'Filter updated successfully!'
     else
-      redirect_back(
-        fallback_location: defect_filters_path,
-        alert: @defect_filter.errors.full_messages.to_sentence
-      )
+      @qa_products = Product.qa_projects.active
+      @users = User.where(active: true).order(:first_name, :last_name)
+      @modules = QaModule.includes(:children, :parent).distinct.order(:name)
+      @statuses = Status.distinct.order(:name)
+      @labels = Label.distinct.order(:name)
+      @banking_types = BankingType.active.order(:name)
+      @current_filters = @defect_filter.sanitized_filters_string_keys
+
+      render :edit, status: :unprocessable_entity
     end
   end
 
