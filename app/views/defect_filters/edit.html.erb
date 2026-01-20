@@ -4,6 +4,12 @@
       <div class="px-6 py-4 border-b border-gray-200">
         <h1 class="text-2xl font-bold text-gray-900">Edit Filter: <%= @defect_filter.name %></h1>
         <p class="text-gray-600 mt-1">Modify your saved filter criteria</p>
+        
+        <% if Rails.env.development? %>
+          <div class="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+            <strong>Debug - Current Filters:</strong> <%= @current_filters.inspect %>
+          </div>
+        <% end %>
       </div>
 
       <div class="p-6">
@@ -30,7 +36,7 @@
               <% @qa_products.each do |product| %>
                 <label class="flex items-center space-x-2 mb-2 project-item">
                   <%= check_box_tag 'product_id[]', product.id,
-                      Array(@current_filters['product_id']).include?(product.id.to_s),
+                      (Array(@current_filters['product_id']).map(&:to_s).include?(product.id.to_s) rescue false),
                       class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500 filter-checkbox' %>
                   <span class="text-sm text-gray-700">
                     <%= product.document_name %>
@@ -52,7 +58,7 @@
               <% @statuses.each do |status| %>
                 <label class="flex items-center space-x-2 mb-2 status-item">
                   <%= check_box_tag 'status[]', status.name,
-                      Array(@current_filters['status']).include?(status.name),
+                      (Array(@current_filters['status']).map(&:to_s).include?(status.name.to_s) rescue false),
                       class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500 filter-checkbox' %>
                   <span class="text-sm text-gray-700"><%= status.name %></span>
                 </label>
@@ -67,7 +73,7 @@
               <% %w[Critical High Medium Low].each do |priority| %>
                 <label class="flex items-center space-x-2">
                   <%= check_box_tag 'priority[]', priority,
-                      Array(@current_filters['priority']).include?(priority),
+                      (Array(@current_filters['priority']).map(&:to_s).include?(priority.to_s) rescue false),
                       class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500 filter-checkbox' %>
                   <span class="text-sm text-gray-700"><%= priority %></span>
                 </label>
@@ -86,7 +92,7 @@
               <% @users.each do |user| %>
                 <label class="flex items-center space-x-2 mb-2 assignee-item">
                   <%= check_box_tag 'user_id[]', user.id,
-                      Array(@current_filters['user_id']).include?(user.id.to_s),
+                      (Array(@current_filters['user_id']).map(&:to_s).include?(user.id.to_s) rescue false),
                       class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500 filter-checkbox' %>
                   <span class="text-sm text-gray-700"><%= user.name %></span>
                 </label>
@@ -105,7 +111,7 @@
               <% @users.each do |user| %>
                 <label class="flex items-center space-x-2 mb-2 reporter-item">
                   <%= check_box_tag 'reporter_id[]', user.id,
-                      Array(@current_filters['reporter_id']).include?(user.id.to_s),
+                      (Array(@current_filters['reporter_id']).map(&:to_s).include?(user.id.to_s) rescue false),
                       class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500 filter-checkbox' %>
                   <span class="text-sm text-gray-700"><%= user.name %></span>
                 </label>
@@ -125,7 +131,7 @@
                 <div class="mb-2 module-item">
                   <label class="flex items-center space-x-2">
                     <%= check_box_tag 'qa_module_id[]', module_item.id,
-                        Array(@current_filters['qa_module_id']).include?(module_item.id.to_s),
+                        (Array(@current_filters['qa_module_id']).map(&:to_s).include?(module_item.id.to_s) rescue false),
                         class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500 filter-checkbox' %>
                     <span class="text-sm font-medium text-gray-700"><%= module_item.name %></span>
                   </label>
@@ -135,7 +141,7 @@
                     <div class="ml-6 mt-1">
                       <label class="flex items-center space-x-2">
                         <%= check_box_tag 'submodule_id[]', submodule.id,
-                            Array(@current_filters['submodule_id']).include?(submodule.id.to_s),
+                            (Array(@current_filters['submodule_id']).map(&:to_s).include?(submodule.id.to_s) rescue false),
                             class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500 filter-checkbox' %>
                         <span class="text-sm text-gray-600">└ <%= submodule.name %></span>
                       </label>
@@ -157,7 +163,7 @@
               <% @labels.each do |label| %>
                 <label class="flex items-center space-x-2 mb-2 label-item">
                   <%= check_box_tag 'label_ids[]', label.id,
-                      Array(@current_filters['label_ids']).include?(label.id.to_s),
+                      (Array(@current_filters['label_ids']).map(&:to_s).include?(label.id.to_s) rescue false),
                       class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500 filter-checkbox' %>
                   <span class="text-sm text-gray-700"><%= label.name %></span>
                 </label>
@@ -176,7 +182,7 @@
               <% (@banking_types || []).each do |banking_type| %>
                 <label class="flex items-center space-x-2 mb-2 banking-type-item">
                   <%= check_box_tag 'banking_type_id[]', banking_type.id,
-                      Array(@current_filters['banking_type_id']).include?(banking_type.id.to_s),
+                      (Array(@current_filters['banking_type_id']).map(&:to_s).include?(banking_type.id.to_s) rescue false),
                       class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500 filter-checkbox' %>
                   <span class="text-sm text-gray-700"><%= banking_type.name %></span>
                 </label>
