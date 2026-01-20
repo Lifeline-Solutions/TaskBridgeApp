@@ -80,6 +80,19 @@ class DefectFiltersController < ApplicationController
 
     # Parse existing filter criteria for the form
     @current_filters = @defect_filter.sanitized_filters_string_keys
+
+    # Ensure product_id is included in current_filters for proper pre-selection
+    if @defect_filter.product_id.present? && @current_filters['product_id'].blank?
+      @current_filters['product_id'] = [@defect_filter.product_id.to_s]
+    elsif @current_filters['product_id'].present?
+      # Normalize to array of strings
+      @current_filters['product_id'] = Array(@current_filters['product_id']).map(&:to_s)
+    end
+
+    # Normalize all array-based filter values to strings for consistent comparison
+    %w[user_id reporter_id qa_module_id submodule_id label_ids status priority banking_type_id].each do |key|
+      @current_filters[key] = Array(@current_filters[key]).map(&:to_s) if @current_filters[key].present?
+    end
   end
 
   def create
