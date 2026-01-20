@@ -23,7 +23,7 @@
           </div>
 
           <!-- Hidden field to store filters JSON -->
-          <%= hidden_field_tag 'defect_filter[filters]', '', id: 'filters_json' %>
+          <!-- Note: Filters are submitted directly via form fields, not as JSON -->
 
           <!-- Projects -->
           <div>
@@ -266,38 +266,6 @@
   document.addEventListener("turbo:load", function() {
     const form = document.querySelector('form');
     const applyButton = document.getElementById('apply-updated-filter');
-    const filtersJsonField = document.getElementById('filters_json');
-
-    // Function to collect all filter data
-    function collectFilterData() {
-      const filters = {};
-
-      // Collect checked values from checkboxes
-      document.querySelectorAll('.filter-checkbox:checked').forEach(checkbox => {
-        const name = checkbox.name.replace('[]', '');
-        if (!filters[name]) {
-          filters[name] = [];
-        }
-        filters[name].push(checkbox.value);
-      });
-
-      // Collect text field values
-      document.querySelectorAll('.filter-field').forEach(field => {
-        if (field.value && field.value !== '') {
-          filters[field.name] = field.value;
-        }
-      });
-
-      return filters;
-    }
-
-    // Update hidden field before form submission
-    if (form && filtersJsonField) {
-      form.addEventListener('submit', function(e) {
-        const filters = collectFilterData();
-        filtersJsonField.value = JSON.stringify(filters);
-      });
-    }
 
     // Initialize search functionality for filter sections
     function initializeSearch(inputId, listId, itemClass) {
@@ -333,9 +301,9 @@
         const formData = new FormData(form);
         const params = new URLSearchParams();
 
-        // Add all form fields as URL parameters
+        // Add all form fields as URL parameters (skip the filter name)
         for (let [key, value] of formData) {
-          if (value && value !== '' && key !== 'defect_filter[filters]' && key !== 'defect_filter[name]') {
+          if (value && value !== '' && key !== 'defect_filter[name]') {
             params.append(key, value);
           }
         }
