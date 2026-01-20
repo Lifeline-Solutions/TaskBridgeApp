@@ -16,6 +16,9 @@
             </div>
           </div>
 
+          <!-- Hidden field to store filters JSON -->
+          <%= hidden_field_tag 'defect_filter[filters]', '', id: 'filters_json' %>
+
           <!-- Projects -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Projects</label>
@@ -28,7 +31,7 @@
                 <label class="flex items-center space-x-2 mb-2 project-item">
                   <%= check_box_tag 'product_id[]', product.id,
                       Array(@current_filters['product_id']).include?(product.id.to_s),
-                      class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' %>
+                      class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500 filter-checkbox' %>
                   <span class="text-sm text-gray-700">
                     <%= product.document_name %>
                     <span class="text-xs text-gray-500">(<%= product.client&.name %>)</span>
@@ -50,7 +53,7 @@
                 <label class="flex items-center space-x-2 mb-2 status-item">
                   <%= check_box_tag 'status[]', status.name,
                       Array(@current_filters['status']).include?(status.name),
-                      class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' %>
+                      class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500 filter-checkbox' %>
                   <span class="text-sm text-gray-700"><%= status.name %></span>
                 </label>
               <% end %>
@@ -65,7 +68,7 @@
                 <label class="flex items-center space-x-2">
                   <%= check_box_tag 'priority[]', priority,
                       Array(@current_filters['priority']).include?(priority),
-                      class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' %>
+                      class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500 filter-checkbox' %>
                   <span class="text-sm text-gray-700"><%= priority %></span>
                 </label>
               <% end %>
@@ -84,7 +87,7 @@
                 <label class="flex items-center space-x-2 mb-2 assignee-item">
                   <%= check_box_tag 'user_id[]', user.id,
                       Array(@current_filters['user_id']).include?(user.id.to_s),
-                      class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' %>
+                      class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500 filter-checkbox' %>
                   <span class="text-sm text-gray-700"><%= user.name %></span>
                 </label>
               <% end %>
@@ -103,7 +106,7 @@
                 <label class="flex items-center space-x-2 mb-2 reporter-item">
                   <%= check_box_tag 'reporter_id[]', user.id,
                       Array(@current_filters['reporter_id']).include?(user.id.to_s),
-                      class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' %>
+                      class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500 filter-checkbox' %>
                   <span class="text-sm text-gray-700"><%= user.name %></span>
                 </label>
               <% end %>
@@ -123,7 +126,7 @@
                   <label class="flex items-center space-x-2">
                     <%= check_box_tag 'qa_module_id[]', module_item.id,
                         Array(@current_filters['qa_module_id']).include?(module_item.id.to_s),
-                        class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' %>
+                        class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500 filter-checkbox' %>
                     <span class="text-sm font-medium text-gray-700"><%= module_item.name %></span>
                   </label>
 
@@ -133,7 +136,7 @@
                       <label class="flex items-center space-x-2">
                         <%= check_box_tag 'submodule_id[]', submodule.id,
                             Array(@current_filters['submodule_id']).include?(submodule.id.to_s),
-                            class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' %>
+                            class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500 filter-checkbox' %>
                         <span class="text-sm text-gray-600">└ <%= submodule.name %></span>
                       </label>
                     </div>
@@ -155,7 +158,7 @@
                 <label class="flex items-center space-x-2 mb-2 label-item">
                   <%= check_box_tag 'label_ids[]', label.id,
                       Array(@current_filters['label_ids']).include?(label.id.to_s),
-                      class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' %>
+                      class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500 filter-checkbox' %>
                   <span class="text-sm text-gray-700"><%= label.name %></span>
                 </label>
               <% end %>
@@ -174,7 +177,7 @@
                 <label class="flex items-center space-x-2 mb-2 banking-type-item">
                   <%= check_box_tag 'banking_type_id[]', banking_type.id,
                       Array(@current_filters['banking_type_id']).include?(banking_type.id.to_s),
-                      class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' %>
+                      class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500 filter-checkbox' %>
                   <span class="text-sm text-gray-700"><%= banking_type.name %></span>
                 </label>
               <% end %>
@@ -187,7 +190,7 @@
               <%= form.label :query, "Search Query", class: "block text-sm font-medium text-gray-700 mb-1" %>
               <%= text_field_tag 'query', @current_filters['query'],
                   placeholder: "Search in defect content...",
-                  class: "w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" %>
+                  class: "w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filter-field" %>
             </div>
 
             <div>
@@ -195,10 +198,10 @@
               <div class="flex space-x-2">
                 <%= date_field_tag 'start_date', @current_filters['start_date'],
                     placeholder: "Start date",
-                    class: "flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" %>
+                    class: "flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filter-field" %>
                 <%= date_field_tag 'end_date', @current_filters['end_date'],
                     placeholder: "End date",
-                    class: "flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" %>
+                    class: "flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filter-field" %>
               </div>
             </div>
           </div>
@@ -207,7 +210,7 @@
           <div class="flex flex-wrap gap-4">
             <label class="flex items-center space-x-2">
               <%= check_box_tag 'filter_open', '1', @current_filters['filter_open'] == '1',
-                  class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' %>
+                  class: 'rounded border-gray-300 text-blue-600 focus:ring-blue-500 filter-checkbox' %>
               <span class="text-sm text-gray-700">Show only open defects</span>
             </label>
           </div>
@@ -232,6 +235,38 @@
   document.addEventListener("turbo:load", function() {
     const form = document.querySelector('form');
     const applyButton = document.getElementById('apply-updated-filter');
+    const filtersJsonField = document.getElementById('filters_json');
+
+    // Function to collect all filter data
+    function collectFilterData() {
+      const filters = {};
+
+      // Collect checked values from checkboxes
+      document.querySelectorAll('.filter-checkbox:checked').forEach(checkbox => {
+        const name = checkbox.name.replace('[]', '');
+        if (!filters[name]) {
+          filters[name] = [];
+        }
+        filters[name].push(checkbox.value);
+      });
+
+      // Collect text field values
+      document.querySelectorAll('.filter-field').forEach(field => {
+        if (field.value && field.value !== '') {
+          filters[field.name] = field.value;
+        }
+      });
+
+      return filters;
+    }
+
+    // Update hidden field before form submission
+    if (form && filtersJsonField) {
+      form.addEventListener('submit', function(e) {
+        const filters = collectFilterData();
+        filtersJsonField.value = JSON.stringify(filters);
+      });
+    }
 
     // Initialize search functionality for filter sections
     function initializeSearch(inputId, listId, itemClass) {
@@ -269,7 +304,7 @@
 
         // Add all form fields as URL parameters
         for (let [key, value] of formData) {
-          if (value && value !== '') {
+          if (value && value !== '' && key !== 'defect_filter[filters]' && key !== 'defect_filter[name]') {
             params.append(key, value);
           }
         }
