@@ -70,7 +70,7 @@
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
             <div class="flex flex-wrap gap-2">
-              <% %w[Critical High Medium Low].each do |priority| %>
+              <% %w[Severity\ 1 Severity\ 2 Severity\ 3 Severity\ 4].each do |priority| %>
                 <label class="flex items-center space-x-2">
                   <%= check_box_tag 'priority[]', priority,
                       (Array(@current_filters['priority']).map(&:to_s).include?(priority.to_s) rescue false),
