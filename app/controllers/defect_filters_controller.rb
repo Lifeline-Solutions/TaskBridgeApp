@@ -46,55 +46,67 @@ class DefectFiltersController < ApplicationController
                        .order('products.document_name ASC')
                    end
 
-    # Scope other data to the relevant products
+    # Scope ALL data strictly to defects within the relevant products
     if relevant_product_ids.any?
-      # Get saved user IDs from the filter and validate they are UUIDs
-      saved_user_ids = Array(@defect_filter.filters['user_id']).compact
-      saved_reporter_ids = Array(@defect_filter.filters['reporter_id']).compact
-      all_saved_user_ids = (saved_user_ids + saved_reporter_ids).uniq
+      # Load assignees - users who are assigned to defects in these products (via defects_users join table)
+      @users = User
+        .joins('INNER JOIN defects_users ON users.id = defects_users.user_id')
+        .joins('INNER JOIN defects ON defects.id = defects_users.defect_id')
+        .where(defects: { product_id: relevant_product_ids })
+        .where('defects_users.deleted_on IS NULL')
+        .where(active: true)
+        .distinct
+        .order(:first_name, :last_name)
 
-      # Filter to only valid UUID format (reject integers or non-UUID strings)
-      uuid_pattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-      valid_user_ids = all_saved_user_ids.select { |id| id.to_s.match?(uuid_pattern) }
+      # Load reporters - users who have created defects in these products
+      @reporters = User
+        .joins('INNER JOIN defects ON users.id = defects.created_by')
+        .where(defects: { product_id: relevant_product_ids })
+        .where(active: true)
+        .distinct
+        .order(:first_name, :last_name)
 
-      # Load users who have access to these products OR are in the saved filter
-      @users = if valid_user_ids.any?
-                 User
-                   .left_joins(:products)
-                   .where('(products.id IN (?) OR users.id IN (?)) AND users.active = ?',
-                          relevant_product_ids, valid_user_ids, true)
-                   .distinct
-                   .order(:first_name, :last_name)
-               else
-                 User
-                   .joins(:products)
-                   .where(products: { id: relevant_product_ids }, active: true)
-                   .distinct
-                   .order(:first_name, :last_name)
-               end
-
-      # Load modules for these products
+      # Load modules - only modules used in defects for these products
       @modules = QaModule
-        .joins(:product)
-        .where(products: { id: relevant_product_ids })
+        .joins('INNER JOIN defects ON qa_modules.id = defects.qa_module_id OR qa_modules.id = defects.submodule_id')
+        .where(defects: { product_id: relevant_product_ids })
         .includes(:children, :parent)
         .distinct
         .order(:name)
 
-      # Load banking types for these products
+      # Load banking types - only banking types used in defects for these products
       @banking_types = BankingType
-        .for_product(relevant_product_ids)
-        .active
-    else
-      # Fallback: load all active users and modules
-      @users = User.where(active: true).order(:first_name, :last_name)
-      @modules = QaModule.includes(:children, :parent).distinct.order(:name)
-      @banking_types = BankingType.active.order(:name)
-    end
+        .joins('INNER JOIN defects ON banking_types.id = defects.banking_type_id')
+        .where(defects: { product_id: relevant_product_ids })
+        .where(archive_status: false)
+        .distinct
+        .order(:name)
 
-    # Statuses and labels are global, so no scoping needed
-    @statuses = Status.distinct.order(:name)
-    @labels = Label.distinct.order(:name)
+      # Load statuses - only statuses used in defects for these products (via defect_statuses join table)
+      @statuses = Status
+        .joins('INNER JOIN defect_statuses ON statuses.id = defect_statuses.status_id')
+        .joins('INNER JOIN defects ON defects.id = defect_statuses.defect_id')
+        .where(defects: { product_id: relevant_product_ids })
+        .where('defect_statuses.deleted_on IS NULL')
+        .distinct
+        .order(:name)
+
+      # Load labels - only labels used in defects for these products
+      @labels = Label
+        .joins(:defects)
+        .where(defects: { product_id: relevant_product_ids })
+        .where('labels.deleted_on IS NULL')
+        .distinct
+        .order(:name)
+    else
+      # Fallback: load all active data (when no specific product is selected)
+      @users = User.where(active: true).order(:first_name, :last_name)
+      @reporters = User.where(active: true).order(:first_name, :last_name)
+      @modules = QaModule.includes(:children, :parent).distinct.order(:name)
+      @banking_types = BankingType.where(archive_status: false).order(:name)
+      @statuses = Status.distinct.order(:name)
+      @labels = Label.where('deleted_on IS NULL').distinct.order(:name)
+    end
 
     # Parse existing filter criteria for the form
     @current_filters = @defect_filter.sanitized_filters_string_keys
