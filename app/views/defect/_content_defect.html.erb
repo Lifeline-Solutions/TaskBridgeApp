@@ -1,6 +1,6 @@
 <% if @defect.content.present? %>
   <span class="break-words overflow-hidden">
-    <div class="pl-8 prose dark:prose-invert max-w-full w-full">
+    <div class="pl-8 prose dark:prose-invert max-w-full w-full trix-content">
       <%= @defect.content.body.to_s.html_safe %>
     </div>
 
@@ -155,6 +155,14 @@
 </script>
 
 <style>
+  /* Fix spacing for Trix paragraphs (divs) validation */
+  .trix-content div {
+    margin-bottom: 0.75em;
+  }
+  .trix-content div:last-child {
+    margin-bottom: 0;
+  }
+
   /* ===== TABLE STYLING - Comprehensive fix for Word/Docs paste issues ===== */
 
   /* CRITICAL: Table container must allow horizontal scrolling if needed */
