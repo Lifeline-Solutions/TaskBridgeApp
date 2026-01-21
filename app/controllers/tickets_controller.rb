@@ -868,13 +868,16 @@ class TicketsController < ApplicationController
     # Find the last event for this ticket
     last_event = Event.where(ticket_id: ticket.id).order(created_at: :desc).first
 
-    # Calculate duration for the previous event (time elapsed since last event)
-    if last_event.present?
+    # Calculate duration for the previous event only if current event is NOT a pause status
+    pause_statuses = ['Client Information Pending', 'On-Hold']
+    is_pause_event = event_type == 'status_change' && pause_statuses.any? { |status| details.include?(status) }
+
+    if last_event.present? && !is_pause_event
       business_hours_duration = ticket.calculate_business_hours_duration(last_event.created_at, Time.current)
       last_event.update(duration: business_hours_duration)
     end
 
-    # Create new event with blank duration (will be filled when next event is created)
+    # Create new event with duration 0 (will be filled when next non-pause event is created)
     Event.create(ticket: ticket, user: user, event_type: event_type, details: details, assigned_user_id: assigned_user&.id, duration: 0)
   end
 
