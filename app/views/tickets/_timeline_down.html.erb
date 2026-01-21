@@ -25,19 +25,6 @@
           <div class="text-gray-600 dark:text-gray-400">
             <div class="text-base font-normal"><span class="font-medium text-gray-900 dark:text-white"><%= event.user.name %></span></div>
             <div class="text-sm font-normal"><%= event.details.html_safe %></div>
-            <div class="text-sm font-normal">
-              <% if event.duration.present? %>
-                <% hours = event.duration / 3600 %>
-                <% minutes = (event.duration % 3600) / 60 %>
-                <% if hours > 0 %>
-                  <%= "#{hours}h #{minutes}m" %>
-                <% elsif minutes > 0 %>
-                  <%= "#{minutes}m" %>
-                <% else %>
-                  <%= "0m" %>
-                <% end %>
-              <% end %>
-            </div>
 
           </div>
         </div>
