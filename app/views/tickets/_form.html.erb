@@ -56,11 +56,12 @@
       <!-- Priority Field -->
       <div class="space-y-2">
         <%= f.label :priority, 'Severity Level *', class: "block text-sm font-semibold text-gray-900 dark:text-white" %>
-        <%= f.select :priority, 
-            options_for_select(['SEVERITY 1','SEVERITY 2','SEVERITY 3','SEVERITY 4']), 
-            { prompt: "Select severity level..." },
-            { class: "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-200", 
-              required: true } %>
+        <%= f.select :priority,
+                     options_for_select(['SEVERITY 1','SEVERITY 2','SEVERITY 3','SEVERITY 4'], @ticket.priority || 'SEVERITY 4'),
+                     { prompt: "Select severity level..." },
+                     { class: "w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-200",
+                       required: true } %>
+
         <% if @ticket.errors[:priority].any? %>
           <div class="text-red-600 dark:text-red-400 text-sm flex items-center">
             <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
