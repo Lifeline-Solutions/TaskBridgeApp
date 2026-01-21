@@ -229,7 +229,7 @@ class TicketsController < ApplicationController
         if assigned_user.present?
           log_event(@ticket, current_user, 'created and assign',
                     "Ticket was created and assigned to #{assigned_user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}",
-                    assigned_user)
+                    assigned_user, nil)
         else
           log_event(@ticket, current_user, 'created and assign', "Ticket was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}", nil)
         end
@@ -405,7 +405,9 @@ class TicketsController < ApplicationController
       assigned_user = User.find(params[:user_id]) if params[:user_id].present?
       assigned_user ||= @ticket.users.first || @project.user
       log_event(@ticket, current_user, 'assign', "#{assigned_user.name} was assigned to the ticket, with Status:
-        #{sla_ticket.sla_status} and Target Response Deadline #{sla_target_response_deadline} and Target Resolution deadline #{sla_target_resolution_deadline}", assigned_user)
+        #{sla_ticket.sla_status} and Target Response Deadline #{sla_target_response_deadline} and Target Resolution deadline #{sla_target_resolution_deadline}",
+                assigned_user,
+                )
       activity('user_activity')
         .caused_by(current_user)
         .performed_on(@ticket)
@@ -863,6 +865,17 @@ class TicketsController < ApplicationController
 
   # Log an event for auditing
   def log_event(ticket, user, event_type, details, assigned_user)
-    Event.create(ticket: ticket, user: user, event_type: event_type, details: details, assigned_user_id: assigned_user&.id)
+    # Find the last event for this ticket
+    last_event = Event.where(ticket_id: ticket.id).order(created_at: :desc).first
+
+    # Calculate duration for the previous event (time elapsed since last event)
+    if last_event.present?
+      business_hours_duration = ticket.calculate_business_hours_duration(last_event.created_at, Time.current)
+      last_event.update(duration: business_hours_duration)
+    end
+
+    # Create new event with blank duration (will be filled when next event is created)
+    Event.create(ticket: ticket, user: user, event_type: event_type, details: details, assigned_user_id: assigned_user&.id, duration: 0)
   end
+
 end

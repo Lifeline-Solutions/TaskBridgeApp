@@ -208,7 +208,17 @@ class SlaBreachCheckJob < ApplicationJob
   end
 
   def log_event(ticket, user, event_type, details, assigned_user)
-    event = Event.create(ticket: ticket, user: user, event_type: event_type, details: details, assigned_user_id: assigned_user&.id)
+    # Find the last event for this ticket
+    last_event = Event.where(ticket_id: ticket.id).order(created_at: :desc).first
+
+    # Calculate duration in business hours if a previous event exists
+    duration = if last_event.present?
+                 ticket.calculate_business_hours_duration(last_event.created_at, Time.current)
+               else
+                 0
+               end
+
+    event = Event.create(ticket: ticket, user: user, event_type: event_type, details: details, assigned_user_id: assigned_user&.id, duration: duration)
     if event.persisted?
       Rails.logger.info "[SlaBreachCheckJob] Event #{event.id} created for ticket #{ticket.unique_id}"
     else

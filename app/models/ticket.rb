@@ -187,6 +187,47 @@ class Ticket < ApplicationRecord
     joins(:sla_tickets).where(sla_tickets: { sla_resolution_deadline: 'Breached' }).count
   end
 
+  # Calculate business hours duration between two timestamps
+  def calculate_business_hours_duration(start_time, end_time)
+    return 0 if start_time.blank? || end_time.blank?
+    return 0 if end_time <= start_time
+
+    business_hours = [
+      { day: 1, start: 8, end: 13 }, { day: 1, start: 14, end: 17 },
+      { day: 2, start: 8, end: 13 }, { day: 2, start: 14, end: 17 },
+      { day: 3, start: 8, end: 13 }, { day: 3, start: 14, end: 17 },
+      { day: 4, start: 8, end: 13 }, { day: 4, start: 14, end: 17 },
+      { day: 5, start: 8, end: 13 }, { day: 5, start: 14, end: 17 },
+      { day: 6, start: 8, end: 13 }
+    ]
+
+    holidays = [
+      Date.new(2024, 12, 25), # Christmas
+      Date.new(2024, 12, 26), # Boxing Day
+      Date.new(2025, 1, 1), # New Year's Day
+      Date.new(2025, 10, 10), # Utamaduni!
+      Date.new(2025, 10, 20), # Mashujaa Day
+      Date.new(2025, 12, 12), # Jamhuri!
+      Date.new(2025, 12, 12), # Utamaduni!
+      Date.new(2025, 12, 25), # Christmas
+      Date.new(2025, 12, 26), # Boxing Day
+      Date.new(2026, 1, 1) # New Year
+    ]
+
+    business_minutes = 0
+    current_time = start_time
+
+    while current_time < end_time
+      if within_business_hours?(current_time, business_hours) && !holiday?(current_time, holidays)
+        business_minutes += 1
+      end
+
+      current_time += 1.minute
+    end
+
+    business_minutes * 60 # Convert minutes to seconds
+  end
+
   private
 
   def skip_callbacks
@@ -312,6 +353,7 @@ class Ticket < ApplicationRecord
   def holiday?(time, holidays)
     holidays.include?(time.to_date)
   end
+
 
   # Take the initials for the #{project.title} and append a random hex string to it
 
