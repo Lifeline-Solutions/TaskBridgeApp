@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_12_30_082738) do
+ActiveRecord::Schema[7.2].define(version: 2026_01_21_085537) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -555,6 +555,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_12_30_082738) do
     t.uuid "deleted_by"
     t.datetime "deleted_on"
     t.uuid "assigned_user_id"
+    t.interval "duration"
     t.index ["assigned_user_id"], name: "index_events_on_assigned_user_id"
     t.index ["deleted_on"], name: "index_events_on_deleted_on"
     t.index ["ticket_id"], name: "index_events_on_ticket_id"
