@@ -33,8 +33,8 @@ class DashboardsController < ApplicationController
       # Calculate SLA breakdown for tickets from inception (using sla_target_response_deadline)
       # NO SLA: Use LEFT JOIN to catch tickets without SLA records OR with NO SLA explicitly marked
       tickets_from_inception_no_sla = tickets_from_inception
-        .joins('LEFT OUTER JOIN sla_tickets ON sla_tickets.ticket_id = tickets.id')
-        .where('sla_tickets.sla_target_response_deadline = ? OR sla_tickets.id IS NULL', 'NO SLA')
+        .joins(:sla_tickets)
+        .where(sla_tickets: { sla_resolution_deadline: 'NO SLA' })
         .distinct
         .count
 
@@ -98,14 +98,14 @@ class DashboardsController < ApplicationController
         .where(sla_tickets: { sla_resolution_deadline: 'Breached' })
         .joins('LEFT JOIN add_statuses ON add_statuses.ticket_id = tickets.id')
         .joins('LEFT JOIN statuses ON statuses.id = add_statuses.status_id')
-        .where.not(statuses: { name: %w[Closed Resolved] })
+        .where.not(statuses: { name: %w[Closed Resolved Declined] })
         .count
       resolution_breached_closed_last_30_days = tickets_last_30_days
         .joins(:sla_tickets)
         .where(sla_tickets: { sla_resolution_deadline: 'Breached' })
         .joins('LEFT JOIN add_statuses ON add_statuses.ticket_id = tickets.id')
         .joins('LEFT JOIN statuses ON statuses.id = add_statuses.status_id')
-        .where(statuses: { name: %w[Closed Resolved] })
+        .where(statuses: { name: %w[Closed Resolved Declined] })
         .count
       not_resolution_breached_tickets_last_30_days = tickets_last_30_days
         .joins(:sla_tickets)
@@ -210,12 +210,12 @@ class DashboardsController < ApplicationController
         @tickets = @tickets.joins('LEFT JOIN add_statuses ON add_statuses.ticket_id = tickets.id')
           .joins('LEFT JOIN statuses ON statuses.id = add_statuses.status_id')
           .where(sla_tickets: { sla_resolution_deadline: 'Breached' })
-          .where.not(statuses: { name: %w[Closed Resolved] })
+          .where.not(statuses: { name: %w[Closed Resolved Declined] })
       when 'target_resolution_time_breached_closed'
         @tickets = @tickets.joins('LEFT JOIN add_statuses ON add_statuses.ticket_id = tickets.id')
           .joins('LEFT JOIN statuses ON statuses.id = add_statuses.status_id')
           .where(sla_tickets: { sla_resolution_deadline: 'Breached' })
-          .where(statuses: { name: %w[Closed Resolved] })
+          .where(statuses: { name: %w[Closed Resolved Declined] })
       when 'target_resolution_time_not_breached'
         @tickets = @tickets.where(sla_tickets: { sla_resolution_deadline: ['Not Breached', nil] })
         # === CHANGE START: show only selected status tickets when status param is present
@@ -243,11 +243,10 @@ class DashboardsController < ApplicationController
       when 'tickets_from_inception_no_sla'
         # Show tickets from inception with NO SLA for sla_target_response_deadline
         # Use LEFT JOIN to catch tickets without SLA records OR with NO SLA explicitly marked
-        @tickets = Ticket.joins(:statuses, :users)
-          .joins('LEFT OUTER JOIN sla_tickets ON sla_tickets.ticket_id = tickets.id')
+        @tickets = Ticket.joins(:statuses, :users, :sla_tickets)
           .where(users: { id: user_ids })
           .where.not(statuses: { name: %w[Declined Closed Resolved] })
-          .where('sla_tickets.sla_resolution_deadline = ? OR sla_tickets.id IS NULL', 'NO SLA')
+          .where(sla_tickets: { sla_resolution_deadline: 'NO SLA' })
           .distinct
 
       when 'tickets_from_inception_response_breached'

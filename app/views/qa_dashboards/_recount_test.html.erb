@@ -28,7 +28,7 @@
         </p>
       </div>
       <div class="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-lg p-4 border border-red-200 dark:border-red-800">
-        <h3 class="text-sm font-medium text-red-700 dark:text-red-300 mb-1">Failed Retest Percentage</h3>
+        <h3 class="text-sm font-medium text-red-700 dark:text-red-300 mb-1">Failed Retest Percentage </h3>
         <p class="text-3xl font-bold text-red-900 dark:text-red-100">
           <%= ((@retest_metrics[:distribution].sum { |count, defect_count| (defect_count.to_f * count) } / @retest_metrics[:total_defects]) * 100).round(1) %>%
         </p>

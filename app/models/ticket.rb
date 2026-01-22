@@ -218,9 +218,7 @@ class Ticket < ApplicationRecord
     current_time = start_time
 
     while current_time < end_time
-      if within_business_hours?(current_time, business_hours) && !holiday?(current_time, holidays)
-        business_minutes += 1
-      end
+      business_minutes += 1 if within_business_hours?(current_time, business_hours) && !holiday?(current_time, holidays)
 
       current_time += 1.minute
     end
@@ -353,7 +351,6 @@ class Ticket < ApplicationRecord
   def holiday?(time, holidays)
     holidays.include?(time.to_date)
   end
-
 
   # Take the initials for the #{project.title} and append a random hex string to it
 

@@ -406,8 +406,7 @@ class TicketsController < ApplicationController
       assigned_user ||= @ticket.users.first || @project.user
       log_event(@ticket, current_user, 'assign', "#{assigned_user.name} was assigned to the ticket, with Status:
         #{sla_ticket.sla_status} and Target Response Deadline #{sla_target_response_deadline} and Target Resolution deadline #{sla_target_resolution_deadline}",
-                assigned_user,
-                )
+                assigned_user)
       activity('user_activity')
         .caused_by(current_user)
         .performed_on(@ticket)
@@ -877,5 +876,4 @@ class TicketsController < ApplicationController
     # Create new event with blank duration (will be filled when next event is created)
     Event.create(ticket: ticket, user: user, event_type: event_type, details: details, assigned_user_id: assigned_user&.id, duration: 0)
   end
-
 end
