@@ -178,7 +178,6 @@ class DashboardsController < ApplicationController
       user_ids = team.users.pluck(:id)
       @tickets = Ticket.joins(:users)
         .where(users: { id: user_ids })
-        .where('tickets.created_at >= ?', 30.days.ago)
         .joins(:sla_tickets)
 
       type = params[:type]
@@ -186,38 +185,48 @@ class DashboardsController < ApplicationController
       case type
       when 'initial_response_time_breached'
         @tickets = @tickets.where(sla_tickets: { sla_status: 'Breached' })
+          .where('tickets.created_at >= ?', 30.days.ago)
       when 'initial_response_time_not_breached'
         @tickets = @tickets.where(sla_tickets: { sla_status: ['Not Breached', nil] })
+          .where('tickets.created_at >= ?', 30.days.ago)
       when 'target_repair_time_breached'
-        @tickets = @tickets.where(sla_tickets: { sla_target_response_deadline: 'Breached' })
+        @tickets = @tickets.where(sla_tickets: { sla_target_response_deadline: 'Breached' }).where('tickets.created_at >= ?', 30.days.ago)
       when 'target_repair_time_breached_open'
         @tickets = @tickets.joins('LEFT JOIN add_statuses ON add_statuses.ticket_id = tickets.id')
           .joins('LEFT JOIN statuses ON statuses.id = add_statuses.status_id')
+          .where('tickets.created_at >= ?', 30.days.ago)
           .where(sla_tickets: { sla_target_response_deadline: 'Breached' })
-          .where.not(statuses: { name: %w[Closed Resolved] })
+          .where.not(statuses: { name: %w[Closed Resolved Declined] })
       when 'target_repair_time_breached_closed'
         @tickets = @tickets.joins('LEFT JOIN add_statuses ON add_statuses.ticket_id = tickets.id')
           .joins('LEFT JOIN statuses ON statuses.id = add_statuses.status_id')
+          .where('tickets.created_at >= ?', 30.days.ago)
           .where(sla_tickets: { sla_target_response_deadline: 'Breached' })
           .where(statuses: { name: %w[Closed Resolved] })
       when 'target_repair_time_not_breached'
         @tickets = @tickets.where(sla_tickets: { sla_target_response_deadline: ['Not Breached', nil] })
+          .where('tickets.created_at >= ?', 30.days.ago)
       when 'target_resolution_time_breached'
         @tickets = @tickets.where(sla_tickets: { sla_resolution_deadline: 'Breached' })
+          .where('tickets.created_at >= ?', 30.days.ago)
       when 'no_sla_population'
         @tickets = @tickets.where(sla_tickets: { sla_resolution_deadline: 'NO SLA' })
+          .where('tickets.created_at >= ?', 30.days.ago)
       when 'target_resolution_time_breached_open'
         @tickets = @tickets.joins('LEFT JOIN add_statuses ON add_statuses.ticket_id = tickets.id')
           .joins('LEFT JOIN statuses ON statuses.id = add_statuses.status_id')
+          .where('tickets.created_at >= ?', 30.days.ago)
           .where(sla_tickets: { sla_resolution_deadline: 'Breached' })
           .where.not(statuses: { name: %w[Closed Resolved Declined] })
       when 'target_resolution_time_breached_closed'
         @tickets = @tickets.joins('LEFT JOIN add_statuses ON add_statuses.ticket_id = tickets.id')
           .joins('LEFT JOIN statuses ON statuses.id = add_statuses.status_id')
+          .where('tickets.created_at >= ?', 30.days.ago)
           .where(sla_tickets: { sla_resolution_deadline: 'Breached' })
           .where(statuses: { name: %w[Closed Resolved Declined] })
       when 'target_resolution_time_not_breached'
         @tickets = @tickets.where(sla_tickets: { sla_resolution_deadline: ['Not Breached', nil] })
+          .where('tickets.created_at >= ?', 30.days.ago)
         # === CHANGE START: show only selected status tickets when status param is present
       when 'tickets_from_inception_by_status'
         status_filter = params[:status]
@@ -226,7 +235,6 @@ class DashboardsController < ApplicationController
                        .where(users: { id: user_ids })
                        .where(statuses: { name: status_filter })
                        .where.not(statuses: { name: %w[Declined Closed Resolved] })
-                       .where('tickets.created_at >= ?', 30.days.ago)
                    else
                      Status.left_outer_joins(tickets: [:users])
                        .where(users: { id: user_ids })
