@@ -50,7 +50,7 @@
           <a href="#" class="stat-card-link block" data-type="tickets_from_inception_response_not_breached" onclick="fetchTicketDetails('<%= @selected_team %>', 'tickets_from_inception_response_not_breached'); event.stopPropagation();">
             <div class="bg-white dark:bg-gray-700 p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow text-center">
               <div class="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-1">Not Breached</div>
-              <div class="text-2xl font-bold text-gray-800 dark:text-white" id="tickets_from_inception_response_not_breached"><%= @stats[:tickets_from_inception_not_breached ] || 0 %></div>
+              <div class="text-2xl font-bold text-gray-800 dark:text-white" id="tickets_from_inception_response_not_breached"><%= @stats[:tickets_from_inception_not_breached] || 0 %></div>
             </div>
           </a>
 
@@ -315,6 +315,9 @@
         setTextIfExists("tickets_from_inception_no_sla", data.tickets_from_inception_no_sla);
         setTextIfExists("tickets_from_inception_response_breached", data.tickets_from_inception_response_breached);
         setTextIfExists("tickets_from_inception_response_not_breached", data.tickets_from_inception_response_not_breached);
+        setTextIfExists("tickets_from_inception_not_breached", data.tickets_from_inception_not_breached);
+
+
 
         // NOTE: Depending on your stat_card partial, this might target a container.
         // If this overwrites the whole card, consider targeting a nested element instead.
