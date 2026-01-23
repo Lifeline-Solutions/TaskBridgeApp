@@ -52,6 +52,12 @@ class DashboardsController < ApplicationController
         .distinct
         .count
 
+      tickets_from_inception_not_breached = tickets_from_inception
+        .joins(:sla_tickets)
+        .where(sla_tickets: { sla_resolution_deadline: 'Not Breached' })
+        .distinct
+        .count
+
       tickets_last_30_days = Ticket.joins(:users, :statuses)
         .where(users: { id: user_ids })
         .where('tickets.created_at >= ?', 30.days.ago)
@@ -170,7 +176,8 @@ class DashboardsController < ApplicationController
         tickets_from_inception_by_status: tickets_from_inception_by_status,
         tickets_from_inception_no_sla: tickets_from_inception_no_sla,
         tickets_from_inception_response_breached: tickets_from_inception_response_breached,
-        tickets_from_inception_response_not_breached: tickets_from_inception_response_not_breached
+        tickets_from_inception_response_not_breached: tickets_from_inception_response_not_breached,
+        tickets_from_inception_not_breached: tickets_from_inception_not_breached
       }
 
       render json: stats
@@ -285,6 +292,14 @@ class DashboardsController < ApplicationController
           .where(sla_tickets: { sla_resolution_deadline: nil })
           .distinct
 
+      when 'tickets_from_inception_not_breached'
+        # Show tickets inceptions all not breached
+        @ticket = Ticket.joins(:statuses, :users, :sla_tickets)
+          .where(users: { id: user_ids })
+          .where.not(statuses: { name: %w[Declined Closed Resolved] })
+          .where(sla_tickets: { sla_resolution_deadline: 'Not Breached' })
+          .distinct
+
       when 'total_tickets_last_30_days'
         # No additional filtering needed
         @tickets = @tickets.Ticket.joins(:statuses, :users)
@@ -338,7 +353,8 @@ class DashboardsController < ApplicationController
         tickets_from_inception_by_status: {},
         tickets_from_inception_no_sla: 0,
         tickets_from_inception_response_breached: 0,
-        tickets_from_inception_response_not_breached: 0
+        tickets_from_inception_response_not_breached: 0,
+        tickets_from_inception_not_breached: 0
       }
     else
       {
@@ -347,7 +363,8 @@ class DashboardsController < ApplicationController
         tickets_from_inception_by_status: {},
         tickets_from_inception_no_sla: 0,
         tickets_from_inception_response_breached: 0,
-        tickets_from_inception_response_not_breached: 0
+        tickets_from_inception_response_not_breached: 0,
+        tickets_from_inception_not_breached: 0
       }
     end
   end
