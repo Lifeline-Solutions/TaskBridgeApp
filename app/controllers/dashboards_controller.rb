@@ -19,12 +19,14 @@ class DashboardsController < ApplicationController
       tickets_from_inception = Ticket.joins(:users, :statuses)
         .where(users: { id: user_ids })
         .where.not(statuses: { name: %w[Declined Closed Resolved] })
+        .where('tickets.created_at <= ?', 30.days.ago)
         .distinct
 
       tickets_from_inception_count = tickets_from_inception.count
 
       tickets_from_inception_by_status = Status
         .left_outer_joins(tickets: [:users])
+        .where('tickets.created_at <= ?', 30.days.ago)
         .where(users: { id: user_ids })
         .where.not(statuses: { name: %w[Declined Closed Resolved] })
         .group('statuses.name')
@@ -50,7 +52,7 @@ class DashboardsController < ApplicationController
         .distinct
         .count
 
-      tickets_last_30_days = Ticket.joins(:users)
+      tickets_last_30_days = Ticket.joins(:users, :statuses)
         .where(users: { id: user_ids })
         .where('tickets.created_at >= ?', 30.days.ago)
 
@@ -63,6 +65,7 @@ class DashboardsController < ApplicationController
         .joins(:sla_tickets)
         .where(sla_tickets: { sla_status: ['Not Breached', nil] })
         .count
+      # Breach Two
       response_breached_tickets_last_30_days = tickets_last_30_days
         .joins(:sla_tickets)
         .where(sla_tickets: { sla_target_response_deadline: 'Breached' })
@@ -81,6 +84,7 @@ class DashboardsController < ApplicationController
         .where(sla_tickets: { sla_target_response_deadline: 'Breached' })
         .where.not(statuses: { name: %w[Closed Resolved] })
         .count
+      # Breach Three
       not_response_breached_tickets_last_30_days = tickets_last_30_days
         .joins(:sla_tickets)
         .where(sla_tickets: { sla_target_response_deadline: ['Not Breached', nil] })
@@ -89,10 +93,13 @@ class DashboardsController < ApplicationController
         .joins(:sla_tickets)
         .where(sla_tickets: { sla_resolution_deadline: 'Breached' })
         .count
+      # No SLA NO Breach
       no_sla_tickets_last_30_days = tickets_last_30_days
-        .joins(:sla_tickets)
+        .joins(:sla_tickets, :statuses)
         .where(sla_tickets: { sla_resolution_deadline: 'NO SLA' })
+        .where.not(statuses: { name: %w[Closed Resolved Declined] })
         .count
+
       resolution_breached_open_last_30_days = tickets_last_30_days
         .joins(:sla_tickets)
         .where(sla_tickets: { sla_resolution_deadline: 'Breached' })
@@ -158,6 +165,7 @@ class DashboardsController < ApplicationController
         breached_tickets_resolved_per_assignee: breached_tickets_resolved_per_assignee,
         breached_resolution_resolved_tickets_per_project: breached_resolution_resolved_tickets_per_project,
         ticket_details: ticket_details,
+        # should not include 30 days
         tickets_from_inception_count: tickets_from_inception_count,
         tickets_from_inception_by_status: tickets_from_inception_by_status,
         tickets_from_inception_no_sla: tickets_from_inception_no_sla,
@@ -178,46 +186,59 @@ class DashboardsController < ApplicationController
       user_ids = team.users.pluck(:id)
       @tickets = Ticket.joins(:users)
         .where(users: { id: user_ids })
-        .where('tickets.created_at >= ?', 30.days.ago)
-        .joins(:sla_tickets)
+        .joins(:sla_tickets).joins(:statuses)
 
       type = params[:type]
 
       case type
       when 'initial_response_time_breached'
         @tickets = @tickets.where(sla_tickets: { sla_status: 'Breached' })
+          .where('tickets.created_at >= ?', 30.days.ago)
       when 'initial_response_time_not_breached'
         @tickets = @tickets.where(sla_tickets: { sla_status: ['Not Breached', nil] })
+          .where('tickets.created_at >= ?', 30.days.ago)
       when 'target_repair_time_breached'
         @tickets = @tickets.where(sla_tickets: { sla_target_response_deadline: 'Breached' })
+          .where('tickets.created_at >= ?', 30.days.ago)
       when 'target_repair_time_breached_open'
         @tickets = @tickets.joins('LEFT JOIN add_statuses ON add_statuses.ticket_id = tickets.id')
           .joins('LEFT JOIN statuses ON statuses.id = add_statuses.status_id')
+          .where('tickets.created_at >= ?', 30.days.ago)
           .where(sla_tickets: { sla_target_response_deadline: 'Breached' })
-          .where.not(statuses: { name: %w[Closed Resolved] })
+          .where.not(statuses: { name: %w[Closed Resolved Declined] })
+
       when 'target_repair_time_breached_closed'
         @tickets = @tickets.joins('LEFT JOIN add_statuses ON add_statuses.ticket_id = tickets.id')
           .joins('LEFT JOIN statuses ON statuses.id = add_statuses.status_id')
-          .where(sla_tickets: { sla_target_response_deadline: 'Breached' })
-          .where(statuses: { name: %w[Closed Resolved] })
+          .where('tickets.created_at >= ?', 30.days.ago).where(sla_tickets: { sla_target_response_deadline: 'Breached' })
+          .where(statuses: { name: %w[Closed Resolved Declined] })
+
       when 'target_repair_time_not_breached'
         @tickets = @tickets.where(sla_tickets: { sla_target_response_deadline: ['Not Breached', nil] })
+          .where('tickets.created_at >= ?', 30.days.ago)
       when 'target_resolution_time_breached'
         @tickets = @tickets.where(sla_tickets: { sla_resolution_deadline: 'Breached' })
+          .where('tickets.created_at >= ?', 30.days.ago)
       when 'no_sla_population'
         @tickets = @tickets.where(sla_tickets: { sla_resolution_deadline: 'NO SLA' })
+          .where('tickets.created_at >= ?', 30.days.ago)
+          .where.not(statuses: { name: %w[Closed Resolved Declined] })
+
       when 'target_resolution_time_breached_open'
         @tickets = @tickets.joins('LEFT JOIN add_statuses ON add_statuses.ticket_id = tickets.id')
           .joins('LEFT JOIN statuses ON statuses.id = add_statuses.status_id')
+          .where('tickets.created_at >= ?', 30.days.ago)
           .where(sla_tickets: { sla_resolution_deadline: 'Breached' })
           .where.not(statuses: { name: %w[Closed Resolved Declined] })
       when 'target_resolution_time_breached_closed'
         @tickets = @tickets.joins('LEFT JOIN add_statuses ON add_statuses.ticket_id = tickets.id')
           .joins('LEFT JOIN statuses ON statuses.id = add_statuses.status_id')
+          .where('tickets.created_at >= ?', 30.days.ago)
           .where(sla_tickets: { sla_resolution_deadline: 'Breached' })
-          .where(statuses: { name: %w[Closed Resolved Declined] })
+          .where.call(statuses: { name: %w[Closed Resolved Declined] })
       when 'target_resolution_time_not_breached'
         @tickets = @tickets.where(sla_tickets: { sla_resolution_deadline: ['Not Breached', nil] })
+          .where('tickets.created_at >= ?', 30.days.ago)
         # === CHANGE START: show only selected status tickets when status param is present
       when 'tickets_from_inception_by_status'
         status_filter = params[:status]
@@ -226,7 +247,6 @@ class DashboardsController < ApplicationController
                        .where(users: { id: user_ids })
                        .where(statuses: { name: status_filter })
                        .where.not(statuses: { name: %w[Declined Closed Resolved] })
-                       .where('tickets.created_at >= ?', 30.days.ago)
                    else
                      Status.left_outer_joins(tickets: [:users])
                        .where(users: { id: user_ids })
@@ -267,6 +287,11 @@ class DashboardsController < ApplicationController
 
       when 'total_tickets_last_30_days'
         # No additional filtering needed
+        @tickets = @tickets.Ticket.joins(:statuses, :users)
+          .where('tickets.created_at >= ?', 30.days.ago)
+          .where(users: { id: user_ids })
+          .where.not(statuses: { name: %w[Declined Closed Resolved] })
+          .distinct
       end
 
       # Add ordering (latest first) and include a user team name (first team found) in the select
@@ -308,7 +333,7 @@ class DashboardsController < ApplicationController
     if default_team
       user_ids = default_team.users.pluck(:id)
       {
-        total_tickets_last_30_days: Ticket.where(user_id: user_ids).where('created_at >= ?', 30.days.ago).count,
+        total_tickets_last_30_days: Ticket.where(user_id: user_ids)..where(tickets: { created_at: 30.days.ago..Time.current }).count,
         tickets_from_inception: 0,
         tickets_from_inception_by_status: {},
         tickets_from_inception_no_sla: 0,
