@@ -141,8 +141,12 @@ class DefectMessagesController < ApplicationController
     # Always record in defect history
     DefectHistory.create!(defect: defect, user: user, history_type: history_type, history: history)
 
-    # Gather recipients (assigned users)
-    recipients = defect.users.pluck(:email).compact.uniq
+    # Gather recipients (assigned users + bug reporter/creator)
+    assigned_emails = defect.users.pluck(:email).compact
+    creator_email = defect.creator&.email
+    commenter_email = user.email
+
+    recipients = (assigned_emails + [creator_email].compact).uniq - [commenter_email]
     return if recipients.blank?
 
     # Convert history_type (e.g. "Message Created") → "message_created"
