@@ -26,7 +26,7 @@
     <div class="col-span-1 sm:col-span-5 md:col-span-5 lg:col-span-5">
       <!-- SLA Breakdown Section -->
       <div class="mt-4 text-sm" id="tickets_from_inception_sla_breakdown">
-        <div class="grid grid-cols-4 gap-4 mb-4">
+        <div class="grid grid-cols-5 gap-4 mb-4">
           <!-- NO SLA -->
           <%= render 'dashboards/stat_card', title: "Total Open Tickets", value: @stats[:tickets_from_inception_count], id: "tickets_from_inception_count", class: 'rounded-lg' %>
 
@@ -39,11 +39,18 @@
             </div>
           </a>
 
-          <!-- Not Breached -->
+          <!-- Not Yet Breached -->
           <a href="#" class="stat-card-link block" data-type="tickets_from_inception_response_not_breached" onclick="fetchTicketDetails('<%= @selected_team %>', 'tickets_from_inception_response_not_breached'); event.stopPropagation();">
             <div class="bg-white dark:bg-gray-700 p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow text-center">
               <div class="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-1">Not Breached Yet</div>
               <div class="text-2xl font-bold text-gray-800 dark:text-white" id="tickets_from_inception_response_not_breached"><%= @stats[:tickets_from_inception_response_not_breached] || 0 %></div>
+            </div>
+          </a>
+          <!-- Not Breached -->
+          <a href="#" class="stat-card-link block" data-type="tickets_from_inception_response_not_breached" onclick="fetchTicketDetails('<%= @selected_team %>', 'tickets_from_inception_response_not_breached'); event.stopPropagation();">
+            <div class="bg-white dark:bg-gray-700 p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow text-center">
+              <div class="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-1">Not Breached</div>
+              <div class="text-2xl font-bold text-gray-800 dark:text-white" id="tickets_from_inception_response_not_breached"><%= @stats[:tickets_from_inception_not_breached ] || 0 %></div>
             </div>
           </a>
 
