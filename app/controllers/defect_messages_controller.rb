@@ -144,9 +144,8 @@ class DefectMessagesController < ApplicationController
     # Gather recipients (assigned users + bug reporter/creator)
     assigned_emails = defect.users.pluck(:email).compact
     creator_email = defect.creator&.email
-    commenter_email = user.email # user is the person making the comment
+    commenter_email = user.email
 
-    # Combine and deduplicate, but exclude the commenter (they don't need notification for their own action)
     recipients = (assigned_emails + [creator_email].compact).uniq - [commenter_email]
     return if recipients.blank?
 
