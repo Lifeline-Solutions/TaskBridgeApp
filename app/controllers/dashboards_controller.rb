@@ -53,10 +53,10 @@ class DashboardsController < ApplicationController
                                                        .count
 
       tickets_from_inception_not_breached = tickets_from_inception
-        .joins(:sla_tickets)
-        .where(sla_tickets: { sla_resolution_deadline: 'Not Breached' })
-        .distinct
-        .count
+                                              .joins(:sla_tickets)
+                                              .where(sla_tickets: { sla_resolution_deadline: 'Not Breached' })
+                                              .distinct
+                                              .count
 
       tickets_last_30_days = Ticket.joins(:users, :statuses)
                                    .where(users: { id: user_ids })
@@ -289,16 +289,17 @@ class DashboardsController < ApplicationController
         @tickets = Ticket.joins(:statuses, :users, :sla_tickets)
                          .where(users: { id: user_ids })
                          .where.not(statuses: { name: %w[Declined Closed Resolved] })
+                         .where('tickets.created_at <= ?', 30.days.ago)
                          .where(sla_tickets: { sla_resolution_deadline: nil })
                          .distinct
 
       when 'tickets_from_inception_not_breached'
         # Show tickets inceptions all not breached
         @ticket = Ticket.joins(:statuses, :users, :sla_tickets)
-          .where(users: { id: user_ids })
-          .where.not(statuses: { name: %w[Declined Closed Resolved] })
-          .where(sla_tickets: { sla_resolution_deadline: 'Not Breached' })
-          .distinct
+                        .where(users: { id: user_ids })
+                        .where.not(statuses: { name: %w[Declined Closed Resolved] })
+                        .where(sla_tickets: { sla_resolution_deadline: 'Not Breached' })
+                        .distinct
 
       when 'total_tickets_last_30_days'
         # No additional filtering needed
