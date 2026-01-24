@@ -30,7 +30,7 @@ class ApplicationController < ActionController::Base
   def update_allowed_parameters
     devise_parameter_sanitizer.permit(:sign_up) { |u| u.permit(:email, :password) }
     devise_parameter_sanitizer.permit(:account_update) do |u|
-      u.permit(:name, :email, :password, :current_password, :profile_picture, :first_name, :last_name, :first_login, :confirmation_token)
+      u.permit(:name, :email, :password, :current_password, :profile_picture, :first_name, :last_name, :first_login)
     end
     devise_parameter_sanitizer.permit(:invite, keys: %i[email role])
   end
@@ -49,6 +49,15 @@ class ApplicationController < ActionController::Base
 
     # If the user hasn't completed their profile, force them to edit it
     redirect_to edit_user_registration_path, alert: 'Please complete your profile before continuing.' and return if !current_user.first_login && controller_name != 'registrations' && action_name != 'edit'
+
+    # On profile update, set first_login and update names
+    return unless controller_name == 'registrations' && action_name == 'update' && params[:user].present?
+    return unless current_user.update(first_login: true, first_name: params[:user][:first_name], last_name: params[:user][:last_name])
+
+    # If the user is a CEO, redirect to a special report page after profile update
+    return redirect_to root_path, alert: 'Profile is Updated.' unless user_signed_in? && current_user.has_role?(:ceo) && !request.path.start_with?(cease_fire_report_path)
+
+    redirect_to cease_fire_report_path
   end
 
   # Loads notifications for the current user
