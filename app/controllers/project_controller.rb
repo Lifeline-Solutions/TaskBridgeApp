@@ -104,6 +104,8 @@ class ProjectController < ApplicationController
       team_users = Team.where(id: current_user_team_ids).joins(:users).pluck('users.id').uniq
       @ticket = @ticket.joins(:users, :statuses).where(users: { id: team_users }).where.not(statuses: { name: %w[Closed Resolved Declined] }) if params[:filter] == 'Team_tickets'
 
+      @ticket = @project.tickets.joins(:sla_tickets, :statuses).where.not(statuses: { name: %w[Closed Resolved Declined] }).where(sla_tickets: { sla_resolution_deadline: 'Breached'} ) if params[:filter] == 'Breached_tickets'
+
       # All closed tickets for tickets closed by the current user
 
       # Ordering
@@ -157,6 +159,10 @@ class ProjectController < ApplicationController
       current_user_team_ids = current_user.teams.pluck(:id)
       team_users = Team.where(id: current_user_team_ids).joins(:users).pluck('users.id').uniq
       @total_team_tickets = @project.tickets.joins(:users, :statuses).where.not(statuses: { name: %w[Closed Resolved Declined] }).where(users: { id: team_users }).distinct.count
+
+      @total_breached_tickets = @project.tickets.joins(:sla_tickets, :statuses)
+                                        .where.not(statuses: { name: %w[Closed Resolved Declined] })
+                                        .where(sla_tickets: { sla_resolution_deadline: 'Breached'} ).count
     else
       redirect_to root_path, alert: 'You are not authorized to view this content.'
     end
