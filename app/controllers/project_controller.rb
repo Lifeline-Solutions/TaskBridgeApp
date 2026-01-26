@@ -99,12 +99,11 @@ class ProjectController < ApplicationController
       @ticket = @ticket.joins(:users).where.not(statuses: { name: %w[Closed Resolved Declined] }) if params[:filter] == 'Open'
       # All open tickets for all users
       @ticket = @ticket.joins(:users, :statuses).where(statuses: { name: %w[Closed Resolved Declined] }) if params[:filter] == 'Closed_for_all'
-
+      # Show Team Tickets for Team that are open
       current_user_team_ids = current_user.teams.pluck(:id)
       team_users = Team.where(id: current_user_team_ids).joins(:users).pluck('users.id').uniq
       @ticket = @ticket.joins(:users, :statuses).where(users: { id: team_users }).where.not(statuses: { name: %w[Closed Resolved Declined] }) if params[:filter] == 'Team_tickets'
-
-      @ticket = @project.tickets.joins(:sla_tickets, :statuses).where.not(statuses: { name: %w[Closed Resolved Declined] }).where(sla_tickets: { sla_resolution_deadline: 'Breached'} ) if params[:filter] == 'Breached_tickets'
+      @ticket = @project.tickets.joins(:sla_tickets, :statuses).where.not(statuses: { name: %w[Closed Resolved Declined] }).where(sla_tickets: { sla_resolution_deadline: 'Breached'}) if params[:filter] == 'Breached_tickets'
 
       # All closed tickets for tickets closed by the current user
 
@@ -162,7 +161,7 @@ class ProjectController < ApplicationController
 
       @total_breached_tickets = @project.tickets.joins(:sla_tickets, :statuses)
                                         .where.not(statuses: { name: %w[Closed Resolved Declined] })
-                                        .where(sla_tickets: { sla_resolution_deadline: 'Breached'} ).count
+                                        .where(sla_tickets: { sla_resolution_deadline: 'Breached'}).count
     else
       redirect_to root_path, alert: 'You are not authorized to view this content.'
     end
