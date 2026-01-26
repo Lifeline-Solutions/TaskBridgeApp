@@ -863,7 +863,7 @@ class TicketsController < ApplicationController
   end
 
   # Log an event for auditing
-  def log_event(ticket, user, event_type, details, assigned_user)
+  def log_event(ticket, user, event_type, details, assigned_user, _extra_details = nil)
     # Find the last event for this ticket
     last_event = Event.where(ticket_id: ticket.id).order(created_at: :desc).first
 
