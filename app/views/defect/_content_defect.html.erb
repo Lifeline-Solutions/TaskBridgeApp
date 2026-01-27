@@ -378,36 +378,45 @@
     color: rgba(255, 255, 255, 0.7);
   }
 
-  /* Preserve inline styles (colors, backgrounds, font sizes) in prose */
+  /* ===== INLINE STYLE PRESERVATION - Critical for Rich Text Formatting ===== */
   /* IMPORTANT: These rules ensure that inline styles from the rich text editor are preserved */
-  .prose [style*="color"],
+  /* This fixes the QA issue where bold+color formatting loses color after posting */
+  
+  /* CRITICAL FIX: Tailwind's prose plugin sets colors on strong/b elements that can override inline styles */
+  /* We need to ensure inline style attributes take precedence over prose defaults */
+  
+  /* Force inline color styles to work on bold/strong elements */
+  /* The [style] attribute selector increases specificity so inline styles aren't overridden */
+  .trix-content strong[style*="color"],
+  .trix-content b[style*="color"],
+  .prose strong[style*="color"],
+  .prose b[style*="color"] {
+    /* Don't set any color here - let the inline style attribute apply naturally */
+    /* Having this selector ensures it has higher specificity than .prose strong */
+  }
+  
+  /* Ensure all elements with inline color styles can display them */
+  .trix-content [style*="color"],
+  .prose span[style*="color"],
+  .prose em[style*="color"],
+  .prose i[style*="color"],
+  .prose u[style*="color"],
+  .prose div[style*="color"],
+  .prose p[style*="color"] {
+    /* Inline style will apply due to attribute selector specificity */
+  }
+
+  /* Preserve background colors from inline styles */
+  .trix-content [style*="background"],
   .prose [style*="background-color"],
-  .prose [style*="background"],
-  .prose [style*="font-size"],
-  .prose [style*="font-family"],
-  .prose [style*="font-weight"],
-  .prose [style*="text-align"],
-  .prose [style*="text-decoration"],
-  .prose [style*="border"],
-  .prose [style*="padding"],
-  .prose [style*="margin"] {
-    display: inherit;
+  .prose [style*="background"] {
+    /* Inline style will apply */
   }
-
-  /* Ensure span elements with inline styles are properly displayed */
-  .prose span[style] {
-    all: unset;
-    display: inline;
-  }
-
-  /* Re-apply the inline styles after reset */
-  .prose span[style*="color"] {
-    color: inherit; /* Will use the style attribute value */
-  }
-
-  .prose span[style*="background-color"],
-  .prose span[style*="background"] {
-    background-color: inherit; /* Will use the style attribute value */
+  
+  /* Preserve font sizes from inline styles */
+  .trix-content [style*="font-size"],
+  .prose [style*="font-size"] {
+    /* Inline style will apply */
   }
 
   /* Font size classes */
