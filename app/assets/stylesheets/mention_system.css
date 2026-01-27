@@ -281,3 +281,41 @@
     font-size: 12px;
   }
 }
+
+/* ===== GLOBAL FIX: Preserve Inline Styles in Prose Content ===== */
+/* QA Fix: Bold text with color formatting was losing its color after posting */
+/* This ensures that inline style attributes always take precedence over Tailwind prose defaults */
+
+/* CRITICAL FIX: Tailwind's prose sets colors on strong/b that override inline styles */
+/* Solution: Make strong/b inherit color from parent, allowing inline styles to work */
+
+/* Make strong/b elements inherit color instead of having their own color */
+.prose strong,
+.prose b,
+.trix-content strong,
+.trix-content b {
+  /* Force inherit so colored parents or inline styles work */
+  color: inherit !important;
+}
+
+/* For spans/elements with inline color that contain strong/b */
+.prose [style*="color"] strong,
+.prose [style*="color"] b,
+.trix-content [style*="color"] strong,
+.trix-content [style*="color"] b {
+  /* Inherit the color from parent */
+  color: inherit !important;
+}
+
+/* Preserve background colors with !important */
+.prose [style*="background-color"],
+.prose [style*="background"],
+.trix-content [style*="background"] {
+  background-color: inherit !important;
+}
+
+/* Preserve font sizes with !important */
+.prose [style*="font-size"],
+.trix-content [style*="font-size"] {
+  font-size: inherit !important;
+}

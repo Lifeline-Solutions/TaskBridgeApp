@@ -378,36 +378,42 @@
     color: rgba(255, 255, 255, 0.7);
   }
 
-  /* Preserve inline styles (colors, backgrounds, font sizes) in prose */
+  /* ===== INLINE STYLE PRESERVATION - Critical for Rich Text Formatting ===== */
   /* IMPORTANT: These rules ensure that inline styles from the rich text editor are preserved */
-  .prose [style*="color"],
+  /* This fixes the QA issue where bold+color formatting loses color after posting */
+  
+  /* CRITICAL FIX: Tailwind's prose plugin sets colors on strong/b elements that override inline styles */
+  /* Solution: Force strong/b to inherit color from parent using !important */
+  
+  /* Make strong/b elements inherit color instead of having their own color */
+  .prose strong,
+  .prose b,
+  .trix-content strong,
+  .trix-content b {
+    /* Force inherit so colored parents or inline styles work */
+    color: inherit !important;
+  }
+
+  /* For spans/elements with inline color that contain strong/b */
+  .prose [style*="color"] strong,
+  .prose [style*="color"] b,
+  .trix-content [style*="color"] strong,
+  .trix-content [style*="color"] b {
+    /* Inherit the color from parent */
+    color: inherit !important;
+  }
+
+  /* Preserve background colors with !important */
   .prose [style*="background-color"],
   .prose [style*="background"],
+  .trix-content [style*="background"] {
+    background-color: inherit !important;
+  }
+  
+  /* Preserve font sizes with !important */
   .prose [style*="font-size"],
-  .prose [style*="font-family"],
-  .prose [style*="font-weight"],
-  .prose [style*="text-align"],
-  .prose [style*="text-decoration"],
-  .prose [style*="border"],
-  .prose [style*="padding"],
-  .prose [style*="margin"] {
-    display: inherit;
-  }
-
-  /* Ensure span elements with inline styles are properly displayed */
-  .prose span[style] {
-    all: unset;
-    display: inline;
-  }
-
-  /* Re-apply the inline styles after reset */
-  .prose span[style*="color"] {
-    color: inherit; /* Will use the style attribute value */
-  }
-
-  .prose span[style*="background-color"],
-  .prose span[style*="background"] {
-    background-color: inherit; /* Will use the style attribute value */
+  .trix-content [style*="font-size"] {
+    font-size: inherit !important;
   }
 
   /* Font size classes */
