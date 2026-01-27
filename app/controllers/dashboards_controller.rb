@@ -48,7 +48,7 @@ class DashboardsController < ApplicationController
 
       tickets_from_inception_response_not_breached = tickets_from_inception
         .joins(:sla_tickets)
-        .where(sla_tickets: { sla_resolution_deadline: nil })
+        .where(sla_tickets: { sla_resolution_deadline: ['Not Breached', nil] })
         .distinct
         .count
 
