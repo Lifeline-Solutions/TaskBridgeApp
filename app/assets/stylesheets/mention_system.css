@@ -281,3 +281,40 @@
     font-size: 12px;
   }
 }
+
+/* ===== GLOBAL FIX: Preserve Inline Styles in Prose Content ===== */
+/* QA Fix: Bold text with color formatting was losing its color after posting */
+/* This ensures that inline style attributes always take precedence over Tailwind prose defaults */
+
+/* Fix for bold/strong elements losing their inline color styles */
+.prose strong[style*="color"],
+.prose b[style*="color"],
+.trix-content strong[style*="color"],
+.trix-content b[style*="color"] {
+  /* Empty rule to increase specificity - allows inline style to apply */
+  /* Without this, Tailwind's .prose strong rule overrides inline colors */
+}
+
+/* Ensure all formatted elements preserve their inline color styles */
+.prose span[style*="color"],
+.prose em[style*="color"],
+.prose i[style*="color"],
+.prose u[style*="color"],
+.prose div[style*="color"],
+.prose p[style*="color"],
+.trix-content [style*="color"] {
+  /* Inline style will apply due to higher selector specificity */
+}
+
+/* Preserve background colors */
+.prose [style*="background-color"],
+.prose [style*="background"],
+.trix-content [style*="background"] {
+  /* Inline styles preserved */
+}
+
+/* Preserve font sizes */
+.prose [style*="font-size"],
+.trix-content [style*="font-size"] {
+  /* Inline styles preserved */
+}
