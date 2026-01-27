@@ -4,22 +4,23 @@
     <time class="text-lg font-semibold"><%= event.created_at.strftime("%B %d, %Y %H:%M") %>
       <span class="text-sm font-light">
         <%= " and assigned to #{assigned_user.first_name} #{assigned_user.last_name}" if assigned_user %>
-        <% if current_user.has_role?(:admin) || current_user.has_role?('project manager') || current_user.has_role?(:agent) %>
-
-          and the total duration is
-          <% if event.duration.present? %>
-            <% hours = event.duration / 3600 %>
-            <% minutes = (event.duration % 3600) / 60 %>
-            <% seconds = event.duration % 60 %>
-            <% if hours > 0 %>
-              <%= "#{hours}h #{minutes}m #{seconds}s" %>
-            <% elsif minutes > 0 %>
-              <%= "#{minutes}m #{seconds}s" %>
-            <% else %>
-              <%= "#{seconds}s" %>
+        <% if event.duration.present? && event.duration.to_i > 0 %>
+          <% if current_user.has_role?(:admin) || current_user.has_role?('project manager') || current_user.has_role?(:agent) %>
+            and the total duration is
+            <% if event.duration.present? %>
+              <% hours = event.duration / 3600 %>
+              <% minutes = (event.duration % 3600) / 60 %>
+              <% seconds = event.duration % 60 %>
+              <% if hours > 0 %>
+                <%= "#{hours}h #{minutes}m #{seconds}s" %>
+              <% elsif minutes > 0 %>
+                <%= "#{minutes}m #{seconds}s" %>
+              <% else %>
+                <%= "#{seconds}s" %>
+              <% end %>
             <% end %>
           <% end %>
-          <% end %>
+        <% end %>
 
       </span>
     </time>
