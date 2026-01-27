@@ -382,41 +382,38 @@
   /* IMPORTANT: These rules ensure that inline styles from the rich text editor are preserved */
   /* This fixes the QA issue where bold+color formatting loses color after posting */
   
-  /* CRITICAL FIX: Tailwind's prose plugin sets colors on strong/b elements that can override inline styles */
-  /* We need to ensure inline style attributes take precedence over prose defaults */
+  /* CRITICAL FIX: Tailwind's prose plugin sets colors on strong/b elements that override inline styles */
+  /* Solution: Force strong/b to inherit color from parent using !important */
   
-  /* Force inline color styles to work on bold/strong elements */
-  /* The [style] attribute selector increases specificity so inline styles aren't overridden */
-  .trix-content strong[style*="color"],
-  .trix-content b[style*="color"],
-  .prose strong[style*="color"],
-  .prose b[style*="color"] {
-    /* Don't set any color here - let the inline style attribute apply naturally */
-    /* Having this selector ensures it has higher specificity than .prose strong */
-  }
-  
-  /* Ensure all elements with inline color styles can display them */
-  .trix-content [style*="color"],
-  .prose span[style*="color"],
-  .prose em[style*="color"],
-  .prose i[style*="color"],
-  .prose u[style*="color"],
-  .prose div[style*="color"],
-  .prose p[style*="color"] {
-    /* Inline style will apply due to attribute selector specificity */
+  /* Make strong/b elements inherit color instead of having their own color */
+  .prose strong,
+  .prose b,
+  .trix-content strong,
+  .trix-content b {
+    /* Force inherit so colored parents or inline styles work */
+    color: inherit !important;
   }
 
-  /* Preserve background colors from inline styles */
-  .trix-content [style*="background"],
+  /* For spans/elements with inline color that contain strong/b */
+  .prose [style*="color"] strong,
+  .prose [style*="color"] b,
+  .trix-content [style*="color"] strong,
+  .trix-content [style*="color"] b {
+    /* Inherit the color from parent */
+    color: inherit !important;
+  }
+
+  /* Preserve background colors with !important */
   .prose [style*="background-color"],
-  .prose [style*="background"] {
-    /* Inline style will apply */
+  .prose [style*="background"],
+  .trix-content [style*="background"] {
+    background-color: inherit !important;
   }
   
-  /* Preserve font sizes from inline styles */
-  .trix-content [style*="font-size"],
-  .prose [style*="font-size"] {
-    /* Inline style will apply */
+  /* Preserve font sizes with !important */
+  .prose [style*="font-size"],
+  .trix-content [style*="font-size"] {
+    font-size: inherit !important;
   }
 
   /* Font size classes */
