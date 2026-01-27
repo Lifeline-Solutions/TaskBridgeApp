@@ -286,35 +286,36 @@
 /* QA Fix: Bold text with color formatting was losing its color after posting */
 /* This ensures that inline style attributes always take precedence over Tailwind prose defaults */
 
-/* Fix for bold/strong elements losing their inline color styles */
-.prose strong[style*="color"],
-.prose b[style*="color"],
-.trix-content strong[style*="color"],
-.trix-content b[style*="color"] {
-  /* Empty rule to increase specificity - allows inline style to apply */
-  /* Without this, Tailwind's .prose strong rule overrides inline colors */
+/* CRITICAL FIX: Tailwind's prose sets colors on strong/b that override inline styles */
+/* Solution: Make strong/b inherit color from parent, allowing inline styles to work */
+
+/* Make strong/b elements inherit color instead of having their own color */
+.prose strong,
+.prose b,
+.trix-content strong,
+.trix-content b {
+  /* Force inherit so colored parents or inline styles work */
+  color: inherit !important;
 }
 
-/* Ensure all formatted elements preserve their inline color styles */
-.prose span[style*="color"],
-.prose em[style*="color"],
-.prose i[style*="color"],
-.prose u[style*="color"],
-.prose div[style*="color"],
-.prose p[style*="color"],
-.trix-content [style*="color"] {
-  /* Inline style will apply due to higher selector specificity */
+/* For spans/elements with inline color that contain strong/b */
+.prose [style*="color"] strong,
+.prose [style*="color"] b,
+.trix-content [style*="color"] strong,
+.trix-content [style*="color"] b {
+  /* Inherit the color from parent */
+  color: inherit !important;
 }
 
-/* Preserve background colors */
+/* Preserve background colors with !important */
 .prose [style*="background-color"],
 .prose [style*="background"],
 .trix-content [style*="background"] {
-  /* Inline styles preserved */
+  background-color: inherit !important;
 }
 
-/* Preserve font sizes */
+/* Preserve font sizes with !important */
 .prose [style*="font-size"],
 .trix-content [style*="font-size"] {
-  /* Inline styles preserved */
+  font-size: inherit !important;
 }
