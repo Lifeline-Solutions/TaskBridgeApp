@@ -289,7 +289,7 @@ class DashboardsController < ApplicationController
         @tickets = Ticket.joins(:statuses, :users, :sla_tickets)
           .where(users: { id: user_ids })
           .where.not(statuses: { name: %w[Declined Closed Resolved] })
-          .where(sla_tickets: { sla_resolution_deadline: nil })
+          .where(sla_tickets: { sla_resolution_deadline: ['Not Breached', nil] })
           .distinct
 
       when 'tickets_from_inception_not_breached'
