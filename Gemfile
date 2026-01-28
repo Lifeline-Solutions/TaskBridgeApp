@@ -102,8 +102,6 @@ gem 'passenger', require: 'phusion_passenger/rack_handler'
 gem 'pundit'
 gem 'redis'
 gem 'rolify', '~> 6.0'
-gem 'sentry-rails'
-gem 'sentry-ruby'
 gem 'sidekiq', '~> 8.1'
 gem 'stackprof'
 gem 'whenever', require: false
