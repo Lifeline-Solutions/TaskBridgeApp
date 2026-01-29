@@ -36,7 +36,6 @@
               <% end %>
             </td>
             <% if current_user.has_role?(:admin) or current_user.has_role?(:agent) or current_user.has_role?(:observer) or current_user.has_role?('project manager') %>
-
               <td class="text-left px-2 sm:px-4 py-2 sm:py-4">
                 <% project = Project.find_by(title: project_title) %>
                 <%= link_to project_path(project, filter: 'Breached_tickets'),
