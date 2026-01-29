@@ -295,6 +295,7 @@
                 <% chart_data.sort_by { |_k, v| -v }.each do |label, count| %>
                   <%
                     drill_down_params = { filter_open: true }
+                    display_label = label
 
                     # Include current product scope in drill-down
                     scope_product_ids = @selected_product_ids.any? ? @selected_product_ids : (@dashboard.defect_filter.product_id.present? ? [@dashboard.defect_filter.product_id] : [])
@@ -350,7 +351,7 @@
                         drill_down_params[:query] = label
                       end
                     elsif field_key == 'submodule'
-                      # Resolve Submodule ID
+                      # Resolve Submodule ID and get parent module name for display
                       scope_product_ids = @selected_product_ids.any? ? @selected_product_ids : (@dashboard.defect_filter.product_id.present? ? [@dashboard.defect_filter.product_id] : [])
 
                       submodules = QaModule.where(name: label).where.not(parent_id: nil)
@@ -358,6 +359,10 @@
 
                       if submodules.exists?
                         drill_down_params[:submodule_id] = submodules.pluck(:id)
+                        # Get parent module name for display
+                        submodule = submodules.first
+                        parent_module = QaModule.find(submodule.parent_id)
+                        display_label = "#{parent_module.name} - #{label}"
                       else
                         drill_down_params[:query] = label
                       end
@@ -384,7 +389,7 @@
                   <%= link_to index_show_defect_index_path(drill_down_params), class: "block hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors group" do %>
                     <div class="flex items-center justify-between text-sm p-1">
                       <span class="text-gray-700 dark:text-gray-300 flex-1 truncate group-hover:underline group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                        <%= label.presence || '(Not Set)' %>
+                        <%= display_label.presence || '(Not Set)' %>
                       </span>
                       <span class="font-semibold text-gray-900 dark:text-white ml-2">
                         <%= count %>
