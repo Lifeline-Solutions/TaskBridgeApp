@@ -73,7 +73,9 @@
         <%= render 'ticket_show_due_severity_issue' %>
       </div>
       <!-- SLA -->
-      <%= render 'sla' %>
+      <% if current_user.has_role?(:agent) || current_user.has_role?(:admin) || current_user.has_role?('project manager') || current_user.has_role?(:observer) %>
+        <%= render 'sla' %>
+      <% end %>
 
       <!-- Client feedbacks -->
       <div class="mt-2">
