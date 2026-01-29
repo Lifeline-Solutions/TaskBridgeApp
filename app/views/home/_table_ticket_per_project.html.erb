@@ -38,12 +38,14 @@
             <% if current_user.has_role?(:admin) or current_user.has_role?(:agent) or current_user.has_role?(:observer) or current_user.has_role?('project manager') %>
 
               <td class="text-left px-2 sm:px-4 py-2 sm:py-4">
-                  <%= link_to project_path(Project.find_by(title: project_title), filter: 'Breached_tickets'),
-                              class: "inline-flex items-center px-4 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800" do %>
-                    <%= @total_breached_tickets %>
-                  <% end %>
+                <% project = Project.find_by(title: project_title) %>
+                <%= link_to project_path(project, filter: 'Breached_tickets'),
+                            class: "inline-flex items-center px-4 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800" do %>
+                  <%= @total_breached_tickets_per_project[project.id] || 0 %>
+                <% end %>
               </td>
-            <% end %>
+
+          <% end %>
           </tr>
         <% end %>
       </tbody>
