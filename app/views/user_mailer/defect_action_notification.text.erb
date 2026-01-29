@@ -1,0 +1,19 @@
+New Activity on Defect
+
+Hi <%= @user.first_name %>,
+
+<%= @actor.first_name %> <%= @actor.last_name %> <%= @action_name.humanize.downcase %> on this defect:
+
+Defect: <%= @defect.defect_unique %> - <%= @defect.summary %>
+Project: <%= @defect.product&.client&.name || 'N/A' %>
+Priority: <%= @defect.priority %>
+
+<% if @content.present? %>
+Activity:
+<%= strip_tags(@content.to_s) %>
+<% end %>
+
+View Defect: <%= @url %>
+
+--
+You received this notification because you are <%= @defect.creator == @user ? 'the reporter' : 'assigned' %> to this defect.
