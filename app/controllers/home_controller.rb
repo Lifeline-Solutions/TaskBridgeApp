@@ -63,6 +63,7 @@ class HomeController < ApplicationController
                                         else
                                           {}
                                         end
+
       @total_breached_tickets = Project.joins(tickets: %i[statuses users sla_tickets])
                                     .where.not(statuses: { name: %w[Closed Resolved Declined] })
                                        .where(sla_tickets: { sla_resolution_deadline: 'Breached' })
