@@ -162,23 +162,26 @@
         </div>
 
 
+
+        <% if current_user.has_role?(:admin) or current_user.has_role?(:agent) or current_user.has_role?(:observer) or current_user.has_role?('project manager') %>
         <!-- All Breached Tickets -->
-        <div class="flex items-center border border-gray-200 dark:border-gray-300 rounded-lg p-2 bg-transparent">
-          <div class="flex-1">
-            <div class="flex items-center space-x-2 mb-1">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-              </svg>
-              <h3 class="text-sm font-medium">Breached Tickets</h3>
+          <div class="flex items-center border border-gray-200 dark:border-gray-300 rounded-lg p-2 bg-transparent">
+            <div class="flex-1">
+              <div class="flex items-center space-x-2 mb-1">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                </svg>
+                <h3 class="text-sm font-medium">Breached Tickets</h3>
+              </div>
+              <p class="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-1">
+                <%=  @total_breached_tickets %>
+              </p>
             </div>
-            <p class="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-1">
-              <%=  @total_breached_tickets %>
-            </p>
+            <%= link_to "View",
+                        project_path(@project, filter: 'Breached_tickets'),
+                        class: "ml-4 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors" %>
           </div>
-          <%= link_to "View",
-                      project_path(@project, filter: 'Breached_tickets'),
-                      class: "ml-4 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors" %>
-        </div>
+        <% end %>
 
       </div>
 
