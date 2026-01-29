@@ -152,11 +152,16 @@ class DefectMessagesController < ApplicationController
     # Convert history_type (e.g. "Message Created") → "message_created"
     action_name = history_type.parameterize.underscore
 
-    # Send async notification
+    # Determine context text based on action
+    context_text = action_name.include?('message') ? 'comment' : 'defect'
+
+    # Send async notification - use mention-style template for all recipients
     recipients.each do |email|
       recipient_user = User.find_by(email: email)
-      title = UserMailer::ACTION_TITLES[action_name] || action_name.titleize
-      subject_text = "[Defect #{defect.defect_unique}] #{title} by #{user.name}"
+      next unless recipient_user
+
+      # Use consistent mention-style subject and template
+      subject_text = "New activity on defect #{defect.defect_unique}"
 
       Messaging::EmailSender.send_email(
         subject_text,
@@ -165,8 +170,16 @@ class DefectMessagesController < ApplicationController
         priority: :normal,
         type: 'defect_action'
       ).use_template(
-        view: 'user_mailer/defect_action_email',
-        assigns: { defect: defect, actor: user, action_name: action_name, url: defect_url(defect, Rails.application.config.action_mailer.default_url_options) }
+        view: 'user_mailer/defect_action_notification',
+        assigns: {
+          user: recipient_user,
+          defect: defect,
+          actor: user,
+          action_name: action_name,
+          context_text: context_text,
+          content: history,
+          url: defect_url(defect, Rails.application.config.action_mailer.default_url_options)
+        }
       ).set_source('defect', defect.id).set_party('user', recipient_user&.id).send(queue: true)
     end
   end
