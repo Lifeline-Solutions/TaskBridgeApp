@@ -15,4 +15,7 @@ class Client < ApplicationRecord
   def projects_count
     Project.where(client_id: id).count
   end
+  def products_count
+    Product.where(client_id: id).count
+  end
 end
