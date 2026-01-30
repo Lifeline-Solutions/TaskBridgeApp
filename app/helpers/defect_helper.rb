@@ -128,7 +128,32 @@ module DefectHelper
       result[:field] = 'Attachment'
       result[:to] = match[1].strip
 
-    # Pattern 4: "Created the Work item"
+    # Pattern 4: "Added comment: X"
+    elsif (match = content.match(/^Added comment:\s*(.+)$/i))
+      result[:action] = 'added a comment'
+      result[:field] = 'Comment'
+      result[:to] = strip_html_for_history(match[1].strip)
+
+    # Pattern 5: "Edited comment from: X to: Y"
+    elsif (match = content.match(/^Edited comment from:\s*(.+?)\s+to:\s*(.+)$/i))
+      result[:action] = 'edited a comment'
+      result[:field] = 'Comment'
+      result[:from] = strip_html_for_history(match[1].strip)
+      result[:to] = strip_html_for_history(match[2].strip)
+
+    # Pattern 6: "Archived comment: X"
+    elsif (match = content.match(/^Archived comment:\s*(.+)$/i))
+      result[:action] = 'archived a comment'
+      result[:field] = 'Comment'
+      result[:to] = strip_html_for_history(match[1].strip)
+
+    # Pattern 7: "Deleted comment: X"
+    elsif (match = content.match(/^Deleted comment:\s*(.+)$/i))
+      result[:action] = 'deleted a comment'
+      result[:field] = 'Comment'
+      result[:to] = strip_html_for_history(match[1].strip)
+
+    # Pattern 8: "Created the Work item"
     elsif content.match?(/created/i)
       result[:action] = 'created'
       result[:field] = 'Defect'
