@@ -383,25 +383,20 @@
   /* This fixes the QA issue where bold+color formatting loses color after posting */
   
   /* CRITICAL FIX: Tailwind's prose plugin sets colors on strong/b elements that override inline styles */
-  /* Solution: Force strong/b to inherit color from parent using !important */
+  /* Solution: Only override color for strong/b elements that DON'T have their own inline color */
   
-  /* Make strong/b elements inherit color instead of having their own color */
-  .prose strong,
-  .prose b,
-  .trix-content strong,
-  .trix-content b {
-    /* Force inherit so colored parents or inline styles work */
+  /* For strong/b elements WITHOUT their own inline color style */
+  /* These inherit from parent or use default */
+  .prose strong:not([style*="color"]),
+  .prose b:not([style*="color"]),
+  .trix-content strong:not([style*="color"]),
+  .trix-content b:not([style*="color"]) {
     color: inherit !important;
   }
 
-  /* For spans/elements with inline color that contain strong/b */
-  .prose [style*="color"] strong,
-  .prose [style*="color"] b,
-  .trix-content [style*="color"] strong,
-  .trix-content [style*="color"] b {
-    /* Inherit the color from parent */
-    color: inherit !important;
-  }
+  /* For strong/b elements WITH their own inline color style (e.g., <strong style="color: red;">) */
+  /* Don't override - let the inline style work naturally */
+  /* No rule needed here - inline styles have higher specificity */
 
   /* Preserve background colors with !important */
   .prose [style*="background-color"],
