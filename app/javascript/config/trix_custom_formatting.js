@@ -1,4 +1,8 @@
 // --- Colors ---
+// CRITICAL FIX for QA issues:
+// 1. inheritable: false prevents color/italic formatting from leaking to entire blocks
+// 2. groupTagName: "span" ensures colors wrap in spans that can coexist with <strong>/<em>
+// This allows bold+color and italic+color combinations to work correctly
 const colorMap = {
   "text-red": "red",
   "text-blue": "blue",
@@ -12,7 +16,8 @@ const colorMap = {
 Object.entries(colorMap).forEach(([attr, clr]) => {
   Trix.config.textAttributes[attr] = {
     style: { color: clr },
-    inheritable: true,
+    inheritable: false,
+    groupTagName: "span",
     parser(element) { return element.style.color === clr; },
     remover(element) { if (element.style) element.style.color = ""; },
   };
@@ -21,28 +26,32 @@ Object.entries(colorMap).forEach(([attr, clr]) => {
 // --- Other inline styles ---
 Trix.config.textAttributes["text-underline"] = {
   style: { textDecoration: "underline" },
-  inheritable: true,
+  inheritable: false,
+  groupTagName: "span",
   parser(el) { return /underline/.test(el.style.textDecoration); },
   remover(el) { el.style.textDecoration = ""; },
 };
 
 Trix.config.textAttributes["text-highlight"] = {
   style: { backgroundColor: "yellow" },
-  inheritable: true,
+  inheritable: false,
+  groupTagName: "span",
   parser(el) { return el.style.backgroundColor === "yellow"; },
   remover(el) { el.style.backgroundColor = ""; },
 };
 
 Trix.config.textAttributes["text-large"] = {
   style: { fontSize: "1.5em" },
-  inheritable: true,
+  inheritable: false,
+  groupTagName: "span",
   parser(el) { return el.style.fontSize === "1.5em"; },
   remover(el) { el.style.fontSize = ""; },
 };
 
 Trix.config.textAttributes["text-small"] = {
   style: { fontSize: "0.75em" },
-  inheritable: true,
+  inheritable: false,
+  groupTagName: "span",
   parser(el) { return el.style.fontSize === "0.75em"; },
   remover(el) { el.style.fontSize = ""; },
 };
