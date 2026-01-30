@@ -1,5 +1,4 @@
-<% provide(:title, "Edit Product: #{@product.client.name}") %>
-
+<% provide(:title, @product.client&.name ? "Edit Product: #{@product.client.name}" : 'Edit Product: No Client') %>
 <div class="max-w-3xl xl:max-w-5xl 2xl:max-w-7xl mx-auto px-6 py-10 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800">
   <div class="mb-6 flex items-center">
     <%= link_to product_path, class: 'flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 font-semibold transition-all duration-150' do %>
