@@ -43,7 +43,7 @@ class DefectMessagesController < ApplicationController
       draft&.hard_delete # This will bypass the audit system
 
       # Log the message creation in defect history
-      log_event(@defect, current_user, 'message_created', "Message created: #{@defect_message.content.to_plain_text.truncate(100)}")
+      log_event(@defect, current_user, 'comment_added', "Added comment: #{@defect_message.content.to_plain_text.truncate(100)}")
 
       # Process mentions asynchronously
       ProcessMentionsJob.perform_later(
@@ -91,8 +91,8 @@ class DefectMessagesController < ApplicationController
       log_event(
         @defect,
         current_user,
-        'message_updated',
-        "Message updated from: #{old_content.truncate(100)} to: #{@defect_message.content.to_plain_text.truncate(100)}"
+        'comment_edited',
+        "Edited comment from: #{old_content.truncate(100)} to: #{@defect_message.content.to_plain_text.truncate(100)}"
       )
 
       # Process mentions asynchronously for updated message - convert ActionText to HTML string for job serialization
@@ -117,7 +117,7 @@ class DefectMessagesController < ApplicationController
 
     if audit_soft_delete(@defect_message)
       # Log the message archival in defect history
-      log_event(@defect, current_user, 'message_archived', "Message archived: #{message_content}")
+      log_event(@defect, current_user, 'comment_archived', "Archived comment: #{message_content}")
 
       respond_to do |format|
         format.turbo_stream
@@ -125,7 +125,7 @@ class DefectMessagesController < ApplicationController
       end
     else
       # Log the message permanent deletion in defect history
-      log_event(@defect, current_user, 'message_deleted', "Message permanently deleted: #{message_content}")
+      log_event(@defect, current_user, 'comment_deleted', "Deleted comment: #{message_content}")
 
       @defect_message.destroy
       respond_to do |format|
