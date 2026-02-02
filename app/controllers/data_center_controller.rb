@@ -113,12 +113,15 @@ class DataCenterController < ApplicationController
                  else
                    Ticket.joins(project: :client).where(projects: { id: current_user.projects.ids })
                  end
-
-      @tickets = @tickets.where(projects: { client_id: params[:client_id] }) if params[:client_id].present?
-      @tickets = @tickets.joins(:statuses).where(statuses: { name: params[:status] }) if params[:status].present?
-      @tickets = @tickets.where(priority: params[:priority]) if params[:priority].present?
-
-      @status_counts = @tickets.joins(:statuses).group('statuses.name').count
+      if params[:start_date].present? && params[:end_date].present?
+        start_date = Date.parse(params[:start_date])
+        end_date = Date.parse(params[:end_date])
+        @tickets = @tickets.where(created_at: start_date.beginning_of_day..end_date.end_of_day)
+        @tickets = @tickets.where(projects: { client_id: params[:client_id] }) if params[:client_id].present?
+        @tickets = @tickets.joins(:statuses).where(statuses: { name: params[:status] }) if params[:status].present?
+        @tickets = @tickets.where(priority: params[:priority]) if params[:priority].present?
+        @status_counts = @tickets.joins(:statuses).group('statuses.name').count
+      end
 
       respond_to do |format|
         format.html # Default view
