@@ -331,7 +331,7 @@ class ProjectController < ApplicationController
         .send(queue: true)
     end
 
-    redirect_to @project, notice: 'Team and its users were successfully added to the project.'
+    redirect_to @project, notice: "Team #{team.name} and its users were successfully added to the project."
   end
 
   def remove_team
@@ -348,7 +348,7 @@ class ProjectController < ApplicationController
         .log("Removed #{user.name} from Project ##{@project.id} via Team ##{team.id}")
     end
 
-    redirect_to @project, notice: 'Team and its users were successfully removed from the project.'
+    redirect_to @project, notice: "#{team.name} and its users were successfully removed from the project."
   end
 
   def unassign_user
