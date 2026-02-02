@@ -1,19 +1,25 @@
 <% if current_user.has_role? :admin or current_user.has_role?('project manager') %>
   <div class="mt-6">
-    <%= form_with url: remove_team_project_path(@project),  method: :delete, data: { turbo: false }, class: "space-y-3" do %>
+    <%= form_with url: remove_team_project_path(@project), method: :delete, data: { turbo: false }, class: "space-y-3" do %>
       <%= label_tag :team_id, 'Select Team', class: "block mb-1 text-sm font-medium" %>
-      
       <div class="flex flex-col md:flex-row md:items-end gap-4">
         <div class="flex-1">
-          <%= select_tag :team_id,
-            options_from_collection_for_select(Team.all, :id, :name),
-            class: "w-full border border-gray-300 rounded px-3 py-2 text-sm shadow-sm focus:ring focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500",
-            placeholder: 'Select team' %>
+          <% teams_with_users = Team.joins(:users).where(users: { id: @project.users.pluck(:id) }).distinct %>
+          <% if teams_with_users.any? %>
+            <%= select_tag :team_id,
+                           options_from_collection_for_select(teams_with_users, :id, :name),
+                           class: "w-full border border-gray-300 rounded px-3 py-2 text-sm shadow-sm focus:ring focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500",
+                           prompt: 'Select team' %>
+          <% else %><div class="text-sm text-gray-500 dark:text-gray-400 italic">
+          No teams assigned to project users
         </div>
-
-        <div>
-          <%= submit_tag 'Unassign Team', class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] px-4 py-2 rounded font-bold text-sm' %>
+          <% end %>
         </div>
+        <% if teams_with_users.any? %>
+          <div>
+            <%= submit_tag 'Unassign Team', class: 'bg-[#3F8CFF] hover:bg-[#3A81EB] px-4 py-2 rounded font-bold text-sm' %>
+          </div>
+        <% end %>
       </div>
     <% end %>
   </div>
