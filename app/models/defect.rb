@@ -162,6 +162,9 @@ class Defect < ApplicationRecord
   before_create :set_default_issue_type
   after_create :defect_unique_id, unless: -> { defect_unique.present? || draft? }
 
+  # Automatically generate sequential ID when publishing a draft (draft changes from true to false)
+  before_update :generate_sequential_id_on_publish, if: -> { draft_changed? && !draft? && defect_unique.blank? }
+
   # Validations - only required for published defects, not drafts
   validates :summary, presence: true, unless: :draft?
   validates :priority, presence: true, unless: :draft?
@@ -294,5 +297,9 @@ class Defect < ApplicationRecord
 
   def set_default_issue_type
     self.issue_type ||= 'Bug'
+  end
+
+  def generate_sequential_id_on_publish
+    generate_sequential_id
   end
 end
