@@ -108,12 +108,13 @@ class Defect < ApplicationRecord
   end
 
   # Override to_param to use defect_unique in URLs (e.g., /defect/ISP-0045)
-  # For drafts, returns DRAFT-001 format; for published, returns actual ID like PS-0045
+  # For drafts, use UUID to keep URLs stable when drafts are deleted
+  # For published defects, use the sequential ID like PS-0045
   def to_param
     return super unless persisted? # Use Rails default for new records
 
     if draft?
-      draft_display_id
+      id.to_s # Use UUID for draft URLs so they remain stable
     else
       defect_unique.presence&.to_s || id.to_s
     end
@@ -123,9 +124,9 @@ class Defect < ApplicationRecord
   def draft_display_id
     return defect_unique if defect_unique.present? # If somehow has real ID, use it
 
-    # Count drafts created before this one (by created_at) to get sequential number
-    if product_id.present? && created_at.present?
-      draft_number = Defect.where(draft: true, product_id: product_id)
+    # Count non-deleted drafts created by the same user before this one (by created_at) to get sequential number
+    if product_id.present? && created_at.present? && created_by.present?
+      draft_number = Defect.where(draft: true, product_id: product_id, created_by: created_by, deleted_on: nil)
         .where('created_at <= ?', created_at)
         .order(:created_at)
         .count
