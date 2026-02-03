@@ -230,6 +230,13 @@ class Defect < ApplicationRecord
   end
 
   def defect_unique_id
+    generate_sequential_id
+    save
+  end
+
+  def generate_sequential_id
+    return if defect_unique.present?
+
     initials =
       if product&.client&.name.present?
         product.client.name.split.map { |word| word[0] }.join.upcase
@@ -260,8 +267,6 @@ class Defect < ApplicationRecord
 
       next_number += 1
     end
-
-    save
   end
 
   private
