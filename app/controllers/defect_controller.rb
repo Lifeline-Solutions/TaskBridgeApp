@@ -1116,6 +1116,10 @@ class DefectController < ApplicationController
       redirect_to defect_index_path, alert: 'You do not have permission to publish this draft defect.'
       return
     end
+
+    # Generate sequential defect ID before publishing if not already set
+    @defect.defect_unique_id if @defect.defect_unique.blank?
+
     if @defect.update(draft: false)
       log_event(
         @defect,
