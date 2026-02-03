@@ -119,16 +119,20 @@ class Defect < ApplicationRecord
     end
   end
 
-  # Generate a draft display ID like DRAFT-001
+  # Generate a draft display ID like DRAFT-0001, DRAFT-0002, etc.
   def draft_display_id
     return defect_unique if defect_unique.present? # If somehow has real ID, use it
 
-    # Use created_at timestamp to generate unique draft ID
-    if created_at.present?
-      timestamp = created_at.to_i
-      "DRAFT-#{(timestamp % 100_000).to_s.rjust(5, '0')}"
+    # Count drafts created before this one (by created_at) to get sequential number
+    if product_id.present? && created_at.present?
+      draft_number = Defect.where(draft: true, product_id: product_id)
+        .where('created_at <= ?', created_at)
+        .order(:created_at)
+        .count
+      "DRAFT-#{draft_number.to_s.rjust(4, '0')}"
     else
-      "DRAFT-#{id.to_s[0..7]}"
+      # Fallback for new/unsaved records
+      "DRAFT-#{id.to_s[0..3]}"
     end
   end
 
