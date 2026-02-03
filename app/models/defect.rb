@@ -108,12 +108,42 @@ class Defect < ApplicationRecord
   end
 
   # Override to_param to use defect_unique in URLs (e.g., /defect/ISP-0045)
-  # This allows users to see bug numbers in URLs and edit them to navigate to different bugs
-  # Falls back to database ID if defect_unique is not set (for any defect, not just drafts)
+  # For drafts, use UUID to keep URLs stable when drafts are deleted
+  # For published defects, use the sequential ID like PS-0045
   def to_param
     return super unless persisted? # Use Rails default for new records
 
-    defect_unique.presence&.to_s || id.to_s
+    if draft?
+      id.to_s # Use UUID for draft URLs so they remain stable
+    else
+      defect_unique.presence&.to_s || id.to_s
+    end
+  end
+
+  # Generate a draft display ID like ISP-DRAFT-0001, T-DRAFT-0002, etc.
+  # Uses the same client initials as published defects
+  def draft_display_id
+    return defect_unique if defect_unique.present? # If somehow has real ID, use it
+
+    # Get client initials same way as published defects
+    initials =
+      if product&.client&.name.present?
+        product.client.name.split.map { |word| word[0] }.join.upcase
+      else
+        'DEFAULT'
+      end
+
+    # Count non-deleted drafts created by the same user for this product (by created_at) to get sequential number
+    if product_id.present? && created_at.present? && created_by.present?
+      draft_number = Defect.where(draft: true, product_id: product_id, created_by: created_by, deleted_on: nil)
+        .where('created_at <= ?', created_at)
+        .order(:created_at)
+        .count
+      "#{initials}-DRAFT-#{draft_number.to_s.rjust(4, '0')}"
+    else
+      # Fallback for new/unsaved records
+      "#{initials}-DRAFT-#{id.to_s[0..3]}"
+    end
   end
 
   scope :drafts, -> { where(draft: true) }
@@ -160,7 +190,10 @@ class Defect < ApplicationRecord
 
   before_create :set_default_status
   before_create :set_default_issue_type
-  after_create :defect_unique_id, unless: -> { defect_unique.present? }
+  after_create :defect_unique_id, unless: -> { defect_unique.present? || draft? }
+
+  # Automatically generate sequential ID when publishing a draft (draft changes from true to false)
+  before_update :generate_sequential_id_on_publish, if: -> { draft_changed? && !draft? && defect_unique.blank? }
 
   # Validations - only required for published defects, not drafts
   validates :summary, presence: true, unless: :draft?
@@ -229,34 +262,14 @@ class Defect < ApplicationRecord
     blocking_defects.exists?(id: other_defect.id)
   end
 
-  private
-
-  def qa_module_belongs_to_product
-    # Skip validation if columns don't exist in DB
-    return unless Defect.column_names.include?('qa_module_id') && Defect.column_names.include?('product_id')
-
-    qa_module_id_val = self[:qa_module_id] if has_attribute?(:qa_module_id)
-    product_id_val = self[:product_id] if has_attribute?(:product_id)
-
-    return if qa_module_id_val.blank? || product_id_val.blank?
-
-    return if QaModule.where(id: qa_module_id_val, product_id: product_id_val).exists?
-
-    errors.add(:qa_module_id, 'must belong to the selected project')
-  end
-
-  def set_default_status
-    return unless statuses.empty?
-
-    default_status = Status.find_by(name: 'To Do')
-    statuses << default_status if default_status
-  end
-
-  def set_default_issue_type
-    self.issue_type ||= 'Bug'
-  end
-
   def defect_unique_id
+    generate_sequential_id
+    save
+  end
+
+  def generate_sequential_id
+    return if defect_unique.present?
+
     initials =
       if product&.client&.name.present?
         product.client.name.split.map { |word| word[0] }.join.upcase
@@ -287,7 +300,36 @@ class Defect < ApplicationRecord
 
       next_number += 1
     end
+  end
 
-    save
+  private
+
+  def qa_module_belongs_to_product
+    # Skip validation if columns don't exist in DB
+    return unless Defect.column_names.include?('qa_module_id') && Defect.column_names.include?('product_id')
+
+    qa_module_id_val = self[:qa_module_id] if has_attribute?(:qa_module_id)
+    product_id_val = self[:product_id] if has_attribute?(:product_id)
+
+    return if qa_module_id_val.blank? || product_id_val.blank?
+
+    return if QaModule.where(id: qa_module_id_val, product_id: product_id_val).exists?
+
+    errors.add(:qa_module_id, 'must belong to the selected project')
+  end
+
+  def set_default_status
+    return unless statuses.empty?
+
+    default_status = Status.find_by(name: 'To Do')
+    statuses << default_status if default_status
+  end
+
+  def set_default_issue_type
+    self.issue_type ||= 'Bug'
+  end
+
+  def generate_sequential_id_on_publish
+    generate_sequential_id
   end
 end

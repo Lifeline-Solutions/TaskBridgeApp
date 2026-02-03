@@ -1,4 +1,21 @@
 module DefectHelper
+  # Display the appropriate ID for a defect (DRAFT-xxx for drafts, real ID for published)
+  def defect_display_id(defect)
+    if defect.draft?
+      defect.draft_display_id
+    else
+      defect.defect_unique || defect.id
+    end
+  end
+
+  # Display ID with badge styling
+  def defect_id_badge(defect)
+    id = defect_display_id(defect)
+    badge_class = defect.draft? ? 'badge-warning' : 'badge-primary'
+
+    content_tag(:span, id, class: "badge #{badge_class}")
+  end
+
   # Clean duplicate bullets/numbers and Word/Docs artifacts from list items
   # This fixes Word/Google Docs paste issues comprehensively
   def clean_list_html(html)
