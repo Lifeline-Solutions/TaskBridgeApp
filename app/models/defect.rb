@@ -160,7 +160,7 @@ class Defect < ApplicationRecord
 
   before_create :set_default_status
   before_create :set_default_issue_type
-  after_create :defect_unique_id, unless: -> { defect_unique.present? }
+  after_create :defect_unique_id, unless: -> { defect_unique.present? || draft? }
 
   # Validations - only required for published defects, not drafts
   validates :summary, presence: true, unless: :draft?
@@ -229,33 +229,6 @@ class Defect < ApplicationRecord
     blocking_defects.exists?(id: other_defect.id)
   end
 
-  private
-
-  def qa_module_belongs_to_product
-    # Skip validation if columns don't exist in DB
-    return unless Defect.column_names.include?('qa_module_id') && Defect.column_names.include?('product_id')
-
-    qa_module_id_val = self[:qa_module_id] if has_attribute?(:qa_module_id)
-    product_id_val = self[:product_id] if has_attribute?(:product_id)
-
-    return if qa_module_id_val.blank? || product_id_val.blank?
-
-    return if QaModule.where(id: qa_module_id_val, product_id: product_id_val).exists?
-
-    errors.add(:qa_module_id, 'must belong to the selected project')
-  end
-
-  def set_default_status
-    return unless statuses.empty?
-
-    default_status = Status.find_by(name: 'To Do')
-    statuses << default_status if default_status
-  end
-
-  def set_default_issue_type
-    self.issue_type ||= 'Bug'
-  end
-
   def defect_unique_id
     initials =
       if product&.client&.name.present?
@@ -289,5 +262,32 @@ class Defect < ApplicationRecord
     end
 
     save
+  end
+
+  private
+
+  def qa_module_belongs_to_product
+    # Skip validation if columns don't exist in DB
+    return unless Defect.column_names.include?('qa_module_id') && Defect.column_names.include?('product_id')
+
+    qa_module_id_val = self[:qa_module_id] if has_attribute?(:qa_module_id)
+    product_id_val = self[:product_id] if has_attribute?(:product_id)
+
+    return if qa_module_id_val.blank? || product_id_val.blank?
+
+    return if QaModule.where(id: qa_module_id_val, product_id: product_id_val).exists?
+
+    errors.add(:qa_module_id, 'must belong to the selected project')
+  end
+
+  def set_default_status
+    return unless statuses.empty?
+
+    default_status = Status.find_by(name: 'To Do')
+    statuses << default_status if default_status
+  end
+
+  def set_default_issue_type
+    self.issue_type ||= 'Bug'
   end
 end
