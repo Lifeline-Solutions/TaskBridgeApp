@@ -120,20 +120,29 @@ class Defect < ApplicationRecord
     end
   end
 
-  # Generate a draft display ID like DRAFT-0001, DRAFT-0002, etc.
+  # Generate a draft display ID like ISP-DRAFT-0001, T-DRAFT-0002, etc.
+  # Uses the same client initials as published defects
   def draft_display_id
     return defect_unique if defect_unique.present? # If somehow has real ID, use it
 
-    # Count non-deleted drafts created by the same user before this one (by created_at) to get sequential number
+    # Get client initials same way as published defects
+    initials =
+      if product&.client&.name.present?
+        product.client.name.split.map { |word| word[0] }.join.upcase
+      else
+        'DEFAULT'
+      end
+
+    # Count non-deleted drafts created by the same user for this product (by created_at) to get sequential number
     if product_id.present? && created_at.present? && created_by.present?
       draft_number = Defect.where(draft: true, product_id: product_id, created_by: created_by, deleted_on: nil)
         .where('created_at <= ?', created_at)
         .order(:created_at)
         .count
-      "DRAFT-#{draft_number.to_s.rjust(4, '0')}"
+      "#{initials}-DRAFT-#{draft_number.to_s.rjust(4, '0')}"
     else
       # Fallback for new/unsaved records
-      "DRAFT-#{id.to_s[0..3]}"
+      "#{initials}-DRAFT-#{id.to_s[0..3]}"
     end
   end
 
