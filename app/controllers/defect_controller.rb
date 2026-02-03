@@ -2035,8 +2035,19 @@ class DefectController < ApplicationController
     # First, try to find by defect_unique (bug number like "ISP-0045")
     @defect = Defect.find_by(defect_unique: defect_id)
 
+    # If it starts with DRAFT-, it's a draft defect - search by timestamp
+    if @defect.nil? && defect_id.start_with?('DRAFT-')
+      # Find drafts with matching timestamp
+      Defect.where(draft: true).find_each do |draft|
+        if draft.draft_display_id == defect_id
+          @defect = draft
+          break
+        end
+      end
+    end
+
     # If not found, check if it looks like a UUID (contains hyphens)
-    if @defect.nil? && defect_id.include?('-')
+    if @defect.nil? && defect_id.include?('-') && !defect_id.start_with?('DRAFT-')
       # Clean up malformed UUID (remove trailing characters)
       # UUID format: 8-4-4-4-12 characters
       uuid_pattern = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i
