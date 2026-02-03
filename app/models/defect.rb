@@ -108,12 +108,28 @@ class Defect < ApplicationRecord
   end
 
   # Override to_param to use defect_unique in URLs (e.g., /defect/ISP-0045)
-  # This allows users to see bug numbers in URLs and edit them to navigate to different bugs
-  # Falls back to database ID if defect_unique is not set (for any defect, not just drafts)
+  # For drafts, returns DRAFT-001 format; for published, returns actual ID like PS-0045
   def to_param
     return super unless persisted? # Use Rails default for new records
 
-    defect_unique.presence&.to_s || id.to_s
+    if draft?
+      draft_display_id
+    else
+      defect_unique.presence&.to_s || id.to_s
+    end
+  end
+
+  # Generate a draft display ID like DRAFT-001
+  def draft_display_id
+    return defect_unique if defect_unique.present? # If somehow has real ID, use it
+
+    # Use created_at timestamp to generate unique draft ID
+    if created_at.present?
+      timestamp = created_at.to_i
+      "DRAFT-#{(timestamp % 100_000).to_s.rjust(5, '0')}"
+    else
+      "DRAFT-#{id.to_s[0..7]}"
+    end
   end
 
   scope :drafts, -> { where(draft: true) }
