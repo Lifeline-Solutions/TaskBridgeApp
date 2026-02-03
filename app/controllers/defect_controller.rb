@@ -1118,7 +1118,10 @@ class DefectController < ApplicationController
     end
 
     # Generate sequential defect ID before publishing if not already set
-    @defect.defect_unique_id if @defect.defect_unique.blank?
+    if @defect.defect_unique.blank?
+      @defect.defect_unique_id
+      @defect.reload # Reload to get the updated defect_unique value
+    end
 
     if @defect.update(draft: false)
       log_event(
