@@ -30,7 +30,7 @@
           <%= row_number %>
         </td>
         <td class="px-3 py-2 whitespace-nowrap bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-600 sticky z-[5] w-28 min-w-[7rem] border-r border-gray-200 dark:border-gray-700" style="left: 3rem;">
-          <%= link_to defect.defect_unique, defect_path(defect), class: "text-blue-600 hover:underline font-medium text-xs" %>
+          <%= link_to defect_display_id(defect), defect_path(defect), class: "text-blue-600 hover:underline font-medium text-xs" %>
         </td>
         <td class="px-3 py-2 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-600 sticky z-[5] w-64 min-w-[16rem] border-r border-gray-200 dark:border-gray-700" style="left: 10rem;" title="<%= defect.summary if defect.summary.present? %>">
           <% if defect.summary.present? %>
