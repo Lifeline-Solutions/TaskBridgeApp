@@ -172,6 +172,7 @@ class DashboardsController < ApplicationController
         breached_resolution_resolved_tickets_per_project: breached_resolution_resolved_tickets_per_project,
         ticket_details: ticket_details,
         # should not include 30 days
+        tickets_from_inception: tickets_from_inception,
         tickets_from_inception_count: tickets_from_inception_count,
         tickets_from_inception_by_status: tickets_from_inception_by_status,
         tickets_from_inception_no_sla: tickets_from_inception_no_sla,
@@ -261,6 +262,11 @@ class DashboardsController < ApplicationController
                        .group('statuses.name')
                    end
         # === CHANGE END
+
+      when 'tickets_from_inception'
+        @tickets = Ticket.joins(:statuses, :users)
+          .where(users: { id: user_ids })
+          .where.not(statuses: { name: %w[Declined Closed Resolved] })
       when 'tickets_from_inception_count'
         # Show all tickets from the team that are not closed, resolved or declined
         @tickets = Ticket.joins(:statuses, :users)

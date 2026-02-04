@@ -29,8 +29,8 @@
         <div class="grid grid-cols-4 gap-4 mb-4">
           <!-- Total Open Tickets -->
 
-          <a href="#" class="stat-card-link block" data-type="tickets_from_inception_count" onclick="fetchTicketDetails('<%= @selected_team %>', 'tickets_from_inception_count'); event.stopPropagation();">
-            <%= render 'dashboards/stat_card', title: "Total Open Tickets", value: @stats[:tickets_from_inception_count] || 0, id: "tickets_from_inception_count", class: 'rounded-lg' %>
+          <a href="#" class="stat-card-link block" data-type="tickets_from_inception" onclick="fetchTicketDetails('<%= @selected_team %>', 'tickets_from_inception_count'); event.stopPropagation();">
+            <%= render 'dashboards/stat_card', title: "Total Open Tickets", value: @stats[:tickets_from_inception] || 0, id: "tickets_from_inception_count", class: 'rounded-lg' %>
           </a>
 
 
