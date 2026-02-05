@@ -22,8 +22,9 @@
     </thead>
     <tbody>
     <% if @defects.present? %>
-      <% @defects.each_with_index do |defect, index| %>
-      <% row_number = @start_count + index %>
+      <% sorted_defects = @defects.sort_by { |d| d.defect_unique&.split('-')&.last.to_i || 0 }.reverse %>
+      <% sorted_defects.each_with_index do |defect, index| %>
+        <% row_number = @start_count + index %>
       <!-- Your defect row rendering here, unchanged -->
       <tr class="group bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-left">
         <td class="px-3 py-2 font-semibold text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-600 sticky left-0 z-[5] w-12 min-w-[3rem] border-r border-gray-200 dark:border-gray-700">
