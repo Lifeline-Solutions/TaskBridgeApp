@@ -147,12 +147,7 @@
                   </div>
               
                   <!-- Message Content -->
-                  <div class="prose prose-sm sm:prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 break-words">
-                    <% if message.content.present? %>
-                      <%= sanitize raw (message.content.to_trix_html.gsub(/\[.*?\]/, '').strip) %>
-                    <% end %>
-                    <%= render 'messages/show_user', message: message if respond_to?(:show_user) %>
-                  </div>
+                  <%= render partial: 'messages/message_content_all', locals: { message: message } %>
               
                   <!-- Attachments -->
                   <% if message.attachments.attached? %>
