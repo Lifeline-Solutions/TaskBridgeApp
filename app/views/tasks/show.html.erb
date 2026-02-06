@@ -10,23 +10,14 @@
 
   <!-- Sidebar Details -->
   <div id="detailsSidebar"
-    class="sm:col-span-1 space-y-4 p-2
-           fixed top-0 right-0 h-full w-80 bg-white dark:bg-gray-800 shadow-lg z-50 transform translate-x-full transition-transform duration-300
-           sm:static sm:h-auto sm:w-auto sm:bg-transparent sm:shadow-none sm:translate-x-0 sm:z-auto">
+    class="w-full col-span-1 h-full p-2">
     <!-- Cancel/Close Icon (mobile only) -->
     <button onclick="toggleSidebar()" aria-label="Close sidebar" class="absolute top-2 right-2 sm:hidden text-gray-500 hover:text-gray-800 text-xl">
       &times;
     </button>
     <!-- Image/File Section -->
     <div class="space-y-2 mt-8 sm:mt-0">
-      <% if @task.image.present? %>
-        <p class="font-bold capitalize text-xs sm:text-base">Click to Enlarge</p>
-        <%= image_tag @task.image, class: 'zoomable-image w-full sm:w-48 object-cover rounded-md' %>
-      <% elsif @product.image.present? %>
-        <%= image_tag @product.image, class: 'w-16 sm:w-16 object-cover rounded-md' %>
-      <% else %>
-        <%= image_tag 'default.png', class: 'w-16 sm:w-16 object-cover rounded-md' %>
-      <% end %>
+      <%= render partial: 'tasks/image_show_all' if @task.image.attached? %>
 
       <% if @task.file.present? %>
         <%= link_to "Download #{@task.file.filename}", url_for(@task.file), target: "_blank", class: "text-blue-600 hover:underline block mt-2 text-xs sm:text-base" %>
