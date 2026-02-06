@@ -1,18 +1,22 @@
+<div class="prose prose-sm sm:prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 break-words">
+  <%= render 'messages/show_user', message: message if respond_to?(:show_user) %>
 
-<% if @task.description.present? %>
+
+<% if message.content.present? %>
   <span class="break-words overflow-hidden">
     <%= sanitize(
           raw(
-            @task.description.to_trix_html.gsub(/\[.*?\]/, '').strip
+            message.content.to_trix_html.gsub(/\[.*?\]/, '').strip
           ),
           tags: %w[strong em b i u p br span div h1 h2 h3 h4 h5 h6 blockquote ul ol li a table tr td th thead tbody],
           attributes: %w[href style border]
         )
     %>
-    <% if @task.description.body.attachments.any? %>
-        <% @task.description.body.attachments.each_with_index do |attachment, idx| %>
-          <% if attachment.attachable.is_a?(ActiveStorage::Blob) && attachment.attachable.image? %>
-          <div class="mb-2 image-preview-block">
+
+    <% if message.content.body.attachments.any? %>
+      <% message.content.body.attachments.each_with_index do |attachment, idx| %>
+        <% if attachment.attachable.is_a?(ActiveStorage::Blob) && attachment.attachable.image? %>
+          <div class="mb-1 image-preview-block">
             <a href="#"
                class="image-preview-link"
                data-image-url="<%= rails_blob_url(attachment.attachable) %>"
@@ -28,11 +32,11 @@
             <br>
             <%= link_to attachment.attachable.filename.to_s, rails_blob_path(attachment.attachable, disposition: 'attachment', only_path: true), target: "_blank", download: true, class: "text-blue-600 hover:underline pl-2" %>
           </div>
-          <% elsif attachment.attachable.is_a?(ActiveStorage::Blob) %>
-            <!-- Non-image attachments -->
-            <%= link_to attachment.attachable.filename.to_s, rails_blob_path(attachment.attachable, disposition: 'attachment', only_path: true), class: "text-blue-600 hover:underline pl-2" %>
-          <% end %>
+        <% elsif attachment.attachable.is_a?(ActiveStorage::Blob) %>
+          <!-- Non-image attachments -->
+          <%= link_to attachment.attachable.filename.to_s, rails_blob_path(attachment.attachable, disposition: 'attachment', only_path: true), class: "text-blue-600 hover:underline pl-2" %>
         <% end %>
+      <% end %>
     <% end %>
   </span>
 
@@ -56,8 +60,6 @@
     </div>
   </div>
 <% end %>
-<div class="mt-4 max-h-[600px] overflow-y-auto">
-  <%= render template: 'messages/index' %>
 </div>
 
 <script>
