@@ -1,0 +1,17 @@
+<div class="col-span-1 sm:col-span-5 md:col-span-5 lg:col-span-5">
+  <!-- SLA Breakdown Section -->
+  <div class="mt-4 text-sm" id="tasks_sla_breakdown">
+    <div class="grid gap-4 mb-4">
+      <!-- Total Tasks Opened -->
+
+      <a href="#" class="stat-card-link block" data-type="tasks_from_inception_count" onclick="fetchTicketDetails('<%= @selected_team %>', 'tasks_from_inception_count'); event.stopPropagation();">
+        <%= render 'dashboards/stat_card', title: "Total Tasks Opened", value: @stats[:tasks_from_inception_count] || 0, id: "tasks_from_inception_count", class: 'rounded-lg' %>
+      </a>
+    </div>
+  <!-- Status Breakdown Section -->
+      <div class="mt-4 text-sm" data-type="tasks_from_inception_by_status" id="tasks_from_inception_by_status">
+        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Tasks Breakdown</h3>
+        <!-- Placeholder: This will be populated by JavaScript in fetchStats() -->
+      </div>
+  </div>
+</div>

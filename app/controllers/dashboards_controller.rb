@@ -26,15 +26,6 @@ class DashboardsController < ApplicationController
 
       tickets_from_inception_count = tickets_from_inception.count
 
-      # For Tasks
-      tasks_from_inception = Task.joins(:users, :statuses)
-                                 .where(users: { id: user_ids })
-                                 .where.not(statuses: { name: %w[Declined Closed Resolved] })
-                                 .distinct
-
-      tasks_from_inception_count = tasks_from_inception.count
-
-
       tickets_from_inception_by_status = Status
         .left_outer_joins(tickets: [:users])
         .where('tickets.created_at <= ?', 30.days.ago)
@@ -42,6 +33,24 @@ class DashboardsController < ApplicationController
         .where.not(statuses: { name: %w[Declined Closed Resolved] })
         .group('statuses.name')
         .count
+
+      # For Tasks
+      tasks_from_inception = Task.joins(:users, :statuses)
+        .where(users: { id: user_ids })
+        .where.not(statuses: { name: %w[Declined Closed Resolved] })
+        .distinct
+
+      tasks_from_inception_count = tasks_from_inception.count
+
+      tasks_from_inception_by_status = Status
+        .left_outer_joins(tasks: [:users])
+        .where(users: { id: user_ids })
+        .where.not(statuses: { name: %w[Declined Closed Resolved] })
+        .group('statuses.name')
+        .count
+
+
+
 
       # Calculate SLA breakdown for tickets from inception (using sla_target_response_deadline)
       # NO SLA: Use LEFT JOIN to catch tickets without SLA records OR with NO SLA explicitly marked
@@ -187,6 +196,7 @@ class DashboardsController < ApplicationController
         tickets_from_inception_count: tickets_from_inception_count,
         tasks_from_inception_count:  tasks_from_inception_count,
         tickets_from_inception_by_status: tickets_from_inception_by_status,
+        tasks_from_inception_by_status: tasks_from_inception_by_status,
         tickets_from_inception_no_sla: tickets_from_inception_no_sla,
         tickets_from_inception_response_breached: tickets_from_inception_response_breached,
         tickets_from_inception_response_not_breached: tickets_from_inception_response_not_breached,
@@ -325,6 +335,23 @@ class DashboardsController < ApplicationController
           .where(users: { id: user_ids })
           .where.not(statuses: { name: %w[Declined Closed Resolved] })
           .distinct
+
+      when 'tasks_from_inception_by_status'
+        status_filter = params[:status]
+        @tickets = if status_filter.present?
+                     Task.joins(:statuses, :users)
+                       .where(users: { id: user_ids })
+                       .where(statuses: { name: status_filter })
+                   else
+                     Status.left_outer_joins(tasks: [:users])
+                       .where(users: { id: user_ids })
+                       .group('statuses.name')
+                   end
+
+      when 'tasks_from_inception_count'
+        # Show all tasks from the team
+        @tickets = Task.joins(:statuses, :users)
+          .where(users: { id: user_ids })
       end
 
       # Add ordering (latest first) and include a user team name (first team found) in the select
@@ -373,7 +400,8 @@ class DashboardsController < ApplicationController
         tickets_from_inception_response_breached: 0,
         tickets_from_inception_response_not_breached: 0,
         tickets_from_inception_not_breached: 0,
-        tasks_from_inception_count: 0
+        tasks_from_inception_count: 0,
+        tasks_from_inception_by_status: {}
       }
     else
       {
@@ -384,7 +412,8 @@ class DashboardsController < ApplicationController
         tickets_from_inception_response_breached: 0,
         tickets_from_inception_response_not_breached: 0,
         tickets_from_inception_not_breached: 0,
-        tasks_from_inception_count: 0
+        tasks_from_inception_count: 0,
+        tasks_from_inception_by_status: {}
 
       }
     end
