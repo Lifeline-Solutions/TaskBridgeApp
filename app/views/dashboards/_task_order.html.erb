@@ -4,18 +4,18 @@
     <div class="grid grid-cols-4 gap-4 mb-4">
       <!-- Total Open Tickets -->
 
-      <a href="#" class="stat-card-link block" data-type="tasks_from_inception_count" onclick="fetchTicketDetails('<%= @selected_team %>', 'tasks_from_inception_count'); event.stopPropagation();">
+      <div class="stat-card-link block" data-type="tasks_from_inception_count" onclick="fetchTicketDetails('<%= @selected_team %>', 'tasks_from_inception_count'); event.stopPropagation();">
         <%= render 'dashboards/stat_card', title: "Total Tasks Opened", value: @stats[:tasks_from_inception_count] || 0, id: "tasks_from_inception_count", class: 'rounded-lg' %>
-      </a>
+      </div>
 
 
       <!-- Breached -->
-      <a href="#" class="stat-card-link block" data-type="tickets_from_inception_response_breached" onclick="fetchTicketDetails('<%= @selected_team %>', 'tickets_from_inception_response_breached'); event.stopPropagation();">
+      <div class="stat-card-link block" data-type="tickets_from_inception_response_breached" onclick="fetchTicketDetails('<%= @selected_team %>', 'tickets_from_inception_response_breached'); event.stopPropagation();">
         <div class="bg-white dark:bg-gray-700 p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow text-center">
           <div class="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-1">Breached</div>
           <div class="text-2xl font-bold text-gray-800 dark:text-white" id="tickets_from_inception_response_breached"><%= @stats[:tickets_from_inception_response_breached] || 0 %></div>
         </div>
-      </a>
+      </div>
 
       <!-- Not Breached -->
       <a href="#" class="stat-card-link block" data-type="tickets_from_inception_response_not_breached" onclick="fetchTicketDetails('<%= @selected_team %>', 'tickets_from_inception_response_not_breached'); event.stopPropagation();">
@@ -32,5 +32,21 @@
         </div>
       </a>
     </div>
+      <!-- Status Breakdown Section -->
+      <div class="mt-4 text-sm" data-type="tasks_from_inception_by_status" id="tasks_from_inception_by_status">
+        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Status Breakdown</h3>
+        <% if @stats[:tasks_from_inception_by_status].present? %>
+          <%# Desired display order requested by user %>
+          <% desired_order = ['Assigned', 'Work in Progress', 'Under Development', 'QA Testing', 'Client Information Pending', 'Reopened', 'On-Hold'] %>
+          <% ordered_statuses = desired_order.select { |s| @stats[:tasks_from_inception_by_status].key?(s) } + (@stats[:tasks_from_inception_by_status].keys - desired_order) %>
+          <% ordered_statuses.each do |status| %>
+            <div class="text-lg font-bold mb-2">
+              <span class="text-lg font-bold mb-2"><%= status %>:</span> <%= @stats[:tasks_from_inception_by_status][status] %>
+            </div>
+          <% end %>
+        <% else %>
+          <div class="text-gray-400">No status breakdown available.</div>
+        <% end %>
+      </div>
   </div>
 </div>

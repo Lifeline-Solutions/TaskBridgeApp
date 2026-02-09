@@ -26,6 +26,14 @@ class DashboardsController < ApplicationController
 
       tickets_from_inception_count = tickets_from_inception.count
 
+      tickets_from_inception_by_status = Status
+                                           .left_outer_joins(tickets: [:users])
+                                           .where('tickets.created_at <= ?', 30.days.ago)
+                                           .where(users: { id: user_ids })
+                                           .where.not(statuses: { name: %w[Declined Closed Resolved] })
+                                           .group('statuses.name')
+                                           .count
+
       # For Tasks
       tasks_from_inception = Task.joins(:users, :statuses)
                                  .where(users: { id: user_ids })
@@ -34,14 +42,16 @@ class DashboardsController < ApplicationController
 
       tasks_from_inception_count = tasks_from_inception.count
 
+      tasks_from_inception_by_status = Status
+                                           .left_outer_joins(tasks: [:users])
+                                           .where('tasks.created_at <= ?', 30.days.ago)
+                                           .where(users: { id: user_ids })
+                                           .where.not(statuses: { name: %w[Declined Closed Resolved] })
+                                           .group('statuses.name')
+                                           .count
 
-      tickets_from_inception_by_status = Status
-        .left_outer_joins(tickets: [:users])
-        .where('tickets.created_at <= ?', 30.days.ago)
-        .where(users: { id: user_ids })
-        .where.not(statuses: { name: %w[Declined Closed Resolved] })
-        .group('statuses.name')
-        .count
+
+
 
       # Calculate SLA breakdown for tickets from inception (using sla_target_response_deadline)
       # NO SLA: Use LEFT JOIN to catch tickets without SLA records OR with NO SLA explicitly marked
@@ -187,6 +197,7 @@ class DashboardsController < ApplicationController
         tickets_from_inception_count: tickets_from_inception_count,
         tasks_from_inception_count:  tasks_from_inception_count,
         tickets_from_inception_by_status: tickets_from_inception_by_status,
+        tasks_from_inception_by_status: tasks_from_inception_by_status,
         tickets_from_inception_no_sla: tickets_from_inception_no_sla,
         tickets_from_inception_response_breached: tickets_from_inception_response_breached,
         tickets_from_inception_response_not_breached: tickets_from_inception_response_not_breached,
@@ -373,7 +384,8 @@ class DashboardsController < ApplicationController
         tickets_from_inception_response_breached: 0,
         tickets_from_inception_response_not_breached: 0,
         tickets_from_inception_not_breached: 0,
-        tasks_from_inception_count: 0
+        tasks_from_inception_count: 0,
+        tasks_from_inception_by_status: {}
       }
     else
       {
@@ -384,7 +396,8 @@ class DashboardsController < ApplicationController
         tickets_from_inception_response_breached: 0,
         tickets_from_inception_response_not_breached: 0,
         tickets_from_inception_not_breached: 0,
-        tasks_from_inception_count: 0
+        tasks_from_inception_count: 0,
+        tasks_from_inception_by_status: {}
 
       }
     end
