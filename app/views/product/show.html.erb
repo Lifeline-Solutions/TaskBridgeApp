@@ -114,8 +114,8 @@
     <% if @view_mode == 'list' %>
       <!-- LIST VIEW -->
       <div class="min-h-[60vh] p-1 sm:p-2">
-        <% ordered_statuses = ['Reopened', 'TO DO', 'In Progress', 'On-Hold', 'Await Client Information',
-                               'Failed-QA', 'QA-testing', 'Awaiting Build', 'Awaiting Client API',
+        <% ordered_statuses = ['Reopened', 'TO DO', 'In Progress', 'Support Testing', 'On-Hold', 'Await Client Information',
+                               'Failed-QA', 'QA-testing', 'Awaiting Build', 'Awaiting Client API', 'Client Information Pending',
                                'Blocked', 'Resolved', 'Closed'] %>
 
         <% categorized_statuses = @tasks_by_status.slice(*ordered_statuses) %>
@@ -211,8 +211,8 @@
       <div class="min-h-[60vh] p-1 sm:p-2 overflow-x-auto">
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 min-w-full">
 
-        <% ordered_statuses = ['Reopened', 'TO DO', 'In Progress', 'On-Hold', 'Await Client Information',
-                               'Failed-QA', 'QA-testing', 'Awaiting Build', 'Awaiting Client API',
+        <% ordered_statuses = ['Reopened', 'TO DO', 'In Progress', 'Support Testing', 'On-Hold', 'Await Client Information',
+                               'Failed-QA', 'QA-testing', 'Awaiting Build', 'Awaiting Client API', 'Client Information Pending',
                                'Blocked', 'Resolved', 'Closed'] %>
 
         <% categorized_statuses = @tasks_by_status.slice(*ordered_statuses) %>

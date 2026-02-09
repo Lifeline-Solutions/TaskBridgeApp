@@ -16,13 +16,24 @@ class DashboardsController < ApplicationController
       session[:team_id] = team.id # Store the team ID in the session
       user_ids = team.users.pluck(:id)
 
+      # For Tickets
       tickets_from_inception = Ticket.joins(:users, :statuses)
         .where(users: { id: user_ids })
         .where.not(statuses: { name: %w[Declined Closed Resolved] })
         # .where('tickets.created_at <= ?', 30.days.ago)
         .distinct
 
+
       tickets_from_inception_count = tickets_from_inception.count
+
+      # For Tasks
+      tasks_from_inception = Task.joins(:users, :statuses)
+                                 .where(users: { id: user_ids })
+                                 .where.not(statuses: { name: %w[Declined Closed Resolved] })
+                                 .distinct
+
+      tasks_from_inception_count = tasks_from_inception.count
+
 
       tickets_from_inception_by_status = Status
         .left_outer_joins(tickets: [:users])
@@ -174,6 +185,7 @@ class DashboardsController < ApplicationController
         # should not include 30 days
         tickets_from_inception: tickets_from_inception,
         tickets_from_inception_count: tickets_from_inception_count,
+        tasks_from_inception_count:  tasks_from_inception_count,
         tickets_from_inception_by_status: tickets_from_inception_by_status,
         tickets_from_inception_no_sla: tickets_from_inception_no_sla,
         tickets_from_inception_response_breached: tickets_from_inception_response_breached,
@@ -360,7 +372,8 @@ class DashboardsController < ApplicationController
         tickets_from_inception_no_sla: 0,
         tickets_from_inception_response_breached: 0,
         tickets_from_inception_response_not_breached: 0,
-        tickets_from_inception_not_breached: 0
+        tickets_from_inception_not_breached: 0,
+        tasks_from_inception_count: 0
       }
     else
       {
@@ -370,7 +383,9 @@ class DashboardsController < ApplicationController
         tickets_from_inception_no_sla: 0,
         tickets_from_inception_response_breached: 0,
         tickets_from_inception_response_not_breached: 0,
-        tickets_from_inception_not_breached: 0
+        tickets_from_inception_not_breached: 0,
+        tasks_from_inception_count: 0
+
       }
     end
   end
