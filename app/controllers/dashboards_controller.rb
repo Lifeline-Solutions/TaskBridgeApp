@@ -44,7 +44,6 @@ class DashboardsController < ApplicationController
 
       tasks_from_inception_by_status = Status
                                            .left_outer_joins(tasks: [:users])
-                                           .where('tasks.created_at <= ?', 30.days.ago)
                                            .where(users: { id: user_ids })
                                            .where.not(statuses: { name: %w[Declined Closed Resolved] })
                                            .group('statuses.name')
@@ -336,6 +335,23 @@ class DashboardsController < ApplicationController
           .where(users: { id: user_ids })
           .where.not(statuses: { name: %w[Declined Closed Resolved] })
           .distinct
+
+      when 'tasks_from_inception_by_status'
+        status_filter = params[:status]
+        @tickets = if status_filter.present?
+                     Task.joins(:statuses, :users)
+                       .where(users: { id: user_ids })
+                       .where(statuses: { name: status_filter })
+                   else
+                     Status.left_outer_joins(tasks: [:users])
+                       .where(users: { id: user_ids })
+                       .group('statuses.name')
+                   end
+
+      when 'tasks_from_inception_count'
+        # Show all tasks from the team
+        @tickets = Task.joins(:statuses, :users)
+          .where(users: { id: user_ids })
       end
 
       # Add ordering (latest first) and include a user team name (first team found) in the select

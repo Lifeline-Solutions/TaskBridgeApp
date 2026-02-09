@@ -74,7 +74,7 @@
               <div class="text-lg font-bold mb-2">
                 <span class="text-lg font-bold mb-2"><%= status %>:</span> <%= @stats[:tickets_from_inception_by_status][status] %>
               </div>
-            <% end %>
+            <% end %>tasks_from_inception_by_status
           <% else %>
             <div class="text-gray-400">No status breakdown available.</div>
           <% end %>
@@ -393,6 +393,74 @@
           container.innerHTML = `<div class="text-gray-400">No status breakdown available.</div>`;
         }
 
+        // Render status-by-status counts for tasks with ONLY the numeric counts clickable
+        const tasksContainer = document.getElementById("tasks_from_inception_by_status");
+        if (tasksContainer) {
+          tasksContainer.innerHTML = "";
+          const tasksStatusData = data.tasks_from_inception_by_status;
+
+          if (tasksStatusData && Object.keys(tasksStatusData).length > 0) {
+            // enforce the same desired order on the client for tasks
+            const desiredOrder = ['Assigned', 'In Progress', 'Under Development', 'QA Testing', 'Client Information Pending', 'Support Testing', 'Reopened', 'On-Hold'];
+            const allTaskStatuses = Object.keys(tasksStatusData);
+            const orderedTaskStatuses = desiredOrder.filter(s => allTaskStatuses.includes(s)).concat(allTaskStatuses.filter(s => !desiredOrder.includes(s)));
+            const taskStatuses = orderedTaskStatuses;
+            const taskCounts = taskStatuses.map(s => tasksStatusData[s]);
+
+            // Build a table where only the COUNT is a button
+            tasksContainer.innerHTML = `
+            <table class="min-w-full border-separate border-spacing-2 text-center bg-white dark:bg-gray-700 rounded-lg">
+              <thead>
+                <tr>
+                  ${taskStatuses
+              .map(
+                (status) => `
+                    <th class="px-2 py-1 border border-gray-300 font-bold text-md rounded-t-lg bg-gray-100 dark:bg-gray-800">
+                      ${escapeHtml(status)}
+                    </th>
+                  `
+              )
+              .join("")}
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  ${taskCounts
+              .map(
+                (count, idx) => `
+                    <td class="px-2 py-3 border border-blue-400 font-bold text-xl rounded-b-lg">
+                      <button
+                        type="button"
+                        class="task-status-count inline-flex items-center justify-center w-full cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        data-status="${escapeAttr(taskStatuses[idx])}"
+                        title="Show tasks with status: ${escapeAttr(taskStatuses[idx])}"
+                      >
+                        ${escapeHtml(String(count))}
+                      </button>
+                    </td>
+                  `
+              )
+              .join("")}
+                </tr>
+              </tbody>
+            </table>
+          `;
+
+            // Attach click listeners to ONLY the task status count buttons
+            tasksContainer.querySelectorAll(".task-status-count").forEach((btn) => {
+              btn.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const selectedStatus = e.currentTarget.dataset.status;
+                // Only show tasks of the selected status
+                fetchTicketDetails(selectedTeam || teamName, "tasks_from_inception_by_status", selectedStatus);
+              });
+            });
+          } else {
+            tasksContainer.innerHTML = `<div class="text-gray-400">No status breakdown available.</div>`;
+          }
+        }
+
         // Charts
         safeRenderPie("responseTimeChart", [
           [`Breached (${data.response_breached_tickets_last_30_days})`, data.response_breached_tickets_last_30_days],
@@ -474,7 +542,7 @@
     }
 
     let url = `/dashboards/tickets?team_name=${encodeURIComponent(team)}&type=${encodeURIComponent(type)}`;
-    if (type === "tickets_from_inception_by_status" && statusFilter) {
+    if ((type === "tickets_from_inception_by_status" || type === "tasks_from_inception_by_status") && statusFilter) {
       url += `&status=${encodeURIComponent(statusFilter)}`;
     }
 
