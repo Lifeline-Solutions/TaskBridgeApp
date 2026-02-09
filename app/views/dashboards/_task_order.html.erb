@@ -5,7 +5,7 @@
       <!-- Total Tasks Opened -->
 
       <a href="#" class="stat-card-link block" data-type="tasks_from_inception_count" onclick="fetchTicketDetails('<%= @selected_team %>', 'tasks_from_inception_count'); event.stopPropagation();">
-        <%= render 'dashboards/stat_card', title: "Total Tasks Opened", value: @stats[:tasks_from_inception_count] || 0, id: "tasks_from_inception_count", class: 'rounded-lg' %>
+        <%= render 'dashboards/stat_card', title: "Total Projects Tasks Opened", value: @stats[:tasks_from_inception_count] || 0, id: "tasks_from_inception_count", class: 'rounded-lg' %>
       </a>
     </div>
   <!-- Status Breakdown Section -->
