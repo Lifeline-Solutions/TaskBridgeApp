@@ -109,7 +109,8 @@ class SystemMailer < ApplicationMailer
         'product' => Product,
         'task' => Task,
         'groupware' => Groupware,
-        'software' => Software
+        'software' => Software,
+        'defect' => Defect
       }
       mapping[k]
     end
