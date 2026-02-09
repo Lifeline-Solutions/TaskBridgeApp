@@ -25,6 +25,7 @@ class Task < ApplicationRecord
   has_many :users, through: :add_tasks, dependent: :destroy
   has_and_belongs_to_many :statuses, dependent: :destroy
   has_many :bugs
+  has_many :incidents
   has_rich_text :description
   scope :for_product, ->(product_id) { where(product_id: product_id) }
 

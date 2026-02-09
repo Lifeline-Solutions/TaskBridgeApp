@@ -6,7 +6,10 @@
       <h4 class="text-lg font-semibold mb-2 break-words"><%= @task.name %></h4>
     <% end %>
     <%= render 'tasks/content_for_task' %>
+    <%= render partial: 'tasks/incidents', locals: { incidents: @incidents } %>
+
   </div>
+
 
   <!-- Sidebar Details -->
   <div id="detailsSidebar"
@@ -42,7 +45,6 @@
         <%= render 'tasks/add_state' %>
       </div>
     </div>
-
     <!-- Assigned Users Section -->
     <div class="space-y-2">
       <div class="font-bold capitalize text-xs sm:text-base">Assigned To:</div>
@@ -71,6 +73,7 @@
     <!-- Close button for mobile sidebar -->
     <button onclick="toggleSidebar()" class="block sm:hidden mt-4 px-4 py-2 bg-gray-200 rounded text-gray-800 w-full">Close</button>
   </div>
+
 </div>
 
 <!-- Show Details Button (mobile only) -->

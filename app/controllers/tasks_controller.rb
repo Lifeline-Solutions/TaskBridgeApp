@@ -60,6 +60,8 @@ class TasksController < ApplicationController
   def show
     @task = @product.tasks.find(params[:id])
     @prerequisite_task = @task
+    @incident = @task.incidents.order(created_at: :desc)
+
   end
 
   def edit
@@ -114,6 +116,14 @@ class TasksController < ApplicationController
         .set_source('task', @task.id)
         .set_party('user', assigned_user.id)
         .send(queue: true)
+
+      if assigned_user.present?
+        log_incident(@task, current_user, 'created and assign',
+                     "Task was created and assigned to #{assigned_user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}",
+                     assigned_user, status)
+      else
+        log_incident(@task, current_user, 'created and assign', "Task was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}", nil, status)
+      end
 
       redirect_to product_task_path(@product, @task), notice: "#{assigned_user.name} was successfully assigned."
     end
