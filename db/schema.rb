@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_01_21_085537) do
+ActiveRecord::Schema[7.2].define(version: 2026_02_09_050611) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
@@ -600,6 +600,21 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_21_085537) do
     t.index ["deleted_on"], name: "index_groupwares_projects_on_deleted_on"
     t.index ["groupware_id", "project_id"], name: "index_groupwares_projects_on_groupware_id_and_project_id", unique: true
     t.index ["project_id", "groupware_id"], name: "index_groupwares_projects_on_project_id_and_groupware_id", unique: true
+  end
+
+  create_table "incidents", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "task_id", null: false
+    t.uuid "user_id", null: false
+    t.string "event_type"
+    t.string "details"
+    t.uuid "assigned_user_id"
+    t.uuid "status_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assigned_user_id"], name: "index_incidents_on_assigned_user_id"
+    t.index ["status_id"], name: "index_incidents_on_status_id"
+    t.index ["task_id"], name: "index_incidents_on_task_id"
+    t.index ["user_id"], name: "index_incidents_on_user_id"
   end
 
   create_table "issues", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1420,6 +1435,10 @@ ActiveRecord::Schema[7.2].define(version: 2026_01_21_085537) do
   add_foreign_key "events", "users", column: "assigned_user_id"
   add_foreign_key "groupwares", "softwares"
   add_foreign_key "groupwares", "users"
+  add_foreign_key "incidents", "statuses"
+  add_foreign_key "incidents", "tasks"
+  add_foreign_key "incidents", "users"
+  add_foreign_key "incidents", "users", column: "assigned_user_id"
   add_foreign_key "issues", "projects"
   add_foreign_key "issues", "tickets"
   add_foreign_key "issues", "users"

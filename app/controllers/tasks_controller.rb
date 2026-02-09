@@ -43,6 +43,17 @@ class TasksController < ApplicationController
           redirect_to new_product_task_path(@product), notice: 'Task was not created.'
         end
       end
+
+      assigned_user = assignee
+      status = Status.find_by(name: 'TO DO')
+
+      if assigned_user.present?
+        log_incident(@task, current_user, 'created and assign',
+                  "Task was created and assigned to #{assigned_user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}",
+                  assigned_user, status)
+      else
+        log_incident(@task, current_user, 'created and assign', "Task was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}", nil, default_status)
+      end
     end
   end
 
@@ -168,5 +179,10 @@ class TasksController < ApplicationController
 
   def task_params
     params.require(:task).permit(:name, :description, :start_date, :end_date, :image, :file, :user_id, :priority, :tasks_id, :unique_task_id)
+  end
+
+  def log_incident(task, user, event_type, details, assigned_user, status )
+
+    Incident.create(task: task, user: user, event_type: event_type, details: details, assigned_user_id: assigned_user&.id, status: status)
   end
 end
