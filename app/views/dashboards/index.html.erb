@@ -57,7 +57,10 @@
             </div>
           </a>
         </div>
+
       </div>
+
+
 
       <a href="#" class="stat-card-link" data-type="tickets_from_inception_count" onclick="fetchTicketDetails('<%= @selected_team %>', 'tickets_from_inception_count')">
         <!-- Status Breakdown Section -->
@@ -77,7 +80,12 @@
           <% end %>
         </div>
       </a>
+      <div class="m-3">
+        <h1 class="text-2xl md:text-3xl font-bold text-center mt-4">All Tasks</h1>
+        <%= render partial: 'dashboards/task_order' %>
+      </div>
     </div>
+
 
 
     <div class="col-span-1 sm:col-span-5 md:col-span-5 lg:col-span-5">
@@ -315,6 +323,7 @@
         // NOTE: Depending on your stat_card partial, this might target a container.
         // If this overwrites the whole card, consider targeting a nested element instead.
         setTextIfExists("tickets_from_inception_count", data.tickets_from_inception_count);
+        setTextIfExists("tasks_from_inception_count", data.tasks_from_inception_count);
 
         // Render status-by-status counts with ONLY the numeric counts clickable
         const container = document.getElementById("tickets_from_inception_by_status");
