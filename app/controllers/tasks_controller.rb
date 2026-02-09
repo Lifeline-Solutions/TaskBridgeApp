@@ -76,6 +76,17 @@ class TasksController < ApplicationController
       @prerequisite_tasks = Task.prerequisite_tasks(@product.id)
       render :edit, notice: 'Task updated was not successful.'
     end
+
+    status = @task.statuses.first
+    assigned_user = @task.users.first
+
+    if assigned_user.present?
+      log_incident(@task, current_user, 'Update Task',
+                   "Task updated and assigned to #{assigned_user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}",
+                   assigned_user, status)
+    else
+      log_incident(@task, current_user, 'Update Task', "Task was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}", nil, status)
+    end
   end
 
   def destroy
@@ -117,12 +128,14 @@ class TasksController < ApplicationController
         .set_party('user', assigned_user.id)
         .send(queue: true)
 
+      status = @task.statuses.first
+
       if assigned_user.present?
-        log_incident(@task, current_user, 'created and assign',
-                     "Task was created and assigned to #{assigned_user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}",
+        log_incident(@task, current_user, 'Task Assigned',
+                     "Task was assigned to #{assigned_user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}",
                      assigned_user, status)
       else
-        log_incident(@task, current_user, 'created and assign', "Task was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}", nil, status)
+        log_incident(@task, current_user, 'Task Assigned', "Task was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}", nil, status)
       end
 
       redirect_to product_task_path(@product, @task), notice: "#{assigned_user.name} was successfully assigned."
@@ -174,6 +187,18 @@ class TasksController < ApplicationController
         .set_party('user', @task.user.id)
         .send(queue: true)
     end
+
+    status = @task.statuses.first
+    assigned_user = @task.users.first
+
+    if assigned_user.present?
+      log_incident(@task, current_user, 'Update Task Status',
+                   "Task status updated and assigned to #{assigned_user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}",
+                   assigned_user, status)
+    else
+      log_incident(@task, current_user, 'Update Task Status', "Task was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}", nil, status)
+    end
+
     redirect_to product_task_path(@product, @task), notice: 'Task status updated.'
   end
 

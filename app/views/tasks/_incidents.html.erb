@@ -12,7 +12,7 @@
           <%= render 'tickets/ticket_user_initials', event: event %>
           <div class="text-gray-600 dark:text-gray-400">
             <div class="text-base font-normal"><span class="font-medium text-gray-900 dark:text-white"><%= event.user.name %></span></div>
-            <div class="text-sm font-normal"><%= event.details.html_safe %></div>
+            <div class="text-sm font-normal"><%= event.details.html_safe %> and status is <%= event.status.name %></div>
 
           </div>
         </div>
