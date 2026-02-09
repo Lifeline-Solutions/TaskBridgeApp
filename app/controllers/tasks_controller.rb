@@ -44,8 +44,8 @@ class TasksController < ApplicationController
         end
       end
 
-      assigned_user = assignee
-      status = Status.find_by(name: 'TO DO')
+      status = @task.statuses.first
+      assigned_user = @task.users.first
 
       if assigned_user.present?
         log_incident(@task, current_user, 'created and assign',
@@ -129,6 +129,7 @@ class TasksController < ApplicationController
         .send(queue: true)
 
       status = @task.statuses.first
+      assigned_user = @task.users.first
 
       if assigned_user.present?
         log_incident(@task, current_user, 'Task Assigned',
