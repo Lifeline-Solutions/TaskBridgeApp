@@ -52,7 +52,7 @@ class TasksController < ApplicationController
                   "Task was created and assigned to #{assigned_user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}",
                   assigned_user, status)
       else
-        log_incident(@task, current_user, 'created and assign', "Task was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}", nil, default_status)
+        log_incident(@task, current_user, 'created and assign', "Task was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}", nil, status)
       end
     end
   end
