@@ -49,8 +49,8 @@ class TasksController < ApplicationController
 
       if assigned_user.present?
         log_incident(@task, current_user, 'created and assign',
-                  "Task was created and assigned to #{assigned_user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}",
-                  assigned_user, status)
+                     "Task was created and assigned to #{assigned_user.name} at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}",
+                     assigned_user, status)
       else
         log_incident(@task, current_user, 'created and assign', "Task was created but no assigned user at #{Time.now.strftime('%H:%M of  %d-%m-%Y')}", nil, status)
       end
@@ -61,7 +61,6 @@ class TasksController < ApplicationController
     @task = @product.tasks.find(params[:id])
     @prerequisite_task = @task
     @incident = @task.incidents.order(created_at: :desc)
-
   end
 
   def edit
@@ -217,8 +216,7 @@ class TasksController < ApplicationController
     params.require(:task).permit(:name, :description, :start_date, :end_date, :image, :file, :user_id, :priority, :tasks_id, :unique_task_id)
   end
 
-  def log_incident(task, user, event_type, details, assigned_user, status )
-
+  def log_incident(task, user, event_type, details, assigned_user, status)
     Incident.create(task: task, user: user, event_type: event_type, details: details, assigned_user_id: assigned_user&.id, status: status)
   end
 end
