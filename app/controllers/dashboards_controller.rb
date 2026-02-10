@@ -297,7 +297,7 @@ class DashboardsController < ApplicationController
           .joins('LEFT JOIN statuses ON statuses.id = add_statuses.status_id')
           .where('tickets.created_at >= ?', 30.days.ago)
           .where(sla_tickets: { sla_resolution_deadline: 'Breached' })
-          .where.call(statuses: { name: %w[Closed Resolved Declined] })
+          .where(statuses: { name: %w[Closed Resolved Declined] })
 
       when 'target_resolution_time_not_breached'
         @tickets = Ticket.joins(:users)
