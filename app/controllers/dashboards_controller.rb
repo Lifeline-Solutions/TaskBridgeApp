@@ -326,6 +326,7 @@ class DashboardsController < ApplicationController
         @tickets = Ticket.joins(:statuses, :users)
           .where(users: { id: user_ids })
           .where.not(statuses: { name: %w[Declined Closed Resolved] })
+
       when 'tickets_from_inception_count'
         # Show all tickets from the team that are not closed, resolved or declined
         @tickets = Ticket.joins(:statuses, :users)
