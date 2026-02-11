@@ -278,6 +278,8 @@ class ProductController < ApplicationController
       client_name = @product.client&.name.presence || 'Client'
       groupware_names = @product.groupwares.map(&:name).join(', ').presence || ''
       subject = "Project Payment Status for #{client_name} #{groupware_names} milestone"
+      url = product_url(@product)
+
       Messaging::EmailSender
         .send_email(
           subject,
@@ -286,7 +288,7 @@ class ProductController < ApplicationController
           priority: :normal,
           type: 'finance_sales'
         )
-        .use_template(view: 'user_mailer/finance_sales_email', assigns: { product: @product, assigned_user: u, current_user: })
+        .use_template(view: 'user_mailer/finance_sales_email', assigns: { product: @product, assigned_user: u, current_user:, url: url})
         .set_source('product', @product.id)
         .set_party('user', u.id)
         .send(queue: true)
