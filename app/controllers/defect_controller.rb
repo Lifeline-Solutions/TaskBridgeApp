@@ -2109,10 +2109,11 @@ class DefectController < ApplicationController
     defect.users.each do |recipient|
       title = UserMailer::ACTION_TITLES[action_name] || action_name.titleize
       subject_text = "[Defect #{defect.defect_unique}] #{title} by #{user.name}"
+      # the creator of the defect on the defect there is user_id
 
       Messaging::EmailSender.send_email(
         subject_text,
-        to: [recipient.email, user.email],
+        to: [recipient.email, user.email, defect.creator.email],
         actor: user,
         priority: :normal,
         type: 'defect_action'
