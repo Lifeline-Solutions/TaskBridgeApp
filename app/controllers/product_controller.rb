@@ -227,6 +227,7 @@ class ProductController < ApplicationController
       @product.user = current_user
       @product.users << user
 
+
       activity('user_activity')
         .caused_by(current_user)
         .performed_on(@product)
@@ -235,6 +236,8 @@ class ProductController < ApplicationController
         .log("Assigned #{user.name} to Product ##{@product.id}")
 
       assigned_user = user
+      url = product_url(@product)
+
       Messaging::EmailSender
         .send_email(
           'Product Assignment',
@@ -243,7 +246,7 @@ class ProductController < ApplicationController
           priority: :normal,
           type: 'product_assign'
         )
-        .use_template(view: 'user_mailer/assign_product_email', assigns: { user: assigned_user, product: @product, current_user:, assigned_user: })
+        .use_template(view: 'user_mailer/assign_product_email', assigns: { user: assigned_user, product: @product, current_user:, assigned_user:, url: url })
         .set_source('product', @product.id)
         .set_party('user', assigned_user.id)
         .send(queue: true)
@@ -275,6 +278,8 @@ class ProductController < ApplicationController
       client_name = @product.client&.name.presence || 'Client'
       groupware_names = @product.groupwares.map(&:name).join(', ').presence || ''
       subject = "Project Payment Status for #{client_name} #{groupware_names} milestone"
+      url = product_url(@product)
+
       Messaging::EmailSender
         .send_email(
           subject,
@@ -283,7 +288,7 @@ class ProductController < ApplicationController
           priority: :normal,
           type: 'finance_sales'
         )
-        .use_template(view: 'user_mailer/finance_sales_email', assigns: { product: @product, assigned_user: u, current_user: })
+        .use_template(view: 'user_mailer/finance_sales_email', assigns: { product: @product, assigned_user: u, current_user:, url: url})
         .set_source('product', @product.id)
         .set_party('user', u.id)
         .send(queue: true)
