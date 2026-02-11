@@ -272,7 +272,7 @@ class DashboardsController < ApplicationController
           .where('tickets.created_at >= ?', 30.days.ago)
 
       when 'no_sla_population'
-        @tickets = @Ticket.joins(:users)
+        @tickets = Ticket.joins(:users)
           .where(users: { id: user_ids })
           .joins(:sla_tickets).joins(:statuses)
           .where(sla_tickets: { sla_resolution_deadline: 'NO SLA' })
@@ -290,7 +290,7 @@ class DashboardsController < ApplicationController
           .where.not(statuses: { name: %w[Closed Resolved Declined] })
 
       when 'target_resolution_time_breached_closed'
-        @tickets = @Ticket.joins(:users)
+        @tickets = Ticket.joins(:users)
           .where(users: { id: user_ids })
           .joins(:sla_tickets).joins(:statuses)
           .joins('LEFT JOIN add_statuses ON add_statuses.ticket_id = tickets.id')
@@ -390,34 +390,63 @@ class DashboardsController < ApplicationController
         # Show all tasks from the team
         @tickets = Task.joins(:statuses, :users)
           .where(users: { id: user_ids })
+      else
+        # Default case - no tickets/tasks
+        @tickets = Ticket.none
       end
 
+      # Check if this is a task request
+      is_task_request = ['tasks_from_inception_by_status', 'tasks_from_inception_count'].include?(type)
+
       # Add ordering (latest first) and include a user team name (first team found) in the select
-      @tickets = @tickets
-        .joins(:taggings, :users)
-        .joins('LEFT JOIN add_statuses ON add_statuses.ticket_id = tickets.id')
-        .joins('LEFT JOIN statuses ON statuses.id = add_statuses.status_id')
-        .includes(:project)
-        .select(
-          'tickets.id', 'tickets.unique_id', 'tickets.priority', 'tickets.project_id',
-          'tickets.issue', 'tickets.subject', 'tickets.created_at',
-          'users.first_name', 'users.last_name',
-          'statuses.name AS status_name',
-          '(SELECT teams.name FROM teams INNER JOIN teams_users ON teams.id = teams_users.team_id WHERE teams_users.user_id = users.id LIMIT 1) AS user_team_name'
-        )
-        .order('tickets.created_at DESC')
-
-      render json: @tickets.map { |ticket|
-        ticket.as_json
-          .merge(
-            project_id: ticket.project_id,
-            project_title: ticket.project&.title,
-            user_name: "#{ticket.first_name} #{ticket.last_name}",
-            user_team: ticket.respond_to?(:user_team_name) ? ticket.user_team_name : nil,
-            status_name: ticket.status_name
+      if is_task_request
+        @tickets = @tickets
+          .joins(:users)
+          .joins('LEFT JOIN statuses ON statuses.id IN (SELECT status_id FROM tasks_statuses WHERE tasks_statuses.task_id = tasks.id)')
+          .select(
+            'tasks.id', 'tasks.unique_id', 'tasks.priority', 'tasks.name',
+            'tasks.start_date', 'tasks.end_date', 'tasks.description', 'tasks.created_at',
+            'users.first_name', 'users.last_name',
+            'statuses.name AS status_name',
+            '(SELECT teams.name FROM teams INNER JOIN teams_users ON teams.id = teams_users.team_id WHERE teams_users.user_id = users.id LIMIT 1) AS user_team_name'
           )
-      }
+          .distinct
+          .order('tasks.created_at DESC')
 
+        render json: @tickets.map { |task|
+          task.as_json
+            .merge(
+              user_name: "#{task.first_name} #{task.last_name}",
+              user_team: task.respond_to?(:user_team_name) ? task.user_team_name : nil,
+              status_name: task.status_name
+            )
+        }
+      else
+        @tickets = @tickets
+          .joins(:taggings, :users)
+          .joins('LEFT JOIN add_statuses ON add_statuses.ticket_id = tickets.id')
+          .joins('LEFT JOIN statuses ON statuses.id = add_statuses.status_id')
+          .includes(:project)
+          .select(
+            'tickets.id', 'tickets.unique_id', 'tickets.priority', 'tickets.project_id',
+            'tickets.issue', 'tickets.subject', 'tickets.created_at',
+            'users.first_name', 'users.last_name',
+            'statuses.name AS status_name',
+            '(SELECT teams.name FROM teams INNER JOIN teams_users ON teams.id = teams_users.team_id WHERE teams_users.user_id = users.id LIMIT 1) AS user_team_name'
+          )
+          .order('tickets.created_at DESC')
+
+        render json: @tickets.map { |ticket|
+          ticket.as_json
+            .merge(
+              project_id: ticket.project_id,
+              project_title: ticket.project&.title,
+              user_name: "#{ticket.first_name} #{ticket.last_name}",
+              user_team: ticket.respond_to?(:user_team_name) ? ticket.user_team_name : nil,
+              status_name: ticket.status_name
+            )
+        }
+      end
     else
       render json: { error: 'Team not found' }, status: :not_found
     end
