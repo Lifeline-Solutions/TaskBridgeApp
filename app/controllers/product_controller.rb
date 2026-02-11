@@ -227,6 +227,7 @@ class ProductController < ApplicationController
       @product.user = current_user
       @product.users << user
 
+
       activity('user_activity')
         .caused_by(current_user)
         .performed_on(@product)
@@ -235,6 +236,8 @@ class ProductController < ApplicationController
         .log("Assigned #{user.name} to Product ##{@product.id}")
 
       assigned_user = user
+      url = product_url(@product)
+
       Messaging::EmailSender
         .send_email(
           'Product Assignment',
@@ -243,7 +246,7 @@ class ProductController < ApplicationController
           priority: :normal,
           type: 'product_assign'
         )
-        .use_template(view: 'user_mailer/assign_product_email', assigns: { user: assigned_user, product: @product, current_user:, assigned_user: })
+        .use_template(view: 'user_mailer/assign_product_email', assigns: { user: assigned_user, product: @product, current_user:, assigned_user:, url: url })
         .set_source('product', @product.id)
         .set_party('user', assigned_user.id)
         .send(queue: true)

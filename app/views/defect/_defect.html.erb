@@ -18,9 +18,14 @@
             <%= row_number %>
           </td>
           <td class="px-6 py-3 font-semibold text-left">
-            <%= link_to (product.proxy_name.present? ? product.proxy_name : "#{product.client&.name} #{product.groupwares&.first&.name}".truncate(30)),
+            <% groupware_names = product.groupwares.map(&:name).compact.join(" & ") %>
+            <% display_name = product.proxy_name.present? ? product.proxy_name : [product.client&.name, groupware_names.presence].compact.join(" ") %>
+
+            <%= link_to display_name.truncate(30),
                         index_show_defect_index_path(client_name: product.client&.name, product_id: product.id),
                         class: "text-blue-700 hover:underline" %>
+
+
           </td>
           <td class="px-6 py-3 font-semibold text-left">
             <%= product.statuses.first&.name %>
