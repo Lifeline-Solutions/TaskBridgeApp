@@ -396,7 +396,7 @@ class DashboardsController < ApplicationController
       end
 
       # Check if this is a task request
-      is_task_request = ['tasks_from_inception_by_status', 'tasks_from_inception_count'].include?(type)
+      is_task_request = %w[tasks_from_inception_by_status tasks_from_inception_count].include?(type)
 
       # Add ordering (latest first) and include a user team name (first team found) in the select
       if is_task_request
