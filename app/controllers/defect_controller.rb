@@ -2112,7 +2112,7 @@ class DefectController < ApplicationController
 
       Messaging::EmailSender.send_email(
         subject_text,
-        to: [recipient.email, user.email ],
+        to: [recipient.email, user.email],
         actor: user,
         priority: :normal,
         type: 'defect_action'

@@ -65,11 +65,10 @@ class HomeController < ApplicationController
                                         end
 
       @total_breached_tickets_per_project = Project.joins(tickets: %i[statuses users sla_tickets])
-                                                   .where.not(statuses: { name: %w[Closed Resolved Declined] })
-                                                   .where(sla_tickets: { sla_resolution_deadline: 'Breached' })
-                                                   .group('projects.id')
-                                                   .count('DISTINCT tickets.id')
-
+        .where.not(statuses: { name: %w[Closed Resolved Declined] })
+        .where(sla_tickets: { sla_resolution_deadline: 'Breached' })
+        .group('projects.id')
+        .count('DISTINCT tickets.id')
 
       # Count all tickets per project (duplicate, can be removed)
       @tickets_count_per_project = current_user.projects

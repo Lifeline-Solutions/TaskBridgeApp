@@ -74,7 +74,7 @@
               <div class="text-lg font-bold mb-2">
                 <span class="text-lg font-bold mb-2"><%= status %>:</span> <%= @stats[:tickets_from_inception_by_status][status] %>
               </div>
-            <% end %>tasks_from_inception_by_status
+            <% end %>
           <% else %>
             <div class="text-gray-400">No status breakdown available.</div>
           <% end %>
@@ -457,7 +457,7 @@
               });
             });
           } else {
-            tasksContainer.innerHTML = `<div class="text-gray-400">No status breakdown available.</div>`;
+            tasksContainer.innerHTML = `<div class="text-gray-400">No status breakdown tasks available.</div>`;
           }
         }
 
@@ -533,7 +533,7 @@
       .catch((error) => console.error("Error fetching stats:", error));
   }
 
-  // Ticket details fetcher
+  // Ticket/Task details fetcher
   function fetchTicketDetails(teamName, type, statusFilter = null) {
     const team = teamName || selectedTeam;
     if (!team) {
@@ -552,117 +552,240 @@
         // Store data globally for CSV export
         currentTicketData = data;
 
-        const container = document.getElementById("ticketDetails");
-        if (!container) return;
+        // Determine if this is a task or ticket request
+        const isTaskRequest = type.includes('tasks');
 
-        container.innerHTML = "";
-
-        if (Array.isArray(data) && data.length > 0) {
-          // Ensure tickets are displayed with latest (most recent created_at) first
-          data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-          let count = 0;
-          data.forEach((ticket) => {
-            count++;
-            const tr = document.createElement("tr");
-            tr.className = "mb-4 p-4 rounded-lg bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600";
-
-            const ticketURL = `/project/${ticket.project_id}/tickets/${ticket.id}`;
-
-            let priorityClass = "bg-blue-500";
-            switch (ticket.priority) {
-              case "SEVERITY 1":
-                priorityClass = "bg-red-900";
-                break;
-              case "SEVERITY 2":
-                priorityClass = "bg-red-600";
-                break;
-              case "SEVERITY 3":
-                priorityClass = "bg-yellow-500";
-                break;
-            }
-
-            let statusClass = "bg-blue-500 text-white";
-            switch (ticket.status_name) {
-              case "Resolved":
-                statusClass = "bg-green-500 border-green-600 text-white";
-                break;
-              case "Closed":
-                statusClass = "bg-gray-800 border-gray-900 text-white";
-                break;
-              case "Reopened":
-                statusClass = "bg-red-900 border-red-800 text-white";
-                break;
-              case "New":
-                statusClass = "bg-red-500 border-red-600 text-white";
-                break;
-              case "Under Development":
-                statusClass = "bg-yellow-500 border-yellow-600 text-white";
-                break;
-              case "Work in Progress":
-                statusClass = "bg-gray-500 border-gray-600 text-white";
-                break;
-              case "QA Testing":
-                statusClass = "bg-pink-500 border-pink-600 text-white";
-                break;
-              case "Awaiting Build":
-                statusClass = "border-black dark:border-slate-100 text-black";
-                break;
-              case "Client Information Pending":
-                statusClass = "bg-purple-500 border-purple-600 text-white";
-                break;
-              case "On-Hold":
-                statusClass = "bg-yellow-300 border-yellow-400 text-black";
-                break;
-              case "Assigned":
-                statusClass = "bg-blue-800 border-blue-900 text-white";
-                break;
-              case "Approved":
-                statusClass = "bg-green-800 border-green-900 text-white";
-                break;
-              case "Pending":
-                statusClass = "bg-gradient-to-r from-green-800 to-black border-green-900 text-white";
-                break;
-              case "Declined":
-                statusClass = "bg-gray-800 border-gray-900 text-white";
-                break;
-            }
-
-            tr.innerHTML = `
-            <td class="p-2">${count}</td>
-            <td class="p-2 text-gray-500">
-              ${new Date(ticket.created_at).toLocaleString()}
-            </td>
-            <td class="p-2">${escapeHtml(ticket.unique_id)}</td>
-            <td class="p-2">${escapeHtml(ticket.issue)}</td>
-            <td class="p-2">
-              <p class="${priorityClass} p-1 text-center text-white font-bold rounded">
-                ${escapeHtml(ticket.priority)}
-              </p>
-            </td>
-            <td class="p-2">${escapeHtml(ticket.subject)}</td>
-            <td class="p-2">
-              <div>${escapeHtml(ticket.user_name)}</div>
-              ${ticket.user_team || ticket.team || ticket.user_team_name ? `<div class="text-sm text-gray-500">${escapeHtml(ticket.user_team || ticket.team || ticket.user_team_name)}</div>` : ''}
-            </td>
-            <td class="p-2">
-              <p class="${statusClass} text-center font-semibold rounded p-1 border-r-2 border-b-4">
-                ${escapeHtml(ticket.status_name)}
-              </p>
-            </td>
-            <td class="p-2">
-              <a href="${ticketURL}" class="text-blue-500 hover:underline">View Ticket</a>
-            </td>
-          `;
-            container.appendChild(tr);
-          });
+        if (isTaskRequest) {
+          renderTaskDetails(data);
         } else {
-          container.innerHTML = "<tr><td class='p-2' colspan='9'>No tickets found.</td></tr>";
+          renderTicketDetails(data);
         }
 
         openModal();
       })
-      .catch((error) => console.error("Error fetching ticket details:", error));
+      .catch((error) => console.error("Error fetching details:", error));
+  }
+
+  function renderTicketDetails(data) {
+    // Update modal title
+    document.getElementById("modalTitle").textContent = "Ticket Details";
+
+    // Hide task table, show ticket table
+    document.getElementById("taskTable").classList.add("hidden");
+    document.getElementById("ticketTable").classList.remove("hidden");
+
+    const container = document.getElementById("ticketDetails");
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    if (Array.isArray(data) && data.length > 0) {
+      // Ensure tickets are displayed with latest (most recent created_at) first
+      data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      let count = 0;
+      data.forEach((ticket) => {
+        count++;
+        const tr = document.createElement("tr");
+        tr.className = "mb-4 p-4 rounded-lg bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600";
+
+        const ticketURL = `/project/${ticket.project_id}/tickets/${ticket.id}`;
+
+        let priorityClass = "bg-blue-500";
+        switch (ticket.priority) {
+          case "SEVERITY 1":
+            priorityClass = "bg-red-900";
+            break;
+          case "SEVERITY 2":
+            priorityClass = "bg-red-600";
+            break;
+          case "SEVERITY 3":
+            priorityClass = "bg-yellow-500";
+            break;
+        }
+
+        let statusClass = "bg-blue-500 text-white";
+        switch (ticket.status_name) {
+          case "Resolved":
+            statusClass = "bg-green-500 border-green-600 text-white";
+            break;
+          case "Closed":
+            statusClass = "bg-gray-800 border-gray-900 text-white";
+            break;
+          case "Reopened":
+            statusClass = "bg-red-900 border-red-800 text-white";
+            break;
+          case "New":
+            statusClass = "bg-red-500 border-red-600 text-white";
+            break;
+          case "Under Development":
+            statusClass = "bg-yellow-500 border-yellow-600 text-white";
+            break;
+          case "Work in Progress":
+            statusClass = "bg-gray-500 border-gray-600 text-white";
+            break;
+          case "QA Testing":
+            statusClass = "bg-pink-500 border-pink-600 text-white";
+            break;
+          case "Awaiting Build":
+            statusClass = "border-black dark:border-slate-100 text-black";
+            break;
+          case "Client Information Pending":
+            statusClass = "bg-purple-500 border-purple-600 text-white";
+            break;
+          case "On-Hold":
+            statusClass = "bg-yellow-300 border-yellow-400 text-black";
+            break;
+          case "Assigned":
+            statusClass = "bg-blue-800 border-blue-900 text-white";
+            break;
+          case "Approved":
+            statusClass = "bg-green-800 border-green-900 text-white";
+            break;
+          case "Pending":
+            statusClass = "bg-gradient-to-r from-green-800 to-black border-green-900 text-white";
+            break;
+          case "Declined":
+            statusClass = "bg-gray-800 border-gray-900 text-white";
+            break;
+        }
+
+        tr.innerHTML = `
+        <td class="p-2">${count}</td>
+        <td class="p-2 text-gray-500">
+          ${new Date(ticket.created_at).toLocaleString()}
+        </td>
+        <td class="p-2">${escapeHtml(ticket.unique_id)}</td>
+        <td class="p-2">${escapeHtml(ticket.issue)}</td>
+        <td class="p-2">
+          <p class="${priorityClass} p-1 text-center text-white font-bold rounded">
+            ${escapeHtml(ticket.priority)}
+          </p>
+        </td>
+        <td class="p-2">${escapeHtml(ticket.subject)}</td>
+        <td class="p-2">
+          <div>${escapeHtml(ticket.user_name)}</div>
+          ${ticket.user_team || ticket.team || ticket.user_team_name ? `<div class="text-sm text-gray-500">${escapeHtml(ticket.user_team || ticket.team || ticket.user_team_name)}</div>` : ''}
+        </td>
+        <td class="p-2">
+          <p class="${statusClass} text-center font-semibold rounded p-1 border-r-2 border-b-4">
+            ${escapeHtml(ticket.status_name)}
+          </p>
+        </td>
+        <td class="p-2">
+          <a href="${ticketURL}" class="text-blue-500 hover:underline">View Ticket</a>
+        </td>
+      `;
+        container.appendChild(tr);
+      });
+    } else {
+      container.innerHTML = "<tr><td class='p-2' colspan='9'>No tickets found.</td></tr>";
+    }
+  }
+
+  function renderTaskDetails(data) {
+    // Update modal title
+    document.getElementById("modalTitle").textContent = "Task Details";
+
+    // Hide ticket table, show task table
+    document.getElementById("ticketTable").classList.add("hidden");
+    document.getElementById("taskTable").classList.remove("hidden");
+
+    const container = document.getElementById("taskDetails");
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    if (Array.isArray(data) && data.length > 0) {
+      // Ensure tasks are displayed with latest (most recent created_at) first
+      data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      let count = 0;
+      data.forEach((task) => {
+        count++;
+        const tr = document.createElement("tr");
+        tr.className = "mb-4 p-4 rounded-lg bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600";
+
+        let priorityClass = "bg-blue-500";
+        switch (task.priority) {
+          case "SEVERITY 1":
+            priorityClass = "bg-red-900";
+            break;
+          case "SEVERITY 2":
+            priorityClass = "bg-red-600";
+            break;
+          case "SEVERITY 3":
+            priorityClass = "bg-yellow-500";
+            break;
+        }
+
+        let statusClass = "bg-blue-500 text-white";
+        switch (task.status_name) {
+          case "Approved":
+            statusClass = "bg-green-800 border-green-900 text-white";
+            break;
+          case "Declined":
+            statusClass = "bg-gray-800 border-gray-900 text-white";
+            break;
+          case "In Progress":
+            statusClass = "bg-gray-500 border-gray-600 text-white";
+            break;
+          case "Assigned":
+            statusClass = "bg-blue-800 border-blue-900 text-white";
+            break;
+          case "Under Development":
+            statusClass = "bg-yellow-500 border-yellow-600 text-white";
+            break;
+          case "QA Testing":
+            statusClass = "bg-pink-500 border-pink-600 text-white";
+            break;
+          case "Support Testing":
+            statusClass = "bg-orange-500 border-orange-600 text-white";
+            break;
+          case "Reopened":
+            statusClass = "bg-red-900 border-red-800 text-white";
+            break;
+          case "On-Hold":
+            statusClass = "bg-yellow-300 border-yellow-400 text-black";
+            break;
+          case "Pending":
+            statusClass = "bg-gradient-to-r from-green-800 to-black border-green-900 text-white";
+            break;
+        }
+
+        const startDate = task.start_date ? new Date(task.start_date).toLocaleDateString() : 'N/A';
+        const endDate = task.end_date ? new Date(task.end_date).toLocaleDateString() : 'N/A';
+
+        tr.innerHTML = `
+        <td class="p-2">${count}</td>
+        <td class="p-2 text-gray-500">
+          ${new Date(task.created_at).toLocaleString()}
+        </td>
+        <td class="p-2">${escapeHtml(task.unique_id || 'N/A')}</td>
+        <td class="p-2">${escapeHtml(task.name || task.title || 'N/A')}</td>
+        <td class="p-2">
+          <p class="${priorityClass} p-1 text-center text-white font-bold rounded">
+            ${escapeHtml(task.priority || 'N/A')}
+          </p>
+        </td>
+        <td class="p-2">${startDate}</td>
+        <td class="p-2">${endDate}</td>
+        <td class="p-2 truncate max-w-xs" title="${escapeHtml(task.description || 'N/A')}">${escapeHtml(task.description || 'N/A')}</td>
+        <td class="p-2">
+          <div>${escapeHtml(task.user_name || 'N/A')}</div>
+          ${task.user_team || task.team || task.user_team_name ? `<div class="text-sm text-gray-500">${escapeHtml(task.user_team || task.team || task.user_team_name)}</div>` : ''}
+        </td>
+        <td class="p-2">
+          <p class="${statusClass} text-center font-semibold rounded p-1 border-r-2 border-b-4">
+            ${escapeHtml(task.status_name || 'N/A')}
+          </p>
+        </td>
+      `;
+        container.appendChild(tr);
+      });
+    } else {
+      container.innerHTML = "<tr><td class='p-2' colspan='10'>No tasks found.</td></tr>";
+    }
   }
 
   // Modal helpers
@@ -718,30 +841,57 @@
   // CSV Download function
   function downloadCSV() {
     if (!currentTicketData || currentTicketData.length === 0) {
-      alert("No ticket data available to download.");
+      alert("No data available to download.");
       return;
     }
 
-    // Define CSV headers
-    const headers = ["Serial", "Date of Issue", "Ticket ID", "Issue", "Priority", "Summary", "Assigned To", "Team", "Status"];
+    // Determine if we're viewing tasks or tickets
+    const isTaskTable = !document.getElementById("taskTable").classList.contains("hidden");
 
-    // Convert ticket data to CSV rows
-    const rows = currentTicketData.map((ticket, index) => {
-      return [
-        index + 1,
-        new Date(ticket.created_at).toLocaleString(),
-        ticket.unique_id || "",
-        ticket.issue || "",
-        ticket.priority || "",
-        ticket.subject || "",
-        ticket.user_name || "",
-        ticket.user_team || ticket.team || ticket.user_team_name || "",
-        ticket.status_name || ""
-      ];
-    });
+    let csvContent;
+    let headers;
+    let rows;
+
+    if (isTaskTable) {
+      // Task CSV headers and content
+      headers = ["Serial", "Date Created", "Task ID", "Name", "Priority", "Start Date", "End Date", "Description", "Assigned To", "Team", "Status"];
+      rows = currentTicketData.map((task, index) => {
+        const startDate = task.start_date ? new Date(task.start_date).toLocaleDateString() : 'N/A';
+        const endDate = task.end_date ? new Date(task.end_date).toLocaleDateString() : 'N/A';
+        return [
+          index + 1,
+          new Date(task.created_at).toLocaleString(),
+          task.unique_id || 'N/A',
+          task.name || task.title || '',
+          task.priority || '',
+          startDate,
+          endDate,
+          task.description || '',
+          task.user_name || '',
+          task.user_team || task.team || task.user_team_name || '',
+          task.status_name || ''
+        ];
+      });
+    } else {
+      // Ticket CSV headers and content
+      headers = ["Serial", "Date of Issue", "Ticket ID", "Issue", "Priority", "Summary", "Assigned To", "Team", "Status"];
+      rows = currentTicketData.map((ticket, index) => {
+        return [
+          index + 1,
+          new Date(ticket.created_at).toLocaleString(),
+          ticket.unique_id || "",
+          ticket.issue || "",
+          ticket.priority || "",
+          ticket.subject || "",
+          ticket.user_name || "",
+          ticket.user_team || ticket.team || ticket.user_team_name || "",
+          ticket.status_name || ""
+        ];
+      });
+    }
 
     // Create CSV content
-    let csvContent = headers.join(",") + "\n";
+    csvContent = headers.join(",") + "\n";
     rows.forEach(row => {
       // Escape quotes and wrap fields with commas or quotes in double quotes
       const escapedRow = row.map(field => {
@@ -762,7 +912,8 @@
     // Generate filename with timestamp and team name
     const timestamp = new Date().toISOString().split('T')[0];
     const teamName = selectedTeam || "all_teams";
-    const filename = `tickets_${teamName.replace(/\s+/g, '_')}_${timestamp}.csv`;
+    const dataType = isTaskTable ? "tasks" : "tickets";
+    const filename = `${dataType}_${teamName.replace(/\s+/g, '_')}_${timestamp}.csv`;
 
     link.setAttribute("href", url);
     link.setAttribute("download", filename);
