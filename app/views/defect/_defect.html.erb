@@ -21,7 +21,7 @@
             <% groupware_names = product.groupwares.map(&:name).compact.join(" & ") %>
             <% display_name = product.proxy_name.present? ? product.proxy_name : [product.client&.name, groupware_names.presence].compact.join(" ") %>
 
-            <%= link_to display_name.truncate(30),
+            <%= link_to display_name.truncate(50),
                         index_show_defect_index_path(client_name: product.client&.name, product_id: product.id),
                         class: "text-blue-700 hover:underline" %>
 
