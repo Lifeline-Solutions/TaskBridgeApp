@@ -155,12 +155,17 @@
 </script>
 
 <style>
-  /* Fix spacing for Trix paragraphs (divs) validation */
-  .trix-content div {
+  /* Fix spacing for CKEditor paragraphs - only add spacing between actual paragraphs */
+  .trix-content p {
     margin-bottom: 0.75em;
   }
-  .trix-content div:last-child {
+  .trix-content p:last-child {
     margin-bottom: 0;
+  }
+  
+  /* Don't add spacing to divs unless they're empty (which represent paragraph breaks) */
+  .trix-content div:empty {
+    margin-bottom: 0.75em;
   }
 
   /* ===== TABLE STYLING - Comprehensive fix for Word/Docs paste issues ===== */
