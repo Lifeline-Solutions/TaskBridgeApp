@@ -242,13 +242,21 @@ document.addEventListener("trix-change", (event) => {
   }
 });
 
-// --- Handle pasting Markdown/Excel tables ---
+// --- Handle pasting Markdown/Excel tables AND plain text with newlines ---
 document.addEventListener("trix-paste", (event) => {
   const editor = event.target.editor;
-  const pastedText = (event.clipboardData || window.clipboardData).getData("text/plain");
+  const paste = event.clipboardData || window.clipboardData;
+  const pastedText = paste.getData("text/plain");
+  const pastedHTML = paste.getData("text/html");
+
+  // If HTML is pasted, let Trix handle it normally
+  if (pastedHTML && pastedHTML.trim()) {
+    return;
+  }
+
   const lines = pastedText.trim().split('\n');
 
-  // Heuristic: Check for pipe-separated data in at least one line.
+  // Heuristic: Check for pipe-separated data (tables) in at least one line.
   if (lines.length > 0 && lines[0].includes('|')) {
     const bodyStartIndex = lines[1] && lines[1].replace(/[-|: ]/g, '') === '' ? 2 : 1;
 
@@ -273,5 +281,34 @@ document.addEventListener("trix-paste", (event) => {
     event.preventDefault();
     editor.insertHTML(tableHTML);
     styleTablesInTrixContent(editor.element);
+    return;
+  }
+
+  // Handle plain text with newlines (e.g., from Notepad)
+  // Single newlines become <br>, double newlines become paragraph breaks
+  if (pastedText && pastedText.includes('\n')) {
+    event.preventDefault();
+    
+    // Split by double newlines first (paragraph breaks)
+    const paragraphs = pastedText.split(/\n\s*\n/);
+    
+    const htmlContent = paragraphs.map(para => {
+      if (!para.trim()) {
+        return '<div><br></div>';
+      }
+      
+      // Within each paragraph, replace single newlines with <br>
+      const escapedPara = para
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;')
+        .replace(/\n/g, '<br>');
+      
+      return `<div>${escapedPara}</div>`;
+    }).join('');
+    
+    editor.insertHTML(htmlContent);
   }
 });
