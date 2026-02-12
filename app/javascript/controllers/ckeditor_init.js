@@ -38,10 +38,40 @@
       paste: function (evt) {
         const editor = evt.editor;
         let data = evt.data.dataValue;
+        const pasteType = evt.data.type; // 'html' or 'text'
 
         if (!data) return;
 
         console.log('Original paste:', data.substring(0, 200));
+
+        // Handle plain text paste from Notepad/text editors
+        // Check if this is plain text (no HTML tags) or if dataTransfer indicates plain text
+        const isPlainText = pasteType === 'text' || (data && !/<[^>]+>/.test(data));
+        
+        if (isPlainText && data.includes('\n')) {
+          // Convert plain text newlines to HTML
+          // Double newlines = paragraph breaks, single newlines = line breaks
+          const paragraphs = data.split(/\n\s*\n/);
+          
+          const htmlContent = paragraphs.map(para => {
+            if (!para.trim()) {
+              return '<p><br></p>';
+            }
+            
+            // Within each paragraph, replace single newlines with <br>
+            const escapedPara = para
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/\n/g, '<br>');
+            
+            return `<p>${escapedPara}</p>`;
+          }).join('');
+          
+          evt.data.dataValue = htmlContent;
+          console.log('Converted plain text to:', htmlContent.substring(0, 200));
+          return;
+        }
 
         // === STEP 1: Remove Word/Docs XML/conditional comments ===
         data = data.replace(/<!--\[if[^\]]*\]>[\s\S]*?<!\[endif\]-->/gi, '');
