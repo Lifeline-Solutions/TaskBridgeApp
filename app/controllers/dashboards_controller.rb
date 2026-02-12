@@ -27,7 +27,7 @@ class DashboardsController < ApplicationController
 
       tickets_from_inception_by_status = Status
         .left_outer_joins(tickets: [:users])
-        .where('tickets.created_at <= ?', 30.days.ago)
+        # .where('tickets.created_at <= ?', 30.days.ago)
         .where(users: { id: user_ids })
         .where.not(statuses: { name: %w[Declined Closed Resolved] })
         .group('statuses.name')

@@ -106,7 +106,6 @@ class TasksController < ApplicationController
       @task.users << user # Sending to all users added to the product
       # UserMailer.task_assignment_email(user, @task, current_user, assigned_user).deliver_later
 
-
       activity('user_activity')
         .caused_by(current_user)
         .performed_on(@task)

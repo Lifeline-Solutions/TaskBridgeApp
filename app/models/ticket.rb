@@ -107,13 +107,17 @@ class Ticket < ApplicationRecord
     start_time = adjust_start_time(start_time)
     case priority
     when 'SEVERITY 1'
-      update_column(:resolution_deadline, next_business_time(start_time, 4.hours))
+      deadline1 = next_business_time(start_time, 4.hours)
+      update_columns(resolution_deadline: deadline1, due_date: deadline1)
     when 'SEVERITY 2'
-      update_column(:resolution_deadline, next_business_time(start_time, 8.hours))
+      deadline2 = next_business_time(start_time, 8.hours)
+      update_columns(resolution_deadline: deadline2, due_date: deadline2)
     when 'SEVERITY 3'
-      update_column(:resolution_deadline, next_business_time(start_time, 16.hours))
+      deadline3 = next_business_time(start_time, 16.hours)
+      update_columns(resolution_deadline: deadline3, due_date: deadline3)
     when 'SEVERITY 4'
-      update_column(:resolution_deadline, next_business_time(start_time, 24.hours))
+      deadline4 = next_business_time(start_time, 24.hours)
+      update_columns(resolution_deadline: deadline4, due_date: deadline4)
     end
   end
 
@@ -394,4 +398,18 @@ class Ticket < ApplicationRecord
 
     errors.add(:content, 'must be less than or equal to 3000 characters')
   end
+
+  # For Breaches to occur
+  # Severity 1 - 30 mins + 3 hrs + 4hrs = total-time
+  # Severity 2 - 30 mins + 5 hrs + 8hrs = total-time
+  # Severity 3 - 30 mins + 12 hrs + 16hrs = total-time
+  # Severity 4 - 30 mins + 24 hrs + 24 hrs = total-time
+  # In the Event table we have a field called duration where we record intervals for each ticket and the time take
+  # Each status is recorded and saved on the Event table
+  # We would like to add the time taken and subtract to the total time for each severity
+  # if the interval time is greater than total-time the ticket is breached
+  # if the interval time is less than total-time the ticket is not breached
+  # if the ticket time is On-hold, Client Information Pending, Resolved, Closed, Declined the recorded interval is ignored
+  # if the ticket time is New, Assigned, Work in Progress, Under Development, Pending, QA Testing,  ` the recorded interval is added to the total time
+  #
 end

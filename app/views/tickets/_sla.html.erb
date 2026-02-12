@@ -7,7 +7,7 @@
   </summary>
   <div class="p-4 lg:p-6 space-y-4">
 
-  <% if current_user.has_role? :admin or current_user.has_role?('project manager') or current_user.has_role?(:agent) %>
+    <% if current_user.has_role? :admin or current_user.has_role?('project manager') or current_user.has_role?(:agent) %>
     <!-- Timeline/Progress style for SLA milestones with status -->
     <div class="flex flex-col gap-2">
       <!-- Time Created -->
@@ -85,4 +85,5 @@
       </div>
     </div>
   <% end %>
+  </div>
 </details>
