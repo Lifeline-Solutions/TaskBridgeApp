@@ -2,7 +2,7 @@
   <!-- Due Date Field -->
   <% if current_user.has_role?(:agent) || current_user.has_role?(:admin) || current_user.has_role?('project manager') || current_user.has_role?(:observer) %>
     <div>
-      <div class="text-sm font-semibold uppercase tracking-wider mb-1">Due Date</div>
+      <div class="text-sm font-semibold uppercase tracking-wider mb-1">Due Date - <span class="font-light"> <%= @ticket.due_date.strftime("%d %b %Y") %></span></div>
       <%= form_with model: @ticket, url: update_due_date_project_ticket_path(@ticket.project, @ticket), method: :patch, remote: true, class: "flex items-center gap-2" do |f| %>
         <div class="relative flex-1">
           <%= f.date_field :due_date, value: @ticket.due_date,

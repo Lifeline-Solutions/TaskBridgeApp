@@ -227,7 +227,6 @@ class ProductController < ApplicationController
       @product.user = current_user
       @product.users << user
 
-
       activity('user_activity')
         .caused_by(current_user)
         .performed_on(@product)
@@ -288,7 +287,7 @@ class ProductController < ApplicationController
           priority: :normal,
           type: 'finance_sales'
         )
-        .use_template(view: 'user_mailer/finance_sales_email', assigns: { product: @product, assigned_user: u, current_user:, url: url})
+        .use_template(view: 'user_mailer/finance_sales_email', assigns: { product: @product, assigned_user: u, current_user:, url: url })
         .set_source('product', @product.id)
         .set_party('user', u.id)
         .send(queue: true)
