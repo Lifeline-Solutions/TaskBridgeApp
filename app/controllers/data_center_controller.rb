@@ -514,7 +514,7 @@ class DataCenterController < ApplicationController
 
     respond_to do |format|
       format.html { render :cbk_groupware_report }
-      format.csv { send_data generate_cbk_groupware_report_csv(@tickets), filename: "cbk_report_for #{month_name} and #{Date.today}.csv" }
+      format.xlsx { send_data generate_cbk_groupware_report_xlsx(@tickets), filename: "cbk_report_for_#{month_name}_#{Date.today}.xlsx" }
     end
   end
 
@@ -723,25 +723,109 @@ class DataCenterController < ApplicationController
     bom + csv_data
   end
 
-  def generate_cbk_groupware_report_csv(tickets)
-    CSV.generate(headers: true) do |csv|
-      csv << ['Ticket ID', 'Project Name', 'Severity', 'Summary', 'Issue Type', 'Status',
-              'Assignee', 'Reporter by', 'Created At', 'Closed']
+  def generate_cbk_groupware_report_xlsx(tickets)
+    # Generate CBK Groupware Report in XLSX format
+    # Report includes: Schedule for Customer Complains
+    # Contains institution name, financial year, start/end dates, and complaint details
 
+    package = Axlsx::Package.new
+    workbook = package.workbook
+
+    # Get start and end dates from params if available
+    start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : nil
+    end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
+    institution_name = 'Craft Silicon Limited' # Default institution name
+    financial_year = start_date ? start_date.year : Date.today.year
+
+    # Define styles
+    title_style = workbook.styles.add_style(
+      b: true,
+      sz: 14,
+      alignment: { horizontal: :center, vertical: :center },
+      fg_color: 'fffff',
+      bg_color: '000099'
+    )
+
+    header_info_style = workbook.styles.add_style(
+      b: true,
+      sz: 11,
+      alignment: { horizontal: :left, vertical: :center },
+      fg_color: 'fffff',
+      bg_color: '000099'
+    )
+
+    header_value_style = workbook.styles.add_style(
+      sz: 11,
+      alignment: { horizontal: :left, vertical: :center }
+    )
+
+    table_header_style = workbook.styles.add_style(
+      b: true,
+      #sz: 10,
+      alignment: { horizontal: :center, vertical: :center, wrap_text: true },
+      bg_color: 'D9E1F2',
+      border: { style: :thin, color: '000000' }
+    )
+
+    table_row_style = workbook.styles.add_style(
+      #sz: 10,
+      alignment: { horizontal: :left, vertical: :top, wrap_text: true },
+      border: { style: :thin, color: '000000' }
+    )
+
+    workbook.add_worksheet(name: 'CBK Report') do |sheet|
+      # Set column widths
+      sheet.column_widths 10, 10, 10, 10, 10, 10, 10, 10, 10
+
+      # Report Title
+      sheet.add_row(['SCHEDULE FOR CUSTOMER COMPLAINS'], style: title_style)
+      sheet.merge_cells('A1:B1')
+
+      # Empty row
+      sheet.add_row([])
+
+      # Report Header Information
+      sheet.add_row(['Name of Institution:', institution_name], style: [header_info_style, header_value_style])
+      sheet.add_row(['Financial Year:', financial_year], style: [header_info_style, header_value_style])
+      sheet.add_row(['Start Date:', start_date ? start_date.strftime('%b %d, %Y') : 'N/A'], style: [header_info_style, header_value_style])
+      sheet.add_row(['End Date:', end_date ? end_date.strftime('%b %d, %Y') : 'N/A'], style: [header_info_style, header_value_style])
+
+      # Empty row before table
+      sheet.add_row([])
+
+      # Table Headers
+      sheet.add_row(
+        ['Nature of the Complain', 'Complain Contact Information', 'Name of Merchant Complained Against',
+         'Complaint Reference ID', 'Physical Location of merchant', 'Date of Occurrence', 'Date Of Resolution',
+         'Priority', 'Remedial Action & Status'],
+        style: table_header_style
+      )
+
+      # Table Data
       tickets.each do |ticket|
-        csv << [
-          ticket.unique_id,
-          ticket.project.title,
-          ticket.priority,
-          ticket.subject,
-          ticket.issue,
-          ticket.statuses.first&.name || 'N/A',
-          ticket.users.map(&:name).select(&:present?).join(', '),
-          ticket.user.name,
-          ticket.created_at.strftime('%m/%d/%Y %H:%M'),
-          (ticket.add_statuses.order(updated_at: :desc).first&.updated_at&.strftime('%m/%d/%Y %H:%M') || 'N/A' if %w[Closed Resolved].include?(ticket.statuses.first&.name))
-        ]
+        resolution_date = if %w[Closed Resolved].include?(ticket.statuses.first&.name)
+                            ticket.add_statuses.order(updated_at: :desc).first&.updated_at&.strftime('%m/%d/%Y %H:%M') || 'N/A'
+                          else
+                            'N/A'
+                          end
+
+        sheet.add_row(
+          [
+            ticket.issue || '',
+            ticket.project.client.name || '',
+            ticket.subject || '',
+            ticket.unique_id || '',
+            ticket.project.client.country_code || '',
+            ticket.created_at.strftime('%m/%d/%Y %H:%M'),
+            resolution_date,
+            ticket.priority || '',
+            '' # Remedial Action & Status - can be populated if data is available
+          ],
+          style: table_row_style
+        )
       end
     end
+
+    package.to_stream.read
   end
 end

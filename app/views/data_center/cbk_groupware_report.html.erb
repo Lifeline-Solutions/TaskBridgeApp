@@ -43,7 +43,7 @@
   <div class="mb-4 px-2 sm:px-4 lg:px-8 py-4 flex flex-col sm:flex-row gap-2">
     <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mt-2 sm:mt-6"><%= @groupware.name.capitalize %> Report</h2>
     <div class="mt-2 sm:mt-4">
-      <%= link_to 'Download Report', cbk_groupware_report_path(format: :csv, groupware_id: params[:groupware_id], start_date: params[:start_date], end_date: params[:end_date], country_code: params[:country_code]), class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" %>
+      <%= link_to 'Download Report', cbk_groupware_report_path(format: :xlsx, groupware_id: params[:groupware_id], start_date: params[:start_date], end_date: params[:end_date], country_code: params[:country_code]), class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" %>
     </div>
   </div>
   <div class="overflow-x-auto">
