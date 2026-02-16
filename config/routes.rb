@@ -54,7 +54,7 @@ Rails.application.routes.draw do
   get 'orm_team_report', to: 'data_center#orm_team_report', as: 'orm_team_report'
   get 'sod_report', to: 'data_center#sod_report', as: 'sod_report'
   get 'assigned_tickets', to: 'data_center#assigned_tickets', as: 'assigned_tickets'
-  get 'cbk_groupware_report', to: 'data_center#cbk_groupware_report', as: 'cbk_groupware_report'
+  get 'cbk_groupware_report(.:format)', to: 'data_center#cbk_groupware_report', as: 'cbk_groupware_report'
   get 'project_report', to: 'profiles#project_report', as: 'project_report'
   get 'profiles_show', to: 'profiles#profiles_show', as: 'profiles_show'
   get 'profiles_show_user', to: 'profiles#profiles_show_user', as: 'profiles_show_user'
