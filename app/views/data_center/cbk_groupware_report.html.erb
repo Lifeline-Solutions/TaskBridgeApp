@@ -1,13 +1,13 @@
 <% provide(:title, "CBK Report") %>
 
 <%= form_with url: cbk_groupware_report_path, method: :get, local: true, class: "space-y-4" do %>
-  <div class="flex flex-wrap gap-4 justify-center md:gap-6 md:justify-start">
-    <div class="field w-full sm:w-1/2 md:w-1/4">
+  <div class="flex flex-wrap grid grid-cols-5 justify-center md:gap-6 md:justify-start">
+    <div class="field w-full col-span-1">
       <%= label_tag :groupware_id, 'Select Product', class: "block text-sm font-medium text-gray-700" %>
       <%= select_tag :groupware_id, options_from_collection_for_select(Groupware.all, :id, :name), include_blank: true, class: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" %>
     </div>
 
-    <div class="field w-full sm:w-1/2 md:w-1/4">
+    <div class="field w-full col-span-1">
       <%= label_tag :country_code, 'Select Country', class: "block text-sm font-medium text-gray-700" %>
       <%# safe country label lookup to avoid nil#[] errors %>
       <%= select_tag :country_code,
@@ -23,17 +23,17 @@
 
     </div>
 
-    <div class="field w-full sm:w-1/2 md:w-1/4">
+    <div class="field w-full col-span-1">
       <%= label_tag :start_date, 'Start Date', class: "block text-sm font-medium text-gray-700" %>
       <%= date_field_tag :start_date, nil, class: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" %>
     </div>
 
-    <div class="field w-full sm:w-1/2 md:w-1/4">
+    <div class="field w-full col-span-1">
       <%= label_tag :end_date, 'End Date', class: "block text-sm font-medium text-gray-700" %>
       <%= date_field_tag :end_date, nil, class: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" %>
     </div>
 
-    <div class="actions mt-6 w-full">
+    <div class="actions w-full mt-6 col-span-1">
       <%= submit_tag 'Generate Report', class: "inline-flex items-center justify-center w-full sm:w-auto px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" %>
     </div>
   </div>
