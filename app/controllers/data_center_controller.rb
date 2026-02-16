@@ -734,7 +734,7 @@ class DataCenterController < ApplicationController
     # Get start and end dates from params if available
     start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : nil
     end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
-    institution_name = 'Craftsilicon' # Default institution name
+    institution_name = 'Craft Silicon Limited' # Default institution name
     financial_year = start_date ? start_date.year : Date.today.year
 
     # Define styles
