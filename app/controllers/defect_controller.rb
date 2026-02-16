@@ -451,11 +451,26 @@ class DefectController < ApplicationController
 
     # Ordering
     @selected_order = params[:order]
+    @sort_by = params[:sort_by]
+    @sort_direction = %w[asc desc].include?(params[:sort_direction]) ? params[:sort_direction] : 'asc'
     direction = %w[asc desc].include?(@selected_order) ? @selected_order : 'desc'
-    @defects = @defects.order(created_at: direction)
 
-    # Ensure uniqueness after joins (affects count and pagination)
-    @defects = @defects.distinct
+    @defects = case @sort_by
+               when 'assignee'
+                 @defects
+                   .left_joins(:users)
+                   .select('defects.*', "MIN(COALESCE(users.first_name, '')) as assignee_name")
+                   .group('defects.id')
+                   .order(Arel.sql("assignee_name #{@sort_direction == 'desc' ? 'DESC' : 'ASC'}"))
+               when 'reporter'
+                 @defects
+                   .joins('LEFT JOIN users AS reporter_users ON reporter_users.id = defects.created_by')
+                   .select('defects.*', 'reporter_users.first_name as reporter_first', 'reporter_users.last_name as reporter_last')
+                   .order(Arel.sql("reporter_first #{@sort_direction == 'desc' ? 'DESC' : 'ASC'}, reporter_last #{@sort_direction == 'desc' ? 'DESC' : 'ASC'}"))
+                   .distinct
+               else
+                 @defects.order(created_at: direction).distinct
+               end
 
     # FIX: Handle multiple products - don't set @product if multiple products are selected
     if product_ids.any?
@@ -607,7 +622,8 @@ class DefectController < ApplicationController
     # Pagination
     @per_page = 20
     @page = (params[:page] || 1).to_i
-    @total_count = @defects.count
+    total = @defects.except(:select, :group, :order).count
+    @total_count = total.is_a?(Hash) ? total.size : total
     @total_pages = (@total_count / @per_page.to_f).ceil
     @start_count = ((@page - 1) * @per_page) + 1
     @end_count = [@page * @per_page, @total_count].min
