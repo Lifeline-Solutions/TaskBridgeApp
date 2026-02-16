@@ -11,8 +11,8 @@
       <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 border-r border-gray-200 dark:border-gray-600" style="position: sticky; top: 0; z-index: 1;">Sub Module</th>
       <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 border-r border-gray-200 dark:border-gray-600" style="position: sticky; top: 0; z-index: 1;">Banking Types</th>
       <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 border-r border-gray-200 dark:border-gray-600" style="position: sticky; top: 0; z-index: 1;">Labels</th>
-      <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 border-r border-gray-200 dark:border-gray-600" style="position: sticky; top: 0; z-index: 1;">Assignee(s)</th>
-      <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 border-r border-gray-200 dark:border-gray-600" style="position: sticky; top: 0; z-index: 1;">Reporter</th>
+      <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 border-r border-gray-200 dark:border-gray-600" style="position: sticky; top: 0; z-index: 1;"><%= defect_sort_link(:assignee, 'Assignee(s)') %></th>
+      <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 border-r border-gray-200 dark:border-gray-600" style="position: sticky; top: 0; z-index: 1;"><%= defect_sort_link(:reporter, 'Reporter') %></th>
       <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 border-r border-gray-200 dark:border-gray-600" style="position: sticky; top: 0; z-index: 1;">Created At</th>
       <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 border-r border-gray-200 dark:border-gray-600" style="position: sticky; top: 0; z-index: 1;">Retest Count</th>
       <th scope="col" class="px-3 py-2 bg-gray-100 dark:bg-gray-700 border-r border-gray-200 dark:border-gray-600" style="position: sticky; top: 0; z-index: 1;">Reopened Count</th>
@@ -22,7 +22,13 @@
     </thead>
     <tbody>
     <% if @defects.present? %>
-      <% sorted_defects = @defects.sort_by { |d| d.defect_unique&.split('-')&.last.to_i || 0 }.reverse %>
+      <%
+        sorted_defects = if @sort_by.present?
+                           @defects.to_a
+                         else
+                           @defects.sort_by { |d| d.defect_unique&.split('-')&.last.to_i || 0 }.reverse
+                         end
+      %>
       <% sorted_defects.each_with_index do |defect, index| %>
         <% row_number = @start_count + index %>
       <!-- Your defect row rendering here, unchanged -->

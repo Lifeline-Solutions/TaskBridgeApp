@@ -92,6 +92,28 @@ module DefectHelper
                                             ]).html_safe
   end
 
+  def defect_sort_link(column, label)
+    current_sort = params[:sort_by]
+    current_dir = params[:sort_direction]
+
+    next_dir = if current_sort == column.to_s && current_dir == 'asc'
+                 'desc'
+               else
+                 'asc'
+               end
+
+    arrow = if current_sort == column.to_s
+              current_dir == 'asc' ? ' ▲' : ' ▼'
+            else
+              ' ⇅'
+            end
+
+    merged = request.query_parameters.merge(sort_by: column, sort_direction: next_dir, page: 1)
+    link_to "#{label}#{arrow}".html_safe,
+            index_show_defect_index_path(merged),
+            class: "inline-flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer #{'text-blue-700 dark:text-blue-300 font-bold' if current_sort == column.to_s}"
+  end
+
   def priority_badge_class(priority)
     case priority.to_s.downcase
     when 'severity 1', 'high' then 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
