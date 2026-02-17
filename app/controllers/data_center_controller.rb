@@ -773,6 +773,22 @@ class DataCenterController < ApplicationController
       border: { style: :thin, color: '000000' }
     )
 
+    bottom_row_style = workbook.styles.add_style(
+      sz: 11,
+      alignment: { horizontal: :left, vertical: :center },
+      fg_color: '000000',
+      bg_color: 'f2f2f2'
+    )
+
+    bottom_row_style_underline = workbook.styles.add_style(
+      b: true,
+      sz: 14,
+      alignment: { horizontal: :left, vertical: :center},
+      underline: true,
+      fg_color: '000000',
+      bg_color: 'f2f2f2'
+    )
+
     workbook.add_worksheet(name: 'CBK Report') do |sheet|
       # Set column widths
       sheet.column_widths 10, 10, 10, 10, 10, 10, 10, 10, 10
@@ -819,12 +835,31 @@ class DataCenterController < ApplicationController
             ticket.created_at.strftime('%m/%d/%Y %H:%M'),
             resolution_date,
             ticket.priority || '',
-            '' # Remedial Action & Status - can be populated if data is available
+            ticket.statuses.first&.name || '' # Remedial Action & Status - can be populated if data is available
           ],
           style: table_row_style
         )
       end
+
+      sheet.add_row([])
+      sheet.add_row([])
+
+
+      # Report Header Information
+      sheet.add_row(['', '',''], style: [bottom_row_style_underline, bottom_row_style, bottom_row_style])
+      sheet.add_row(['Authorization:', '', ''], style: [bottom_row_style_underline, bottom_row_style, bottom_row_style])
+      sheet.add_row(['We declare that this return, to the best of our knowledge and belief is correct.', '', ''], style: [bottom_row_style, bottom_row_style, bottom_row_style])
+      sheet.add_row(['Name of Compiling Officer: Moses Murage', 'Sign ...........', ' Date .............'], style: [bottom_row_style, bottom_row_style, bottom_row_style])
+      sheet.add_row(['Head of Business and Sales ', '', ''], style: [bottom_row_style, bottom_row_style, bottom_row_style])
+      sheet.add_row(['', '',''], style: [bottom_row_style_underline, bottom_row_style, bottom_row_style])
+
+      sheet.add_row(['', '',''], style: [bottom_row_style_underline, bottom_row_style, bottom_row_style])
+      sheet.add_row(['Name of authorizing officer (1) Miriam Mungai', 'Sign ...........', ' Date ............'], style: [bottom_row_style, bottom_row_style, bottom_row_style])
+      sheet.add_row(['Head of Legal and Regulatory Compliance', '', ''], style: [bottom_row_style, bottom_row_style, bottom_row_style])
+      sheet.add_row(['', '',''], style: [bottom_row_style_underline, bottom_row_style, bottom_row_style])
+
     end
+
 
     package.to_stream.read
   end
