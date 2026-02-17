@@ -71,6 +71,28 @@ class SlaBreachCheckJob < ApplicationJob
     end
   end
 
+  def check_thirty_days_on_hold
+    # Find tickets that have been in 'Client Information Pending' status for 30+ days
+    resolved_status = Status.find_by(name: 'On-Hold')
+    return unless resolved_status
+
+    tickets = Ticket.joins(:add_statuses, :statuses)
+                    .joins('INNER JOIN statuses ON statuses.id = add_statuses.status_id')
+                    .where(statuses: { name: 'On-Hold' })
+                    .where('add_statuses.updated_at <= ?', 1.month.ago)
+                    .distinct
+
+    tickets.find_each do |ticket|
+      # Update status to Resolved
+      ticket.statuses.clear
+      ticket.statuses << resolved_status
+
+      assigned_user = ticket.users.first
+      details = "Status was changed to #{resolved_status.name} currently assigned to #{assigned_user&.name || 'Unassigned'}, This process was automated"
+      log_event(ticket, nil, 'status_change', details, assigned_user)
+    end
+  end
+
   def check_thirty_days_resolved
     # Find tickets that have been in 'Client Information Pending' status for 30+ days
     closed_status = Status.find_by(name: 'Closed')
