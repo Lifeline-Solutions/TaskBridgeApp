@@ -849,12 +849,12 @@ class DataCenterController < ApplicationController
       sheet.add_row(['', '',''], style: [bottom_row_style_underline, bottom_row_style, bottom_row_style])
       sheet.add_row(['Authorization:', '', ''], style: [bottom_row_style_underline, bottom_row_style, bottom_row_style])
       sheet.add_row(['We declare that this return, to the best of our knowledge and belief is correct.', '', ''], style: [bottom_row_style, bottom_row_style, bottom_row_style])
-      sheet.add_row(['Name of Compiling Officer: Moses Murage', 'Sign .......', ' Date .........'], style: [bottom_row_style, bottom_row_style, bottom_row_style])
+      sheet.add_row(['Name of Compiling Officer: Moses Murage', 'Sign ...........', ' Date .............'], style: [bottom_row_style, bottom_row_style, bottom_row_style])
       sheet.add_row(['Head of Business and Sales ', '', ''], style: [bottom_row_style, bottom_row_style, bottom_row_style])
       sheet.add_row(['', '',''], style: [bottom_row_style_underline, bottom_row_style, bottom_row_style])
 
       sheet.add_row(['', '',''], style: [bottom_row_style_underline, bottom_row_style, bottom_row_style])
-      sheet.add_row(['Name of authorizing officer (1) Miriam Mungai', 'Sign .......', ' Date .........'], style: [bottom_row_style, bottom_row_style, bottom_row_style])
+      sheet.add_row(['Name of authorizing officer (1) Miriam Mungai', 'Sign ...........', ' Date ............'], style: [bottom_row_style, bottom_row_style, bottom_row_style])
       sheet.add_row(['Head of Legal and Regulatory Compliance', '', ''], style: [bottom_row_style, bottom_row_style, bottom_row_style])
       sheet.add_row(['', '',''], style: [bottom_row_style_underline, bottom_row_style, bottom_row_style])
 
