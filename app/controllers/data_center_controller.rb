@@ -819,7 +819,7 @@ class DataCenterController < ApplicationController
             ticket.created_at.strftime('%m/%d/%Y %H:%M'),
             resolution_date,
             ticket.priority || '',
-            '' # Remedial Action & Status - can be populated if data is available
+            ticket.statuses.first&.name || '' # Remedial Action & Status - can be populated if data is available
           ],
           style: table_row_style
         )
