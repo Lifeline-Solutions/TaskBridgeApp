@@ -102,16 +102,32 @@ module DefectHelper
                  'asc'
                end
 
-    arrow = if current_sort == column.to_s
-              current_dir == 'asc' ? ' ▲' : ' ▼'
-            else
-              ' ⇅'
-            end
+    # Determine icon and tooltip based on current state
+    if current_sort == column.to_s
+      if current_dir == 'asc'
+        icon = '<i class="fas fa-sort-up ml-1 text-blue-600 dark:text-blue-400"></i>'
+        tooltip = 'Sorted A→Z. Click to sort Z→A'
+        text_class = 'text-blue-700 dark:text-blue-300 font-semibold'
+      else
+        icon = '<i class="fas fa-sort-down ml-1 text-blue-600 dark:text-blue-400"></i>'
+        tooltip = 'Sorted Z→A. Click to sort A→Z'
+        text_class = 'text-blue-700 dark:text-blue-300 font-semibold'
+      end
+    else
+      icon = '<i class="fas fa-sort ml-1 text-gray-400 dark:text-gray-500"></i>'
+      tooltip = 'Click to sort A→Z'
+      text_class = 'text-gray-700 dark:text-gray-300'
+    end
 
     merged = request.query_parameters.merge(sort_by: column, sort_direction: next_dir, page: 1)
-    link_to "#{label}#{arrow}".html_safe,
-            index_show_defect_index_path(merged),
-            class: "inline-flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer #{'text-blue-700 dark:text-blue-300 font-bold' if current_sort == column.to_s}"
+
+    link_to index_show_defect_index_path(merged),
+            class: "inline-flex items-center gap-1 #{text_class} hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-150 cursor-pointer group",
+            title: tooltip,
+            data: { toggle: 'tooltip', placement: 'top' } do
+      content_tag(:span, label, class: 'group-hover:underline') +
+        icon.html_safe
+    end
   end
 
   def priority_badge_class(priority)
