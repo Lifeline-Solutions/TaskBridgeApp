@@ -111,7 +111,6 @@ module DefectHelper
       else
         icon = '<i class="fas fa-sort-down ml-1 text-blue-600 dark:text-blue-400"></i>'
         tooltip = 'Sorted Z→A. Click to sort A→Z'
-        text_class = 'text-blue-700 dark:text-blue-300 font-semibold'
       end
     else
       icon = '<i class="fas fa-sort ml-1 text-gray-400 dark:text-gray-500"></i>'
