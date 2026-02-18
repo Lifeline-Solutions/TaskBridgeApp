@@ -95,23 +95,58 @@ module DefectHelper
   def defect_sort_link(column, label)
     current_sort = params[:sort_by]
     current_dir = params[:sort_direction]
+    is_active = current_sort == column.to_s
 
-    next_dir = if current_sort == column.to_s && current_dir == 'asc'
+    next_dir = if is_active && current_dir == 'asc'
                  'desc'
                else
                  'asc'
                end
 
-    arrow = if current_sort == column.to_s
-              current_dir == 'asc' ? ' ▲' : ' ▼'
-            else
-              ' ⇅'
-            end
+    # Determine icon, tooltip, and styling based on current state
+    if is_active
+      if current_dir == 'asc'
+        icon = '<i class="fas fa-sort-up ml-1.5 text-blue-600 dark:text-blue-400 animate-pulse"></i>'
+        sort_badge = '<span class="ml-1.5 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">A→Z</span>'
+        tooltip = 'Currently sorted A→Z. Click to reverse to Z→A'
+        text_class = 'text-blue-700 dark:text-blue-300 font-semibold'
+        link_class = 'bg-blue-50 dark:bg-blue-900/20 rounded-md px-2 py-1 -mx-2 -my-1'
+        aria_sort = 'ascending'
+      else
+        icon = '<i class="fas fa-sort-down ml-1.5 text-blue-600 dark:text-blue-400 animate-pulse"></i>'
+        sort_badge = '<span class="ml-1.5 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">Z→A</span>'
+        tooltip = 'Currently sorted Z→A. Click to reverse to A→Z'
+        text_class = 'text-blue-700 dark:text-blue-300 font-semibold'
+        link_class = 'bg-blue-50 dark:bg-blue-900/20 rounded-md px-2 py-1 -mx-2 -my-1'
+        aria_sort = 'descending'
+      end
+    else
+      icon = '<i class="fas fa-sort ml-1.5 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400 transition-colors"></i>'
+      sort_badge = ''
+      tooltip = 'Click to sort by this column (A→Z)'
+      text_class = 'text-gray-700 dark:text-gray-300'
+      link_class = 'hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-md px-2 py-1 -mx-2 -my-1'
+      aria_sort = 'none'
+    end
 
     merged = request.query_parameters.merge(sort_by: column, sort_direction: next_dir, page: 1)
-    link_to "#{label}#{arrow}".html_safe,
-            index_show_defect_index_path(merged),
-            class: "inline-flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer #{'text-blue-700 dark:text-blue-300 font-bold' if current_sort == column.to_s}"
+
+    link_to index_show_defect_index_path(merged),
+            class: "inline-flex items-center gap-1 #{text_class} #{link_class} hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 cursor-pointer group select-none",
+            title: tooltip,
+            role: 'button',
+            tabindex: '0',
+            'aria-label': "Sort by #{label} #{next_dir == 'asc' ? 'ascending' : 'descending'}",
+            'aria-sort': aria_sort,
+            data: {
+              toggle: 'tooltip',
+              placement: 'top',
+              turbo_action: 'replace'
+            } do
+      content_tag(:span, label, class: 'group-hover:underline font-medium') +
+        icon.html_safe +
+        sort_badge.html_safe
+    end
   end
 
   def priority_badge_class(priority)
