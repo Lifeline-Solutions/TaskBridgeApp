@@ -639,7 +639,9 @@ class DefectController < ApplicationController
     # If we skipped eager loading earlier due to GROUP BY, add it back now after pagination
     # to avoid N+1 queries when rendering the view
     if skip_eager_loading
-      defect_ids = @defects.pluck(:id)
+      # For assignee sorting, we need to preserve the SELECT clause when getting IDs
+      # Use select(:id) instead of pluck to maintain the ORDER BY with computed columns
+      defect_ids = @defects.select('defects.id').map(&:id)
       @defects = Defect.where(id: defect_ids)
         .includes(:users, :labels, :statuses, :qa_module, :banking_type, product: %i[client groupwares])
         .order(Arel.sql("array_position(ARRAY[#{defect_ids.join(',')}]::bigint[], defects.id)"))
