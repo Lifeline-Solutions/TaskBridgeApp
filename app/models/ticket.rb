@@ -410,6 +410,41 @@ class Ticket < ApplicationRecord
   # if the interval time is greater than total-time the ticket is breached
   # if the interval time is less than total-time the ticket is not breached
   # if the ticket time is On-hold, Client Information Pending, Resolved, Closed, Declined the recorded interval is ignored
-  # if the ticket time is New, Assigned, Work in Progress, Under Development, Pending, QA Testing,  ` the recorded interval is added to the total time
+  # if the ticket time is New, Assigned, Work in Progress, Under Development, Pending, QA Testing, the recorded interval is added to the total time
   #
+  #
+  # Calculate total time allowed for each severity
+  # def calculate_sla_breach(ticket)
+  #  total_time = case ticket.priority
+  #                when 'SEVERITY 1'
+  #                  calculate_business_hours_duration(DateTime.now, DateTime.now + (30.minutes + 3.hours + 4.hours))
+  #                when 'SEVERITY 2'
+  #                  calculate_business_hours_duration(DateTime.now, DateTime.now + (30.minutes + 5.hours + 8.hours))
+  #                when 'SEVERITY 3'
+  #                  calculate_business_hours_duration(DateTime.now, DateTime.now + (30.minutes + 12.hours + 16.hours))
+  #                when 'SEVERITY 4'
+  #                  calculate_business_hours_duration(DateTime.now, DateTime.now + (30.minutes + 24.hours + 24.hours))
+  #                else
+  #                  0 # Default to 0 if priority is not defined
+  #                end
+
+    # Fetch all events for the ticket
+  # total_duration = ticket.events.sum do |event|
+  #    if %w[New Assigned Work\ in\ Progress Under\ Development Pending QA\ Testing].include?(event.status)
+  #      event.duration
+  #    elsif %w[On-Hold Client\ Information\ Pending Resolved Closed Declined].include?(event.status)
+  #      0 # Ignore these statuses
+  #    else
+  #      0 # Default to 0 for undefined statuses
+  #    end
+  #  end
+
+  # Determine if the ticket is breached
+  #  if total_duration > total_time
+  #    'Breached'
+  #  elsif total_duration < total_time
+  #    'Not Breached'
+  # end
+  #
+
 end
