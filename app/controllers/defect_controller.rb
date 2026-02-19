@@ -642,9 +642,11 @@ class DefectController < ApplicationController
       # For assignee sorting, we need to preserve the SELECT clause when getting IDs
       # Use select(:id) instead of pluck to maintain the ORDER BY with computed columns
       defect_ids = @defects.select('defects.id').map(&:id)
+      # Quote UUIDs properly for array_position
+      quoted_ids = defect_ids.map { |id| "'#{id}'" }.join(',')
       @defects = Defect.where(id: defect_ids)
         .includes(:users, :labels, :statuses, :qa_module, :banking_type, product: %i[client groupwares])
-        .order(Arel.sql("array_position(ARRAY[#{defect_ids.join(',')}]::bigint[], defects.id)"))
+        .order(Arel.sql("array_position(ARRAY[#{quoted_ids}]::uuid[], defects.id)"))
     end
 
     # All details show all
