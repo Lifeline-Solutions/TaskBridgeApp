@@ -196,8 +196,8 @@ class DefectController < ApplicationController
   end
 
   def index_show
-    # Determine if we need to skip eager loading due to GROUP BY sorting
-    skip_eager_loading = params[:sort_by] == 'assignee'
+    # Determine if we need to skip eager loading due to custom sorting
+    skip_eager_loading = %w[assignee reporter].include?(params[:sort_by])
 
     # Base scope - use safe includes that won't break if columns don't exist
     # Skip eager loading when using GROUP BY to avoid PostgreSQL grouping errors
@@ -472,9 +472,8 @@ class DefectController < ApplicationController
                when 'reporter'
                  @defects
                    .joins('LEFT JOIN users AS reporter_users ON reporter_users.id = defects.created_by')
-                   .select('defects.*', 'reporter_users.first_name as reporter_first', 'reporter_users.last_name as reporter_last')
+                   .select('DISTINCT reporter_users.first_name as reporter_first', 'reporter_users.last_name as reporter_last', 'defects.id')
                    .order(Arel.sql("reporter_first #{@sort_direction == 'desc' ? 'DESC' : 'ASC'}, reporter_last #{@sort_direction == 'desc' ? 'DESC' : 'ASC'}"))
-                   .distinct
                else
                  @defects.order(created_at: direction).distinct
                end
