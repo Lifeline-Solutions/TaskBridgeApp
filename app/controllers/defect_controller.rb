@@ -196,16 +196,23 @@ class DefectController < ApplicationController
   end
 
   def index_show
-    # Base scope - use safe includes that won't break if columns don't exist
-    @defects = Defect.published
-      .includes(:users, :labels, :statuses, product: %i[client groupwares])
+    # Determine if we need to skip eager loading due to GROUP BY sorting
+    skip_eager_loading = params[:sort_by] == 'assignee'
 
-    # Safely add optional includes only if columns exist
-    begin
-      @defects = @defects.includes(:qa_module, :banking_type)
-    rescue ActiveRecord::StatementInvalid
-      # Columns don't exist yet, continue without these includes
-      Rails.logger.warn 'Optional defect associations not available yet'
+    # Base scope - use safe includes that won't break if columns don't exist
+    # Skip eager loading when using GROUP BY to avoid PostgreSQL grouping errors
+    @defects = Defect.published
+
+    unless skip_eager_loading
+      @defects = @defects.includes(:users, :labels, :statuses, product: %i[client groupwares])
+
+      # Safely add optional includes only if columns exist
+      begin
+        @defects = @defects.includes(:qa_module, :banking_type)
+      rescue ActiveRecord::StatementInvalid
+        # Columns don't exist yet, continue without these includes
+        Rails.logger.warn 'Optional defect associations not available yet'
+      end
     end
 
     # Apply saved filter shortcut
@@ -628,6 +635,15 @@ class DefectController < ApplicationController
     @start_count = ((@page - 1) * @per_page) + 1
     @end_count = [@page * @per_page, @total_count].min
     @defects = @defects.offset((@page - 1) * @per_page).limit(@per_page)
+
+    # If we skipped eager loading earlier due to GROUP BY, add it back now after pagination
+    # to avoid N+1 queries when rendering the view
+    if skip_eager_loading
+      defect_ids = @defects.pluck(:id)
+      @defects = Defect.where(id: defect_ids)
+        .includes(:users, :labels, :statuses, :qa_module, :banking_type, product: %i[client groupwares])
+        .order(Arel.sql("array_position(ARRAY[#{defect_ids.join(',')}]::bigint[], defects.id)"))
+    end
 
     # All details show all
     # (moved to above pagination)
