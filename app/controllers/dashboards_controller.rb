@@ -44,7 +44,7 @@ class DashboardsController < ApplicationController
       tasks_from_inception_by_status = Status
         .left_outer_joins(tasks: [:users])
         .where(users: { id: user_ids })
-        .where.not(statuses: { name: %w[Declined Closed Resolved] })
+        .where.not(statuses: { name: %w[Closed Resolved] })
         .group('statuses.name')
         .count
 
@@ -402,11 +402,11 @@ class DashboardsController < ApplicationController
       if is_task_request
         @tickets = @tickets
           .joins(:users)
-          .joins('LEFT JOIN statuses ON statuses.id IN (SELECT status_id FROM tasks_statuses WHERE tasks_statuses.task_id = tasks.id)')
+          .joins('LEFT JOIN statuses ON statuses.id IN (SELECT status_id FROM statuses_tasks WHERE statuses_tasks.task_id = tasks.id)')
           .select(
-            'tasks.id', 'tasks.unique_id', 'tasks.priority', 'tasks.name',
+            'tasks.id', 'tasks.unique_task_id',  'tasks.name',
             'tasks.start_date', 'tasks.end_date', 'tasks.description', 'tasks.created_at',
-            'users.first_name', 'users.last_name',
+            'users.first_name', 'users.last_name', 'tasks.priority',
             'statuses.name AS status_name',
             '(SELECT teams.name FROM teams INNER JOIN teams_users ON teams.id = teams_users.team_id WHERE teams_users.user_id = users.id LIMIT 1) AS user_team_name'
           )
