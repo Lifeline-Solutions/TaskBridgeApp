@@ -13,18 +13,6 @@
         <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Tasks Breakdown</h3>
         <!-- Placeholder: This will be populated by JavaScript in fetchStats() -->
 
-        <% if @stats[:tasks_from_inception_by_status].present? %>
-          <%# Desired display order requested by user %>
-          <% desired_order = ['To Do', 'Work in Progress', 'Under Development', 'QA Testing', 'Client Information Pending', 'Reopened', 'On-Hold'] %>
-          <% ordered_statuses = desired_order.select { |s| @stats[:tasks_from_inception_by_status].key?(s) } + (@stats[:tasks_from_inception_by_status].keys - desired_order) %>
-          <% ordered_statuses.each do |status| %>
-            <div class="text-lg font-bold mb-2">
-              <span class="text-lg font-bold mb-2"><%= status %>:</span> <%= @stats[:tasks_from_inception_by_status][status] %>
-            </div>
-          <% end %>
-        <% else %>
-          <div class="text-gray-400">No status breakdown available.</div>
-        <% end %>
       </div>
     </a>
   </div>
