@@ -47,3 +47,6 @@ config/master.key
 config/credentials/
 config/jira_import.yml
 
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
